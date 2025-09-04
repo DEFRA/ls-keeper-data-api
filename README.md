@@ -11,7 +11,7 @@ Core delivery C# ASP.NET backend template.
 
 ### Docker Compose
 
-A Docker Compose template is in [compose.yml](compose.yml).
+A Docker Compose template is in [docker-compose.yml](docker-compose.yml).
 
 A local environment with:
 
@@ -77,7 +77,7 @@ dotnet test
 
 Run CDP-Deployments application:
 ```bash
-dotnet run --project LsKeeperDataApi --launch-profile Development
+dotnet run --project src\KeeperData.Api --launch-profile Development
 ```
 
 ### SonarCloud

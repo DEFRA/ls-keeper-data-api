@@ -3,6 +3,8 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
+EXPOSE 8080
+EXPOSE 8081
 
 # Add curl to template.
 # CDP PLATFORM HEALTHCHECK REQUIREMENT
@@ -13,23 +15,24 @@ RUN apt update && \
 
 # Build stage image
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-
 COPY . .
-WORKDIR "/src"
 
 # unit test and code coverage
-RUN dotnet test LsKeeperDataApi.Test
+RUN dotnet test KeeperData.Api.sln --filter Dependence!=localstack
+RUN dotnet restore "KeeperData.Api.sln"
+RUN dotnet build "src/KeeperData.Api/KeeperData.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build /p:UseAppHost=false
 
 FROM build AS publish
-RUN dotnet publish LsKeeperDataApi -c Release -o /app/publish /p:UseAppHost=false
-
-
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet publish "src/KeeperData.Api" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 ENV ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+
 
 # Final production image
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 EXPOSE 8085
-ENTRYPOINT ["dotnet", "LsKeeperDataApi.dll"]
+ENTRYPOINT ["dotnet", "KeeperData.Api.dll"]
