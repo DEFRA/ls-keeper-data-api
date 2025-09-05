@@ -1,5 +1,3 @@
-using KeeperData.Api.Example.Endpoints;
-using KeeperData.Api.Example.Services;
 using KeeperData.Api.Utils;
 using KeeperData.Api.Utils.Http;
 using KeeperData.Api.Utils.Mongo;
@@ -56,16 +54,12 @@ static void ConfigureBuilder(WebApplicationBuilder builder)
         }
     });
 
-
     // Set up the MongoDB client. Config and credentials are injected automatically at runtime.
     builder.Services.Configure<MongoConfig>(builder.Configuration.GetSection("Mongo"));
     builder.Services.AddSingleton<IMongoDbClientFactory, MongoDbClientFactory>();
 
     builder.Services.AddHealthChecks();
     builder.Services.AddValidatorsFromAssemblyContaining<Program>();
-
-    // Set up the endpoints and their dependencies
-    builder.Services.AddSingleton<IExamplePersistence, ExamplePersistence>();
 }
 
 [ExcludeFromCodeCoverage]
@@ -74,9 +68,6 @@ static WebApplication SetupApplication(WebApplication app)
     app.UseHeaderPropagation();
     app.UseRouting();
     app.MapHealthChecks("/health");
-
-    // Example module, remove before deploying!
-    app.UseExampleEndpoints();
 
     return app;
 }

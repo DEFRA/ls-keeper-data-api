@@ -8,7 +8,6 @@ public abstract class MongoService<T>
 {
     protected readonly IMongoClient Client;
     protected readonly IMongoCollection<T> Collection;
-
     protected readonly ILogger Logger;
 
     protected MongoService(IMongoDbClientFactory connectionFactory, string collectionName, ILoggerFactory loggerFactory)
