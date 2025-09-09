@@ -41,7 +41,8 @@ services:
       - mongodb-data:/data
     restart: always
   
-  keeperdata-api:
+  keeperdata.api:
+    platform: linux
     build: ./
     ports:
       - '8080:8080'
