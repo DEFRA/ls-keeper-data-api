@@ -10,7 +10,7 @@ public class IntakeEventConsumer(
     ILogger<IntakeEventConsumer> logger,
     IIntakeEventRepository intakeEventRepository,
     IAmazonSQS sqsClient,
-    IOptions<IntakeEventConsumerOptions> options)
+    IOptions<IntakeEventQueueOptions> options)
     : QueueConsumerBase<IntakeEventModel>(logger, sqsClient, options)
 {
     protected override Task ProcessMessageAsync(IntakeEventModel payload, CancellationToken cancellationToken)
@@ -19,7 +19,7 @@ public class IntakeEventConsumer(
     }
 }
 
-public record IntakeEventConsumerOptions : QueueConsumerOptions;
+public record IntakeEventQueueOptions : QueueConsumerOptions;
 
 // Everything below here would normally be elsewhere in the application
 

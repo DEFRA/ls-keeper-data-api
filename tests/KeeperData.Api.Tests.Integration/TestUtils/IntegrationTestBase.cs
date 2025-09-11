@@ -41,7 +41,7 @@ public class IntegrationTestBase
         }
         if (queueListResult.QueueUrls.Count <= 0)
         {
-            throw new Exception("Queue List Request Succeeded but not queues found");
+            throw new Exception("Queue List Request Succeeded but no queues found");
         }
         var queueUrl = queueListResult.QueueUrls[0];
 

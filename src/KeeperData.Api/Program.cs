@@ -58,13 +58,15 @@ static void ConfigureBuilder(WebApplicationBuilder builder)
     // Set up the MongoDB client. Config and credentials are injected automatically at runtime.
     builder.Services.Configure<MongoConfig>(builder.Configuration.GetSection("Mongo"));
     builder.Services.AddSingleton<IMongoDbClientFactory, MongoDbClientFactory>();
-
-    builder.Services.AddHealthChecks();
+    
     builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
+    builder.Services.AddCoreRepositories();
 
     builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
     builder.Services.AddQueueConsumers(builder.Configuration);
+
+    builder.AddCustomHealthChecks();
 }
 
 [ExcludeFromCodeCoverage]
@@ -72,7 +74,7 @@ static WebApplication SetupApplication(WebApplication app)
 {
     app.UseHeaderPropagation();
     app.UseRouting();
-    app.MapHealthChecks("/health");
+    app.ConfigureCustomHealthChecks();
 
     return app;
 }
