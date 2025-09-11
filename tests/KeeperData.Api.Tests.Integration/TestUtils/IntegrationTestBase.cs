@@ -44,7 +44,7 @@ public class IntegrationTestBase
             throw new Exception("Queue List Request Succeeded but not queues found");
         }
         var queueUrl = queueListResult.QueueUrls[0];
-        
+
         // Purge messages from previous test runs
         await SqsClient.PurgeQueueAsync(queueUrl);
 
