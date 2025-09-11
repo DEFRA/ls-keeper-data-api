@@ -14,7 +14,7 @@ public class IntakeEventConsumerTests : IntegrationTestBase
         var payload = $"{{ \"Message\": \"{message}\" }}";
 
         // Act
-        await this.PublishMessageAsync(payload, "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue");
+        await this.PublishMessageAsync(payload, "ls_keeper_data_intake_queue");
 
         // Assert
         await WebAppFactory!.IntakeEventRepositoryMock.Received(1).CreateAsync(Arg.Is<IntakeEventModel>(x => x.Message == message), Arg.Any<CancellationToken>());

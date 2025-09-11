@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using Amazon.Extensions.NETCore.Setup;
@@ -30,15 +31,30 @@ public class IntegrationTestBase
         SqsClient = awsOptions.CreateServiceClient<IAmazonSQS>();
     }
 
-    protected async Task PublishMessageAsync(string message, string queueUrl)
+    protected async Task PublishMessageAsync(string message, string queueName)
     {
+        // List queues, won't work on CDP because or permissions but will on localstack
+        var queueListResult = await SqsClient.ListQueuesAsync(queueName);
+        if (queueListResult == null || queueListResult.HttpStatusCode != HttpStatusCode.OK)
+        {
+            throw new Exception("Queue List Request Failed");
+        }
+        if (queueListResult.QueueUrls.Count <= 0)
+        {
+            throw new Exception("Queue List Request Succeeded but not queues found");
+        }
+        var queueUrl = queueListResult.QueueUrls[0];
+        
+        // Purge messages from previous test runs
+        await SqsClient.PurgeQueueAsync(queueUrl);
+
+        // Send message
         var request = new SendMessageRequest()
         {
             MessageBody = message,
             QueueUrl = queueUrl,
         };
-
-        var res = await SqsClient.SendMessageAsync(request);
+        await SqsClient.SendMessageAsync(request);
 
         // Wait for message poll
         Thread.Sleep(TimeSpan.FromSeconds(3));
