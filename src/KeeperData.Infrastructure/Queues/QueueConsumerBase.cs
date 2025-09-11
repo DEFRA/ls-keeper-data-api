@@ -73,7 +73,7 @@ public abstract class QueueConsumerBase<T>(
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError($"Unable to connect to queue: {_queueConsumerOptions.QueueUrl}");
+                    logger.LogError($"Unable to connect to queue: {_queueConsumerOptions.QueueUrl} - Exception: {ex}");
                     // Wait for queue creation, refactor with Polly later
                     Thread.Sleep(1000);
                 }
@@ -86,7 +86,7 @@ public abstract class QueueConsumerBase<T>(
 
 public record QueueConsumerOptions
 {
-    public string QueueUrl { get; init; }
+    public required string QueueUrl { get; init; }
     public int MaxNumberOfMessages { get; init; }
     public int WaitTimeSeconds { get; init; }
     public bool Disabled { get; init; } = false;

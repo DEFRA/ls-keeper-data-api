@@ -116,7 +116,10 @@ public class QueueConsumerBaseTests
         var logger = Substitute.For<ILogger<QueueConsumerBase<TestModel>>>();
         var sqsClient = Substitute.For<IAmazonSQS>();
         var options = Substitute.For<IOptions<QueueConsumerOptions>>();
-        options.Value.Returns(new QueueConsumerOptions());
+        options.Value.Returns(new QueueConsumerOptions()
+        {
+            QueueUrl = string.Empty
+        });
 
         return new HarnessSetup(logger, sqsClient, options);
     }
