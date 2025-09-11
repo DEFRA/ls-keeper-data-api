@@ -1,4 +1,4 @@
-name: 'Keeper Data API Services'
+name: 'keeperdata_api'
 services:
   localstack:
     image: localstack/localstack:3.0.2
@@ -41,7 +41,8 @@ services:
       - mongodb-data:/data
     restart: always
   
-  keeperdata-api:
+  keeperdata_api:
+    platform: linux
     build: ./
     ports:
       - '8080:8080'
