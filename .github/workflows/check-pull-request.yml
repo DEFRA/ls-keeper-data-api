@@ -41,7 +41,7 @@ jobs:
         run: chmod +x ./working-dir/wait-for-docker-logs.sh
 
       - name: Wait for Localstack
-        run: ./working-dir/wait-for-docker-logs.sh localstack-emulator "Ready." 60
+        run: ./working-dir/wait-for-docker-logs.sh localstack-emulator "Bootstrapping Complete" 60
 
       - name: Test
         run: dotnet test ./working-dir/KeeperData.Api.sln --logger "GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true" --collect:"XPlat Code Coverage" --results-directory ./coverage

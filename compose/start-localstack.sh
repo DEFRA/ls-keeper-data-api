@@ -22,3 +22,5 @@ queue_url=$(awslocal sqs create-queue  \
   --query 'QueueUrl')
 
 echo "SQS Queue created: $queue_url"
+
+echo "Bootstrapping Complete"
