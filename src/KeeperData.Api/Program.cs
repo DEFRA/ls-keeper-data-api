@@ -5,6 +5,7 @@ using FluentValidation;
 using System.Diagnostics.CodeAnalysis;
 using KeeperData.Api.Config;
 using KeeperData.Api.Utils.Logging;
+using KeeperData.Core;
 using Serilog;
 
 var app = CreateWebApplication(args);
@@ -60,6 +61,10 @@ static void ConfigureBuilder(WebApplicationBuilder builder)
 
     builder.Services.AddHealthChecks();
     builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+    
+    
+    builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+    builder.Services.AddQueueConsumers(builder.Configuration);
 }
 
 [ExcludeFromCodeCoverage]
@@ -71,3 +76,5 @@ static WebApplication SetupApplication(WebApplication app)
 
     return app;
 }
+
+public partial class Program { }

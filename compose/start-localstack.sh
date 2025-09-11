@@ -9,3 +9,5 @@ export AWS_SECRET_ACCESS_KEY=test
 
 # SQS queues
 # aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name my-queue
+
+aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name ls_keeper_data_intake_queue --region eu-west-2
