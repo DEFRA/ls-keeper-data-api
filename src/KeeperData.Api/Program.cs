@@ -58,7 +58,7 @@ static void ConfigureBuilder(WebApplicationBuilder builder)
     // Set up the MongoDB client. Config and credentials are injected automatically at runtime.
     builder.Services.Configure<MongoConfig>(builder.Configuration.GetSection("Mongo"));
     builder.Services.AddSingleton<IMongoDbClientFactory, MongoDbClientFactory>();
-    
+
     builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
     builder.Services.AddCoreRepositories();

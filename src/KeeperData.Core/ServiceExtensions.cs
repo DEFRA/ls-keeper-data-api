@@ -17,13 +17,13 @@ public static class ServiceExtensions
 
         var intakeEventConfig = config.GetRequiredSection($"{nameof(QueueConsumerOptions)}:{nameof(IntakeEventQueueOptions)}");
         services.AddSingleton(intakeEventConfig.Get<IntakeEventQueueOptions>()!);
-        
+
         services.AddSingleton<IIntakeEventRepository, IntakeEventRepository>();
         services.AddHostedService<IntakeEventConsumer>()
             .Configure<IntakeEventQueueOptions>(intakeEventConfig);
         return services;
     }
-    
+
     public static IServiceCollection AddCoreRepositories(this IServiceCollection services)
     {
         services.AddSingleton<IIntakeEventRepository, IntakeEventRepository>();
