@@ -10,4 +10,15 @@ export AWS_SECRET_ACCESS_KEY=test
 # SQS queues
 # aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name my-queue
 
-aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name ls_keeper_data_intake_queue --region eu-west-2
+# aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name ls_keeper_data_intake_queue --region eu-west-2
+
+echo "Bootstrapping SQS setup..."
+
+# Create SNS Topics
+queue_url=$(awslocal sqs create-queue  \
+  --queue-name ls-keeper-data-bridge-events \
+  --endpoint-url=http://localhost:4566 \
+  --output text \
+  --query 'QueueUrl')
+
+echo "SQS Queue created: $queue_url"
