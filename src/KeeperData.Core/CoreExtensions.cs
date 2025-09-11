@@ -10,7 +10,7 @@ public static class ServiceExtensions
     public static IServiceCollection AddQueueConsumers(this IServiceCollection services, IConfiguration config)
     {
         services.AddAWSService<IAmazonSQS>();
-        
+
         services.AddSingleton<IIntakeEventRepository, IntakeEventRepository>();
         services.AddHostedService<IntakeEventConsumer>()
             .Configure<IntakeEventConsumerOptions>(config.GetRequiredSection("QueueConsumerConfiguration:IntakeEventQueue"));

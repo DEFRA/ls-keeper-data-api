@@ -61,8 +61,8 @@ static void ConfigureBuilder(WebApplicationBuilder builder)
 
     builder.Services.AddHealthChecks();
     builder.Services.AddValidatorsFromAssemblyContaining<Program>();
-    
-    
+
+
     builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
     builder.Services.AddQueueConsumers(builder.Configuration);
 }
