@@ -1,5 +1,5 @@
 services:
-  keeperdata.api:
+  keeperdata_api:
     labels:
       com.microsoft.visual-studio.project-name: "keeperdata.api"
     environment:
