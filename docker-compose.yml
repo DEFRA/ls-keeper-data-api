@@ -1,6 +1,8 @@
+version: '3.4'
 name: 'keeperdata_api'
 services:
   localstack:
+    container_name: "localstack-emulator"
     image: localstack/localstack:3.0.2
     ports:
       - '4566:4566' # LocalStack Gateway
@@ -16,7 +18,7 @@ services:
       - '${TMPDIR:-/tmp}/localstack:/var/lib/localstack'
       - ./compose/start-localstack.sh:/etc/localstack/init/ready.d/start-localstack.sh
     healthcheck:
-      test: ['CMD', 'curl', 'localhost:4566']
+      test: ['CMD', 'curl', 'http://localstack-emulator:4566/health']
       interval: 5s
       start_period: 5s
       retries: 3
@@ -32,6 +34,7 @@ services:
       - cdp-tenant
 
   mongodb:
+    container_name: mongodb
     image: mongo:6.0.13
     networks:
       - cdp-tenant
@@ -42,7 +45,9 @@ services:
     restart: always
   
   keeperdata_api:
+    container_name: "keeperdata_api"
     platform: linux
+    image: keeperdata_api
     build: ./
     ports:
       - '8080:8080'
@@ -58,12 +63,9 @@ services:
       - 'compose/aws.env'
     environment:
       PORT: 8080
-      LOCALSTACK_ENDPOINT: http://localstack:4566
-      MONGO_URI: mongodb://mongodb:27017/
+      LOCALSTACK_ENDPOINT: http://localstack-emulator:4566
     networks:
       - cdp-tenant
-
-################################################################################
 
 volumes:
   mongodb-data:

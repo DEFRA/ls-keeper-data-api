@@ -1,10 +1,12 @@
 services:
   keeperdata_api:
     labels:
-      com.microsoft.visual-studio.project-name: "keeperdata.api"
+      com.microsoft.visual-studio.project-name: "KeeperData.Api"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
+      - AWS__ServiceURL=http://localstack-emulator:4566
+      - Mongo__DatabaseUri=mongodb://mongodb:27017
     ports:
       - "8080"
     volumes:
