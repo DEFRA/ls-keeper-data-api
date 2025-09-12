@@ -10,4 +10,17 @@
       <ProjectReference Include="..\KeeperData.Infrastructure\KeeperData.Infrastructure.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Consumers\" />
+      <Folder Include="Models\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="AWSSDK.Core" Version="4.0.0.26" />
+      <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.2" />
+      <PackageReference Include="AWSSDK.SimpleNotificationService" Version="4.0.0.14" />
+      <PackageReference Include="AWSSDK.SQS" Version="4.0.0.15" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    </ItemGroup>
+
 </Project>
