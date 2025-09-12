@@ -16,7 +16,7 @@ echo "Bootstrapping SQS setup..."
 
 # Create SNS Topics
 queue_url=$(awslocal sqs create-queue  \
-  --queue-name ls-keeper-data-bridge-events \
+  --queue-name ls_keeper_data_intake_queue \
   --endpoint-url=http://localhost:4566 \
   --output text \
   --query 'QueueUrl')

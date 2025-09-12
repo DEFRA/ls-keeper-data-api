@@ -69,7 +69,7 @@ public class QueueConsumerBaseTests
     }
 
     [Fact]
-    public async Task Dispose_ShouldCallDisposeOnSnsService()
+    public async Task Dispose_ShouldCallDisposeOnSqsClient()
     {
         // Arrange
         var mockSetup = CreateMocks();

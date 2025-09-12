@@ -34,7 +34,7 @@ public class IntegrationTestBase
     protected async Task PublishMessageAsync(string message, string queueName)
     {
         // List queues, won't work on CDP because or permissions but will on localstack
-        var queueListResult = await SqsClient.ListQueuesAsync(queueName);
+        var queueListResult = await SqsClient.ListQueuesAsync(new ListQueuesRequest());
         if (queueListResult == null || queueListResult.HttpStatusCode != HttpStatusCode.OK)
         {
             throw new Exception("Queue List Request Failed");
