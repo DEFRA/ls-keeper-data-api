@@ -1,13 +1,16 @@
-using System.Diagnostics.CodeAnalysis;
 using Elastic.CommonSchema.Serilog;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Serilog;
+using System.Diagnostics.CodeAnalysis;
 
-namespace KeeperData.Api.Utils.Logging;
+namespace KeeperData.Infrastructure.Telemetry.Logging;
 
-public static class CdpLogging
+[ExcludeFromCodeCoverage]
+public static class SerilogLoggingExtensions
 {
-    [ExcludeFromCodeCoverage]
-    public static void Configuration(HostBuilderContext ctx, LoggerConfiguration config)
+    public static void AddLogging(HostBuilderContext ctx, LoggerConfiguration config)
     {
         var httpAccessor = ctx.Configuration.Get<HttpContextAccessor>();
         var traceIdHeader = ctx.Configuration.GetValue<string>("TraceHeader");

@@ -1,14 +1,12 @@
-using KeeperData.Api.Utils.Http;
+using KeeperData.Api.Utils;
 
-namespace KeeperData.Api.Tests.Component.Utils.Http;
+namespace KeeperData.Api.Tests.Component.Utils;
 
 public class ProxyHttpMessageHandlerTests
 {
-
     [Fact]
     public void ExtractsCredentialsFromUri()
     {
-
         var creds = ProxyHttpMessageHandler.GetCredentialsFromUri(new UriBuilder("http://username:password@www.example.com"));
         Assert.NotNull(creds);
         Assert.Equal("username", creds.UserName);
@@ -21,5 +19,4 @@ public class ProxyHttpMessageHandlerTests
         var creds = ProxyHttpMessageHandler.GetCredentialsFromUri(new UriBuilder("http://www.example.com"));
         Assert.Null(creds);
     }
-
 }

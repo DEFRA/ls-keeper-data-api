@@ -1,0 +1,26 @@
+using KeeperData.Application.Setup;
+
+namespace KeeperData.Api.Setup;
+
+public static class ServiceCollectionExtensions
+{
+    public static void ConfigureApi(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddDefaultAWSOptions(configuration.GetAWSOptions());
+
+        services.ConfigureHealthChecks();
+
+        services.AddApplicationLayer();
+
+        // services.AddDatabaseDependencies(configuration);
+
+        // services.AddMessagingDependencies(configuration);
+
+        // services.AddStorageDependencies(configuration);
+    }
+
+    private static void ConfigureHealthChecks(this IServiceCollection services)
+    {
+        services.AddHealthChecks();
+    }
+}

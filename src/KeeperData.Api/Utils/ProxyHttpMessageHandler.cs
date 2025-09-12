@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 
-namespace KeeperData.Api.Utils.Http;
+namespace KeeperData.Api.Utils;
 
 public class ProxyHttpMessageHandler : HttpClientHandler
 {
