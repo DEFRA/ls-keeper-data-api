@@ -1,15 +1,16 @@
 using FluentAssertions;
 
-namespace KeeperData.Api.Tests.Component.Endpoints;
+namespace KeeperData.Api.Tests.Integration.Endpoints;
 
-public class HealthcheckEndpointTests(AppTestFixture appTestFixture) : IClassFixture<AppTestFixture>
+[Trait("Category", "Integration")]
+public class HealthcheckEndpointTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
 {
-    private readonly AppTestFixture _appTestFixture = appTestFixture;
+    private readonly HttpClient _httpClient = fixture.HttpClient;
 
     [Fact]
     public async Task GivenValidHealthCheckRequest_ShouldSucceed()
     {
-        var response = await _appTestFixture.HttpClient.GetAsync("health");
+        var response = await _httpClient.GetAsync("health");
         var responseBody = await response.Content.ReadAsStringAsync();
 
         response.EnsureSuccessStatusCode();

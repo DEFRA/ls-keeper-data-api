@@ -3,6 +3,7 @@ using Amazon.SQS.Model;
 using FluentAssertions;
 using KeeperData.Infrastructure.Messaging.Configuration;
 using KeeperData.Infrastructure.Messaging.Consumers;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -114,15 +115,16 @@ public class QueueConsumerBaseTests
 
     private static HarnessSetup CreateMocks()
     {
-        var logger = Substitute.For<ILogger<QueueConsumerBase<TestModel>>>();
+        var serviceScopeFactory = Substitute.For<IServiceScopeFactory>();
         var sqsClient = Substitute.For<IAmazonSQS>();
         var options = Substitute.For<IOptions<QueueConsumerOptions>>();
+        var logger = Substitute.For<ILogger<QueueConsumerBase<TestModel>>>();
         options.Value.Returns(new QueueConsumerOptions()
         {
             QueueUrl = string.Empty
         });
 
-        return new HarnessSetup(logger, sqsClient, options);
+        return new HarnessSetup(serviceScopeFactory, sqsClient, options, logger);
     }
 
     private static void AddResponses(HarnessSetup harnessSetup, int delay)
@@ -146,14 +148,15 @@ public class QueueConsumerBaseTests
     }
 
     public record HarnessSetup(
-        ILogger<QueueConsumerBase<TestModel>> Logger,
+        IServiceScopeFactory ScopeFactory,
         IAmazonSQS SqsClient,
-        IOptions<QueueConsumerOptions> Options);
+        IOptions<QueueConsumerOptions> Options,
+        ILogger<QueueConsumerBase<TestModel>> Logger);
 
-    public class ConsumerBaseTestHarness(HarnessSetup setup) : QueueConsumerBase<TestModel>(setup.Logger, setup.SqsClient, setup.Options)
+    public class ConsumerBaseTestHarness(HarnessSetup setup) : QueueConsumerBase<TestModel>(setup.ScopeFactory, setup.SqsClient, setup.Options, setup.Logger)
     {
         public List<TestModel> ReceivedMessages = [];
-        protected override Task ProcessMessageAsync(TestModel payload, CancellationToken cancellationToken)
+        protected override Task ProcessMessageAsync(string messageId, TestModel payload, CancellationToken cancellationToken)
         {
             ReceivedMessages.Add(payload);
             return Task.CompletedTask;

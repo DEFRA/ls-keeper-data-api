@@ -1,5 +1,7 @@
 using Amazon.Extensions.NETCore.Setup;
 using Amazon.Runtime;
+using KeeperData.Api.Tests.Integration.Consumers.Helpers;
+using KeeperData.Core.Messaging.Contracts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -41,6 +43,8 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         builder.ConfigureServices(services =>
         {
             services.Replace(new ServiceDescriptor(typeof(AWSOptions), AwsOptions));
+
+            services.AddSingleton<TestConsumerObserver<IntakeEventModel>>();
         });
         var app = builder.Build();
         app.Start();

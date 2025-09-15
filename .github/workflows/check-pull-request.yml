@@ -20,27 +20,35 @@ jobs:
       - uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '8.0.x'
-
+    
       - name: Check out code
         uses: actions/checkout@v3
         with:
           path: working-dir
-
-      - name: Make LocalStack init script executable
+    
+      - name: Restore
+        run: dotnet restore ./working-dir/KeeperData.Api.sln
+  
+      - name: Build
+        run: dotnet build ./working-dir/KeeperData.Api.sln --configuration Release --no-restore -warnaserror
+  
+      - name: Verify format
+        run: dotnet format ./working-dir/KeeperData.Api.sln --verify-no-changes --verbosity diagnostic
+  
+      - name: Make localstack init script executable
         run: chmod +x ./working-dir/compose/start-localstack.sh
 
-      - name: Verify Format
-        run: dotnet format ./working-dir/KeeperData.Api.sln --verify-no-changes --verbosity diagnostic
-
+      - name: Make script executable
+        run: chmod +x ./working-dir/wait-for-docker-logs.sh
+  
       - name: Run docker-compose
         uses: hoverkraft-tech/compose-action@v2.0.1
         with:
-          compose-file: "./working-dir/docker-compose.yml"
-
-      - name: Make Script Executable
-        run: chmod +x ./working-dir/wait-for-docker-logs.sh
-
-      - name: Wait for Localstack
+          compose-file: |
+            ./working-dir/docker-compose.yml
+            ./working-dir/docker-compose.override.yml
+      
+      - name: Wait for localstack
         run: ./working-dir/wait-for-docker-logs.sh localstack-emulator "Bootstrapping Complete" 60
 
       - name: Test
@@ -52,7 +60,7 @@ jobs:
       - name: merge coverage reports
         run:  dotnet-coverage merge *.cobertura.xml --recursive --output merged.cobertura.xml --output-format cobertura
   
-      - name: Code Coverage Report
+      - name: Code coverage report
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
           filename: merged.cobertura.xml
