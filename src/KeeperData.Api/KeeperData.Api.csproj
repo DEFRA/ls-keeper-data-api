@@ -6,15 +6,20 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Dockerfile>..\Dockerfile</Dockerfile>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <DockerComposeProjectPath>..\..\docker-compose.dcproj</DockerComposeProjectPath>
+    <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Content Include="..\..\.dockerignore">
+      <Link>.dockerignore</Link>
+    </Content>
+  </ItemGroup>
+ 
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\KeeperData.Core\KeeperData.Core.csproj" />
     <ProjectReference Include="..\KeeperData.Infrastructure\KeeperData.Infrastructure.csproj" />
   </ItemGroup>
 

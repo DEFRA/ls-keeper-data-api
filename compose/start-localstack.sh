@@ -8,8 +8,15 @@ export AWS_SECRET_ACCESS_KEY=test
 
 set -e
 
-# S3 buckets
-# aws --endpoint-url=http://localhost:4566 s3 mb s3://my-bucket
+echo "Bootstrapping SQS setup..."
 
-# SQS queues
-# aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name my-queue
+# Create SQS resources
+queue_url=$(awslocal sqs create-queue  \
+  --queue-name ls_keeper_data_intake_queue \
+  --endpoint-url=http://localhost:4566 \
+  --output text \
+  --query 'QueueUrl')
+
+echo "SQS Queue created: $queue_url"
+
+echo "Bootstrapping Complete"

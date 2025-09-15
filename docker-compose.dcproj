@@ -18,7 +18,7 @@
     <None Include=".dockerignore" />
   </ItemGroup>
   <ItemGroup>
-    <DockerComposeServiceReference Include="keeperdata_bridge">
+    <DockerComposeServiceReference Include="keeperdata_api">
       <ProjectPath>src\KeeperData.Api\KeeperData.Api.csproj</ProjectPath>
     </DockerComposeServiceReference>
   </ItemGroup>

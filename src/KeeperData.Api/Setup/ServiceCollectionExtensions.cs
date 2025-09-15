@@ -1,4 +1,6 @@
 using KeeperData.Application.Setup;
+using KeeperData.Infrastructure.Database.Setup;
+using KeeperData.Infrastructure.Messaging.Setup;
 
 namespace KeeperData.Api.Setup;
 
@@ -12,9 +14,9 @@ public static class ServiceCollectionExtensions
 
         services.AddApplicationLayer();
 
-        // services.AddDatabaseDependencies(configuration);
+        services.AddDatabaseDependencies(configuration);
 
-        // services.AddMessagingDependencies(configuration);
+        services.AddMessagingDependencies(configuration);
 
         // services.AddStorageDependencies(configuration);
     }
