@@ -5,6 +5,7 @@ using FluentValidation;
 using System.Diagnostics.CodeAnalysis;
 using KeeperData.Api.Config;
 using KeeperData.Api.Utils.Logging;
+using KeeperData.Core;
 using Serilog;
 
 var app = CreateWebApplication(args);
@@ -58,8 +59,14 @@ static void ConfigureBuilder(WebApplicationBuilder builder)
     builder.Services.Configure<MongoConfig>(builder.Configuration.GetSection("Mongo"));
     builder.Services.AddSingleton<IMongoDbClientFactory, MongoDbClientFactory>();
 
-    builder.Services.AddHealthChecks();
     builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
+    builder.Services.AddCoreRepositories();
+
+    builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+    builder.Services.AddQueueConsumers(builder.Configuration);
+
+    builder.AddCustomHealthChecks();
 }
 
 [ExcludeFromCodeCoverage]
@@ -67,7 +74,9 @@ static WebApplication SetupApplication(WebApplication app)
 {
     app.UseHeaderPropagation();
     app.UseRouting();
-    app.MapHealthChecks("/health");
+    app.ConfigureCustomHealthChecks();
 
     return app;
 }
+
+public partial class Program { }
