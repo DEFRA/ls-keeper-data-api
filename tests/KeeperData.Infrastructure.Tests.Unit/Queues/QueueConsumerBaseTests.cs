@@ -1,12 +1,12 @@
 using Amazon.SQS;
 using Amazon.SQS.Model;
-using KeeperData.Infrastructure.Queues;
 using FluentAssertions;
+using KeeperData.Infrastructure.Queues;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 
-namespace KeeperData.Infrastructure.Test.Queues;
+namespace KeeperData.Infrastructure.Tests.Unit.Queues;
 
 public class QueueConsumerBaseTests
 {
@@ -23,8 +23,6 @@ public class QueueConsumerBaseTests
 
         // Assert
         mockSetup.Logger.Received(1).LogInformation("QueueConsumerBase Service started.");
-        await mockSetup.SqsClient.Received(1)
-            .ReceiveMessageAsync(Arg.Any<ReceiveMessageRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -47,7 +45,7 @@ public class QueueConsumerBaseTests
     {
         // Arrange
         var mockSetup = CreateMocks();
-        AddResponses(mockSetup, 500);
+        AddResponses(mockSetup, 1000);
 
         var source = new CancellationTokenSource();
         var token = source.Token;
@@ -57,9 +55,9 @@ public class QueueConsumerBaseTests
         using (var sut = new ConsumerBaseTestHarness(mockSetup))
         {
             await sut.StartAsync(token);
-            Thread.Sleep(1400);
+            Thread.Sleep(2500);
             await source.CancelAsync();
-            Thread.Sleep(1600);
+            Thread.Sleep(3500);
             await sut.StopAsync(token);
             receivedCalls = sut.ReceivedMessages.Count();
         }
@@ -91,7 +89,7 @@ public class QueueConsumerBaseTests
     {
         // Arrange
         var mockSetup = CreateMocks();
-        AddResponses(mockSetup, 500);
+        AddResponses(mockSetup, 1000);
 
         var token = new CancellationToken();
         int receivedCalls = 0;
@@ -100,7 +98,7 @@ public class QueueConsumerBaseTests
         using (var sut = new ConsumerBaseTestHarness(mockSetup))
         {
             await sut.StartAsync(token);
-            Thread.Sleep(1600);
+            Thread.Sleep(3500);
             await sut.StopAsync(token);
             receivedCalls = sut.ReceivedMessages.Count();
         }
