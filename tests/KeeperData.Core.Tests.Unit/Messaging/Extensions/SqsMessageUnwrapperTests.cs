@@ -78,7 +78,7 @@ public class SqsMessageUnwrapperTests
             MessageAttributes = new Dictionary<string, SnsMessageAttribute>
             {
                 [SubjectKey] = new() { Type = "String" },
-                [CorrelationIdKey] = new() { Type = "String", Value = null }
+                [CorrelationIdKey] = new() { Type = "String", Value = null! }
             }
         };
 
