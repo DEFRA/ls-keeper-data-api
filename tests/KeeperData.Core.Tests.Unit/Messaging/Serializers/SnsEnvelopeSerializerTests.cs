@@ -68,5 +68,5 @@ public class SnsEnvelopeSerializerTests
         var result = _sut.Deserialize(message);
 
         result.Should().BeNull();
-    }    
+    }
 }
