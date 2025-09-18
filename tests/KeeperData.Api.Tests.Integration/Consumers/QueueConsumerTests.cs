@@ -6,7 +6,7 @@ using KeeperData.Api.Tests.Integration.Helpers;
 
 namespace KeeperData.Api.Tests.Integration.Consumers;
 
-[Trait("Category", "Integration")]
+[Trait("Dependence", "localstack")]
 public class QueueConsumerTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
 {
     [Fact]
