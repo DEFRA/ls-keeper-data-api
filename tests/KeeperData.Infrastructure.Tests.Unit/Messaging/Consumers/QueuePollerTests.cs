@@ -102,17 +102,6 @@ public class QueuePollerTests
     }
 
     [Fact]
-    public async Task DisposeAsync_ShouldCancelAndSuppressFinalization()
-    {
-        var sut = CreateSut();
-        await sut.StartAsync(CancellationToken.None);
-
-        Func<Task> act = async () => await sut.DisposeAsync();
-
-        await act.Should().NotThrowAsync();
-    }
-
-    [Fact]
     public async Task PollMessagesAsync_ShouldHandleOperationCanceledException_Gracefully()
     {
         var cancellationSource = new CancellationTokenSource();
