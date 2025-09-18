@@ -19,51 +19,32 @@ jobs:
     steps:
       - uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '8.0.x'
-    
+          dotnet-version: '8.0.x'    
       - name: Check out code
         uses: actions/checkout@v3
         with:
-          path: working-dir
-    
+          path: working-dir    
       - name: Restore
-        run: dotnet restore ./working-dir/KeeperData.Api.sln
-  
+        run: dotnet restore ./working-dir/KeeperData.Api.sln  
       - name: Build
-        run: dotnet build ./working-dir/KeeperData.Api.sln --configuration Release --no-restore -warnaserror
-  
+        run: dotnet build ./working-dir/KeeperData.Api.sln --configuration Release --no-restore -warnaserror  
       - name: Verify format
         run: dotnet format ./working-dir/KeeperData.Api.sln --verify-no-changes --verbosity diagnostic
-  
-      - name: Make localstack init script executable
-        run: chmod +x ./working-dir/compose/start-localstack.sh
-
-      - name: Make script executable
-        run: chmod +x ./working-dir/wait-for-docker-logs.sh
-  
-      - name: Run docker-compose
-        uses: hoverkraft-tech/compose-action@v2.0.1
-        with:
-          compose-file: |
-            ./working-dir/docker-compose.yml
-            ./working-dir/docker-compose.override.yml
-      
-      - name: Wait for localstack
-        run: ./working-dir/wait-for-docker-logs.sh localstack-emulator "Bootstrapping Complete" 60
-
-      - name: Test
-        run: dotnet test ./working-dir/KeeperData.Api.sln --logger "GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true" --collect:"XPlat Code Coverage" --results-directory ./coverage
-
-      - name: install dotnet coverage
-        run: dotnet tool install --global dotnet-coverage        
-        
-      - name: merge coverage reports
-        run:  dotnet-coverage merge *.cobertura.xml --recursive --output merged.cobertura.xml --output-format cobertura
-  
+      - name: Test (unit and component)
+        run: dotnet test ./working-dir/KeeperData.Api.sln --filter "Category!=Integration" --logger "GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true" --collect:"XPlat Code Coverage" --results-directory ./coverage
+      - name: Install ReportGenerator
+        run: dotnet tool install --global dotnet-reportgenerator-globaltool
+      - name: Generate Coverage Summary
+        run: |
+          reportgenerator \
+            -reports:"./coverage/**/coverage.cobertura.xml" \
+            -targetdir:"coverage-report" \
+            -reporttypes:"Cobertura;MarkdownSummary" \
+            -assemblyfilters:+KeeperData.*
       - name: Code coverage report
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          filename: merged.cobertura.xml
+          filename: coverage-report/Cobertura.xml
           badge: true
           fail_below_min: false
           format: markdown
@@ -72,7 +53,6 @@ jobs:
           indicators: true
           output: both
           thresholds: '60 80'
-
       - name: Add Coverage PR Comment
         uses: marocchino/sticky-pull-request-comment@v2
         if: github.event_name == 'pull_request'
@@ -80,6 +60,34 @@ jobs:
           recreate: true
           path: code-coverage-results.md
 
+  integration-tests:
+    name: Run Integration Tests
+    runs-on: ubuntu-latest
+    needs: pr-validator
+    steps:
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          path: working-dir
+      - name: Make LocalStack init script executable
+        run: chmod +x ./working-dir/compose/start-localstack.sh
+      - name: Run docker-compose
+        uses: hoverkraft-tech/compose-action@v2.0.1
+        with:
+          compose-file: |
+            ./working-dir/docker-compose.yml
+            ./working-dir/docker-compose.override.yml
+      - name: Make script executable
+        run: chmod +x ./working-dir/wait-for-docker-logs.sh
+      - name: Wait for localstack
+        run: ./working-dir/wait-for-docker-logs.sh localstack-emulator "Bootstrapping Complete" 60
+      - name: Wait for keeperdata_api to be ready
+        run: ./working-dir/wait-for-docker-logs.sh keeperdata_api "Now listening on" 60
+      - name: Run integration tests
+        run: dotnet test ./working-dir/KeeperData.Api.sln --filter "Category=Integration"
 
     ## SonarCloud
     ## Uncomment to unable SonarCloud scan
