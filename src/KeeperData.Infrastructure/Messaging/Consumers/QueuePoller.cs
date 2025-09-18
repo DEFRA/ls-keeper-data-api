@@ -31,7 +31,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
     private IQueuePollerObserver<MessageType>? _observer;
 
     private Task? _pollingTask;
-    private CancellationTokenSource? _cts;
+    private CancellationTokenSource _cts = new();
 
     private const string MESSAGE_SUFFIX = "Message";
 
@@ -42,7 +42,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         using var scope = _scopeFactory.CreateScope();
         _observer = scope.ServiceProvider.GetService<IQueuePollerObserver<MessageType>>();
 
-        if (_queueConsumerOptions?.Disabled == true)
+        if (_queueConsumerOptions.Disabled == true)
         {
             _logger.LogInformation("Queue {queueUrl} disabled in config", _queueConsumerOptions.QueueUrl);
 
@@ -60,11 +60,18 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
     {
         _logger.LogInformation("QueuePoller stop requested.");
 
-        _cts?.Cancel();
+        _cts.Cancel();
 
         if (_pollingTask is { IsCompletedSuccessfully: false })
         {
-            await _pollingTask;
+            try
+            {
+                await _pollingTask;
+            }
+            catch (TaskCanceledException)
+            {
+                // Expected during cancellation
+            }
         }
     }
 
@@ -107,17 +114,16 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
                     MessageAttributeNames = ["All"]
                 }, cancellationToken);
 
-                if (response?.Messages.Count == 0) continue;
+                var messages = response?.Messages;
+
+                if (messages == null || messages.Count == 0) continue;
 
                 _logger.LogTrace("Completed receive for queue: {queueUrl}, Number of messages: {count}",
-                    _queueConsumerOptions.QueueUrl, response?.Messages.Count);
+                    _queueConsumerOptions.QueueUrl, messages.Count);
 
-                if (response?.Messages?.Count > 0)
+                foreach (var message in messages)
                 {
-                    foreach (var message in response.Messages)
-                    {
-                        await HandleMessageAsync(message, _queueConsumerOptions.QueueUrl, cancellationToken);
-                    }
+                    await HandleMessageAsync(message, _queueConsumerOptions.QueueUrl, cancellationToken);
                 }
             }
             catch (OperationCanceledException)
@@ -142,7 +148,6 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
             var unwrappedMessage = message.Unwrap(_messageSerializer);
 
             var handlerTypes = _messageHandlerManager.GetHandlersForMessage(unwrappedMessage.Subject);
-
             foreach (var handlerInfo in handlerTypes)
             {
                 var messageType = _messageHandlerManager.GetMessageTypeByName($"{unwrappedMessage.Subject}{MESSAGE_SUFFIX}");

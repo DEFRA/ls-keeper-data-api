@@ -21,7 +21,7 @@ public class InMemoryMessageHandlerManager : IMessageHandlerManager
     {
         var messageType = GetMessageTypeKey<T>();
 
-        DoAddReceiver(typeof(TH), messageType, isDynamic: false);
+        DoAddReceiver(typeof(TH), messageType);
 
         if (!_messageTypes.Contains(typeof(T)))
         {
@@ -46,7 +46,7 @@ public class InMemoryMessageHandlerManager : IMessageHandlerManager
         return HasHandlerForMessage(key);
     }
 
-    public IEnumerable<MessageHandlerInfo> GetHandlersForMessage(string messageType) => _handlers[messageType];
+    public IEnumerable<MessageHandlerInfo> GetHandlersForMessage(string messageType) => _handlers[messageType.ReplaceSuffix()];
 
     public IEnumerable<MessageHandlerInfo> GetHandlersForMessage<T>() where T : MessageType
     {
@@ -54,7 +54,7 @@ public class InMemoryMessageHandlerManager : IMessageHandlerManager
         return GetHandlersForMessage(key);
     }
 
-    private void DoAddReceiver(Type handlerType, string messageType, bool isDynamic)
+    private void DoAddReceiver(Type handlerType, string messageType)
     {
         if (!HasHandlerForMessage(messageType))
         {
@@ -67,13 +67,6 @@ public class InMemoryMessageHandlerManager : IMessageHandlerManager
                 $"Handler Type {handlerType.Name} already registered for '{messageType}'", nameof(handlerType));
         }
 
-        if (isDynamic)
-        {
-            _handlers[messageType].Add(MessageHandlerInfo.Dynamic(handlerType));
-        }
-        else
-        {
-            _handlers[messageType].Add(MessageHandlerInfo.Typed(handlerType));
-        }
+        _handlers[messageType].Add(MessageHandlerInfo.Typed(handlerType));
     }
 }

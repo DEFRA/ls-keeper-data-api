@@ -30,7 +30,6 @@ public class IntegrationTestFixture : IDisposable
         // SNS
         var amazonSimpleNotificationServiceConfig = new AmazonSimpleNotificationServiceConfig
         {
-            // ServiceURL = "http://sqs.eu-west-2.localhost.localstack.cloud:4566/",
             ServiceURL = "http://localhost:4566",
             AuthenticationRegion = "eu-west-2",
             UseHttp = true

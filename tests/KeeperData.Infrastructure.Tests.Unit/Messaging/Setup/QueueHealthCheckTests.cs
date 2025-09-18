@@ -27,7 +27,9 @@ public class QueueHealthCheckTests
 
         _intakeEventQueueOptions = new IntakeEventQueueOptions
         {
-            QueueUrl = "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue"
+            QueueUrl = "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue",
+            WaitTimeSeconds = 5,
+            MaxNumberOfMessages = 10
         };
 
         _sut = new QueueHealthCheck<IntakeEventQueueOptions>(_intakeEventQueueOptions, _amazonSimpleQueueServiceMock.Object);
@@ -63,5 +65,19 @@ public class QueueHealthCheckTests
         var result = await _sut.CheckHealthAsync(_healthCheckContext, CancellationToken.None);
 
         result.Status.Should().Be(HealthStatus.Unhealthy);
+    }
+
+    [Fact]
+    public async Task GivenGetQueueAttributesTimesOut_WhenCallingCheckHealthAsync_ShouldReturnUnhealthy()
+    {
+        _amazonSimpleQueueServiceMock
+            .Setup(x => x.GetQueueAttributesAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new TaskCanceledException("Task has been cancelled"));
+
+        var result = await _sut.CheckHealthAsync(_healthCheckContext, CancellationToken.None);
+
+        result.Status.Should().Be(HealthStatus.Unhealthy);
+        result.Exception.Should().NotBeNull().And.BeOfType<TimeoutException>();
+        result.Exception.Message.Should().Be($"The queue check was cancelled, probably because it timed out after {_intakeEventQueueOptions.WaitTimeSeconds} seconds");
     }
 }
