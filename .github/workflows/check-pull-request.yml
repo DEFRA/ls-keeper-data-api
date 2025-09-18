@@ -87,7 +87,7 @@ jobs:
       - name: Wait for keeperdata_api to be ready
         run: ./working-dir/wait-for-docker-logs.sh keeperdata_api "Now listening on" 60
       - name: Run integration tests
-        run: dotnet test ./working-dir/KeeperData.Api.sln --filter "Category=Integration"
+        run: dotnet test ./working-dir/KeeperData.Api.sln --filter Dependence=localstack
 
     ## SonarCloud
     ## Uncomment to unable SonarCloud scan
