@@ -30,11 +30,13 @@ public class IntegrationTestFixture : IDisposable
         // SNS
         var amazonSimpleNotificationServiceConfig = new AmazonSimpleNotificationServiceConfig
         {
-            ServiceURL = "http://sqs.eu-west-2.localhost.localstack.cloud:4566/",
+            // ServiceURL = "http://sqs.eu-west-2.localhost.localstack.cloud:4566/",
+            ServiceURL = "http://localhost:4566",
             AuthenticationRegion = "eu-west-2",
             UseHttp = true
         };
-        _amazonSimpleNotificationServiceClient = new AmazonSimpleNotificationServiceClient(amazonSimpleNotificationServiceConfig);
+        var credentials = new Amazon.Runtime.BasicAWSCredentials("test", "test");
+        _amazonSimpleNotificationServiceClient = new AmazonSimpleNotificationServiceClient(credentials, amazonSimpleNotificationServiceConfig);
     }
 
     internal async Task<PublishResponse> PublishToTopicAsync(PublishRequest publishRequest, CancellationToken cancellationToken)
