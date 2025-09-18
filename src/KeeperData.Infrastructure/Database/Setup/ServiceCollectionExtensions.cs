@@ -20,10 +20,11 @@ namespace KeeperData.Infrastructure.Database.Setup;
 [ExcludeFromCodeCoverage]
 public static class ServiceCollectionExtensions
 {
+    private static bool _mongoSerializersRegistered;
+
     public static void AddDatabaseDependencies(this IServiceCollection services, IConfiguration configuration)
     {
-        BsonSerializer.RegisterSerializer(typeof(Guid), new GuidSerializer(GuidRepresentation.Standard));
-        ConventionRegistry.Register("CamelCase", new ConventionPack { new CamelCaseElementNameConvention() }, _ => true);
+        RegisterMongoDbGlobals();
 
         var mongoConfig = configuration.GetSection("Mongo").Get<MongoConfig>()!;
         services.Configure<MongoConfig>(configuration.GetSection("Mongo"));
@@ -45,6 +46,22 @@ public static class ServiceCollectionExtensions
         {
             services.AddHealthChecks()
                 .AddCheck<MongoDbHealthCheck>("mongodb", tags: ["db", "mongo"]);
+        }
+    }
+
+    private static void RegisterMongoDbGlobals()
+    {
+        if (!_mongoSerializersRegistered)
+        {
+            lock (typeof(ServiceCollectionExtensions))
+            {
+                if (!_mongoSerializersRegistered)
+                {
+                    BsonSerializer.RegisterSerializer(typeof(Guid), new GuidSerializer(GuidRepresentation.Standard));
+                    ConventionRegistry.Register("CamelCase", new ConventionPack { new CamelCaseElementNameConvention() }, _ => true);
+                    _mongoSerializersRegistered = true;
+                }
+            }
         }
     }
 }

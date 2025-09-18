@@ -1,6 +1,6 @@
 using KeeperData.Api.Utils;
 
-namespace KeeperData.Api.Tests.Component.Utils;
+namespace KeeperData.Api.Tests.Component.ProxyHandlers;
 
 public class ProxyHttpMessageHandlerTests
 {

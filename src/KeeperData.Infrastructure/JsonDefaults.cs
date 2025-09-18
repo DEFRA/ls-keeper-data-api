@@ -18,6 +18,12 @@ public static class JsonDefaults
         WriteIndented = true
     };
 
+    private static JsonSerializerOptions s_defaultOptionsWithSnsPascalSupport = new()
+    {
+        PropertyNamingPolicy = null, // Pascal
+        WriteIndented = false
+    };
+
     public static JsonSerializerOptions DefaultOptionsWithStringEnumConversion
     {
         get => s_defaultOptionsWithStringEnumConversion;
@@ -28,5 +34,11 @@ public static class JsonDefaults
     {
         get => s_defaultOptionsWithIndented;
         set => s_defaultOptionsWithIndented = value;
+    }
+
+    public static JsonSerializerOptions DefaultOptionsWithSnsPascalSupport
+    {
+        get => s_defaultOptionsWithSnsPascalSupport;
+        set => s_defaultOptionsWithSnsPascalSupport = value;
     }
 }

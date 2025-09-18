@@ -2,6 +2,9 @@ using Amazon.Extensions.NETCore.Setup;
 using Amazon.Runtime;
 using Amazon.SQS;
 using Amazon.SQS.Model;
+using KeeperData.Api.Tests.Component.Consumers.Helpers;
+using KeeperData.Core.Messaging.Contracts;
+using KeeperData.Core.Messaging.Observers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -19,6 +22,9 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
     public Mock<IAmazonSQS>? AmazonSQSMock;
 
     public Mock<IMongoClient>? MongoClientMock;
+
+    private readonly List<Action<IServiceCollection>> _overrideServices = [];
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         SetTestEnvironmentVariables();
@@ -32,6 +38,11 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
             ConfigureSimpleQueueService(services);
 
             ConfigureDatabase(services);
+
+            foreach (var applyOverride in _overrideServices)
+            {
+                applyOverride(services);
+            }
         });
     }
 
@@ -40,10 +51,20 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         return Services.GetRequiredService<T>();
     }
 
+    public void OverrideService<T>(T implementation) where T : class
+    {
+        _overrideServices.Add(services =>
+        {
+            services.RemoveAll<T>();
+            services.AddSingleton(implementation);
+        });
+    }
+
     private static void SetTestEnvironmentVariables()
     {
         Environment.SetEnvironmentVariable("AWS__ServiceURL", "http://localhost:4566");
         Environment.SetEnvironmentVariable("Mongo__DatabaseUri", "mongodb://localhost:27017");
+        Environment.SetEnvironmentVariable("QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl", "http://localhost:4566/000000000000/test-queue");
     }
 
     private static void ConfigureAwsOptions(IServiceCollection services)
@@ -56,7 +77,7 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
 
     private void ConfigureSimpleQueueService(IServiceCollection services)
     {
-        RemoveService<IAmazonSQS>(services);
+        services.RemoveAll<IAmazonSQS>();
 
         AmazonSQSMock = new Mock<IAmazonSQS>();
 
@@ -64,7 +85,10 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
             .Setup(x => x.GetQueueAttributesAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GetQueueAttributesResponse { HttpStatusCode = HttpStatusCode.OK });
 
-        services.Replace(new ServiceDescriptor(typeof(IAmazonSQS), AmazonSQSMock.Object));
+        services.AddSingleton(AmazonSQSMock.Object);
+
+        services.AddSingleton<TestQueuePollerObserver<MessageType>>();
+        services.AddScoped<IQueuePollerObserver<MessageType>>(sp => sp.GetRequiredService<TestQueuePollerObserver<MessageType>>());
     }
 
     private void ConfigureDatabase(IServiceCollection services)
