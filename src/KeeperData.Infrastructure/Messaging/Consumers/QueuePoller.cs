@@ -164,7 +164,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         catch (RetryableException ex)
         {
             // SQS doesn't support abandon so let visibility timeout expire.
-            
+
             _logger.LogError("RetryableException in queue: {queue}, messageId: {messageId}, Exception: {ex}",
                 _queueConsumerOptions.QueueUrl, message.MessageId, ex);
 

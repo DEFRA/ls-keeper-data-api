@@ -15,4 +15,3 @@ public class SnsMessageAttribute
     public string Type { get; set; } = default!;
     public string Value { get; set; } = default!;
 }
-

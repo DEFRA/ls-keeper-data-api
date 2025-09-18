@@ -31,7 +31,8 @@ public class QueueConsumerTests(IntegrationTestFixture fixture) : IClassFixture<
     private async Task ExecuteTest(string correlationId, IntegrationTestMessage message)
     {
         var topic = new Topic { TopicArn = "arn:aws:sns:eu-west-2:000000000000:ls-keeper-data-bridge-events" };
-        var additionalUserProperties = new Dictionary<string, string> {
+        var additionalUserProperties = new Dictionary<string, string>
+        {
             ["CorrelationId"] = correlationId
         };
         var publishRequest = SNSMessageUtility.CreateMessage(topic.TopicArn, message, "Placeholder", additionalUserProperties);

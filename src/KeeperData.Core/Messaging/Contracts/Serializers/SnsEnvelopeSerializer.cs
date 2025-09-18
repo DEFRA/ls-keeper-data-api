@@ -14,8 +14,8 @@ public class SnsEnvelopeSerializer : IMessageSerializer<SnsEnvelope>
             return envelope;
         }
         catch
-        { 
+        {
             return null;
-        }        
+        }
     }
 }
