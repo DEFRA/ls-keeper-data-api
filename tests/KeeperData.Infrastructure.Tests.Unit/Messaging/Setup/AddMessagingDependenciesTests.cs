@@ -1,4 +1,7 @@
+using Amazon.Extensions.NETCore.Setup;
+using Amazon.Runtime;
 using Amazon.SQS;
+using Castle.Core.Configuration;
 using FluentAssertions;
 using KeeperData.Infrastructure.Messaging.Configuration;
 using KeeperData.Infrastructure.Messaging.Setup;
@@ -28,6 +31,12 @@ public class AddMessagingDependenciesTests
 
         // Act
         services.AddMessagingDependencies(config);
+        services.AddDefaultAWSOptions(new AWSOptions
+        {
+            Region = Amazon.RegionEndpoint.EUWest2,            
+            Credentials = new BasicAWSCredentials("test", "test")
+        });
+
         var provider = services.BuildServiceProvider();
 
         // Assert
@@ -59,6 +68,12 @@ public class AddMessagingDependenciesTests
 
         // Act
         services.AddMessagingDependencies(config);
+        services.AddDefaultAWSOptions(new AWSOptions
+        {
+            Region = Amazon.RegionEndpoint.EUWest2,
+            Credentials = new BasicAWSCredentials("test", "test")
+        });
+
         var provider = services.BuildServiceProvider();
 
         // Assert
