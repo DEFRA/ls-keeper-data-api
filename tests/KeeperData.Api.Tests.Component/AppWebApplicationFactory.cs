@@ -1,10 +1,15 @@
 using Amazon.Extensions.NETCore.Setup;
 using Amazon.Runtime;
+using Amazon.S3;
+using Amazon.S3.Model;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using KeeperData.Api.Tests.Component.Consumers.Helpers;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Observers;
+using KeeperData.Infrastructure.Storage.Clients;
+using KeeperData.Infrastructure.Storage.Factories;
+using KeeperData.Infrastructure.Storage.Factories.Implementations;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -19,11 +24,15 @@ namespace KeeperData.Api.Tests.Component;
 
 public class AppWebApplicationFactory : WebApplicationFactory<Program>
 {
+    public Mock<IAmazonS3>? AmazonS3Mock;
+
     public Mock<IAmazonSQS>? AmazonSQSMock;
 
     public Mock<IMongoClient>? MongoClientMock;
 
     private readonly List<Action<IServiceCollection>> _overrideServices = [];
+
+    private const string ComparisonReportsStorageBucket = "test-comparison-reports-bucket";
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -34,6 +43,8 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
             RemoveService<IHealthCheckPublisher>(services);
 
             ConfigureAwsOptions(services);
+
+            ConfigureS3ClientFactory(services);
 
             ConfigureSimpleQueueService(services);
 
@@ -64,6 +75,7 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
     {
         Environment.SetEnvironmentVariable("AWS__ServiceURL", "http://localhost:4566");
         Environment.SetEnvironmentVariable("Mongo__DatabaseUri", "mongodb://localhost:27017");
+        Environment.SetEnvironmentVariable("StorageConfiguration__ComparisonReportsStorage__BucketName", ComparisonReportsStorageBucket);
         Environment.SetEnvironmentVariable("QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl", "http://localhost:4566/000000000000/test-queue");
     }
 
@@ -73,6 +85,27 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         var awsOptions = provider.GetRequiredService<AWSOptions>();
         awsOptions.Credentials = new BasicAWSCredentials("test", "test");
         services.Replace(new ServiceDescriptor(typeof(AWSOptions), awsOptions));
+    }
+
+    private void ConfigureS3ClientFactory(IServiceCollection services)
+    {
+        AmazonS3Mock = new Mock<IAmazonS3>();
+
+        AmazonS3Mock
+            .Setup(x => x.GetBucketAclAsync(It.IsAny<GetBucketAclRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetBucketAclResponse { HttpStatusCode = HttpStatusCode.OK });
+
+        AmazonS3Mock
+            .Setup(x => x.ListObjectsV2Async(It.IsAny<ListObjectsV2Request>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ListObjectsV2Response { HttpStatusCode = HttpStatusCode.OK });
+
+        var provider = services.BuildServiceProvider();
+        var factory = provider.GetRequiredService<IS3ClientFactory>();
+
+        if (factory is S3ClientFactory concreteFactory)
+        {
+            concreteFactory.RegisterMockClient<ComparisonReportsStorageClient>(ComparisonReportsStorageBucket, AmazonS3Mock.Object);
+        }
     }
 
     private void ConfigureSimpleQueueService(IServiceCollection services)

@@ -8,6 +8,23 @@ export AWS_SECRET_ACCESS_KEY=test
 
 set -e
 
+# S3 buckets
+echo "Bootstrapping S3 setup..."
+
+## Create 'test-comparison-reports-bucket' Bucket
+existing_bucket=$(awslocal s3api list-buckets \
+  --query "Buckets[?Name=='test-comparison-reports-bucket'].Name" \
+  --output text)
+
+if [ "$existing_bucket" == "test-comparison-reports-bucket" ]; then
+  echo "S3 bucket already exists: test-comparison-reports-bucket"
+else
+  awslocal s3api create-bucket --bucket test-comparison-reports-bucket --region eu-west-2 \
+    --create-bucket-configuration LocationConstraint=eu-west-2 \
+    --endpoint-url=http://localhost:4566
+  echo "S3 bucket created: test-comparison-reports-bucket"
+fi
+
 echo "Bootstrapping SQS setup..."
 
 # Create SQS resources

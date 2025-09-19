@@ -2,6 +2,7 @@ using Asp.Versioning;
 using KeeperData.Application.Setup;
 using KeeperData.Infrastructure.Database.Setup;
 using KeeperData.Infrastructure.Messaging.Setup;
+using KeeperData.Infrastructure.Storage.Setup;
 using System.Text.Json.Serialization;
 
 namespace KeeperData.Api.Setup;
@@ -39,7 +40,7 @@ public static class ServiceCollectionExtensions
 
         services.AddMessagingDependencies(configuration);
 
-        // services.AddStorageDependencies(configuration);
+        services.AddStorageDependencies(configuration);
     }
 
     private static void ConfigureHealthChecks(this IServiceCollection services)
