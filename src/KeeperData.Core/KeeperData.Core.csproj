@@ -1,26 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\KeeperData.Infrastructure\KeeperData.Infrastructure.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Consumers\" />
-      <Folder Include="Models\" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="AWSSDK.Core" Version="4.0.0.26" />
-      <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.2" />
-      <PackageReference Include="AWSSDK.SimpleNotificationService" Version="4.0.0.14" />
-      <PackageReference Include="AWSSDK.SQS" Version="4.0.0.15" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
-    </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.Core" Version="4.0.0.26" />
+    <PackageReference Include="AWSSDK.SQS" Version="4.0.0.15" />
+    <PackageReference Include="AWSSDK.SecurityToken" Version="4.0.2.1" />
+    <PackageReference Include="MediatR" Version="13.0.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.28.0" />
+  </ItemGroup>
 
 </Project>

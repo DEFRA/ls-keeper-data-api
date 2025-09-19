@@ -4,7 +4,6 @@ namespace KeeperData.Api.Tests.Component.Config;
 
 public class EnvironmentTest
 {
-
     [Fact]
     public void IsNotDevModeByDefault()
     {

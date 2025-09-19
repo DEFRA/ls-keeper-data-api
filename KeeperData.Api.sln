@@ -13,16 +13,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{9780B59B
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeeperData.Infrastructure", "src\KeeperData.Infrastructure\KeeperData.Infrastructure.csproj", "{F07A8DFD-D7A7-42C8-9850-F0C336DEC045}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeeperData.Data", "src\KeeperData.Data\KeeperData.Data.csproj", "{8256795B-5937-43DF-95C2-D41053D2D27E}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeeperData.Common", "src\KeeperData.Common\KeeperData.Common.csproj", "{F4DD4797-B666-4175-83FC-0E57F8C3DB80}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeeperData.Api.Tests.Integration", "tests\KeeperData.Api.Tests.Integration\KeeperData.Api.Tests.Integration.csproj", "{72D99550-9D4F-4374-9344-BC018111906D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "solutionitems", "solutionitems", "{B0A5300E-181B-4F81-9C8C-64F69DAAC024}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
-		docker-compose.yml = docker-compose.yml
 		Dockerfile = Dockerfile
 	EndProjectSection
 EndProject
@@ -30,7 +25,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeeperData.Core.Tests.Unit"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeeperData.Infrastructure.Tests.Unit", "tests\KeeperData.Infrastructure.Tests.Unit\KeeperData.Infrastructure.Tests.Unit.csproj", "{5BFBB1F5-7D75-411B-9A71-1325C1E22E09}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeeperData.Common.Tests.Unit", "tests\KeeperData.Common.Tests.Unit\KeeperData.Common.Tests.Unit.csproj", "{F16C919A-8FB1-4AC9-B45F-C2E29F62FF7A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeeperData.Application", "src\KeeperData.Application\KeeperData.Application.csproj", "{C628C38C-B7BF-4CBB-9A44-F0ED36F3B48F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeeperData.Application.Tests.Unit", "tests\KeeperData.Application.Tests.Unit\KeeperData.Application.Tests.Unit.csproj", "{BA4E8D8A-FFCE-4ECD-8C55-90194019C765}"
+EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{81DDED9D-158B-E303-5F62-77A2896D2A5A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -54,14 +53,6 @@ Global
 		{F07A8DFD-D7A7-42C8-9850-F0C336DEC045}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F07A8DFD-D7A7-42C8-9850-F0C336DEC045}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F07A8DFD-D7A7-42C8-9850-F0C336DEC045}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8256795B-5937-43DF-95C2-D41053D2D27E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8256795B-5937-43DF-95C2-D41053D2D27E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8256795B-5937-43DF-95C2-D41053D2D27E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8256795B-5937-43DF-95C2-D41053D2D27E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F4DD4797-B666-4175-83FC-0E57F8C3DB80}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F4DD4797-B666-4175-83FC-0E57F8C3DB80}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F4DD4797-B666-4175-83FC-0E57F8C3DB80}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F4DD4797-B666-4175-83FC-0E57F8C3DB80}.Release|Any CPU.Build.0 = Release|Any CPU
 		{72D99550-9D4F-4374-9344-BC018111906D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{72D99550-9D4F-4374-9344-BC018111906D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{72D99550-9D4F-4374-9344-BC018111906D}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -74,10 +65,14 @@ Global
 		{5BFBB1F5-7D75-411B-9A71-1325C1E22E09}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5BFBB1F5-7D75-411B-9A71-1325C1E22E09}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5BFBB1F5-7D75-411B-9A71-1325C1E22E09}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F16C919A-8FB1-4AC9-B45F-C2E29F62FF7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F16C919A-8FB1-4AC9-B45F-C2E29F62FF7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F16C919A-8FB1-4AC9-B45F-C2E29F62FF7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F16C919A-8FB1-4AC9-B45F-C2E29F62FF7A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C628C38C-B7BF-4CBB-9A44-F0ED36F3B48F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C628C38C-B7BF-4CBB-9A44-F0ED36F3B48F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C628C38C-B7BF-4CBB-9A44-F0ED36F3B48F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C628C38C-B7BF-4CBB-9A44-F0ED36F3B48F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA4E8D8A-FFCE-4ECD-8C55-90194019C765}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA4E8D8A-FFCE-4ECD-8C55-90194019C765}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA4E8D8A-FFCE-4ECD-8C55-90194019C765}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA4E8D8A-FFCE-4ECD-8C55-90194019C765}.Release|Any CPU.Build.0 = Release|Any CPU
 		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -91,7 +86,7 @@ Global
 		{72D99550-9D4F-4374-9344-BC018111906D} = {9780B59B-FFF7-481C-AA15-072631C6736C}
 		{A1C6A0AD-6C5D-4698-8047-FFFB9ECD9FD9} = {9780B59B-FFF7-481C-AA15-072631C6736C}
 		{5BFBB1F5-7D75-411B-9A71-1325C1E22E09} = {9780B59B-FFF7-481C-AA15-072631C6736C}
-		{F16C919A-8FB1-4AC9-B45F-C2E29F62FF7A} = {9780B59B-FFF7-481C-AA15-072631C6736C}
+		{BA4E8D8A-FFCE-4ECD-8C55-90194019C765} = {9780B59B-FFF7-481C-AA15-072631C6736C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {23761809-E330-42D6-B303-C5568B1FB035}

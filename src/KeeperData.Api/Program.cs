@@ -1,12 +1,9 @@
+using KeeperData.Api.Setup;
 using KeeperData.Api.Utils;
-using KeeperData.Api.Utils.Http;
-using KeeperData.Api.Utils.Mongo;
-using FluentValidation;
-using System.Diagnostics.CodeAnalysis;
-using KeeperData.Api.Config;
-using KeeperData.Api.Utils.Logging;
-using KeeperData.Core;
+using KeeperData.Infrastructure.Telemetry.Logging;
 using Serilog;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
 var app = CreateWebApplication(args);
 await app.RunAsync();
@@ -19,7 +16,10 @@ static WebApplication CreateWebApplication(string[] args)
     ConfigureBuilder(builder);
 
     var app = builder.Build();
-    return SetupApplication(app);
+
+    app.ConfigureRequestPipeline();
+
+    return app;
 }
 
 [ExcludeFromCodeCoverage]
@@ -32,7 +32,7 @@ static void ConfigureBuilder(WebApplicationBuilder builder)
 
     // Configure logging to use the CDP Platform standards.
     builder.Services.AddHttpContextAccessor();
-    builder.Host.UseSerilog(CdpLogging.Configuration);
+    builder.Host.UseSerilog(SerilogLoggingExtensions.AddLogging);
 
     // Default HTTP Client
     builder.Services
@@ -55,28 +55,7 @@ static void ConfigureBuilder(WebApplicationBuilder builder)
         }
     });
 
-    // Set up the MongoDB client. Config and credentials are injected automatically at runtime.
-    builder.Services.Configure<MongoConfig>(builder.Configuration.GetSection("Mongo"));
-    builder.Services.AddSingleton<IMongoDbClientFactory, MongoDbClientFactory>();
-
-    builder.Services.AddValidatorsFromAssemblyContaining<Program>();
-
-    builder.Services.AddCoreRepositories();
-
-    builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
-    builder.Services.AddQueueConsumers(builder.Configuration);
-
-    builder.AddCustomHealthChecks();
-}
-
-[ExcludeFromCodeCoverage]
-static WebApplication SetupApplication(WebApplication app)
-{
-    app.UseHeaderPropagation();
-    app.UseRouting();
-    app.ConfigureCustomHealthChecks();
-
-    return app;
+    builder.Services.ConfigureApi(builder.Configuration);
 }
 
 public partial class Program { }
