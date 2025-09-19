@@ -8,6 +8,7 @@
     <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
     <DockerServiceUrl>{Scheme}://localhost:{ServicePort}/health</DockerServiceUrl>
     <DockerServiceName>keeperdata_api</DockerServiceName>
+    <AdditionalComposeFilePaths>docker-compose.override.yml</AdditionalComposeFilePaths>
   </PropertyGroup>
   <ItemGroup>
     <None Include="docker-compose.override.yml">
@@ -15,5 +16,10 @@
     </None>
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
+  </ItemGroup>
+  <ItemGroup>
+    <DockerComposeServiceReference Include="keeperdata_api">
+      <ProjectPath>src\KeeperData.Api\KeeperData.Api.csproj</ProjectPath>
+    </DockerComposeServiceReference>
   </ItemGroup>
 </Project>

@@ -1,10 +1,8 @@
-﻿# Base dotnet image
+# Base dotnet image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
-EXPOSE 8080
-EXPOSE 8081
 
 # Add curl to template.
 # CDP PLATFORM HEALTHCHECK REQUIREMENT
@@ -16,19 +14,26 @@ RUN apt update && \
 # Build stage image
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
+ENV BUILD_CONFIGURATION=${BUILD_CONFIGURATION}
 WORKDIR /src
-COPY . .
 
-# unit test and code coverage
-RUN dotnet test KeeperData.Api.sln --filter Dependence!=localstack
-RUN dotnet restore "KeeperData.Api.sln"
-RUN dotnet build "src/KeeperData.Api/KeeperData.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build /p:UseAppHost=false
+COPY ["src/KeeperData.Api/KeeperData.Api.csproj", "KeeperData.Api/"]
+COPY ["src/KeeperData.Infrastructure/KeeperData.Infrastructure.csproj", "KeeperData.Infrastructure/"]
+COPY ["src/KeeperData.Application/KeeperData.Application.csproj", "KeeperData.Application/"]
+COPY ["src/KeeperData.Core/KeeperData.Core.csproj", "KeeperData.Core/"]
+
+RUN dotnet restore "KeeperData.Api/KeeperData.Api.csproj" -r linux-x64 -v n
+RUN dotnet restore "KeeperData.Infrastructure/KeeperData.Infrastructure.csproj" -r linux-x64 -v n
+RUN dotnet restore "KeeperData.Application/KeeperData.Application.csproj" -r linux-x64 -v n
+RUN dotnet restore "KeeperData.Core/KeeperData.Core.csproj" -r linux-x64 -v n
+
+COPY ["src/", "."]
 
 FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "src/KeeperData.Api" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
-ENV ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+WORKDIR "/src/KeeperData.Api"
+RUN dotnet publish "KeeperData.Api.csproj" -v n -c ${BUILD_CONFIGURATION} -o /app/publish -r linux-x64 --no-restore /p:UseAppHost=false
 
+ENV ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
 
 # Final production image
 FROM base AS final
