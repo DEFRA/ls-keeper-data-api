@@ -21,7 +21,9 @@ public static class ServiceCollectionExtensions
     {
         var intakeEventQueueConfig = configuration.GetRequiredSection($"{nameof(QueueConsumerOptions)}:{nameof(IntakeEventQueueOptions)}");
         services.Configure<IntakeEventQueueOptions>(intakeEventQueueConfig);
-        services.AddSingleton(intakeEventQueueConfig.Get<IntakeEventQueueOptions>()!);
+
+        var intakeEventQueueOptions = intakeEventQueueConfig.Get<IntakeEventQueueOptions>() ?? new() { QueueUrl = "Missing", Disabled = true };
+        services.AddSingleton(intakeEventQueueOptions);
 
         if (configuration["LOCALSTACK_ENDPOINT"] != null)
         {
@@ -48,8 +50,11 @@ public static class ServiceCollectionExtensions
 
         services.AddMessageHandlers();
 
-        services.AddHealthChecks()
-            .AddCheck<QueueHealthCheck<IntakeEventQueueOptions>>("intake-event-consumer", tags: ["aws", "sqs"]);
+        if (!intakeEventQueueOptions.Disabled)
+        {
+            services.AddHealthChecks()
+                .AddCheck<QueueHealthCheck<IntakeEventQueueOptions>>("intake-event-consumer", tags: ["aws", "sqs"]);
+        }
     }
 
     private static void AddMessageConsumers(this IServiceCollection services)
