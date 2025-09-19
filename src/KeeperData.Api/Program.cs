@@ -3,7 +3,6 @@ using KeeperData.Api.Utils;
 using KeeperData.Infrastructure.Telemetry.Logging;
 using Serilog;
 using System.Diagnostics.CodeAnalysis;
-using System.Text.Json.Serialization;
 
 var app = CreateWebApplication(args);
 await app.RunAsync();
