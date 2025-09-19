@@ -1,4 +1,3 @@
-using KeeperData.Core.Domain;
 using MongoDB.Driver;
 
 namespace KeeperData.Core.Repositories;

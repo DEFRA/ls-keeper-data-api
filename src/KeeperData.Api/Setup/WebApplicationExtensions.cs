@@ -21,6 +21,11 @@ public static class WebApplicationExtensions
         applicationLifetime.ApplicationStopped.Register(() =>
             logger.LogInformation("{applicationName} stopped", env.ApplicationName));
 
+        var versionSet = app.NewApiVersionSet()
+            .HasApiVersion(new Asp.Versioning.ApiVersion(1.0))
+            .ReportApiVersions()
+            .Build();
+
         app.UseMiddleware<ExceptionHandlingMiddleware>();
 
         app.UseHeaderPropagation();
@@ -40,9 +45,9 @@ public static class WebApplicationExtensions
                 [HealthStatus.Degraded] = StatusCodes.Status200OK,
                 [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable
             }
-        });
+        }).WithApiVersionSet(versionSet).IsApiVersionNeutral();
 
-        app.MapGet("/", () => "Alive!");
+        app.MapGet("/", () => "Alive!").WithApiVersionSet(versionSet).IsApiVersionNeutral();
 
         app.MapControllers();
     }

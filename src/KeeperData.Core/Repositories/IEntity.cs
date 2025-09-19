@@ -1,4 +1,4 @@
-namespace KeeperData.Core.Domain;
+namespace KeeperData.Core.Repositories;
 
 public interface IEntity
 {

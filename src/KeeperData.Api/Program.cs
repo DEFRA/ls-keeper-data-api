@@ -55,13 +55,6 @@ static void ConfigureBuilder(WebApplicationBuilder builder)
         }
     });
 
-    builder.Services.AddControllers()
-        .AddJsonOptions(opts =>
-        {
-            var enumConverter = new JsonStringEnumConverter();
-            opts.JsonSerializerOptions.Converters.Add(enumConverter);
-        });
-
     builder.Services.ConfigureApi(builder.Configuration);
 }
 

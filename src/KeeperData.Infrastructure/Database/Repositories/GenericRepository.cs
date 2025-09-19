@@ -1,5 +1,4 @@
 using KeeperData.Core.Attributes;
-using KeeperData.Core.Domain;
 using KeeperData.Core.Repositories;
 using KeeperData.Infrastructure.Database.Configuration;
 using Microsoft.Extensions.Options;

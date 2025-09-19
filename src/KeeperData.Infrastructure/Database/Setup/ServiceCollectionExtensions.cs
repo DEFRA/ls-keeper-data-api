@@ -1,3 +1,4 @@
+using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Behaviors;
@@ -20,7 +21,7 @@ namespace KeeperData.Infrastructure.Database.Setup;
 [ExcludeFromCodeCoverage]
 public static class ServiceCollectionExtensions
 {
-    private static bool _mongoSerializersRegistered;
+    private static bool s_mongoSerializersRegistered;
 
     public static void AddDatabaseDependencies(this IServiceCollection services, IConfiguration configuration)
     {
@@ -38,9 +39,12 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IUnitOfWork, MongoUnitOfWork>();
         services.AddScoped(sp => (ITransactionManager)sp.GetRequiredService<IUnitOfWork>());
+        services.AddScoped<IAggregateTracker, AggregateTracker>();
 
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(UnitOfWorkTransactionBehavior<,>));
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(DomainEventDispatchingBehavior<,>));
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AggregateRootChangedBehavior<,>));
 
         if (mongoConfig.HealthcheckEnabled)
         {
@@ -51,15 +55,15 @@ public static class ServiceCollectionExtensions
 
     private static void RegisterMongoDbGlobals()
     {
-        if (!_mongoSerializersRegistered)
+        if (!s_mongoSerializersRegistered)
         {
             lock (typeof(ServiceCollectionExtensions))
             {
-                if (!_mongoSerializersRegistered)
+                if (!s_mongoSerializersRegistered)
                 {
                     BsonSerializer.RegisterSerializer(typeof(Guid), new GuidSerializer(GuidRepresentation.Standard));
                     ConventionRegistry.Register("CamelCase", new ConventionPack { new CamelCaseElementNameConvention() }, _ => true);
-                    _mongoSerializersRegistered = true;
+                    s_mongoSerializersRegistered = true;
                 }
             }
         }
