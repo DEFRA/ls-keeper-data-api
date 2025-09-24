@@ -5,6 +5,13 @@ namespace KeeperData.Infrastructure;
 
 public static class JsonDefaults
 {
+    private static JsonSerializerOptions s_defaultOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = false,
+        Converters = { }
+    };
+
     private static JsonSerializerOptions s_defaultOptionsWithStringEnumConversion = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -23,6 +30,12 @@ public static class JsonDefaults
         PropertyNamingPolicy = null, // Pascal
         WriteIndented = false
     };
+
+    public static JsonSerializerOptions DefaultOptions
+    {
+        get => s_defaultOptions;
+        set => s_defaultOptions = value;
+    }
 
     public static JsonSerializerOptions DefaultOptionsWithStringEnumConversion
     {

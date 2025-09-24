@@ -22,7 +22,7 @@ public class IntegrationTestFixture : IDisposable
         // HttpClient
         HttpClient = new HttpClient(_httpClientHandler)
         {
-            BaseAddress = new Uri("http://localhost:8080"),
+            BaseAddress = new Uri("http://localhost:5555"),
             Timeout = TimeSpan.FromSeconds(30)
         };
         HttpClient.DefaultRequestHeaders.Add("Accept", "application/json");
@@ -30,7 +30,7 @@ public class IntegrationTestFixture : IDisposable
         // SNS
         var amazonSimpleNotificationServiceConfig = new AmazonSimpleNotificationServiceConfig
         {
-            ServiceURL = "http://localhost:4566",
+            ServiceURL = "http://localhost:4568",
             AuthenticationRegion = "eu-west-2",
             UseHttp = true
         };

@@ -1,11 +1,10 @@
 name: 'keeperdata_api'
 services:
   localstack:
-    container_name: "localstack-emulator"
+    container_name: "kda-localstack-emulator"
     image: localstack/localstack:3.0.2
     ports:
-      - '4566:4566' # LocalStack Gateway
-      - '4510-4559:4510-4559' # external services port range
+      - '4568:4566'
     env_file:
       - 'compose/aws.env'
     environment:
@@ -18,7 +17,7 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - ./compose/start-localstack.sh:/etc/localstack/init/ready.d/start-localstack.sh
     healthcheck:
-      test: ['CMD', 'curl', 'http://localstack-emulator:4566/health']
+      test: ['CMD', 'curl', 'http://kda-localstack-emulator:4566/health']
       interval: 5s
       start_period: 5s
       retries: 3
@@ -26,20 +25,21 @@ services:
       - cdp-tenant
 
   redis:
+    container_name: "kda-redis"
     image: redis:7.2.3-alpine3.18
     ports:
-      - '6379:6379'
+      - '6381:6379'
     restart: always
     networks:
       - cdp-tenant
 
   mongodb:
-    container_name: mongodb
+    container_name: kda_mongodb
     image: mongo:6.0.13
     networks:
       - cdp-tenant
     ports:
-      - '27018:27017'
+      - '27019:27017'
     volumes:
       - mongodb-data:/data
     restart: always
@@ -50,10 +50,7 @@ services:
     image: keeperdata_api
     build: ./
     ports:
-      - '8080:8080'
-    links:
-      - 'localstack:localstack'
-      - 'mongodb:mongodb'
+      - '5555:5555'
     depends_on:
       localstack:
         condition: service_healthy
@@ -62,8 +59,8 @@ services:
     env_file:
       - 'compose/aws.env'
     environment:
-      PORT: 8080
-      LOCALSTACK_ENDPOINT: http://localstack-emulator:4566
+      PORT: 5555
+      LOCALSTACK_ENDPOINT: http://kda-localstack-emulator:4566
     networks:
       - cdp-tenant
 
@@ -72,4 +69,4 @@ volumes:
 
 networks:
   cdp-tenant:
-    driver: bridge
+    name: cdp-tenant
