@@ -5,7 +5,7 @@ namespace KeeperData.Api.Tests.Integration.Helpers;
 public static class ContainerLoggingUtility
 {
     public const string ServiceNameApi = "keeperdata_api";
-    public const string ServiceNameLocalstack = "localstack-emulator";
+    public const string ServiceNameLocalstack = "kda-localstack-emulator";
 
     public static async Task<bool> FindContainerLogEntryAsync(string containerServiceName, string entryToMatch)
     {

@@ -30,6 +30,8 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
 
     public Mock<IMongoClient>? MongoClientMock;
 
+    public readonly Mock<HttpMessageHandler> DataBridgeApiClientHttpMessageHandlerMock = new();
+
     private readonly List<Action<IServiceCollection>> _overrideServices = [];
 
     private const string ComparisonReportsStorageBucket = "test-comparison-reports-bucket";
@@ -49,6 +51,9 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
             ConfigureSimpleQueueService(services);
 
             ConfigureDatabase(services);
+
+            services.AddHttpClient("DataBridgeApi")
+                .ConfigurePrimaryHttpMessageHandler(() => DataBridgeApiClientHttpMessageHandlerMock.Object);
 
             foreach (var applyOverride in _overrideServices)
             {
@@ -77,6 +82,8 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("Mongo__DatabaseUri", "mongodb://localhost:27017");
         Environment.SetEnvironmentVariable("StorageConfiguration__ComparisonReportsStorage__BucketName", ComparisonReportsStorageBucket);
         Environment.SetEnvironmentVariable("QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl", "http://localhost:4566/000000000000/test-queue");
+        Environment.SetEnvironmentVariable("ApiClients__DataBridgeApi__HealthcheckEnabled", "true");
+        Environment.SetEnvironmentVariable("ApiClients__DataBridgeApi__BaseUrl", TestConstants.DataBridgeApiBaseUrl);
     }
 
     private static void ConfigureAwsOptions(IServiceCollection services)
