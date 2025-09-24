@@ -1,0 +1,63 @@
+components:
+  schemas:
+    Errors:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        title:
+            type: string
+            example: "An error occurred"
+            description: The title of the problem detail
+        detail:
+            type: string
+            example: "Provide the details of the Exception message."
+            description: Details of the problem    
+        type:
+            type: string
+            example: "Invalid Request"
+
+  examples:
+    invalidRequestSchema:
+      description: Invalid Request Schema
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+    badRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+    unAuthorised:
+      description: Unauthorised
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+    forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+    notFound:
+      description: Resource Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+    serverError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+    serviceUnavailable:
+      description: Service Unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'

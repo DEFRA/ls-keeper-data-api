@@ -83,7 +83,7 @@ jobs:
       - name: Make script executable
         run: chmod +x ./working-dir/wait-for-docker-logs.sh
       - name: Wait for localstack
-        run: ./working-dir/wait-for-docker-logs.sh localstack-emulator "Bootstrapping Complete" 60
+        run: ./working-dir/wait-for-docker-logs.sh kda-localstack-emulator "Bootstrapping Complete" 60
       - name: Wait for keeperdata_api to be ready
         run: ./working-dir/wait-for-docker-logs.sh keeperdata_api "Now listening on" 60
       - name: Run integration tests

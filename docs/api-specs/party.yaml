@@ -1,0 +1,488 @@
+openapi: 3.0.3
+info:
+  title: Party API
+  description: |-
+    This document formalises the Defra Livestock - Party API definitions delivered by the Defra - Keepers Reference Data Services.
+    
+    The specification is based on the OpenAPI 3.0 format. 
+  termsOfService: http://www.defra.gov.uk/
+  contact:
+    email: livestock_refdata_serviceowner@defra.gov.uk
+  license:
+    name: Commercial License
+    url: http://www.defra.gov.uk/
+  
+  version: 0.3.0
+
+# Change History
+  # 0.1.0 - Initial Draft
+  # 0.2.0 - Amendments based on the initial peer review. . Removing Haulier related operations and schemas
+  # 0.3.0 - Amendments based on review from LI Ltd.
+  
+externalDocs:
+  description: Defra APHA website
+  url: http://www.defra.gov.uk/
+tags:
+  - name: party
+
+security: 
+  - bearerAuth: []
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT authorisation token
+
+  schemas:
+
+    HealthResponse:
+      type: object
+      properties:
+        healthy:
+          type: boolean
+        dependencies:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              healthy:
+                type: boolean
+              ping:
+                type: number
+                minimum: -1
+      example:
+        healthy: true
+        dependencies:
+          - name: db
+            healthy: true
+            ping: 21
+          - name: search
+            healthy: true
+            ping: 26
+
+#Country
+    Country:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        code: 
+          type: string
+          example: GB-ENG
+        name:
+          type: string
+          readOnly: true
+          example: England
+        longName:
+          type: string
+          readOnly: true
+          example: England - United Kingdom
+        euTradeMemberFlag:
+          type: boolean
+          example: true
+          readOnly: false
+        devolvedAuthorityFlag:
+          type: boolean
+          readOnly: false
+          example: false
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Country record was updated"
+      required:
+        - code
+        - name
+
+#Address
+    Address:
+      type: object
+      properties:
+        id: 
+          type: string
+          format: uuid
+          readOnly: true
+        uprn:
+          type: integer
+          nullable: true
+          example: 671544009
+        addressLine1: 
+          type: string
+          nullable: false
+          description: "This single address line is associated with the OS Address Base Fields such as SAO_TEXT, SAO_START_NUMBER, PAO_TEXT, PAO_START_NUMBER and STREET_DESCRIPTION."
+          example: "Hansel & Gretel Farm, Pigs Street"
+        addressLine2:
+            type:  string
+            example: "Cloverfield"
+            nullable: true
+            description : "This optional field is associated with the OS Address Base Field of LOCALITY, if applicable."
+        postTown:
+            type: string
+            example: "Clover town"
+            nullable: true
+            description : "This field is to describes the Town or City of the Address. It is aligned to the OS Address Base Field of POST_TOWN."
+        county:
+            type: string
+            example: "Sussex"
+            nullable: true
+            description : "This optional field is associated with the OS Address Base Field of ADMINISTRATIVE_AREA."
+        postCode:
+          type: string
+          example: "S36 2BS"
+          nullable: false
+        country:
+          $ref: '#/components/schemas/Country'
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Address record was updated"
+      required:
+        - addressLine1
+        - postCode
+        
+#Party Communication
+    PartyCommunication:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        email:
+          type: string
+          example: john.doe@somecompany.co.uk        
+        mobile:
+          type: string
+          example: "07123456789"
+        landline:
+          type: string
+          example: "0114 1231234"
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Party Communication record was updated"
+          
+          
+#Species
+    Species:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        code: 
+          type: string
+          example: BV
+        name:
+          type: string
+          readOnly: true
+          example: Bovine                                                          
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Species record was updated"
+      required:
+        - code
+        - name
+          
+#Roles To Party
+    RolesToParty:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        role:
+          type: string
+          example: Keeper
+          nullable : true
+        startDate:
+          type: string
+          format: date
+          nullable: false
+          description: "The date the said role was assigned to the said Party"
+        endDate:
+          type: string
+          format: date
+          nullable: true
+          description: "The date the said role was revoked/removed to the said Party"
+        speciesManagedByRole:
+          type: array
+          readOnly: true
+          description: "This is the list of species managed by the said Role assigned to the said Party. Normally Roles such as Keeper will have species asscociated with them."
+          items:
+                $ref: '#/components/schemas/Species'
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Roles To Party record was updated"
+
+         
+# Party
+    Party:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          example: "Mr"
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        name:
+          type: string
+          example: "John Doe"        
+        partyType:
+            type: string
+            example : Person
+            enum:
+            - Person
+            - Organisation
+        communication:
+            type: array
+            readOnly: true
+            items:
+                $ref: '#/components/schemas/PartyCommunication'
+        correspondanceAddress:
+          $ref: '#/components/schemas/Address'
+        partyRoles:
+            type: array
+            readOnly: true
+            items:
+                $ref: '#/components/schemas/RolesToParty'        
+        state:
+          type: string
+          enum:
+          - active
+          - inactive
+          description: "This denotes that current state of the Party, i.e. Active or Inactive."
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Party record was updated"
+
+    PartyList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 1
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/Party'
+
+    Error:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              message:
+                type: string
+      example:
+        items:
+          - code: 1
+            message: "nnnnn"
+          - code: 2
+            message: "nnnnn"   
+    
+
+#Start of the API operations area
+paths:
+  /api/health:
+    get:
+      tags:
+      - housekeeping
+      summary: Execute a health check
+      description: Execute a health check on the API and its dependencies
+      operationId: getHealth
+      security: 
+        - {} 
+      responses:
+        '200':
+          description: OK - Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+                       
+  /api/parties:
+    get:
+      tags:
+        - party
+      summary: Retrieve a list of parties.
+      description: The endpoint allows searching and retrieving a list of parties.
+      operationId: getParties
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          allowEmptyValue: false
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          required: false
+          allowEmptyValue: false
+          schema:
+            type: integer
+        - name: order
+          in: query
+          required: false
+          allowEmptyValue: false
+          schema: 
+            type: string
+            enum:
+              - id
+              - name
+        - name: sort
+          in: query
+          required: false
+          allowEmptyValue: false
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc 
+        - name: lastUpdatedDate
+          in:   query
+          required: false
+          schema:
+            type: string
+            format: date-time
+            description: Returns only Party that have been updated since this timestamp. This is the key parameter for Change Data Capture (CDC)
+      responses:
+        '200':
+          description: OK - Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartyList'
+        '404':
+          description: Party not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+               
+  /api/parties/{id}:
+    get:
+      tags:
+        - party
+      summary: Retrieve details of a party.
+      description: The endpoint allows to retrieve details of a given party.
+      operationId: getPartiesById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK - Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+               allOf:
+                 - $ref: '../error.yaml#/components/schemas/Errors'
+                 - type: object
+                   properties:
+                      status:
+                        type: integer
+                        enum: [BadRequest]
+              examples:
+                invalid-request-schema: 
+                  $ref: '../error.yaml#/components/examples/invalid-request-schema'   
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+               allOf:
+                - $ref: '../error.yaml#/components/schemas/Errors'
+                - type: object
+                  properties:
+                      status:
+                        type: integer                 
+                        enum: [Forbidden]
+              examples:
+                not-found: 
+                  $ref: '../error.yaml#/components/examples/forbidden' 
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '../error.yaml#/components/schemas/Errors'
+                - type: object
+                  properties:
+                      status:
+                        type: integer    
+                        enum: [NotFound]
+              examples:
+                  not-found: 
+                    $ref: '../error.yaml#/components/examples/not-found' 
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '../error.yaml#/components/schemas/Errors'
+                - type: object
+                  properties:
+                      status:
+                        type: integer    
+                        enum: [ServerError]
+              examples:
+                    server-error:
+                      $ref: '../error.yaml#/components/examples/server-error' 
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '../error.yaml#/components/schemas/Errors'
+                - type: object
+                  properties:
+                      status:
+                        type: integer    
+                        enum: [ServiceUnavailable]
+              examples:
+                    server-error:
+                      $ref: '../error.yaml#/components/examples/service-unavailable'              

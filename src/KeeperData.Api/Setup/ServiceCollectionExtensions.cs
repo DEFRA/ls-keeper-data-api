@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using KeeperData.Application.Setup;
+using KeeperData.Infrastructure.ApiClients.Setup;
 using KeeperData.Infrastructure.Database.Setup;
 using KeeperData.Infrastructure.Messaging.Setup;
 using KeeperData.Infrastructure.Storage.Setup;
@@ -41,6 +42,8 @@ public static class ServiceCollectionExtensions
         services.AddMessagingDependencies(configuration);
 
         services.AddStorageDependencies(configuration);
+
+        services.AddApiClientDependencies(configuration);
     }
 
     private static void ConfigureHealthChecks(this IServiceCollection services)

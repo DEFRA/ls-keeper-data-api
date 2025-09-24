@@ -4,13 +4,14 @@ services:
       com.microsoft.visual-studio.project-name: "KeeperData.Api"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_HTTP_PORTS=8080
-      - AWS__ServiceURL=http://localstack-emulator:4566
-      - Mongo__DatabaseUri=mongodb://mongodb:27017
+      - ASPNETCORE_HTTP_PORTS=5555
+      - AWS__ServiceURL=http://kda-localstack-emulator:4566
+      - Mongo__DatabaseUri=mongodb://kda_mongodb:27017
       - StorageConfiguration__ComparisonReportsStorage__BucketName=test-comparison-reports-bucket
       - QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl=http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue
+      - ApiClients__DataBridgeApi__BaseUrl=http://keeperdata_bridge:5560/
     ports:
-      - "8080"
+      - "5555"
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
