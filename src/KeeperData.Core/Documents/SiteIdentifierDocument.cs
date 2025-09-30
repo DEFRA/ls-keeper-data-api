@@ -1,22 +1,30 @@
 using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
+using MongoDB.Bson.Serialization.Attributes;
+using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
 
-public class SiteIdentifierDocument : IEntity
+public class SiteIdentifierDocument : INestedEntity
 {
-    public required string Id { get; set; }
-    public string SystemId { get; set; } = default!;
+    [JsonPropertyName("id")]
+    [BsonElement("id")]
+    public required string IdentifierId { get; set; }
+    public DateTime LastUpdatedDate { get; set; }
     public string Identifier { get; set; } = default!;
     public string Type { get; set; } = default!;
 
     public static SiteIdentifierDocument FromDomain(SiteIdentifier si) => new()
     {
-        Id = si.Id,
-        SystemId = si.SystemId,
+        IdentifierId = si.Id,
+        LastUpdatedDate = si.LastUpdatedDate,
         Identifier = si.Identifier,
-        Type = si.Type
+        Type = si.Type,
     };
 
-    public SiteIdentifier ToDomain() => new(Id, SystemId, Identifier, Type);
+    public SiteIdentifier ToDomain() => new(
+        IdentifierId,
+        LastUpdatedDate,
+        Identifier,
+        Type);
 }

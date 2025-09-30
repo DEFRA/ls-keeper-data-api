@@ -7,45 +7,102 @@ namespace KeeperData.Core.Domain.Sites;
 public class Site : IAggregateRoot
 {
     public string Id { get; private set; }
-    public string SystemId { get; private set; }
+    public DateTime LastUpdatedDate { get; private set; }
     public string Type { get; private set; }
     public string Name { get; private set; }
     public string State { get; private set; }
 
-    private readonly List<SiteIdentifier> _siteIdentifiers = [];
-    public IReadOnlyCollection<SiteIdentifier> SiteIdentifiers => _siteIdentifiers.AsReadOnly();
+    private readonly List<SiteIdentifier> _identifiers = [];
+    public IReadOnlyCollection<SiteIdentifier> Identifiers => _identifiers.AsReadOnly();
 
-    public Site(string id, string systemId, string type, string name, string state)
+    private Location? _location;
+    public Location? Location => _location;
+
+    public string? PrimaryIdentifier => Identifiers.FirstOrDefault()?.Identifier;
+
+    public Site(
+        string id,
+        DateTime lastUpdatedDate,
+        string type,
+        string name,
+        string state,        
+        Location? location = null)
     {
         Id = id;
-        SystemId = systemId;
+        LastUpdatedDate = lastUpdatedDate;
         Type = type;
         Name = name;
         State = state;
+        _location = location;
         _domainEvents.Add(new SiteCreatedDomainEvent(Id));
     }
 
-    public static Site Create(string systemId, string type, string name, string state)
+    public static Site Create(
+        string type,
+        string name,
+        string state,
+        Location? location = null)
     {
-        return new Site(Guid.NewGuid().ToString(), systemId, type, name, state);
+        return new Site(
+            Guid.NewGuid().ToString(),
+            DateTime.UtcNow,
+            type,
+            name,
+            state,            
+            location);
     }
 
-    public void AddSiteIdentifier(string systemId, string identifier, string type, string? id = null)
+    public void UpdateLastUpdatedDate(DateTime lastUpdatedDate)
+    {
+        LastUpdatedDate = lastUpdatedDate;
+    }
+
+    public void AddSiteIdentifier(
+        DateTime lastUpdatedDate,
+        string identifier,
+        string type,
+        string? id = null)
     {
         var siteIdentifier = id is null
-            ? SiteIdentifier.Create(systemId, identifier, type)
-            : new SiteIdentifier(id, systemId, identifier, type);
+            ? SiteIdentifier.Create(
+                identifier,
+                type)
+            : new SiteIdentifier(
+                id,
+                lastUpdatedDate,
+                identifier,
+                type);
 
-        _siteIdentifiers.Add(siteIdentifier);
+        _identifiers.Add(siteIdentifier);
     }
 
     public void RemoveSiteIdentifier(string identifier)
     {
-        var existing = _siteIdentifiers.FirstOrDefault(x => x.Identifier == identifier);
+        var existing = _identifiers.FirstOrDefault(x => x.Identifier == identifier);
         if (existing is not null)
         {
-            _siteIdentifiers.Remove(existing);
+            _identifiers.Remove(existing);
         }
+    }
+
+    public void SetLocation(
+        DateTime lastUpdatedDate,
+        string? osMapReference,
+        double? easting,
+        double? northing,
+        string? id = null)
+    {
+        _location = id is null
+            ? Location.Create(
+                osMapReference,
+                easting,
+                northing)
+            : new Location(
+                id,
+                lastUpdatedDate,
+                osMapReference,
+                easting,
+                northing);
     }
 
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents;

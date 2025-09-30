@@ -1,4 +1,5 @@
 using FluentValidation;
+using KeeperData.Application.Queries.Sites.Adapters;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace KeeperData.Application.Setup;
@@ -14,5 +15,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IRequestExecutor, RequestExecutor>();
         services.AddValidatorsFromAssemblyContaining<IRequestExecutor>();
+
+        services.AddScoped<SitesQueryAdapter>();
     }
 }

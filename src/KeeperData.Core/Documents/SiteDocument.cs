@@ -1,41 +1,87 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Driver;
 
 namespace KeeperData.Core.Documents;
 
 [CollectionName("sites")]
-public class SiteDocument : IEntity
+public class SiteDocument : IEntity, IContainsIndexes
 {
+    [BsonId]
     public required string Id { get; set; }
-    public string SystemId { get; set; } = default!;
+    public DateTime LastUpdatedDate { get; set; }
     public string Type { get; set; } = default!;
     public string Name { get; set; } = default!;
     public string State { get; set; } = default!;
-    public List<SiteIdentifierDocument> SiteIdentifiers { get; private set; } = [];
+    public List<SiteIdentifierDocument> Identifiers { get; private set; } = [];
+    public LocationDocument? Location { get; set; }
+    public string PrimaryIdentifier { get; set; } = default!;
 
-    public static SiteDocument FromDomain(Site site) => new()
+    public static SiteDocument FromDomain(Site m) => new()
     {
-        Id = site.Id,
-        SystemId = site.SystemId,
-        Type = site.Type,
-        Name = site.Name,
-        State = site.State,
-        SiteIdentifiers = [.. site.SiteIdentifiers.Select(SiteIdentifierDocument.FromDomain)]
+        Id = m.Id,
+        LastUpdatedDate = m.LastUpdatedDate,
+        Type = m.Type,
+        Name = m.Name,
+        State = m.State,
+        Identifiers = [.. m.Identifiers.Select(SiteIdentifierDocument.FromDomain)],
+        Location = m.Location is not null ? LocationDocument.FromDomain(m.Location) : null,
+        PrimaryIdentifier = m.PrimaryIdentifier ?? string.Empty
     };
 
     public Site ToDomain()
     {
-        var site = new Site(Id, SystemId, Type, Name, State);
+        var site = new Site(
+            Id,
+            LastUpdatedDate,
+            Type,
+            Name,
+            State);
 
-        if (SiteIdentifiers is not null)
+        foreach (var si in Identifiers)
         {
-            foreach (var item in SiteIdentifiers)
-            {
-                site.AddSiteIdentifier(item.SystemId, item.Identifier, item.Type, item.Id);
-            }
+            site.AddSiteIdentifier(
+                si.LastUpdatedDate,
+                si.Identifier,
+                si.Type,                
+                si.IdentifierId);
+        }
+
+        if (Location is not null)
+        {
+            site.SetLocation(
+                Location.LastUpdatedDate,
+                Location.OsMapReference,
+                Location.Easting,
+                Location.Northing,                
+                Location.IdentifierId);
         }
 
         return site;
+    }
+
+    public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
+    {
+        return
+        [
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("Type"),
+                new CreateIndexOptions { Name = "idx_type" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("Name"),
+                new CreateIndexOptions { Name = "idx_name" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("State"),
+                new CreateIndexOptions { Name = "idx_state" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("PrimaryIdentifier"),
+                new CreateIndexOptions { Name = "idx_primaryIdentifier" })
+        ];
     }
 }

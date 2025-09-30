@@ -10,7 +10,7 @@ namespace KeeperData.Infrastructure.Database.Repositories;
 public class GenericRepository<T> : IGenericRepository<T>
     where T : IEntity
 {
-    private readonly IMongoCollection<T> _collection;
+    protected readonly IMongoCollection<T> _collection;
 
     public GenericRepository(IOptions<MongoConfig> mongoConfig, IMongoClient client)
     {

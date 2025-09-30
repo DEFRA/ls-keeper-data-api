@@ -3,10 +3,6 @@ using KeeperData.Core.Repositories;
 
 namespace KeeperData.Application.Queries.Sites;
 
-/// <summary>
-/// Example implementation only. To remove in future stories.
-/// </summary>
-/// <param name="repository"></param>
 public class GetSiteByIdQueryHandler(IGenericRepository<SiteDocument> repository) : IQueryHandler<GetSiteByIdQuery, SiteDocument>
 {
     private readonly IGenericRepository<SiteDocument> _repository = repository;
