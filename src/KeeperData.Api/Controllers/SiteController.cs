@@ -1,4 +1,3 @@
-using Asp.Versioning;
 using KeeperData.Api.Controllers.RequestDtos.Sites;
 using KeeperData.Application;
 using KeeperData.Application.Queries.Sites;
@@ -7,8 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace KeeperData.Api.Controllers
 {
     [ApiController]
-    [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/[controller]")]
+    [Route("api/[controller]")]
     public class SiteController(IRequestExecutor executor) : ControllerBase
     {
         private readonly IRequestExecutor _executor = executor;

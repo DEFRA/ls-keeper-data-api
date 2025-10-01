@@ -25,7 +25,7 @@ public class Site : IAggregateRoot
         DateTime lastUpdatedDate,
         string type,
         string name,
-        string state,        
+        string state,
         Location? location = null)
     {
         Id = id;
@@ -48,7 +48,7 @@ public class Site : IAggregateRoot
             DateTime.UtcNow,
             type,
             name,
-            state,            
+            state,
             location);
     }
 

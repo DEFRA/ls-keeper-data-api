@@ -1,6 +1,7 @@
 using FluentAssertions;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;
+using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Infrastructure.Database.Repositories;
 using Microsoft.Extensions.Options;
@@ -14,6 +15,7 @@ public class GenericRepositoryTests
 {
     private readonly IOptions<MongoConfig> _mongoConfig;
     private readonly Mock<IMongoClient> _mongoClientMock = new();
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<IMongoDatabase> _mongoDatabaseMock = new();
     private readonly Mock<IAsyncCursor<TestEntity>> _asyncCursorMock = new();
     private readonly Mock<IMongoCollection<TestEntity>> _mongoCollectionMock = new();
@@ -44,7 +46,7 @@ public class GenericRepositoryTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(_asyncCursorMock.Object);
 
-        _sut = new GenericRepository<TestEntity>(_mongoConfig, _mongoClientMock.Object);
+        _sut = new GenericRepository<TestEntity>(_mongoConfig, _mongoClientMock.Object, _unitOfWorkMock.Object);
 
         typeof(GenericRepository<TestEntity>)
             .GetField("_collection", BindingFlags.NonPublic | BindingFlags.Instance)!

@@ -46,7 +46,7 @@ public class SiteDocument : IEntity, IContainsIndexes
             site.AddSiteIdentifier(
                 si.LastUpdatedDate,
                 si.Identifier,
-                si.Type,                
+                si.Type,
                 si.IdentifierId);
         }
 
@@ -56,7 +56,7 @@ public class SiteDocument : IEntity, IContainsIndexes
                 Location.LastUpdatedDate,
                 Location.OsMapReference,
                 Location.Easting,
-                Location.Northing,                
+                Location.Northing,
                 Location.IdentifierId);
         }
 

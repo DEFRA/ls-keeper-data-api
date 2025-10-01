@@ -39,7 +39,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped(sp => sp.GetRequiredService<IMongoSessionFactory>().GetSession());
         services.AddSingleton(sp => sp.GetRequiredService<IMongoDbClientFactory>().CreateClient());
-        
+
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         services.AddScoped<ISitesRepository, SitesRepository>();
 

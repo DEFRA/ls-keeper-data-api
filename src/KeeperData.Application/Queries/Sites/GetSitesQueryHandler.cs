@@ -4,7 +4,7 @@ using KeeperData.Core.Documents;
 
 namespace KeeperData.Application.Queries.Sites;
 
-public class GetSitesQueryHandler(SitesQueryAdapter adapter) 
+public class GetSitesQueryHandler(SitesQueryAdapter adapter)
     : PagedQueryHandler<GetSitesQuery, SiteDocument>
 {
     private readonly SitesQueryAdapter _adapter = adapter;

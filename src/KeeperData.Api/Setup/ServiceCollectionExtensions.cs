@@ -1,4 +1,3 @@
-using Asp.Versioning;
 using KeeperData.Application.Setup;
 using KeeperData.Infrastructure.ApiClients.Setup;
 using KeeperData.Infrastructure.Database.Setup;
@@ -18,18 +17,6 @@ public static class ServiceCollectionExtensions
                 var enumConverter = new JsonStringEnumConverter();
                 opts.JsonSerializerOptions.Converters.Add(enumConverter);
             });
-
-        services.AddApiVersioning(options =>
-        {
-            options.ApiVersionReader = new UrlSegmentApiVersionReader();
-            options.DefaultApiVersion = new ApiVersion(1, 0);
-            options.ReportApiVersions = true;
-        })
-        .AddApiExplorer(options =>
-        {
-            options.GroupNameFormat = "'v'VVV";
-            options.SubstituteApiVersionInUrl = true;
-        });
 
         services.AddDefaultAWSOptions(configuration.GetAWSOptions());
 
