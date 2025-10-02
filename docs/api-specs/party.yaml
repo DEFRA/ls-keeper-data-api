@@ -1,23 +1,32 @@
 openapi: 3.0.3
 info:
-  title: Party API
+  title: Party API 
   description: |-
-    This document formalises the Defra Livestock - Party API definitions delivered by the Defra - Keepers Reference Data Services.
+    The Party API is reference data service that allows developers to build applications that connect with Defra's Livestock - Party Data domain.
     
-    The specification is based on the OpenAPI 3.0 format. 
-  termsOfService: http://www.defra.gov.uk/
-  contact:
-    email: livestock_refdata_serviceowner@defra.gov.uk
-  license:
-    name: Commercial License
-    url: http://www.defra.gov.uk/
+    With the Party API, you can:
+
+    * **Authenticate** with the Defra's identity system.
+    * **Retrieve** reference data for Parties and its related information.
+    
+  termsOfService: http://www.defra.gov.uk/legal
   
-  version: 0.3.0
+  contact:
+    name: Defra Livestock Data Services Support
+    url: https://www.defra.gov.uk/support
+    email: support_cdp_platform.@defra.gov.uk
+  
+  license:
+    name: Livestock Data Services Agreement
+    url: https://www.defra.gov.uk/services-agreement/
+  
+  version: 0.4.0
 
 # Change History
   # 0.1.0 - Initial Draft
   # 0.2.0 - Amendments based on the initial peer review. . Removing Haulier related operations and schemas
   # 0.3.0 - Amendments based on review from LI Ltd.
+  # 0.4.0 - Amendments to the object model based on the changes done to the Location service model.
   
 externalDocs:
   description: Defra APHA website
@@ -120,22 +129,22 @@ components:
           example: "Hansel & Gretel Farm, Pigs Street"
         addressLine2:
             type:  string
-            example: "Cloverfield"
+            example: "Beechwood"
             nullable: true
             description : "This optional field is associated with the OS Address Base Field of LOCALITY, if applicable."
         postTown:
             type: string
-            example: "Clover town"
+            example: "Abdington"
             nullable: true
             description : "This field is to describes the Town or City of the Address. It is aligned to the OS Address Base Field of POST_TOWN."
         county:
             type: string
-            example: "Sussex"
+            example: "Warwickshire"
             nullable: true
             description : "This optional field is associated with the OS Address Base Field of ADMINISTRATIVE_AREA."
         postCode:
           type: string
-          example: "S36 2BS"
+          example: "CV31 5TG"
           nullable: false
         country:
           $ref: '#/components/schemas/Country'
@@ -147,8 +156,8 @@ components:
         - addressLine1
         - postCode
         
-#Party Communication
-    PartyCommunication:
+#Communication
+    Communication:
       type: object
       properties:
         id:
@@ -157,10 +166,10 @@ components:
           readOnly: true
         email:
           type: string
-          example: john.doe@somecompany.co.uk        
+          example: jane.doe@somecompany.co.uk        
         mobile:
           type: string
-          example: "07123456789"
+          example: "07562525288"
         landline:
           type: string
           example: "0114 1231234"
@@ -192,6 +201,56 @@ components:
       required:
         - code
         - name
+        
+    ManagedSpecies:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        code: 
+          type: string
+          example: CTT
+        name:
+          type: string
+          readOnly: true
+          example: Cattle
+        startDate:
+          type: string
+          format: date
+          nullable: false
+          description: "The date the said species came under the care of the said Role."
+        endDate:
+          type: string
+          format: date
+          nullable: true
+          description: "The date the said species left the care of the said Role."
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the ManagedSpecies record was updated"
+      required:
+        - code
+        - name
+        
+#Role
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          example: "Keeper"
+          nullable: false
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Role record was updated" 
+
           
 #Roles To Party
     RolesToParty:
@@ -202,25 +261,13 @@ components:
           format: uuid
           readOnly: true
         role:
-          type: string
-          example: Keeper
-          nullable : true
-        startDate:
-          type: string
-          format: date
-          nullable: false
-          description: "The date the said role was assigned to the said Party"
-        endDate:
-          type: string
-          format: date
-          nullable: true
-          description: "The date the said role was revoked/removed to the said Party"
+           $ref: '#/components/schemas/Role'
         speciesManagedByRole:
           type: array
           readOnly: true
           description: "This is the list of species managed by the said Role assigned to the said Party. Normally Roles such as Keeper will have species asscociated with them."
           items:
-                $ref: '#/components/schemas/Species'
+                $ref: '#/components/schemas/ManagedSpecies'
         lastUpdatedDate:
           type: string
           format: date-time
@@ -237,16 +284,16 @@ components:
           readOnly: true
         title:
           type: string
-          example: "Mr"
+          example: "Miss"
         firstName:
           type: string
-          example: "John"
+          example: "Jane"
         lastName:
           type: string
           example: "Doe"
         name:
           type: string
-          example: "John Doe"        
+          example: "Jane Doe"        
         partyType:
             type: string
             example : Person
@@ -257,7 +304,7 @@ components:
             type: array
             readOnly: true
             items:
-                $ref: '#/components/schemas/PartyCommunication'
+                $ref: '#/components/schemas/Communication'
         correspondanceAddress:
           $ref: '#/components/schemas/Address'
         partyRoles:

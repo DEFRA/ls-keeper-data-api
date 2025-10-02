@@ -2,24 +2,35 @@ openapi: 3.0.3
 info:
   title: Location API 
   description: |-
-    This document formalises the Defra Livestock - Location API definitions delivered by the Defra - Keepers Reference Data Services.
-    The specification is based on the OpenAPI 3.0 format. 
-  termsOfService: http://www.defra.gov.uk/
-  contact:
-    email: livestock_refdata_serviceowner@defra.gov.uk
-  license:
-    name: Commercial License
-    url: http://www.defra.gov.uk/
+    The Location API is reference data service that allows developers to build applications that connect with Defra's Livestock - Location Data domain.
+    
+    With the Location API, you can:
+
+    * **Authenticate** with the Defra's identity system.
+    * **Retrieve** location based reference data such as Sites and its related data such as Parties, Species, Marks etc.
+    * **Provide** count of the current sites within the scope of Livestock Information Service.
+    
+  termsOfService: http://www.defra.gov.uk/legal
   
-  version: 0.3.0
+  contact:
+    name: Defra Livestock Data Services Support
+    url: https://www.defra.gov.uk/support
+    email: support_cdp_platform.@defra.gov.uk
+  
+  license:
+    name: Livestock Data Services Agreement
+    url: https://www.defra.gov.uk/services-agreement/
+  
+  version: 0.4.0
 
   # Change History
   # 0.1.0 - Initial Draft
   # 0.2.0 - Amendments based on the initial peer review.
   # 0.3.0 - Amendments based on review from LI Ltd.
+  # 0.4.0 - Amendments based on further review comments from internal stakeholders and LI Ltd.
  
 externalDocs:
-  description: Defra APHA website
+  description: Defra website
   url: http://www.defra.gov.uk/
 tags:
   - name: site
@@ -110,11 +121,11 @@ components:
           readOnly: true
         code: 
           type: string
-          example: BV
+          example: CTT
         name:
           type: string
           readOnly: true
-          example: Bovine (Cattle)
+          example: Cattle
         lastUpdatedDate:
           type: string
           format: date-time
@@ -133,6 +144,8 @@ components:
         mark: 
           type: string
           example: 564545
+        species:
+          $ref: '#/components/schemas/Species'
         startDate:
           type: string
           format: date-time
@@ -142,6 +155,38 @@ components:
           format: date-time
           example: null
           description: "The date the herd/flock/group mark was removed."
+      required:
+        - mark
+        
+        
+    ManagedSpecies:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        code: 
+          type: string
+          example: CTT
+        name:
+          type: string
+          readOnly: true
+          example: Cattle
+        startDate:
+          type: string
+          format: date
+          nullable: false
+          description: "The date the said species came under the care of the said Role."
+        endDate:
+          type: string
+          format: date
+          nullable: true
+          description: "The date the said species left the care of the said Role."
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the ManagedSpecies record was updated"
       required:
         - code
         - name
@@ -282,10 +327,44 @@ components:
         landline:
           type: string
           example: "0114 1231234"
+        primaryContact:
+          type: boolean
+          nullable: true
+          example: true
         lastUpdatedDate:
           type: string
           format: date-time
           description: "The timestamp of the last time the Party Communication record was updated"
+          
+
+#Role
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          example: "Keeper"
+          nullable: false
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Role record was updated" 
+
+    RoleList:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 1
+            values:
+              type: array
+              items:
+                $ref: '#/components/schemas/Role'
+            
           
 #Roles To Party
     RolesToParty:
@@ -296,25 +375,13 @@ components:
           format: uuid
           readOnly: true
         role:
-          type: string
-          example: Keeper
-          nullable : true
-        startDate:
-          type: string
-          format: date
-          nullable: false
-          description: "The date the said role was assigned to the said Party"
-        endDate:
-          type: string
-          format: date
-          nullable: true
-          description: "The date the said role was revoked/removed from the said Party"
+           $ref: '#/components/schemas/Role'
         speciesManagedByRole:
           type: array
           readOnly: true
           description: "This is the list of species managed by the said Role assigned to the said Party. Normally Roles such as Keeper will have species asscociated with them."
           items:
-                $ref: '#/components/schemas/Species'
+                $ref: '#/components/schemas/ManagedSpecies'
         lastUpdatedDate:
           type: string
           format: date-time
@@ -339,7 +406,11 @@ components:
           example: "Doe"
         name:
           type: string
-          example: "John Doe"        
+          example: "John Doe"
+        customerNumber:
+          type: string
+          example: "C77473"
+          description: "This is the L or the C number provided from the SAM system."
         partyType:
             type: string
             example : Person
@@ -391,38 +462,6 @@ components:
       required:
         - identifier
         - type    
-
-    AssociatedSite:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-          readOnly: true
-        site:
-          allOf:
-          - $ref: '#/components/schemas/Site'
-        associationType:
-          type: string
-          enum:
-            - temporaryHolding
-            - mainSite
-          example: "temporaryHolding"
-          nullable: false
-        startDate: 
-          type: string
-          format: date
-          nullable: false
-        endDate: 
-          type: string
-          format: date
-          nullable: true
-
-      required:
-        - id
-        - type
-        - startDate
     
     Site:
       type: object
@@ -432,8 +471,7 @@ components:
           format: uuid
           readOnly: true
         type:
-          type: string
-          example: "agriculturalHolding"
+          $ref: '#/components/schemas/SiteType'
         name:
           type: string
           example: Hansel & Gretel Farm
@@ -451,7 +489,6 @@ components:
           format: date-time
           description: "The timestamp of the last time the Site record was updated"
       required:
-        - name
         - siteType
         - source
         - destroyIdentityDocumentsFlag
@@ -476,11 +513,6 @@ components:
               example: SAM
             destroyIdentityDocumentsFlag:
               type: boolean
-            #associatedSites:
-            #  type: array
-            #  readOnly: true
-            #  items:
-            #    $ref: '#/components/schemas/AssociatedSite'        
             location:
               $ref: '#/components/schemas/Location'
               required: false
@@ -501,12 +533,7 @@ components:
             activities:
               type: array
               items:
-                type: string
-              readOnly: true
-              example:
-                - dairy
-                - meat
-                - tanning
+                $ref: '#/components/schemas/SiteActivity'
             lastUpdatedDate:
                 type: string
                 format: date-time
@@ -530,34 +557,7 @@ components:
           items:
             allOf:
               - $ref: '#/components/schemas/SiteDetail'
-              - type: object
-             #   properties:
-             #     startDate:
-             #       type: string
-             #       format: date
-             #       nullable: false
-             #     endDate:
-             #       type: string
-             #       format: date
-             #       nullable: true
-             #       example: null
-             #     associatedSites:
-             #       type: array
-             #       readOnly: true
-             #       items:
-             #         $ref: '#/components/schemas/AssociatedSite'
-             #     location:
-             #       $ref: '#/components/schemas/Location'
-             #     parties:
-             #       type: array
-             #       items:
-             #         $ref: '#/components/schemas/Party'
-                  
-            #    required:
-            #     - siteType
-            #      - name
-            #      - destroyIdentityDocumentsFlag
-            #      - location
+              - type: object             
       required:
         - count
         - values
@@ -581,11 +581,12 @@ components:
         startDate:
           type: string
           format: date
-          nullable: false
+          nullable: true
         endDate:
           type: string
           format: date
           nullable: true
+          example: null
         lastUpdatedDate:
           type: string
           format: date-time
@@ -671,17 +672,6 @@ components:
           format: date-time
           description: "The timestamp of the last time the SiteType record was updated"
           
-    SiteTypeResponse:
-      allOf:
-        - $ref: '#/components/schemas/SiteType'
-        - type: object
-          properties:
-            relations:
-              type: array
-              items:
-                $ref: '#/components/schemas/SiteTypeRelation'
-              readOnly: true   
-    
     SiteTypeList:
       type: object
       properties:
@@ -693,21 +683,6 @@ components:
           items:
             $ref: '#/components/schemas/SiteType'
 
-    SiteTypeRelation:
-      type: object
-      required:
-        - relation
-        - siteType
-      properties:
-        relation:
-          type: string
-          description: The coded value for a site relationship.
-          example: "canCreateSite"
-        siteType:
-          type: string
-          description: The type of site for the relationship
-          example: performanceLocation   
-    
 
 #Start of the API opearations area
 paths:
@@ -795,8 +770,6 @@ paths:
             type: string
             format: date-time
             description: Returns only Countries that have been updated since this timestamp. This is the key parameter for Change Data Capture (CDC)
-        # allowEmptyValue is deprecated in 3.0, no need to include it
-
       responses:
         '200':
           description: OK - Successful operation
@@ -840,19 +813,27 @@ paths:
       tags:
         - site
       summary: Retrieve a list of available sites
-      description: Endpoint created to retrieve a list of sites. Parameters can be set to filter by various elements such as Site Identifiers, Site Type etc.
+      description: Endpoint created to retrieve a list of sites. Parameters can be set to filter by various elements such as Site Identifiers, Site Type, Site Id, Party Id etc.
       operationId: getSites
       parameters:
         - name: siteIdentifier
           in:   query
           required: false
+          description: This parameter accepts site identifiers such as CPH Number, FSA No, Port No etc which are associated with different site type such as CPH No for Agricultural Holdings.
           schema:
             type: string
             example: 57/103/2335
-            description: This parameter accepts site identifiers such as CPH Number, FSA No, Port No etc which are associated with different site type such as CPH No for Agricultural Holdings.
+        - name: name
+          in:   query
+          required: false
+          description: This parameter accepts the name of the site.
+          schema:
+            type: string
+            example: Hansel & Gretel Farm            
         - name: type
           in: query
           required: false
+          description: This parameter accepts the Site Type. The possible list of Site Types is mentioned below.
           schema:
             type: array
             items:
@@ -884,10 +865,12 @@ paths:
                 - Waste Food Premises
         - name: siteId
           in: query
+          description: This parameter accepts the id of the site.
           schema:
             type: string
-        - name: keeperPartyId
+        - name: partyId
           in: query
+          description: This parameter accepts Party Id (UUID) asscociated with the said site.
           required: false
           schema:
             type: string
@@ -912,14 +895,14 @@ paths:
             type: integer
         - name: order
           in: query
+          description: This parameter accepts the order in which the data could be retreived. The possible list is mentioned below.
           required: false
           schema: 
             type: string
             enum:
               - type
               - name
-              - identifier 
-              - state
+              - siteIdentifier 
         - name: sort
           in: query
           required: false
@@ -931,10 +914,11 @@ paths:
         - name: lastUpdatedDate
           in:   query
           required: false
+          description: This parameter accepts the date timestamp to retrieve the data which has changed since. This is the key parameter for Change Data Capture (CDC)
           schema:
             type: string
             format: date-time
-            description: Returns only Sites that have been updated since this timestamp. This is the key parameter for Change Data Capture (CDC)
+            
       responses:
         '200':
           description: OK - Successful operation
@@ -955,7 +939,7 @@ paths:
                         type: integer
                         enum: [BadRequest]
               examples:
-                invalidRequestSchema: 
+                invalid-request-schema: 
                   $ref: './error.yaml#/components/examples/invalid-request-schema'
         '401':
           description: Unauthorised
@@ -970,218 +954,8 @@ paths:
                         type: integer
                         enum: [Unauthorised]
               examples:
-                unAuthorised: 
+                unauthorised: 
                   $ref: './error.yaml#/components/examples/unauthorised'            
-        '403':
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-               allOf:
-                - $ref: './error.yaml#/components/schemas/Errors'
-                - type: object
-                  properties:
-                      status:
-                        type: integer                 
-                        enum: [Forbidden]
-              examples:
-                notFound: 
-                  $ref: './error.yaml#/components/examples/forbidden' 
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: './error.yaml#/components/schemas/Errors'
-                - type: object
-                  properties:
-                      status:
-                        type: integer    
-                        enum: [NotFound]
-              examples:
-                  notFound: 
-                    $ref: './error.yaml#/components/examples/not-found' 
-        '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: './error.yaml#/components/schemas/Errors'
-                - type: object
-                  properties:
-                      status:
-                        type: integer    
-                        enum: [ServerError]
-              examples:
-                    serverError:
-                      $ref: './error.yaml#/components/examples/server-error' 
-        '503':
-          description: Service Unavailable
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: './error.yaml#/components/schemas/Errors'
-                - type: object
-                  properties:
-                      status:
-                        type: integer    
-                        enum: [ServiceUnavailable]
-              examples:
-                    serverUnavailable:
-                      $ref: './error.yaml#/components/examples/service-unavailable'
-
-  
-
-  /api/sites/count:
-    get:
-      tags:
-          - site
-      summary: Retrieve the total count of all available sites.
-      description: The endpoint returns the total count of all available sites.
-      operationId: getSiteCount
-      parameters:
-        - name: lastUpdatedDate
-          in:   query
-          required: false
-          schema:
-            type: string
-            format: date-time
-            description: Returns the total count of all available sites that have been updated since this timestamp. This is the key parameter for Change Data Capture (CDC)
-      responses:
-        '200':
-          description: OK - Successful response with the site count
-          content:
-            application/json:
-              schema:
-                type: integer
-                properties:
-                    count:
-                      type: integer
-                      format: int64
-                      example: 47000
-                      description: The total number of sites.
-        '400':
-          description: Invalid request
-          content:
-            application/json:
-              schema:
-               allOf:
-                 - $ref: './error.yaml#/components/schemas/Errors'
-                 - type: object
-                   properties:
-                      status:
-                        type: integer
-                        enum: [BadRequest]
-              examples:
-                invalidRequestSchema: 
-                  $ref: './error.yaml#/components/examples/invalidRequestSchema'   
-        '403':
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-               allOf:
-                - $ref: './error.yaml#/components/schemas/Errors'
-                - type: object
-                  properties:
-                      status:
-                        type: integer                 
-                        enum: [Forbidden]
-              examples:
-                notFound: 
-                  $ref: './error.yaml#/components/examples/forbidden' 
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: './error.yaml#/components/schemas/Errors'
-                - type: object
-                  properties:
-                      status:
-                        type: integer    
-                        enum: [NotFound]
-              examples:
-                  notFound: 
-                    $ref: './error.yaml#/components/examples/notFound' 
-        '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: './error.yaml#/components/schemas/Errors'
-                - type: object
-                  properties:
-                      status:
-                        type: integer    
-                        enum: [ServerError]
-              examples:
-                    serverError:
-                      $ref: './error.yaml#/components/examples/serverError' 
-        '503':
-          description: Service Unavailable
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: './error.yaml#/components/schemas/Errors'
-                - type: object
-                  properties:
-                      status:
-                        type: integer    
-                        enum: [ServiceUnavailable]
-              examples:
-                    serverUnavailable:
-                      $ref: './error.yaml#/components/examples/serviceUnavailable'  
-  
-  /api/sites/{id}:
-    get:
-      tags:
-          - site
-      summary: Retrieve a site detailed information.
-      description: The endpoint returns an object containing the requested site detailed information.
-      operationId: getSiteById
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: assuranceHistoryFlag
-          in: query
-          required: false
-          description: Set true to return the sites assurance history.
-          schema:
-            type: boolean
-            default: false
-      responses:
-        '200':
-          description: OK - Successful request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SiteDetail'
-        '400':
-          description: Invalid request
-          content:
-            application/json:
-              schema:
-               allOf:
-                 - $ref: './error.yaml#/components/schemas/Errors'
-                 - type: object
-                   properties:
-                      status:
-                        type: integer
-                        enum: [BadRequest]
-              examples:
-                invalid-request-schema: 
-                  $ref: './error.yaml#/components/examples/invalidRequestSchema'   
         '403':
           description: Forbidden
           content:
@@ -1211,7 +985,7 @@ paths:
                         enum: [NotFound]
               examples:
                   not-found: 
-                    $ref: './error.yaml#/components/examples/notFound' 
+                    $ref: './error.yaml#/components/examples/not-found' 
         '500':
           description: Internal Server Error
           content:
@@ -1226,7 +1000,7 @@ paths:
                         enum: [ServerError]
               examples:
                     server-error:
-                      $ref: './error.yaml#/components/examples/serverError' 
+                      $ref: './error.yaml#/components/examples/server-error' 
         '503':
           description: Service Unavailable
           content:
@@ -1240,8 +1014,243 @@ paths:
                         type: integer    
                         enum: [ServiceUnavailable]
               examples:
+                    service-unavailable:
+                      $ref: './error.yaml#/components/examples/service-unavailable'
+
+  
+
+  /api/sites/count:
+    get:
+      tags:
+          - site
+      summary: Retrieve the total count of all available sites.
+      description: The endpoint returns the total count of all available sites.
+      operationId: getSiteCount
+      parameters:
+        - name: lastUpdatedDate
+          in:   query
+          required: false
+          description: This parameter accepts the date timestamp to retrieve the data which has changed since. This is the key parameter for Change Data Capture (CDC)
+          schema:
+            type: string
+            format: date-time
+            
+      responses:
+        '200':
+          description: OK - Successful response with the site count
+          content:
+            application/json:
+              schema:
+                type: integer
+                properties:
+                    count:
+                      type: integer
+                      format: int64
+                      example: "47000"
+                      description: The total number of sites.
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+               allOf:
+                 - $ref: './error.yaml#/components/schemas/Errors'
+                 - type: object
+                   properties:
+                      status:
+                        type: integer
+                        enum: [BadRequest]
+              examples:
+                invalid-request-schema: 
+                  $ref: './error.yaml#/components/examples/invalid-request-schema'
+        '401':
+          description: Unauthorised
+          content:
+            application/json:
+              schema:
+               allOf:
+                 - $ref: './error.yaml#/components/schemas/Errors'
+                 - type: object
+                   properties:
+                      status:
+                        type: integer
+                        enum: [Unauthorised]
+              examples:
+                unauthorised: 
+                  $ref: './error.yaml#/components/examples/unauthorised'            
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+               allOf:
+                - $ref: './error.yaml#/components/schemas/Errors'
+                - type: object
+                  properties:
+                      status:
+                        type: integer                 
+                        enum: [Forbidden]
+              examples:
+                not-found: 
+                  $ref: './error.yaml#/components/examples/forbidden' 
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: './error.yaml#/components/schemas/Errors'
+                - type: object
+                  properties:
+                      status:
+                        type: integer    
+                        enum: [NotFound]
+              examples:
+                  not-found: 
+                    $ref: './error.yaml#/components/examples/not-found' 
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: './error.yaml#/components/schemas/Errors'
+                - type: object
+                  properties:
+                      status:
+                        type: integer    
+                        enum: [ServerError]
+              examples:
                     server-error:
-                      $ref: './error.yaml#/components/examples/serviceUnavailable'
+                      $ref: './error.yaml#/components/examples/server-error' 
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: './error.yaml#/components/schemas/Errors'
+                - type: object
+                  properties:
+                      status:
+                        type: integer    
+                        enum: [ServiceUnavailable]
+              examples:
+                    service-unavailable:
+                      $ref: './error.yaml#/components/examples/service-unavailable'  
+  
+  /api/sites/{id}:
+    get:
+      tags:
+          - site
+      summary: Retrieve a site detailed information.
+      description: The endpoint returns an object containing the requested site detailed information.
+      operationId: getSiteById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: This parameter accepts the id of the site.
+          schema:
+            type: string
+            format: uuid        
+      responses:
+        '200':
+          description: OK - Successful request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteDetail'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+               allOf:
+                 - $ref: './error.yaml#/components/schemas/Errors'
+                 - type: object
+                   properties:
+                      status:
+                        type: integer
+                        enum: [BadRequest]
+              examples:
+                invalid-request-schema: 
+                  $ref: './error.yaml#/components/examples/invalid-request-schema'
+        '401':
+          description: Unauthorised
+          content:
+            application/json:
+              schema:
+               allOf:
+                 - $ref: './error.yaml#/components/schemas/Errors'
+                 - type: object
+                   properties:
+                      status:
+                        type: integer
+                        enum: [Unauthorised]
+              examples:
+                unauthorised: 
+                  $ref: './error.yaml#/components/examples/unauthorised'            
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+               allOf:
+                - $ref: './error.yaml#/components/schemas/Errors'
+                - type: object
+                  properties:
+                      status:
+                        type: integer                 
+                        enum: [Forbidden]
+              examples:
+                not-found: 
+                  $ref: './error.yaml#/components/examples/forbidden' 
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: './error.yaml#/components/schemas/Errors'
+                - type: object
+                  properties:
+                      status:
+                        type: integer    
+                        enum: [NotFound]
+              examples:
+                  not-found: 
+                    $ref: './error.yaml#/components/examples/not-found' 
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: './error.yaml#/components/schemas/Errors'
+                - type: object
+                  properties:
+                      status:
+                        type: integer    
+                        enum: [ServerError]
+              examples:
+                    server-error:
+                      $ref: './error.yaml#/components/examples/server-error' 
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: './error.yaml#/components/schemas/Errors'
+                - type: object
+                  properties:
+                      status:
+                        type: integer    
+                        enum: [ServiceUnavailable]
+              examples:
+                    service-unavailable:
+                      $ref: './error.yaml#/components/examples/service-unavailable'
     
           
   /api/sites/{id}/parties:
@@ -1277,17 +1286,18 @@ paths:
         - name: id
           in: path
           required: true
+          description: 'The id of the site to retrieve'
           schema:
             type: string
-            format: uuid      
-          description: 'The id of the site to retrieve'
+            format: uuid                 
         - name: pid
           in: path
           required: true
+          description: 'The id of the site party to retrieve'
           schema:
             type: string
             format: uuid      
-          description: 'The id of the site party to retrieve'
+          
       responses:
         '200':
           description: 'OK - successful'
@@ -1296,70 +1306,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Party'
         '404':
-          description: 'Not Found '
-
-   
-  /api/sites/{id}/associatedsites:
-    get:
-      tags:
-        - site
-      summary: 'Retrieve a list of a sites associated sites'
-      description: 'This endpoint can be used to retrieve associated sites'
-      operationId: 'getSiteAssociatedSites'
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: lastUpdatedDate
-          in:   query
-          required: false
-          schema:
-            type: string
-            format: date-time
-            description: Returns only AssociatedSites that have been updated since this timestamp. This is the key parameter for Change Data Capture (CDC)
-      responses:
-        '200':
-          description: 'OK - successful'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AssociatedSite'
-
-    
-  /api/sites/{id}/associatedsites/{aid}:
-    get:
-      tags:
-        - site
-      summary: 'Get a sites associated site'
-      description: 'Returns a sites associated site'
-      operationId: getSiteAssociatedSiteById
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid      
-          description: 'The id of the site to retrieve'
-        - name: aid
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid      
-          description: 'The id of the associated site to retrieve'
-      responses:
-        '200':
-          description: 'OK - successful'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AssociatedSite'
-        '404':
-          description: 'Not Found '
-          
+          description: 'Not Found '         
           
   /api/sites/{id}/species:
     get:
@@ -1394,17 +1341,19 @@ paths:
         - name: id
           in: path
           required: true
+          description: 'The id of the site to retrieve'
           schema:
             type: string
             format: uuid      
-          description: 'The id of the site to retrieve'
+          
         - name: sid
           in: path
           required: true
+          description: 'The id of the site species to retrieve'
           schema:
             type: string
             format: uuid      
-          description: 'The id of the site species to retrieve'
+          
       responses:
         '200':
           description: 'OK - successful'
@@ -1448,17 +1397,19 @@ paths:
         - name: id
           in: path
           required: true
+          description: 'The id of the site to retrieve'
           schema:
             type: string
             format: uuid      
-          description: 'The id of the site to retrieve'
+          
         - name: mid
           in: path
           required: true
+          description: 'The id of the site marks to retrieve'
           schema:
             type: string
             format: uuid      
-          description: 'The id of the site marks to retrieve'
+          
       responses:
         '200':
           description: 'OK - successful'
@@ -1485,10 +1436,11 @@ paths:
         - name: lastUpdatedDate
           in:   query
           required: false
+          description: This parameter accepts the date timestamp to retrieve the data which has changed since. This is the key parameter for Change Data Capture (CDC)
           schema:
             type: string
             format: date-time
-            description: Returns only Activities that have been updated since this timestamp. This is the key parameter for Change Data Capture (CDC)
+            
       responses:
         '200':
           description: 'OK - successful'
@@ -1509,17 +1461,19 @@ paths:
         - name: id
           in: path
           required: true
+          description: 'The id of the site to retrieve'
           schema:
             type: string
             format: uuid      
-          description: 'The id of the site to retrieve'
+          
         - name: aid
           in: path
           required: true
+          description: 'The id of the activity to retrieve'
           schema:
             type: string
             format: uuid      
-          description: 'The id of the activity to retrieve'
+          
       responses:
         '200':
           description: 'OK - successful'
@@ -1540,10 +1494,11 @@ paths:
         - name: lastUpdatedDate
           in:   query
           required: false
+          description: This parameter accepts the date timestamp to retrieve the data which has changed since. This is the key parameter for Change Data Capture (CDC)
           schema:
             type: string
             format: date-time
-            description: Returns only SiteTypes that have been updated since this timestamp. This is the key parameter for Change Data Capture (CDC)
+            
       tags:
         - site reference
       responses:
@@ -1558,17 +1513,16 @@ paths:
           description: Invalid request 
         '500':
           description: Internal server error
-
-
-  /api/sitetypes/{type}:
+          
+  /api/sitetypes/{id}:
     get:
       tags:
           - site reference
-      summary: Retrieve a site types detailed information.
-      description: The endpoint returns an object containing the requested site type and any relations information.
+      summary: Retrieve a sitetype detailed information.
+      description: The endpoint returns an object containing the requested sitetype and any relations information.
       operationId: getSiteTypeById
       parameters:
-        - name: type
+        - name: id
           in: path
           required: true
           schema:
@@ -1579,7 +1533,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SiteTypeResponse'
+                $ref: '#/components/schemas/SiteType'
         '400':
           description: Invalid request
           
@@ -1604,10 +1558,10 @@ paths:
         - name: lastUpdatedDate
           in:   query
           required: false
+          description: This parameter accepts the date timestamp to retrieve the data which has changed since. This is the key parameter for Change Data Capture (CDC)
           schema:
             type: string
             format: date-time
-            description: Returns only SpeciesTypes that have been updated since this timestamp. This is the key parameter for Change Data Capture (CDC)
       tags:
         - site reference
       responses:
@@ -1624,7 +1578,7 @@ paths:
           description: Internal server error
 
 
-  /api/species/{code}:
+  /api/species/{id}:
     get:
       tags:
           - site reference
@@ -1632,7 +1586,7 @@ paths:
       description: The endpoint returns an object containing the requested species type and any relations information.
       operationId: getSpeciesTypeById
       parameters:
-        - name: code
+        - name: id
           in: path
           required: true
           schema:
@@ -1676,10 +1630,11 @@ paths:
         - name: lastUpdatedDate
           in:   query
           required: false
+          description: This parameter accepts the date timestamp to retrieve the data which has changed since. This is the key parameter for Change Data Capture (CDC)
           schema:
             type: string
             format: date-time
-            description: Returns only locations that have been updated since this timestamp. This is the key parameter for Change Data Capture (CDC)
+            
       responses:
         '200':
           description: OK - successful
@@ -1714,4 +1669,135 @@ paths:
         '404':
           description: Not found
         '500':
-          description: 'Internal Server Error'              
+          description: 'Internal Server Error' 
+
+
+  /api/roles:
+        get:
+          summary: Retrieve all roles 
+          description: Get a list of all available roles 
+          operationId: getRoles
+          parameters:
+            - name: lastUpdatedDate
+              in:   query
+              required: false
+              description: This parameter accepts the date timestamp to retrieve the data which has changed since. This is the key parameter for Change Data Capture (CDC)
+              schema:
+                type: string
+                format: date-time
+                
+          tags:
+            - site reference
+          responses:
+            '200':
+              description: OK - Successful response
+              content:
+                application/json:
+                  schema:
+                     items:
+                      $ref: '#/components/schemas/RoleList'
+            '400':
+              description: Invalid request 
+            '500':
+              description: Internal server error
+
+
+  /api/roles/{id}:
+    get:
+      tags:
+          - site reference
+      summary: Retrieve a role detailed information based on its identifier.
+      description: The endpoint returns an object containing the requested role and any relations information.
+      operationId: getRoleById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK - Successful request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '400':
+          description: Invalid request
+          
+        '403':
+          description: Forbidden
+          
+        '404':
+          description: Not Found
+          
+        '500':
+          description: Internal Server Error
+          
+        '503':
+          description: Service Unavailable   
+
+  /api/activities:
+        get:
+          summary: Retrieve all Activities 
+          description: Get a list of all activities 
+          operationId: getActivities
+          parameters:
+            - name: lastUpdatedDate
+              in:   query
+              required: false
+              description: This parameter accepts the date timestamp to retrieve the data which has changed since. This is the key parameter for Change Data Capture (CDC)
+              schema:
+                type: string
+                format: date-time
+                
+          tags:
+            - site reference
+          responses:
+            '200':
+              description: OK - Successful response
+              content:
+                application/json:
+                  schema:
+                     items:
+                      $ref: '#/components/schemas/SiteActivityList'
+            '400':
+              description: Invalid request 
+            '500':
+              description: Internal server error
+
+
+  /api/activities/{id}:
+    get:
+      tags:
+          - site reference
+      summary: Retrieve a activities detailed information based on its identifier.
+      description: The endpoint returns an object containing the requested activity and any relations information.
+      operationId: getActivitiesById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK - Successful request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteActivity'
+        '400':
+          description: Invalid request
+          
+        '403':
+          description: Forbidden
+          
+        '404':
+          description: Not Found
+          
+        '500':
+          description: Internal Server Error
+          
+        '503':
+          description: Service Unavailable          
