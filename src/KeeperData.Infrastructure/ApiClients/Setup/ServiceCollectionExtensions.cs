@@ -18,6 +18,10 @@ public static class ServiceCollectionExtensions
 
         if (apiClientConfigurations == null) return;
 
+        services.AddSingleton(apiClientConfigurations);
+
+        services.AddScoped<IDataBridgeClient, DataBridgeClient>();
+
         var healthChecksBuilder = services.AddHealthChecks();
 
         foreach (var (clientName, config) in apiClientConfigurations)

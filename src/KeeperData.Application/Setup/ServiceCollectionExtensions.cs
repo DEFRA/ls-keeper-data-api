@@ -1,5 +1,11 @@
 using FluentValidation;
+using KeeperData.Application.Orchestration;
+using KeeperData.Application.Orchestration.Sam;
+using KeeperData.Application.Orchestration.Sam.Steps;
+using KeeperData.Application.Queries.Sites.Adapters;
+using KeeperData.Core.Attributes;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 
 namespace KeeperData.Application.Setup;
 
@@ -14,5 +20,40 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IRequestExecutor, RequestExecutor>();
         services.AddValidatorsFromAssemblyContaining<IRequestExecutor>();
+
+        services.AddScoped<SitesQueryAdapter>();
+
+        RegisterOrchestrators(services, typeof(SamCphHoldingImportedOrchestrator).Assembly);
+        RegisterSteps(services, typeof(SamRawAggregationStep).Assembly);
+    }
+
+    public static void RegisterOrchestrators(IServiceCollection services, Assembly assembly)
+    {
+        var orchestratorTypes = assembly.GetTypes()
+            .Where(t => !t.IsAbstract && !t.IsInterface)
+            .Where(t => t.BaseType?.IsGenericType == true &&
+                        t.BaseType.GetGenericTypeDefinition() == typeof(ImportOrchestrator<>));
+
+        foreach (var orchestrator in orchestratorTypes)
+        {
+            services.AddScoped(orchestrator);
+        }
+    }
+
+    public static void RegisterSteps(IServiceCollection services, Assembly assembly)
+    {
+        var stepTypes = assembly.GetTypes()
+            .Where(t => !t.IsAbstract && !t.IsInterface)
+            .SelectMany(t => t.GetInterfaces()
+                .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IImportStep<>))
+                .Select(i => new { Implementation = t, Service = i }));
+
+        var orderedSteps = stepTypes
+            .OrderBy(t => t.Implementation.GetCustomAttribute<StepOrderAttribute>()?.Order ?? int.MaxValue);
+
+        foreach (var step in orderedSteps)
+        {
+            services.AddScoped(step.Service, step.Implementation);
+        }
     }
 }

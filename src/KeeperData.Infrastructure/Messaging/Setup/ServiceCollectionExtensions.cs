@@ -68,6 +68,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IMessageSerializer<SnsEnvelope>, SnsEnvelopeSerializer>();
 
         services.AddSingleton<IUnwrappedMessageSerializer<PlaceholderMessage>, PlaceholderMessageSerializer>();
+        services.AddSingleton<IUnwrappedMessageSerializer<CphHoldingImportedMessage>, CphHoldingImportedMessageSerializer>();
     }
 
     private static IServiceCollection AddMessageHandlers(this IServiceCollection services)
