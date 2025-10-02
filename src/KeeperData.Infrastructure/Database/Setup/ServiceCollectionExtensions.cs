@@ -58,29 +58,10 @@ public static class ServiceCollectionExtensions
                 .AddCheck<MongoDbHealthCheck>("mongodb", tags: ["db", "mongo"]);
         }
 
-        var provider = services.BuildServiceProvider();
-        EnsureMongoIndexesAsync(provider).GetAwaiter().GetResult();
+        services.AddHostedService<MongoIndexInitializer>();
     }
 
-    private static void RegisterMongoDbGlobals()
-    {
-        if (!s_mongoSerializersRegistered)
-        {
-            lock (typeof(ServiceCollectionExtensions))
-            {
-                if (!s_mongoSerializersRegistered)
-                {
-                    BsonSerializer.RegisterSerializer(typeof(Guid), new GuidSerializer(GuidRepresentation.Standard));
-                    ConventionRegistry.Register("CamelCase", new ConventionPack { new CamelCaseElementNameConvention() }, _ => true);
-                    s_mongoSerializersRegistered = true;
-
-                    RegisterAllDocumentsFromAssembly(typeof(INestedEntity).Assembly);
-                }
-            }
-        }
-    }
-
-    private static async Task EnsureMongoIndexesAsync(IServiceProvider serviceProvider)
+    public static async Task EnsureMongoIndexesAsync(IServiceProvider serviceProvider)
     {
         var client = serviceProvider.GetRequiredService<IMongoClient>();
         var config = serviceProvider.GetRequiredService<IOptions<MongoConfig>>().Value;
@@ -103,7 +84,25 @@ public static class ServiceCollectionExtensions
         }
     }
 
-    public static void RegisterAllDocumentsFromAssembly(Assembly assembly)
+    private static void RegisterMongoDbGlobals()
+    {
+        if (!s_mongoSerializersRegistered)
+        {
+            lock (typeof(ServiceCollectionExtensions))
+            {
+                if (!s_mongoSerializersRegistered)
+                {
+                    BsonSerializer.RegisterSerializer(typeof(Guid), new GuidSerializer(GuidRepresentation.Standard));
+                    ConventionRegistry.Register("CamelCase", new ConventionPack { new CamelCaseElementNameConvention() }, _ => true);
+                    s_mongoSerializersRegistered = true;
+
+                    RegisterAllDocumentsFromAssembly(typeof(INestedEntity).Assembly);
+                }
+            }
+        }
+    }
+
+    private static void RegisterAllDocumentsFromAssembly(Assembly assembly)
     {
         var documentTypes = assembly.GetTypes()
             .Where(t => t.IsClass && !t.IsAbstract && typeof(INestedEntity).IsAssignableFrom(t));

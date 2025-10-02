@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Moq;
 using System.Net;
@@ -133,10 +134,31 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
 
     private void ConfigureDatabase(IServiceCollection services)
     {
+        var mongoDatabaseMock = new Mock<IMongoDatabase>();
+        var mongoCollectionMock = new Mock<IMongoCollection<BsonDocument>>();
+        var indexManagerMock = new Mock<IMongoIndexManager<BsonDocument>>();
+
+        indexManagerMock
+            .Setup(x => x.CreateManyAsync(It.IsAny<IEnumerable<CreateIndexModel<BsonDocument>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        indexManagerMock
+            .Setup(x => x.CreateManyAsync(It.IsAny<IClientSessionHandle>(), It.IsAny<IEnumerable<CreateIndexModel<BsonDocument>>>(),
+                It.IsAny<CreateManyIndexesOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        mongoCollectionMock
+            .SetupGet(x => x.Indexes)
+            .Returns(indexManagerMock.Object);
+
+        mongoDatabaseMock
+            .Setup(x => x.GetCollection<BsonDocument>(It.IsAny<string>(), It.IsAny<MongoCollectionSettings>()))
+            .Returns(mongoCollectionMock.Object);
+
         MongoClientMock = new Mock<IMongoClient>();
 
         MongoClientMock.Setup(x => x.GetDatabase(It.IsAny<string>(), It.IsAny<MongoDatabaseSettings>()))
-            .Returns(() => new Mock<IMongoDatabase>().Object);
+            .Returns(mongoDatabaseMock.Object);
 
         services.Replace(new ServiceDescriptor(typeof(IMongoClient), MongoClientMock.Object));
     }
