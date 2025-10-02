@@ -1,5 +1,4 @@
 using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Moq.Contrib.HttpClient;
 using System.Net;
@@ -17,13 +16,6 @@ public class HealthcheckEndpointTests(AppTestFixture appTestFixture) : IClassFix
     {
         _appTestFixture.DataBridgeApiClientHttpMessageHandlerMock.Reset();
         SetupDataBridgeApiHealthCheckRequest(DataBridgeApiHealthEndpoint, HttpStatusCode.OK);
-
-        var client = _appTestFixture.AppWebApplicationFactory.Services
-            .GetRequiredService<IHttpClientFactory>()
-            .CreateClient("DataBridgeApi");
-
-        Console.WriteLine($"BaseAddress: {client.BaseAddress}");
-
 
         var response = await _appTestFixture.HttpClient.GetAsync("health");
         var responseBody = await response.Content.ReadAsStringAsync();

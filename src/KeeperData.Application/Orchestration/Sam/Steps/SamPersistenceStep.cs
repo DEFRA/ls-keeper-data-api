@@ -1,25 +1,38 @@
+using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents;
+using KeeperData.Core.Documents.Source;
 using KeeperData.Core.Repositories;
 using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Application.Orchestration.Sam.Steps;
 
+[StepOrder(4)]
 public class SamPersistenceStep(
-    IGenericRepository<SiteDocument> siteRepository,
-    IGenericRepository<PartyDocument> partyRepository,
-    ILogger<SamPersistenceStep> logger) 
+    IGenericRepository<SamHoldingDocument> silverHoldingRepository,
+    IGenericRepository<SamPartyDocument> silverPartyRepository,
+    IGenericRepository<SiteDocument> goldSiteRepository,
+    IGenericRepository<PartyDocument> goldPartyRepository,
+    ILogger<SamPersistenceStep> logger)
     : ImportStepBase<SamHoldingImportContext>(logger)
 {
-    private readonly IGenericRepository<SiteDocument> _siteRepository = siteRepository;
-    private readonly IGenericRepository<PartyDocument> _partyRepository = partyRepository;
+    private readonly IGenericRepository<SamHoldingDocument> _silverHoldingRepository = silverHoldingRepository;
+    private readonly IGenericRepository<SamPartyDocument> _silverPartyRepository = silverPartyRepository;
+    private readonly IGenericRepository<SiteDocument> _goldSiteRepository = goldSiteRepository;
+    private readonly IGenericRepository<PartyDocument> _goldPartyRepository = goldPartyRepository;
 
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
     {
+        if (context.SilverHolding is not null)
+            await _silverHoldingRepository.BulkUpsertAsync([context.SilverHolding], cancellationToken);
+
+        if (context.SilverParties is not null)
+            await _silverPartyRepository.BulkUpsertAsync(context.SilverParties, cancellationToken);
+
         if (context.GoldSite is not null)
-            await _siteRepository.BulkUpsertAsync([context.GoldSite], cancellationToken);
+            await _goldSiteRepository.BulkUpsertAsync([context.GoldSite], cancellationToken);
 
         if (context.GoldParties is not null)
-            await _partyRepository.BulkUpsertAsync(context.GoldParties, cancellationToken);
+            await _goldPartyRepository.BulkUpsertAsync(context.GoldParties, cancellationToken);
 
         await Task.CompletedTask;
     }

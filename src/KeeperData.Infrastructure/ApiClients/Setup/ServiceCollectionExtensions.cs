@@ -14,15 +14,17 @@ public static class ServiceCollectionExtensions
     {
         var apiClientConfigurations = configuration
             .GetSection("ApiClients")
-            .Get<ApiClientsConfiguration>();
+            .Get<Dictionary<string, ApiClientConfiguration>>();
 
         if (apiClientConfigurations == null) return;
 
         services.AddSingleton(apiClientConfigurations);
 
+        services.AddScoped<IDataBridgeClient, DataBridgeClient>();
+
         var healthChecksBuilder = services.AddHealthChecks();
 
-        foreach (var (clientName, config) in apiClientConfigurations.Clients)
+        foreach (var (clientName, config) in apiClientConfigurations)
         {
             services.RegisterNamedHttpClient(
                 clientName: clientName,

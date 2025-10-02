@@ -25,9 +25,7 @@ public class GenericRepository<T> : IGenericRepository<T>
         _unitOfWork = unitOfWork;
     }
 
-    private IClientSessionHandle? Session => _unitOfWork?.Session?.IsInTransaction == true
-        ? _unitOfWork.Session
-        : null;
+    private IClientSessionHandle? Session => _unitOfWork?.Session;
 
     public async Task<T> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {

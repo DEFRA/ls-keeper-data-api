@@ -1,8 +1,10 @@
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using KeeperData.Core.Attributes;
 using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Application.Orchestration.Sam.Steps;
 
+[StepOrder(1)]
 public class SamRawAggregationStep : ImportStepBase<SamHoldingImportContext>
 {
     private readonly IHttpClientFactory _httpClientFactory;
@@ -24,9 +26,15 @@ public class SamRawAggregationStep : ImportStepBase<SamHoldingImportContext>
         // Make API calls using _httpClient
 
         // Construct Raw model
-        context.Raw = new SamCphHolding
+        context.RawHolding = new SamCphHolding
         {
         };
+
+        context.RawHolders = [];
+
+        context.RawHerds = [];
+
+        context.RawParties = [];
 
         await Task.CompletedTask;
     }

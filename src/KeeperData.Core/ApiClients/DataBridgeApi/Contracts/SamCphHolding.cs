@@ -24,6 +24,4 @@ public class SamCphHolding
 
     public string? FACILITY_BUSINESS_ACTIVITY_CODE { get; set; }
     public string? FACILITY_TYPE_CODE { get; set; }
-
-    public List<SamCphHolder> HOLDERS { get; private set; } = [];
 }
