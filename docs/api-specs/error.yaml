@@ -1,12 +1,26 @@
 ---
-openapi: '3.0.3'
+openapi: 3.0.3
 info:
-  title: 'ProblemDetails'
-  description: "\nThe `ProblemDetails` object provides detailed information about an errors that occurred during an API call execution. \n\nThis problem object conforms to the [RFC9457](https://www.rfc-editor.org/info/rfc9457) (formerly [RFC7807](https://tools.ietf.org/html/rfc7807)).\n\nThe object is extended with the following properties:\n\n - `errors` - an array of errors providing contextual information on the root cause of the problem\n\n The `ProblemDetails` referenced by this domain utilize the [SmartBear Problems Registry](https://problems-registry.smartbear.com/).\n"
+  title: ProblemDetails 
+  description: |-
+    The ProblemDetails object provides detailed information about an errors that occurred during an API call execution. 
+    
+    This problem object :
+    
+    * **conforms** to the [RFC9457](https://www.rfc-editor.org/info/rfc9457) (formerly [RFC7807](https://tools.ietf.org/html/rfc7807)).
+    
+    * is **extended** with the following properties:
+    
+        * **errors** - an array of errors providing contextual information on the root cause of the problem.
+    
+    
+    The ProblemDetails referenced by this domain utilize the [SmartBear Problems Registry](https://problems-registry.smartbear.com/).
+           
   version: '1.0.0'
 components:
   schemas:
-           
+    
+      
     ProblemDetails:
       type: 'object'
       properties:
