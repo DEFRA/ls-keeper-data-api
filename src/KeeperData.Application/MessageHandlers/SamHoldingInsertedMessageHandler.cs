@@ -1,17 +1,17 @@
 using KeeperData.Application.Orchestration.Sam.Inserts;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
-using KeeperData.Core.Messaging.Contracts.V1;
+using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Serializers;
 
 namespace KeeperData.Application.MessageHandlers;
 
-public class SamCphHoldingImportedMessageHandler(SamHoldingInsertedOrchestrator orchestrator,
-  IUnwrappedMessageSerializer<SamCphHoldingImportedMessage> serializer)
-  : IMessageHandler<SamCphHoldingImportedMessage>
+public class SamHoldingInsertedMessageHandler(SamHoldingInsertedOrchestrator orchestrator,
+  IUnwrappedMessageSerializer<SamHoldingInsertedMessage> serializer)
+  : IMessageHandler<SamHoldingInsertedMessage>
 {
-    private readonly IUnwrappedMessageSerializer<SamCphHoldingImportedMessage> _serializer = serializer;
+    private readonly IUnwrappedMessageSerializer<SamHoldingInsertedMessage> _serializer = serializer;
     private readonly SamHoldingInsertedOrchestrator _orchestrator = orchestrator;
 
     public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)

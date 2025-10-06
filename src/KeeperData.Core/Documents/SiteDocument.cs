@@ -12,6 +12,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 {
     [BsonId]
     public required string Id { get; set; }
+    public int LastUpdatedBatchId { get; set; }
     public DateTime LastUpdatedDate { get; set; }
     public string Type { get; set; } = default!;
     public string Name { get; set; } = default!;
@@ -24,6 +25,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     public static SiteDocument FromDomain(Site m) => new()
     {
         Id = m.Id,
+        LastUpdatedBatchId = m.LastUpdatedBatchId,
         LastUpdatedDate = m.LastUpdatedDate,
         Type = m.Type,
         Name = m.Name,
@@ -37,6 +39,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     {
         var site = new Site(
             Id,
+            LastUpdatedBatchId,
             LastUpdatedDate,
             Type,
             Name,

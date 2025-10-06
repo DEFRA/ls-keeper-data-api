@@ -9,6 +9,7 @@ namespace KeeperData.Core.Documents.Silver;
 public class SamPartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 {
     public string Id { get; set; } = string.Empty;
+    public int LastUpdatedBatchId { get; set; }
     public string PartyId { get; set; } = string.Empty;
     public string? LandlineNumber { get; set; }
     public string? MobileNumber { get; set; }

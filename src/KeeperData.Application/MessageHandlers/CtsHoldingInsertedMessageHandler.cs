@@ -1,17 +1,17 @@
 using KeeperData.Application.Orchestration.Cts.Inserts;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
-using KeeperData.Core.Messaging.Contracts.V1;
+using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Serializers;
 
 namespace KeeperData.Application.MessageHandlers;
 
-public class CtsCphHoldingImportedMessageHandler(CtsHoldingInsertedOrchestrator orchestrator,
-  IUnwrappedMessageSerializer<CtsCphHoldingImportedMessage> serializer)
-  : IMessageHandler<CtsCphHoldingImportedMessage>
+public class CtsHoldingInsertedMessageHandler(CtsHoldingInsertedOrchestrator orchestrator,
+  IUnwrappedMessageSerializer<CtsHoldingInsertedMessage> serializer)
+  : IMessageHandler<CtsHoldingInsertedMessage>
 {
-    private readonly IUnwrappedMessageSerializer<CtsCphHoldingImportedMessage> _serializer = serializer;
+    private readonly IUnwrappedMessageSerializer<CtsHoldingInsertedMessage> _serializer = serializer;
     private readonly CtsHoldingInsertedOrchestrator _orchestrator = orchestrator;
 
     public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)

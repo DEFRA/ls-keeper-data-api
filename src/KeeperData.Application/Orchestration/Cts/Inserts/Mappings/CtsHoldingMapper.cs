@@ -9,6 +9,7 @@ public static class CtsHoldingMapper
     {
         return new CtsHoldingDocument
         {
+            LastUpdatedBatchId = raw.BATCH_ID,
             CountyParishHoldingNumber = raw.LID_FULL_IDENTIFIER
         };
     }

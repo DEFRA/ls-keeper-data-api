@@ -238,5 +238,6 @@ public class GenericRepositoryTests
 public class TestEntity : IEntity
 {
     public string Id { get; set; } = default!;
+    public int LastUpdatedBatchId { get; set; }
     public string Name { get; set; } = default!;
 }

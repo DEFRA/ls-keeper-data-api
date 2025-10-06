@@ -9,6 +9,7 @@ namespace KeeperData.Core.Documents.Silver;
 public class CtsPartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 {
     public string Id { get; set; } = string.Empty;
+    public int LastUpdatedBatchId { get; set; }
     public string PartyId { get; set; } = string.Empty;
     public bool Deleted { get; set; }
 

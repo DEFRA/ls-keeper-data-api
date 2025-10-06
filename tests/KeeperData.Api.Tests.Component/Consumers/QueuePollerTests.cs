@@ -5,7 +5,7 @@ using KeeperData.Api.Tests.Component.Consumers.Helpers;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Messaging.Contracts;
-using KeeperData.Core.Messaging.Contracts.V1;
+using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -42,7 +42,7 @@ public class QueuePollerTests
 
         var factory = new AppWebApplicationFactory();
         factory.OverrideServiceAsSingleton(amazonSqsMock.Object);
-        factory.OverrideServiceAsTransient<IMessageHandler<SamCphHoldingImportedMessage>, TestSamCphHoldingImportedMessage>();
+        factory.OverrideServiceAsTransient<IMessageHandler<SamHoldingInsertedMessage>, TestSamCphHoldingImportedMessage>();
 
         using var scope = factory.Services.CreateAsyncScope();
         var queuePoller = scope.ServiceProvider.GetRequiredService<IQueuePoller>();
@@ -52,7 +52,7 @@ public class QueuePollerTests
         await queuePoller.StartAsync(cts.Token);
 
         var (MessageId, Payload) = await queuePollerObserver.MessageHandled;
-        var payloadAsType = Payload as SamCphHoldingImportedMessage;
+        var payloadAsType = Payload as SamHoldingInsertedMessage;
 
         MessageId.Should().NotBeNull().And.Be(messageId);
         payloadAsType.Should().NotBeNull();
@@ -87,7 +87,7 @@ public class QueuePollerTests
 
         var factory = new AppWebApplicationFactory();
         factory.OverrideServiceAsSingleton(amazonSqsMock.Object);
-        factory.OverrideServiceAsTransient<IMessageHandler<SamCphHoldingImportedMessage>, TestSamCphHoldingImportedMessage>();
+        factory.OverrideServiceAsTransient<IMessageHandler<SamHoldingInsertedMessage>, TestSamCphHoldingImportedMessage>();
 
         using var scope = factory.Services.CreateAsyncScope();
         var queuePoller = scope.ServiceProvider.GetRequiredService<IQueuePoller>();
@@ -97,7 +97,7 @@ public class QueuePollerTests
         await queuePoller.StartAsync(cts.Token);
 
         var (MessageId, Payload) = await queuePollerObserver.MessageHandled;
-        var payloadAsType = Payload as SamCphHoldingImportedMessage;
+        var payloadAsType = Payload as SamHoldingInsertedMessage;
 
         MessageId.Should().NotBeNull().And.Be(messageId);
         payloadAsType.Should().NotBeNull();
@@ -126,7 +126,7 @@ public class QueuePollerTests
             .ReturnsAsync(receiveMessageResponseArgs)
             .ReturnsAsync(new ReceiveMessageResponse { HttpStatusCode = HttpStatusCode.OK, Messages = [] });
 
-        var samCphHoldingImportedMessageMock = new Mock<IMessageHandler<SamCphHoldingImportedMessage>>();
+        var samCphHoldingImportedMessageMock = new Mock<IMessageHandler<SamHoldingInsertedMessage>>();
         samCphHoldingImportedMessageMock
             .Setup(x => x.Handle(It.IsAny<UnwrappedMessage>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new RetryableException("A temporary failure has occurred"));
@@ -169,7 +169,7 @@ public class QueuePollerTests
             .ReturnsAsync(receiveMessageResponseArgs)
             .ReturnsAsync(new ReceiveMessageResponse { HttpStatusCode = HttpStatusCode.OK, Messages = [] });
 
-        var samCphHoldingImportedMessageMock = new Mock<IMessageHandler<SamCphHoldingImportedMessage>>();
+        var samCphHoldingImportedMessageMock = new Mock<IMessageHandler<SamHoldingInsertedMessage>>();
         samCphHoldingImportedMessageMock
             .Setup(x => x.Handle(It.IsAny<UnwrappedMessage>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new NonRetryableException("A permanent failure has occurred"));
@@ -229,7 +229,7 @@ public class QueuePollerTests
         Exception.Message.Should().Be("The given key 'QueuePollerTest' was not present in the dictionary.");
     }
 
-    private static SamCphHoldingImportedMessage GetSamCphHoldingImportedMessage(string identifier) => new()
+    private static SamHoldingInsertedMessage GetSamCphHoldingImportedMessage(string identifier) => new()
     {
         Identifier = identifier
     };
@@ -254,13 +254,13 @@ public class QueuePollerTests
 
     public class QueuePollerTestMessage : MessageType { }
 
-    public class TestSamCphHoldingImportedMessage() : IMessageHandler<SamCphHoldingImportedMessage>
+    public class TestSamCphHoldingImportedMessage() : IMessageHandler<SamHoldingInsertedMessage>
     {
         public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(message, nameof(message));
 
-            var messagePayload = System.Text.Json.JsonSerializer.Deserialize<SamCphHoldingImportedMessage>(message.Payload, JsonDefaults.DefaultOptions);
+            var messagePayload = System.Text.Json.JsonSerializer.Deserialize<SamHoldingInsertedMessage>(message.Payload, JsonDefaults.DefaultOptions);
 
             return await Task.FromResult(messagePayload!);
         }

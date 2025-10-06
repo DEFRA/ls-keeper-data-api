@@ -9,6 +9,7 @@ public static class SamHoldingMapper
     {
         return new SamHoldingDocument
         {
+            LastUpdatedBatchId = raw.BATCH_ID,
             CountyParishHoldingNumber = raw.CPH
         };
     }

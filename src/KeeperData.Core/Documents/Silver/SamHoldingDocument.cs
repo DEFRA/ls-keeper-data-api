@@ -9,6 +9,7 @@ namespace KeeperData.Core.Documents.Silver;
 public class SamHoldingDocument : IEntity, IDeletableEntity, IContainsIndexes
 {
     public string Id { get; set; } = string.Empty;
+    public int LastUpdatedBatchId { get; set; }
     public string CountyParishHoldingNumber { get; set; } = string.Empty;
     public string? AlternativeHoldingIdentifier { get; set; }
     public string? CphTypeIdentifier { get; set; }

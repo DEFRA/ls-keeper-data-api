@@ -16,7 +16,7 @@ public class CreateSiteCommandHandler(IGenericRepository<SiteDocument> repositor
 
     public async Task<TrackedResult<string>> Handle(CreateSiteCommand request, CancellationToken cancellationToken)
     {
-        var site = Site.Create("Holding", request.Name, "England");
+        var site = Site.Create(1, "Holding", request.Name, "England");
         site.AddSiteIdentifier(DateTime.UtcNow, Guid.NewGuid().ToString(), "CPH");
 
         var document = SiteDocument.FromDomain(site);

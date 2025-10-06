@@ -7,10 +7,12 @@ namespace KeeperData.Core.Domain.Sites;
 public class Site : IAggregateRoot
 {
     public string Id { get; private set; }
+    public int LastUpdatedBatchId { get; set; }
     public DateTime LastUpdatedDate { get; private set; }
     public string Type { get; private set; }
     public string Name { get; private set; }
     public string State { get; private set; }
+    public bool Deleted { get; set; }
 
     private readonly List<SiteIdentifier> _identifiers = [];
     public IReadOnlyCollection<SiteIdentifier> Identifiers => _identifiers.AsReadOnly();
@@ -22,6 +24,7 @@ public class Site : IAggregateRoot
 
     public Site(
         string id,
+        int batchId,
         DateTime lastUpdatedDate,
         string type,
         string name,
@@ -29,15 +32,18 @@ public class Site : IAggregateRoot
         Location? location = null)
     {
         Id = id;
+        LastUpdatedBatchId = batchId;
         LastUpdatedDate = lastUpdatedDate;
         Type = type;
         Name = name;
         State = state;
+        Deleted = false;
         _location = location;
         _domainEvents.Add(new SiteCreatedDomainEvent(Id));
     }
 
     public static Site Create(
+        int batchId,
         string type,
         string name,
         string state,
@@ -45,6 +51,7 @@ public class Site : IAggregateRoot
     {
         return new Site(
             Guid.NewGuid().ToString(),
+            batchId,
             DateTime.UtcNow,
             type,
             name,

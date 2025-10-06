@@ -3,8 +3,10 @@ using KeeperData.Application.MessageHandlers;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.Serializers;
-using KeeperData.Core.Messaging.Contracts.V1;
-using KeeperData.Core.Messaging.Contracts.V1.Serializers;
+using KeeperData.Core.Messaging.Contracts.V1.Cts;
+using KeeperData.Core.Messaging.Contracts.V1.Cts.Serializers;
+using KeeperData.Core.Messaging.Contracts.V1.Sam;
+using KeeperData.Core.Messaging.Contracts.V1.Sam.Serializers;
 using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Serializers;
 using KeeperData.Infrastructure.Messaging.Configuration;
@@ -67,18 +69,18 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<IMessageSerializer<SnsEnvelope>, SnsEnvelopeSerializer>();
 
-        services.AddSingleton<IUnwrappedMessageSerializer<SamCphHoldingImportedMessage>, SamCphHoldingImportedMessageSerializer>();
-        services.AddSingleton<IUnwrappedMessageSerializer<CtsCphHoldingImportedMessage>, CtsCphHoldingImportedMessageSerializer>();
+        services.AddSingleton<IUnwrappedMessageSerializer<SamHoldingInsertedMessage>, SamHoldingInsertedMessageSerializer>();
+        services.AddSingleton<IUnwrappedMessageSerializer<CtsHoldingInsertedMessage>, CtsHoldingInsertedMessageSerializer>();
     }
 
     private static IServiceCollection AddMessageHandlers(this IServiceCollection services)
     {
-        services.AddTransient<IMessageHandler<SamCphHoldingImportedMessage>, SamCphHoldingImportedMessageHandler>();
-        services.AddTransient<IMessageHandler<CtsCphHoldingImportedMessage>, CtsCphHoldingImportedMessageHandler>();
+        services.AddTransient<IMessageHandler<SamHoldingInsertedMessage>, SamHoldingInsertedMessageHandler>();
+        services.AddTransient<IMessageHandler<CtsHoldingInsertedMessage>, CtsHoldingInsertedMessageHandler>();
 
         var messageHandlerManager = new InMemoryMessageHandlerManager();
-        messageHandlerManager.AddReceiver<SamCphHoldingImportedMessage, IMessageHandler<SamCphHoldingImportedMessage>>();
-        messageHandlerManager.AddReceiver<CtsCphHoldingImportedMessage, IMessageHandler<CtsCphHoldingImportedMessage>>();
+        messageHandlerManager.AddReceiver<SamHoldingInsertedMessage, IMessageHandler<SamHoldingInsertedMessage>>();
+        messageHandlerManager.AddReceiver<CtsHoldingInsertedMessage, IMessageHandler<CtsHoldingInsertedMessage>>();
 
         services.AddSingleton<IMessageHandlerManager>(messageHandlerManager);
 

@@ -1,14 +1,14 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
-namespace KeeperData.Core.Messaging.Contracts.V1.Serializers;
+namespace KeeperData.Core.Messaging.Contracts.V1.Cts.Serializers;
 
 [ExcludeFromCodeCoverage]
 [JsonSourceGenerationOptions(
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     Converters = []
 )]
-[JsonSerializable(typeof(CtsCphHoldingImportedMessage))]
-public partial class CtsCphHoldingImportedMessageSerializerContext : JsonSerializerContext
+[JsonSerializable(typeof(CtsHoldingInsertedMessage))]
+public partial class CtsHoldingInsertedMessageSerializerContext : JsonSerializerContext
 {
 }
