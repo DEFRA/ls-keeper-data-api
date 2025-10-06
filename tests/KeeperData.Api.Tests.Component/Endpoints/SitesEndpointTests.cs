@@ -39,10 +39,17 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>
         var siteId = Guid.NewGuid();
         var keeperPartyId = Guid.NewGuid();
 
-        var sites = new List<SiteDocument>
+        var site = new SiteDocument
         {
-            new() { Id = siteId.ToString(), Name = "Site A", Type = "Type1", State = "Active", PrimaryIdentifier = "ID1", KeeperPartyIds = [keeperPartyId.ToString()] }
+            Id = siteId.ToString(),
+            Name = "Site A",
+            Type = "Type1",
+            State = "Active",
+            KeeperPartyIds = [keeperPartyId.ToString()]
         };
+        site.Identifiers.Add(new SiteIdentifierDocument { IdentifierId = "test-id-1", Identifier = "ID1", Type = "CPH", LastUpdatedDate = DateTime.UtcNow });
+        var sites = new List<SiteDocument> { site };
+
 
         _sitesRepositoryMock.Setup(r => r.FindAsync(It.IsAny<MongoDB.Driver.FilterDefinition<SiteDocument>>(), It.IsAny<MongoDB.Driver.SortDefinition<SiteDocument>>(), 0, 10, It.IsAny<CancellationToken>()))
             .ReturnsAsync(sites);
@@ -69,11 +76,25 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>
     public async Task GetSites_WithoutParameters_ReturnsDefaultOkResult()
     {
         // Arrange
-        var sites = new List<SiteDocument>
+        var siteA = new SiteDocument
         {
-            new() { Id = Guid.NewGuid().ToString(), Name = "Site B", Type = "Type2", State = "Inactive", PrimaryIdentifier = "ID2" },
-            new() { Id = Guid.NewGuid().ToString(), Name = "Site A", Type = "Type1", State = "Active", PrimaryIdentifier = "ID1" }
+            Id = Guid.NewGuid().ToString(),
+            Name = "Site A",
+            Type = "Type1",
+            State = "Active"
         };
+        siteA.Identifiers.Add(new SiteIdentifierDocument { IdentifierId = "test-id-1", Identifier = "ID1", Type = "CPH", LastUpdatedDate = DateTime.UtcNow });
+
+        var siteB = new SiteDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = "Site B",
+            Type = "Type2",
+            State = "Inactive"
+        };
+        siteB.Identifiers.Add(new SiteIdentifierDocument { IdentifierId = "test-id-2", Identifier = "ID2", Type = "CPH", LastUpdatedDate = DateTime.UtcNow });
+
+        var sites = new List<SiteDocument> { siteB, siteA };
 
         _sitesRepositoryMock.Setup(r => r.FindAsync(It.IsAny<MongoDB.Driver.FilterDefinition<SiteDocument>>(), It.IsAny<MongoDB.Driver.SortDefinition<SiteDocument>>(), 0, 10, It.IsAny<CancellationToken>()))
             .ReturnsAsync(sites);

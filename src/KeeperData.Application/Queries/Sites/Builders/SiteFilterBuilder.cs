@@ -17,12 +17,7 @@ public static class SiteFilterBuilder
 
         if (!string.IsNullOrEmpty(query.SiteIdentifier))
         {
-            var identifierFilter = builder.Or(
-                builder.Eq(x => x.PrimaryIdentifier, query.SiteIdentifier),
-                //This checks nested identifier documents
-                builder.ElemMatch(x => x.Identifiers, identifierDoc => identifierDoc.Identifier == query.SiteIdentifier)
-            );
-            filters.Add(identifierFilter);
+            filters.Add(builder.ElemMatch(x => x.Identifiers, identifierDoc => identifierDoc.Identifier == query.SiteIdentifier));
         }
 
         if (query.Type is { Count: > 0 })

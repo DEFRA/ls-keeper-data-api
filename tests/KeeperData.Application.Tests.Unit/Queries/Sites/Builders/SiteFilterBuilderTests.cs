@@ -5,7 +5,6 @@ using KeeperData.Core.Documents;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
-using MongoDB.Driver;
 
 namespace KeeperData.Application.Tests.Unit.Queries.Sites.Builders;
 
@@ -36,10 +35,7 @@ public class SiteFilterBuilderTests
 
         var expectedBson = BsonDocument.Parse(@"
             {
-                ""$or"": [
-                    { ""primaryIdentifier"": ""CPH123"" },
-                    { ""identifiers"": { ""$elemMatch"": { ""identifier"": ""CPH123"" } } }
-                ]
+                ""identifiers"": { ""$elemMatch"": { ""identifier"": ""CPH123"" } }
             }");
 
         renderedFilter.Should().BeEquivalentTo(expectedBson);
@@ -86,10 +82,7 @@ public class SiteFilterBuilderTests
 
         var expectedBson = BsonDocument.Parse(@"
         {
-            ""$or"" : [
-                { ""primaryIdentifier"" : ""CPH123"" },
-                { ""identifiers"" : { ""$elemMatch"" : { ""identifier"" : ""CPH123"" } } }
-            ],
+            ""identifiers"" : { ""$elemMatch"" : { ""identifier"" : ""CPH123"" } },
             ""type"" : { ""$in"" : [""type1""] }
         }");
 

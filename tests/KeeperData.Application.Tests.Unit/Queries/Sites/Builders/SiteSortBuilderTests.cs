@@ -5,6 +5,7 @@ using KeeperData.Core.Documents;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
+using MongoDB.Driver;
 
 namespace KeeperData.Application.Tests.Unit.Queries.Sites.Builders;
 
@@ -21,7 +22,8 @@ public class SiteSortBuilderTests
     [InlineData("name", "desc", "{ \"name\" : -1 }")]
     [InlineData("type", "asc", "{ \"type\" : 1 }")]
     [InlineData("state", "desc", "{ \"state\" : -1 }")]
-    [InlineData("identifier", "asc", "{ \"primaryIdentifier\" : 1 }")]
+    // Updated sort path for identifier
+    [InlineData("identifier", "asc", "{ \"identifiers.identifier\" : 1 }")]
     [InlineData(null, null, "{ \"name\" : 1 }")]
     [InlineData("name", null, "{ \"name\" : 1 }")]
     [InlineData(null, "desc", "{ \"name\" : -1 }")]
