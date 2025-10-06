@@ -67,16 +67,18 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<IMessageSerializer<SnsEnvelope>, SnsEnvelopeSerializer>();
 
-        services.AddSingleton<IUnwrappedMessageSerializer<PlaceholderMessage>, PlaceholderMessageSerializer>();
-        services.AddSingleton<IUnwrappedMessageSerializer<CphHoldingImportedMessage>, CphHoldingImportedMessageSerializer>();
+        services.AddSingleton<IUnwrappedMessageSerializer<SamCphHoldingImportedMessage>, SamCphHoldingImportedMessageSerializer>();
+        services.AddSingleton<IUnwrappedMessageSerializer<CtsCphHoldingImportedMessage>, CtsCphHoldingImportedMessageSerializer>();
     }
 
     private static IServiceCollection AddMessageHandlers(this IServiceCollection services)
     {
-        services.AddTransient<IMessageHandler<PlaceholderMessage>, PlaceholderMessageHandler>();
+        services.AddTransient<IMessageHandler<SamCphHoldingImportedMessage>, SamCphHoldingImportedMessageHandler>();
+        services.AddTransient<IMessageHandler<CtsCphHoldingImportedMessage>, CtsCphHoldingImportedMessageHandler>();
 
         var messageHandlerManager = new InMemoryMessageHandlerManager();
-        messageHandlerManager.AddReceiver<PlaceholderMessage, IMessageHandler<PlaceholderMessage>>();
+        messageHandlerManager.AddReceiver<SamCphHoldingImportedMessage, IMessageHandler<SamCphHoldingImportedMessage>>();
+        messageHandlerManager.AddReceiver<CtsCphHoldingImportedMessage, IMessageHandler<CtsCphHoldingImportedMessage>>();
 
         services.AddSingleton<IMessageHandlerManager>(messageHandlerManager);
 

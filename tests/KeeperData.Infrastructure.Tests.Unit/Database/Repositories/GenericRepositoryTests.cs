@@ -1,4 +1,3 @@
-using Amazon.S3;
 using FluentAssertions;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;

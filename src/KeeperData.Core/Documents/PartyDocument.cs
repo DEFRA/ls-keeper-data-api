@@ -8,7 +8,7 @@ using MongoDB.Driver;
 namespace KeeperData.Core.Documents;
 
 [CollectionName("parties")]
-public class PartyDocument : IEntity, IContainsIndexes
+public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 {
     [BsonId]
     public required string Id { get; set; }
@@ -16,6 +16,7 @@ public class PartyDocument : IEntity, IContainsIndexes
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public string? Name { get; set; }
+    public bool Deleted { get; set; }
 
     public static PartyDocument FromDomain(Party m) => new()
     {

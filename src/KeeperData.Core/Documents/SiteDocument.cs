@@ -8,7 +8,7 @@ using MongoDB.Driver;
 namespace KeeperData.Core.Documents;
 
 [CollectionName("sites")]
-public class SiteDocument : IEntity, IContainsIndexes
+public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 {
     [BsonId]
     public required string Id { get; set; }
@@ -19,6 +19,7 @@ public class SiteDocument : IEntity, IContainsIndexes
     public List<SiteIdentifierDocument> Identifiers { get; private set; } = [];
     public LocationDocument? Location { get; set; }
     public string PrimaryIdentifier { get; set; } = default!;
+    public bool Deleted { get; set; }
 
     public static SiteDocument FromDomain(Site m) => new()
     {

@@ -1,4 +1,4 @@
-using KeeperData.Application.Orchestration.Sam;
+using KeeperData.Application.Orchestration.Sam.Inserts;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1;
@@ -7,12 +7,12 @@ using KeeperData.Core.Messaging.Serializers;
 
 namespace KeeperData.Application.MessageHandlers;
 
-public class SamCphHoldingImportedMessageHandler(SamCphHoldingImportedOrchestrator orchestrator,
+public class SamCphHoldingImportedMessageHandler(SamHoldingInsertedOrchestrator orchestrator,
   IUnwrappedMessageSerializer<SamCphHoldingImportedMessage> serializer)
   : IMessageHandler<SamCphHoldingImportedMessage>
 {
     private readonly IUnwrappedMessageSerializer<SamCphHoldingImportedMessage> _serializer = serializer;
-    private readonly SamCphHoldingImportedOrchestrator _orchestrator = orchestrator;
+    private readonly SamHoldingInsertedOrchestrator _orchestrator = orchestrator;
 
     public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)
     {
@@ -21,9 +21,10 @@ public class SamCphHoldingImportedMessageHandler(SamCphHoldingImportedOrchestrat
         var messagePayload = _serializer.Deserialize(message)
             ?? throw new NonRetryableException($"Deserialisation failed or the message payload was null for messageType: SamCphHoldingImportedMessage, messageId: {message.MessageId}, correlationId: {message.CorrelationId}");
 
-        var context = new SamHoldingImportContext
+        var context = new SamHoldingInsertContext
         {
-            Cph = messagePayload.Identifier
+            Cph = messagePayload.Identifier,
+            BatchId = messagePayload.BatchId
         };
 
         await _orchestrator.ExecuteAsync(context, cancellationToken);
