@@ -8,17 +8,38 @@ public static class SiteFilterBuilder
     public static FilterDefinition<SiteDocument> Build(GetSitesQuery query)
     {
         var filters = new List<FilterDefinition<SiteDocument>>();
+        var builder = Builders<SiteDocument>.Filter;
 
         if (query.LastUpdatedDate.HasValue)
         {
-            filters.Add(Builders<SiteDocument>.Filter.Gte(
-                x => x.LastUpdatedDate, query.LastUpdatedDate.Value));
+            filters.Add(builder.Gte(x => x.LastUpdatedDate, query.LastUpdatedDate.Value));
         }
 
-        // TODO - Add all filters
+        if (!string.IsNullOrEmpty(query.SiteIdentifier))
+        {
+            var identifierFilter = builder.Or(
+                builder.Eq(x => x.PrimaryIdentifier, query.SiteIdentifier),
+                //This checks nested identifier documents
+                builder.ElemMatch(x => x.Identifiers, identifierDoc => identifierDoc.Identifier == query.SiteIdentifier)
+            );
+            filters.Add(identifierFilter);
+        }
 
-        return filters.Count != 0
-            ? Builders<SiteDocument>.Filter.And(filters)
-            : Builders<SiteDocument>.Filter.Empty;
+        if (query.Type is { Count: > 0 })
+        {
+            filters.Add(builder.In(x => x.Type, query.Type));
+        }
+
+        if (query.SiteId.HasValue)
+        {
+            filters.Add(builder.Eq(x => x.Id, query.SiteId.Value.ToString()));
+        }
+
+        if (query.KeeperPartyId.HasValue)
+        {
+            filters.Add(builder.AnyEq(x => x.KeeperPartyIds, query.KeeperPartyId.Value.ToString()));
+        }
+
+        return filters.Count > 0 ? builder.And(filters) : builder.Empty;
     }
 }

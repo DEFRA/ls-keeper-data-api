@@ -19,6 +19,7 @@ public class SiteDocument : IEntity, IContainsIndexes
     public List<SiteIdentifierDocument> Identifiers { get; private set; } = [];
     public LocationDocument? Location { get; set; }
     public string PrimaryIdentifier { get; set; } = default!;
+    public List<string> KeeperPartyIds { get; set; } = [];
 
     public static SiteDocument FromDomain(Site m) => new()
     {
@@ -78,6 +79,10 @@ public class SiteDocument : IEntity, IContainsIndexes
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("State"),
                 new CreateIndexOptions { Name = "idx_state" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("KeeperPartyIds"),
+                new CreateIndexOptions { Name = "idx_keeperPartyIds" }),
 
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("PrimaryIdentifier"),
