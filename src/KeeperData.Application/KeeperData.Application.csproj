@@ -20,9 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Orchestration\Cts\Deletions\" />
     <Folder Include="Orchestration\Cts\Updates\" />
-    <Folder Include="Orchestration\Sam\Deletions\" />
     <Folder Include="Orchestration\Sam\Updates\" />
   </ItemGroup>
 

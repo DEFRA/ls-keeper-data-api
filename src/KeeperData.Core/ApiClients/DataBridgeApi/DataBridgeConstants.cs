@@ -5,4 +5,6 @@ public static class DataBridgeConstants
     public const string ChangeTypeInsert = "I";
     public const string ChangeTypeUpdate = "U";
     public const string ChangeTypeDelete = "D";
+
+    public const string CphIdentifierName = "CPH";
 }
