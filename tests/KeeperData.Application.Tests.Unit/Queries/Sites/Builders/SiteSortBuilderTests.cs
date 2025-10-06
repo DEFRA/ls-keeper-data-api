@@ -22,13 +22,12 @@ public class SiteSortBuilderTests
     [InlineData("name", "desc", "{ \"name\" : -1 }")]
     [InlineData("type", "asc", "{ \"type\" : 1 }")]
     [InlineData("state", "desc", "{ \"state\" : -1 }")]
-    // Updated sort path for identifier
     [InlineData("identifier", "asc", "{ \"identifiers.identifier\" : 1 }")]
     [InlineData(null, null, "{ \"name\" : 1 }")]
     [InlineData("name", null, "{ \"name\" : 1 }")]
     [InlineData(null, "desc", "{ \"name\" : -1 }")]
     [InlineData("invalid", "asc", "{ \"type\" : 1 }")]
-    public void Build_ShouldReturnCorrectSortDefinition(string order, string sort, string expected)
+    public void Build_ShouldReturnCorrectSortDefinition(string? order, string? sort, string expected)
     {
         var query = new GetSitesQuery { Order = order, Sort = sort };
         var sortDefinition = SiteSortBuilder.Build(query);
