@@ -20,13 +20,15 @@ info:
     name: Livestock Data Services Agreement
     url: https://www.defra.gov.uk/services-agreement/
   
-  version: 0.4.0
+  version: 1.0.0
 
 # Change History
   # 0.1.0 - Initial Draft
   # 0.2.0 - Amendments based on the initial peer review. . Removing Haulier related operations and schemas
   # 0.3.0 - Amendments based on review from LI Ltd.
   # 0.4.0 - Amendments to the object model based on the changes done to the Location service model.
+  # 0.5.0 - Amendments based on further review comments from LI Ltd.
+  # 1.0.0 - KRDS Party API specification has now been baselined on the 06/10/2025.
   
 externalDocs:
   description: Defra APHA website
@@ -142,7 +144,7 @@ components:
             example: "Warwickshire"
             nullable: true
             description : "This optional field is associated with the OS Address Base Field of ADMINISTRATIVE_AREA."
-        postCode:
+        postcode:
           type: string
           example: "CV31 5TG"
           nullable: false
@@ -173,6 +175,10 @@ components:
         landline:
           type: string
           example: "0114 1231234"
+        primaryContactFlag:
+          type: boolean
+          nullable: true
+          example: true
         lastUpdatedDate:
           type: string
           format: date-time
@@ -201,7 +207,23 @@ components:
       required:
         - code
         - name
-        
+    
+    Site:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          example: Hansel & Gretel Farm
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Site record was updated"
+    
+    
     ManagedSpecies:
       type: object
       properties:
@@ -260,6 +282,8 @@ components:
           type: string
           format: uuid
           readOnly: true
+        site:
+           $ref: '#/components/schemas/Site'
         role:
            $ref: '#/components/schemas/Role'
         speciesManagedByRole:
@@ -381,9 +405,21 @@ paths:
       description: The endpoint allows searching and retrieving a list of parties.
       operationId: getParties
       parameters:
+        - name: firstName
+          in: query
+          required: false
+          schema:
+            type: string
+            example: Jane
+        - name: lastName
+          in: query
+          required: false
+          schema:
+            type: string
+            example: Doe
         - name: email
           in: query
-          required: true
+          required: false
           schema:
             type: string
         - name: page
