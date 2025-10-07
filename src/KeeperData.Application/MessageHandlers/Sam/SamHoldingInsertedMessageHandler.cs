@@ -5,7 +5,7 @@ using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Serializers;
 
-namespace KeeperData.Application.MessageHandlers;
+namespace KeeperData.Application.MessageHandlers.Sam;
 
 public class SamHoldingInsertedMessageHandler(SamHoldingInsertedOrchestrator orchestrator,
   IUnwrappedMessageSerializer<SamHoldingInsertedMessage> serializer)
@@ -19,7 +19,10 @@ public class SamHoldingInsertedMessageHandler(SamHoldingInsertedOrchestrator orc
         ArgumentNullException.ThrowIfNull(message, nameof(message));
 
         var messagePayload = _serializer.Deserialize(message)
-            ?? throw new NonRetryableException($"Deserialisation failed or the message payload was null for messageType: SamCphHoldingImportedMessage, messageId: {message.MessageId}, correlationId: {message.CorrelationId}");
+            ?? throw new NonRetryableException($"Deserialisation failed or the message payload was null for " +
+            $"messageType: {typeof(SamHoldingInsertedMessage).Name}," +
+            $"messageId: {message.MessageId}," +
+            $"correlationId: {message.CorrelationId}");
 
         var context = new SamHoldingInsertContext
         {

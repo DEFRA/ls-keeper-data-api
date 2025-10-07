@@ -1,12 +1,10 @@
 using Amazon.SQS;
-using KeeperData.Application.MessageHandlers;
+using KeeperData.Application.MessageHandlers.Sam;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.Serializers;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
-using KeeperData.Core.Messaging.Contracts.V1.Cts.Serializers;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
-using KeeperData.Core.Messaging.Contracts.V1.Sam.Serializers;
 using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Serializers;
 using KeeperData.Infrastructure.Messaging.Configuration;
@@ -69,18 +67,55 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<IMessageSerializer<SnsEnvelope>, SnsEnvelopeSerializer>();
 
-        services.AddSingleton<IUnwrappedMessageSerializer<SamHoldingInsertedMessage>, SamHoldingInsertedMessageSerializer>();
-        services.AddSingleton<IUnwrappedMessageSerializer<CtsHoldingInsertedMessage>, CtsHoldingInsertedMessageSerializer>();
+        var messageIdentifierTypes = new[]
+        {
+            typeof(SamHoldingInsertedMessage),
+            typeof(SamHoldingDeletedMessage),
+            typeof(SamHolderDeletedMessage),
+            typeof(SamPartyDeletedMessage),
+            typeof(CtsHoldingInsertedMessage),
+            typeof(CtsHoldingDeletedMessage),
+            typeof(CtsAgentDeletedMessage),
+            typeof(CtsKeeperDeletedMessage)
+        };
+
+        foreach (var messageType in messageIdentifierTypes)
+        {
+            var typeInfo = MessageIdentifierSerializerContext.Default.GetType().GetProperty(messageType.Name)?.GetValue(MessageIdentifierSerializerContext.Default);
+
+            var serializerType = typeof(MessageIdentifierSerializer<>).MakeGenericType(messageType);
+            var interfaceType = typeof(IUnwrappedMessageSerializer<>).MakeGenericType(messageType);
+
+            services.AddSingleton(interfaceType, Activator.CreateInstance(serializerType, typeInfo)!);
+        }
     }
 
     private static IServiceCollection AddMessageHandlers(this IServiceCollection services)
     {
-        services.AddTransient<IMessageHandler<SamHoldingInsertedMessage>, SamHoldingInsertedMessageHandler>();
-        services.AddTransient<IMessageHandler<CtsHoldingInsertedMessage>, CtsHoldingInsertedMessageHandler>();
+        var handlerInterfaceType = typeof(IMessageHandler<>);
+        var handlerTypes = typeof(SamHoldingInsertedMessageHandler).Assembly.GetTypes()
+            .Where(type => !type.IsAbstract && !type.IsInterface)
+            .Select(type => new
+            {
+                Implementation = type,
+                Interface = type.GetInterfaces()
+                    .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == handlerInterfaceType)
+            })
+            .Where(x => x.Interface != null);
 
         var messageHandlerManager = new InMemoryMessageHandlerManager();
-        messageHandlerManager.AddReceiver<SamHoldingInsertedMessage, IMessageHandler<SamHoldingInsertedMessage>>();
-        messageHandlerManager.AddReceiver<CtsHoldingInsertedMessage, IMessageHandler<CtsHoldingInsertedMessage>>();
+
+        foreach (var types in handlerTypes)
+        {
+            services.AddTransient(types.Interface!, types.Implementation);
+
+            var messageType = types.Interface!.GenericTypeArguments[0];
+            var addReceiverMethod = typeof(InMemoryMessageHandlerManager)
+                .GetMethod(nameof(InMemoryMessageHandlerManager.AddReceiver))!
+                .MakeGenericMethod(messageType, types.Interface);
+
+            addReceiverMethod.Invoke(messageHandlerManager, null);
+        }
 
         services.AddSingleton<IMessageHandlerManager>(messageHandlerManager);
 

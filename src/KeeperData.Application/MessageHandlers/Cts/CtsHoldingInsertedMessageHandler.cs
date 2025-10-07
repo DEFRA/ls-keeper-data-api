@@ -5,7 +5,7 @@ using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Serializers;
 
-namespace KeeperData.Application.MessageHandlers;
+namespace KeeperData.Application.MessageHandlers.Cts;
 
 public class CtsHoldingInsertedMessageHandler(CtsHoldingInsertedOrchestrator orchestrator,
   IUnwrappedMessageSerializer<CtsHoldingInsertedMessage> serializer)
@@ -19,7 +19,10 @@ public class CtsHoldingInsertedMessageHandler(CtsHoldingInsertedOrchestrator orc
         ArgumentNullException.ThrowIfNull(message, nameof(message));
 
         var messagePayload = _serializer.Deserialize(message)
-            ?? throw new NonRetryableException($"Deserialisation failed or the message payload was null for messageType: CtsCphHoldingImportedMessage, messageId: {message.MessageId}, correlationId: {message.CorrelationId}");
+            ?? throw new NonRetryableException($"Deserialisation failed or the message payload was null for " +
+            $"messageType: {typeof(CtsHoldingInsertedMessage).Name}," +
+            $"messageId: {message.MessageId}," +
+            $"correlationId: {message.CorrelationId}");
 
         var context = new CtsHoldingInsertedContext
         {
