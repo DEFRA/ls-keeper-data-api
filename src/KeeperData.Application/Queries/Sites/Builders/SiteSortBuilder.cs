@@ -13,22 +13,25 @@ public static class SiteSortBuilder
         var sortField = query.Order?.ToLowerInvariant() ?? "name";
         var sortDirection = query.Sort?.ToLowerInvariant() ?? "asc";
 
+        // can't use a strongly-typed expression for nested array fields
+        var sortFieldPath = GetSortFieldPath(sortField);
+
         return sortDirection switch
         {
-            "desc" => sortBuilder.Descending(GetSortExpression(sortField)),
-            _ => sortBuilder.Ascending(GetSortExpression(sortField))
+            "desc" => sortBuilder.Descending(sortFieldPath),
+            _ => sortBuilder.Ascending(sortFieldPath)
         };
     }
 
-    private static Expression<Func<SiteDocument, object>> GetSortExpression(string field)
+    private static string GetSortFieldPath(string field)
     {
         return field switch
         {
-            "name" => x => x.Name,
-            "type" => x => x.Type,
-            "state" => x => x.State,
-            "identifier" => x => x.PrimaryIdentifier,
-            _ => x => x.Type
+            "name" => "name",
+            "type" => "type",
+            "state" => "state",
+            "identifier" => "identifiers.identifier", // replaces PrimaryIdentifier
+            _ => "type"
         };
     }
 }

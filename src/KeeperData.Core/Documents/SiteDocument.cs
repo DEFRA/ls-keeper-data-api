@@ -18,7 +18,7 @@ public class SiteDocument : IEntity, IContainsIndexes
     public string State { get; set; } = default!;
     public List<SiteIdentifierDocument> Identifiers { get; private set; } = [];
     public LocationDocument? Location { get; set; }
-    public string PrimaryIdentifier { get; set; } = default!;
+    public List<string> KeeperPartyIds { get; set; } = [];
 
     public static SiteDocument FromDomain(Site m) => new()
     {
@@ -28,8 +28,7 @@ public class SiteDocument : IEntity, IContainsIndexes
         Name = m.Name,
         State = m.State,
         Identifiers = [.. m.Identifiers.Select(SiteIdentifierDocument.FromDomain)],
-        Location = m.Location is not null ? LocationDocument.FromDomain(m.Location) : null,
-        PrimaryIdentifier = m.PrimaryIdentifier ?? string.Empty
+        Location = m.Location is not null ? LocationDocument.FromDomain(m.Location) : null
     };
 
     public Site ToDomain()
@@ -68,20 +67,24 @@ public class SiteDocument : IEntity, IContainsIndexes
         return
         [
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("Type"),
+                Builders<BsonDocument>.IndexKeys.Ascending("type"),
                 new CreateIndexOptions { Name = "idx_type" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("Name"),
+                Builders<BsonDocument>.IndexKeys.Ascending("name"),
                 new CreateIndexOptions { Name = "idx_name" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("State"),
+                Builders<BsonDocument>.IndexKeys.Ascending("state"),
                 new CreateIndexOptions { Name = "idx_state" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("PrimaryIdentifier"),
-                new CreateIndexOptions { Name = "idx_primaryIdentifier" })
+                Builders<BsonDocument>.IndexKeys.Ascending("keeperPartyIds"),
+                new CreateIndexOptions { Name = "idx_keeperPartyIds" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("identifiers.identifier"),
+                new CreateIndexOptions { Name = "idx_identifiers_identifier", Sparse = true })
         ];
     }
 }
