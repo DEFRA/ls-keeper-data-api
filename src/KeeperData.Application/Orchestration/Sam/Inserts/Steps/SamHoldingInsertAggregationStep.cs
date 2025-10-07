@@ -35,7 +35,7 @@ public class SamHoldingInsertAggregationStep : ImportStepBase<SamHoldingInsertCo
 
         // Construct Raw model
         context.RawHolding = samCphHolding;
-   
+
         context.RawHolders = [];
 
         context.RawHerds = [];

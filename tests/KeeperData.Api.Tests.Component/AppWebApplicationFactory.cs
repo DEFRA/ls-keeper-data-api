@@ -77,14 +77,14 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         });
     }
 
-    public void OverrideServiceAsTransient<T,TH>()
+    public void OverrideServiceAsTransient<T, TH>()
         where T : class
         where TH : class, T
     {
         _overrideServices.Add(services =>
         {
             services.RemoveAll<T>();
-            services.AddTransient<T,TH>();
+            services.AddTransient<T, TH>();
         });
     }
 
