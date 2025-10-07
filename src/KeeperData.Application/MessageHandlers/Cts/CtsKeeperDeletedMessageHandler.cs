@@ -7,12 +7,12 @@ using KeeperData.Core.Messaging.Serializers;
 
 namespace KeeperData.Application.MessageHandlers.Cts;
 
-public class CtsKeeperDeletedMessageHandler(CtsKeeperDeletedOrchestrator orchestrator,
+public class CtsKeeperDeletedMessageHandler(CtsKeeperDeleteOrchestrator orchestrator,
   IUnwrappedMessageSerializer<CtsKeeperDeletedMessage> serializer)
   : IMessageHandler<CtsKeeperDeletedMessage>
 {
     private readonly IUnwrappedMessageSerializer<CtsKeeperDeletedMessage> _serializer = serializer;
-    private readonly CtsKeeperDeletedOrchestrator _orchestrator = orchestrator;
+    private readonly CtsKeeperDeleteOrchestrator _orchestrator = orchestrator;
 
     public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)
     {

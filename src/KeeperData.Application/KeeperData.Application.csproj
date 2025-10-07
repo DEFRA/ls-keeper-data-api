@@ -20,8 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Orchestration\Cts\Updates\" />
-    <Folder Include="Orchestration\Sam\Updates\" />
+    <Folder Include="Orchestration\Cts\Updates\Mappings\" />
+    <Folder Include="Orchestration\Sam\Updates\Mappings\" />
   </ItemGroup>
 
 </Project>

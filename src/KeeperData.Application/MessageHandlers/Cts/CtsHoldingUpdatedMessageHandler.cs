@@ -1,18 +1,18 @@
-using KeeperData.Application.Orchestration.Sam.Inserts;
+using KeeperData.Application.Orchestration.Cts.Updates;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
-using KeeperData.Core.Messaging.Contracts.V1.Sam;
+using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Serializers;
 
-namespace KeeperData.Application.MessageHandlers.Sam;
+namespace KeeperData.Application.MessageHandlers.Cts;
 
-public class SamHoldingInsertedMessageHandler(SamHoldingInsertOrchestrator orchestrator,
-  IUnwrappedMessageSerializer<SamHoldingInsertedMessage> serializer)
-  : IMessageHandler<SamHoldingInsertedMessage>
+public class CtsHoldingUpdatedMessageHandler(CtsHoldingUpdateOrchestrator orchestrator,
+  IUnwrappedMessageSerializer<CtsHoldingUpdatedMessage> serializer)
+  : IMessageHandler<CtsHoldingUpdatedMessage>
 {
-    private readonly IUnwrappedMessageSerializer<SamHoldingInsertedMessage> _serializer = serializer;
-    private readonly SamHoldingInsertOrchestrator _orchestrator = orchestrator;
+    private readonly IUnwrappedMessageSerializer<CtsHoldingUpdatedMessage> _serializer = serializer;
+    private readonly CtsHoldingUpdateOrchestrator _orchestrator = orchestrator;
 
     public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)
     {
@@ -20,11 +20,11 @@ public class SamHoldingInsertedMessageHandler(SamHoldingInsertOrchestrator orche
 
         var messagePayload = _serializer.Deserialize(message)
             ?? throw new NonRetryableException($"Deserialisation failed or the message payload was null for " +
-            $"messageType: {typeof(SamHoldingInsertedMessage).Name}," +
+            $"messageType: {typeof(CtsHoldingUpdatedMessage).Name}," +
             $"messageId: {message.MessageId}," +
             $"correlationId: {message.CorrelationId}");
 
-        var context = new SamHoldingInsertContext
+        var context = new CtsHoldingUpdateContext
         {
             Cph = messagePayload.Identifier,
             BatchId = messagePayload.BatchId

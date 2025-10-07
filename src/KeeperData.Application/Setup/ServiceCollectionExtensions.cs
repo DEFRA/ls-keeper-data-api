@@ -23,7 +23,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<SitesQueryAdapter>();
 
-        RegisterOrchestrators(services, typeof(SamHoldingInsertedOrchestrator).Assembly);
+        RegisterOrchestrators(services, typeof(SamHoldingInsertOrchestrator).Assembly);
         RegisterSteps(services, typeof(SamHoldingInsertAggregationStep).Assembly);
     }
 

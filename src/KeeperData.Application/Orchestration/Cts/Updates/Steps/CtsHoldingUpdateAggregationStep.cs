@@ -2,45 +2,39 @@ using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
 using Microsoft.Extensions.Logging;
 
-namespace KeeperData.Application.Orchestration.Sam.Inserts.Steps;
+namespace KeeperData.Application.Orchestration.Cts.Updates.Steps;
 
 [StepOrder(1)]
-public class SamHoldingInsertAggregationStep : ImportStepBase<SamHoldingInsertContext>
+public class CtsHoldingUpdateAggregationStep : ImportStepBase<CtsHoldingUpdateContext>
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly HttpClient _httpClient;
 
     private const string ClientName = "DataBridgeApi";
 
-    public SamHoldingInsertAggregationStep(
+    public CtsHoldingUpdateAggregationStep(
         IHttpClientFactory httpClientFactory,
-        ILogger<SamHoldingInsertAggregationStep> logger)
+        ILogger<CtsHoldingUpdateAggregationStep> logger)
         : base(logger)
     {
         _httpClientFactory = httpClientFactory;
         _httpClient = _httpClientFactory.CreateClient(ClientName);
     }
 
-    protected override async Task ExecuteCoreAsync(SamHoldingInsertContext context, CancellationToken cancellationToken)
+    protected override async Task ExecuteCoreAsync(CtsHoldingUpdateContext context, CancellationToken cancellationToken)
     {
         // Make API calls using _httpClient using Cph and BatchId
-        var samCphHolding = new SamCphHolding
+        var ctsCphHolding = new CtsCphHolding
         {
             BATCH_ID = 1,
-            CHANGE_TYPE = "I"
+            CHANGE_TYPE = "U"
         };
 
-        if (samCphHolding is not { CHANGE_TYPE: DataBridgeConstants.ChangeTypeInsert })
+        if (ctsCphHolding is not { CHANGE_TYPE: DataBridgeConstants.ChangeTypeUpdate })
             return;
 
         // Construct Raw model
-        context.RawHolding = samCphHolding;
-   
-        context.RawHolders = [];
-
-        context.RawHerds = [];
-
-        context.RawParties = [];
+        context.RawHolding = ctsCphHolding;
 
         await Task.CompletedTask;
     }

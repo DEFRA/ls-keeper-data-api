@@ -7,12 +7,12 @@ using KeeperData.Core.Messaging.Serializers;
 
 namespace KeeperData.Application.MessageHandlers.Sam;
 
-public class SamHoldingDeletedMessageHandler(SamHoldingDeletedOrchestrator orchestrator,
+public class SamHoldingDeletedMessageHandler(SamHoldingDeleteOrchestrator orchestrator,
   IUnwrappedMessageSerializer<SamHoldingDeletedMessage> serializer)
   : IMessageHandler<SamHoldingDeletedMessage>
 {
     private readonly IUnwrappedMessageSerializer<SamHoldingDeletedMessage> _serializer = serializer;
-    private readonly SamHoldingDeletedOrchestrator _orchestrator = orchestrator;
+    private readonly SamHoldingDeleteOrchestrator _orchestrator = orchestrator;
 
     public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)
     {

@@ -1,3 +1,4 @@
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Repositories;
@@ -6,17 +7,20 @@ using Microsoft.Extensions.Logging;
 namespace KeeperData.Application.Orchestration.Cts.Inserts.Steps;
 
 [StepOrder(4)]
-public class CtsHoldingInsertedPersistenceStep(
+public class CtsHoldingInsertPersistenceStep(
     IGenericRepository<CtsHoldingDocument> silverHoldingRepository,
     IGenericRepository<CtsPartyDocument> silverPartyRepository,
-    ILogger<CtsHoldingInsertedPersistenceStep> logger)
-    : ImportStepBase<CtsHoldingInsertedContext>(logger)
+    ILogger<CtsHoldingInsertPersistenceStep> logger)
+    : ImportStepBase<CtsHoldingInsertContext>(logger)
 {
     private readonly IGenericRepository<CtsHoldingDocument> _silverHoldingRepository = silverHoldingRepository;
     private readonly IGenericRepository<CtsPartyDocument> _silverPartyRepository = silverPartyRepository;
 
-    protected override async Task ExecuteCoreAsync(CtsHoldingInsertedContext context, CancellationToken cancellationToken)
+    protected override async Task ExecuteCoreAsync(CtsHoldingInsertContext context, CancellationToken cancellationToken)
     {
+        if (context is not { RawHolding.CHANGE_TYPE: DataBridgeConstants.ChangeTypeInsert })
+            return;
+
         if (context.SilverHolding is not null)
             await _silverHoldingRepository.BulkUpsertAsync([context.SilverHolding], cancellationToken);
 

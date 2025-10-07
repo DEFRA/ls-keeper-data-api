@@ -70,10 +70,16 @@ public static class ServiceCollectionExtensions
         var messageIdentifierTypes = new[]
         {
             typeof(SamHoldingInsertedMessage),
+            typeof(SamHoldingUpdatedMessage),
+            typeof(SamHolderUpdatedMessage),
+            typeof(SamPartyUpdatedMessage),
             typeof(SamHoldingDeletedMessage),
             typeof(SamHolderDeletedMessage),
             typeof(SamPartyDeletedMessage),
             typeof(CtsHoldingInsertedMessage),
+            typeof(CtsHoldingUpdatedMessage),
+            typeof(CtsAgentUpdatedMessage),
+            typeof(CtsKeeperUpdatedMessage),
             typeof(CtsHoldingDeletedMessage),
             typeof(CtsAgentDeletedMessage),
             typeof(CtsKeeperDeletedMessage)

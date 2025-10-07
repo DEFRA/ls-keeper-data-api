@@ -1,16 +1,18 @@
 using KeeperData.Application.Orchestration.Cts.Inserts.Mappings;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
 using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Application.Orchestration.Cts.Inserts.Steps;
 
 [StepOrder(2)]
-public class CtsHoldingInsertedSilverMappingStep(ILogger<CtsHoldingInsertedSilverMappingStep> logger)
-    : ImportStepBase<CtsHoldingInsertedContext>(logger)
+public class CtsHoldingInsertSilverMappingStep(ILogger<CtsHoldingInsertSilverMappingStep> logger)
+    : ImportStepBase<CtsHoldingInsertContext>(logger)
 {
-    protected override async Task ExecuteCoreAsync(CtsHoldingInsertedContext context, CancellationToken cancellationToken)
+    protected override async Task ExecuteCoreAsync(CtsHoldingInsertContext context, CancellationToken cancellationToken)
     {
-        if (context.RawHolding == null) return;
+        if (context is not { RawHolding.CHANGE_TYPE: DataBridgeConstants.ChangeTypeInsert })
+            return;
 
         context.SilverHolding = CtsHoldingMapper.ToSilver(context.RawHolding);
 

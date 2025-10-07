@@ -7,12 +7,12 @@ using KeeperData.Core.Messaging.Serializers;
 
 namespace KeeperData.Application.MessageHandlers.Cts;
 
-public class CtsHoldingInsertedMessageHandler(CtsHoldingInsertedOrchestrator orchestrator,
+public class CtsHoldingInsertedMessageHandler(CtsHoldingInsertOrchestrator orchestrator,
   IUnwrappedMessageSerializer<CtsHoldingInsertedMessage> serializer)
   : IMessageHandler<CtsHoldingInsertedMessage>
 {
     private readonly IUnwrappedMessageSerializer<CtsHoldingInsertedMessage> _serializer = serializer;
-    private readonly CtsHoldingInsertedOrchestrator _orchestrator = orchestrator;
+    private readonly CtsHoldingInsertOrchestrator _orchestrator = orchestrator;
 
     public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)
     {
@@ -24,7 +24,7 @@ public class CtsHoldingInsertedMessageHandler(CtsHoldingInsertedOrchestrator orc
             $"messageId: {message.MessageId}," +
             $"correlationId: {message.CorrelationId}");
 
-        var context = new CtsHoldingInsertedContext
+        var context = new CtsHoldingInsertContext
         {
             Cph = messagePayload.Identifier,
             BatchId = messagePayload.BatchId

@@ -1,3 +1,4 @@
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
@@ -22,6 +23,9 @@ public class SamHoldingInsertPersistenceStep(
 
     protected override async Task ExecuteCoreAsync(SamHoldingInsertContext context, CancellationToken cancellationToken)
     {
+        if (context is not { RawHolding.CHANGE_TYPE: DataBridgeConstants.ChangeTypeInsert })
+            return;
+
         if (context.SilverHolding is not null)
             await _silverHoldingRepository.BulkUpsertAsync([context.SilverHolding], cancellationToken);
 
