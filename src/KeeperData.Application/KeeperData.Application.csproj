@@ -19,4 +19,9 @@
     <ProjectReference Include="..\KeeperData.Core\KeeperData.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Orchestration\Cts\Updates\Mappings\" />
+    <Folder Include="Orchestration\Sam\Updates\Mappings\" />
+  </ItemGroup>
+
 </Project>

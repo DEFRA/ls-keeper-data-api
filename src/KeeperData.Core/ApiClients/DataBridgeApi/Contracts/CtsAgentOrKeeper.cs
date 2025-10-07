@@ -1,6 +1,6 @@
 namespace KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 
-public class CtsAgentOrKeeper
+public class CtsAgentOrKeeper : BronzeBase
 {
     public string PAR_ID { get; set; } = string.Empty;
 

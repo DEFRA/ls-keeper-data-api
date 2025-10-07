@@ -1,6 +1,6 @@
 namespace KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 
-public class CtsCphHolding
+public class CtsCphHolding : BronzeBase
 {
     public string LID_FULL_IDENTIFIER { get; set; } = string.Empty;
 

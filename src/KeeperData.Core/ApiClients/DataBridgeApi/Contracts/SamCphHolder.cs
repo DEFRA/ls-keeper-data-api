@@ -1,6 +1,6 @@
 namespace KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 
-public class SamCphHolder
+public class SamCphHolder : BronzeBase
 {
     public string PARTY_ID { get; set; } = string.Empty;
 

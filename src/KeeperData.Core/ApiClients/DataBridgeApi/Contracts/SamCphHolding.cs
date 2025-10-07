@@ -1,6 +1,6 @@
 namespace KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 
-public class SamCphHolding
+public class SamCphHolding : BronzeBase
 {
     public string CPH { get; set; } = string.Empty;
 

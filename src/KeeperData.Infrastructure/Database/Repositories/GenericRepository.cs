@@ -4,6 +4,7 @@ using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace KeeperData.Infrastructure.Database.Repositories;
@@ -32,6 +33,18 @@ public class GenericRepository<T> : IGenericRepository<T>
         var filter = Builders<T>.Filter.Eq(x => x.Id, id);
         var cursor = await _collection.FindAsync(Session, filter, cancellationToken: cancellationToken);
         return await cursor.FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public Task<List<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default) =>
+        _collection.Find(predicate).ToListAsync(cancellationToken);
+
+    public async Task<List<T>> FindAsync<TNested>(
+        Expression<Func<T, IEnumerable<TNested>>> arrayField,
+        FilterDefinition<TNested> nestedFilter,
+        CancellationToken cancellationToken = default)
+    {
+        var filter = Builders<T>.Filter.ElemMatch(arrayField, nestedFilter);
+        return await _collection.Find(filter).ToListAsync(cancellationToken);
     }
 
     public Task AddAsync(T entity, CancellationToken cancellationToken = default) =>

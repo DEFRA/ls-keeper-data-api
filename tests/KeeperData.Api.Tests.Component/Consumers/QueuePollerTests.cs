@@ -5,8 +5,9 @@ using KeeperData.Api.Tests.Component.Consumers.Helpers;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Messaging.Contracts;
-using KeeperData.Core.Messaging.Contracts.V1;
+using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessageHandlers;
+using KeeperData.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using NSubstitute.ExceptionExtensions;
@@ -21,9 +22,9 @@ public class QueuePollerTests
     {
         var messageId = Guid.NewGuid().ToString();
         var correlationId = Guid.NewGuid().ToString();
-        var messageText = Guid.NewGuid();
+        var identifierId = Guid.NewGuid();
 
-        var componentTestMessage = GetPlaceholderMessage(messageText.ToString());
+        var componentTestMessage = GetSamCphHoldingImportedMessage(identifierId.ToString());
         var messageArgs = GetMessageWithOriginSnsArgs(messageId, correlationId, componentTestMessage);
         var receiveMessageResponseArgs = GetReceiveMessageResponseArgs(messageArgs);
 
@@ -40,7 +41,8 @@ public class QueuePollerTests
             .ReturnsAsync(new DeleteMessageResponse { HttpStatusCode = HttpStatusCode.OK });
 
         var factory = new AppWebApplicationFactory();
-        factory.OverrideService(amazonSqsMock.Object);
+        factory.OverrideServiceAsSingleton(amazonSqsMock.Object);
+        factory.OverrideServiceAsTransient<IMessageHandler<SamHoldingInsertedMessage>, TestSamCphHoldingImportedMessage>();
 
         using var scope = factory.Services.CreateAsyncScope();
         var queuePoller = scope.ServiceProvider.GetRequiredService<IQueuePoller>();
@@ -50,11 +52,11 @@ public class QueuePollerTests
         await queuePoller.StartAsync(cts.Token);
 
         var (MessageId, Payload) = await queuePollerObserver.MessageHandled;
-        var payloadAsType = Payload as PlaceholderMessage;
+        var payloadAsType = Payload as SamHoldingInsertedMessage;
 
         MessageId.Should().NotBeNull().And.Be(messageId);
         payloadAsType.Should().NotBeNull();
-        payloadAsType.Message.Should().NotBeNull().And.Be(messageText.ToString());
+        payloadAsType.Identifier.Should().NotBeNull().And.Be(identifierId.ToString());
 
         SQSMessageUtility.VerifyMessageWasCompleted(amazonSqsMock);
     }
@@ -65,9 +67,9 @@ public class QueuePollerTests
         // Arrange
         var messageId = Guid.NewGuid().ToString();
         var correlationId = Guid.NewGuid().ToString();
-        var messageText = Guid.NewGuid();
+        var identifierId = Guid.NewGuid();
 
-        var componentTestMessage = GetPlaceholderMessage(messageText.ToString());
+        var componentTestMessage = GetSamCphHoldingImportedMessage(identifierId.ToString());
         var messageArgs = GetMessageWithOriginSqsArgs(messageId, correlationId, componentTestMessage);
         var receiveMessageResponseArgs = GetReceiveMessageResponseArgs(messageArgs);
 
@@ -84,7 +86,8 @@ public class QueuePollerTests
             .ReturnsAsync(new DeleteMessageResponse { HttpStatusCode = HttpStatusCode.OK });
 
         var factory = new AppWebApplicationFactory();
-        factory.OverrideService(amazonSqsMock.Object);
+        factory.OverrideServiceAsSingleton(amazonSqsMock.Object);
+        factory.OverrideServiceAsTransient<IMessageHandler<SamHoldingInsertedMessage>, TestSamCphHoldingImportedMessage>();
 
         using var scope = factory.Services.CreateAsyncScope();
         var queuePoller = scope.ServiceProvider.GetRequiredService<IQueuePoller>();
@@ -94,11 +97,11 @@ public class QueuePollerTests
         await queuePoller.StartAsync(cts.Token);
 
         var (MessageId, Payload) = await queuePollerObserver.MessageHandled;
-        var payloadAsType = Payload as PlaceholderMessage;
+        var payloadAsType = Payload as SamHoldingInsertedMessage;
 
         MessageId.Should().NotBeNull().And.Be(messageId);
         payloadAsType.Should().NotBeNull();
-        payloadAsType.Message.Should().NotBeNull().And.Be(messageText.ToString());
+        payloadAsType.Identifier.Should().NotBeNull().And.Be(identifierId.ToString());
 
         SQSMessageUtility.VerifyMessageWasCompleted(amazonSqsMock);
     }
@@ -108,9 +111,9 @@ public class QueuePollerTests
     {
         var messageId = Guid.NewGuid().ToString();
         var correlationId = Guid.NewGuid().ToString();
-        var messageText = Guid.NewGuid();
+        var identifierId = Guid.NewGuid();
 
-        var componentTestMessage = GetPlaceholderMessage(messageText.ToString());
+        var componentTestMessage = GetSamCphHoldingImportedMessage(identifierId.ToString());
         var messageArgs = GetMessageWithOriginSnsArgs(messageId, correlationId, componentTestMessage);
         var receiveMessageResponseArgs = GetReceiveMessageResponseArgs(messageArgs);
 
@@ -123,14 +126,14 @@ public class QueuePollerTests
             .ReturnsAsync(receiveMessageResponseArgs)
             .ReturnsAsync(new ReceiveMessageResponse { HttpStatusCode = HttpStatusCode.OK, Messages = [] });
 
-        var placeholderMessageHandlerMock = new Mock<IMessageHandler<PlaceholderMessage>>();
-        placeholderMessageHandlerMock
+        var samCphHoldingImportedMessageMock = new Mock<IMessageHandler<SamHoldingInsertedMessage>>();
+        samCphHoldingImportedMessageMock
             .Setup(x => x.Handle(It.IsAny<UnwrappedMessage>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new RetryableException("A temporary failure has occurred"));
 
         var factory = new AppWebApplicationFactory();
-        factory.OverrideService(amazonSqsMock.Object);
-        factory.OverrideService(placeholderMessageHandlerMock.Object);
+        factory.OverrideServiceAsSingleton(amazonSqsMock.Object);
+        factory.OverrideServiceAsSingleton(samCphHoldingImportedMessageMock.Object);
 
         using var scope = factory.Services.CreateAsyncScope();
         var queuePoller = scope.ServiceProvider.GetRequiredService<IQueuePoller>();
@@ -151,9 +154,9 @@ public class QueuePollerTests
     {
         var messageId = Guid.NewGuid().ToString();
         var correlationId = Guid.NewGuid().ToString();
-        var messageText = Guid.NewGuid();
+        var identifierId = Guid.NewGuid();
 
-        var componentTestMessage = GetPlaceholderMessage(messageText.ToString());
+        var componentTestMessage = GetSamCphHoldingImportedMessage(identifierId.ToString());
         var messageArgs = GetMessageWithOriginSnsArgs(messageId, correlationId, componentTestMessage);
         var receiveMessageResponseArgs = GetReceiveMessageResponseArgs(messageArgs);
 
@@ -166,14 +169,14 @@ public class QueuePollerTests
             .ReturnsAsync(receiveMessageResponseArgs)
             .ReturnsAsync(new ReceiveMessageResponse { HttpStatusCode = HttpStatusCode.OK, Messages = [] });
 
-        var placeholderMessageHandlerMock = new Mock<IMessageHandler<PlaceholderMessage>>();
-        placeholderMessageHandlerMock
+        var samCphHoldingImportedMessageMock = new Mock<IMessageHandler<SamHoldingInsertedMessage>>();
+        samCphHoldingImportedMessageMock
             .Setup(x => x.Handle(It.IsAny<UnwrappedMessage>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new NonRetryableException("A permanent failure has occurred"));
 
         var factory = new AppWebApplicationFactory();
-        factory.OverrideService(amazonSqsMock.Object);
-        factory.OverrideService(placeholderMessageHandlerMock.Object);
+        factory.OverrideServiceAsSingleton(amazonSqsMock.Object);
+        factory.OverrideServiceAsSingleton(samCphHoldingImportedMessageMock.Object);
 
         using var scope = factory.Services.CreateAsyncScope();
         var queuePoller = scope.ServiceProvider.GetRequiredService<IQueuePoller>();
@@ -210,7 +213,7 @@ public class QueuePollerTests
             .ReturnsAsync(new ReceiveMessageResponse { HttpStatusCode = HttpStatusCode.OK, Messages = [] });
 
         var factory = new AppWebApplicationFactory();
-        factory.OverrideService(amazonSqsMock.Object);
+        factory.OverrideServiceAsSingleton(amazonSqsMock.Object);
 
         using var scope = factory.Services.CreateAsyncScope();
         var queuePoller = scope.ServiceProvider.GetRequiredService<IQueuePoller>();
@@ -226,9 +229,9 @@ public class QueuePollerTests
         Exception.Message.Should().Be("The given key 'QueuePollerTest' was not present in the dictionary.");
     }
 
-    private static PlaceholderMessage GetPlaceholderMessage(string message) => new()
+    private static SamHoldingInsertedMessage GetSamCphHoldingImportedMessage(string identifier) => new()
     {
-        Message = message
+        Identifier = identifier
     };
 
     private static ReceiveMessageResponse GetReceiveMessageResponseArgs(Message message)
@@ -250,4 +253,16 @@ public class QueuePollerTests
     }
 
     public class QueuePollerTestMessage : MessageType { }
+
+    public class TestSamCphHoldingImportedMessage() : IMessageHandler<SamHoldingInsertedMessage>
+    {
+        public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(message, nameof(message));
+
+            var messagePayload = System.Text.Json.JsonSerializer.Deserialize<SamHoldingInsertedMessage>(message.Payload, JsonDefaults.DefaultOptions);
+
+            return await Task.FromResult(messagePayload!);
+        }
+    }
 }

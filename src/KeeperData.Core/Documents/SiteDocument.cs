@@ -8,21 +8,24 @@ using MongoDB.Driver;
 namespace KeeperData.Core.Documents;
 
 [CollectionName("sites")]
-public class SiteDocument : IEntity, IContainsIndexes
+public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 {
     [BsonId]
     public required string Id { get; set; }
+    public int LastUpdatedBatchId { get; set; }
     public DateTime LastUpdatedDate { get; set; }
     public string Type { get; set; } = default!;
     public string Name { get; set; } = default!;
     public string State { get; set; } = default!;
     public List<SiteIdentifierDocument> Identifiers { get; private set; } = [];
     public LocationDocument? Location { get; set; }
-    public List<string> KeeperPartyIds { get; set; } = [];
+    public bool Deleted { get; set; }
+    public List<string> KeeperPartyIds { get; set; } = []; // To be written out
 
     public static SiteDocument FromDomain(Site m) => new()
     {
         Id = m.Id,
+        LastUpdatedBatchId = m.LastUpdatedBatchId,
         LastUpdatedDate = m.LastUpdatedDate,
         Type = m.Type,
         Name = m.Name,
@@ -35,6 +38,7 @@ public class SiteDocument : IEntity, IContainsIndexes
     {
         var site = new Site(
             Id,
+            LastUpdatedBatchId,
             LastUpdatedDate,
             Type,
             Name,
