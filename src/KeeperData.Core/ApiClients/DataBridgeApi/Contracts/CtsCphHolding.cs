@@ -17,5 +17,5 @@ public class CtsCphHolding : BronzeBase
     public string? LOC_MAP_REFERENCE { get; set; }
 
     public DateTime LOC_EFFECTIVE_FROM { get; set; } = default;
-    public DateTime? LOC_EFFECTIVE_TO { get; set; }    
+    public DateTime? LOC_EFFECTIVE_TO { get; set; }
 }
