@@ -1,6 +1,8 @@
 using KeeperData.Core.Domain.BuildingBlocks;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
 using KeeperData.Core.Domain.Sites.DomainEvents;
+using System;
+using System.Collections.Generic;
 
 namespace KeeperData.Core.Domain.Sites;
 
@@ -14,6 +16,9 @@ public class Site : IAggregateRoot
 
     private readonly List<SiteIdentifier> _identifiers = [];
     public IReadOnlyCollection<SiteIdentifier> Identifiers => _identifiers.AsReadOnly();
+
+    private readonly List<SiteActivity> _activities = [];
+    public IReadOnlyCollection<SiteActivity> Activities => _activities.AsReadOnly();
 
     private Location? _location;
     public Location? Location => _location;
@@ -57,6 +62,23 @@ public class Site : IAggregateRoot
         LastUpdatedDate = lastUpdatedDate;
     }
 
+    public void AddActivity(string activity, string? description, DateTime startDate, DateTime? endDate)
+    {
+        var newActivity = SiteActivity.Create(activity, description, startDate, endDate);
+        _activities.Add(newActivity);
+        LastUpdatedDate = DateTime.UtcNow;
+    }
+
+    public void RemoveActivity(string activityId)
+    {
+        var existing = _activities.FirstOrDefault(a => a.Id == activityId);
+        if (existing is not null)
+        {
+            _activities.Remove(existing);
+            LastUpdatedDate = DateTime.UtcNow;
+        }
+    }
+
     public void AddSiteIdentifier(
         DateTime lastUpdatedDate,
         string identifier,
@@ -84,25 +106,30 @@ public class Site : IAggregateRoot
             _identifiers.Remove(existing);
         }
     }
-
     public void SetLocation(
         DateTime lastUpdatedDate,
         string? osMapReference,
         double? easting,
         double? northing,
+        Address? address,
+        IEnumerable<Communication>? communication,
         string? id = null)
     {
         _location = id is null
             ? Location.Create(
                 osMapReference,
                 easting,
-                northing)
+                northing,
+                address,
+                communication)
             : new Location(
                 id,
                 lastUpdatedDate,
                 osMapReference,
                 easting,
-                northing);
+                northing,
+                address,
+                communication);
     }
 
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents;
