@@ -1,0 +1,40 @@
+@startuml CTS_Relationships
+
+entity "SAM CPH Holder" as Holder {
+  * PARTY_ID : VARCHAR2(8)
+  * CPHS : CLOB
+  --
+  BATCH_ID
+  CHANGE_TYPE
+}
+
+entity "SAM CPH Holding" as Holding {
+  * CPH : CHAR(11)
+  --
+  BATCH_ID
+  CHANGE_TYPE
+}
+
+entity "SAM Herd" as Herd {
+  * Herdmark : VARCHAR2(80)
+  * CPHH : VARCHAR2(80)
+  --
+  BATCH_ID
+  CHANGE_TYPE
+  OWNER_PARTY_IDS : VARCHAR2(4000)
+  KEEPER_PARTY_IDS : VARCHAR2(4000)
+}
+
+entity "SAM Party" as Party {
+  * PARTY_ID : VARCHAR2(8)
+  --
+  BATCH_ID
+  CHANGE_TYPE
+}
+
+Holder 0--* Holding : via CPHS (,) == CPH
+Holding 0--* Herd : via CPH == CPHH
+Herd 0--* Party : via OWNER_PARTY_IDS (,) == PARTY_ID
+Herd 0--* Party : via KEEPER_PARTY_IDS (,) == PARTY_ID
+
+@enduml

@@ -1,0 +1,29 @@
+@startuml CTS_Relationships
+
+entity "CTS CPH Holding" as CPH {
+  * LID_FULL_IDENTIFIER : VARCHAR2(17)
+  --
+  BATCH_ID
+  CHANGE_TYPE
+}
+
+entity "CTS Primary Keeper" as Keeper {
+  * PAR_ID : NUMBER(12)
+  * LID_FULL_IDENTIFIER : VARCHAR2(17)
+  --
+  BATCH_ID
+  CHANGE_TYPE
+}
+
+entity "CTS Agent" as Agent {
+  * PAR_ID : NUMBER(12)
+  * LID_FULL_IDENTIFIER : VARCHAR2(17)
+  --
+  BATCH_ID
+  CHANGE_TYPE
+}
+
+CPH 0--* Keeper : via LID_FULL_IDENTIFIER
+CPH 0--* Agent : via LID_FULL_IDENTIFIER
+
+@enduml
