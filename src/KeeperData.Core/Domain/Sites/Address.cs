@@ -1,4 +1,6 @@
 using KeeperData.Core.Domain.BuildingBlocks;
+using System;
+using System.Collections.Generic;
 
 namespace KeeperData.Core.Domain.Sites;
 
@@ -25,6 +27,21 @@ public class Address : ValueObject
         PostCode = postCode;
         Country = country;
         LastUpdatedDate = lastUpdatedDate;
+    }
+
+    public static Address Create(int? uprn, string addressLine1, string? addressLine2, string? postTown, string? county, string postCode, Country? country)
+    {
+        return new Address(
+            Guid.NewGuid().ToString(),
+            uprn,
+            addressLine1,
+            addressLine2,
+            postTown,
+            county,
+            postCode,
+            country,
+            DateTime.UtcNow
+        );
     }
 
     protected override IEnumerable<object> GetEqualityComponents()

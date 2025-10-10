@@ -1,4 +1,5 @@
 using KeeperData.Core.Domain.BuildingBlocks;
+using KeeperData.Core.Exceptions;
 using System;
 using System.Collections.Generic;
 
@@ -15,6 +16,11 @@ public class ManagedSpecies : ValueObject
 
     public ManagedSpecies(string id, string code, string name, DateTime startDate, DateTime? endDate, DateTime? lastUpdatedDate)
     {
+        if (endDate.HasValue && endDate.Value < startDate)
+        {
+            throw new DomainException("EndDate for a managed species cannot be before its StartDate.");
+        }
+
         Id = id;
         Code = code;
         Name = name;
@@ -23,9 +29,24 @@ public class ManagedSpecies : ValueObject
         LastUpdatedDate = lastUpdatedDate;
     }
 
+    public static ManagedSpecies Create(string code, string name, DateTime startDate, DateTime? endDate = null)
+    {
+        return new ManagedSpecies(
+            Guid.NewGuid().ToString(),
+            code,
+            name,
+            startDate,
+            endDate,
+            DateTime.UtcNow
+        );
+    }
+
+
     protected override IEnumerable<object> GetEqualityComponents()
     {
+
         yield return Code;
         yield return StartDate;
+        yield return EndDate ?? default;
     }
 }

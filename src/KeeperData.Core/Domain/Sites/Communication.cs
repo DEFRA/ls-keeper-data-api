@@ -1,7 +1,8 @@
 using KeeperData.Core.Domain.BuildingBlocks;
+using System;
+using System.Collections.Generic;
 
 namespace KeeperData.Core.Domain.Sites;
-
 public class Communication : ValueObject
 {
     public string Id { get; private set; }
@@ -25,6 +26,18 @@ public class Communication : ValueObject
         Landline = landline;
         PrimaryContactFlag = primaryContactFlag;
         LastUpdatedDate = lastUpdatedDate;
+    }
+
+    public static Communication Create(string? email, string? mobile, string? landline, bool? primaryContactFlag)
+    {
+        return new Communication(
+            Guid.NewGuid().ToString(),
+            email,
+            mobile,
+            landline,
+            primaryContactFlag,
+            DateTime.UtcNow
+        );
     }
 
     protected override IEnumerable<object> GetEqualityComponents()
