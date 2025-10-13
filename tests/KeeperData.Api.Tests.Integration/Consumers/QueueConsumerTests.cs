@@ -9,7 +9,7 @@ namespace KeeperData.Api.Tests.Integration.Consumers;
 [Trait("Dependence", "localstack")]
 public class QueueConsumerTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
 {
-    [Fact]
+    [Fact(Skip = "Needs to be written out now 'Placeholder' handler removed")]
     public async Task GivenMessagePublishedToTopic_WhenReceivedOnTheQueue_ShouldComplete()
     {
         var messageId = Guid.NewGuid().ToString();

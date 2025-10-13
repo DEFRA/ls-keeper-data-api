@@ -8,18 +8,21 @@ using MongoDB.Driver;
 namespace KeeperData.Core.Documents;
 
 [CollectionName("parties")]
-public class PartyDocument : IEntity, IContainsIndexes
+public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 {
     [BsonId]
     public required string Id { get; set; }
+    public int LastUpdatedBatchId { get; set; }
     public DateTime LastUpdatedDate { get; set; }
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public string? Name { get; set; }
+    public bool Deleted { get; set; }
 
     public static PartyDocument FromDomain(Party m) => new()
     {
         Id = m.Id,
+        LastUpdatedBatchId = m.LastUpdatedBatchId,
         LastUpdatedDate = m.LastUpdatedDate,
         FirstName = m.FirstName,
         LastName = m.LastName,
@@ -30,6 +33,7 @@ public class PartyDocument : IEntity, IContainsIndexes
     {
         var site = new Party(
             Id,
+            LastUpdatedBatchId,
             LastUpdatedDate,
             FirstName,
             LastName,

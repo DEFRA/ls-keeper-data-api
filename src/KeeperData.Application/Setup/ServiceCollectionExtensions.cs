@@ -1,7 +1,7 @@
 using FluentValidation;
 using KeeperData.Application.Orchestration;
-using KeeperData.Application.Orchestration.Sam;
-using KeeperData.Application.Orchestration.Sam.Steps;
+using KeeperData.Application.Orchestration.Sam.Inserts;
+using KeeperData.Application.Orchestration.Sam.Inserts.Steps;
 using KeeperData.Application.Queries.Sites.Adapters;
 using KeeperData.Core.Attributes;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,8 +23,8 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<SitesQueryAdapter>();
 
-        RegisterOrchestrators(services, typeof(SamCphHoldingImportedOrchestrator).Assembly);
-        RegisterSteps(services, typeof(SamRawAggregationStep).Assembly);
+        RegisterOrchestrators(services, typeof(SamHoldingInsertOrchestrator).Assembly);
+        RegisterSteps(services, typeof(SamHoldingInsertAggregationStep).Assembly);
     }
 
     public static void RegisterOrchestrators(IServiceCollection services, Assembly assembly)

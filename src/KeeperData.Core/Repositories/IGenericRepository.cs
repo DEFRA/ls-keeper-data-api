@@ -1,10 +1,17 @@
 using MongoDB.Driver;
+using System.Linq.Expressions;
 
 namespace KeeperData.Core.Repositories;
 
 public interface IGenericRepository<T> where T : IEntity
 {
     Task<T> GetByIdAsync(string id, CancellationToken cancellationToken = default);
+    Task<List<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
+    Task<List<T>> FindAsync<TNested>(
+        Expression<Func<T, IEnumerable<TNested>>> arrayField,
+        FilterDefinition<TNested> nestedFilter,
+        CancellationToken cancellationToken = default);
+
     Task AddAsync(T entity, CancellationToken cancellationToken = default);
     Task UpdateAsync(T entity, CancellationToken cancellationToken = default);
     Task BulkUpsertAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);

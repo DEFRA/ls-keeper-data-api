@@ -11,6 +11,7 @@ namespace KeeperData.Core.Domain.Sites;
 public class Site : IAggregateRoot
 {   
     public string Id { get; private set; }
+    public int LastUpdatedBatchId { get; set; }
     public DateTime LastUpdatedDate { get; private set; }
     public string Type { get; private set; }
     public string Name { get; private set; }
@@ -22,7 +23,7 @@ public class Site : IAggregateRoot
     public string? Source { get; private set; }
     public bool? DestroyIdentityDocumentsFlag { get; private set; }
 
-
+    public bool Deleted { get; set; }
 
     private readonly List<SiteIdentifier> _identifiers = [];
     public IReadOnlyCollection<SiteIdentifier> Identifiers => _identifiers.AsReadOnly();
@@ -46,6 +47,7 @@ public class Site : IAggregateRoot
 
     public Site(
         string id,
+        int batchId,
         DateTime lastUpdatedDate,
         string type,
         string name,
@@ -57,6 +59,7 @@ public class Site : IAggregateRoot
         Location? location)
     {
         Id = id;
+        LastUpdatedBatchId = batchId;
         LastUpdatedDate = lastUpdatedDate;
         Type = type;
         Name = name;
@@ -65,11 +68,14 @@ public class Site : IAggregateRoot
         EndDate = endDate;
         Source = source;
         DestroyIdentityDocumentsFlag = destroyIdentityDocumentsFlag;
+        Deleted = false;
+
         _location = location;
     }
 
 
     public static Site Create(
+        int batchId,
         string type,
         string name,
         DateTime startDate,
@@ -80,12 +86,13 @@ public class Site : IAggregateRoot
     {
         var site = new Site(
             Guid.NewGuid().ToString(),
+            batchId,
             DateTime.UtcNow,
             type,
             name,
             startDate,
             state,
-            null, // <<< THIS IS THE FIX: Explicitly pass null for the 'endDate' parameter.
+            null,
             source,
             destroyIdentityDocumentsFlag,
             location

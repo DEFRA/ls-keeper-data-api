@@ -68,12 +68,23 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         return Services.GetRequiredService<T>();
     }
 
-    public void OverrideService<T>(T implementation) where T : class
+    public void OverrideServiceAsSingleton<T>(T implementation) where T : class
     {
         _overrideServices.Add(services =>
         {
             services.RemoveAll<T>();
             services.AddSingleton(implementation);
+        });
+    }
+
+    public void OverrideServiceAsTransient<T, TH>()
+        where T : class
+        where TH : class, T
+    {
+        _overrideServices.Add(services =>
+        {
+            services.RemoveAll<T>();
+            services.AddTransient<T, TH>();
         });
     }
 

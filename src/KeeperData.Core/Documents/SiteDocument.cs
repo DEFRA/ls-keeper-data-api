@@ -11,15 +11,15 @@ using System.Linq;
 namespace KeeperData.Core.Documents;
 
 [CollectionName("sites")]
-public class SiteDocument : IEntity, IContainsIndexes
+public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 {
     [BsonId]
     public required string Id { get; set; }
-
     public string Type { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public List<SiteIdentifierDocument> Identifiers { get; set; } = [];
     public string? State { get; set; }
+    public int LastUpdatedBatchId { get; set; }
     public DateTime LastUpdatedDate { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime? EndDate { get; set; }
@@ -31,10 +31,12 @@ public class SiteDocument : IEntity, IContainsIndexes
     public List<MarksDocument> Marks { get; set; } = [];
     public List<SiteActivityDocument> Activities { get; set; } = [];
     public List<string> KeeperPartyIds { get; set; } = [];
+    public bool Deleted { get; set; }
 
     public static SiteDocument FromDomain(Site m) => new()
     {
         Id = m.Id,
+        LastUpdatedBatchId = m.LastUpdatedBatchId,
         LastUpdatedDate = m.LastUpdatedDate,
         Type = m.Type,
         Name = m.Name,
@@ -56,6 +58,7 @@ public class SiteDocument : IEntity, IContainsIndexes
     {
         var site = new Site(
             Id,
+            LastUpdatedBatchId,
             LastUpdatedDate,
             Type ?? string.Empty,
             Name ?? string.Empty,
