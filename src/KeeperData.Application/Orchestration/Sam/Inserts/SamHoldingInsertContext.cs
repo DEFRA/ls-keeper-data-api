@@ -16,6 +16,7 @@ public class SamHoldingInsertContext
 
     public SamHoldingDocument? SilverHolding { get; set; }
     public List<SamPartyDocument> SilverParties { get; set; } = [];
+    public List<PartyRoleRelationshipDocument> SilverPartyRoles { get; set; } = [];
 
     public SiteDocument? GoldSite { get; set; }
     public List<PartyDocument> GoldParties { get; set; } = [];

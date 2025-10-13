@@ -15,7 +15,7 @@ public class AddressDocument : INestedEntity
     public string? AddressTown { get; set; }
     public string? AddressPostCode { get; set; }
 
-    public string? CountryIdentifier { get; set; } // LOV Lookup
+    public string? CountryIdentifier { get; set; } // LOV Lookup / Internal Id
     public string? CountryCode { get; set; }
 
     public string? UniquePropertyReferenceNumber { get; set; }

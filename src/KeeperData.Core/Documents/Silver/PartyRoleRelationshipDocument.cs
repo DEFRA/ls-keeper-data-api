@@ -9,13 +9,13 @@ namespace KeeperData.Core.Documents.Silver;
 public class PartyRoleRelationshipDocument : IEntity, IContainsIndexes
 {
     public string Id { get; set; } = string.Empty;
+    public string PartyId { get; set; } = string.Empty;
+    public string PartyTypeId { get; set; } = string.Empty; // LOV Lookup / Internal Id
     public string CountyParishHoldingNumber { get; set; } = string.Empty;
 
-    public string PartyId { get; set; } = string.Empty;
-    public string PartyTypeId { get; set; } = string.Empty; // LOV Lookup
-
-    public string? RoleTypeId { get; set; } // LOV Lookup
-    public string? RoleName { get; set; }
+    public string? RoleTypeId { get; set; } // LOV Lookup / Internal Id
+    public string? RoleTypeName { get; set; } // LOV Lookup / Internal Name
+    public string? SourceRoleName { get; set; }
 
     public DateTime EffectiveFromData { get; set; } = default;
     public DateTime? EffectiveToData { get; set; }

@@ -15,11 +15,14 @@ public class GroupMarkDocument : INestedEntity
     public DateTime GroupMarkStartDate { get; set; } = default;
     public DateTime? GroupMarkEndDate { get; set; }
 
-    public string? SpeciesTypeId { get; set; }
+    public string? SpeciesTypeId { get; set; } // LOV Lookup / Internal Id
     public string? SpeciesTypeCode { get; set; }
 
-    public string? ProductionUsageId { get; set; }
+    public string? ProductionUsageId { get; set; } // LOV Lookup / Internal Id
     public string? ProductionUsageCode { get; set; }
+
+    public string? ProductionTypeId { get; set; } // LOV Lookup / Internal Id
+    public string? ProductionTypeCode { get; set; }
 
     public string? TbTestingIntervalId { get; set; }
 }
