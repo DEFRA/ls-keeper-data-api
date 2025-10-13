@@ -16,11 +16,19 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     public DateTime LastUpdatedDate { get; set; }
     public string Type { get; set; } = default!;
     public string Name { get; set; } = default!;
-    public string State { get; set; } = default!;
+    public string? State { get; set; } = default!;
     public List<SiteIdentifierDocument> Identifiers { get; private set; } = [];
+    public DateTime StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
+    public string? Source { get; set; }
+    public bool? DestroyIdentityDocumentsFlag { get; set; }
     public LocationDocument? Location { get; set; }
     public bool Deleted { get; set; }
-    public List<string> KeeperPartyIds { get; set; } = []; // To be written out
+    public List<SitePartyDocument> Parties { get; set; } = [];
+    public List<SpeciesDocument> Species { get; set; } = [];
+    public List<MarksDocument> Marks { get; set; } = [];
+    public List<SiteActivityDocument> Activities { get; set; } = [];
+    public List<string> KeeperPartyIds { get; set; } = [];
 
     public static SiteDocument FromDomain(Site m) => new()
     {
@@ -31,7 +39,16 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         Name = m.Name,
         State = m.State,
         Identifiers = [.. m.Identifiers.Select(SiteIdentifierDocument.FromDomain)],
-        Location = m.Location is not null ? LocationDocument.FromDomain(m.Location) : null
+        Location = m.Location is not null ? LocationDocument.FromDomain(m.Location) : null,
+        StartDate = m.StartDate,
+        EndDate = m.EndDate,
+        Source = m.Source,
+        DestroyIdentityDocumentsFlag = m.DestroyIdentityDocumentsFlag,
+        Deleted = m.Deleted,
+        Parties = m.Parties.Select(SitePartyDocument.FromDomain).ToList(),
+        Species = m.Species.Select(SpeciesDocument.FromDomain).ToList(),
+        Marks = m.Marks.Select(MarksDocument.FromDomain).ToList(),
+        Activities = m.Activities.Select(SiteActivityDocument.FromDomain).ToList(),
     };
 
     public Site ToDomain()
@@ -42,7 +59,13 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
             LastUpdatedDate,
             Type,
             Name,
-            State);
+            StartDate,
+            State,
+            EndDate,
+            Source,
+            DestroyIdentityDocumentsFlag,
+            null
+        );
 
         foreach (var si in Identifiers)
         {
@@ -53,6 +76,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
                 si.IdentifierId);
         }
 
+
         if (Location is not null)
         {
             site.SetLocation(
@@ -60,7 +84,10 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
                 Location.OsMapReference,
                 Location.Easting,
                 Location.Northing,
-                Location.IdentifierId);
+                Location.Address?.ToDomain(),
+                Location.Communication.Select(c => c.ToDomain()),
+                Location.IdentifierId
+            );
         }
 
         return site;
