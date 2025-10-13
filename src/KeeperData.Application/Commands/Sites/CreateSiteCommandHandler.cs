@@ -3,6 +3,7 @@ using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
 using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
 
+
 namespace KeeperData.Application.Commands.Sites;
 
 /// <summary>
@@ -16,7 +17,17 @@ public class CreateSiteCommandHandler(IGenericRepository<SiteDocument> repositor
 
     public async Task<TrackedResult<string>> Handle(CreateSiteCommand request, CancellationToken cancellationToken)
     {
-        var site = Site.Create(1, "Holding", request.Name, "England");
+        var site = Site.Create(
+            request.BatchId,
+            "Holding",
+            request.Name,
+            DateTime.UtcNow,
+            "Active",
+            "Application",
+            false,
+            null
+        );
+
         site.AddSiteIdentifier(DateTime.UtcNow, Guid.NewGuid().ToString(), "CPH");
 
         var document = SiteDocument.FromDomain(site);
