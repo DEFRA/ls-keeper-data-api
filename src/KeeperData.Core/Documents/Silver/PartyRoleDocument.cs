@@ -10,8 +10,9 @@ public class PartyRoleDocument : INestedEntity
     [BsonElement("id")]
     public required string IdentifierId { get; set; }
 
-    public string? RoleTypeId { get; set; } // LOV Lookup
-    public string? RoleName { get; set; }
+    public string? RoleTypeId { get; set; } // LOV Lookup / Internal Id
+    public string? RoleTypeName { get; set; } // LOV Lookup / Internal Name
+    public string? SourceRoleName { get; set; }
 
     public DateTime EffectiveFromData { get; set; } = default;
     public DateTime? EffectiveToData { get; set; }

@@ -12,6 +12,7 @@ public class PartyRoleRelationshipDocument : IEntity, IContainsIndexes
     public string PartyId { get; set; } = string.Empty;
     public string PartyTypeId { get; set; } = string.Empty; // LOV Lookup / Internal Id
     public string CountyParishHoldingNumber { get; set; } = string.Empty;
+    public string Source { get; set; } = string.Empty; // Enum or string value
 
     public string? RoleTypeId { get; set; } // LOV Lookup / Internal Id
     public string? RoleTypeName { get; set; } // LOV Lookup / Internal Name
