@@ -102,6 +102,16 @@ public class Site : IAggregateRoot
         return site;
     }
 
+    public void Delete(int batchId)
+    {
+        if (Deleted) return; 
+
+        Deleted = true;
+        State = "Inactive"; 
+        LastUpdatedBatchId = batchId;
+        LastUpdatedDate = DateTime.UtcNow;
+    }
+
     public void UpdateLastUpdatedDate(DateTime lastUpdatedDate)
     {
         LastUpdatedDate = lastUpdatedDate;

@@ -17,13 +17,14 @@ public class CreateSiteCommandHandler(IGenericRepository<SiteDocument> repositor
 
     public async Task<TrackedResult<string>> Handle(CreateSiteCommand request, CancellationToken cancellationToken)
     {
-
         var site = Site.Create(
+            request.BatchId,
             "Holding",
             request.Name,
-            DateTime.UtcNow, 
-            "England",
-            null,
+            DateTime.UtcNow,
+            "Active",
+            "Application",
+            false,
             null
         );
 
