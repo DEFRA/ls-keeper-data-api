@@ -23,7 +23,7 @@ entity "CTS Agent" as Agent {
   CHANGE_TYPE
 }
 
-CPH 0--* Keeper : via LID_FULL_IDENTIFIER
-CPH 0--* Agent : via LID_FULL_IDENTIFIER
+CPH 0--* Keeper : Holding.LID_FULL_IDENTIFIER == Keeper.LID_FULL_IDENTIFIER
+CPH 0--* Agent : Holding.LID_FULL_IDENTIFIER == Agent.LID_FULL_IDENTIFIER
 
 @enduml
