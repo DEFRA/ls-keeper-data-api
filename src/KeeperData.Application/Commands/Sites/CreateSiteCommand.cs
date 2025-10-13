@@ -7,5 +7,3 @@ namespace KeeperData.Application.Commands.Sites;
 /// </summary>
 /// <param name="Name"></param>
 public record CreateSiteCommand(int BatchId, string Name) : ICommand<TrackedResult<string>>;
-
-
