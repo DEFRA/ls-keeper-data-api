@@ -85,7 +85,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
                 Location.Easting,
                 Location.Northing,
                 Location.Address?.ToDomain(),
-                Location.Communication.Select(c => c.ToDomain()), 
+                Location.Communication.Select(c => c.ToDomain()),
                 Location.IdentifierId
             );
         }

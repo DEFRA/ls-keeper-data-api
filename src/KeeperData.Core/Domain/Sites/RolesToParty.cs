@@ -7,7 +7,7 @@ namespace KeeperData.Core.Domain.Sites;
 public class RolesToParty : ValueObject
 {
     public string Id { get; }
-    public Role? Role { get; } 
+    public Role? Role { get; }
     public IReadOnlyCollection<ManagedSpecies> SpeciesManagedByRole { get; }
     public DateTime? LastUpdatedDate { get; }
 

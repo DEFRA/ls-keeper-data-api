@@ -9,7 +9,7 @@ using System.Linq;
 namespace KeeperData.Core.Domain.Sites;
 
 public class Site : IAggregateRoot
-{   
+{
     public string Id { get; private set; }
     public int LastUpdatedBatchId { get; set; }
     public DateTime LastUpdatedDate { get; private set; }
@@ -104,10 +104,10 @@ public class Site : IAggregateRoot
 
     public void Delete(int batchId)
     {
-        if (Deleted) return; 
+        if (Deleted) return;
 
         Deleted = true;
-        State = "Inactive"; 
+        State = "Inactive";
         LastUpdatedBatchId = batchId;
         LastUpdatedDate = DateTime.UtcNow;
     }
