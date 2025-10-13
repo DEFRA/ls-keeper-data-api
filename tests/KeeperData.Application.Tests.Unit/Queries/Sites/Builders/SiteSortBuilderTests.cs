@@ -5,7 +5,6 @@ using KeeperData.Core.Documents;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
-using MongoDB.Driver;
 
 namespace KeeperData.Application.Tests.Unit.Queries.Sites.Builders;
 
