@@ -46,7 +46,7 @@ public class Address : ValueObject
 
     protected override IEnumerable<object> GetEqualityComponents()
     {
-        yield return Uprn;
+        yield return Uprn ?? default;
         yield return AddressLine1;
         yield return AddressLine2 ?? string.Empty;
         yield return PostTown ?? string.Empty;

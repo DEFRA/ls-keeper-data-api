@@ -45,6 +45,6 @@ public class Communication : ValueObject
         yield return Email ?? string.Empty;
         yield return Mobile ?? string.Empty;
         yield return Landline ?? string.Empty;
-        yield return PrimaryContactFlag;
+        yield return PrimaryContactFlag ?? false;
     }
 }

@@ -1,7 +1,7 @@
-using KeeperData.Core.Domain.Sites; // Add this using
+using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
-using System; // Add this using
+using System;
 using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
@@ -25,8 +25,8 @@ public class SpeciesDocument : INestedEntity
 
     public Species ToDomain() => new(
         IdentifierId,
-        Code,
-        Name,
+        Code ?? string.Empty,
+        Name ?? string.Empty,
         LastUpdatedDate
     );
 }

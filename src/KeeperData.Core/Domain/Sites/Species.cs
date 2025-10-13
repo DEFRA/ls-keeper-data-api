@@ -11,6 +11,11 @@ public class Species : ValueObject
 
     public Species(string id, string code, string name, DateTime? lastUpdatedDate)
     {
+        if (string.IsNullOrWhiteSpace(code))
+            throw new ArgumentException("Species code cannot be null or empty.", nameof(code));
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Species name cannot be null or empty.", nameof(name));
+
         Id = id;
         Code = code;
         Name = name;
