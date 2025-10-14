@@ -15,6 +15,7 @@ public class CtsHoldingInsertContext
 
     public CtsHoldingDocument? SilverHolding { get; set; }
     public List<CtsPartyDocument> SilverParties { get; set; } = [];
+    public List<PartyRoleRelationshipDocument> SilverPartyRoles { get; set; } = [];
 
     public SiteDocument? GoldSite { get; set; }
     public List<PartyDocument> GoldParties { get; set; } = [];

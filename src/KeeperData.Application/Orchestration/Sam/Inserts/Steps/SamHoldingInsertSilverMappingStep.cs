@@ -21,6 +21,8 @@ public class SamHoldingInsertSilverMappingStep(ILogger<SamHoldingInsertSilverMap
             .. SamPartyMapper.ToSilver(context.RawParties, context.RawHerds)
         ];
 
+        context.SilverPartyRoles = []; // Map From SilverParties
+
         await Task.CompletedTask;
     }
 }

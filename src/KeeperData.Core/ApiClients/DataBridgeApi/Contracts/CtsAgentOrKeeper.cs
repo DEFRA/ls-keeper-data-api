@@ -24,5 +24,4 @@ public class CtsAgentOrKeeper : BronzeBase
 
     public DateTime LPR_EFFECTIVE_FROM_DATE { get; set; } = default;
     public DateTime? LPR_EFFECTIVE_TO_DATE { get; set; }
-
 }

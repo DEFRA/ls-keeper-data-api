@@ -21,6 +21,8 @@ public class CtsHoldingInsertSilverMappingStep(ILogger<CtsHoldingInsertSilverMap
             .. CtsAgentOrKeeperMapper.ToSilver(context.RawKeepers)
         ];
 
+        context.SilverPartyRoles = []; // Map From SilverParties
+
         await Task.CompletedTask;
     }
 }
