@@ -11,6 +11,7 @@ public class GroupMarkDocument : INestedEntity
     public required string IdentifierId { get; set; }
 
     public string GroupMark { get; set; } = string.Empty;
+    public string CountyParishHoldingNumber { get; set; } = string.Empty;
 
     public DateTime GroupMarkStartDate { get; set; } = default;
     public DateTime? GroupMarkEndDate { get; set; }
