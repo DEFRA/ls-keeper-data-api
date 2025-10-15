@@ -11,16 +11,23 @@ public class MockCtsDataFactoryTests
     public void GivenMockCtsDataFactory_WhenCallingCreateMockHolding_ShouldProduceValidHoldingModel()
     {
         var factory = new MockCtsDataFactory();
+        var holdingIdentifier = CphGenerator.GenerateFormattedCph();
 
         var result = factory.CreateMockHolding(
             changeType: DataBridgeConstants.ChangeTypeInsert,
+            batchId: 1,
+            holdingIdentifier: holdingIdentifier,
             locType: "AG",
             endDate: DateTime.UtcNow.Date);
 
         result.Should().NotBeNull();
+
         result.CHANGE_TYPE.Should().Be(DataBridgeConstants.ChangeTypeInsert);
+        result.BATCH_ID.Should().Be(1);
+
         result.LID_FULL_IDENTIFIER.Should().NotBeNull();
-        result.LID_FULL_IDENTIFIER.Length.Should().Be(11);
+        result.LID_FULL_IDENTIFIER.Should().Be(holdingIdentifier);
+
         result.LTY_LOC_TYPE.Should().Be("AG");
         result.LOC_EFFECTIVE_TO.Should().NotBeNull();
     }
@@ -33,14 +40,16 @@ public class MockCtsDataFactoryTests
 
         var result = factory.CreateMockAgentOrKeeper(
             changeType: DataBridgeConstants.ChangeTypeInsert,
-            holdingIdentifier: holdingIdentifier,
             batchId: 1,
+            holdingIdentifier: holdingIdentifier,
             endDate: DateTime.UtcNow.Date);
 
         result.Should().NotBeNull();
+
         result.CHANGE_TYPE.Should().Be(DataBridgeConstants.ChangeTypeInsert);
-        result.LID_FULL_IDENTIFIER.Should().NotBeNull().And.Be(holdingIdentifier);
         result.BATCH_ID.Should().Be(1);
+
+        result.LID_FULL_IDENTIFIER.Should().NotBeNull().And.Be(holdingIdentifier);
         result.LPR_EFFECTIVE_TO_DATE.Should().NotBeNull();
     }
 

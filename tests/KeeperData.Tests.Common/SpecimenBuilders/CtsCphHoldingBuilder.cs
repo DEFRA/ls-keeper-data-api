@@ -6,6 +6,8 @@ namespace KeeperData.Tests.Common.SpecimenBuilders;
 
 public class CtsCphHoldingBuilder(
     string fixedChangeType,
+    int batchId,
+    string holdingIdentifier,
     string? fixedLocType = null,
     DateTime? fixedEndDate = null) : ISpecimenBuilder
 {
@@ -14,6 +16,8 @@ public class CtsCphHoldingBuilder(
     private readonly string[] _locationTypes = ["AG", "SH", "AH", "CL", "CC"];
 
     private readonly string _fixedChangeType = fixedChangeType;
+    private readonly int _batchId = batchId;
+    private readonly string _holdingIdentifier = holdingIdentifier;
     private readonly string? _fixedLocType = fixedLocType;
     private readonly DateTime? _fixedEndDate = fixedEndDate;
 
@@ -21,12 +25,11 @@ public class CtsCphHoldingBuilder(
     {
         if (request is Type type && type == typeof(CtsCphHolding))
         {
-            var holdingIdentifier = CphGenerator.GenerateFormattedCph();
             var (addressName, address2, address3, address4, address5, postCode) = AddressGenerator.GenerateCtsAddress();
 
             return new CtsCphHolding
             {
-                LID_FULL_IDENTIFIER = holdingIdentifier,
+                LID_FULL_IDENTIFIER = _holdingIdentifier,
                 LTY_LOC_TYPE = _fixedLocType ?? _locationTypes[_random.Next(_locationTypes.Length)],
 
                 ADR_NAME = addressName,
@@ -43,7 +46,7 @@ public class CtsCphHoldingBuilder(
                 LOC_EFFECTIVE_FROM = DateTime.Today.AddDays(-_random.Next(1000)),
                 LOC_EFFECTIVE_TO = _fixedEndDate,
 
-                BATCH_ID = _random.Next(1000),
+                BATCH_ID = _batchId,
                 CHANGE_TYPE = _fixedChangeType
             };
         }

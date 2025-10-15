@@ -6,13 +6,14 @@ namespace KeeperData.Tests.Common.SpecimenBuilders;
 
 public class CtsAgentOrKeeperBuilder(
     string fixedChangeType,
-    string holdingIdentifier,
     int batchId,
+    string holdingIdentifier,
     DateTime? fixedEndDate = null) : ISpecimenBuilder
 {
     private readonly Random _random = new();
 
     private readonly string _fixedChangeType = fixedChangeType;
+    private readonly int _batchId = batchId;
     private readonly string _holdingIdentifier = holdingIdentifier;
     private readonly DateTime? _fixedEndDate = fixedEndDate;
 
@@ -48,7 +49,7 @@ public class CtsAgentOrKeeperBuilder(
                 LPR_EFFECTIVE_FROM_DATE = DateTime.Today.AddDays(-_random.Next(500)),
                 LPR_EFFECTIVE_TO_DATE = _fixedEndDate,
 
-                BATCH_ID = batchId,
+                BATCH_ID = _batchId,
                 CHANGE_TYPE = _fixedChangeType
             };
         }
