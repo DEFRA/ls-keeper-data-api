@@ -169,8 +169,8 @@ public class S3ClientFactoryTests
     [Fact]
     public void GivenCredentialsAreNotSet_WhenCallingAddClientWithCredentials_ShouldThrow()
     {
-        Environment.SetEnvironmentVariable("TEST_ACCESS_KEY", null);
-        Environment.SetEnvironmentVariable("TEST_SECRET_KEY", null);
+        Environment.SetEnvironmentVariable("TEST_ACCESS_KEY", string.Empty);
+        Environment.SetEnvironmentVariable("TEST_SECRET_KEY", string.Empty);
 
         Action act = () => _clientFactory.AddClientWithCredentials<TestStorageClient>(DefaultBucketName, "TEST_ACCESS_KEY", "TEST_SECRET_KEY", _defaultAmazonS3Config);
 
