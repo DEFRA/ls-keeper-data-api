@@ -1,4 +1,4 @@
-namespace KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+namespace KeeperData.Core.ApiClients.DataBridgeApi;
 
 public static class DataBridgeConstants
 {
@@ -6,5 +6,5 @@ public static class DataBridgeConstants
     public const string ChangeTypeUpdate = "U";
     public const string ChangeTypeDelete = "D";
 
-    public const string CphIdentifierName = "CPH";
+    public const string CphIdentifierName = "HoldingNumber";
 }

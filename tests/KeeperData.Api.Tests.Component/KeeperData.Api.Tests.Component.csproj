@@ -35,5 +35,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\KeeperData.Api\KeeperData.Api.csproj" />
+    <ProjectReference Include="..\KeeperData.Tests.Common\KeeperData.Tests.Common.csproj" />
   </ItemGroup>
 </Project>

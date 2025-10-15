@@ -1,4 +1,4 @@
-using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Repositories;
