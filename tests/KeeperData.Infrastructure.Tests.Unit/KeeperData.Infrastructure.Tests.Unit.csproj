@@ -35,6 +35,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\KeeperData.Infrastructure\KeeperData.Infrastructure.csproj" />
+      <ProjectReference Include="..\KeeperData.Tests.Common\KeeperData.Tests.Common.csproj" />
     </ItemGroup>
 
 </Project>
