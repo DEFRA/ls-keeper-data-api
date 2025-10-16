@@ -1,5 +1,3 @@
-using System;
-
 namespace KeeperData.Tests.Common.Generators;
 
 public static class PersonGenerator
