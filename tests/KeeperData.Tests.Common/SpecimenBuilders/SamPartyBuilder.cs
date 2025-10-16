@@ -81,7 +81,7 @@ public class SamPartyBuilder(
                 PREFERRED_CONTACT_METHOD_IND = 'T',
 
                 ROLES = string.Join(",", partyRoles),
-                
+
                 PARTY_ROLE_FROM_DATE = DateTime.Today.AddDays(-_random.Next(500)),
                 PARTY_ROLE_TO_DATE = _fixedEndDate,
 

@@ -92,7 +92,7 @@ public class SamCphHoldingBuilder(
 
                 CPH_RELATIONSHIP_TYPE = _allowNulls && _random.Next(2) == 0 ? null : Guid.NewGuid().ToString(),
                 SECONDARY_CPH = _allowNulls && _random.Next(2) == 0 ? null : CphGenerator.GenerateFormattedCph(),
-                
+
                 FACILITY_BUSINSS_ACTVTY_CODE = businessActivityCode,
                 FACILITY_TYPE_CODE = facilityTypeCode,
                 FCLTY_SUB_BSNSS_ACTVTY_CODE = businessSubActivityCode,
@@ -101,7 +101,7 @@ public class SamCphHoldingBuilder(
                 MOVEMENT_RSTRCTN_RSN_CODE = movementRestrictionCode,
 
                 ANIMAL_SPECIES_CODE = animalSpeciesCode,
-                ANIMAL_PRODUCTION_USAGE_CODE = animalProductionUsageCode,                
+                ANIMAL_PRODUCTION_USAGE_CODE = animalProductionUsageCode,
 
                 BATCH_ID = _batchId,
                 CHANGE_TYPE = _fixedChangeType

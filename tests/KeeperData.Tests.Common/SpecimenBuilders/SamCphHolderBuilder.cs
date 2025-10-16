@@ -77,7 +77,7 @@ public class SamCphHolderBuilder(
                 PREFERRED_CONTACT_METHOD_IND = 'T',
 
                 CPHS = string.Join(",", _holdingIdentifiers),
-                
+
                 BATCH_ID = _batchId,
                 CHANGE_TYPE = _fixedChangeType
             };

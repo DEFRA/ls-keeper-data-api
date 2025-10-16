@@ -61,7 +61,7 @@ public class MockCtsDataFactory
         _fixture.Customizations.Add(new CtsCphHoldingBuilder(changeType, batchId, holdingIdentifier));
 
         var holdings = _fixture.CreateMany<CtsCphHolding>(holdingCount).ToList();
-        
+
         _fixture.Customizations.Add(new CtsAgentOrKeeperBuilder(changeType, batchId, holdingIdentifier));
 
         var agents = _fixture.CreateMany<CtsAgentOrKeeper>(agentCount).ToList();

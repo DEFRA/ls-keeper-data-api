@@ -115,7 +115,7 @@ public class MockSamDataFactory
         foreach (var item in animalSpeciesAndProductionUsageCodes)
         {
             herdSpeciesParties.Add(
-                item, 
+                item,
                 PersonGenerator.GetPartyIds(partyCount));
         }
 
