@@ -9,7 +9,8 @@ public class CtsCphHoldingBuilder(
     int batchId,
     string holdingIdentifier,
     string? fixedLocType = null,
-    DateTime? fixedEndDate = null) : ISpecimenBuilder
+    DateTime? fixedEndDate = null,
+    bool allowNulls = true) : ISpecimenBuilder
 {
     private readonly Random _random = new();
 
@@ -20,12 +21,13 @@ public class CtsCphHoldingBuilder(
     private readonly string _holdingIdentifier = holdingIdentifier;
     private readonly string? _fixedLocType = fixedLocType;
     private readonly DateTime? _fixedEndDate = fixedEndDate;
+    private readonly bool _allowNulls = allowNulls;
 
     public object Create(object request, ISpecimenContext context)
     {
         if (request is Type type && type == typeof(CtsCphHolding))
         {
-            var (addressName, address2, address3, address4, address5, postCode) = AddressGenerator.GenerateCtsAddress();
+            var (addressName, address2, address3, address4, address5, postCode) = AddressGenerator.GenerateCtsAddress(_allowNulls);
 
             return new CtsCphHolding
             {
@@ -39,9 +41,9 @@ public class CtsCphHoldingBuilder(
                 ADR_ADDRESS_5 = address5,
                 ADR_POST_CODE = postCode,
 
-                LOC_TEL_NUMBER = CommunicationGenerator.GenerateTelephoneNumber(),
-                LOC_MOBILE_NUMBER = CommunicationGenerator.GenerateMobileNumber(),
-                LOC_MAP_REFERENCE = AddressGenerator.GenerateMapReference(),
+                LOC_TEL_NUMBER = CommunicationGenerator.GenerateTelephoneNumber(_allowNulls),
+                LOC_MOBILE_NUMBER = CommunicationGenerator.GenerateMobileNumber(_allowNulls),
+                LOC_MAP_REFERENCE = AddressGenerator.GenerateMapReference(_allowNulls),
 
                 LOC_EFFECTIVE_FROM = DateTime.Today.AddDays(-_random.Next(1000)),
                 LOC_EFFECTIVE_TO = _fixedEndDate,

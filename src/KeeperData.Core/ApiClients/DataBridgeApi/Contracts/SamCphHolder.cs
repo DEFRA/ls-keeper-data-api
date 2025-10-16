@@ -32,8 +32,8 @@ public class SamCphHolder : BronzeBase
     public string? UK_INTERNAL_CODE { get; set; }
     public string? POSTCODE { get; set; }
     public string? COUNTRY_CODE { get; set; }
-    public char? PREFERRED_CONTACT_METHOD_IND { get; set; }
     public string? UDPRN { get; set; }
+    public char? PREFERRED_CONTACT_METHOD_IND { get; set; } = default;
 
     /// <summary>
     /// CLOB (comma separated list of CPH)

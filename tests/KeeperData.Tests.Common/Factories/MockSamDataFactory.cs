@@ -35,12 +35,12 @@ public class MockSamDataFactory
     public SamCphHolder CreateMockHolder(
         string changeType,
         int batchId,
-        string holdingIdentifier)
+        List<string> holdingIdentifiers)
     {
         _fixture.Customizations.Add(new SamCphHolderBuilder(
             changeType,
             batchId,
-            holdingIdentifier));
+            holdingIdentifiers));
 
         return _fixture.Create<SamCphHolder>();
     }
@@ -83,15 +83,13 @@ public class MockSamDataFactory
         var holdingIdentifier = CphGenerator.GenerateFormattedCph();
         var batchId = 1;
 
-        var partyIds = Enumerable.Range(1, partyCount)
-            .Select(i => $"C{i:D6}")
-            .ToList();
+        var partyIds = PersonGenerator.GetPartyIds(partyCount);
 
         _fixture.Customizations.Add(new SamCphHoldingBuilder(changeType, batchId, holdingIdentifier));
 
         var holdings = _fixture.CreateMany<SamCphHolding>(holdingCount).ToList();
 
-        _fixture.Customizations.Add(new SamCphHolderBuilder(changeType, batchId, holdingIdentifier));
+        _fixture.Customizations.Add(new SamCphHolderBuilder(changeType, batchId, [holdingIdentifier]));
 
         var holders = _fixture.CreateMany<SamCphHolder>(holderCount).ToList();
 
@@ -104,5 +102,23 @@ public class MockSamDataFactory
         var parties = _fixture.CreateMany<SamParty>(partyCount).ToList();
 
         return (holdings, holders, herds, parties);
+    }
+
+    private static Dictionary<(string animalSpeciesCode, string animalProductionUsageCode), List<string>> GetHerdSpeciesPartyAssociations(int herdCount, int partyCount)
+    {
+        var herdSpeciesParties = new Dictionary<(string animalSpeciesCode, string animalProductionUsageCode), List<string>>();
+
+        var animalSpeciesAndProductionUsageCodes = Enumerable.Range(1, herdCount)
+            .Select(i => FacilityGenerator.GenerateAnimalSpeciesAndProductionUsageCodes(allowNulls: false))
+            .ToList();
+
+        foreach (var item in animalSpeciesAndProductionUsageCodes)
+        {
+            herdSpeciesParties.Add(
+                item, 
+                PersonGenerator.GetPartyIds(partyCount));
+        }
+
+        return herdSpeciesParties;
     }
 }
