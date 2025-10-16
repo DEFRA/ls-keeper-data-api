@@ -1,5 +1,6 @@
 using AutoFixture;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using KeeperData.Tests.Common.Generators;
 using KeeperData.Tests.Common.SpecimenBuilders;
 
 namespace KeeperData.Tests.Common.Factories;
@@ -16,16 +17,34 @@ public class MockCtsDataFactory
         _fixture = new Fixture();
     }
 
-    public CtsCphHolding CreateMockHolding(string changeType, string? locType = null, DateTime? endDate = null)
+    public CtsCphHolding CreateMockHolding(
+        string changeType,
+        int batchId,
+        string holdingIdentifier,
+        string? locType = null,
+        DateTime? endDate = null)
     {
-        _fixture.Customizations.Add(new CtsCphHoldingBuilder(changeType, locType, endDate));
+        _fixture.Customizations.Add(new CtsCphHoldingBuilder(
+            changeType,
+            batchId,
+            holdingIdentifier,
+            locType,
+            endDate));
 
         return _fixture.Create<CtsCphHolding>();
     }
 
-    public CtsAgentOrKeeper CreateMockAgentOrKeeper(string changeType, string holdingIdentifier, int batchId = 1, DateTime? endDate = null)
+    public CtsAgentOrKeeper CreateMockAgentOrKeeper(
+        string changeType,
+        int batchId,
+        string holdingIdentifier,
+        DateTime? endDate = null)
     {
-        _fixture.Customizations.Add(new CtsAgentOrKeeperBuilder(changeType, holdingIdentifier, batchId, endDate));
+        _fixture.Customizations.Add(new CtsAgentOrKeeperBuilder(
+            changeType,
+            batchId,
+            holdingIdentifier,
+            endDate));
 
         return _fixture.Create<CtsAgentOrKeeper>();
     }
@@ -36,13 +55,14 @@ public class MockCtsDataFactory
         int agentCount,
         int keeperCount)
     {
-        _fixture.Customizations.Add(new CtsCphHoldingBuilder(changeType));
+        var holdingIdentifier = CphGenerator.GenerateFormattedCph();
+        var batchId = 1;
+
+        _fixture.Customizations.Add(new CtsCphHoldingBuilder(changeType, batchId, holdingIdentifier));
 
         var holdings = _fixture.CreateMany<CtsCphHolding>(holdingCount).ToList();
-        var holdingIdentifier = holdings.First().LID_FULL_IDENTIFIER;
-        var batchId = holdings.First().BATCH_ID;
 
-        _fixture.Customizations.Add(new CtsAgentOrKeeperBuilder(changeType, holdingIdentifier, batchId));
+        _fixture.Customizations.Add(new CtsAgentOrKeeperBuilder(changeType, batchId, holdingIdentifier));
 
         var agents = _fixture.CreateMany<CtsAgentOrKeeper>(agentCount).ToList();
         var keepers = _fixture.CreateMany<CtsAgentOrKeeper>(keeperCount).ToList();

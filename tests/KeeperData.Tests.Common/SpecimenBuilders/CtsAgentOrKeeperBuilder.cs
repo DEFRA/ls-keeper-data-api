@@ -6,22 +6,25 @@ namespace KeeperData.Tests.Common.SpecimenBuilders;
 
 public class CtsAgentOrKeeperBuilder(
     string fixedChangeType,
-    string holdingIdentifier,
     int batchId,
-    DateTime? fixedEndDate = null) : ISpecimenBuilder
+    string holdingIdentifier,
+    DateTime? fixedEndDate = null,
+    bool allowNulls = true) : ISpecimenBuilder
 {
     private readonly Random _random = new();
 
     private readonly string _fixedChangeType = fixedChangeType;
+    private readonly int _batchId = batchId;
     private readonly string _holdingIdentifier = holdingIdentifier;
     private readonly DateTime? _fixedEndDate = fixedEndDate;
+    private readonly bool _allowNulls = allowNulls;
 
     public object Create(object request, ISpecimenContext context)
     {
         if (request is Type type && type == typeof(CtsAgentOrKeeper))
         {
-            var (addressName, address2, address3, address4, address5, postCode) = AddressGenerator.GenerateCtsAddress();
-            var (title, initials, _, surname) = PersonGenerator.GeneratePerson();
+            var (addressName, address2, address3, address4, address5, postCode) = AddressGenerator.GenerateCtsAddress(_allowNulls);
+            var (title, initials, _, _, surname) = PersonGenerator.GeneratePerson(_allowNulls);
 
             return new CtsAgentOrKeeper
             {
@@ -31,12 +34,12 @@ public class CtsAgentOrKeeperBuilder(
                 PAR_TITLE = title,
                 PAR_INITIALS = initials,
                 PAR_SURNAME = surname,
-                PAR_TEL_NUMBER = CommunicationGenerator.GenerateTelephoneNumber(),
-                PAR_MOBILE_NUMBER = CommunicationGenerator.GenerateMobileNumber(),
-                PAR_EMAIL_ADDRESS = CommunicationGenerator.GenerateEmail(),
+                PAR_TEL_NUMBER = CommunicationGenerator.GenerateTelephoneNumber(_allowNulls),
+                PAR_MOBILE_NUMBER = CommunicationGenerator.GenerateMobileNumber(_allowNulls),
+                PAR_EMAIL_ADDRESS = CommunicationGenerator.GenerateEmail(_allowNulls),
 
-                LOC_TEL_NUMBER = CommunicationGenerator.GenerateTelephoneNumber(),
-                LOC_MOBILE_NUMBER = CommunicationGenerator.GenerateMobileNumber(),
+                LOC_TEL_NUMBER = CommunicationGenerator.GenerateTelephoneNumber(_allowNulls),
+                LOC_MOBILE_NUMBER = CommunicationGenerator.GenerateMobileNumber(_allowNulls),
 
                 ADR_NAME = addressName,
                 ADR_ADDRESS_2 = address2,
@@ -48,7 +51,7 @@ public class CtsAgentOrKeeperBuilder(
                 LPR_EFFECTIVE_FROM_DATE = DateTime.Today.AddDays(-_random.Next(500)),
                 LPR_EFFECTIVE_TO_DATE = _fixedEndDate,
 
-                BATCH_ID = batchId,
+                BATCH_ID = _batchId,
                 CHANGE_TYPE = _fixedChangeType
             };
         }
