@@ -1,12 +1,17 @@
+using KeeperData.Core.Attributes;
 using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
 
+[CollectionName("refCountries")]
 public class CountryDocument : INestedEntity
 {
+    [BsonId]
+    [BsonRepresentation(BsonType.String)]
     [JsonPropertyName("id")]
     [BsonElement("id")]
     public required string IdentifierId { get; set; }

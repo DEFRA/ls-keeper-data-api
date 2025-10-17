@@ -24,4 +24,14 @@
       <ProjectReference Include="..\KeeperData.Application\KeeperData.Application.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Content Include="Data\Source\countries.csv">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Data\Seed\" />
+      <Folder Include="Data\Source\" />
+    </ItemGroup>
 </Project>
