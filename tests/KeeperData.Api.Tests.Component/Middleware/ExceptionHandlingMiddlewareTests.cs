@@ -3,11 +3,13 @@ using FluentValidation.Results;
 using KeeperData.Api.Middleware;
 using KeeperData.Core.Exceptions;
 using KeeperData.Infrastructure;
+using KeeperData.Infrastructure.Telemetry;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
+using Moq;
 using System.Text.Json;
 
 namespace KeeperData.Api.Tests.Component.Middleware;
@@ -15,11 +17,13 @@ namespace KeeperData.Api.Tests.Component.Middleware;
 public class ExceptionHandlingMiddlewareTests
 {
     private readonly TestLogger<ExceptionHandlingMiddleware> _testLogger;
+    private readonly Mock<IApplicationMetrics> _mockMetrics;
     private readonly string _traceHeader = "x-cdp-request-id";
 
     public ExceptionHandlingMiddlewareTests()
     {
         _testLogger = new TestLogger<ExceptionHandlingMiddleware>();
+        _mockMetrics = new Mock<IApplicationMetrics>();
     }
 
     public class TestLogger<T> : ILogger<T>
@@ -83,7 +87,7 @@ public class ExceptionHandlingMiddlewareTests
             .AddInMemoryCollection(initialData)
             .Build();
 
-        return new ExceptionHandlingMiddleware(next, _testLogger, config);
+        return new ExceptionHandlingMiddleware(next, _testLogger, config, _mockMetrics.Object);
     }
 
     private DefaultHttpContext CreateHttpContext(string path = "/test", string? traceHeaderValue = null)
@@ -398,5 +402,89 @@ public class ExceptionHandlingMiddlewareTests
 
         nextCalled.Should().BeTrue();
         context.Response.StatusCode.Should().Be(200);
+    }
+
+    [Fact]
+    public async Task Successful_request_records_success_metrics()
+    {
+        // Arrange
+        var context = CreateHttpContext("/api/test");
+        var nextCalled = false;
+        var sut = CreateMiddleware(_ =>
+        {
+            nextCalled = true;
+            return Task.CompletedTask;
+        });
+
+        // Act
+        await sut.InvokeAsync(context);
+
+        // Assert
+        nextCalled.Should().BeTrue();
+        context.Response.StatusCode.Should().Be(200);
+
+        _mockMetrics.Verify(m => m.RecordRequest("http_request", "success"), Times.Once);
+        _mockMetrics.Verify(m => m.RecordDuration("http_request", It.IsAny<double>()), Times.Once);
+        _mockMetrics.Verify(m => m.RecordCount("http_requests", 1, 
+            It.Is<(string Key, string Value)[]>(tags => 
+                tags.Any(t => t.Key == "method" && t.Value == "GET") &&
+                tags.Any(t => t.Key == "endpoint" && t.Value == "/api/test") &&
+                tags.Any(t => t.Key == "status" && t.Value == "success"))), Times.Once);
+    }
+
+    [Fact]
+    public async Task Exception_records_error_metrics()
+    {
+        // Arrange
+        var context = CreateHttpContext("/api/error");
+        var sut = CreateMiddleware(_ => throw new NotFoundException("Test", 1));
+
+        // Act
+        await sut.InvokeAsync(context);
+
+        // Assert
+        context.Response.StatusCode.Should().Be(404);
+
+        _mockMetrics.Verify(m => m.RecordRequest("http_request", "error"), Times.Once);
+        _mockMetrics.Verify(m => m.RecordDuration("http_request", It.IsAny<double>()), Times.Once);
+        _mockMetrics.Verify(m => m.RecordCount("http_requests", 1, 
+            It.Is<(string Key, string Value)[]>(tags => 
+                tags.Any(t => t.Key == "status" && t.Value == "error") &&
+                tags.Any(t => t.Key == "status_code" && t.Value == "404"))), Times.Once);
+        _mockMetrics.Verify(m => m.RecordCount("http_errors", 1, 
+            It.Is<(string Key, string Value)[]>(tags => 
+                tags.Any(t => t.Key == "error_type" && t.Value == "not_found") &&
+                tags.Any(t => t.Key == "exception_type" && t.Value == "NotFoundException"))), Times.Once);
+    }
+
+    [Theory]
+    [InlineData(typeof(FluentValidation.ValidationException), "validation_error", 422)]
+    [InlineData(typeof(DomainException), "domain_error", 400)] 
+    [InlineData(typeof(InvalidOperationException), "internal_error", 500)]
+    public async Task Different_exception_types_record_appropriate_error_metrics(Type exceptionType, string expectedErrorType, int expectedStatusCode)
+    {
+        // Arrange
+        var context = CreateHttpContext("/api/test");
+        Exception exception = exceptionType.Name switch
+        {
+            nameof(FluentValidation.ValidationException) => new FluentValidation.ValidationException([new ValidationFailure("Test", "Test error")]),
+            nameof(DomainException) => new DomainException("Test domain error"),
+            nameof(InvalidOperationException) => new InvalidOperationException("Test internal error"),
+            _ => throw new ArgumentException($"Unsupported exception type: {exceptionType}")
+        };
+
+        var sut = CreateMiddleware(_ => throw exception);
+
+        // Act
+        await sut.InvokeAsync(context);
+
+        // Assert
+        context.Response.StatusCode.Should().Be(expectedStatusCode);
+
+        _mockMetrics.Verify(m => m.RecordCount("http_errors", 1, 
+            It.Is<(string Key, string Value)[]>(tags => 
+                tags.Any(t => t.Key == "error_type" && t.Value == expectedErrorType) &&
+                tags.Any(t => t.Key == "exception_type" && t.Value == exceptionType.Name) &&
+                tags.Any(t => t.Key == "status_code" && t.Value == expectedStatusCode.ToString()))), Times.Once);
     }
 }
