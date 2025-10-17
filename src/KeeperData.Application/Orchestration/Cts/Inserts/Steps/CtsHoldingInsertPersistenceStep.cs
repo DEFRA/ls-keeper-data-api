@@ -1,4 +1,3 @@
-using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Repositories;
@@ -18,14 +17,14 @@ public class CtsHoldingInsertPersistenceStep(
 
     protected override async Task ExecuteCoreAsync(CtsHoldingInsertContext context, CancellationToken cancellationToken)
     {
-        if (context is not { RawHolding.CHANGE_TYPE: DataBridgeConstants.ChangeTypeInsert })
-            return;
+        //if (context is not { RawHolding.CHANGE_TYPE: DataBridgeConstants.ChangeTypeInsert })
+        //    return;
 
-        if (context.SilverHolding is not null)
-            await _silverHoldingRepository.BulkUpsertAsync([context.SilverHolding], cancellationToken);
+        //if (context.SilverHoldings is not null)
+        //    await _silverHoldingRepository.BulkUpsertAsync(context.SilverHoldings, cancellationToken);
 
-        if (context.SilverParties is not null)
-            await _silverPartyRepository.BulkUpsertAsync(context.SilverParties, cancellationToken);
+        //if (context.SilverParties is not null)
+        //    await _silverPartyRepository.BulkUpsertAsync(context.SilverParties, cancellationToken);
 
         await Task.CompletedTask;
     }

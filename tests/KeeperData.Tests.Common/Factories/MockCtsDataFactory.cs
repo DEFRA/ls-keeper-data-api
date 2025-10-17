@@ -49,7 +49,7 @@ public class MockCtsDataFactory
         return _fixture.Create<CtsAgentOrKeeper>();
     }
 
-    public (List<CtsCphHolding> holdings, List<CtsAgentOrKeeper> agents, List<CtsAgentOrKeeper> keepers) CreateMockData(
+    public (string holdingIdentifier, List<CtsCphHolding> holdings, List<CtsAgentOrKeeper> agents, List<CtsAgentOrKeeper> keepers) CreateMockData(
         string changeType,
         int holdingCount,
         int agentCount,
@@ -67,6 +67,6 @@ public class MockCtsDataFactory
         var agents = _fixture.CreateMany<CtsAgentOrKeeper>(agentCount).ToList();
         var keepers = _fixture.CreateMany<CtsAgentOrKeeper>(keeperCount).ToList();
 
-        return (holdings, agents, keepers);
+        return (holdingIdentifier, holdings, agents, keepers);
     }
 }

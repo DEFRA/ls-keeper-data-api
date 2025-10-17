@@ -31,6 +31,13 @@ public static class JsonDefaults
         WriteIndented = false
     };
 
+    private static JsonSerializerOptions s_defaultOptionsDataBridgeApiSupport = new()
+    {
+        PropertyNamingPolicy = null, // Pascal
+        WriteIndented = true,
+        PropertyNameCaseInsensitive = true
+    };
+
     public static JsonSerializerOptions DefaultOptions
     {
         get => s_defaultOptions;
@@ -53,5 +60,11 @@ public static class JsonDefaults
     {
         get => s_defaultOptionsWithSnsPascalSupport;
         set => s_defaultOptionsWithSnsPascalSupport = value;
+    }
+
+    public static JsonSerializerOptions DefaultOptionsWithDataBridgeApiSupport
+    {
+        get => s_defaultOptionsDataBridgeApiSupport;
+        set => s_defaultOptionsDataBridgeApiSupport = value;
     }
 }

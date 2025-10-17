@@ -58,7 +58,7 @@ public class MockCtsDataFactoryTests
     {
         var factory = new MockCtsDataFactory();
 
-        var (holdings, agents, keepers) = factory.CreateMockData(
+        var (_, holdings, agents, keepers) = factory.CreateMockData(
             changeType: DataBridgeConstants.ChangeTypeInsert,
             holdingCount: 1,
             agentCount: 1,
