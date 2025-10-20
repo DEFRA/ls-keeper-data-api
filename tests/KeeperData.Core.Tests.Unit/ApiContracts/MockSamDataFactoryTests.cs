@@ -78,7 +78,7 @@ public class MockSamDataFactoryTests
     {
         var factory = new MockSamDataFactory();
 
-        var (holdings, holders, herds, parties) = factory.CreateMockData(
+        var (holdingIdentifier, holdings, holders, herds, parties) = factory.CreateMockData(
             changeType: DataBridgeConstants.ChangeTypeInsert,
             holdingCount: 1,
             holderCount: 1,
@@ -94,7 +94,7 @@ public class MockSamDataFactoryTests
 
         holding.CHANGE_TYPE.Should().Be(DataBridgeConstants.ChangeTypeInsert);
         holding.CPH.Should().NotBeNull();
-        holding.CPH.Length.Should().Be(11);
+        holding.CPH.Should().Be(holdingIdentifier);
 
         var holder = holders[0];
 

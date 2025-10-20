@@ -15,24 +15,59 @@ public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClie
 
     private const string ClientName = "DataBridgeApi";
 
-    public Task<SamCphHolding> GetSamHoldingAsync(string id, CancellationToken cancellationToken)
+    public async Task<List<SamCphHolding>> GetSamHoldingsAsync(string id, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var query = DataBridgeQueries.SamHoldingsByCph(id);
+        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHoldings, new { }, query);
+
+        return await GetFromApiAsync<List<SamCphHolding>>(
+            uri,
+            $"Sam holdings for ID '{id}'",
+            cancellationToken);
     }
 
-    public Task<List<SamCphHolder>> GetSamHoldersAsync(string id, CancellationToken cancellationToken)
+    public async Task<List<SamCphHolder>> GetSamHoldersAsync(string id, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var query = DataBridgeQueries.SamHoldersByCph(id);
+        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHolders, new { }, query);
+
+        return await GetFromApiAsync<List<SamCphHolder>>(
+            uri,
+            $"Sam holders for ID '{id}'",
+            cancellationToken);
     }
 
-    public Task<List<SamParty>> GetSamPartiesAsync(string id, CancellationToken cancellationToken)
+    public async Task<List<SamHerd>> GetSamHerdsAsync(string id, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var query = DataBridgeQueries.SamHerdsByCph(id);
+        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHerds, new { }, query);
+
+        return await GetFromApiAsync<List<SamHerd>>(
+            uri,
+            $"Sam herds for ID '{id}'",
+            cancellationToken);
     }
 
-    public Task<List<SamHerd>> GetSamHerdsAsync(string id, CancellationToken cancellationToken)
+    public async Task<SamParty> GetSamPartyAsync(string id, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var query = DataBridgeQueries.SamPartyByPartyId(id);
+        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamParties, new { }, query);
+
+        return await GetFromApiAsync<SamParty>(
+            uri,
+            $"Sam party for ID '{id}'",
+            cancellationToken);
+    }
+
+    public async Task<List<SamParty>> GetSamPartiesAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
+    {
+        var query = DataBridgeQueries.SamPartiesByPartyIds(ids);
+        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamParties, new { }, query);
+
+        return await GetFromApiAsync<List<SamParty>>(
+            uri,
+            $"Sam parties for IDs '{string.Join(",", ids)}'",
+            cancellationToken);
     }
 
     public async Task<List<CtsCphHolding>> GetCtsHoldingsAsync(string id, CancellationToken cancellationToken)
