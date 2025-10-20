@@ -425,8 +425,8 @@ public class ExceptionHandlingMiddlewareTests
 
         _mockMetrics.Verify(m => m.RecordRequest("http_request", "success"), Times.Once);
         _mockMetrics.Verify(m => m.RecordDuration("http_request", It.IsAny<double>()), Times.Once);
-        _mockMetrics.Verify(m => m.RecordCount("http_requests", 1, 
-            It.Is<(string Key, string Value)[]>(tags => 
+        _mockMetrics.Verify(m => m.RecordCount("http_requests", 1,
+            It.Is<(string Key, string Value)[]>(tags =>
                 tags.Any(t => t.Key == "method" && t.Value == "GET") &&
                 tags.Any(t => t.Key == "endpoint" && t.Value == "/api/test") &&
                 tags.Any(t => t.Key == "status" && t.Value == "success"))), Times.Once);
@@ -447,19 +447,19 @@ public class ExceptionHandlingMiddlewareTests
 
         _mockMetrics.Verify(m => m.RecordRequest("http_request", "error"), Times.Once);
         _mockMetrics.Verify(m => m.RecordDuration("http_request", It.IsAny<double>()), Times.Once);
-        _mockMetrics.Verify(m => m.RecordCount("http_requests", 1, 
-            It.Is<(string Key, string Value)[]>(tags => 
+        _mockMetrics.Verify(m => m.RecordCount("http_requests", 1,
+            It.Is<(string Key, string Value)[]>(tags =>
                 tags.Any(t => t.Key == "status" && t.Value == "error") &&
                 tags.Any(t => t.Key == "status_code" && t.Value == "404"))), Times.Once);
-        _mockMetrics.Verify(m => m.RecordCount("http_errors", 1, 
-            It.Is<(string Key, string Value)[]>(tags => 
+        _mockMetrics.Verify(m => m.RecordCount("http_errors", 1,
+            It.Is<(string Key, string Value)[]>(tags =>
                 tags.Any(t => t.Key == "error_type" && t.Value == "not_found") &&
                 tags.Any(t => t.Key == "exception_type" && t.Value == "NotFoundException"))), Times.Once);
     }
 
     [Theory]
     [InlineData(typeof(FluentValidation.ValidationException), "validation_error", 422)]
-    [InlineData(typeof(DomainException), "domain_error", 400)] 
+    [InlineData(typeof(DomainException), "domain_error", 400)]
     [InlineData(typeof(InvalidOperationException), "internal_error", 500)]
     public async Task Different_exception_types_record_appropriate_error_metrics(Type exceptionType, string expectedErrorType, int expectedStatusCode)
     {
@@ -481,8 +481,8 @@ public class ExceptionHandlingMiddlewareTests
         // Assert
         context.Response.StatusCode.Should().Be(expectedStatusCode);
 
-        _mockMetrics.Verify(m => m.RecordCount("http_errors", 1, 
-            It.Is<(string Key, string Value)[]>(tags => 
+        _mockMetrics.Verify(m => m.RecordCount("http_errors", 1,
+            It.Is<(string Key, string Value)[]>(tags =>
                 tags.Any(t => t.Key == "error_type" && t.Value == expectedErrorType) &&
                 tags.Any(t => t.Key == "exception_type" && t.Value == exceptionType.Name) &&
                 tags.Any(t => t.Key == "status_code" && t.Value == expectedStatusCode.ToString()))), Times.Once);

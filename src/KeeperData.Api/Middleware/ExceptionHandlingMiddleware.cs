@@ -28,12 +28,12 @@ public sealed class ExceptionHandlingMiddleware(
         try
         {
             await _next(context);
-            
+
             // Record successful request metrics
             stopwatch.Stop();
             _metrics.RecordRequest("http_request", "success");
             _metrics.RecordDuration("http_request", stopwatch.ElapsedMilliseconds);
-            _metrics.RecordCount("http_requests", 1, 
+            _metrics.RecordCount("http_requests", 1,
                 ("method", context.Request.Method),
                 ("endpoint", context.Request.Path.Value ?? "unknown"),
                 ("status_code", context.Response.StatusCode.ToString()),
@@ -129,20 +129,20 @@ public sealed class ExceptionHandlingMiddleware(
         {
             _metrics.RecordRequest("http_request", "error");
             _metrics.RecordDuration("http_request", durationMs);
-            _metrics.RecordCount("http_requests", 1, 
+            _metrics.RecordCount("http_requests", 1,
                 ("method", endpoint.Split(' ').FirstOrDefault() ?? "unknown"),
                 ("endpoint", endpoint.Split(' ').Skip(1).FirstOrDefault() ?? "unknown"),
                 ("status_code", statusCode.ToString()),
                 ("status", "error"));
 
             // Record error-specific metrics
-            _metrics.RecordCount("http_errors", 1, 
+            _metrics.RecordCount("http_errors", 1,
                 ("error_type", errorType),
                 ("exception_type", exception.GetType().Name),
                 ("status_code", statusCode.ToString()));
 
             // Record duration for error analysis
-            _metrics.RecordValue("error_request_duration", durationMs, 
+            _metrics.RecordValue("error_request_duration", durationMs,
                 ("error_type", errorType),
                 ("status_code", statusCode.ToString()));
         }
