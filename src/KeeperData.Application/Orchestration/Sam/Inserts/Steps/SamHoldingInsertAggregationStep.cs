@@ -6,43 +6,45 @@ using Microsoft.Extensions.Logging;
 namespace KeeperData.Application.Orchestration.Sam.Inserts.Steps;
 
 [StepOrder(1)]
-public class SamHoldingInsertAggregationStep : ImportStepBase<SamHoldingInsertContext>
+public class SamHoldingInsertAggregationStep(
+    IDataBridgeClient dataBridgeClient,
+    ILogger<SamHoldingInsertAggregationStep> logger) : ImportStepBase<SamHoldingInsertContext>(logger)
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly HttpClient _httpClient;
-
-    private const string ClientName = "DataBridgeApi";
-
-    public SamHoldingInsertAggregationStep(
-        IHttpClientFactory httpClientFactory,
-        ILogger<SamHoldingInsertAggregationStep> logger)
-        : base(logger)
-    {
-        _httpClientFactory = httpClientFactory;
-        _httpClient = _httpClientFactory.CreateClient(ClientName);
-    }
+    private readonly IDataBridgeClient _dataBridgeClient = dataBridgeClient;
 
     protected override async Task ExecuteCoreAsync(SamHoldingInsertContext context, CancellationToken cancellationToken)
     {
-        // Make API calls using _httpClient using Cph and BatchId
-        var samCphHolding = new SamCphHolding
-        {
-            BATCH_ID = 1,
-            CHANGE_TYPE = "I"
-        };
+        var getHoldingsTask = _dataBridgeClient.GetSamHoldingsAsync(context.Cph, cancellationToken);
+        var getHoldersTask = _dataBridgeClient.GetSamHoldersAsync(context.Cph, cancellationToken);
+        var getHerdsTask = _dataBridgeClient.GetSamHerdsAsync(context.Cph, cancellationToken);
 
-        if (samCphHolding is not { CHANGE_TYPE: DataBridgeConstants.ChangeTypeInsert })
-            return;
+        await Task.WhenAll(
+            getHoldingsTask,
+            getHoldersTask,
+            getHerdsTask);
 
-        // Construct Raw model
-        context.RawHolding = samCphHolding;
+        context.RawHoldings = getHoldingsTask.Result;
 
-        context.RawHolders = [];
+        context.RawHolders = getHoldersTask.Result;
 
-        context.RawHerds = [];
+        context.RawHerds = getHerdsTask.Result;
 
-        context.RawParties = [];
+        context.RawParties = await GetSamPartiesAsync(context, cancellationToken);
 
         await Task.CompletedTask;
+    }
+
+    private async Task<List<SamParty>> GetSamPartiesAsync(SamHoldingInsertContext context, CancellationToken cancellationToken)
+    {
+        var uniquePartyIds = (context.RawHerds ?? Enumerable.Empty<SamHerd>())
+            .SelectMany(h => h.KeeperPartyIdList
+                .Union(h.OwnerPartyIdList, StringComparer.OrdinalIgnoreCase))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (uniquePartyIds.Count == 0)
+            return [];
+
+        return await _dataBridgeClient.GetSamPartiesAsync(uniquePartyIds, cancellationToken);
     }
 }

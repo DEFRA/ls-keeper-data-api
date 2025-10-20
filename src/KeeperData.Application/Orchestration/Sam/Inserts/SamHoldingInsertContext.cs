@@ -9,12 +9,12 @@ public class SamHoldingInsertContext
     public required string Cph { get; init; }
     public required int BatchId { get; init; }
 
-    public SamCphHolding? RawHolding { get; set; }
+    public List<SamCphHolding> RawHoldings { get; set; } = [];
     public List<SamCphHolder> RawHolders { get; set; } = [];
-    public List<SamParty> RawParties { get; set; } = [];
     public List<SamHerd> RawHerds { get; set; } = [];
+    public List<SamParty> RawParties { get; set; } = [];
 
-    public SamHoldingDocument? SilverHolding { get; set; }
+    public List<SamHoldingDocument> SilverHoldings { get; set; } = [];
     public List<SamPartyDocument> SilverParties { get; set; } = [];
     public List<PartyRoleRelationshipDocument> SilverPartyRoles { get; set; } = [];
 

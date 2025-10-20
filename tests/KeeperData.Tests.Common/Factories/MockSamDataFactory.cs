@@ -73,7 +73,7 @@ public class MockSamDataFactory
         return _fixture.Create<SamParty>();
     }
 
-    public (List<SamCphHolding> holdings, List<SamCphHolder> holders, List<SamHerd> herds, List<SamParty> parties) CreateMockData(
+    public (string holdingIdentifier, List<SamCphHolding> holdings, List<SamCphHolder> holders, List<SamHerd> herds, List<SamParty> parties) CreateMockData(
         string changeType,
         int holdingCount,
         int holderCount,
@@ -101,7 +101,7 @@ public class MockSamDataFactory
 
         var parties = _fixture.CreateMany<SamParty>(partyCount).ToList();
 
-        return (holdings, holders, herds, parties);
+        return (holdingIdentifier, holdings, holders, herds, parties);
     }
 
     private static Dictionary<(string animalSpeciesCode, string animalProductionUsageCode), List<string>> GetHerdSpeciesPartyAssociations(int herdCount, int partyCount)
