@@ -11,15 +11,16 @@ public static class CtsAgentOrKeeperMapper
     public static async Task<List<CtsPartyDocument>> ToSilver(
         List<CtsAgentOrKeeper> rawParties,
         InferredRoleType inferredRoleType,
-        Func<string, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType)
+        Func<string, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
+        CancellationToken cancellationToken)
     {
         var result = new List<CtsPartyDocument>();
 
-        foreach (var p in rawParties.Where(x => x.LID_FULL_IDENTIFIER != null))
+        foreach (var p in rawParties?.Where(x => x.LID_FULL_IDENTIFIER != null) ?? [])
         {
             var roleNameToLookup = EnumExtensions.GetDescription(inferredRoleType);
-            var (roleTypeId, roleTypeName) = !string.IsNullOrWhiteSpace(roleNameToLookup) 
-                ? await resolveRoleType(roleNameToLookup)
+            var (roleTypeId, roleTypeName) = !string.IsNullOrWhiteSpace(roleNameToLookup)
+                ? await resolveRoleType(roleNameToLookup, cancellationToken)
                 : (null, null);
 
             var party = new CtsPartyDocument
@@ -69,7 +70,7 @@ public static class CtsAgentOrKeeperMapper
                         IdentifierId = Guid.NewGuid().ToString(),
                         RoleTypeId = roleTypeId,
                         RoleTypeName = roleTypeName,
-                        SourceRoleName = inferredRoleType.ToString(),
+                        SourceRoleName = roleNameToLookup,
                         EffectiveFromData = p.LPR_EFFECTIVE_FROM_DATE,
                         EffectiveToData = p.LPR_EFFECTIVE_TO_DATE
                     }

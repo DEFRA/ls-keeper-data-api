@@ -8,14 +8,14 @@ public static class CtsHoldingMapper
 {
     public static List<CtsHoldingDocument> ToSilver(List<CtsCphHolding> rawHoldings)
     {
-        var result = rawHoldings
+        var result = rawHoldings?
             .Where(x => x.LID_FULL_IDENTIFIER != null)
             .Select(h => new CtsHoldingDocument()
             {
                 Id = Guid.NewGuid().ToString(),
                 LastUpdatedBatchId = h.BATCH_ID,
                 Deleted = false,
-            
+
                 CountyParishHoldingNumber = h.LID_FULL_IDENTIFIER,
                 AlternativeHoldingIdentifier = null,
 
@@ -24,7 +24,7 @@ public static class CtsHoldingMapper
 
                 HoldingStartDate = h.LOC_EFFECTIVE_FROM,
                 HoldingEndDate = h.LOC_EFFECTIVE_TO,
-                HoldingStatus = h.LOC_EFFECTIVE_TO.HasValue 
+                HoldingStatus = h.LOC_EFFECTIVE_TO.HasValue
                                     && h.LOC_EFFECTIVE_TO != default
                                     ? HoldingStatusType.Inactive.ToString()
                                     : HoldingStatusType.Active.ToString(),
@@ -59,15 +59,15 @@ public static class CtsHoldingMapper
 
                 Communication = new CommunicationDocument
                 {
-                    IdentifierId= Guid.NewGuid().ToString(),
+                    IdentifierId = Guid.NewGuid().ToString(),
                     Email = null,
                     Mobile = h.LOC_MOBILE_NUMBER,
                     Landline = h.LOC_TEL_NUMBER
                 },
 
                 GroupMarks = []
-            }).ToList();
+            });
 
-        return result;
+        return result?.ToList() ?? [];
     }
 }

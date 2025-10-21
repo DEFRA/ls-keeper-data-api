@@ -1,4 +1,3 @@
-using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;

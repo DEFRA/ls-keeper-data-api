@@ -2,11 +2,14 @@ using System.ComponentModel;
 
 namespace KeeperData.Core.Domain.Enums;
 
+/// <summary>
+/// Descriptions (TBC) to match with seeded values when available.
+/// </summary>
 public enum InferredRoleType
 {
-    [Description("Agent - Name tbc to match with seed")]
+    [Description("Agent")]
     Agent = 1,
 
-    [Description("Keeper - Name tbc to match with seed")]
+    [Description("Keeper")]
     PrimaryKeeper
 }

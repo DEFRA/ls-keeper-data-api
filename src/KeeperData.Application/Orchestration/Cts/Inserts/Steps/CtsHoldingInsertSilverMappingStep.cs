@@ -19,12 +19,14 @@ public class CtsHoldingInsertSilverMappingStep(IRoleTypeLookupService roleTypeLo
             .. await CtsAgentOrKeeperMapper.ToSilver(
                 context.RawAgents,
                 InferredRoleType.Agent,
-                roleTypeLookupService.FindRoleAsync),
+                roleTypeLookupService.FindRoleAsync,
+                cancellationToken),
 
             .. await CtsAgentOrKeeperMapper.ToSilver(
                 context.RawKeepers,
                 InferredRoleType.PrimaryKeeper,
-                roleTypeLookupService.FindRoleAsync)
+                roleTypeLookupService.FindRoleAsync,
+                cancellationToken)
         ];
 
         context.SilverPartyRoles = CtsPartyRoleRelationshipMapper.ToSilver(

@@ -10,7 +10,7 @@ public static class CtsPartyRoleRelationshipMapper
         string holdingIdentifier,
         string holdingIdentifierType)
     {
-        var result = silverParties
+        var result = silverParties?
             .Where(x => x.Roles != null)
             .SelectMany(x => x.Roles!, (party, role) => new PartyRoleRelationshipDocument
             {
@@ -29,8 +29,8 @@ public static class CtsPartyRoleRelationshipMapper
                 EffectiveToData = role.EffectiveToData,
 
                 LastUpdatedBatchId = party.LastUpdatedBatchId
-            }).ToList();
+            });
 
-        return result;
+        return result?.ToList() ?? [];
     }
 }
