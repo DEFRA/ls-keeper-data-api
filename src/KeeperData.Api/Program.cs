@@ -54,7 +54,6 @@ static void ConfigureBuilder(WebApplicationBuilder builder)
         }
     });
 
-    builder.Services.AddHostedService<KeeperData.Infrastructure.Services.JsonGenerationService>();
     builder.Services.AddHostedService<KeeperData.Infrastructure.Services.MongoDataSeeder>();
 
     builder.Services.ConfigureApi(builder.Configuration);

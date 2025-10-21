@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
@@ -23,15 +23,10 @@
     <ItemGroup>
       <ProjectReference Include="..\KeeperData.Application\KeeperData.Application.csproj" />
     </ItemGroup>
-
+  
     <ItemGroup>
-      <Content Include="Data\Source\countries.csv">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Data\Seed\" />
-      <Folder Include="Data\Source\" />
-    </ItemGroup>
+      <None Update="Data\Seed\countries.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>  
 </Project>

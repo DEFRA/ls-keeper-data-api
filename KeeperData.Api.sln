@@ -31,6 +31,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeeperData.Application.Test
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{81DDED9D-158B-E303-5F62-77A2896D2A5A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsvToJsonConverter", "tools\CsvToJsonConverter\CsvToJsonConverter.csproj", "{A2C28CB8-2575-4718-96CB-4733FA26AE72}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +81,10 @@ Global
 		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2C28CB8-2575-4718-96CB-4733FA26AE72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2C28CB8-2575-4718-96CB-4733FA26AE72}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2C28CB8-2575-4718-96CB-4733FA26AE72}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2C28CB8-2575-4718-96CB-4733FA26AE72}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -87,6 +95,7 @@ Global
 		{A1C6A0AD-6C5D-4698-8047-FFFB9ECD9FD9} = {9780B59B-FFF7-481C-AA15-072631C6736C}
 		{5BFBB1F5-7D75-411B-9A71-1325C1E22E09} = {9780B59B-FFF7-481C-AA15-072631C6736C}
 		{BA4E8D8A-FFCE-4ECD-8C55-90194019C765} = {9780B59B-FFF7-481C-AA15-072631C6736C}
+		{A2C28CB8-2575-4718-96CB-4733FA26AE72} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {23761809-E330-42D6-B303-C5568B1FB035}
