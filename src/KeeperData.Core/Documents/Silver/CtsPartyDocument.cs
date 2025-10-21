@@ -9,9 +9,10 @@ namespace KeeperData.Core.Documents.Silver;
 public class CtsPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IContainsIndexes
 {
     public string Id { get; set; } = string.Empty;
-    public string CountyParishHoldingNumber { get; set; } = string.Empty;
     public int LastUpdatedBatchId { get; set; }
     public bool Deleted { get; set; }
+
+    public string CountyParishHoldingNumber { get; set; } = string.Empty;
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {

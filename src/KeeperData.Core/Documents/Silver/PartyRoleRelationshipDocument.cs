@@ -11,7 +11,8 @@ public class PartyRoleRelationshipDocument : IEntity, IContainsIndexes
     public string Id { get; set; } = string.Empty;
     public string PartyId { get; set; } = string.Empty;
     public string PartyTypeId { get; set; } = string.Empty; // LOV Lookup / Internal Id
-    public string CountyParishHoldingNumber { get; set; } = string.Empty;
+    public string HoldingIdentifier { get; set; } = string.Empty;
+    public string HoldingIdentifierType { get; set; } = string.Empty;
     public string Source { get; set; } = string.Empty; // Enum or string value
 
     public string? RoleTypeId { get; set; } // LOV Lookup / Internal Id
@@ -28,8 +29,12 @@ public class PartyRoleRelationshipDocument : IEntity, IContainsIndexes
         return
         [
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("CountyParishHoldingNumber"),
-                new CreateIndexOptions { Name = "idx_cphNumber" }),
+                Builders<BsonDocument>.IndexKeys.Ascending("HoldingIdentifier"),
+                new CreateIndexOptions { Name = "idx_holdingIdentifier" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("HoldingIdentifierType"),
+                new CreateIndexOptions { Name = "idx_holdingIdentifierType" }),
 
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("PartyId"),

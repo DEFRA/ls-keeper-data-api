@@ -68,6 +68,7 @@ public static class ServiceCollectionExtensions
         var database = client.GetDatabase(config.DatabaseName);
 
         var indexableTypes = AppDomain.CurrentDomain.GetAssemblies()
+            .Where(a => !a.IsDynamic)
             .SelectMany(x => x.GetTypes())
             .Where(t => typeof(IContainsIndexes).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface);
 

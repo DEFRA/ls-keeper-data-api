@@ -1,7 +1,7 @@
-using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Repositories;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -27,7 +27,7 @@ public class SamHoldingDeletePersistenceStep(
 
         // Find gold holding > mark as deleted
         var identifierFilter = Builders<SiteIdentifierDocument>.Filter.And(
-            Builders<SiteIdentifierDocument>.Filter.Eq(x => x.Type, DataBridgeConstants.CphIdentifierName),
+            Builders<SiteIdentifierDocument>.Filter.Eq(x => x.Type, HoldingIdentifierType.HoldingNumber.ToString()),
             Builders<SiteIdentifierDocument>.Filter.Eq(x => x.Identifier, context.Cph));
 
         var goldHoldingResults = await _goldSiteRepository.FindAsync(
