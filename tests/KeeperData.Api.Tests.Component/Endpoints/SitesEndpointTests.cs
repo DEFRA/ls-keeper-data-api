@@ -1,4 +1,5 @@
 using FluentAssertions;
+using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Repositories;
 using Microsoft.AspNetCore.TestHost;
@@ -7,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Moq;
 using System.Net;
 using System.Net.Http.Json;
-using KeeperData.Application.Queries.Pagination;
 
 namespace KeeperData.Api.Tests.Component.Endpoints;
 

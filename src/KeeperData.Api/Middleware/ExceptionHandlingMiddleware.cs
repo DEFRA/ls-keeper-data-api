@@ -1,6 +1,8 @@
 using KeeperData.Core.Exceptions;
 using KeeperData.Infrastructure;
+using KeeperData.Infrastructure.Telemetry;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace KeeperData.Api.Middleware;
@@ -8,36 +10,58 @@ namespace KeeperData.Api.Middleware;
 public sealed class ExceptionHandlingMiddleware(
         RequestDelegate next,
         ILogger<ExceptionHandlingMiddleware> logger,
-        IConfiguration cfg)
+        IConfiguration cfg,
+        IApplicationMetrics metrics)
 {
     private readonly RequestDelegate _next = next;
     private readonly ILogger<ExceptionHandlingMiddleware> _logger = logger;
+    private readonly IApplicationMetrics _metrics = metrics;
     private readonly string _traceHeader = cfg.GetValue<string>("TraceHeader") ?? "x-correlation-id";
 
     public async Task InvokeAsync(HttpContext context)
     {
         context.Request.Headers.TryGetValue(_traceHeader, out var headerValues);
         var correlationId = headerValues.FirstOrDefault() ?? context.TraceIdentifier;
+        var stopwatch = Stopwatch.StartNew();
+        var endpoint = $"{context.Request.Method} {context.Request.Path}";
 
         try
         {
             await _next(context);
+
+            // Record successful request metrics
+            stopwatch.Stop();
+            _metrics.RecordRequest("http_request", "success");
+            _metrics.RecordDuration("http_request", stopwatch.ElapsedMilliseconds);
+            _metrics.RecordCount("http_requests", 1,
+                ("method", context.Request.Method),
+                ("endpoint", context.Request.Path.Value ?? "unknown"),
+                ("status_code", context.Response.StatusCode.ToString()),
+                ("status", "success"));
         }
         catch (FluentValidation.ValidationException ex)
         {
+            stopwatch.Stop();
             await HandleExceptionAsync(context, ex, correlationId, 422, "Unprocessable Content");
+            RecordExceptionMetrics(ex, 422, endpoint, stopwatch.ElapsedMilliseconds, "validation_error");
         }
         catch (NotFoundException ex)
         {
+            stopwatch.Stop();
             await HandleExceptionAsync(context, ex, correlationId, 404);
+            RecordExceptionMetrics(ex, 404, endpoint, stopwatch.ElapsedMilliseconds, "not_found");
         }
         catch (DomainException ex)
         {
+            stopwatch.Stop();
             await HandleExceptionAsync(context, ex, correlationId, 400);
+            RecordExceptionMetrics(ex, 400, endpoint, stopwatch.ElapsedMilliseconds, "domain_error");
         }
         catch (Exception ex)
         {
+            stopwatch.Stop();
             await HandleExceptionAsync(context, ex, correlationId, 500, "An error occurred");
+            RecordExceptionMetrics(ex, 500, endpoint, stopwatch.ElapsedMilliseconds, "internal_error");
         }
     }
 
@@ -97,5 +121,35 @@ public sealed class ExceptionHandlingMiddleware(
 
         var json = JsonSerializer.Serialize(problemDetails, JsonDefaults.DefaultOptionsWithIndented);
         return context.Response.WriteAsync(json);
+    }
+
+    private void RecordExceptionMetrics(Exception exception, int statusCode, string endpoint, double durationMs, string errorType)
+    {
+        try
+        {
+            _metrics.RecordRequest("http_request", "error");
+            _metrics.RecordDuration("http_request", durationMs);
+            _metrics.RecordCount("http_requests", 1,
+                ("method", endpoint.Split(' ').FirstOrDefault() ?? "unknown"),
+                ("endpoint", endpoint.Split(' ').Skip(1).FirstOrDefault() ?? "unknown"),
+                ("status_code", statusCode.ToString()),
+                ("status", "error"));
+
+            // Record error-specific metrics
+            _metrics.RecordCount("http_errors", 1,
+                ("error_type", errorType),
+                ("exception_type", exception.GetType().Name),
+                ("status_code", statusCode.ToString()));
+
+            // Record duration for error analysis
+            _metrics.RecordValue("error_request_duration", durationMs,
+                ("error_type", errorType),
+                ("status_code", statusCode.ToString()));
+        }
+        catch (Exception ex)
+        {
+            // Don't let metrics recording crash the app
+            _logger.LogWarning(ex, "Failed to record exception metrics for {ErrorType}", errorType);
+        }
     }
 }

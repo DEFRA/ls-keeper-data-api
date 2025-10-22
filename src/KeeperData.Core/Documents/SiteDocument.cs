@@ -45,10 +45,10 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         Source = m.Source,
         DestroyIdentityDocumentsFlag = m.DestroyIdentityDocumentsFlag,
         Deleted = m.Deleted,
-        Parties = m.Parties.Select(SitePartyDocument.FromDomain).ToList(),
-        Species = m.Species.Select(SpeciesDocument.FromDomain).ToList(),
-        Marks = m.Marks.Select(MarksDocument.FromDomain).ToList(),
-        Activities = m.Activities.Select(SiteActivityDocument.FromDomain).ToList(),
+        Parties = [.. m.Parties.Select(SitePartyDocument.FromDomain)],
+        Species = [.. m.Species.Select(SpeciesDocument.FromDomain)],
+        Marks = [.. m.Marks.Select(MarksDocument.FromDomain)],
+        Activities = [.. m.Activities.Select(SiteActivityDocument.FromDomain)],
     };
 
     public Site ToDomain()

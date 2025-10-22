@@ -1,4 +1,3 @@
-using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
@@ -23,20 +22,20 @@ public class SamHoldingInsertPersistenceStep(
 
     protected override async Task ExecuteCoreAsync(SamHoldingInsertContext context, CancellationToken cancellationToken)
     {
-        if (context is not { RawHolding.CHANGE_TYPE: DataBridgeConstants.ChangeTypeInsert })
-            return;
+        //if (context is not { RawHolding.CHANGE_TYPE: DataBridgeConstants.ChangeTypeInsert })
+        //    return;
 
-        if (context.SilverHolding is not null)
-            await _silverHoldingRepository.BulkUpsertAsync([context.SilverHolding], cancellationToken);
+        //if (context.SilverHolding is not null)
+        //    await _silverHoldingRepository.BulkUpsertAsync([context.SilverHolding], cancellationToken);
 
-        if (context.SilverParties is not null)
-            await _silverPartyRepository.BulkUpsertAsync(context.SilverParties, cancellationToken);
+        //if (context.SilverParties is not null)
+        //    await _silverPartyRepository.BulkUpsertAsync(context.SilverParties, cancellationToken);
 
-        if (context.GoldSite is not null)
-            await _goldSiteRepository.BulkUpsertAsync([context.GoldSite], cancellationToken);
+        //if (context.GoldSite is not null)
+        //    await _goldSiteRepository.BulkUpsertAsync([context.GoldSite], cancellationToken);
 
-        if (context.GoldParties is not null)
-            await _goldPartyRepository.BulkUpsertAsync(context.GoldParties, cancellationToken);
+        //if (context.GoldParties is not null)
+        //    await _goldPartyRepository.BulkUpsertAsync(context.GoldParties, cancellationToken);
 
         await Task.CompletedTask;
     }

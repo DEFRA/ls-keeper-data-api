@@ -1,9 +1,6 @@
 using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
@@ -21,15 +18,14 @@ public class RolesToPartyDocument : INestedEntity
     {
         IdentifierId = m.Id,
         Role = m.Role?.Name,
-        SpeciesManagedByRole = m.SpeciesManagedByRole.Select(ManagedSpeciesDocument.FromDomain).ToList(),
+        SpeciesManagedByRole = [.. m.SpeciesManagedByRole.Select(ManagedSpeciesDocument.FromDomain)],
         LastUpdatedDate = m.LastUpdatedDate
     };
 
-
     public RolesToParty ToDomain()
     {
-        var roleObject = this.Role is not null
-            ? new Role(Guid.NewGuid().ToString(), this.Role, this.LastUpdatedDate)
+        var roleObject = Role is not null
+            ? new Role(Guid.NewGuid().ToString(), Role, LastUpdatedDate)
             : null;
 
         return new RolesToParty(

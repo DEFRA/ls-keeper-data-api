@@ -1,4 +1,3 @@
-using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
 using Microsoft.Extensions.Logging;
 
@@ -8,11 +7,8 @@ namespace KeeperData.Application.Orchestration.Cts.Inserts.Steps;
 public class CtsHoldingInsertGoldMappingStep(ILogger<CtsHoldingInsertGoldMappingStep> logger)
     : ImportStepBase<CtsHoldingInsertContext>(logger)
 {
-    protected override async Task ExecuteCoreAsync(CtsHoldingInsertContext context, CancellationToken cancellationToken)
+    protected override Task ExecuteCoreAsync(CtsHoldingInsertContext context, CancellationToken cancellationToken)
     {
-        if (context is not { RawHolding.CHANGE_TYPE: DataBridgeConstants.ChangeTypeInsert })
-            return;
-
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 }

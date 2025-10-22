@@ -5,7 +5,7 @@ namespace KeeperData.Application.Orchestration.Cts.Deletions;
 public class CtsAgentDeleteContext
 {
     public required string PartyId { get; init; }
-    public required int BatchId { get; init; }
+    public int BatchId { get; init; }
 
     public CtsPartyDocument? SilverParty { get; set; }
 }

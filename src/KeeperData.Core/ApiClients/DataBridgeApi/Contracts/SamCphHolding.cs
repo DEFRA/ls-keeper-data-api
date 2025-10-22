@@ -39,7 +39,7 @@ public class SamCphHolding : BronzeBase
     public DateTime? FEATURE_ADDRESS_TO_DATE { get; set; }
 
     public string? CPH_RELATIONSHIP_TYPE { get; set; }
-    public string SECONDARY_CPH { get; set; } = string.Empty;
+    public string? SECONDARY_CPH { get; set; } = string.Empty;
 
     public string? FACILITY_BUSINSS_ACTVTY_CODE { get; set; }
     public string? FACILITY_TYPE_CODE { get; set; }
