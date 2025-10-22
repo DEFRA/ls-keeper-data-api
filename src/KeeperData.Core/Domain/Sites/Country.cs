@@ -28,7 +28,7 @@ public class Country : ValueObject
         Name = name;
         LongName = longName;
         EuTradeMember = euTradeMember;
-        DevolvedAuthority = devolvedAuthority; 
+        DevolvedAuthority = devolvedAuthority;
         LastUpdatedDate = lastUpdatedDate;
     }
 
