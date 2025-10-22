@@ -1,8 +1,6 @@
 using KeeperData.Core.Domain.Sites; // Add this using
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
-using System.Collections.Generic; // Add this using
-using System.Linq; // Add this using
 using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
@@ -33,9 +31,9 @@ public class SitePartyDocument : INestedEntity
         Name = m.Name,
         CustomerNumber = m.CustomerNumber,
         PartyType = m.PartyType,
-        Communication = m.Communication.Select(CommunicationDocument.FromDomain).ToList(),
+        Communication = [.. m.Communication.Select(CommunicationDocument.FromDomain)],
         CorrespondanceAddress = m.CorrespondanceAddress is not null ? AddressDocument.FromDomain(m.CorrespondanceAddress) : null,
-        PartyRoles = m.PartyRoles.Select(RolesToPartyDocument.FromDomain).ToList(),
+        PartyRoles = [.. m.PartyRoles.Select(RolesToPartyDocument.FromDomain)],
         State = m.State,
         LastUpdatedDate = m.LastUpdatedDate
     };

@@ -7,7 +7,7 @@ namespace KeeperData.Application.Orchestration.Sam.Updates;
 public class SamHoldingUpdateContext
 {
     public required string Cph { get; init; }
-    public required int BatchId { get; init; }
+    public int BatchId { get; init; }
 
     public SamCphHolding? RawHolding { get; set; }
     public SamHoldingDocument? SilverHolding { get; set; }

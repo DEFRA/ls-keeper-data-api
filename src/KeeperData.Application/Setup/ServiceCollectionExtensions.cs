@@ -3,7 +3,9 @@ using KeeperData.Application.Orchestration;
 using KeeperData.Application.Orchestration.Sam.Inserts;
 using KeeperData.Application.Orchestration.Sam.Inserts.Steps;
 using KeeperData.Application.Queries.Sites.Adapters;
+using KeeperData.Application.Services;
 using KeeperData.Core.Attributes;
+using KeeperData.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
@@ -25,6 +27,7 @@ public static class ServiceCollectionExtensions
 
         RegisterOrchestrators(services, typeof(SamHoldingInsertOrchestrator).Assembly);
         RegisterSteps(services, typeof(SamHoldingInsertAggregationStep).Assembly);
+        RegisterLookupServices(services);
     }
 
     public static void RegisterOrchestrators(IServiceCollection services, Assembly assembly)
@@ -55,5 +58,10 @@ public static class ServiceCollectionExtensions
         {
             services.AddScoped(step.Service, step.Implementation);
         }
+    }
+
+    public static void RegisterLookupServices(IServiceCollection services)
+    {
+        services.AddTransient<IRoleTypeLookupService, RoleTypeLookupService>();
     }
 }

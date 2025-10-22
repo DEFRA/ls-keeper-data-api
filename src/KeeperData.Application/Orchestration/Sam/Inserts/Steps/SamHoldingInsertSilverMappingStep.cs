@@ -1,5 +1,3 @@
-using KeeperData.Application.Orchestration.Sam.Inserts.Mappings;
-using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
 using Microsoft.Extensions.Logging;
 
@@ -11,15 +9,17 @@ public class SamHoldingInsertSilverMappingStep(ILogger<SamHoldingInsertSilverMap
 {
     protected override async Task ExecuteCoreAsync(SamHoldingInsertContext context, CancellationToken cancellationToken)
     {
-        if (context is not { RawHolding.CHANGE_TYPE: DataBridgeConstants.ChangeTypeInsert })
-            return;
+        //if (context is not { RawHolding.CHANGE_TYPE: DataBridgeConstants.ChangeTypeInsert })
+        //    return;
 
-        context.SilverHolding = SamHoldingMapper.ToSilver(context.RawHolding);
+        //context.SilverHolding = SamHoldingMapper.ToSilver(context.RawHolding);
 
-        context.SilverParties = [
-            .. SamHolderMapper.ToSilver(context.RawHolders),
-            .. SamPartyMapper.ToSilver(context.RawParties, context.RawHerds)
-        ];
+        //context.SilverParties = [
+        //    .. SamHolderMapper.ToSilver(context.RawHolders),
+        //    .. SamPartyMapper.ToSilver(context.RawParties, context.RawHerds)
+        //];
+
+        //context.SilverPartyRoles = []; // Map From SilverParties
 
         await Task.CompletedTask;
     }

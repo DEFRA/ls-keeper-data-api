@@ -1,7 +1,6 @@
 using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
-using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
@@ -26,7 +25,7 @@ public class LocationDocument : INestedEntity
         Easting = m.Easting,
         Northing = m.Northing,
         Address = m.Address is not null ? AddressDocument.FromDomain(m.Address) : null,
-        Communication = m.Communication.Select(CommunicationDocument.FromDomain).ToList()
+        Communication = [.. m.Communication.Select(CommunicationDocument.FromDomain)]
     };
 
     public Location ToDomain() => new(
@@ -36,5 +35,5 @@ public class LocationDocument : INestedEntity
         Easting,
         Northing,
         Address?.ToDomain(),
-        Communication.Select(c => c.ToDomain()).ToList());
+        [.. Communication.Select(c => c.ToDomain())]);
 }

@@ -33,7 +33,7 @@ public class SamParty : BronzeBase
     public string? POSTCODE { get; set; }
     public string? COUNTRY_CODE { get; set; }
     public string? UDPRN { get; set; }
-    public char PREFERRED_CONTACT_METHOD_IND { get; set; } = default;
+    public char? PREFERRED_CONTACT_METHOD_IND { get; set; } = default;
 
     public string? ROLES { get; set; }
 

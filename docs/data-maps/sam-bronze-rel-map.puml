@@ -1,0 +1,54 @@
+@startuml CTS_Relationships
+
+entity "SAM CPH Holder" as Holder {
+  * PARTY_ID : VARCHAR2(8)
+  * CPHS : CLOB
+  --
+  BATCH_ID
+  CHANGE_TYPE
+}
+
+entity "SAM CPH Holding" as Holding {
+  * CPH : CHAR(11)
+  --
+  BATCH_ID
+  CHANGE_TYPE
+}
+
+entity "SAM Herd" as Herd {
+  * Herdmark : VARCHAR2(80)
+  * CPHH : VARCHAR2(80)
+  --
+  BATCH_ID
+  CHANGE_TYPE
+  OWNER_PARTY_IDS : VARCHAR2(4000)
+  KEEPER_PARTY_IDS : VARCHAR2(4000)
+  ANIMAL_SPECIES_CODE: VARCHAR2(20)
+  ANIMAL_PURPOSE_CODE: VARCHAR2(20)
+}
+
+entity "SAM Party" as Party {
+  * PARTY_ID : VARCHAR2(8)
+  --
+  BATCH_ID
+  CHANGE_TYPE
+}
+
+Holder 0--* Holding : <<parsed>> CPHS contains CPH
+Holding 0--* Herd : CPH == CPHH
+Herd 0--* Party : <<parsed>> OWNER_PARTY_IDS includes PARTY_ID
+Herd 0--* Party : <<parsed>> KEEPER_PARTY_IDS includes PARTY_ID
+
+note right of Holder::CPHS
+  CLOB field containing comma-separated CPH values
+end note
+note right of Herd::OWNER_PARTY_IDS
+  Comma-separated PARTY_IDs
+  Parsed to link to SAM Party
+end note
+note right of Herd::KEEPER_PARTY_IDS
+  Comma-separated PARTY_IDs
+  Parsed to link to SAM Party
+end note
+
+@enduml

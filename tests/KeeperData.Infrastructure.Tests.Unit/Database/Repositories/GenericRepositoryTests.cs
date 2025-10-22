@@ -79,6 +79,24 @@ public class GenericRepositoryTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
+    public async Task GivenValidId_WhenCallingFindOneAsync_ThenReturnsExpectedEntity(bool useTransaction)
+    {
+        _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(useTransaction);
+
+        var expected = new TestEntity { Id = Guid.NewGuid().ToString(), Name = "Test Entity" };
+
+        _asyncCursorMock
+            .SetupGet(c => c.Current)
+            .Returns([expected]);
+
+        var result = await _sut.FindOneAsync(x => x.Id == expected.Id, CancellationToken.None);
+
+        result.Should().BeEquivalentTo(expected);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
     public async Task GivenEntity_WhenCallingAddAsync_ThenInsertOneIsCalled(bool useTransaction)
     {
         _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(useTransaction);
@@ -95,6 +113,30 @@ public class GenericRepositoryTests
             .Verifiable();
 
         await _sut.AddAsync(entity, CancellationToken.None);
+
+        _mongoCollectionMock.Verify();
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task GivenEntity_WhenCallingAddManyAsync_ThenInsertManyAsyncCalled(bool useTransaction)
+    {
+        _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(useTransaction);
+
+        var entity = new TestEntity { Id = Guid.NewGuid().ToString(), Name = "New Entity" };
+        IEnumerable<TestEntity> entities = [entity];
+
+        _mongoCollectionMock
+            .Setup(c => c.InsertManyAsync(
+                It.IsAny<IClientSessionHandle?>(),
+                entities,
+                It.IsAny<InsertManyOptions>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask)
+            .Verifiable();
+
+        await _sut.AddManyAsync([entity], CancellationToken.None);
 
         _mongoCollectionMock.Verify();
     }
@@ -229,6 +271,31 @@ public class GenericRepositoryTests
             .Verifiable();
 
         await _sut.DeleteAsync(id, CancellationToken.None);
+
+        _mongoCollectionMock.Verify();
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task GivenValidId_WhenCallingDeleteManyAsync_ThenDeleteManyIsCalled(bool useTransaction)
+    {
+        _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(useTransaction);
+
+        var id = Guid.NewGuid().ToString();
+
+        _mongoCollectionMock
+            .Setup(c => c.DeleteManyAsync(
+                It.IsAny<IClientSessionHandle>(),
+                It.IsAny<FilterDefinition<TestEntity>>(),
+                It.IsAny<DeleteOptions>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Mock.Of<DeleteResult>())
+            .Verifiable();
+
+        var deleteFilter = Builders<TestEntity>.Filter.In(x => x.Id, [id]);
+
+        await _sut.DeleteManyAsync(id, CancellationToken.None);
 
         _mongoCollectionMock.Verify();
     }

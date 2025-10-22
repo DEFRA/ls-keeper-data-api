@@ -35,6 +35,12 @@ public class GenericRepository<T> : IGenericRepository<T>
         return await cursor.FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<T?> FindOneAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        var cursor = await _collection.FindAsync(Session, predicate, cancellationToken: cancellationToken);
+        return await cursor.FirstOrDefaultAsync(cancellationToken);
+    }
+
     public Task<List<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default) =>
         _collection.Find(predicate).ToListAsync(cancellationToken);
 
@@ -49,6 +55,9 @@ public class GenericRepository<T> : IGenericRepository<T>
 
     public Task AddAsync(T entity, CancellationToken cancellationToken = default) =>
         _collection.InsertOneAsync(Session, entity, new InsertOneOptions { BypassDocumentValidation = true }, cancellationToken);
+
+    public Task AddManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default) =>
+        _collection.InsertManyAsync(Session, entities, new InsertManyOptions { BypassDocumentValidation = true }, cancellationToken);
 
     public Task UpdateAsync(T entity, CancellationToken cancellationToken = default) =>
         _collection.ReplaceOneAsync(Session, x => x.Id == entity.Id, entity, cancellationToken: cancellationToken);
@@ -83,5 +92,11 @@ public class GenericRepository<T> : IGenericRepository<T>
         _collection.DeleteOneAsync(
             session: Session,
             filter: Builders<T>.Filter.Eq(x => x.Id, id),
+            cancellationToken: cancellationToken);
+
+    public Task DeleteManyAsync(FilterDefinition<T> filter, CancellationToken cancellationToken = default) =>
+        _collection.DeleteManyAsync(
+            session: Session,
+            filter: filter,
             cancellationToken: cancellationToken);
 }

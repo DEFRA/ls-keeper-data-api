@@ -7,7 +7,7 @@ namespace KeeperData.Application.Orchestration.Cts.Updates;
 public class CtsHoldingUpdateContext
 {
     public required string Cph { get; init; }
-    public required int BatchId { get; init; }
+    public int BatchId { get; init; }
 
     public CtsCphHolding? RawHolding { get; set; }
     public CtsHoldingDocument? SilverHolding { get; set; }

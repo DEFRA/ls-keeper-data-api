@@ -1,6 +1,4 @@
 using KeeperData.Core.Domain.BuildingBlocks;
-using System;
-using System.Collections.Generic;
 
 namespace KeeperData.Core.Domain.Sites;
 public class Communication : ValueObject

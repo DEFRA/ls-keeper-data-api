@@ -6,12 +6,13 @@ using MongoDB.Driver;
 namespace KeeperData.Core.Documents.Silver;
 
 [CollectionName("ctsParties")]
-public class CtsPartyDocument : IEntity, IDeletableEntity, IContainsIndexes
+public class CtsPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IContainsIndexes
 {
-    public string Id { get; set; } = string.Empty;
+    public string? Id { get; set; }
     public int LastUpdatedBatchId { get; set; }
-    public string PartyId { get; set; } = string.Empty;
     public bool Deleted { get; set; }
+
+    public string CountyParishHoldingNumber { get; set; } = string.Empty;
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {

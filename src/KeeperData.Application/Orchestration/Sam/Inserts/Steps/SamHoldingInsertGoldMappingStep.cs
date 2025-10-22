@@ -1,4 +1,3 @@
-using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
 using Microsoft.Extensions.Logging;
 
@@ -10,8 +9,8 @@ public class SamHoldingInsertGoldMappingStep(ILogger<SamHoldingInsertGoldMapping
 {
     protected override async Task ExecuteCoreAsync(SamHoldingInsertContext context, CancellationToken cancellationToken)
     {
-        if (context is not { RawHolding.CHANGE_TYPE: DataBridgeConstants.ChangeTypeInsert })
-            return;
+        //if (context is not { RawHolding.CHANGE_TYPE: DataBridgeConstants.ChangeTypeInsert })
+        //    return;
 
         // TODO - Add implementation
 

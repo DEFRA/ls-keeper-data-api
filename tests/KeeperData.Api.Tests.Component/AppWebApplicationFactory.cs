@@ -88,6 +88,15 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         });
     }
 
+    public void OverrideServiceAsScoped<T>(T implementation) where T : class
+    {
+        _overrideServices.Add(services =>
+        {
+            services.RemoveAll<T>();
+            services.AddScoped(_ => implementation);
+        });
+    }
+
     private static void SetTestEnvironmentVariables()
     {
         Environment.SetEnvironmentVariable("AWS__ServiceURL", "http://localhost:4566");
