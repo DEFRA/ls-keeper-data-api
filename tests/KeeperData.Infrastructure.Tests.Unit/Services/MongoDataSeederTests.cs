@@ -134,7 +134,6 @@ public class MongoDataSeederTests : IDisposable
     {
         // Arrange
         var seeder = CreateSeeder();
-
         var countries = new List<CountryDocument>
         {
             CreateTestCountry("US", "United States"),
@@ -143,10 +142,10 @@ public class MongoDataSeederTests : IDisposable
         var seedFile = Path.Combine(_seedDirectory, "countries.json");
         await File.WriteAllTextAsync(seedFile, JsonSerializer.Serialize(countries));
 
-        CountryListDocument capturedDocument = null;
+        CountryListDocument? capturedDocument = null;
         _mockCollection.Setup(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<CountryListDocument>>(), It.IsAny<CountryListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()))
                        .Callback<FilterDefinition<CountryListDocument>, CountryListDocument, ReplaceOptions, CancellationToken>((filter, doc, opts, token) => capturedDocument = doc)
-                       .Returns(Task.FromResult<ReplaceOneResult>(null)); // Use null result for abstract type
+                       .Returns(Task.FromResult(new Mock<ReplaceOneResult>().Object));
 
         // Act
         await seeder.StartAsync(CancellationToken.None);
@@ -155,7 +154,7 @@ public class MongoDataSeederTests : IDisposable
         _mockCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<CountryListDocument>>(), It.IsAny<CountryListDocument>(), It.Is<ReplaceOptions>(o => o.IsUpsert), It.IsAny<CancellationToken>()), Times.Once);
 
         capturedDocument.Should().NotBeNull();
-        capturedDocument.Id.Should().Be("all-countries");
+        capturedDocument!.Id.Should().Be("all-countries");
         capturedDocument.Countries.Should().HaveCount(2);
         capturedDocument.Countries.Should().Contain(c => c.Code == "US");
         capturedDocument.Countries.Should().Contain(c => c.Code == "CA");
@@ -189,9 +188,9 @@ public static class LoggerMockExtensions
             x => x.Log(
                 level,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(message)),
+                It.Is<It.IsAnyType>((v, t) => v != null && v.ToString()!.Contains(message)),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
 }
