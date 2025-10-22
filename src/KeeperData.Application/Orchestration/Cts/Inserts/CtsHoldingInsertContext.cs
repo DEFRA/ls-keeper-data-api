@@ -6,7 +6,7 @@ namespace KeeperData.Application.Orchestration.Cts.Inserts;
 public class CtsHoldingInsertContext
 {
     public required string Cph { get; init; }
-    public required int BatchId { get; init; }
+    public int BatchId { get; init; }
 
     public List<CtsCphHolding> RawHoldings { get; set; } = [];
     public List<CtsAgentOrKeeper> RawAgents { get; set; } = [];

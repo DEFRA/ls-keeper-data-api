@@ -9,7 +9,7 @@ public static class MockSamData
     public static StringContent GetSamHoldingsResponse(string holdingIdentifier) =>
         HttpContentUtility.CreateResponseContent(new List<SamCphHolding>
         {
-            new MockSamDataFactory().CreateMockHolding(
+            new MockSamRawDataFactory().CreateMockHolding(
                 changeType: DataBridgeConstants.ChangeTypeInsert,
                 batchId: 1,
                 holdingIdentifier: holdingIdentifier)
@@ -18,7 +18,7 @@ public static class MockSamData
     public static StringContent GetSamHoldersResponse(string holdingIdentifier) =>
         HttpContentUtility.CreateResponseContent(new List<SamCphHolder>
         {
-        new MockSamDataFactory().CreateMockHolder(
+        new MockSamRawDataFactory().CreateMockHolder(
             changeType: DataBridgeConstants.ChangeTypeInsert,
             batchId: 1,
             holdingIdentifiers: [holdingIdentifier])
@@ -27,7 +27,7 @@ public static class MockSamData
     public static StringContent GetSamHerdsResponse(string holdingIdentifier, string partyId) =>
         HttpContentUtility.CreateResponseContent(new List<SamHerd>
         {
-        new MockSamDataFactory().CreateMockHerd(
+        new MockSamRawDataFactory().CreateMockHerd(
             changeType: DataBridgeConstants.ChangeTypeInsert,
             batchId: 1,
             holdingIdentifier: holdingIdentifier,
@@ -35,7 +35,7 @@ public static class MockSamData
         });
 
     public static StringContent GetSamPartyResponse(string partyId) =>
-        HttpContentUtility.CreateResponseContent(new MockSamDataFactory().CreateMockParty(
+        HttpContentUtility.CreateResponseContent(new MockSamRawDataFactory().CreateMockParty(
             changeType: DataBridgeConstants.ChangeTypeInsert,
             batchId: 1,
             partyId: partyId));
@@ -43,7 +43,7 @@ public static class MockSamData
     public static StringContent GetSamPartiesResponse(string partyId) =>
         HttpContentUtility.CreateResponseContent(new List<SamParty>
         {
-        new MockSamDataFactory().CreateMockParty(
+        new MockSamRawDataFactory().CreateMockParty(
             changeType: DataBridgeConstants.ChangeTypeInsert,
             batchId: 1,
             partyId: partyId)

@@ -16,7 +16,7 @@ public class SamHoldingInsertOrchestratorTests
     [Fact]
     public async Task GivenAHoldingIdentifier_WhenExecutingSamHoldingInsertOrchestrator_ShouldProcessAllStepsSuccessfully()
     {
-        var (holdingIdentifier, holdings, holders, herds, parties) = new MockSamDataFactory().CreateMockData(
+        var (holdingIdentifier, holdings, holders, herds, parties) = new MockSamRawDataFactory().CreateMockData(
             changeType: DataBridgeConstants.ChangeTypeInsert,
             holdingCount: 1,
             holderCount: 1,

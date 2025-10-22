@@ -13,7 +13,7 @@ public static class VerifyCtsAgentOrKeeperMappings
         source.Should().NotBeNull();
         target.Should().NotBeNull();
 
-        target.Id.Should().NotBeNullOrWhiteSpace();
+        target.Id.Should().BeNull();
         target.LastUpdatedBatchId.Should().Be(source.BATCH_ID);
         target.Deleted.Should().BeFalse();
 

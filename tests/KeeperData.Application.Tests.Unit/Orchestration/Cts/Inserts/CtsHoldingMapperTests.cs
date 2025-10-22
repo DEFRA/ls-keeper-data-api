@@ -49,7 +49,7 @@ public class CtsHoldingMapperTests
     private static List<CtsCphHolding> GenerateCtsCphHolding(int quantity)
     {
         var records = new List<CtsCphHolding>();
-        var factory = new MockCtsDataFactory();
+        var factory = new MockCtsRawDataFactory();
         for (var i = 0; i < quantity; i++)
         {
             records.Add(factory.CreateMockHolding(

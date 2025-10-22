@@ -5,12 +5,12 @@ using KeeperData.Tests.Common.Generators;
 
 namespace KeeperData.Core.Tests.Unit.ApiContracts;
 
-public class MockSamDataFactoryTests
+public class MockSamRawDataFactoryTests
 {
     [Fact]
     public void GivenMockSamDataFactory_WhenCallingCreateMockHolding_ShouldProduceValidHoldingModel()
     {
-        var factory = new MockSamDataFactory();
+        var factory = new MockSamRawDataFactory();
         var holdingIdentifier = CphGenerator.GenerateFormattedCph();
 
         var result = factory.CreateMockHolding(
@@ -31,7 +31,7 @@ public class MockSamDataFactoryTests
     [Fact]
     public void GivenMockSamDataFactory_WhenCallingCreateMockHolder_ShouldProduceValidHolderModel()
     {
-        var factory = new MockSamDataFactory();
+        var factory = new MockSamRawDataFactory();
         var holdingIdentifier1 = CphGenerator.GenerateFormattedCph();
         var holdingIdentifier2 = CphGenerator.GenerateFormattedCph();
 
@@ -53,7 +53,7 @@ public class MockSamDataFactoryTests
     [Fact]
     public void GivenMockSamDataFactory_WhenCallingCreateMockHerd_ShouldProduceValidHerdModel()
     {
-        var factory = new MockSamDataFactory();
+        var factory = new MockSamRawDataFactory();
         var holdingIdentifier = CphGenerator.GenerateFormattedCph();
         var partyIds = PersonGenerator.GetPartyIds(3);
 
@@ -76,7 +76,7 @@ public class MockSamDataFactoryTests
     [Fact]
     public void GivenMockSamDataFactory_WhenCallingCreateMockData_ShouldProduceValidModels()
     {
-        var factory = new MockSamDataFactory();
+        var factory = new MockSamRawDataFactory();
 
         var (holdingIdentifier, holdings, holders, herds, parties) = factory.CreateMockData(
             changeType: DataBridgeConstants.ChangeTypeInsert,
