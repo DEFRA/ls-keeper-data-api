@@ -1,7 +1,7 @@
 using FluentValidation;
 using KeeperData.Application.Orchestration;
-using KeeperData.Application.Orchestration.Sam.Inserts;
-using KeeperData.Application.Orchestration.Sam.Inserts.Steps;
+using KeeperData.Application.Orchestration.Sam.Holdings;
+using KeeperData.Application.Orchestration.Sam.Holdings.Steps;
 using KeeperData.Application.Queries.Sites.Adapters;
 using KeeperData.Application.Services;
 using KeeperData.Core.Attributes;
@@ -25,8 +25,8 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<SitesQueryAdapter>();
 
-        RegisterOrchestrators(services, typeof(SamHoldingInsertOrchestrator).Assembly);
-        RegisterSteps(services, typeof(SamHoldingInsertAggregationStep).Assembly);
+        RegisterOrchestrators(services, typeof(SamHoldingImportOrchestrator).Assembly);
+        RegisterSteps(services, typeof(SamHoldingImportAggregationStep).Assembly);
         RegisterLookupServices(services);
     }
 

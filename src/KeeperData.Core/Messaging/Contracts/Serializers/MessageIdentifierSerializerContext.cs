@@ -8,8 +8,8 @@ namespace KeeperData.Core.Messaging.Contracts.Serializers;
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     Converters = []
 )]
-[JsonSerializable(typeof(SamHoldingInsertedMessage))]
-[JsonSerializable(typeof(CtsHoldingInsertedMessage))]
+[JsonSerializable(typeof(SamImportHoldingMessage))]
+[JsonSerializable(typeof(CtsImportHoldingMessage))]
 public partial class MessageIdentifierSerializerContext : JsonSerializerContext
 {
 }

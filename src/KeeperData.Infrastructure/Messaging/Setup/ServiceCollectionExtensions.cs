@@ -69,8 +69,8 @@ public static class ServiceCollectionExtensions
 
         var messageIdentifierTypes = new[]
         {
-            typeof(SamHoldingInsertedMessage),
-            typeof(CtsHoldingInsertedMessage)
+            typeof(SamImportHoldingMessage),
+            typeof(CtsImportHoldingMessage)
         };
 
         foreach (var messageType in messageIdentifierTypes)
@@ -87,7 +87,7 @@ public static class ServiceCollectionExtensions
     private static IServiceCollection AddMessageHandlers(this IServiceCollection services)
     {
         var handlerInterfaceType = typeof(IMessageHandler<>);
-        var handlerTypes = typeof(SamHoldingInsertedMessageHandler).Assembly.GetTypes()
+        var handlerTypes = typeof(SamImportHoldingMessageHandler).Assembly.GetTypes()
             .Where(type => !type.IsAbstract && !type.IsInterface)
             .Select(type => new
             {
