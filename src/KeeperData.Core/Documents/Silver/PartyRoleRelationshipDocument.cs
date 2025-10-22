@@ -8,7 +8,7 @@ namespace KeeperData.Core.Documents.Silver;
 [CollectionName("partyRoleRelationships")]
 public class PartyRoleRelationshipDocument : IEntity, IContainsIndexes
 {
-    public string Id { get; set; } = string.Empty;
+    public string? Id { get; set; }
     public string PartyId { get; set; } = string.Empty;
     public string PartyTypeId { get; set; } = string.Empty; // LOV Lookup / Internal Id
     public string HoldingIdentifier { get; set; } = string.Empty;

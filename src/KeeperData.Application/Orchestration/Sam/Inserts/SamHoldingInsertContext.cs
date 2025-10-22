@@ -7,7 +7,7 @@ namespace KeeperData.Application.Orchestration.Sam.Inserts;
 public class SamHoldingInsertContext
 {
     public required string Cph { get; init; }
-    public required int BatchId { get; init; }
+    public int BatchId { get; init; }
 
     public List<SamCphHolding> RawHoldings { get; set; } = [];
     public List<SamCphHolder> RawHolders { get; set; } = [];

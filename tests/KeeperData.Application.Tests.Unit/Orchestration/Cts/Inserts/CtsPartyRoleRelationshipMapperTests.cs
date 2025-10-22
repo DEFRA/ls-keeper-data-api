@@ -92,7 +92,7 @@ public class CtsPartyRoleRelationshipMapperTests
     private static List<CtsAgentOrKeeper> GenerateCtsAgentOrKeeper(int quantity)
     {
         var records = new List<CtsAgentOrKeeper>();
-        var factory = new MockCtsDataFactory();
+        var factory = new MockCtsRawDataFactory();
         for (var i = 0; i < quantity; i++)
         {
             records.Add(factory.CreateMockAgentOrKeeper(

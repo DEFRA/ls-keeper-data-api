@@ -25,9 +25,10 @@ public static class CtsAgentOrKeeperMapper
 
             var party = new CtsPartyDocument
             {
-                Id = Guid.NewGuid().ToString(),
+                // Id - Leave to support upsert assigning Id
+
                 LastUpdatedBatchId = p.BATCH_ID,
-                Deleted = false,
+                Deleted = p.IsDeleted ?? false,
 
                 CountyParishHoldingNumber = p.LID_FULL_IDENTIFIER,
 

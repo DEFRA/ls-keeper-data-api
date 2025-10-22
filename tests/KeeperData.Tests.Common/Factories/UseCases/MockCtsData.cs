@@ -9,7 +9,7 @@ public static class MockCtsData
     public static StringContent GetCtsHoldingsResponse(string holdingIdentifier) =>
         HttpContentUtility.CreateResponseContent(new List<CtsCphHolding>
         {
-            new MockCtsDataFactory().CreateMockHolding(
+            new MockCtsRawDataFactory().CreateMockHolding(
                 changeType: DataBridgeConstants.ChangeTypeInsert,
                 batchId: 1,
                 holdingIdentifier: holdingIdentifier)
@@ -18,7 +18,7 @@ public static class MockCtsData
     public static StringContent GetCtsAgentOrKeeperResponse(string holdingIdentifier) =>
         HttpContentUtility.CreateResponseContent(new List<CtsAgentOrKeeper>
         {
-            new MockCtsDataFactory().CreateMockAgentOrKeeper(
+            new MockCtsRawDataFactory().CreateMockAgentOrKeeper(
                 changeType: DataBridgeConstants.ChangeTypeInsert,
                 batchId: 1,
                 holdingIdentifier: holdingIdentifier)

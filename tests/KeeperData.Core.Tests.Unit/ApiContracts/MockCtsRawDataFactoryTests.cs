@@ -5,12 +5,12 @@ using KeeperData.Tests.Common.Generators;
 
 namespace KeeperData.Core.Tests.Unit.ApiContracts;
 
-public class MockCtsDataFactoryTests
+public class MockCtsRawDataFactoryTests
 {
     [Fact]
     public void GivenMockCtsDataFactory_WhenCallingCreateMockHolding_ShouldProduceValidHoldingModel()
     {
-        var factory = new MockCtsDataFactory();
+        var factory = new MockCtsRawDataFactory();
         var holdingIdentifier = CphGenerator.GenerateFormattedCph();
 
         var result = factory.CreateMockHolding(
@@ -35,7 +35,7 @@ public class MockCtsDataFactoryTests
     [Fact]
     public void GivenMockCtsDataFactory_WhenCallingCreateMockAgentOrKeeper_ShouldProduceValidPartyModel()
     {
-        var factory = new MockCtsDataFactory();
+        var factory = new MockCtsRawDataFactory();
         var holdingIdentifier = CphGenerator.GenerateFormattedCph();
 
         var result = factory.CreateMockAgentOrKeeper(
@@ -56,7 +56,7 @@ public class MockCtsDataFactoryTests
     [Fact]
     public void GivenMockCtsDataFactory_WhenCallingCreateMockData_ShouldProduceValidModels()
     {
-        var factory = new MockCtsDataFactory();
+        var factory = new MockCtsRawDataFactory();
 
         var (_, holdings, agents, keepers) = factory.CreateMockData(
             changeType: DataBridgeConstants.ChangeTypeInsert,

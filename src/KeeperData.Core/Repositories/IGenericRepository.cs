@@ -6,6 +6,7 @@ namespace KeeperData.Core.Repositories;
 public interface IGenericRepository<T> where T : IEntity
 {
     Task<T> GetByIdAsync(string id, CancellationToken cancellationToken = default);
+    Task<T?> FindOneAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
     Task<List<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
     Task<List<T>> FindAsync<TNested>(
         Expression<Func<T, IEnumerable<TNested>>> arrayField,
@@ -13,8 +14,10 @@ public interface IGenericRepository<T> where T : IEntity
         CancellationToken cancellationToken = default);
 
     Task AddAsync(T entity, CancellationToken cancellationToken = default);
+    Task AddManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
     Task UpdateAsync(T entity, CancellationToken cancellationToken = default);
     Task BulkUpsertAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
     Task BulkUpsertWithCustomFilterAsync(IEnumerable<(FilterDefinition<T> Filter, T Entity)> items, CancellationToken cancellationToken = default);
     Task DeleteAsync(string id, CancellationToken cancellationToken = default);
+    Task DeleteManyAsync(FilterDefinition<T> filter, CancellationToken cancellationToken = default);
 }

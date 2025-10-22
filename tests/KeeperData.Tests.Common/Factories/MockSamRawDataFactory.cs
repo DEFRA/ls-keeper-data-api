@@ -8,11 +8,11 @@ namespace KeeperData.Tests.Common.Factories;
 /// <summary>
 /// Factory to be used to create mock objects for <see cref="IDataBridgeClient"/> to be used by all tests.
 /// </summary>
-public class MockSamDataFactory
+public class MockSamRawDataFactory
 {
     private readonly Fixture _fixture;
 
-    public MockSamDataFactory()
+    public MockSamRawDataFactory()
     {
         _fixture = new Fixture();
     }

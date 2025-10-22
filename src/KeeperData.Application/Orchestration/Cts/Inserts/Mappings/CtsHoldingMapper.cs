@@ -12,9 +12,10 @@ public static class CtsHoldingMapper
             .Where(x => x.LID_FULL_IDENTIFIER != null)
             .Select(h => new CtsHoldingDocument()
             {
-                Id = Guid.NewGuid().ToString(),
+                // Id - Leave to support upsert assigning Id
+
                 LastUpdatedBatchId = h.BATCH_ID,
-                Deleted = false,
+                Deleted = h.IsDeleted ?? false,
 
                 CountyParishHoldingNumber = h.LID_FULL_IDENTIFIER,
                 AlternativeHoldingIdentifier = null,
