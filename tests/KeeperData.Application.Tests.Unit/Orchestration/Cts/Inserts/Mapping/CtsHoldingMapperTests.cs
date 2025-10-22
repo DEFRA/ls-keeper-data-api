@@ -6,7 +6,7 @@ using KeeperData.Tests.Common.Factories;
 using KeeperData.Tests.Common.Generators;
 using KeeperData.Tests.Common.Mappings;
 
-namespace KeeperData.Application.Tests.Unit.Orchestration.Cts.Inserts;
+namespace KeeperData.Application.Tests.Unit.Orchestration.Cts.Inserts.Mapping;
 
 public class CtsHoldingMapperTests
 {

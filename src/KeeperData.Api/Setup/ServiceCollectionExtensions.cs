@@ -7,7 +7,6 @@ using KeeperData.Infrastructure.Messaging.Setup;
 using KeeperData.Infrastructure.Storage.Setup;
 using KeeperData.Infrastructure.Telemetry;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using OpenTelemetry.Metrics;
 using System.Text.Json.Serialization;
 
 namespace KeeperData.Api.Setup;

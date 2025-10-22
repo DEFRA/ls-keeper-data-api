@@ -10,7 +10,7 @@ using KeeperData.Tests.Common.Generators;
 using KeeperData.Tests.Common.Mappings;
 using Moq;
 
-namespace KeeperData.Application.Tests.Unit.Orchestration.Cts.Inserts;
+namespace KeeperData.Application.Tests.Unit.Orchestration.Cts.Inserts.Mapping;
 
 public class CtsAgentOrKeeperMapperTests
 {
@@ -76,7 +76,7 @@ public class CtsAgentOrKeeperMapperTests
 
         var role = result.Roles[0];
         role.IdentifierId.Should().NotBeNullOrWhiteSpace();
-        role.SourceRoleName.Should().Be(EnumExtensions.GetDescription(InferredRoleType.Agent));
+        role.SourceRoleName.Should().Be(InferredRoleType.Agent.GetDescription());
         role.RoleTypeId.Should().BeNull();
         role.RoleTypeName.Should().BeNull();
         role.EffectiveFromData.Should().Be(records[0].LPR_EFFECTIVE_FROM_DATE);

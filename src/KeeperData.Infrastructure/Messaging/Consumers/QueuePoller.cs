@@ -1,6 +1,7 @@
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using KeeperData.Core.Exceptions;
+using KeeperData.Core.Messaging;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Extensions;
@@ -146,6 +147,9 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         try
         {
             var unwrappedMessage = message.Unwrap(_messageSerializer);
+            CorrelationIdContext.Value = unwrappedMessage.CorrelationId;
+
+            _logger.LogDebug("HandleMessageAsync using correlationId: {correlationId}", CorrelationIdContext.Value);
 
             var handlerTypes = _messageHandlerManager.GetHandlersForMessage(unwrappedMessage.Subject);
             foreach (var handlerInfo in handlerTypes)
@@ -161,7 +165,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
 
                 await _amazonSQS.DeleteMessageAsync(queueUrl, message.ReceiptHandle, cancellationToken);
 
-                _logger.LogInformation("Handled message with CorrelationId: {correlationId}", unwrappedMessage.CorrelationId);
+                _logger.LogInformation("Handled message with correlationId: {correlationId}", CorrelationIdContext.Value);
 
                 _observer?.OnMessageHandled(message.MessageId, DateTime.UtcNow, messagePayload, message);
             }
@@ -170,8 +174,8 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         {
             // SQS doesn't support abandon so let visibility timeout expire.
 
-            _logger.LogError("RetryableException in queue: {queue}, messageId: {messageId}, Exception: {ex}",
-                _queueConsumerOptions.QueueUrl, message.MessageId, ex);
+            _logger.LogError("RetryableException in queue: {queue}, correlationId: {correlationId}, messageId: {messageId}, Exception: {ex}",
+                _queueConsumerOptions.QueueUrl, CorrelationIdContext.Value, message.MessageId, ex);
 
             _observer?.OnMessageFailed(message.MessageId, DateTime.UtcNow, ex, message);
         }
@@ -179,15 +183,15 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         {
             // "Move to a DLQ by configuration" - TODO
 
-            _logger.LogError("NonRetryableException in queue: {queue}, messageId: {messageId}, Exception: {ex}",
-                _queueConsumerOptions.QueueUrl, message.MessageId, ex);
+            _logger.LogError("NonRetryableException in queue: {queue}, correlationId: {correlationId}, messageId: {messageId}, Exception: {ex}",
+                _queueConsumerOptions.QueueUrl, CorrelationIdContext.Value, message.MessageId, ex);
 
             _observer?.OnMessageFailed(message.MessageId, DateTime.UtcNow, ex, message);
         }
         catch (Exception ex)
         {
-            _logger.LogError("Unhandled Exception in queue: {queue}, messageId: {messageId}, Exception: {ex}",
-                _queueConsumerOptions.QueueUrl, message.MessageId, ex);
+            _logger.LogError("Unhandled Exception in queue: {queue}, correlationId: {correlationId}, messageId: {messageId}, Exception: {ex}",
+                _queueConsumerOptions.QueueUrl, CorrelationIdContext.Value, message.MessageId, ex);
 
             _observer?.OnMessageFailed(message.MessageId, DateTime.UtcNow, ex, message);
         }
