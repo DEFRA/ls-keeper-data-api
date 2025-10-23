@@ -22,5 +22,10 @@
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
-
+  <ItemGroup>
+    <PackageReference Include="GitHubActionsTestLogger" Version="2.4.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
 </Project>
