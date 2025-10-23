@@ -6,7 +6,7 @@ namespace KeeperData.Api.Setup;
 
 public static class HealthCheckWriter
 {
-    public static string WriteHealthStatusAsJson(HealthReport healthReport, bool excludeHealthy, bool indented)
+    public static string WriteHealthStatusAsJson(HealthReport healthReport, bool healthcheckMaskingEnabled, bool excludeHealthy, bool indented)
     {
         var options = new JsonWriterOptions { Indented = indented };
 
@@ -17,7 +17,10 @@ public static class HealthCheckWriter
             jsonWriter.WriteString("status", healthReport.Status.ToString());
             jsonWriter.WriteNumber("durationMs", healthReport.TotalDuration.TotalMilliseconds);
 
-            WriteEntries(healthReport, excludeHealthy, jsonWriter);
+            if (!healthcheckMaskingEnabled)
+            {
+                WriteEntries(healthReport, excludeHealthy, jsonWriter);
+            }
 
             jsonWriter.WriteEndObject();
         }
@@ -39,12 +42,11 @@ public static class HealthCheckWriter
             jsonWriter.WriteString("description", healthReportEntry.Value.Description);
             jsonWriter.WriteNumber("durationMs", healthReportEntry.Value.Duration.TotalMilliseconds);
             if (healthReportEntry.Value.Exception != null)
+            {
                 jsonWriter.WriteString("exception", $"{healthReportEntry.Value.Exception?.GetType().Name}  {healthReportEntry.Value.Exception?.InnerException?.GetType().Name}".Trim());
-
+            }
             WriteTags(healthReportEntry, jsonWriter);
-
             WriteData(jsonWriter, healthReportEntry);
-
             jsonWriter.WriteEndObject();
         }
 

@@ -147,7 +147,9 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         try
         {
             var unwrappedMessage = message.Unwrap(_messageSerializer);
-            CorrelationIdContext.Value = unwrappedMessage.CorrelationId;
+            CorrelationIdContext.Value = string.IsNullOrWhiteSpace(unwrappedMessage.CorrelationId)
+                ? Guid.NewGuid().ToString()
+                : unwrappedMessage.CorrelationId;
 
             _logger.LogDebug("HandleMessageAsync using correlationId: {correlationId}", CorrelationIdContext.Value);
 

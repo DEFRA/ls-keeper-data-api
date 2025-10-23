@@ -1,3 +1,4 @@
+using Amazon.SimpleNotificationService;
 using Amazon.SQS;
 using KeeperData.Application.MessageHandlers.Sam;
 using KeeperData.Core.Messaging.Consumers;
@@ -6,10 +7,16 @@ using KeeperData.Core.Messaging.Contracts.Serializers;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessageHandlers;
+using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.Serializers;
 using KeeperData.Infrastructure.Messaging.Configuration;
 using KeeperData.Infrastructure.Messaging.Consumers;
+using KeeperData.Infrastructure.Messaging.Factories;
+using KeeperData.Infrastructure.Messaging.Factories.Implementations;
 using KeeperData.Infrastructure.Messaging.MessageHandlers;
+using KeeperData.Infrastructure.Messaging.Publishers;
+using KeeperData.Infrastructure.Messaging.Publishers.Clients;
+using KeeperData.Infrastructure.Messaging.Publishers.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -49,6 +56,8 @@ public static class ServiceCollectionExtensions
         services.AdddMessageSerializers();
 
         services.AddMessageHandlers();
+
+        services.AddServiceBusSenderDependencies(configuration);
 
         if (!intakeEventQueueOptions.Disabled)
         {
@@ -112,6 +121,47 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddSingleton<IMessageHandlerManager>(messageHandlerManager);
+
+        return services;
+    }
+
+    private static void AddServiceBusSenderDependencies(this IServiceCollection services, IConfiguration configuration)
+    {
+        var serviceBusSenderConfiguration = configuration.GetSection(nameof(ServiceBusSenderConfiguration)).Get<ServiceBusSenderConfiguration>()!;
+        services.AddSingleton<IServiceBusSenderConfiguration>(serviceBusSenderConfiguration);
+
+        if (configuration["LOCALSTACK_ENDPOINT"] != null)
+        {
+            services.AddSingleton<IAmazonSimpleNotificationService>(sp =>
+            {
+                var config = new AmazonSimpleNotificationServiceConfig
+                {
+                    ServiceURL = configuration["AWS:ServiceURL"],
+                    AuthenticationRegion = configuration["AWS:Region"],
+                    UseHttp = true
+                };
+                return new AmazonSimpleNotificationServiceClient(config);
+            });
+        }
+        else
+        {
+            services.AddAWSService<IAmazonSimpleNotificationService>();
+        }
+
+        if (serviceBusSenderConfiguration.IntakeEventsTopic.HealthcheckEnabled)
+        {
+            services.AddHealthChecks()
+                .AddCheck<AwsSnsHealthCheck>("aws_sns", tags: ["aws", "sns"]);
+        }
+
+        services.AddServiceBusEventPublishers();
+    }
+
+    private static IServiceCollection AddServiceBusEventPublishers(this IServiceCollection services)
+    {
+        services.AddTransient<IMessageFactory, MessageFactory>();
+
+        services.AddSingleton<IMessagePublisher<IntakeEventsTopicClient>, IntakeEventsPublisher>();
 
         return services;
     }

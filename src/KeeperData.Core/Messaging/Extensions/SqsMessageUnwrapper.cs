@@ -32,7 +32,7 @@ public static class SqsMessageUnwrapper
     private static UnwrappedMessage UnwrapFromEnvelope(SnsEnvelope envelope)
     {
         var subject = envelope.GetMessageAttributeValue<string>("Subject") ?? "Default";
-        var correlationId = envelope.GetMessageAttributeValue<string>("CorrelationId") ?? Guid.NewGuid().ToString();
+        var correlationId = envelope.GetMessageAttributeValue<string>("CorrelationId") ?? string.Empty;
 
         return new UnwrappedMessage
         {
@@ -49,7 +49,7 @@ public static class SqsMessageUnwrapper
     private static UnwrappedMessage UnwrapFromRawMessage(Message message)
     {
         var subject = message.GetMessageAttributeValue<string>("Subject") ?? "Default";
-        var correlationId = message.GetMessageAttributeValue<string>("CorrelationId") ?? Guid.NewGuid().ToString();
+        var correlationId = message.GetMessageAttributeValue<string>("CorrelationId") ?? string.Empty;
 
         return new UnwrappedMessage
         {
