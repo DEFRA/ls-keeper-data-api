@@ -1,5 +1,6 @@
-using Amazon.SimpleNotificationService;
 using Amazon.SimpleNotificationService.Model;
+using Amazon.SQS;
+using Amazon.SQS.Model;
 using FluentAssertions;
 using KeeperData.Core.Messaging.Exceptions;
 using KeeperData.Infrastructure.Messaging.Factories.Implementations;
@@ -12,23 +13,23 @@ namespace KeeperData.Infrastructure.Tests.Unit.Messaging.MessagePublishers;
 
 public class MessagePublisherTests
 {
-    private readonly Mock<IAmazonSimpleNotificationService> _amazonSimpleNotificationServiceMock = new();
+    private readonly Mock<IAmazonSQS> _amazonSQSMock = new();
     private readonly Mock<IServiceBusSenderConfiguration> _serviceBusSenderConfigurationMock = new();
     private readonly MessageFactory _messageFactory = new();
 
-    private readonly IntakeEventsPublisher _sut;
+    private readonly IntakeEventQueuePublisher _sut;
 
-    private const string TestTopicArn = "arn:aws:sns:eu-west-2:000000000000:test-topic";
+    private const string TestQueueUrl = "http://localhost:4566/000000000000/test-queue";
 
     public MessagePublisherTests()
     {
-        _amazonSimpleNotificationServiceMock
-            .Setup(x => x.PublishAsync(It.IsAny<PublishRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PublishResponse { HttpStatusCode = HttpStatusCode.OK });
+        _amazonSQSMock
+            .Setup(x => x.SendMessageAsync(It.IsAny<SendMessageRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SendMessageResponse { HttpStatusCode = HttpStatusCode.OK });
 
-        SetupServiceBusSenderConfiguration(TestTopicArn);
+        SetupServiceBusSenderConfiguration(TestQueueUrl);
 
-        _sut = new IntakeEventsPublisher(_amazonSimpleNotificationServiceMock.Object, _messageFactory, _serviceBusSenderConfigurationMock.Object);
+        _sut = new IntakeEventQueuePublisher(_amazonSQSMock.Object, _messageFactory, _serviceBusSenderConfigurationMock.Object);
     }
 
     [Fact]
@@ -53,39 +54,39 @@ public class MessagePublisherTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData(" ")]
-    public async Task GivenMissingTopicArn_WhenCallingPublishAsync_ShouldThrow(string? topicArn)
+    public async Task GivenMissingQueueUrl_WhenCallingPublishAsync_ShouldThrow(string? queueUrl)
     {
-        SetupServiceBusSenderConfiguration(topicArn);
+        SetupServiceBusSenderConfiguration(queueUrl);
 
         var testMessage = new { Id = Guid.NewGuid(), Name = Guid.NewGuid().ToString() };
 
         Func<Task> func = async () => await _sut.PublishAsync(testMessage, CancellationToken.None);
 
-        await func.Should().ThrowAsync<PublishFailedException>().WithMessage("TopicArn is missing");
+        await func.Should().ThrowAsync<PublishFailedException>().WithMessage("QueueUrl is missing");
     }
 
     [Fact]
     public async Task GivenValidMessage_AndSnsServiceFails_WhenCallingPublishAsync_ShouldThrow()
     {
-        _amazonSimpleNotificationServiceMock
-            .Setup(x => x.PublishAsync(It.IsAny<PublishRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new NotFoundException("Topic not found"));
+        _amazonSQSMock
+            .Setup(x => x.SendMessageAsync(It.IsAny<SendMessageRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new NotFoundException("Queue not found"));
 
         var testMessage = new { Id = Guid.NewGuid(), Name = Guid.NewGuid().ToString() };
 
         Func<Task> func = async () => await _sut.PublishAsync(testMessage, CancellationToken.None);
 
         var exceptionAssertion = await func.Should().ThrowAsync<PublishFailedException>();
-        exceptionAssertion.And.Message.Should().Be($"Failed to publish event on {TestTopicArn}.");
+        exceptionAssertion.And.Message.Should().Be($"Failed to publish message on {TestQueueUrl}.");
         exceptionAssertion.And.InnerException.Should().BeOfType<NotFoundException>();
-        exceptionAssertion.And.InnerException!.Message.Should().Be("Topic not found");
+        exceptionAssertion.And.InnerException!.Message.Should().Be("Queue not found");
     }
 
-    private void SetupServiceBusSenderConfiguration(string? topicArn)
+    private void SetupServiceBusSenderConfiguration(string? queueUrl)
     {
-        _serviceBusSenderConfigurationMock.Setup(c => c.IntakeEventsTopic).Returns(new TopicConfiguration
+        _serviceBusSenderConfigurationMock.Setup(c => c.IntakeEventQueue).Returns(new QueueConfiguration
         {
-            TopicArn = topicArn!
+            QueueUrl = queueUrl!
         });
     }
 }

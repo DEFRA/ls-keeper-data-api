@@ -2,8 +2,6 @@ using Amazon.Extensions.NETCore.Setup;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
-using Amazon.SimpleNotificationService;
-using Amazon.SimpleNotificationService.Model;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using KeeperData.Api.Tests.Component.Consumers.Helpers;
@@ -29,15 +27,12 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
 {
     public Mock<IAmazonS3>? AmazonS3Mock;
     public Mock<IAmazonSQS>? AmazonSQSMock;
-    public Mock<IAmazonSimpleNotificationService>? AmazonSimpleNotificationServiceMock;
     public Mock<IMongoClient>? MongoClientMock;
     public readonly Mock<HttpMessageHandler> DataBridgeApiClientHttpMessageHandlerMock = new();
 
     private readonly List<Action<IServiceCollection>> _overrideServices = [];
 
     private const string ComparisonReportsStorageBucket = "test-comparison-reports-bucket";
-    private const string IntakeEventsTopicName = "ls-keeper-data-bridge-events";
-    private const string IntakeEventsTopicArn = $"arn:aws:sns:eu-west-2:000000000000:{IntakeEventsTopicName}";
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -52,8 +47,6 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
             ConfigureS3ClientFactory(services);
 
             ConfigureSimpleQueueService(services);
-
-            ConfigureSimpleNotificationService(services);
 
             ConfigureDatabase(services);
 
@@ -109,8 +102,7 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl", "http://localhost:4566/000000000000/test-queue");
         Environment.SetEnvironmentVariable("ApiClients__DataBridgeApi__HealthcheckEnabled", "true");
         Environment.SetEnvironmentVariable("ApiClients__DataBridgeApi__BaseUrl", TestConstants.DataBridgeApiBaseUrl);
-        Environment.SetEnvironmentVariable("ServiceBusSenderConfiguration__IntakeEventsTopic__TopicName", IntakeEventsTopicName);
-        Environment.SetEnvironmentVariable("ServiceBusSenderConfiguration__IntakeEventsTopic__TopicArn", string.Empty);
+        Environment.SetEnvironmentVariable("ServiceBusSenderConfiguration__IntakeEventQueue__QueueUrl", "http://localhost:4566/000000000000/test-queue");
     }
 
     private static void ConfigureAwsOptions(IServiceCollection services)
@@ -156,23 +148,6 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
 
         services.AddSingleton<TestQueuePollerObserver<MessageType>>();
         services.AddScoped<IQueuePollerObserver<MessageType>>(sp => sp.GetRequiredService<TestQueuePollerObserver<MessageType>>());
-    }
-
-    private void ConfigureSimpleNotificationService(IServiceCollection services)
-    {
-        RemoveService<IAmazonSimpleNotificationService>(services);
-
-        AmazonSimpleNotificationServiceMock = new Mock<IAmazonSimpleNotificationService>();
-
-        AmazonSimpleNotificationServiceMock
-            .Setup(x => x.ListTopicsAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ListTopicsResponse { HttpStatusCode = HttpStatusCode.OK, Topics = [new Topic { TopicArn = IntakeEventsTopicArn }] });
-
-        AmazonSimpleNotificationServiceMock
-            .Setup(x => x.GetTopicAttributesAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GetTopicAttributesResponse { HttpStatusCode = HttpStatusCode.OK });
-
-        services.Replace(new ServiceDescriptor(typeof(IAmazonSimpleNotificationService), AmazonSimpleNotificationServiceMock.Object));
     }
 
     private void ConfigureDatabase(IServiceCollection services)

@@ -1,4 +1,3 @@
-using Amazon.SimpleNotificationService;
 using Amazon.SQS;
 using KeeperData.Application.MessageHandlers.Sam;
 using KeeperData.Core.Messaging.Consumers;
@@ -130,30 +129,6 @@ public static class ServiceCollectionExtensions
         var serviceBusSenderConfiguration = configuration.GetSection(nameof(ServiceBusSenderConfiguration)).Get<ServiceBusSenderConfiguration>()!;
         services.AddSingleton<IServiceBusSenderConfiguration>(serviceBusSenderConfiguration);
 
-        if (configuration["LOCALSTACK_ENDPOINT"] != null)
-        {
-            services.AddSingleton<IAmazonSimpleNotificationService>(sp =>
-            {
-                var config = new AmazonSimpleNotificationServiceConfig
-                {
-                    ServiceURL = configuration["AWS:ServiceURL"],
-                    AuthenticationRegion = configuration["AWS:Region"],
-                    UseHttp = true
-                };
-                return new AmazonSimpleNotificationServiceClient(config);
-            });
-        }
-        else
-        {
-            services.AddAWSService<IAmazonSimpleNotificationService>();
-        }
-
-        if (serviceBusSenderConfiguration.IntakeEventsTopic.HealthcheckEnabled)
-        {
-            services.AddHealthChecks()
-                .AddCheck<AwsSnsHealthCheck>("aws_sns", tags: ["aws", "sns"]);
-        }
-
         services.AddServiceBusEventPublishers();
     }
 
@@ -161,7 +136,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddTransient<IMessageFactory, MessageFactory>();
 
-        services.AddSingleton<IMessagePublisher<IntakeEventsTopicClient>, IntakeEventsPublisher>();
+        services.AddSingleton<IMessagePublisher<IntakeEventsQueueClient>, IntakeEventQueuePublisher>();
 
         return services;
     }

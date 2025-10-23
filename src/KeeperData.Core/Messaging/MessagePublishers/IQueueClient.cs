@@ -1,6 +1,6 @@
 namespace KeeperData.Core.Messaging.MessagePublishers;
 
-public interface ITopicClient
+public interface IQueueClient
 {
     string ClientName { get; }
 }

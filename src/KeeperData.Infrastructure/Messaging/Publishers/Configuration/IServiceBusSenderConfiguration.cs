@@ -2,5 +2,5 @@ namespace KeeperData.Infrastructure.Messaging.Publishers.Configuration;
 
 public interface IServiceBusSenderConfiguration
 {
-    TopicConfiguration IntakeEventsTopic { get; init; }
+    QueueConfiguration IntakeEventQueue { get; init; }
 }

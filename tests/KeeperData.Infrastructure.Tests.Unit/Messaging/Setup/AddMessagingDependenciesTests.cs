@@ -1,6 +1,5 @@
 using Amazon.Extensions.NETCore.Setup;
 using Amazon.Runtime;
-using Amazon.SimpleNotificationService;
 using Amazon.SQS;
 using FluentAssertions;
 using KeeperData.Infrastructure.Messaging.Configuration;
@@ -22,8 +21,7 @@ public class AddMessagingDependenciesTests
             ["QueueConsumerOptions:IntakeEventQueueOptions:QueueUrl"] = "http://localhost:4566/000000000000/test-queue",
             ["QueueConsumerOptions:IntakeEventQueueOptions:WaitTimeSeconds"] = "5",
             ["QueueConsumerOptions:IntakeEventQueueOptions:MaxNumberOfMessages"] = "10",
-            ["ServiceBusSenderConfiguration:IntakeEventsTopic:TopicName"] = "ls-keeper-data-bridge-events",
-            ["ServiceBusSenderConfiguration:IntakeEventsTopic:TopicArn"] = "arn:aws:sns:eu-west-2:000000000000:ls-keeper-data-bridge-events"
+            ["ServiceBusSenderConfiguration:IntakeEventQueue:QueueUrl"] = "http://localhost:4566/000000000000/test-queue"
         };
 
         var config = new ConfigurationBuilder()
@@ -49,11 +47,9 @@ public class AddMessagingDependenciesTests
         intakeEventQueueOptions.MaxNumberOfMessages.Should().Be(10);
 
         var serviceBusSenderConfiguration = provider.GetRequiredService<IServiceBusSenderConfiguration>();
-        serviceBusSenderConfiguration.IntakeEventsTopic.TopicName.Should().Be("ls-keeper-data-bridge-events");
-        serviceBusSenderConfiguration.IntakeEventsTopic.TopicArn.Should().Be("arn:aws:sns:eu-west-2:000000000000:ls-keeper-data-bridge-events");
+        serviceBusSenderConfiguration.IntakeEventQueue.QueueUrl.Should().Be("http://localhost:4566/000000000000/test-queue");
 
         provider.GetRequiredService<IAmazonSQS>().Should().NotBeNull();
-        provider.GetRequiredService<IAmazonSimpleNotificationService>().Should().NotBeNull();
     }
 
     [Fact]
@@ -66,8 +62,7 @@ public class AddMessagingDependenciesTests
             ["AWS:ServiceURL"] = "http://localhost:4566/",
             ["AWS:Region"] = "eu-west-2",
             ["QueueConsumerOptions:IntakeEventQueueOptions:QueueUrl"] = "http://localhost:4566/000000000000/test-queue",
-            ["ServiceBusSenderConfiguration:IntakeEventsTopic:TopicName"] = "ls-keeper-data-bridge-events",
-            ["ServiceBusSenderConfiguration:IntakeEventsTopic:TopicArn"] = "arn:aws:sns:eu-west-2:000000000000:ls-keeper-data-bridge-events"
+            ["ServiceBusSenderConfiguration:IntakeEventQueue:QueueUrl"] = "http://localhost:4566/000000000000/test-queue"
         };
 
         var config = new ConfigurationBuilder()
@@ -91,10 +86,5 @@ public class AddMessagingDependenciesTests
         sqsClient.Should().NotBeNull();
         sqsClient.Config.ServiceURL.Should().Be("http://localhost:4566/");
         sqsClient.Config.AuthenticationRegion.Should().Be("eu-west-2");
-
-        var snsClient = provider.GetRequiredService<IAmazonSimpleNotificationService>();
-        snsClient.Should().NotBeNull();
-        snsClient.Config.ServiceURL.Should().Be("http://localhost:4566/");
-        snsClient.Config.AuthenticationRegion.Should().Be("eu-west-2");
     }
 }

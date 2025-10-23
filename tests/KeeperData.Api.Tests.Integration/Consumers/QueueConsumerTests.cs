@@ -1,48 +1,80 @@
 using Amazon.SimpleNotificationService.Model;
 using FluentAssertions;
-using KeeperData.Api.Tests.Integration.Consumers.Contracts;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
 using KeeperData.Api.Tests.Integration.Helpers;
+using KeeperData.Core.Messaging.Contracts.V1.Cts;
 
 namespace KeeperData.Api.Tests.Integration.Consumers;
 
 [Trait("Dependence", "localstack")]
 public class QueueConsumerTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
 {
-    [Fact(Skip = "Needs to be written out now 'Placeholder' handler removed")]
+    [Fact]
     public async Task GivenMessagePublishedToTopic_WhenReceivedOnTheQueue_ShouldComplete()
     {
-        var messageId = Guid.NewGuid().ToString();
-        var messageText = Guid.NewGuid();
-        var integrationTestMessage = GetIntegrationTestMessage(messageText.ToString());
+        var correlationId = Guid.NewGuid().ToString();
+        var holdingIdentifier = Guid.NewGuid().ToString();
+        var message = GetCtsImportHoldingMessage(holdingIdentifier);
 
-        await ExecuteTest(messageId, integrationTestMessage);
+        await ExecuteTopicTest(correlationId, message);
 
         // Wait briefly to allow processing
         await Task.Delay(TimeSpan.FromSeconds(5));
 
         var foundMessageProcesseEntryInLogs = await ContainerLoggingUtility.FindContainerLogEntryAsync(
             ContainerLoggingUtility.ServiceNameApi,
-            $"Handled message with CorrelationId: \"{messageId}\"");
+            $"Handled message with correlationId: \"{correlationId}\"");
 
         foundMessageProcesseEntryInLogs.Should().BeTrue();
     }
 
-    private async Task ExecuteTest(string correlationId, IntegrationTestMessage message)
+    [Fact]
+    public async Task GivenMessagePublishedToQueue_WhenReceivedOnTheQueue_ShouldComplete()
+    {
+        var correlationId = Guid.NewGuid().ToString();
+        var holdingIdentifier = Guid.NewGuid().ToString();
+        var message = GetCtsImportHoldingMessage(holdingIdentifier);
+
+        await ExecuteQueueTest(correlationId, message);
+
+        // Wait briefly to allow processing
+        await Task.Delay(TimeSpan.FromSeconds(5));
+
+        var foundMessageProcesseEntryInLogs = await ContainerLoggingUtility.FindContainerLogEntryAsync(
+            ContainerLoggingUtility.ServiceNameApi,
+            $"Handled message with correlationId: \"{correlationId}\"");
+
+        foundMessageProcesseEntryInLogs.Should().BeTrue();
+    }
+
+    private async Task ExecuteTopicTest<TMessage>(string correlationId, TMessage message)
     {
         var topic = new Topic { TopicArn = "arn:aws:sns:eu-west-2:000000000000:ls-keeper-data-bridge-events" };
         var additionalUserProperties = new Dictionary<string, string>
         {
             ["CorrelationId"] = correlationId
         };
-        var publishRequest = SNSMessageUtility.CreateMessage(topic.TopicArn, message, "Placeholder", additionalUserProperties);
+        var request = SNSMessageUtility.CreateMessage(topic.TopicArn, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var cts = new CancellationTokenSource();
-        await fixture.PublishToTopicAsync(publishRequest, cts.Token);
+        await fixture.PublishToTopicAsync(request, cts.Token);
     }
 
-    private static IntegrationTestMessage GetIntegrationTestMessage(string message) => new()
+    private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
     {
-        Message = message
+        var queueUrl = "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue";
+        var additionalUserProperties = new Dictionary<string, string>
+        {
+            ["CorrelationId"] = correlationId
+        };
+        var request = SQSMessageUtility.CreateMessage(queueUrl, message, typeof(TMessage).Name, additionalUserProperties);
+
+        using var cts = new CancellationTokenSource();
+        await fixture.PublishToQueueAsync(request, cts.Token);
+    }
+
+    private static CtsImportHoldingMessage GetCtsImportHoldingMessage(string holdingIdentifier) => new()
+    {
+        Identifier = holdingIdentifier
     };
 }

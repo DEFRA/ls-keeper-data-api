@@ -47,7 +47,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult(GetCtsAgentOrKeeper(id));
     }
 
-    private List<CtsCphHolding> GetCtsCphHolding(string id)
+    private static List<CtsCphHolding> GetCtsCphHolding(string id)
     {
         return [
             new CtsCphHolding {
