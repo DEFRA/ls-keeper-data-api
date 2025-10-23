@@ -22,6 +22,8 @@ public class IntegrationTestFixture : IDisposable
 
     private readonly AmazonSQSClient _amazonSQSClient;
 
+    private static bool s_mongoGlobalsRegistered;
+
     public IntegrationTestFixture()
     {
         // Register MongoDB globals
@@ -75,8 +77,12 @@ public class IntegrationTestFixture : IDisposable
 
     private static void RegisterMongoGlobals()
     {
+        if (s_mongoGlobalsRegistered) return;
+
         BsonSerializer.RegisterSerializer(typeof(Guid), new GuidSerializer(GuidRepresentation.Standard));
         ConventionRegistry.Register("CamelCase", new ConventionPack { new CamelCaseElementNameConvention() }, _ => true);
+
+        s_mongoGlobalsRegistered = true;
     }
 
     public void Dispose()
