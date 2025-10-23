@@ -40,7 +40,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
     public Task<List<CtsAgentOrKeeper>> GetCtsAgentsAsync(string id, CancellationToken cancellationToken)
     {
         return Task.FromResult(GetCtsAgentOrKeeper(id));
-    }    
+    }
 
     public Task<List<CtsAgentOrKeeper>> GetCtsKeepersAsync(string id, CancellationToken cancellationToken)
     {
