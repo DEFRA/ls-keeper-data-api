@@ -5,12 +5,20 @@ namespace KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
 
 public static class SamHoldingMapper
 {
-    public static SamHoldingDocument ToSilver(SamCphHolding raw)
+    public static async Task<List<SamHoldingDocument>> ToSilver(
+        List<SamCphHolding> rawHoldings,
+        CancellationToken cancellationToken)
     {
-        return new SamHoldingDocument
-        {
-            LastUpdatedBatchId = raw.BATCH_ID,
-            CountyParishHoldingNumber = raw.CPH
-        };
+        var result = rawHoldings?
+            .Where(x => x.CPH != null)
+            .Select(h => new SamHoldingDocument()
+            {
+                // Id - Leave to support upsert assigning Id
+
+                LastUpdatedBatchId = h.BATCH_ID,
+                Deleted = h.IsDeleted ?? false
+            });
+
+        return result?.ToList() ?? [];
     }
 }

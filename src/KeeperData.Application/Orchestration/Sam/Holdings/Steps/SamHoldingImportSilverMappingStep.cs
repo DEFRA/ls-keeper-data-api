@@ -1,4 +1,6 @@
+using KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
 using KeeperData.Core.Attributes;
+using KeeperData.Core.Domain.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Application.Orchestration.Sam.Holdings.Steps;
@@ -9,18 +11,24 @@ public class SamHoldingImportSilverMappingStep(ILogger<SamHoldingImportSilverMap
 {
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
     {
-        //if (context is not { RawHolding.CHANGE_TYPE: DataBridgeConstants.ChangeTypeInsert })
-        //    return;
+        context.SilverHoldings = await SamHoldingMapper.ToSilver(
+            context.RawHoldings,
+            cancellationToken);
 
-        //context.SilverHolding = SamHoldingMapper.ToSilver(context.RawHolding);
+        context.SilverParties = [
+            .. await SamHolderMapper.ToSilver(
+                context.RawHolders,
+                cancellationToken),
 
-        //context.SilverParties = [
-        //    .. SamHolderMapper.ToSilver(context.RawHolders),
-        //    .. SamPartyMapper.ToSilver(context.RawParties, context.RawHerds)
-        //];
+            .. await SamPartyMapper.ToSilver(
+                context.RawParties,
+                context.RawHerds,
+                cancellationToken)
+        ];
 
-        //context.SilverPartyRoles = []; // Map From SilverParties
-
-        await Task.CompletedTask;
+        context.SilverPartyRoles = SamPartyRoleRelationshipMapper.ToSilver(
+            context.SilverParties,
+            context.Cph,
+            HoldingIdentifierType.HoldingNumber.ToString());
     }
 }

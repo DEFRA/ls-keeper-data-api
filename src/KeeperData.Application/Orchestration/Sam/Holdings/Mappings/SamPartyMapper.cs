@@ -5,7 +5,10 @@ namespace KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
 
 public static class SamPartyMapper
 {
-    public static List<SamPartyDocument> ToSilver(List<SamParty> parties, List<SamHerd> herds)
+    public static async Task<List<SamPartyDocument>> ToSilver(
+        List<SamParty> parties,
+        List<SamHerd> herds,
+        CancellationToken cancellationToken)
     {
         return [];
     }

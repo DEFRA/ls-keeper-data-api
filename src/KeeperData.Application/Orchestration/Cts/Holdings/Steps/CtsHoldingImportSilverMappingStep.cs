@@ -33,7 +33,5 @@ public class CtsHoldingImportSilverMappingStep(IRoleTypeLookupService roleTypeLo
             context.SilverParties,
             context.Cph,
             HoldingIdentifierType.HoldingNumber.ToString());
-
-        await Task.CompletedTask;
     }
 }

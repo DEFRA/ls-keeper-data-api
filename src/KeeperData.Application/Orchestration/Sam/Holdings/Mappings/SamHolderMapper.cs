@@ -5,7 +5,9 @@ namespace KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
 
 public static class SamHolderMapper
 {
-    public static List<SamPartyDocument> ToSilver(List<SamCphHolder> holders)
+    public static async Task<List<SamPartyDocument>> ToSilver(
+        List<SamCphHolder> holders,
+        CancellationToken cancellationToken)
     {
         return [];
     }
