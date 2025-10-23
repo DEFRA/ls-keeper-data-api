@@ -21,7 +21,14 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton(apiClientConfigurations);
 
-        services.AddScoped<IDataBridgeClient, DataBridgeClient>();
+        if (configuration.GetValue<bool>("ApiClients:DataBridgeApi:UseFakeClient"))
+        {
+            services.AddScoped<IDataBridgeClient, Fakes.FakeDataBridgeClient>();
+        }
+        else
+        {
+            services.AddScoped<IDataBridgeClient, DataBridgeClient>();
+        }
 
         var healthChecksBuilder = services.AddHealthChecks();
 

@@ -26,11 +26,8 @@ namespace KeeperData.Api.Tests.Component;
 public class AppWebApplicationFactory : WebApplicationFactory<Program>
 {
     public Mock<IAmazonS3>? AmazonS3Mock;
-
     public Mock<IAmazonSQS>? AmazonSQSMock;
-
     public Mock<IMongoClient>? MongoClientMock;
-
     public readonly Mock<HttpMessageHandler> DataBridgeApiClientHttpMessageHandlerMock = new();
 
     private readonly List<Action<IServiceCollection>> _overrideServices = [];
@@ -105,6 +102,7 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl", "http://localhost:4566/000000000000/test-queue");
         Environment.SetEnvironmentVariable("ApiClients__DataBridgeApi__HealthcheckEnabled", "true");
         Environment.SetEnvironmentVariable("ApiClients__DataBridgeApi__BaseUrl", TestConstants.DataBridgeApiBaseUrl);
+        Environment.SetEnvironmentVariable("ServiceBusSenderConfiguration__IntakeEventQueue__QueueUrl", "http://localhost:4566/000000000000/test-queue");
     }
 
     private static void ConfigureAwsOptions(IServiceCollection services)

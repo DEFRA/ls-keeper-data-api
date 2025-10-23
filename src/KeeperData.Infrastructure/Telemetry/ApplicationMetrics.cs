@@ -1,7 +1,7 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Metrics;
 using KeeperData.Infrastructure.Config;
 using Microsoft.Extensions.Options;
+using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Metrics;
 
 namespace KeeperData.Infrastructure.Telemetry;
 

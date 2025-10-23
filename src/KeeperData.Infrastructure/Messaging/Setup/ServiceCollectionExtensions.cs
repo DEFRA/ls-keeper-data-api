@@ -6,10 +6,16 @@ using KeeperData.Core.Messaging.Contracts.Serializers;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessageHandlers;
+using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.Serializers;
 using KeeperData.Infrastructure.Messaging.Configuration;
 using KeeperData.Infrastructure.Messaging.Consumers;
+using KeeperData.Infrastructure.Messaging.Factories;
+using KeeperData.Infrastructure.Messaging.Factories.Implementations;
 using KeeperData.Infrastructure.Messaging.MessageHandlers;
+using KeeperData.Infrastructure.Messaging.Publishers;
+using KeeperData.Infrastructure.Messaging.Publishers.Clients;
+using KeeperData.Infrastructure.Messaging.Publishers.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -50,6 +56,8 @@ public static class ServiceCollectionExtensions
 
         services.AddMessageHandlers();
 
+        services.AddServiceBusSenderDependencies(configuration);
+
         if (!intakeEventQueueOptions.Disabled)
         {
             services.AddHealthChecks()
@@ -69,20 +77,8 @@ public static class ServiceCollectionExtensions
 
         var messageIdentifierTypes = new[]
         {
-            typeof(SamHoldingInsertedMessage),
-            typeof(SamHoldingUpdatedMessage),
-            typeof(SamHolderUpdatedMessage),
-            typeof(SamPartyUpdatedMessage),
-            typeof(SamHoldingDeletedMessage),
-            typeof(SamHolderDeletedMessage),
-            typeof(SamPartyDeletedMessage),
-            typeof(CtsHoldingInsertedMessage),
-            typeof(CtsHoldingUpdatedMessage),
-            typeof(CtsAgentUpdatedMessage),
-            typeof(CtsKeeperUpdatedMessage),
-            typeof(CtsHoldingDeletedMessage),
-            typeof(CtsAgentDeletedMessage),
-            typeof(CtsKeeperDeletedMessage)
+            typeof(SamImportHoldingMessage),
+            typeof(CtsImportHoldingMessage)
         };
 
         foreach (var messageType in messageIdentifierTypes)
@@ -99,7 +95,7 @@ public static class ServiceCollectionExtensions
     private static IServiceCollection AddMessageHandlers(this IServiceCollection services)
     {
         var handlerInterfaceType = typeof(IMessageHandler<>);
-        var handlerTypes = typeof(SamHoldingInsertedMessageHandler).Assembly.GetTypes()
+        var handlerTypes = typeof(SamImportHoldingMessageHandler).Assembly.GetTypes()
             .Where(type => !type.IsAbstract && !type.IsInterface)
             .Select(type => new
             {
@@ -124,6 +120,23 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddSingleton<IMessageHandlerManager>(messageHandlerManager);
+
+        return services;
+    }
+
+    private static void AddServiceBusSenderDependencies(this IServiceCollection services, IConfiguration configuration)
+    {
+        var serviceBusSenderConfiguration = configuration.GetSection(nameof(ServiceBusSenderConfiguration)).Get<ServiceBusSenderConfiguration>()!;
+        services.AddSingleton<IServiceBusSenderConfiguration>(serviceBusSenderConfiguration);
+
+        services.AddServiceBusEventPublishers();
+    }
+
+    private static IServiceCollection AddServiceBusEventPublishers(this IServiceCollection services)
+    {
+        services.AddTransient<IMessageFactory, MessageFactory>();
+
+        services.AddSingleton<IMessagePublisher<IntakeEventsQueueClient>, IntakeEventQueuePublisher>();
 
         return services;
     }

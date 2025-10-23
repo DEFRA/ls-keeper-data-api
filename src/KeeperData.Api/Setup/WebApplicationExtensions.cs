@@ -14,6 +14,8 @@ public static class WebApplicationExtensions
         var env = app.Services.GetRequiredService<IWebHostEnvironment>();
         var applicationLifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
         var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        var configuration = app.Services.GetRequiredService<IConfiguration>();
+        var healthcheckMaskingEnabled = configuration.GetValue<bool>("HealthcheckMaskingEnabled");
 
         applicationLifetime.ApplicationStarted.Register(() =>
             logger.LogInformation("{applicationName} started", env.ApplicationName));
@@ -35,7 +37,7 @@ public static class WebApplicationExtensions
             ResponseWriter = (context, healthReport) =>
             {
                 context.Response.ContentType = "application/json; charset=utf-8";
-                return context.Response.WriteAsync(HealthCheckWriter.WriteHealthStatusAsJson(healthReport, excludeHealthy: false, indented: true));
+                return context.Response.WriteAsync(HealthCheckWriter.WriteHealthStatusAsJson(healthReport, healthcheckMaskingEnabled: healthcheckMaskingEnabled, excludeHealthy: false, indented: true));
             },
             ResultStatusCodes =
             {

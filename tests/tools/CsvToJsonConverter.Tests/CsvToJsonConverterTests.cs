@@ -1,7 +1,6 @@
 using CsvToJsonConverter.Logic;
 using FluentAssertions;
 using System.Text.Json;
-using Xunit;
 
 namespace CsvToJsonConverter.Tests;
 
