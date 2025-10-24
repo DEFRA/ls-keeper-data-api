@@ -14,19 +14,19 @@ namespace KeeperData.Application.Tests.Unit.Orchestration.Cts.Holdings.Mapping;
 public class CtsPartyRoleRelationshipMapperTests
 {
     private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
-    private readonly Func<string, CancellationToken, Task<(string?, string?)>> _resolveRoleType;
+    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveRoleType;
 
     public CtsPartyRoleRelationshipMapperTests()
     {
         _roleTypeLookupServiceMock
-            .Setup(x => x.FindRoleAsync("Agent", It.IsAny<CancellationToken>()))
+            .Setup(x => x.FindAsync("Agent", It.IsAny<CancellationToken>()))
             .ReturnsAsync(("AgentId", "Agent"));
 
         _roleTypeLookupServiceMock
-            .Setup(x => x.FindRoleAsync("Keeper", It.IsAny<CancellationToken>()))
+            .Setup(x => x.FindAsync("Keeper", It.IsAny<CancellationToken>()))
             .ReturnsAsync(("KeeperId", "Keeper"));
 
-        _resolveRoleType = _roleTypeLookupServiceMock.Object.FindRoleAsync;
+        _resolveRoleType = _roleTypeLookupServiceMock.Object.FindAsync;
     }
 
     [Fact]

@@ -7,7 +7,8 @@ using Microsoft.Extensions.Logging;
 namespace KeeperData.Application.Orchestration.Cts.Holdings.Steps;
 
 [StepOrder(2)]
-public class CtsHoldingImportSilverMappingStep(IRoleTypeLookupService roleTypeLookupService,
+public class CtsHoldingImportSilverMappingStep(
+    IRoleTypeLookupService roleTypeLookupService,
     ILogger<CtsHoldingImportSilverMappingStep> logger)
     : ImportStepBase<CtsHoldingImportContext>(logger)
 {
@@ -19,13 +20,13 @@ public class CtsHoldingImportSilverMappingStep(IRoleTypeLookupService roleTypeLo
             .. await CtsAgentOrKeeperMapper.ToSilver(
                 context.RawAgents,
                 InferredRoleType.Agent,
-                roleTypeLookupService.FindRoleAsync,
+                roleTypeLookupService.FindAsync,
                 cancellationToken),
 
             .. await CtsAgentOrKeeperMapper.ToSilver(
                 context.RawKeepers,
                 InferredRoleType.PrimaryKeeper,
-                roleTypeLookupService.FindRoleAsync,
+                roleTypeLookupService.FindAsync,
                 cancellationToken)
         ];
 

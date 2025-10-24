@@ -1,18 +1,26 @@
 using KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Services;
 using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Application.Orchestration.Sam.Holdings.Steps;
 
 [StepOrder(2)]
-public class SamHoldingImportSilverMappingStep(ILogger<SamHoldingImportSilverMappingStep> logger)
+public class SamHoldingImportSilverMappingStep(
+    IPremiseActivityTypeLookupService premiseActivityTypeLookupService,
+    IPremiseTypeLookupService premiseTypeLookupService,
+    ICountryIdentifierLookupService countryIdentifierLookupService,
+    ILogger<SamHoldingImportSilverMappingStep> logger)
     : ImportStepBase<SamHoldingImportContext>(logger)
 {
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
     {
         context.SilverHoldings = await SamHoldingMapper.ToSilver(
             context.RawHoldings,
+            premiseActivityTypeLookupService.FindAsync,
+            premiseTypeLookupService.FindAsync,
+            countryIdentifierLookupService.FindAsync,
             cancellationToken);
 
         context.SilverParties = [

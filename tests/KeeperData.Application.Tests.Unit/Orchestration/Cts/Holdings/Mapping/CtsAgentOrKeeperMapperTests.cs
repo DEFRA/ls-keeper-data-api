@@ -15,19 +15,19 @@ namespace KeeperData.Application.Tests.Unit.Orchestration.Cts.Holdings.Mapping;
 public class CtsAgentOrKeeperMapperTests
 {
     private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
-    private readonly Func<string, CancellationToken, Task<(string?, string?)>> _resolveRoleType;
+    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveRoleType;
 
     public CtsAgentOrKeeperMapperTests()
     {
         _roleTypeLookupServiceMock
-            .Setup(x => x.FindRoleAsync("Agent", It.IsAny<CancellationToken>()))
+            .Setup(x => x.FindAsync("Agent", It.IsAny<CancellationToken>()))
             .ReturnsAsync(("AgentId", "Agent"));
 
         _roleTypeLookupServiceMock
-            .Setup(x => x.FindRoleAsync("Keeper", It.IsAny<CancellationToken>()))
+            .Setup(x => x.FindAsync("Keeper", It.IsAny<CancellationToken>()))
             .ReturnsAsync(("KeeperId", "Keeper"));
 
-        _resolveRoleType = _roleTypeLookupServiceMock.Object.FindRoleAsync;
+        _resolveRoleType = _roleTypeLookupServiceMock.Object.FindAsync;
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public class CtsAgentOrKeeperMapperTests
     public async Task GivenFindRoleDoesNotMatch_WhenCallingToSilver_ShouldReturnEmptyRoleDetails()
     {
         _roleTypeLookupServiceMock
-            .Setup(x => x.FindRoleAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.FindAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((null, null));
 
         var records = GenerateCtsAgentOrKeeper(1);
