@@ -58,7 +58,7 @@ public class CtsAgentOrKeeperMapperTests
     public async Task GivenFindRoleDoesNotMatch_WhenCallingToSilver_ShouldReturnEmptyRoleDetails()
     {
         _roleTypeLookupServiceMock
-            .Setup(x => x.FindAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((null, null));
 
         var records = GenerateCtsAgentOrKeeper(1);

@@ -10,6 +10,7 @@ namespace KeeperData.Application.Orchestration.Sam.Holdings.Steps;
 public class SamHoldingImportSilverMappingStep(
     IPremiseActivityTypeLookupService premiseActivityTypeLookupService,
     IPremiseTypeLookupService premiseTypeLookupService,
+    IRoleTypeLookupService roleTypeLookupService,
     ICountryIdentifierLookupService countryIdentifierLookupService,
     ILogger<SamHoldingImportSilverMappingStep> logger)
     : ImportStepBase<SamHoldingImportContext>(logger)
@@ -26,11 +27,17 @@ public class SamHoldingImportSilverMappingStep(
         context.SilverParties = [
             .. await SamHolderMapper.ToSilver(
                 context.RawHolders,
+                context.Cph,
+                InferredRoleType.Holder,
+                roleTypeLookupService.FindAsync,
+                countryIdentifierLookupService.FindAsync,
                 cancellationToken),
 
             .. await SamPartyMapper.ToSilver(
                 context.RawParties,
-                context.RawHerds,
+                context.Cph,
+                roleTypeLookupService.FindAsync,
+                countryIdentifierLookupService.FindAsync,
                 cancellationToken)
         ];
 

@@ -20,6 +20,7 @@ public static class CtsAgentOrKeeperMapper
         {
             var roleNameToLookup = EnumExtensions.GetDescription(inferredRoleType);
             var (roleTypeId, roleTypeName) = await resolveRoleType(roleNameToLookup, cancellationToken);
+            var partyTypeId = p.DeterminePartyType().ToString();
 
             var party = new CtsPartyDocument
             {
@@ -31,7 +32,7 @@ public static class CtsAgentOrKeeperMapper
                 CountyParishHoldingNumber = p.LID_FULL_IDENTIFIER,
 
                 PartyId = p.PAR_ID.ToString(),
-                PartyTypeId = p.DeterminePartyType().ToString(),
+                PartyTypeId = partyTypeId,
 
                 PartyFullName = null,
 

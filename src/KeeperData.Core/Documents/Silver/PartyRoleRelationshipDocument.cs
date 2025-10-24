@@ -19,7 +19,7 @@ public class PartyRoleRelationshipDocument : IEntity, IContainsIndexes
     public string? RoleTypeName { get; set; } // LOV Lookup / Internal Name
     public string? SourceRoleName { get; set; }
 
-    public DateTime EffectiveFromData { get; set; } = default;
+    public DateTime? EffectiveFromData { get; set; }
     public DateTime? EffectiveToData { get; set; }
 
     public int LastUpdatedBatchId { get; set; }

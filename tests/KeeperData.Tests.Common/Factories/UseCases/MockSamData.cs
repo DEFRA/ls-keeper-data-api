@@ -38,7 +38,7 @@ public static class MockSamData
         HttpContentUtility.CreateResponseContent(new MockSamRawDataFactory().CreateMockParty(
             changeType: DataBridgeConstants.ChangeTypeInsert,
             batchId: 1,
-            partyId: partyId));
+            partyIds: [partyId]));
 
     public static StringContent GetSamPartiesResponse(string partyId) =>
         HttpContentUtility.CreateResponseContent(new List<SamParty>
@@ -46,6 +46,6 @@ public static class MockSamData
         new MockSamRawDataFactory().CreateMockParty(
             changeType: DataBridgeConstants.ChangeTypeInsert,
             batchId: 1,
-            partyId: partyId)
+            partyIds: [partyId])
         });
 }

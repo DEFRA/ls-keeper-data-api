@@ -19,7 +19,7 @@ public static class SamPartyRoleRelationshipMapper
                 PartyTypeId = party.PartyTypeId,
                 HoldingIdentifier = holdingIdentifier,
                 HoldingIdentifierType = holdingIdentifierType,
-                Source = SourceSystemType.CTS.ToString(),
+                Source = SourceSystemType.SAM.ToString(),
 
                 RoleTypeId = role.RoleTypeId,
                 RoleTypeName = role.RoleTypeName,
