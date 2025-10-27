@@ -1,7 +1,7 @@
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
-using KeeperData.Core.Domain.Sites.Extensions;
+using KeeperData.Core.Domain.Sites.Formatters;
 
 namespace KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
 
@@ -20,7 +20,7 @@ public static class SamHoldingMapper
 
         foreach (var h in rawHoldings?.Where(x => x.CPH != null) ?? [])
         {
-            var addressLine = FormatAddressExtensions.FormatAddressRange(
+            var addressLine = AddressFormatters.FormatAddressRange(
                             h.SAON_START_NUMBER, h.SAON_START_NUMBER_SUFFIX,
                             h.SAON_END_NUMBER, h.SAON_END_NUMBER_SUFFIX,
                             h.PAON_START_NUMBER, h.PAON_START_NUMBER_SUFFIX,

@@ -2,7 +2,7 @@ using FluentAssertions;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
-using KeeperData.Core.Domain.Sites.Extensions;
+using KeeperData.Core.Domain.Sites.Formatters;
 
 namespace KeeperData.Tests.Common.Mappings;
 
@@ -10,7 +10,7 @@ public static class VerifySamHoldingMappings
 {
     public static void VerifyMapping_From_SamCphHolding_To_SamHoldingDocument(SamCphHolding source, SamHoldingDocument target)
     {
-        var addressLine = FormatAddressExtensions.FormatAddressRange(
+        var addressLine = AddressFormatters.FormatAddressRange(
                             source.SAON_START_NUMBER, source.SAON_START_NUMBER_SUFFIX,
                             source.SAON_END_NUMBER, source.SAON_END_NUMBER_SUFFIX,
                             source.PAON_START_NUMBER, source.PAON_START_NUMBER_SUFFIX,
@@ -38,9 +38,9 @@ public static class VerifySamHoldingMappings
             : HoldingStatusType.Active.ToString();
         target.HoldingStatus.Should().Be(expectedStatus);
 
-        target.PremiseActivityTypeId.Should().Be("PremiseActivityTypeId");
+        target.PremiseActivityTypeId.Should().NotBeNullOrWhiteSpace();
         target.PremiseActivityTypeCode.Should().Be(source.FACILITY_BUSINSS_ACTVTY_CODE);
-        target.PremiseTypeIdentifier.Should().Be("PremiseTypeId");
+        target.PremiseTypeIdentifier.Should().NotBeNullOrWhiteSpace();
         target.PremiseTypeCode.Should().Be(source.FACILITY_TYPE_CODE);
 
         // Location
@@ -59,7 +59,7 @@ public static class VerifySamHoldingMappings
         address.AddressStreet.Should().Be(source.STREET);
         address.AddressTown.Should().Be(source.TOWN);
         address.AddressPostCode.Should().Be(source.POSTCODE);
-        address.CountryIdentifier.Should().Be("CountryId");
+        address.CountryIdentifier.Should().NotBeNullOrWhiteSpace();
         address.CountryCode.Should().Be(source.COUNTRY_CODE);
         address.UniquePropertyReferenceNumber.Should().Be(source.UDPRN);
 

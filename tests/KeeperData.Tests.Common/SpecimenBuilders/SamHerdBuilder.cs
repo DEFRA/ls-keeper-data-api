@@ -40,7 +40,7 @@ public class SamHerdBuilder(
 
             return new SamHerd
             {
-                HERDMARK = "",
+                HERDMARK = Guid.NewGuid().ToString(),
                 CPHH = _holdingIdentifier,
 
                 ANIMAL_SPECIES_CODE = animalSpeciesCode,

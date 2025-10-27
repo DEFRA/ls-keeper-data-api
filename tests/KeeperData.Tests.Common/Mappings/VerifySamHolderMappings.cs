@@ -4,7 +4,7 @@ using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Parties.Formatters;
-using KeeperData.Core.Domain.Sites.Extensions;
+using KeeperData.Core.Domain.Sites.Formatters;
 
 namespace KeeperData.Tests.Common.Mappings;
 
@@ -12,7 +12,7 @@ public static class VerifySamHolderMappings
 {
     public static void VerifyMapping_From_SamCphHolder_To_SamPartyDocument(string holdingIdentifier, SamCphHolder source, SamPartyDocument target, InferredRoleType inferredRoleType)
     {
-        var addressLine = FormatAddressExtensions.FormatAddressRange(
+        var addressLine = AddressFormatters.FormatAddressRange(
                             source.SAON_START_NUMBER, source.SAON_START_NUMBER_SUFFIX,
                             source.SAON_END_NUMBER, source.SAON_END_NUMBER_SUFFIX,
                             source.PAON_START_NUMBER, source.PAON_START_NUMBER_SUFFIX,
@@ -57,7 +57,7 @@ public static class VerifySamHolderMappings
         address.AddressStreet.Should().Be(source.STREET);
         address.AddressTown.Should().Be(source.TOWN);
         address.AddressPostCode.Should().Be(source.POSTCODE);
-        address.CountryIdentifier.Should().Be("CountryId");
+        address.CountryIdentifier.Should().NotBeNullOrWhiteSpace();
         address.CountryCode.Should().Be(source.COUNTRY_CODE);
         address.UniquePropertyReferenceNumber.Should().Be(source.UDPRN);
 
@@ -73,14 +73,12 @@ public static class VerifySamHolderMappings
         target.Roles.Should().NotBeNull().And.HaveCount(1);
 
         var roleNameToLookup = EnumExtensions.GetDescription(inferredRoleType);
-        var expectedRoleTypeId = "HolderId";
-        var expectedRoleTypeName = "Holder";
 
         var role = target.Roles[0];
         role.Should().NotBeNull();
         role.IdentifierId.Should().NotBeNullOrWhiteSpace();
-        role.RoleTypeId.Should().Be(expectedRoleTypeId);
-        role.RoleTypeName.Should().Be(expectedRoleTypeName);
+        role.RoleTypeId.Should().NotBeNullOrWhiteSpace();
+        role.RoleTypeName.Should().Be(roleNameToLookup);
         role.SourceRoleName.Should().Be(roleNameToLookup);
         role.EffectiveFromData.Should().BeNull();
         role.EffectiveToData.Should().BeNull();

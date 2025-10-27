@@ -24,15 +24,15 @@ public class SamHoldingMapperTests
     {
         _premiseActivityTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("PremiseActivityTypeId", "PremiseActivityType"));
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
         _premiseTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("PremiseTypeId", "PremiseType"));
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
         _countryIdentifierLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("CountryId", "Country"));
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
         _resolvePremiseActivityType = _premiseActivityTypeLookupServiceMock.Object.FindAsync;
         _resolvePremiseType = _premiseTypeLookupServiceMock.Object.FindAsync;

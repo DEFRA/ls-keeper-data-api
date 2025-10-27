@@ -25,7 +25,7 @@ public class SamPartyRoleRelationshipMapperTests
 
         _countryIdentifierLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => ("CountryId", input));
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
         _resolveRoleType = _roleTypeLookupServiceMock.Object.FindAsync;
         _resolveCountry = _countryIdentifierLookupServiceMock.Object.FindAsync;
@@ -67,7 +67,7 @@ public class SamPartyRoleRelationshipMapperTests
             holdingIdentifier,
             _resolveRoleType,
             _resolveCountry,
-            CancellationToken.None);        
+            CancellationToken.None);
 
         var results = SamPartyRoleRelationshipMapper.ToSilver(silverParties,
             holdingIdentifier,

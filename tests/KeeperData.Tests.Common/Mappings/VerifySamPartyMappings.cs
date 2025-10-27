@@ -3,7 +3,7 @@ using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Parties.Formatters;
-using KeeperData.Core.Domain.Sites.Extensions;
+using KeeperData.Core.Domain.Sites.Formatters;
 
 namespace KeeperData.Tests.Common.Mappings;
 
@@ -11,7 +11,7 @@ public static class VerifySamPartyMappings
 {
     public static void VerifyMapping_From_SamParty_To_SamPartyDocument(string holdingIdentifier, SamParty source, SamPartyDocument target)
     {
-        var addressLine = FormatAddressExtensions.FormatAddressRange(
+        var addressLine = AddressFormatters.FormatAddressRange(
                             source.SAON_START_NUMBER, source.SAON_START_NUMBER_SUFFIX,
                             source.SAON_END_NUMBER, source.SAON_END_NUMBER_SUFFIX,
                             source.PAON_START_NUMBER, source.PAON_START_NUMBER_SUFFIX,
@@ -60,7 +60,7 @@ public static class VerifySamPartyMappings
         address.AddressStreet.Should().Be(source.STREET);
         address.AddressTown.Should().Be(source.TOWN);
         address.AddressPostCode.Should().Be(source.POSTCODE);
-        address.CountryIdentifier.Should().Be("CountryId");
+        address.CountryIdentifier.Should().NotBeNullOrWhiteSpace();
         address.CountryCode.Should().Be(source.COUNTRY_CODE);
         address.UniquePropertyReferenceNumber.Should().Be(source.UDPRN);
 

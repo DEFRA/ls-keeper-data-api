@@ -7,6 +7,7 @@ using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Repositories;
+using KeeperData.Core.Services;
 using KeeperData.Tests.Common.Factories;
 using KeeperData.Tests.Common.Utilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +27,14 @@ public class SamHoldingImportOrchestratorTests
 
     private readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
     private readonly Mock<IGenericRepository<PartyDocument>> _goldPartyRepositoryMock = new();
+
+    private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
+    private readonly Mock<IPremiseActivityTypeLookupService> _premiseActivityTypeLookupServiceMock = new();
+    private readonly Mock<IPremiseTypeLookupService> _premiseTypeLookupServiceMock = new();
+    private readonly Mock<IProductionTypeLookupService> _productionTypeLookupServiceMock = new();
+    private readonly Mock<IProductionUsageLookupService> _productionUsageLookupServiceMock = new();
+    private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
+    private readonly Mock<ISpeciesTypeLookupService> _speciesTypeLookupServiceMock = new();
 
     private readonly Fixture _fixture;
 
@@ -50,6 +59,7 @@ public class SamHoldingImportOrchestratorTests
         var (holdingsUri, holdersUri, herdsUri, partiesUri) = GetAllQueryUris(holdingIdentifier, parties.Select(x => x.PARTY_ID));
 
         SetupRepositoryMocks();
+        SetupLookupServiceMocks();
 
         var factory = new AppWebApplicationFactory();
         factory.OverrideServiceAsScoped(_silverHoldingRepositoryMock.Object);
@@ -122,6 +132,9 @@ public class SamHoldingImportOrchestratorTests
     {
         context.SilverHoldings.Should().NotBeNull().And.HaveCount(1);
         context.SilverHoldings[0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
+        context.SilverHoldings[0].GroupMarks.Should().NotBeNull().And.HaveCount(1);
+        context.SilverHoldings![0].GroupMarks![0].Should().NotBeNull();
+        context.SilverHoldings![0].GroupMarks![0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
 
         context.SilverParties.Should().NotBeNull().And.HaveCount(2);
         context.SilverParties[0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
@@ -130,6 +143,9 @@ public class SamHoldingImportOrchestratorTests
         context.SilverPartyRoles.Should().NotBeNull().And.HaveCount(2);
         context.SilverPartyRoles[0].HoldingIdentifier.Should().Be(holdingIdentifier);
         context.SilverPartyRoles[1].HoldingIdentifier.Should().Be(holdingIdentifier);
+
+        context.SilverHerds.Should().NotBeNull().And.HaveCount(1);
+        context.SilverHerds[0].CountyParishHoldingHerd.Should().Be(holdingIdentifier);
 
         // TODO - Add Gold
     }
@@ -231,5 +247,36 @@ public class SamHoldingImportOrchestratorTests
         _goldPartyRepositoryMock
             .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<PartyDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+    }
+
+    private void SetupLookupServiceMocks()
+    {
+        _countryIdentifierLookupServiceMock
+            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+
+        _premiseActivityTypeLookupServiceMock
+            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+
+        _premiseTypeLookupServiceMock
+            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+
+        _productionTypeLookupServiceMock
+            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+
+        _productionUsageLookupServiceMock
+            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+
+        _roleTypeLookupServiceMock
+            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+
+        _speciesTypeLookupServiceMock
+            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
     }
 }

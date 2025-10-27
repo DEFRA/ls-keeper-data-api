@@ -11,6 +11,7 @@ public class SamHoldingImportPersistenceStep(
     IGenericRepository<SamHoldingDocument> silverHoldingRepository,
     IGenericRepository<SamPartyDocument> silverPartyRepository,
     IGenericRepository<PartyRoleRelationshipDocument> silverPartyRoleRelationshipRepository,
+    IGenericRepository<SamHerdDocument> silverHerdRepository,
     IGenericRepository<SiteDocument> goldSiteRepository,
     IGenericRepository<PartyDocument> goldPartyRepository,
     ILogger<SamHoldingImportPersistenceStep> logger)
@@ -19,7 +20,8 @@ public class SamHoldingImportPersistenceStep(
     private readonly IGenericRepository<SamHoldingDocument> _silverHoldingRepository = silverHoldingRepository;
     private readonly IGenericRepository<SamPartyDocument> _silverPartyRepository = silverPartyRepository;
     private readonly IGenericRepository<PartyRoleRelationshipDocument> _silverPartyRoleRelationshipRepository = silverPartyRoleRelationshipRepository;
-    
+    private readonly IGenericRepository<SamHerdDocument> _silverHerdRepository = silverHerdRepository;
+
     private readonly IGenericRepository<SiteDocument> _goldSiteRepository = goldSiteRepository;
     private readonly IGenericRepository<PartyDocument> _goldPartyRepository = goldPartyRepository;
 

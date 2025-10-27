@@ -4,7 +4,7 @@ using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Parties.Formatters;
 using KeeperData.Core.Domain.Parties.Rules;
-using KeeperData.Core.Domain.Sites.Extensions;
+using KeeperData.Core.Domain.Sites.Formatters;
 
 namespace KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
 
@@ -28,7 +28,7 @@ public static class SamHolderMapper
             var (roleTypeId, roleTypeName) = await resolveRoleType(roleNameToLookup, cancellationToken);
             var (countryId, countryName) = await resolveCountry(p.COUNTRY_CODE, cancellationToken);
             var partyTypeId = p.DeterminePartyType().ToString();
-            var addressLine = FormatAddressExtensions.FormatAddressRange(
+            var addressLine = AddressFormatters.FormatAddressRange(
                             p.SAON_START_NUMBER, p.SAON_START_NUMBER_SUFFIX,
                             p.SAON_END_NUMBER, p.SAON_END_NUMBER_SUFFIX,
                             p.PAON_START_NUMBER, p.PAON_START_NUMBER_SUFFIX,

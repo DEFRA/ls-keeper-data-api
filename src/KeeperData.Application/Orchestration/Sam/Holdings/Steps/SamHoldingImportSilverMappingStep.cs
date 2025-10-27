@@ -12,6 +12,9 @@ public class SamHoldingImportSilverMappingStep(
     IPremiseTypeLookupService premiseTypeLookupService,
     IRoleTypeLookupService roleTypeLookupService,
     ICountryIdentifierLookupService countryIdentifierLookupService,
+    IProductionUsageLookupService productionUsageLookupService,
+    // IProductionTypeLookupService productionTypeLookupService,
+    ISpeciesTypeLookupService speciesTypeLookupService,
     ILogger<SamHoldingImportSilverMappingStep> logger)
     : ImportStepBase<SamHoldingImportContext>(logger)
 {
@@ -45,5 +48,16 @@ public class SamHoldingImportSilverMappingStep(
             context.SilverParties,
             context.Cph,
             HoldingIdentifierType.HoldingNumber.ToString());
+
+        context.SilverHerds = await SamHerdMapper.ToSilver(
+            context.RawHerds,
+            productionUsageLookupService.FindAsync,
+            // productionTypeLookupService.FindAsync,
+            speciesTypeLookupService.FindAsync,
+            cancellationToken);
+
+        context.SilverHoldings = SamHoldingGroupMarkMapper.EnrichHoldingsWithGroupMarks(
+            context.SilverHoldings,
+            context.SilverHerds);
     }
 }

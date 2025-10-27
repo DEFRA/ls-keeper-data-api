@@ -24,11 +24,11 @@ public class SamHolderMapperTests
     {
         _roleTypeLookupServiceMock
             .Setup(x => x.FindAsync("Holder", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("HolderId", "Holder"));
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
         _countryIdentifierLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("CountryId", "Country"));
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
         _resolveRoleType = _roleTypeLookupServiceMock.Object.FindAsync;
         _resolveCountry = _countryIdentifierLookupServiceMock.Object.FindAsync;
