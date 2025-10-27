@@ -1,5 +1,6 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Repositories;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -26,20 +27,17 @@ public class CtsHoldingImportPersistenceStep(
             await UpsertPrimaryHoldingAsync(primaryHolding, cancellationToken);
         }
 
-        if (context.SilverParties?.Count > 0)
-        {
-            await UpsertPartiesAndDeleteOrphansAsync(context.SilverParties, cancellationToken);
-        }
+        await UpsertPartiesAndDeleteOrphansAsync(context.Cph, context.SilverParties, cancellationToken);
 
-        if (context.SilverPartyRoles?.Count > 0)
-        {
-            await ReplacePartyRolesAsync(context.SilverPartyRoles, cancellationToken);
-        }
+        await ReplacePartyRolesAsync(context.Cph, context.SilverPartyRoles, cancellationToken);
     }
 
-    private async Task UpsertPrimaryHoldingAsync(CtsHoldingDocument incomingHolding, CancellationToken cancellationToken)
+    private async Task UpsertPrimaryHoldingAsync(
+        CtsHoldingDocument incomingHolding,
+        CancellationToken cancellationToken)
     {
-        var existingHolding = await _silverHoldingRepository.FindOneAsync(x => x.CountyParishHoldingNumber == incomingHolding.CountyParishHoldingNumber,
+        var existingHolding = await _silverHoldingRepository.FindOneAsync(
+            x => x.CountyParishHoldingNumber == incomingHolding.CountyParishHoldingNumber,
             cancellationToken);
 
         incomingHolding.Id = existingHolding?.Id ?? Guid.NewGuid().ToString();
@@ -53,16 +51,22 @@ public class CtsHoldingImportPersistenceStep(
             [holdingUpsert], cancellationToken);
     }
 
-    private async Task UpsertPartiesAndDeleteOrphansAsync(List<CtsPartyDocument> incomingParties, CancellationToken cancellationToken)
+    private async Task UpsertPartiesAndDeleteOrphansAsync(
+        string holdingIdentifier,
+        List<CtsPartyDocument> incomingParties,
+        CancellationToken cancellationToken)
     {
+        incomingParties ??= [];
+
         var incomingKeys = incomingParties
             .Select(p => $"{p.PartyId}::{p.CountyParishHoldingNumber}")
             .ToHashSet();
 
-        var existingParties = await GetExistingPartiesAsync(incomingParties, cancellationToken);
+        var existingParties = await GetExistingPartiesAsync(holdingIdentifier, cancellationToken);
 
-        var partyUpserts = incomingParties
-            .Select(p =>
+        if (incomingParties.Count > 0)
+        {
+            var partyUpserts = incomingParties.Select(p =>
             {
                 var existing = existingParties.FirstOrDefault(e =>
                     e.PartyId == p.PartyId &&
@@ -79,41 +83,50 @@ public class CtsHoldingImportPersistenceStep(
                 );
             });
 
-        await _silverPartyRepository.BulkUpsertWithCustomFilterAsync(partyUpserts, cancellationToken);
+            await _silverPartyRepository.BulkUpsertWithCustomFilterAsync(partyUpserts, cancellationToken);
+        }
 
-        var orphanedParties = existingParties
+        var orphanedParties = existingParties?
             .Where(e => !incomingKeys.Contains($"{e.PartyId}::{e.CountyParishHoldingNumber}"))
-            .ToList();
+            .ToList() ?? [];
 
-        if (orphanedParties.Count > 0)
+        if (orphanedParties?.Count > 0)
         {
-            var deleteFilter = Builders<CtsPartyDocument>.Filter.In(x => x.Id, orphanedParties.Select(d => d.Id));
+            var deleteFilter = Builders<CtsPartyDocument>.Filter.In(
+                x => x.Id,
+                orphanedParties.Select(d => d.Id)
+            );
+
             await _silverPartyRepository.DeleteManyAsync(deleteFilter, cancellationToken);
         }
     }
 
-    private async Task<List<CtsPartyDocument>> GetExistingPartiesAsync(List<CtsPartyDocument> incomingParties, CancellationToken cancellationToken)
+    private async Task<List<CtsPartyDocument>> GetExistingPartiesAsync(
+        string holdingIdentifier,
+        CancellationToken cancellationToken)
     {
-        var holdingIds = incomingParties
-            .Select(p => p.CountyParishHoldingNumber)
-            .Distinct()
-            .ToList();
-
         return await _silverPartyRepository.FindAsync(
-            x => holdingIds.Contains(x.CountyParishHoldingNumber),
-            cancellationToken);
+            x => x.CountyParishHoldingNumber == holdingIdentifier,
+            cancellationToken) ?? [];
     }
 
-    private async Task ReplacePartyRolesAsync(List<PartyRoleRelationshipDocument> incomingPartyRoles, CancellationToken cancellationToken)
+    private async Task ReplacePartyRolesAsync(
+        string holdingIdentifier,
+        List<PartyRoleRelationshipDocument> incomingPartyRoles,
+        CancellationToken cancellationToken)
     {
-        var holdingIdentifiers = incomingPartyRoles
-            .Select(r => r.HoldingIdentifier)
-            .Distinct()
-            .ToList();
+        var sourceAsCts = SourceSystemType.CTS.ToString();
 
-        var deleteFilter = Builders<PartyRoleRelationshipDocument>.Filter.In(x => x.HoldingIdentifier, holdingIdentifiers);
+        var deleteFilter = Builders<PartyRoleRelationshipDocument>.Filter.And(
+            Builders<PartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier),
+            Builders<PartyRoleRelationshipDocument>.Filter.Eq(x => x.Source, sourceAsCts)
+        );
 
         await _silverPartyRoleRelationshipRepository.DeleteManyAsync(deleteFilter, cancellationToken);
-        await _silverPartyRoleRelationshipRepository.AddManyAsync(incomingPartyRoles, cancellationToken);
+
+        if (incomingPartyRoles?.Count > 0)
+        {
+            await _silverPartyRoleRelationshipRepository.AddManyAsync(incomingPartyRoles, cancellationToken);
+        }
     }
 }
