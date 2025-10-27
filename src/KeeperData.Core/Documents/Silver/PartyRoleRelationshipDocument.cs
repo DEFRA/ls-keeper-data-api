@@ -46,7 +46,11 @@ public class PartyRoleRelationshipDocument : IEntity, IContainsIndexes
 
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("RoleTypeId"),
-                new CreateIndexOptions { Name = "idx_roleTypeId" })
+                new CreateIndexOptions { Name = "idx_roleTypeId" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("Source"),
+                new CreateIndexOptions { Name = "idx_source" })
         ];
     }
 }

@@ -24,6 +24,7 @@ public class SamHoldingImportOrchestratorTests
     private readonly Mock<IGenericRepository<SamHoldingDocument>> _silverHoldingRepositoryMock = new();
     private readonly Mock<IGenericRepository<SamPartyDocument>> _silverPartyRepositoryMock = new();
     private readonly Mock<IGenericRepository<PartyRoleRelationshipDocument>> _silverPartyRoleRelationshipRepositoryMock = new();
+    private readonly Mock<IGenericRepository<SamHerdDocument>> _silverHerdRepositoryMock = new();
 
     private readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
     private readonly Mock<IGenericRepository<PartyDocument>> _goldPartyRepositoryMock = new();
@@ -65,6 +66,7 @@ public class SamHoldingImportOrchestratorTests
         factory.OverrideServiceAsScoped(_silverHoldingRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_silverPartyRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_silverPartyRoleRelationshipRepositoryMock.Object);
+        factory.OverrideServiceAsScoped(_silverHerdRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_goldSiteRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_goldPartyRepositoryMock.Object);
 
@@ -140,9 +142,17 @@ public class SamHoldingImportOrchestratorTests
         context.SilverParties[0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
         context.SilverParties[1].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
 
-        context.SilverPartyRoles.Should().NotBeNull().And.HaveCount(2);
-        context.SilverPartyRoles[0].HoldingIdentifier.Should().Be(holdingIdentifier);
-        context.SilverPartyRoles[1].HoldingIdentifier.Should().Be(holdingIdentifier);
+        var roleList = context.RawParties[0].ROLES?.Split(",")
+            .Where(role => !string.IsNullOrWhiteSpace(role))
+            .Select(role => role.Trim())
+            .ToArray() ?? [];
+
+        context.SilverPartyRoles.Should().NotBeNull().And.HaveCount(roleList.Length + 1);
+
+        for (var i = 0; i < context.SilverPartyRoles.Count; i++)
+        {
+            context.SilverPartyRoles[i].HoldingIdentifier.Should().Be(holdingIdentifier);
+        }
 
         context.SilverHerds.Should().NotBeNull().And.HaveCount(1);
         context.SilverHerds[0].CountyParishHoldingHerd.Should().Be(holdingIdentifier);
@@ -224,6 +234,15 @@ public class SamHoldingImportOrchestratorTests
 
         _silverPartyRoleRelationshipRepositoryMock
             .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<PartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // SamHerdDocument
+        _silverHerdRepositoryMock
+            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamHerdDocument>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _silverHerdRepositoryMock
+            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<SamHerdDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // SiteDocument
