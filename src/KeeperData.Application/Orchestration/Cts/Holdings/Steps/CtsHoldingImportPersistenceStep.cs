@@ -2,7 +2,6 @@ using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Repositories;
 using Microsoft.Extensions.Logging;
-using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace KeeperData.Application.Orchestration.Cts.Holdings.Steps;

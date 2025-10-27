@@ -7,13 +7,8 @@ namespace KeeperData.Application.Orchestration.Sam.Holdings.Steps;
 public class SamHoldingImportGoldMappingStep(ILogger<SamHoldingImportGoldMappingStep> logger)
     : ImportStepBase<SamHoldingImportContext>(logger)
 {
-    protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
+    protected override Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
     {
-        //if (context is not { RawHolding.CHANGE_TYPE: DataBridgeConstants.ChangeTypeInsert })
-        //    return;
-
-        // TODO - Add implementation
-
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 }

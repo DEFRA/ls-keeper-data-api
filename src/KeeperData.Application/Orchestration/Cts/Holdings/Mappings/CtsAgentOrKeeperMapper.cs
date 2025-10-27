@@ -11,7 +11,7 @@ public static class CtsAgentOrKeeperMapper
     public static async Task<List<CtsPartyDocument>> ToSilver(
         List<CtsAgentOrKeeper> rawParties,
         InferredRoleType inferredRoleType,
-        Func<string, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
+        Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
         CancellationToken cancellationToken)
     {
         var result = new List<CtsPartyDocument>();
@@ -19,9 +19,8 @@ public static class CtsAgentOrKeeperMapper
         foreach (var p in rawParties?.Where(x => x.LID_FULL_IDENTIFIER != null) ?? [])
         {
             var roleNameToLookup = EnumExtensions.GetDescription(inferredRoleType);
-            var (roleTypeId, roleTypeName) = !string.IsNullOrWhiteSpace(roleNameToLookup)
-                ? await resolveRoleType(roleNameToLookup, cancellationToken)
-                : (null, null);
+            var (roleTypeId, roleTypeName) = await resolveRoleType(roleNameToLookup, cancellationToken);
+            var partyTypeId = p.DeterminePartyType().ToString();
 
             var party = new CtsPartyDocument
             {
@@ -33,7 +32,7 @@ public static class CtsAgentOrKeeperMapper
                 CountyParishHoldingNumber = p.LID_FULL_IDENTIFIER,
 
                 PartyId = p.PAR_ID.ToString(),
-                PartyTypeId = p.DeterminePartyType().ToString(),
+                PartyTypeId = partyTypeId,
 
                 PartyFullName = null,
 

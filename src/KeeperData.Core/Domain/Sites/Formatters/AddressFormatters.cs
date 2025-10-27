@@ -1,6 +1,6 @@
-namespace KeeperData.Core.Domain.Sites.Extensions;
+namespace KeeperData.Core.Domain.Sites.Formatters;
 
-public static class FormatAddressExtensions
+public static class AddressFormatters
 {
     public static string FormatAddressRange(
         short? saonStart, char? saonStartSuffix,

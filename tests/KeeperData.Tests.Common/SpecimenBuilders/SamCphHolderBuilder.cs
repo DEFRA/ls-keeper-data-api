@@ -76,7 +76,7 @@ public class SamCphHolderBuilder(
                 UDPRN = _allowNulls && _random.Next(2) == 0 ? null : Guid.NewGuid().ToString(),
                 PREFERRED_CONTACT_METHOD_IND = 'T',
 
-                CPHS = string.Join(",", _holdingIdentifiers),
+                CPHS = string.Join(",", _holdingIdentifiers.Where(c => !string.IsNullOrWhiteSpace(c))),
 
                 BATCH_ID = _batchId,
                 CHANGE_TYPE = _fixedChangeType

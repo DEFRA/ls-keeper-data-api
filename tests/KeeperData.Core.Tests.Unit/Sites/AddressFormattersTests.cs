@@ -1,9 +1,9 @@
 using FluentAssertions;
-using KeeperData.Core.Domain.Sites.Extensions;
+using KeeperData.Core.Domain.Sites.Formatters;
 
-namespace KeeperData.Core.Tests.Unit.Extensions;
+namespace KeeperData.Core.Tests.Unit.Sites;
 
-public class FormatAddressExtensionsTests
+public class AddressFormattersTests
 {
     [Theory]
     [InlineData((short)1, (short)3, (short)10, (short)12, "1-3, 10-12")]
@@ -17,7 +17,7 @@ public class FormatAddressExtensionsTests
         short? paonEnd,
         string expectedResult)
     {
-        var result = FormatAddressExtensions.FormatAddressRange(saonStart, saonEnd, paonStart, paonEnd);
+        var result = AddressFormatters.FormatAddressRange(saonStart, saonEnd, paonStart, paonEnd);
         result.Should().Be(expectedResult);
     }
 
@@ -33,7 +33,7 @@ public class FormatAddressExtensionsTests
         short? paonEnd, char? paonEndSuffix,
         string expectedResult)
     {
-        var result = FormatAddressExtensions.FormatAddressRange(
+        var result = AddressFormatters.FormatAddressRange(
             saonStart, saonStartSuffix,
             saonEnd, saonEndSuffix,
             paonStart, paonStartSuffix,

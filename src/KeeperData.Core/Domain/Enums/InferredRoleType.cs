@@ -11,5 +11,8 @@ public enum InferredRoleType
     Agent = 1,
 
     [Description("Keeper")]
-    PrimaryKeeper
+    PrimaryKeeper,
+
+    [Description("Holder")]
+    Holder
 }

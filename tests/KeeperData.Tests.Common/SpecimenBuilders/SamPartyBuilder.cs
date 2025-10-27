@@ -80,7 +80,7 @@ public class SamPartyBuilder(
                 UDPRN = _allowNulls && _random.Next(2) == 0 ? null : Guid.NewGuid().ToString(),
                 PREFERRED_CONTACT_METHOD_IND = 'T',
 
-                ROLES = string.Join(",", partyRoles),
+                ROLES = string.Join(",", partyRoles.Where(r => !string.IsNullOrWhiteSpace(r))),
 
                 PARTY_ROLE_FROM_DATE = DateTime.Today.AddDays(-_random.Next(500)),
                 PARTY_ROLE_TO_DATE = _fixedEndDate,

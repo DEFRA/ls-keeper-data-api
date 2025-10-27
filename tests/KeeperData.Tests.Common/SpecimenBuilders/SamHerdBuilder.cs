@@ -40,7 +40,7 @@ public class SamHerdBuilder(
 
             return new SamHerd
             {
-                HERDMARK = "",
+                HERDMARK = Guid.NewGuid().ToString(),
                 CPHH = _holdingIdentifier,
 
                 ANIMAL_SPECIES_CODE = animalSpeciesCode,
@@ -51,8 +51,8 @@ public class SamHerdBuilder(
                 INTERVAL_UNIT_OF_TIME = intervalUnit,
                 MOVEMENT_RSTRCTN_RSN_CODE = movementRestrictionCode,
 
-                OWNER_PARTY_IDS = string.Join(",", ownerIds),
-                KEEPER_PARTY_IDS = string.Join(",", keeperIds),
+                OWNER_PARTY_IDS = string.Join(",", ownerIds.Where(x => !string.IsNullOrWhiteSpace(x))),
+                KEEPER_PARTY_IDS = string.Join(",", keeperIds.Where(x => !string.IsNullOrWhiteSpace(x))),
 
                 ANIMAL_GROUP_ID_MCH_FRM_DAT = DateTime.Today.AddDays(-_random.Next(500)),
                 ANIMAL_GROUP_ID_MCH_TO_DAT = _allowNulls && _random.Next(2) == 0 ? null : DateTime.Today.AddDays(-_random.Next(50)),

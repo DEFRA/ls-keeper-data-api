@@ -63,12 +63,12 @@ public class MockSamRawDataFactory
     public SamParty CreateMockParty(
         string changeType,
         int batchId,
-        string partyId)
+        List<string> partyIds)
     {
         _fixture.Customizations.Add(new SamPartyBuilder(
             changeType,
             batchId,
-            [partyId]));
+            partyIds));
 
         return _fixture.Create<SamParty>();
     }

@@ -9,8 +9,10 @@ public class RoleTypeLookupService : IRoleTypeLookupService
     /// </summary>
     /// <param name="roleName"></param>
     /// <returns></returns>
-    public async Task<(string? roleTypeId, string? roleTypeName)> FindRoleAsync(string lookupValue, CancellationToken cancellationToken)
+    public async Task<(string? roleTypeId, string? roleTypeName)> FindAsync(string? lookupValue, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(lookupValue)) return (null, null);
+
         string? roleTypeId = null;
         string? roleTypeName = null;
 
