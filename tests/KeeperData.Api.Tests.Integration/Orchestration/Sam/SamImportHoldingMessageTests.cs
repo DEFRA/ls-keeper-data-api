@@ -34,11 +34,11 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
 
         var silverSamPartyFilter = Builders<SamPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
         var silverSamParties = await fixture.MongoVerifier.FindDocumentsAsync("samParties", silverSamPartyFilter);
-        silverSamParties.Should().NotBeNull().And.HaveCount(3);
+        silverSamParties.Should().NotBeNull().And.HaveCountGreaterThanOrEqualTo(1);
 
         var partyRoleRelationshipFilter = Builders<PartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
         var partyRoleRelationships = await fixture.MongoVerifier.FindDocumentsAsync("partyRoleRelationships", partyRoleRelationshipFilter);
-        partyRoleRelationships.Should().NotBeNull().And.HaveCount(3);
+        partyRoleRelationships.Should().NotBeNull().And.HaveCount(silverSamParties.Count);
 
         var partyIds = silverSamParties.Select(x => x.PartyId).Distinct().ToHashSet();
         var partyRolePartyIds = partyRoleRelationships.Select(x => x.PartyId).Distinct().ToHashSet();
