@@ -2,20 +2,20 @@ using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Documents.Silver;
-using KeeperData.Core.Messaging.Contracts.V1.Cts;
+using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using MongoDB.Driver;
 
-namespace KeeperData.Api.Tests.Integration.Orchestration.Cts;
+namespace KeeperData.Api.Tests.Integration.Orchestration.Sam;
 
 [Trait("Dependence", "localstack")]
-public class CtsImportHoldingMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
+public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
 {
     [Fact]
-    public async Task GivenCtsImportHoldingMessage_WhenReceivedOnTheQueue_ShouldComplete()
+    public async Task GivenSamImportHoldingMessage_WhenReceivedOnTheQueue_ShouldComplete()
     {
         var correlationId = Guid.NewGuid().ToString();
         var holdingIdentifier = Guid.NewGuid().ToString();
-        var message = GetCtsImportHoldingMessage(holdingIdentifier);
+        var message = GetSamImportHoldingMessage(holdingIdentifier);
 
         await ExecuteQueueTest(correlationId, message);
 
@@ -28,21 +28,25 @@ public class CtsImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
 
         foundMessageProcesseEntryInLogs.Should().BeTrue();
 
-        var silverCtsHoldingFilter = Builders<CtsHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
-        var silverCtsHoldings = await fixture.MongoVerifier.FindDocumentsAsync("ctsHoldings", silverCtsHoldingFilter);
-        silverCtsHoldings.Should().NotBeNull().And.HaveCount(1);
+        var silverSamHoldingFilter = Builders<SamHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
+        var silverSamHoldings = await fixture.MongoVerifier.FindDocumentsAsync("samHoldings", silverSamHoldingFilter);
+        silverSamHoldings.Should().NotBeNull().And.HaveCount(1);
 
-        var silverCtsPartyFilter = Builders<CtsPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
-        var silverCtsParties = await fixture.MongoVerifier.FindDocumentsAsync("ctsParties", silverCtsPartyFilter);
-        silverCtsParties.Should().NotBeNull().And.HaveCount(2);
+        var silverSamPartyFilter = Builders<SamPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
+        var silverSamParties = await fixture.MongoVerifier.FindDocumentsAsync("samParties", silverSamPartyFilter);
+        silverSamParties.Should().NotBeNull().And.HaveCountGreaterThanOrEqualTo(1);
 
         var partyRoleRelationshipFilter = Builders<PartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
         var partyRoleRelationships = await fixture.MongoVerifier.FindDocumentsAsync("partyRoleRelationships", partyRoleRelationshipFilter);
-        partyRoleRelationships.Should().NotBeNull().And.HaveCount(2);
+        partyRoleRelationships.Should().NotBeNull().And.HaveCount(silverSamParties.Count);
 
-        var partyIds = silverCtsParties.Select(x => x.PartyId).Distinct().ToHashSet();
+        var partyIds = silverSamParties.Select(x => x.PartyId).Distinct().ToHashSet();
         var partyRolePartyIds = partyRoleRelationships.Select(x => x.PartyId).Distinct().ToHashSet();
         partyIds.SetEquals(partyRolePartyIds).Should().BeTrue();
+
+        var silverSamHerdFilter = Builders<SamHerdDocument>.Filter.Eq(x => x.CountyParishHoldingHerd, holdingIdentifier);
+        var silverSamHerds = await fixture.MongoVerifier.FindDocumentsAsync("samHerds", silverSamHerdFilter);
+        silverSamHerds.Should().NotBeNull().And.HaveCount(1);
 
         // TODO - Add Gold
     }
@@ -56,11 +60,11 @@ public class CtsImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
         };
         var request = SQSMessageUtility.CreateMessage(queueUrl, message, typeof(TMessage).Name, additionalUserProperties);
 
-        using var cts = new CancellationTokenSource();
-        await fixture.PublishToQueueAsync(request, cts.Token);
+        using var sam = new CancellationTokenSource();
+        await fixture.PublishToQueueAsync(request, sam.Token);
     }
 
-    private static CtsImportHoldingMessage GetCtsImportHoldingMessage(string holdingIdentifier) => new()
+    private static SamImportHoldingMessage GetSamImportHoldingMessage(string holdingIdentifier) => new()
     {
         Identifier = holdingIdentifier
     };

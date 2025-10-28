@@ -100,7 +100,8 @@ public class FakeDataBridgeClient : IDataBridgeClient
             IsDeleted = false,
             PARTY_ID = id,
             ORGANISATION_NAME = Guid.NewGuid().ToString(),
-            PARTY_ROLE_FROM_DATE = DateTime.Today.AddDays(-1)
+            PARTY_ROLE_FROM_DATE = DateTime.Today.AddDays(-1),
+            ROLES = "Agent"
         };
     }
 
