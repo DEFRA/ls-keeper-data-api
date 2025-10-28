@@ -11,7 +11,7 @@ public static class VerifySamHerdMappings
         source.Should().NotBeNull();
         target.Should().NotBeNull();
 
-        target.Id.Should().BeNull();
+        target.Id.Should().NotBeNullOrWhiteSpace();
         target.LastUpdatedBatchId.Should().Be(source.BATCH_ID);
         target.Deleted.Should().BeFalse();
 
