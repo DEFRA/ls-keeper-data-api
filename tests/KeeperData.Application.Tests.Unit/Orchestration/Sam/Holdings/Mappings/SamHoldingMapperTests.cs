@@ -42,7 +42,9 @@ public class SamHoldingMapperTests
     [Fact]
     public async Task GivenNullableRawHoldings_WhenCallingToSilver_ShouldReturnEmptyList()
     {
-        var results = await SamHoldingMapper.ToSilver(null!,
+        var results = await SamHoldingMapper.ToSilver(
+            DateTime.UtcNow,
+            null!,
             _resolvePremiseActivityType,
             _resolvePremiseType,
             _resolveCountry,
@@ -55,7 +57,9 @@ public class SamHoldingMapperTests
     [Fact]
     public async Task GivenEmptyRawHoldings_WhenCallingToSilver_ShouldReturnEmptyList()
     {
-        var results = await SamHoldingMapper.ToSilver([],
+        var results = await SamHoldingMapper.ToSilver(
+            DateTime.UtcNow,
+            [],
             _resolvePremiseActivityType,
             _resolvePremiseType,
             _resolveCountry,
@@ -72,7 +76,9 @@ public class SamHoldingMapperTests
     {
         var records = GenerateSamCphHolding(quantity);
 
-        var results = await SamHoldingMapper.ToSilver(records,
+        var results = await SamHoldingMapper.ToSilver(
+            DateTime.UtcNow,
+            records,
             _resolvePremiseActivityType,
             _resolvePremiseType,
             _resolveCountry,

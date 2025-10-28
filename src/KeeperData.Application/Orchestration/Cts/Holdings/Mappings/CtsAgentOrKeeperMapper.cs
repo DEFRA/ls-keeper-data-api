@@ -9,6 +9,7 @@ namespace KeeperData.Application.Orchestration.Cts.Holdings.Mappings;
 public static class CtsAgentOrKeeperMapper
 {
     public static async Task<List<CtsPartyDocument>> ToSilver(
+        DateTime currentDateTime,
         List<CtsAgentOrKeeper> rawParties,
         InferredRoleType inferredRoleType,
         Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
@@ -27,6 +28,7 @@ public static class CtsAgentOrKeeperMapper
                 // Id - Leave to support upsert assigning Id
 
                 LastUpdatedBatchId = p.BATCH_ID,
+                LastUpdatedDate = currentDateTime,
                 Deleted = p.IsDeleted ?? false,
 
                 CountyParishHoldingNumber = p.LID_FULL_IDENTIFIER,

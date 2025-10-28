@@ -6,7 +6,9 @@ namespace KeeperData.Application.Orchestration.Cts.Holdings.Mappings;
 
 public static class CtsHoldingMapper
 {
-    public static List<CtsHoldingDocument> ToSilver(List<CtsCphHolding> rawHoldings)
+    public static List<CtsHoldingDocument> ToSilver(
+        DateTime currentDateTime,
+        List<CtsCphHolding> rawHoldings)
     {
         var result = rawHoldings?
             .Where(x => x.LID_FULL_IDENTIFIER != null)
@@ -15,6 +17,7 @@ public static class CtsHoldingMapper
                 // Id - Leave to support upsert assigning Id
 
                 LastUpdatedBatchId = h.BATCH_ID,
+                LastUpdatedDate = currentDateTime,
                 Deleted = h.IsDeleted ?? false,
 
                 CountyParishHoldingNumber = h.LID_FULL_IDENTIFIER,

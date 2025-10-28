@@ -94,7 +94,8 @@ public class SamHoldingImportOrchestratorTests
         var context = new SamHoldingImportContext
         {
             Cph = holdingIdentifier,
-            BatchId = 1
+            BatchId = 1,
+            CurrentDateTime = DateTime.UtcNow
         };
 
         using var scope = factory.Services.CreateAsyncScope();

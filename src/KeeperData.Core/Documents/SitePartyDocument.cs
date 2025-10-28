@@ -22,7 +22,7 @@ public class SitePartyDocument : INestedEntity
     public string? State { get; set; }
     public DateTime? LastUpdatedDate { get; set; }
 
-    public static SitePartyDocument FromDomain(Party m) => new()
+    public static SitePartyDocument FromDomain(SiteParty m) => new()
     {
         IdentifierId = m.Id,
         Title = m.Title,
@@ -38,7 +38,7 @@ public class SitePartyDocument : INestedEntity
         LastUpdatedDate = m.LastUpdatedDate
     };
 
-    public Party ToDomain() => new(
+    public SiteParty ToDomain() => new(
         IdentifierId,
         Title,
         FirstName,

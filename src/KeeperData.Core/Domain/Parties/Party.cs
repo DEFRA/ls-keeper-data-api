@@ -28,7 +28,8 @@ public class Party : IAggregateRoot
         string? lastName,
         string? name,
         string? customerNumber,
-        string? partyType)
+        string? partyType,
+        bool deleted)
     {
         Id = id;
         LastUpdatedBatchId = batchId;
@@ -39,29 +40,48 @@ public class Party : IAggregateRoot
         Name = name;
         CustomerNumber = customerNumber;
         PartyType = partyType;
-        Deleted = false;
+        Deleted = deleted;
+
         _domainEvents.Add(new PartyCreatedDomainEvent(Id));
     }
 
     public static Party Create(
         int batchId,
+        DateTime lastUpdatedDate,
         string? title,
         string? firstName,
         string? lastName,
         string? name,
         string? customerNumber,
-        string? partyType)
+        string? partyType,
+        bool deleted)
     {
         return new Party(
             Guid.NewGuid().ToString(),
             batchId,
-            DateTime.UtcNow,
+            lastUpdatedDate,
             title,
             firstName,
             lastName,
             name,
             customerNumber,
-            partyType);
+            partyType,
+            deleted);
+    }
+
+    public void Delete(int batchId)
+    {
+        if (Deleted) return;
+
+        Deleted = true;
+        State = "Inactive";
+        LastUpdatedBatchId = batchId;
+        LastUpdatedDate = DateTime.UtcNow;
+    }
+
+    public void UpdateLastUpdatedDate(DateTime lastUpdatedDate)
+    {
+        LastUpdatedDate = lastUpdatedDate;
     }
 
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents;

@@ -66,6 +66,7 @@ public class SamHoldingImportPersistenceStepTests
         var context = new SamHoldingImportContext
         {
             Cph = Guid.NewGuid().ToString(),
+            CurrentDateTime = DateTime.UtcNow,
             SilverParties = []
         };
 
@@ -101,6 +102,7 @@ public class SamHoldingImportPersistenceStepTests
         var context = new SamHoldingImportContext
         {
             Cph = Guid.NewGuid().ToString(),
+            CurrentDateTime = DateTime.UtcNow,
             SilverParties = [incomingParties]
         };
 
@@ -137,6 +139,7 @@ public class SamHoldingImportPersistenceStepTests
         var context = new SamHoldingImportContext
         {
             Cph = Guid.NewGuid().ToString(),
+            CurrentDateTime = DateTime.UtcNow,
             SilverParties = [incomingParties]
         };
 
@@ -167,6 +170,7 @@ public class SamHoldingImportPersistenceStepTests
         var context = new SamHoldingImportContext
         {
             Cph = Guid.NewGuid().ToString(),
+            CurrentDateTime = DateTime.UtcNow,
             SilverPartyRoles = []
         };
 
@@ -195,6 +199,7 @@ public class SamHoldingImportPersistenceStepTests
         var context = new SamHoldingImportContext
         {
             Cph = Guid.NewGuid().ToString(),
+            CurrentDateTime = DateTime.UtcNow,
             SilverPartyRoles = roles
         };
 
@@ -221,6 +226,7 @@ public class SamHoldingImportPersistenceStepTests
         var context = new SamHoldingImportContext
         {
             Cph = Guid.NewGuid().ToString(),
+            CurrentDateTime = DateTime.UtcNow,
             SilverHerds = []
         };
 
@@ -249,6 +255,7 @@ public class SamHoldingImportPersistenceStepTests
         var context = new SamHoldingImportContext
         {
             Cph = Guid.NewGuid().ToString(),
+            CurrentDateTime = DateTime.UtcNow,
             SilverHerds = herds
         };
 

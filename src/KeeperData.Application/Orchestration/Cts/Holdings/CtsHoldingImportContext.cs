@@ -7,6 +7,7 @@ public class CtsHoldingImportContext
 {
     public required string Cph { get; init; }
     public int BatchId { get; init; }
+    public DateTime CurrentDateTime { get; init; }
 
     public List<CtsCphHolding> RawHoldings { get; set; } = [];
     public List<CtsAgentOrKeeper> RawAgents { get; set; } = [];

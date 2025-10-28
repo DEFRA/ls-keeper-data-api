@@ -1,5 +1,6 @@
 using KeeperData.Core.Domain.BuildingBlocks;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
+using KeeperData.Core.Domain.Parties.DomainEvents;
 using KeeperData.Core.Domain.Sites.DomainEvents;
 using KeeperData.Core.Exceptions;
 
@@ -8,19 +9,16 @@ namespace KeeperData.Core.Domain.Sites;
 public class Site : IAggregateRoot
 {
     public string Id { get; private set; }
-    public int LastUpdatedBatchId { get; set; }
+    public int LastUpdatedBatchId { get; private set; }
     public DateTime LastUpdatedDate { get; private set; }
     public string Type { get; private set; }
     public string Name { get; private set; }
     public DateTime StartDate { get; private set; }
-
-
-    public string? State { get; private set; }
     public DateTime? EndDate { get; private set; }
+    public string? State { get; private set; }
     public string? Source { get; private set; }
     public bool? DestroyIdentityDocumentsFlag { get; private set; }
-
-    public bool Deleted { get; set; }
+    public bool Deleted { get; private set; }
 
     private readonly List<SiteIdentifier> _identifiers = [];
     public IReadOnlyCollection<SiteIdentifier> Identifiers => _identifiers.AsReadOnly();
@@ -28,8 +26,8 @@ public class Site : IAggregateRoot
     private Location? _location;
     public Location? Location => _location;
 
-    private readonly List<Party> _parties = [];
-    public IReadOnlyCollection<Party> Parties => _parties.AsReadOnly();
+    private readonly List<SiteParty> _parties = [];
+    public IReadOnlyCollection<SiteParty> Parties => _parties.AsReadOnly();
 
     private readonly List<Species> _species = [];
     public IReadOnlyCollection<Species> Species => _species.AsReadOnly();
@@ -40,8 +38,6 @@ public class Site : IAggregateRoot
     private readonly List<SiteActivity> _activities = [];
     public IReadOnlyCollection<SiteActivity> Activities => _activities.AsReadOnly();
 
-    public string? PrimaryIdentifier => Identifiers.FirstOrDefault()?.Identifier;
-
     public Site(
         string id,
         int batchId,
@@ -49,10 +45,11 @@ public class Site : IAggregateRoot
         string type,
         string name,
         DateTime startDate,
-        string? state,
         DateTime? endDate,
+        string? state,
         string? source,
         bool? destroyIdentityDocumentsFlag,
+        bool deleted,
         Location? location)
     {
         Id = id;
@@ -61,37 +58,42 @@ public class Site : IAggregateRoot
         Type = type;
         Name = name;
         StartDate = startDate;
-        State = state;
         EndDate = endDate;
+        State = state;
         Source = source;
         DestroyIdentityDocumentsFlag = destroyIdentityDocumentsFlag;
-        Deleted = false;
+        Deleted = deleted;
 
         _location = location;
-    }
 
+        _domainEvents.Add(new SiteCreatedDomainEvent(Id));
+    }
 
     public static Site Create(
         int batchId,
+        DateTime lastUpdatedDate,
         string type,
         string name,
         DateTime startDate,
+        DateTime? endDate,
         string? state,
         string? source,
         bool? destroyIdentityDocumentsFlag,
+        bool deleted,
         Location? location = null)
     {
         var site = new Site(
             Guid.NewGuid().ToString(),
             batchId,
-            DateTime.UtcNow,
+            lastUpdatedDate,
             type,
             name,
             startDate,
+            endDate,
             state,
-            null,
             source,
             destroyIdentityDocumentsFlag,
+            deleted,
             location
         );
 
@@ -146,7 +148,7 @@ public class Site : IAggregateRoot
         LastUpdatedDate = DateTime.UtcNow;
     }
 
-    public void AddParty(Party party)
+    public void AddParty(SiteParty party)
     {
         if (_parties.Any(p => p.Id == party.Id))
         {
@@ -229,7 +231,7 @@ public class Site : IAggregateRoot
         _identifiers.AddRange(identifiers);
     }
 
-    internal void LoadParties(IEnumerable<Party> parties)
+    internal void LoadParties(IEnumerable<SiteParty> parties)
     {
         _parties.Clear();
         _parties.AddRange(parties);

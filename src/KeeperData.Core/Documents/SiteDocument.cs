@@ -60,10 +60,11 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
             Type,
             Name,
             StartDate,
-            State,
             EndDate,
+            State,
             Source,
             DestroyIdentityDocumentsFlag,
+            Deleted,
             null
         );
 
@@ -75,7 +76,6 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
                 si.Type,
                 si.IdentifierId);
         }
-
 
         if (Location is not null)
         {

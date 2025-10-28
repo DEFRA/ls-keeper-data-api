@@ -6,6 +6,7 @@ namespace KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
 public static class SamHerdMapper
 {
     public static async Task<List<SamHerdDocument>> ToSilver(
+        DateTime currentDateTime,
         List<SamHerd> rawHerds,
         Func<string?, CancellationToken, Task<(string? ProductionUsageId, string? ProductionUsageName)>> resolveProductionUsage,
         // Func<string?, CancellationToken, Task<(string? ProductionTypeId, string? ProductionTypeName)>> resolveProductionType,
@@ -27,6 +28,7 @@ public static class SamHerdMapper
                 Id = Guid.NewGuid().ToString(),
 
                 LastUpdatedBatchId = h.BATCH_ID,
+                LastUpdatedDate = currentDateTime,
                 Deleted = h.IsDeleted ?? false,
 
                 Herdmark = h.HERDMARK,

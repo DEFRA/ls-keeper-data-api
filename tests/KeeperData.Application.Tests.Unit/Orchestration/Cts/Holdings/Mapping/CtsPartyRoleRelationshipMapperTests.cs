@@ -60,7 +60,9 @@ public class CtsPartyRoleRelationshipMapperTests
     {
         var records = GenerateCtsAgentOrKeeper(quantity);
 
-        var silverParties = await CtsAgentOrKeeperMapper.ToSilver(records,
+        var silverParties = await CtsAgentOrKeeperMapper.ToSilver(
+            DateTime.UtcNow,
+            records,
             inferredRoleType,
             _resolveRoleType,
             CancellationToken.None);

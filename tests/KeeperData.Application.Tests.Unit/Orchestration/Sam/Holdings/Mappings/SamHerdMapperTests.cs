@@ -37,7 +37,9 @@ public class SamHerdMapperTests
     [Fact]
     public async Task GivenNullableRawHerds_WhenCallingToSilver_ShouldReturnEmptyList()
     {
-        var results = await SamHerdMapper.ToSilver(null!,
+        var results = await SamHerdMapper.ToSilver(
+            DateTime.UtcNow,
+            null!,
             _resolveProductionUsage,
             // _resolveProductionType,
             _resolveSpeciesType,
@@ -50,7 +52,9 @@ public class SamHerdMapperTests
     [Fact]
     public async Task GivenEmptyRawHerds_WhenCallingToSilver_ShouldReturnEmptyList()
     {
-        var results = await SamHerdMapper.ToSilver([],
+        var results = await SamHerdMapper.ToSilver(
+            DateTime.UtcNow,
+            [],
             _resolveProductionUsage,
             // _resolveProductionType,
             _resolveSpeciesType,
@@ -69,7 +73,9 @@ public class SamHerdMapperTests
 
         var records = GenerateSamHerds(quantityHerds: 1, quantityParties: 2);
 
-        var results = await SamHerdMapper.ToSilver(records,
+        var results = await SamHerdMapper.ToSilver(
+            DateTime.UtcNow,
+            records,
             _resolveProductionUsage,
             // _resolveProductionType,
             _resolveSpeciesType,
@@ -94,7 +100,9 @@ public class SamHerdMapperTests
 
         var records = GenerateSamHerds(quantityHerds: 1, quantityParties: 2);
 
-        var results = await SamHerdMapper.ToSilver(records,
+        var results = await SamHerdMapper.ToSilver(
+            DateTime.UtcNow,
+            records,
             _resolveProductionUsage,
             // _resolveProductionType,
             _resolveSpeciesType,
@@ -120,7 +128,9 @@ public class SamHerdMapperTests
     {
         var records = GenerateSamHerds(quantityHerds, quantityParties);
 
-        var results = await SamHerdMapper.ToSilver(records,
+        var results = await SamHerdMapper.ToSilver(
+            DateTime.UtcNow,
+            records,
             _resolveProductionUsage,
             // _resolveProductionType,
             _resolveSpeciesType,

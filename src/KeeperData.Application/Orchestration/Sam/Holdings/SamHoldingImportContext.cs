@@ -8,6 +8,7 @@ public class SamHoldingImportContext
 {
     public required string Cph { get; init; }
     public int BatchId { get; init; }
+    public DateTime CurrentDateTime { get; init; }
 
     public List<SamCphHolding> RawHoldings { get; set; } = [];
     public List<SamCphHolder> RawHolders { get; set; } = [];

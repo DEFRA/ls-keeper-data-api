@@ -32,17 +32,41 @@ public class SamHoldingImportPersistenceStep(
         if (context.SilverHoldings?.Count > 0)
         {
             var primaryHolding = context.SilverHoldings[0];
-            await UpsertPrimaryHoldingAsync(primaryHolding, cancellationToken);
+            await UpsertSilverHoldingAsync(primaryHolding, cancellationToken);
         }
 
-        await UpsertPartiesAndDeleteOrphansAsync(context.Cph, context.SilverParties, cancellationToken);
+        await UpsertSilverPartiesAndDeleteOrphansAsync(context.Cph, context.SilverParties, cancellationToken);
 
-        await ReplacePartyRolesAsync(context.Cph, context.SilverPartyRoles, cancellationToken);
+        await ReplaceSilverPartyRolesAsync(context.Cph, context.SilverPartyRoles, cancellationToken);
 
-        await ReplaceHerdsAsync(context.Cph, context.SilverHerds, cancellationToken);
+        await ReplaceSilverHerdsAsync(context.Cph, context.SilverHerds, cancellationToken);
+
+        if (context.GoldSite != null)
+        {
+            await UpsertGoldSiteAsync(context.GoldSite, cancellationToken);
+        }
+
+        await UpsertGoldPartiesAndDeleteOrphansAsync(context.Cph, context.GoldParties, cancellationToken);
     }
 
-    private async Task UpsertPrimaryHoldingAsync(
+    private Task UpsertGoldSiteAsync(
+        SiteDocument incomingHolding,
+        CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
+    private Task UpsertGoldPartiesAndDeleteOrphansAsync(
+        string holdingIdentifier,
+        List<PartyDocument> incomingParties,
+        CancellationToken cancellationToken)
+    {
+        incomingParties ??= [];
+
+        return Task.CompletedTask;
+    }
+
+    private async Task UpsertSilverHoldingAsync(
         SamHoldingDocument incomingHolding,
         CancellationToken cancellationToken)
     {
@@ -61,7 +85,7 @@ public class SamHoldingImportPersistenceStep(
             [holdingUpsert], cancellationToken);
     }
 
-    private async Task UpsertPartiesAndDeleteOrphansAsync(
+    private async Task UpsertSilverPartiesAndDeleteOrphansAsync(
         string holdingIdentifier,
         List<SamPartyDocument> incomingParties,
         CancellationToken cancellationToken)
@@ -72,7 +96,7 @@ public class SamHoldingImportPersistenceStep(
             .Select(p => $"{p.PartyId}::{p.CountyParishHoldingNumber}")
             .ToHashSet();
 
-        var existingParties = await GetExistingPartiesAsync(holdingIdentifier, cancellationToken);
+        var existingParties = await GetExistingSilverPartiesAsync(holdingIdentifier, cancellationToken);
 
         if (incomingParties.Count > 0)
         {
@@ -111,7 +135,7 @@ public class SamHoldingImportPersistenceStep(
         }
     }
 
-    private async Task<List<SamPartyDocument>> GetExistingPartiesAsync(
+    private async Task<List<SamPartyDocument>> GetExistingSilverPartiesAsync(
         string holdingIdentifier,
         CancellationToken cancellationToken)
     {
@@ -120,7 +144,7 @@ public class SamHoldingImportPersistenceStep(
             cancellationToken) ?? [];
     }
 
-    private async Task ReplacePartyRolesAsync(
+    private async Task ReplaceSilverPartyRolesAsync(
         string holdingIdentifier,
         List<PartyRoleRelationshipDocument> incomingPartyRoles,
         CancellationToken cancellationToken)
@@ -140,7 +164,7 @@ public class SamHoldingImportPersistenceStep(
         }
     }
 
-    private async Task ReplaceHerdsAsync(
+    private async Task ReplaceSilverHerdsAsync(
         string holdingIdentifier,
         List<SamHerdDocument> incomingHerds,
         CancellationToken cancellationToken)

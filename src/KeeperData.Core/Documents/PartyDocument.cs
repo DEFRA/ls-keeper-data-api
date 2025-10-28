@@ -33,12 +33,13 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
         LastName = m.LastName,
         Name = m.Name,
         CustomerNumber = m.CustomerNumber,
-        PartyType = m.PartyType
+        PartyType = m.PartyType,
+        Deleted = m.Deleted
     };
 
     public Party ToDomain()
     {
-        var site = new Party(
+        var party = new Party(
             Id,
             LastUpdatedBatchId,
             LastUpdatedDate,
@@ -47,9 +48,10 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
             LastName,
             Name,
             CustomerNumber,
-            PartyType);
+            PartyType,
+            Deleted);
 
-        return site;
+        return party;
     }
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
