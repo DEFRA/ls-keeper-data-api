@@ -77,7 +77,7 @@ public class Program
             EuTradeMember: ParseBool(parts[9]),
             IsActive: ParseBool(parts[10]),
             LastModifiedBy: string.IsNullOrWhiteSpace(parts[11]) ? null : parts[11].Trim(),
-            LastModifiedDate: HandlePlaceholderOrEmptyDate(parts[12] , DateTime.UtcNow),
+            LastModifiedDate: HandlePlaceholderOrEmptyDate(parts[12], DateTime.UtcNow),
             SortOrder: ParseInt(parts[13])
         );
     }
@@ -120,7 +120,7 @@ public class Program
         Console.WriteLine("3. Commit the new JSON file to your Git repository.");
         Console.ResetColor();
     }
-    private static string HandlePlaceholderId(string value) => value.Trim().Equals("NEWID()", 
+    private static string HandlePlaceholderId(string value) => value.Trim().Equals("NEWID()",
         StringComparison.OrdinalIgnoreCase) ? Guid.NewGuid().ToString() : value.Trim();
     private static DateTime HandlePlaceholderOrEmptyDate(string value, DateTime defaultValue)
     {
@@ -133,12 +133,12 @@ public class Program
 
         return ParseDateTime(trimmedValue, defaultValue);
     }
-    private static bool ParseBool(string value, bool defaultValue = false) => 
+    private static bool ParseBool(string value, bool defaultValue = false) =>
         bool.TryParse(value.Trim(), out var result) ? result : defaultValue;
-    private static int ParseInt(string value, int defaultValue = 0) => 
+    private static int ParseInt(string value, int defaultValue = 0) =>
         int.TryParse(value.Trim(), out var result) ? result : defaultValue;
-    private static DateTime ParseDateTime(string value, DateTime defaultValue) => 
+    private static DateTime ParseDateTime(string value, DateTime defaultValue) =>
         DateTime.TryParse(value.Trim(), CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var result) ? result.ToUniversalTime() : defaultValue;
-    private static DateTime? ParseNullableDateTime(string value) => 
+    private static DateTime? ParseNullableDateTime(string value) =>
         DateTime.TryParse(value.Trim(), CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var result) ? (DateTime?)result.ToUniversalTime() : null;
 }
