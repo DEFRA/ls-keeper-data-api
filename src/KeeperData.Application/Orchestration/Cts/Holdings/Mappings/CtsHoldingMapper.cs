@@ -20,7 +20,7 @@ public static class CtsHoldingMapper
                 LastUpdatedDate = currentDateTime,
                 Deleted = h.IsDeleted ?? false,
 
-                CountyParishHoldingNumber = h.LID_FULL_IDENTIFIER,
+                CountyParishHoldingNumber = h.LID_FULL_IDENTIFIER, // TODO - Need to strip out prefix.
                 AlternativeHoldingIdentifier = null,
 
                 CphTypeIdentifier = h.LTY_LOC_TYPE,

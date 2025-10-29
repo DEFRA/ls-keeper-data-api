@@ -14,7 +14,7 @@ public class SamHerdDocument : IEntity, IContainsIndexes, IDeletableEntity
     public bool Deleted { get; set; }
 
     public string Herdmark { get; set; } = string.Empty;
-    public string CountyParishHoldingHerd { get; set; } = string.Empty;
+    public string CountyParishHoldingHerd { get; set; } = string.Empty; // TODO - Add in separate CPHH
 
     public string? SpeciesTypeId { get; set; } // LOV Lookup / Internal Id
     public string? SpeciesTypeCode { get; set; }
