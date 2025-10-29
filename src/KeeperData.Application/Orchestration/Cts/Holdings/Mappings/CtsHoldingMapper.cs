@@ -17,7 +17,7 @@ public static class CtsHoldingMapper
                 LastUpdatedBatchId = h.BATCH_ID,
                 Deleted = h.IsDeleted ?? false,
 
-                CountyParishHoldingNumber = h.LID_FULL_IDENTIFIER,
+                CountyParishHoldingNumber = h.LID_FULL_IDENTIFIER, // TODO - Trim prefix
                 AlternativeHoldingIdentifier = null,
 
                 CphTypeIdentifier = h.LTY_LOC_TYPE,
