@@ -1,6 +1,6 @@
 [
   {
-    "id": "85f7ec60-9bdc-4855-a772-4443fc872a54",
+    "id": "5e4b8d0d-96a8-4102-81e2-f067ee85d030",
     "code": "GB",
     "name": "United Kingdom",
     "longName": "United Kingdom of Great Britain and Northern Ireland",
@@ -13,10 +13,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6634958Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "8c6be56b-7be7-4d8c-b804-b6d9224c4727",
+    "id": "1c979ce3-1155-4170-bcdb-d4dd43535303",
     "code": "IE",
     "name": "Ireland",
     "longName": "Ireland",
@@ -29,10 +29,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6637612Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "56e74249-29b1-40ee-a2c8-52dc9494a5ff",
+    "id": "78b3acbe-1a17-4bca-be8e-1c02c3b1ef39",
     "code": "AT",
     "name": "Austria",
     "longName": "Republic of Austria",
@@ -45,10 +45,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6637667Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "8132c274-82ea-4033-93e0-362503455fc8",
+    "id": "48814780-faed-40eb-acc8-0d76d01b343b",
     "code": "BE",
     "name": "Belgium",
     "longName": "Kingdom of Belgium",
@@ -61,10 +61,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6637706Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "67bd2c7a-0a8a-4193-a197-ea87f090e9fe",
+    "id": "a0415d78-a879-4be2-bb34-0a8b46cb24ee",
     "code": "BG",
     "name": "Bulgaria",
     "longName": "Republic of Bulgaria",
@@ -77,10 +77,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6637741Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "8ca4b984-f77d-49d0-9ab0-e1271f564dee",
+    "id": "5a7cd44e-cd73-4505-afc5-842c990ff526",
     "code": "CY",
     "name": "Cyprus",
     "longName": "Republic of Cyprus",
@@ -93,10 +93,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6637794Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "e82855db-580b-4dfa-9706-158f462eb876",
+    "id": "60489aaf-b721-4947-bf59-cf8c95a81b2b",
     "code": "CZ",
     "name": "Czechia",
     "longName": "Czech Republic",
@@ -109,10 +109,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6637956Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "4ad89641-8247-49cd-abc9-9da3824e9881",
+    "id": "9f50b4a8-b6d4-4e59-9e58-4a10d9520882",
     "code": "DK",
     "name": "Denmark",
     "longName": "Kingdom of Denmark",
@@ -125,10 +125,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6637992Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "fe39cfcf-e2f2-495e-ac50-3b6c18631fdf",
+    "id": "692e8164-3fd5-45f0-8612-807f651c64fe",
     "code": "EE",
     "name": "Estonia",
     "longName": "Republic of Estonia",
@@ -141,10 +141,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638011Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "2a6cfd50-9387-4439-9ee7-15d1bd1aadc0",
+    "id": "a30e5fcf-ecd0-4e8c-b87e-6a681762af4d",
     "code": "FI",
     "name": "Finland",
     "longName": "Republic of Finland",
@@ -157,10 +157,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638029Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "0eb2ae22-056d-4d5d-8c91-41c86f9d0ae2",
+    "id": "5626e81c-b54c-4b5c-a83d-bdf7dae7ead6",
     "code": "FR",
     "name": "France",
     "longName": "French Republic",
@@ -173,10 +173,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638047Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "7fd3ea2a-5393-4796-800a-2c904bbdbc42",
+    "id": "e1f16623-bb1c-4541-a7ff-c581eb3c72b9",
     "code": "DE",
     "name": "Germany",
     "longName": "Federal Republic of Germany",
@@ -189,10 +189,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638065Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "4c7f3758-e434-405c-ab95-7147cb82e89a",
+    "id": "ab66c85c-3d44-4d1c-995e-b02d347eaff8",
     "code": "GR",
     "name": "Greece",
     "longName": "Hellenic Republic",
@@ -205,10 +205,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638082Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "dfb62468-6535-436c-941c-fa3f1980eb21",
+    "id": "4757152c-4721-417b-b4fb-295035dda8e9",
     "code": "HU",
     "name": "Hungary",
     "longName": "Hungary",
@@ -221,10 +221,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638101Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "3a0fca57-7c0f-4160-aaea-b713140906ae",
+    "id": "a01fdb1f-e893-4f6e-96eb-b77e6684b88a",
     "code": "IT",
     "name": "Italy",
     "longName": "Italian Republic",
@@ -237,10 +237,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638117Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "de693a24-b00a-4832-8ac3-919a24c23e3c",
+    "id": "5ac51cc6-71b5-47ee-8a11-c252623a8318",
     "code": "LV",
     "name": "Latvia",
     "longName": "Republic of Latvia",
@@ -253,10 +253,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638173Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "91bdf4fa-ae32-461e-a90a-f5c5f93ca94e",
+    "id": "f9d25f08-e31c-49f5-94c8-04bf3fec8984",
     "code": "LT",
     "name": "Lithuania",
     "longName": "Republic of Lithuania",
@@ -269,10 +269,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638191Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "3a5039bf-5eb4-474d-b024-5166b087b8c3",
+    "id": "ca9c63ec-8651-4678-a5c6-fca1bd32d4ea",
     "code": "LU",
     "name": "Luxembourg",
     "longName": "Grand Duchy of Luxembourg",
@@ -285,10 +285,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.663821Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "d43c151a-467e-439a-8fd0-79221f14447d",
+    "id": "d543c1d3-461a-473d-b871-84383f828fb2",
     "code": "MT",
     "name": "Malta",
     "longName": "Republic of Malta",
@@ -301,10 +301,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638226Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "78c633a7-c86e-499f-8198-e2172130acc7",
+    "id": "1e03e8d4-4735-43b9-b372-2effa41ce0b0",
     "code": "NL",
     "name": "Netherlands",
     "longName": "Kingdom of the Netherlands",
@@ -317,10 +317,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638242Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "bc0fa2b0-5094-4584-b785-16b5dddc9083",
+    "id": "28e76612-2c1e-4079-b6ff-667756ab137b",
     "code": "PL",
     "name": "Poland",
     "longName": "Republic of Poland",
@@ -333,10 +333,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638258Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "315529c0-0dbf-4c9e-9035-36507596d955",
+    "id": "900bdd2f-0266-4aac-a404-6724348f0a51",
     "code": "PT",
     "name": "Portugal",
     "longName": "Portuguese Republic",
@@ -349,10 +349,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638274Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "b00a9a78-412a-4ae0-864a-abdea93e342c",
+    "id": "9b92f977-4179-4341-9e66-2abebec48b7e",
     "code": "RO",
     "name": "Romania",
     "longName": "Romania",
@@ -365,10 +365,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638291Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "3c378327-76dd-4367-b357-e1e9a4d4d931",
+    "id": "96b197a3-6c79-4991-9afc-fb3d3dd559eb",
     "code": "SK",
     "name": "Slovakia",
     "longName": "Slovak Republic",
@@ -381,10 +381,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638344Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "fdb7cb00-f555-44f2-a80b-095ac55435fe",
+    "id": "a1221a1c-7e21-4f3e-9af1-20909552a943",
     "code": "SI",
     "name": "Slovenia",
     "longName": "Republic of Slovenia",
@@ -397,10 +397,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638361Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "8b393a6e-cb2e-4529-ae51-f8b82265397c",
+    "id": "ff685811-1b95-4a3e-8d57-f4094f575e4e",
     "code": "ES",
     "name": "Spain",
     "longName": "Kingdom of Spain",
@@ -413,10 +413,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638378Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "e0646acb-13e4-480c-bf0a-2f36d2582f52",
+    "id": "e96d31ec-b66a-4f85-9afa-128dcc22332c",
     "code": "SE",
     "name": "Sweden",
     "longName": "Kingdom of Sweden",
@@ -429,10 +429,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638394Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "6fe34027-d515-42e1-b7e2-809e10e411fc",
+    "id": "c50c3d98-9c19-4640-a64a-2310803a5e7a",
     "code": "AX",
     "name": "\uFFFDland Islands",
     "longName": "\uFFFDland Islands",
@@ -445,10 +445,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638463Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "e523de60-2fa1-40db-ae9f-2f2242d472a7",
+    "id": "af2c52f4-1ced-4355-91b7-a2e5f683fa53",
     "code": "AL",
     "name": "Albania",
     "longName": "Republic of Albania",
@@ -461,10 +461,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638483Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "6a80bc45-a61b-40ed-a40c-2ec370d256be",
+    "id": "a7954e62-96d0-450e-8a69-f460c8bab1d0",
     "code": "AD",
     "name": "Andorra",
     "longName": "Principality of Andorra",
@@ -477,10 +477,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638501Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "c98c2a94-ccb9-48a0-9279-90e6a660d5f5",
+    "id": "6dccc0c8-4b87-4673-93ef-59225151d18d",
     "code": "AM",
     "name": "Armenia",
     "longName": "Republic of Armenia",
@@ -493,10 +493,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638516Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "937b7441-b263-45fd-b1c6-d375bdd2b098",
+    "id": "35fb85de-8e00-4121-b4e3-01ae70d6f020",
     "code": "BY",
     "name": "Belarus",
     "longName": "Republic of Belarus",
@@ -509,10 +509,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638534Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "000caeac-8fef-4023-aa70-8bf5e442642d",
+    "id": "6a3dc71f-b941-4e2f-b52b-dbc8b2e1dc3b",
     "code": "BA",
     "name": "Bosnia and Herzegovina",
     "longName": "Republic of Bosnia and Herzegovina",
@@ -525,10 +525,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638588Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "07520a5a-c736-4b26-9707-8ced1c85e09e",
+    "id": "c59e8b32-034d-493c-8eb7-b6bba1ecb835",
     "code": "HR",
     "name": "Croatia",
     "longName": "Republic of Croatia",
@@ -541,10 +541,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638607Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "7e57c841-9257-4019-99af-b9fe4de5ecda",
+    "id": "94b66f50-9070-412d-95be-fe3dc8dca140",
     "code": "FO",
     "name": "Faroe Islands",
     "longName": "Faroe Islands",
@@ -557,10 +557,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638623Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "7df7dae0-ba5a-4981-9bbc-1ef3251170e9",
+    "id": "81ae1ff9-cb50-4708-9aab-5c388aeac997",
     "code": "GE",
     "name": "Georgia",
     "longName": "Georgia",
@@ -573,10 +573,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638641Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "41e58345-28a6-467b-9c13-766f9df1533a",
+    "id": "500e6b84-1243-4181-bf93-2eea01fe2a9f",
     "code": "GL",
     "name": "Greenland",
     "longName": "Greenland",
@@ -589,10 +589,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638659Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "31037f2d-d215-43ce-afb2-9ac0a43a551b",
+    "id": "c8b41290-baca-45a6-8f7a-f6d861ba7a95",
     "code": "GG",
     "name": "Guernsey",
     "longName": "Guernsey",
@@ -605,10 +605,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638675Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "ea567198-7147-46ba-9955-8e0c86988166",
+    "id": "eaf9700c-f371-4597-b731-aabd2f1c9926",
     "code": "VA",
     "name": "Holy See (Vatican City State)",
     "longName": "Holy See (Vatican City State)",
@@ -621,10 +621,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638692Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "5a92f27b-e9cf-4e83-b7ed-9527574c07ed",
+    "id": "dce34b10-f6e5-40b5-905f-47771729d190",
     "code": "IS",
     "name": "Iceland",
     "longName": "Republic of Iceland",
@@ -637,10 +637,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.663871Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "1a73f09a-7a2b-42a5-9a5a-de81bcbc4bf2",
+    "id": "1069e80e-ab68-470a-8e6b-d6c64ca21664",
     "code": "IM",
     "name": "Isle of Man",
     "longName": "Isle of Man",
@@ -653,10 +653,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638762Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "3f1a4aa3-8918-40a7-a346-77c76fd50cd1",
+    "id": "a7b20ab5-e92f-4c60-aa75-ab6b15a85b68",
     "code": "JE",
     "name": "Jersey",
     "longName": "Jersey",
@@ -669,10 +669,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638779Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "e280a290-b1f4-4321-b29c-ac86accd2d34",
+    "id": "4fc19e44-c32e-40dc-9fad-5761160cae1a",
     "code": "LI",
     "name": "Liechtenstein",
     "longName": "Principality of Liechtenstein",
@@ -685,10 +685,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638796Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "257a5f32-77bb-458e-9d62-10cba513b864",
+    "id": "bf5539a9-d279-4be4-8863-3fb5a4c4107e",
     "code": "MK",
     "name": "North Macedonia",
     "longName": "Republic of North Macedonia",
@@ -701,10 +701,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6638812Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "3b03e54d-7974-436b-beeb-c6ea125ed922",
+    "id": "ef987380-41d8-4345-b943-d229228f8f05",
     "code": "MD",
     "name": "\u0022Moldova",
     "longName": "Republic of Moldova",
@@ -712,15 +712,15 @@
     "euTradeMember": false,
     "devolvedAuthority": false,
     "sortOrder": 0,
-    "effectiveStartDate": "1900-01-01T00:00:00Z",
+    "effectiveStartDate": "2025-10-28T19:50:15.1677857Z",
     "effectiveEndDate": null,
     "createdBy": "Republic of\u0022",
-    "createdDate": "2025-10-21T12:48:36.6638916Z",
+    "createdDate": "2025-10-28T19:50:15.1677729Z",
     "lastModifiedBy": "True",
-    "lastModifiedDate": "2025-10-21T12:48:36.663917Z"
+    "lastModifiedDate": "2025-10-28T19:50:15.1677861Z"
   },
   {
-    "id": "5905c6e1-c8b4-496e-8ae3-88868d8506c8",
+    "id": "8d52cbfc-a14d-4185-ada7-4202ab0b89e9",
     "code": "MC",
     "name": "Monaco",
     "longName": "Principality of Monaco",
@@ -733,10 +733,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645329Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "7d0509da-b6d7-4dfd-ab9d-7b65da31ebbf",
+    "id": "129639e6-e1ad-47f5-8de9-73f2e25b1180",
     "code": "ME",
     "name": "Montenegro",
     "longName": "Montenegro",
@@ -749,10 +749,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645359Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "d3ea5c76-b665-4939-b855-d7841409747a",
+    "id": "5b563a9f-41ce-423a-bb55-c9e9da60ccc7",
     "code": "NO",
     "name": "Norway",
     "longName": "Kingdom of Norway",
@@ -765,10 +765,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645387Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "d88a8931-f5eb-450b-9ae2-a81981205cc1",
+    "id": "9beea6f9-ddb2-4d0a-a730-3995dc7b59e5",
     "code": "RU",
     "name": "Russian Federation",
     "longName": "Russian Federation",
@@ -781,10 +781,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645407Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "1ac551da-118c-4ecf-92e0-12b30e595903",
+    "id": "56ee097c-7bb9-4b16-bc2f-8218b4b9604d",
     "code": "SM",
     "name": "San Marino",
     "longName": "Republic of San Marino",
@@ -797,10 +797,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645489Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "d33cacb0-714e-48da-ad38-7bb8e3c3fd47",
+    "id": "f9289626-84f9-40f3-a1ac-ec9b2432e1dd",
     "code": "RS",
     "name": "Serbia",
     "longName": "Republic of Serbia",
@@ -813,10 +813,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645506Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "1d52991e-6d1b-4cf0-988d-3bf6a718fda1",
+    "id": "ee06bce1-b353-409f-9e4f-be53c8767700",
     "code": "SJ",
     "name": "Svalbard and Jan Mayen",
     "longName": "Svalbard and Jan Mayen",
@@ -829,10 +829,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645524Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "0779af0f-bc6b-41d6-8c41-4dde910bca70",
+    "id": "b4796d40-e20f-4d29-ab06-0afd76a70051",
     "code": "CH",
     "name": "Switzerland",
     "longName": "Swiss Confederation",
@@ -845,10 +845,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645541Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "7d3a3ccd-418e-4fa3-a89f-40950bb3a117",
+    "id": "bd52fd9a-24d4-4b0d-b090-6c393e04db9c",
     "code": "TR",
     "name": "T\uFFFDrkiye",
     "longName": "Republic of T\uFFFDrkiye",
@@ -861,10 +861,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645557Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "6b1bbc88-bba5-4a61-9e07-8583791e25bf",
+    "id": "b95763a0-bdce-4b92-b52c-09135e916340",
     "code": "UA",
     "name": "Ukraine",
     "longName": "Ukraine",
@@ -877,10 +877,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645573Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "3ad413f1-9cfd-4207-bc02-330322544813",
+    "id": "0354f339-ea8f-4f42-a7a3-941745a6eed3",
     "code": "CA",
     "name": "Canada",
     "longName": "Canada",
@@ -893,10 +893,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645604Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "049bd433-506a-4300-b596-fd8e4d041e26",
+    "id": "5fcd3ab9-d00b-4245-a2b4-ea2fb4456103",
     "code": "PM",
     "name": "Saint Pierre and Miquelon",
     "longName": "Saint Pierre and Miquelon",
@@ -909,10 +909,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645638Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "0acf288a-d142-403a-92ef-0b4f0652ed92",
+    "id": "c61e5eba-1814-421f-a539-01fb0aae25b0",
     "code": "US",
     "name": "United States",
     "longName": "United States of America",
@@ -925,10 +925,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645674Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "af13b106-7922-4db1-9c88-0d23aaa19bed",
+    "id": "56209fed-4a78-4287-b71e-e80af528c5be",
     "code": "UM",
     "name": "United States Minor Outlying Islands",
     "longName": "United States Minor Outlying Islands",
@@ -941,10 +941,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645756Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "b7083b3e-f4ed-4b38-9c18-ff827646d387",
+    "id": "7072c0e9-918d-4e05-9060-b1120b7e6de8",
     "code": "AR",
     "name": "Argentina",
     "longName": "Argentine Republic",
@@ -957,10 +957,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645792Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "3fedae29-395e-4a7b-882b-73658c09928c",
+    "id": "9d250143-7e0d-4e55-a89b-3c29dbd90a92",
     "code": "BR",
     "name": "Brazil",
     "longName": "Federative Republic of Brazil",
@@ -973,10 +973,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645823Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "77788dfe-b99a-4c1e-a0cd-7d07f24b79d5",
+    "id": "cc01ad7b-07c3-4b7d-9cf1-d75c8d1d44eb",
     "code": "BO",
     "name": "\u0022Bolivia",
     "longName": "Plurinational State of Bolivia",
@@ -984,15 +984,15 @@
     "euTradeMember": false,
     "devolvedAuthority": false,
     "sortOrder": 0,
-    "effectiveStartDate": "1900-01-01T00:00:00Z",
+    "effectiveStartDate": "2025-10-28T19:50:15.168595Z",
     "effectiveEndDate": null,
     "createdBy": "Plurinational State of\u0022",
-    "createdDate": "2025-10-21T12:48:36.6645846Z",
+    "createdDate": "2025-10-28T19:50:15.1685924Z",
     "lastModifiedBy": "True",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645892Z"
+    "lastModifiedDate": "2025-10-28T19:50:15.1685952Z"
   },
   {
-    "id": "65f48f27-9add-4300-a0a5-d577671669f4",
+    "id": "3d8929fb-242a-4428-a89c-c0777f348d35",
     "code": "CL",
     "name": "Chile",
     "longName": "Republic of Chile",
@@ -1005,10 +1005,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645949Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "b52b215e-40cc-49a2-8627-0ecbf5ff3d2a",
+    "id": "6153edcd-9b53-4f3e-93dd-fa282acf8cbe",
     "code": "CO",
     "name": "Colombia",
     "longName": "Republic of Colombia",
@@ -1021,10 +1021,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6645973Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "c62a341b-509d-4a1c-bf70-272708bed1ed",
+    "id": "76b3f06d-8618-4d59-ac38-1c0770d6196e",
     "code": "EC",
     "name": "Ecuador",
     "longName": "Republic of Ecuador",
@@ -1037,10 +1037,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646012Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "7c1e3f6d-a1b8-47f9-835c-491f4789566c",
+    "id": "adc08f6b-fd63-4a1f-9893-a0c6ab5e10fc",
     "code": "GF",
     "name": "French Guiana",
     "longName": "French Guiana",
@@ -1053,10 +1053,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646156Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "450851f8-6936-4a43-a3fc-5b7be5e3c3af",
+    "id": "74b7fd0f-6a6a-4164-9ba0-14cd2aa50162",
     "code": "GY",
     "name": "Guyana",
     "longName": "Republic of Guyana",
@@ -1069,10 +1069,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646174Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "c6fa80c4-510e-4c83-9c84-08c859d7aaac",
+    "id": "772ca681-0a3a-47b2-bba9-dddff903992b",
     "code": "PY",
     "name": "Paraguay",
     "longName": "Republic of Paraguay",
@@ -1085,10 +1085,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646193Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "298fc04d-5d8b-4b30-8cc6-5a46e795ba65",
+    "id": "56bc66ae-d32b-4aa5-ac6c-959ec9abfe4f",
     "code": "PE",
     "name": "Peru",
     "longName": "Republic of Peru",
@@ -1101,10 +1101,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.664621Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "0cb8ee51-2fab-4a68-83e3-d8a4187094e8",
+    "id": "2810110a-469c-4899-92f9-9567e36a0ffe",
     "code": "PR",
     "name": "Puerto Rico",
     "longName": "Puerto Rico",
@@ -1117,10 +1117,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646227Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "99e4c4c8-1955-4b12-a991-2569065ccea2",
+    "id": "43ab5dc9-dc82-4f23-9ed6-99ea3cea77ca",
     "code": "SR",
     "name": "Suriname",
     "longName": "Republic of Suriname",
@@ -1133,10 +1133,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646243Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "a6c1e006-6ac1-4df3-abd9-f4a3c5540efe",
+    "id": "1c67951c-ae79-4528-8761-f53de8992133",
     "code": "UY",
     "name": "Uruguay",
     "longName": "Eastern Republic of Uruguay",
@@ -1149,10 +1149,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646264Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "88003507-ad07-4241-8b10-68ce9a96b8a7",
+    "id": "a3d41fb6-0670-408d-9786-1b8f13769cda",
     "code": "VE",
     "name": "\u0022Venezuela",
     "longName": "Bolivarian Republic of Venezuela",
@@ -1160,15 +1160,15 @@
     "euTradeMember": false,
     "devolvedAuthority": false,
     "sortOrder": 0,
-    "effectiveStartDate": "1900-01-01T00:00:00Z",
+    "effectiveStartDate": "2025-10-28T19:50:15.1686266Z",
     "effectiveEndDate": null,
     "createdBy": "Bolivarian Republic of\u0022",
-    "createdDate": "2025-10-21T12:48:36.6646272Z",
+    "createdDate": "2025-10-28T19:50:15.1686259Z",
     "lastModifiedBy": "True",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646282Z"
+    "lastModifiedDate": "2025-10-28T19:50:15.1686267Z"
   },
   {
-    "id": "fffed579-cfe5-4f0d-9a23-71974c7c45a5",
+    "id": "ba08633e-8a22-4b89-acc2-c2bdf37c70c3",
     "code": "AF",
     "name": "Afghanistan",
     "longName": "Islamic Republic of Afghanistan",
@@ -1181,10 +1181,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646354Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "17f41930-7dc8-4cf0-a1d5-e2a56c370832",
+    "id": "feadc4e7-d92a-40fc-bbbd-3af7163c0819",
     "code": "DZ",
     "name": "Algeria",
     "longName": "People\u0027s Democratic Republic of Algeria",
@@ -1197,10 +1197,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646371Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "8e9f9ba2-f96e-43a2-9161-5ccf05736dc8",
+    "id": "d3837a65-8508-4d4e-bbe6-bac19ce82c4e",
     "code": "AS",
     "name": "American Samoa",
     "longName": "American Samoa",
@@ -1213,10 +1213,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646387Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "e04256b0-912f-4cd1-95d5-6d2deb0b8add",
+    "id": "d1bd5a43-74b6-4fbe-8afb-69cabfaa1c2c",
     "code": "AO",
     "name": "Angola",
     "longName": "Republic of Angola",
@@ -1229,10 +1229,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646404Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "ccc609b6-ca95-43a0-aa5d-5ba3d5b065a5",
+    "id": "5010aac1-f615-49ef-989f-92216c90a06d",
     "code": "AI",
     "name": "Anguilla",
     "longName": "Anguilla",
@@ -1245,10 +1245,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646421Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "0cab7edf-4d0e-4f90-8d19-6950b259f492",
+    "id": "a6841245-5e31-4a42-94ee-faea8dbb0077",
     "code": "AQ",
     "name": "Antarctica",
     "longName": "Antarctica",
@@ -1261,10 +1261,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646437Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "f4ceaa61-4a90-42b7-83eb-5a1ff838dfa0",
+    "id": "4b9f5498-0ea6-4674-bf6b-93f68cc56b34",
     "code": "AG",
     "name": "Antigua and Barbuda",
     "longName": "Antigua and Barbuda",
@@ -1277,10 +1277,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646464Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "b46941dd-9e28-4f3f-865f-2a952835e309",
+    "id": "838e1414-0545-4ca3-b9e1-ff1e5b505f9c",
     "code": "AW",
     "name": "Aruba",
     "longName": "Aruba",
@@ -1293,10 +1293,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.664648Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "c770960a-c464-4986-9ad6-a3a79d649cc9",
+    "id": "2d8c1270-cdd0-4cb2-8fb5-d756b67dcfd3",
     "code": "AU",
     "name": "Australia",
     "longName": "Australia",
@@ -1309,10 +1309,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646497Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "7439be3e-bef5-42dd-b519-37a5e5908d87",
+    "id": "22d56578-7bf9-4743-9cf7-1512eaac1f5a",
     "code": "AZ",
     "name": "Azerbaijan",
     "longName": "Republic of Azerbaijan",
@@ -1325,10 +1325,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.664655Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "88bb12d5-a51c-46da-85c9-9b197e8656ec",
+    "id": "46331262-9be0-4dd1-8885-afc39a03b5fb",
     "code": "BS",
     "name": "Bahamas",
     "longName": "Commonwealth of the Bahamas",
@@ -1341,10 +1341,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646568Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "0ba39074-b0c2-45ba-b7bd-142108e9422e",
+    "id": "03634dfa-ba3a-43ac-84b9-8e0cdede3127",
     "code": "BH",
     "name": "Bahrain",
     "longName": "Kingdom of Bahrain",
@@ -1357,10 +1357,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646585Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "ea7c26ba-0ea7-4354-ab45-54b8c087310c",
+    "id": "5fb246b3-b932-45d9-b575-4de6973ceba9",
     "code": "BD",
     "name": "Bangladesh",
     "longName": "People\u0027s Republic of Bangladesh",
@@ -1373,10 +1373,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646604Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "a03ac17a-35bb-40ba-bc52-b48b2db6385e",
+    "id": "14e65cd5-6af0-4f22-aa1d-f87d833d871f",
     "code": "BB",
     "name": "Barbados",
     "longName": "Barbados",
@@ -1389,10 +1389,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.664662Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "4b4aed79-e0c8-4dd0-b058-6c643677343e",
+    "id": "2946fc28-da36-41d1-a609-328e48a301b4",
     "code": "BZ",
     "name": "Belize",
     "longName": "Belize",
@@ -1405,10 +1405,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646638Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "4b037ce6-96e0-44dc-9670-2a4f5a47b4cf",
+    "id": "77784baf-c1d3-40e3-9435-2808a101e725",
     "code": "BJ",
     "name": "Benin",
     "longName": "Republic of Benin",
@@ -1421,10 +1421,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646654Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "e260c65d-e9ac-41cb-a4f2-49458a48f559",
+    "id": "da2914e1-807d-46aa-be73-3c82fdc0e0e9",
     "code": "BM",
     "name": "Bermuda",
     "longName": "Bermuda",
@@ -1437,10 +1437,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.664667Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "c3c95440-2aee-452c-844f-cdecfa8ebdd0",
+    "id": "fad0662f-eaa2-4604-a110-d3bc3ca612ae",
     "code": "BT",
     "name": "Bhutan",
     "longName": "Kingdom of Bhutan",
@@ -1453,10 +1453,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646686Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "30c70dc4-669c-42b6-9996-be4dbf65ca6a",
+    "id": "8a583342-0bbc-4820-a8a5-5b0e5ad3e751",
     "code": "BW",
     "name": "Botswana",
     "longName": "Republic of Botswana",
@@ -1469,10 +1469,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646739Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "23437c78-5e29-4de7-9053-d2fe416cf169",
+    "id": "029a16c5-cbc3-4f55-a9db-7e63634b105d",
     "code": "BV",
     "name": "Bouvet Island",
     "longName": "Bouvet Island",
@@ -1485,10 +1485,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646756Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "2e071e9c-12e9-496b-a5cd-f29babb3c3f8",
+    "id": "062157b2-98d7-4a07-9283-0b867bdecadc",
     "code": "IO",
     "name": "British Indian Ocean Territory",
     "longName": "British Indian Ocean Territory",
@@ -1501,10 +1501,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646773Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "bf867da9-3159-4b63-8b17-ccdd88e1621c",
+    "id": "b4a0675f-ddc8-47ff-b954-b0761ad17f2e",
     "code": "BN",
     "name": "Brunei Darussalam",
     "longName": "Brunei Darussalam",
@@ -1517,10 +1517,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.664679Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "f08acbae-438f-4b0d-a772-ed5dea2a0a0e",
+    "id": "ede2416e-b642-4840-81fd-4ea9a927d32b",
     "code": "BF",
     "name": "Burkina Faso",
     "longName": "Burkina Faso",
@@ -1533,10 +1533,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646809Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "4804907f-47ae-4c89-8365-0486f00505cf",
+    "id": "e541bdd9-5b67-477d-a391-e919157d7a7d",
     "code": "BI",
     "name": "Burundi",
     "longName": "Republic of Burundi",
@@ -1549,10 +1549,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646824Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "7cb0ed0b-5542-4da4-b38d-db89e46efb09",
+    "id": "f074b2c5-ac39-47bb-9569-b598f292a96f",
     "code": "KH",
     "name": "Cambodia",
     "longName": "Kingdom of Cambodia",
@@ -1565,10 +1565,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646841Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "22e77263-e733-4d41-bb2a-1dec20a2b68f",
+    "id": "57bdf07d-76d6-47bc-acd4-78f0110e95ca",
     "code": "CM",
     "name": "Cameroon",
     "longName": "Republic of Cameroon",
@@ -1581,10 +1581,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646857Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "a45ce817-1bd4-424f-ab44-0671ef7ddd38",
+    "id": "c786a68a-bfc5-4116-aa76-1c730b84024d",
     "code": "CV",
     "name": "Cabo Verde",
     "longName": "Republic of Cabo Verde",
@@ -1597,10 +1597,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646915Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "cce5e2ef-89c4-4796-af73-663f2c2550d8",
+    "id": "875ffbf3-669b-424d-b4fd-771675806053",
     "code": "KY",
     "name": "Cayman Islands",
     "longName": "Cayman Islands",
@@ -1613,10 +1613,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646932Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "45383973-b6ad-4ee2-af54-ad0cc1f4919e",
+    "id": "771a774a-3eb2-4a8e-9c74-a298f5d7f594",
     "code": "CF",
     "name": "Central African Republic",
     "longName": "Central African Republic",
@@ -1629,10 +1629,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.664695Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "23c44f7a-9d55-42db-9c0d-6c0e2251e9d5",
+    "id": "f4c660b8-7ebd-48dd-b201-34d8156cd013",
     "code": "TD",
     "name": "Chad",
     "longName": "Republic of Chad",
@@ -1645,10 +1645,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646967Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "ca41e356-15e7-4165-94c2-53b4d345486a",
+    "id": "bb99f29a-3af6-4eb6-a601-36340cf8cab8",
     "code": "CN",
     "name": "China",
     "longName": "People\u0027s Republic of China",
@@ -1661,10 +1661,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6646986Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "3195d9fd-0350-4c97-bcae-dd06424ec249",
+    "id": "8ddd469e-9f38-4e19-9376-cad13cfe0631",
     "code": "CX",
     "name": "Christmas Island",
     "longName": "Christmas Island",
@@ -1677,10 +1677,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647003Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "5274039e-723d-4a06-a07b-77b35d404eb2",
+    "id": "54a0c0ad-85dc-41de-880a-e61e6142d991",
     "code": "CC",
     "name": "Cocos (Keeling) Islands",
     "longName": "Cocos (Keeling) Islands",
@@ -1693,10 +1693,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647019Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "2af75469-2752-4175-b067-60d1e94ba5c5",
+    "id": "dd1b8f42-1eb6-4a82-89f6-4166f40cac5b",
     "code": "KM",
     "name": "Comoros",
     "longName": "Union of the Comoros",
@@ -1709,10 +1709,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647035Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "bfc823c8-bc13-4ef1-9138-4b14f216cbc8",
+    "id": "062b3c49-8e15-47d7-bf6c-81b0c15fb259",
     "code": "CG",
     "name": "Congo",
     "longName": "Republic of the Congo",
@@ -1725,10 +1725,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647051Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "fbe2d944-439f-43b4-a317-ac6fed34d067",
+    "id": "d84d805d-0a91-4ea5-a7a0-3c532c2a1288",
     "code": "CD",
     "name": "The Democratic Republic of the\u0022",
     "longName": "\u0022Congo",
@@ -1736,15 +1736,15 @@
     "euTradeMember": false,
     "devolvedAuthority": false,
     "sortOrder": 0,
-    "effectiveStartDate": "1900-01-01T00:00:00Z",
+    "effectiveStartDate": "2025-10-28T19:50:15.1687209Z",
     "effectiveEndDate": "2025-10-09T23:00:00Z",
     "createdBy": "\u0022Congo",
-    "createdDate": "2025-10-21T12:48:36.6647094Z",
+    "createdDate": "2025-10-28T19:50:15.1687194Z",
     "lastModifiedBy": "False",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647118Z"
+    "lastModifiedDate": "2025-10-28T19:50:15.1687214Z"
   },
   {
-    "id": "e8439df3-85f3-49f8-ae3a-b5c084e117fb",
+    "id": "8dada538-7a65-4a97-9e96-30b92faa1c8f",
     "code": "CK",
     "name": "Cook Islands",
     "longName": "Cook Islands",
@@ -1757,10 +1757,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647135Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "6a29ae4e-23fc-4743-b115-77d90f49b44f",
+    "id": "003fe481-63e9-4523-813d-7e9f1163fb16",
     "code": "CR",
     "name": "Costa Rica",
     "longName": "Republic of Costa Rica",
@@ -1773,10 +1773,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647152Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "1f301e58-90a1-4093-81c7-5bc9b5c0ca10",
+    "id": "ae2748a5-66cc-4d08-bb87-b62ebe09f9e5",
     "code": "CI",
     "name": "C\uFFFDte d\u0027Ivoire",
     "longName": "Republic of C\uFFFDte d\u0027Ivoire",
@@ -1789,10 +1789,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.664717Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "5e12b6ae-c3a4-4df1-b86e-a522924b2e78",
+    "id": "8e1f7d70-14a9-4e46-92fb-49954f89f7fc",
     "code": "CU",
     "name": "Cuba",
     "longName": "Republic of Cuba",
@@ -1805,10 +1805,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647186Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "81d89363-532a-4656-8ca8-8ce0b62b70b4",
+    "id": "569cb369-fcbb-48f9-82c6-73907f9a643b",
     "code": "DJ",
     "name": "Djibouti",
     "longName": "Republic of Djibouti",
@@ -1821,10 +1821,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647202Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "d985f961-ee05-4700-931b-b6fdac08b81f",
+    "id": "922a7a1d-84ef-4145-8709-9cf4b0e4803e",
     "code": "DM",
     "name": "Dominica",
     "longName": "Commonwealth of Dominica",
@@ -1837,10 +1837,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647219Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "a548c00e-7c88-406d-b0c7-2747448e06bc",
+    "id": "e5cfe75c-0a56-4d9f-8d30-313d8a7cd0c2",
     "code": "DO",
     "name": "Dominican Republic",
     "longName": "Dominican Republic",
@@ -1853,10 +1853,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647236Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "6964e264-be8e-464a-9a34-6d506569b1b3",
+    "id": "c18dd43d-974e-48bd-8e4d-6eef29dc4bf7",
     "code": "EG",
     "name": "Egypt",
     "longName": "Arab Republic of Egypt",
@@ -1869,10 +1869,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.664729Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "e668c31d-de8e-41f2-8105-d5bb075322d1",
+    "id": "c70a69ce-3876-4f6f-ba16-2425502511e3",
     "code": "SV",
     "name": "El Salvador",
     "longName": "Republic of El Salvador",
@@ -1885,10 +1885,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647307Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "ea90d862-403e-4c11-8b0c-66b11168ab06",
+    "id": "e54aa42a-66c6-423a-bece-10cfef5b2938",
     "code": "GQ",
     "name": "Equatorial Guinea",
     "longName": "Republic of Equatorial Guinea",
@@ -1901,10 +1901,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647324Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "678633fd-fea3-443f-aa7f-22ba9cc257b0",
+    "id": "dd50a01f-2012-4cff-9447-9f194e9b21fa",
     "code": "ER",
     "name": "Eritrea",
     "longName": "the State of Eritrea",
@@ -1917,10 +1917,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647343Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "ce68271c-76f3-451b-ba51-331cb833acbe",
+    "id": "798f57d8-df3c-4098-897e-48bb49612f62",
     "code": "ET",
     "name": "Ethiopia",
     "longName": "Federal Democratic Republic of Ethiopia",
@@ -1933,10 +1933,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.664736Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "31c648aa-7645-47ad-b6a6-fdf6bf865561",
+    "id": "ec8ddfc4-8eb0-4727-ab03-518206f8e11c",
     "code": "FK",
     "name": "Falkland Islands (Malvinas)",
     "longName": "Falkland Islands (Malvinas)",
@@ -1949,10 +1949,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647376Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "35f3aec1-1065-470f-9b34-36753a8c7e47",
+    "id": "06f0bca7-4d83-48ce-bbab-d1164ec7d536",
     "code": "FJ",
     "name": "Fiji",
     "longName": "Republic of Fiji",
@@ -1965,10 +1965,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647392Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "124122b6-df99-4613-a5d6-5e9aac4c4058",
+    "id": "05c9e21a-bafd-4d3b-8cbd-3299aee63e70",
     "code": "PF",
     "name": "French Polynesia",
     "longName": "French Polynesia",
@@ -1981,10 +1981,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647408Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "e893ae3f-b085-4386-88cf-fc5537421d81",
+    "id": "55853c39-9f1c-4617-bd23-2321946cc30d",
     "code": "TF",
     "name": "French Southern Territories",
     "longName": "French Southern Territories",
@@ -1997,10 +1997,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647424Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "1d468c2b-295b-4940-aaa2-b489d80b37c1",
+    "id": "1d50fcdf-58eb-402b-8b94-ed3032c6435e",
     "code": "GA",
     "name": "Gabon",
     "longName": "Gabonese Republic",
@@ -2013,10 +2013,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647462Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "4c8c9a44-c6c5-4518-bb36-33591527c286",
+    "id": "a54d5973-de54-49d8-82ce-acdc0e0d6e26",
     "code": "GM",
     "name": "Gambia",
     "longName": "Republic of the Gambia",
@@ -2029,10 +2029,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647479Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "cbb1f7aa-791c-4b82-b8c0-b3bee52bf139",
+    "id": "3e719262-0fa7-433d-a015-050400d8a4b1",
     "code": "GH",
     "name": "Ghana",
     "longName": "Republic of Ghana",
@@ -2045,10 +2045,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647498Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "5ffa4236-e545-4877-8d3c-7aaf8e9aae21",
+    "id": "3226c507-0ab8-48c7-9f87-883eefa916cf",
     "code": "GI",
     "name": "Gibraltar",
     "longName": "Gibraltar",
@@ -2061,10 +2061,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647515Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "6e82a2a9-af17-4b95-8b43-693b61f7df95",
+    "id": "eefa8a78-9ab7-412d-b48a-15da7145ae43",
     "code": "GD",
     "name": "Grenada",
     "longName": "Grenada",
@@ -2077,10 +2077,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647535Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "086b473b-141c-4f5f-b1b5-5a5e2ea33a85",
+    "id": "62a82748-cecd-448a-ac3b-02d43df558bf",
     "code": "GP",
     "name": "Guadeloupe",
     "longName": "Guadeloupe",
@@ -2093,10 +2093,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647552Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "de30bfd1-7946-42b3-8587-6c6c64e61973",
+    "id": "35bfb3ab-95a5-4180-a330-f0bf959a8b69",
     "code": "GU",
     "name": "Guam",
     "longName": "Guam",
@@ -2109,10 +2109,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647622Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "6c3bfd3d-d958-4e37-a822-8393a95c515b",
+    "id": "858753c8-88b7-49b2-a9ae-379f45e332ce",
     "code": "GT",
     "name": "Guatemala",
     "longName": "Republic of Guatemala",
@@ -2125,10 +2125,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647638Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "95cd2409-eb47-4d1f-afd8-4cec63e61a4a",
+    "id": "ac45cb90-f009-4b20-a07e-75677e7c2827",
     "code": "GN",
     "name": "Guinea",
     "longName": "Republic of Guinea",
@@ -2141,10 +2141,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647675Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "ce1ad858-7e6e-4ca7-ac15-caa27f69f4bb",
+    "id": "ca9b6178-dbc3-446c-b15f-e107f116d81c",
     "code": "GW",
     "name": "Guinea-Bissau",
     "longName": "Republic of Guinea-Bissau",
@@ -2157,10 +2157,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647706Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "1503a315-577d-4c55-8988-5ddabead203b",
+    "id": "b5e620d1-99e8-4fa7-810a-a243aea9d5d8",
     "code": "HT",
     "name": "Haiti",
     "longName": "Republic of Haiti",
@@ -2173,10 +2173,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647743Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "4eeddd4b-d09c-4e55-be11-43392bd5927c",
+    "id": "9f0f143f-cb82-4838-ad4a-a2d651939007",
     "code": "HM",
     "name": "Heard Island and McDonald Islands",
     "longName": "Heard Island and McDonald Islands",
@@ -2189,10 +2189,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647774Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "c951f49b-3ae2-45e9-8126-19513433bad4",
+    "id": "89e24a04-5560-4610-8990-fe0d7c661f74",
     "code": "HN",
     "name": "Honduras",
     "longName": "Republic of Honduras",
@@ -2205,10 +2205,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647804Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "33c62dc0-1daf-41a0-bdb4-40d3224166c7",
+    "id": "13e1a70d-8617-4707-b509-208aa9b5df7d",
     "code": "HK",
     "name": "Hong Kong",
     "longName": "Hong Kong Special Administrative Region of China",
@@ -2221,10 +2221,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647834Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "f5b59f20-57ef-4a80-87ec-63dc23fddc00",
+    "id": "eee72054-7df2-4fc9-9c7c-9067f1fb60d0",
     "code": "IN",
     "name": "India",
     "longName": "Republic of India",
@@ -2237,10 +2237,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647861Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "9f06cad2-3424-4d74-9e27-4118c92d54e0",
+    "id": "fcf930e5-6ae0-44f2-b367-d83207bfdb00",
     "code": "ID",
     "name": "Indonesia",
     "longName": "Republic of Indonesia",
@@ -2253,10 +2253,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647933Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "b0929957-327b-4c14-bfc9-dea97f21a8ba",
+    "id": "090a76bf-96cf-4ea4-82e5-76478976e57c",
     "code": "IR",
     "name": "\u0022Iran",
     "longName": "Islamic Republic of Iran",
@@ -2264,15 +2264,15 @@
     "euTradeMember": false,
     "devolvedAuthority": false,
     "sortOrder": 0,
-    "effectiveStartDate": "1900-01-01T00:00:00Z",
+    "effectiveStartDate": "2025-10-28T19:50:15.1688086Z",
     "effectiveEndDate": null,
     "createdBy": "Islamic Republic of\u0022",
-    "createdDate": "2025-10-21T12:48:36.6647941Z",
+    "createdDate": "2025-10-28T19:50:15.168808Z",
     "lastModifiedBy": "True",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647952Z"
+    "lastModifiedDate": "2025-10-28T19:50:15.1688087Z"
   },
   {
-    "id": "6505c9ab-6e29-4a64-972c-7747316611dc",
+    "id": "b7747d10-5223-438a-9270-9d93e304beb7",
     "code": "IQ",
     "name": "Iraq",
     "longName": "Republic of Iraq",
@@ -2285,10 +2285,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6647969Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "c5534435-f161-4c66-be43-db4e1024fe81",
+    "id": "40463a21-0304-40d9-96cc-ba5e810d5699",
     "code": "IL",
     "name": "Israel",
     "longName": "State of Israel",
@@ -2301,10 +2301,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648098Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "8492e1fb-0abf-4610-8fe4-d4bcfe9cbe58",
+    "id": "7a2f9ef2-0f9d-488c-8362-3a2efdd4b8b9",
     "code": "JM",
     "name": "Jamaica",
     "longName": "Jamaica",
@@ -2317,10 +2317,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648116Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "27b7f691-1f67-482f-9932-a2d26f77964a",
+    "id": "10ffb547-8cfc-4aaa-aee2-b04b81f7d332",
     "code": "JP",
     "name": "Japan",
     "longName": "Japan",
@@ -2333,10 +2333,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648132Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "b87d29a4-0c8d-4559-83b6-6d037ca7acfe",
+    "id": "7677de91-89cf-4c10-a751-f4669c413d39",
     "code": "JO",
     "name": "Jordan",
     "longName": "Hashemite Kingdom of Jordan",
@@ -2349,10 +2349,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648148Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "e2f008af-67a3-45e6-bf96-cdc02ec511a1",
+    "id": "dd9bcfa8-fdff-4a80-8de7-51b95f185318",
     "code": "KZ",
     "name": "Kazakhstan",
     "longName": "Republic of Kazakhstan",
@@ -2365,10 +2365,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648165Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "3921c298-8630-4b88-ab29-d3cf2ca83c2a",
+    "id": "1492b56c-cd78-4797-846e-6a6227eda289",
     "code": "KE",
     "name": "Kenya",
     "longName": "Republic of Kenya",
@@ -2381,10 +2381,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648181Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "a7d30128-3f77-4400-96eb-2566cf6adaa6",
+    "id": "8eeff3de-1475-45eb-bfc4-1f3a343ed834",
     "code": "KI",
     "name": "Kiribati",
     "longName": "Republic of Kiribati",
@@ -2397,10 +2397,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648241Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "67b8bf2f-1df6-45f4-a8f6-5138d2405848",
+    "id": "97f598ee-f4ed-49d9-af60-7cb11dc249ac",
     "code": "KW",
     "name": "Kuwait",
     "longName": "State of Kuwait",
@@ -2413,10 +2413,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648257Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "28675e99-bde3-4eab-9099-ae96f3b5d766",
+    "id": "aa49a29c-1cfa-4541-bcda-7f138fc27c0e",
     "code": "KG",
     "name": "Kyrgyzstan",
     "longName": "Kyrgyz Republic",
@@ -2429,10 +2429,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648276Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "ddef0fdc-742d-463a-b26c-c7085cf67ea4",
+    "id": "4faf3135-1650-4d5d-a1e4-33721204eb2e",
     "code": "LA",
     "name": "Lao People\u0027s Democratic Republic",
     "longName": "Lao People\u0027s Democratic Republic",
@@ -2445,10 +2445,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648292Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "85298480-6137-4bff-818e-868f9baceeb1",
+    "id": "da0c64fa-3c32-4040-902a-69480a736b40",
     "code": "LB",
     "name": "Lebanon",
     "longName": "Lebanese Republic",
@@ -2461,10 +2461,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648309Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "c73aef46-1a44-4f23-b054-afb56c04db81",
+    "id": "263f11d8-1a59-4fa0-b577-7aa9010879cc",
     "code": "LS",
     "name": "Lesotho",
     "longName": "Kingdom of Lesotho",
@@ -2477,10 +2477,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648326Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "c263a9a3-a933-4263-b644-02d53718ac18",
+    "id": "97594d0f-44be-45b0-b761-71c63d38114f",
     "code": "LR",
     "name": "Liberia",
     "longName": "Republic of Liberia",
@@ -2493,10 +2493,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648344Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "f40fb52b-920e-4525-8cc5-8509a3b26785",
+    "id": "bed1a69e-40e5-4d3c-91e7-ce36f4d88075",
     "code": "LY",
     "name": "Libya",
     "longName": "Libya",
@@ -2509,10 +2509,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.664836Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "d9190a7a-1a7a-45ad-a79c-7668f96ce933",
+    "id": "9d5b302c-fa92-412b-a215-d38016dc4098",
     "code": "MO",
     "name": "Macao",
     "longName": "Macao Special Administrative Region of China",
@@ -2525,10 +2525,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648415Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "9b3633f6-1bf9-4a34-82ad-c472f0f947f0",
+    "id": "6d7cb430-4901-400e-8d96-c727b278a5a0",
     "code": "MG",
     "name": "Madagascar",
     "longName": "Republic of Madagascar",
@@ -2541,10 +2541,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648431Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "c247f7a3-ca36-4515-8a74-de974c227b7e",
+    "id": "181b7794-1cfe-47ef-85a2-a42d968ebdc7",
     "code": "MW",
     "name": "Malawi",
     "longName": "Republic of Malawi",
@@ -2557,10 +2557,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648449Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "f557bb33-fde1-4821-affc-9a8c44bbc1fc",
+    "id": "2c0db920-92e5-4c11-8dcb-301547e11469",
     "code": "MY",
     "name": "Malaysia",
     "longName": "Malaysia",
@@ -2573,10 +2573,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648466Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "c166ee21-5ede-41c6-b39b-f5019e6388a9",
+    "id": "0822c1d6-1038-41f5-8529-bdd5f52c22cb",
     "code": "MV",
     "name": "Maldives",
     "longName": "Republic of Maldives",
@@ -2589,10 +2589,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648483Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "382f1453-d348-4303-9488-e76266c198c9",
+    "id": "251ba065-61bd-4414-a320-7b88474106d0",
     "code": "ML",
     "name": "Mali",
     "longName": "Republic of Mali",
@@ -2605,10 +2605,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648499Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "fe6530d0-27f2-4cc2-8377-cc6a54636638",
+    "id": "726e45e0-8dda-4ddd-88c8-b9f0a3fdacbb",
     "code": "MH",
     "name": "Marshall Islands",
     "longName": "Republic of the Marshall Islands",
@@ -2621,10 +2621,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648516Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "91100114-9010-4564-bcaf-67366366a9be",
+    "id": "5b384da5-75a2-4f1a-a822-0020113cb331",
     "code": "MQ",
     "name": "Martinique",
     "longName": "Martinique",
@@ -2637,10 +2637,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648533Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "a6d0efc7-05bf-4e39-b0c6-1924b1d48e3d",
+    "id": "397deded-2de8-4a63-b4a1-a693875c3dae",
     "code": "MR",
     "name": "Mauritania",
     "longName": "Islamic Republic of Mauritania",
@@ -2653,10 +2653,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.664855Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "67fefff3-4c97-4d3e-9048-8e3b6a3b3e89",
+    "id": "bdc128dc-dc34-497d-af59-c89a88ddfb13",
     "code": "MU",
     "name": "Mauritius",
     "longName": "Republic of Mauritius",
@@ -2669,10 +2669,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648603Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "22942299-cdc4-497a-a26a-a25c6fa5563e",
+    "id": "d2c480cd-20fe-424b-9d73-6711ef4163e8",
     "code": "YT",
     "name": "Mayotte",
     "longName": "Mayotte",
@@ -2685,10 +2685,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648621Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "8e1abf93-834e-4ded-b98e-98096880b989",
+    "id": "19fc56c6-a7f1-4fc1-9aa5-df0535af7fe7",
     "code": "MX",
     "name": "Mexico",
     "longName": "United Mexican States",
@@ -2701,10 +2701,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648637Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "582c07bd-7e38-4952-9571-ef119362b500",
+    "id": "1d8571bf-df55-45b3-b88b-f35d4a305636",
     "code": "FM",
     "name": "\u0022Micronesia",
     "longName": "Federated States of Micronesia",
@@ -2712,15 +2712,15 @@
     "euTradeMember": false,
     "devolvedAuthority": false,
     "sortOrder": 0,
-    "effectiveStartDate": "1900-01-01T00:00:00Z",
+    "effectiveStartDate": "2025-10-28T19:50:15.1688817Z",
     "effectiveEndDate": null,
     "createdBy": "Federated States of\u0022",
-    "createdDate": "2025-10-21T12:48:36.6648645Z",
+    "createdDate": "2025-10-28T19:50:15.1688811Z",
     "lastModifiedBy": "True",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648653Z"
+    "lastModifiedDate": "2025-10-28T19:50:15.1688818Z"
   },
   {
-    "id": "1031bb1b-1f2c-418e-be6f-57be72d0f7ab",
+    "id": "4752131c-6cef-4122-86f3-900932a72c3e",
     "code": "MN",
     "name": "Mongolia",
     "longName": "Mongolia",
@@ -2733,10 +2733,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648669Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "07505e5a-3528-4aac-a19e-782311d2f5a1",
+    "id": "44ec7217-d9a7-4005-b2f9-19ae1313f0a9",
     "code": "MS",
     "name": "Montserrat",
     "longName": "Montserrat",
@@ -2749,10 +2749,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648685Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "7c682155-7287-4053-b0e1-04e5375c3f3d",
+    "id": "0adfd6ba-bc3d-443f-8e27-09191585678e",
     "code": "MA",
     "name": "Morocco",
     "longName": "Kingdom of Morocco",
@@ -2765,10 +2765,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648702Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "d32dd333-e896-494e-b43c-88d554c5b422",
+    "id": "ba71f3bb-145a-41a2-91fe-aa3a7544cc3d",
     "code": "MZ",
     "name": "Mozambique",
     "longName": "Republic of Mozambique",
@@ -2781,10 +2781,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648718Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "16b36e80-5b34-4c81-a360-1ad9d204ee7f",
+    "id": "f26a0d1c-f345-46cd-ade0-07618b6bed4d",
     "code": "MM",
     "name": "Myanmar",
     "longName": "Republic of Myanmar",
@@ -2797,10 +2797,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648735Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "fa0d9b3b-3005-425f-b7c0-bb4e7a1aced9",
+    "id": "995bf8fe-8632-4fb7-a720-dc5ccd971c3f",
     "code": "NA",
     "name": "Namibia",
     "longName": "Republic of Namibia",
@@ -2813,10 +2813,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648791Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "87a235df-8069-4432-b298-0bd7199cb3a5",
+    "id": "e000c088-359a-4631-9210-fd25c533f806",
     "code": "NR",
     "name": "Nauru",
     "longName": "Republic of Nauru",
@@ -2829,10 +2829,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648808Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "7cfe057c-7b16-412d-bef5-79ca7b6ceb8c",
+    "id": "b29a4933-d47b-487e-86a1-5ba9b1252579",
     "code": "NP",
     "name": "Nepal",
     "longName": "Federal Democratic Republic of Nepal",
@@ -2845,10 +2845,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648825Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "ecc8789e-3a3d-4c92-b281-4aa13d108cce",
+    "id": "780bc45b-5d37-47e6-a696-a057455596bf",
     "code": "NC",
     "name": "New Caledonia",
     "longName": "New Caledonia",
@@ -2861,10 +2861,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648841Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "0cdf41ef-f4d1-43ff-91c0-1e564b61942f",
+    "id": "a266dc29-0aeb-40ea-b53e-be0a1bf290b1",
     "code": "NZ",
     "name": "New Zealand",
     "longName": "New Zealand",
@@ -2877,10 +2877,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648859Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "e951f974-de53-4fe9-8d7e-0ce631975855",
+    "id": "531d3fba-41bd-4410-8de2-9e32b70faa87",
     "code": "NI",
     "name": "Nicaragua",
     "longName": "Republic of Nicaragua",
@@ -2893,10 +2893,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648875Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "afc409d1-55b2-4245-bb6d-a71c2c2cff83",
+    "id": "f3e68c05-7db5-48aa-82b3-d9723f9e49d6",
     "code": "NE",
     "name": "Niger",
     "longName": "Republic of the Niger",
@@ -2909,10 +2909,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648892Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "650d2db0-3545-4a5d-b578-3839901deeea",
+    "id": "0579df05-43a8-41cd-a421-40e232ae11f4",
     "code": "NG",
     "name": "Nigeria",
     "longName": "Federal Republic of Nigeria",
@@ -2925,10 +2925,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648908Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "d10c0a21-2d31-4bd3-9cd2-6b4e67732b9d",
+    "id": "8da7f8bc-06d3-4e95-933a-af8804ef9270",
     "code": "NU",
     "name": "Niue",
     "longName": "Niue",
@@ -2941,10 +2941,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648926Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "4e169ca9-dcf4-43a1-adcb-6e27aef07607",
+    "id": "03eec165-25aa-44b7-b902-89f4b9b27662",
     "code": "NF",
     "name": "Norfolk Island",
     "longName": "Norfolk Island",
@@ -2957,10 +2957,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648979Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "f8548c02-7773-4707-8724-8c97c4f9e147",
+    "id": "d050d8a0-2847-4127-9b0a-09a0648eef59",
     "code": "KP",
     "name": "\u0022Korea",
     "longName": "Democratic People\u0027s Republic of Korea",
@@ -2968,15 +2968,15 @@
     "euTradeMember": false,
     "devolvedAuthority": false,
     "sortOrder": 0,
-    "effectiveStartDate": "1900-01-01T00:00:00Z",
+    "effectiveStartDate": "2025-10-28T19:50:15.1689202Z",
     "effectiveEndDate": null,
     "createdBy": "Democratic People\u0027s Republic of\u0022",
-    "createdDate": "2025-10-21T12:48:36.6648989Z",
+    "createdDate": "2025-10-28T19:50:15.1689197Z",
     "lastModifiedBy": "True",
-    "lastModifiedDate": "2025-10-21T12:48:36.6648995Z"
+    "lastModifiedDate": "2025-10-28T19:50:15.1689203Z"
   },
   {
-    "id": "c703f1fb-0ef9-4550-8066-3e03f8ea074a",
+    "id": "394dd630-7ccb-4f43-830b-f32f6ba6384c",
     "code": "MP",
     "name": "Northern Mariana Islands",
     "longName": "Commonwealth of the Northern Mariana Islands",
@@ -2989,10 +2989,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649013Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "dce44d15-fbef-4ff8-b651-a7b05b2275ea",
+    "id": "48a3bef8-6468-40a8-b183-71b8b7ac8243",
     "code": "OM",
     "name": "Oman",
     "longName": "Sultanate of Oman",
@@ -3005,10 +3005,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.664903Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "aaadc366-14cb-4959-878e-e530d04ddb7d",
+    "id": "632bcc59-1e68-4741-90e5-5618550b2a4d",
     "code": "PK",
     "name": "Pakistan",
     "longName": "Islamic Republic of Pakistan",
@@ -3021,10 +3021,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649047Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "fd0d35e4-6a7f-441a-9650-3313e7630059",
+    "id": "cbc74767-743a-4b50-8692-4d93e7e13f2f",
     "code": "PW",
     "name": "Palau",
     "longName": "Republic of Palau",
@@ -3037,10 +3037,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649063Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "9eb9e716-516a-4fa9-9901-5bc2fc954564",
+    "id": "1929e482-c131-4be7-86bd-590250fc54f2",
     "code": "PS",
     "name": "\u0022Palestine",
     "longName": "the State of Palestine",
@@ -3048,15 +3048,15 @@
     "euTradeMember": false,
     "devolvedAuthority": false,
     "sortOrder": 0,
-    "effectiveStartDate": "1900-01-01T00:00:00Z",
+    "effectiveStartDate": "2025-10-28T19:50:15.1689339Z",
     "effectiveEndDate": null,
     "createdBy": "State of\u0022",
-    "createdDate": "2025-10-21T12:48:36.6649069Z",
+    "createdDate": "2025-10-28T19:50:15.1689335Z",
     "lastModifiedBy": "True",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649076Z"
+    "lastModifiedDate": "2025-10-28T19:50:15.1689341Z"
   },
   {
-    "id": "2ec0bf9d-37a8-4bc2-8055-9628410e7fbf",
+    "id": "513aa99f-9f08-4a34-8022-122b318147fa",
     "code": "PA",
     "name": "Panama",
     "longName": "Republic of Panama",
@@ -3069,10 +3069,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649094Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "77c25d80-9798-4278-b55a-91839814fc85",
+    "id": "18c6003d-5aa8-451f-aef1-f9e664e252fa",
     "code": "PG",
     "name": "Papua New Guinea",
     "longName": "Independent State of Papua New Guinea",
@@ -3085,10 +3085,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649134Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "70dbbed5-6d7d-4964-986b-46618363d512",
+    "id": "2e31a278-50af-4a72-96a8-aec209f842a0",
     "code": "PH",
     "name": "Philippines",
     "longName": "Republic of the Philippines",
@@ -3101,10 +3101,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649151Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "e97a304c-5244-4bc5-b43c-61ac26a2095c",
+    "id": "5d6e9de5-ce8d-45b6-9f48-b04a9ef0bf09",
     "code": "PN",
     "name": "Pitcairn",
     "longName": "Pitcairn",
@@ -3117,10 +3117,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649168Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "de8dec58-054d-46eb-8da2-d84e2648da65",
+    "id": "ce1927d0-4bb9-4d85-8f2a-a7fa0ae73e47",
     "code": "QA",
     "name": "Qatar",
     "longName": "State of Qatar",
@@ -3133,10 +3133,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649185Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "bf17341f-6ea2-42ae-8c05-be592815d1d1",
+    "id": "f1e215dd-e3ba-4dfb-a3b6-d244deb300eb",
     "code": "RE",
     "name": "R\uFFFDunion",
     "longName": "R\uFFFDunion",
@@ -3149,10 +3149,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649203Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "33474a54-7606-4ef9-8183-84eb9df11c49",
+    "id": "9d5b6d32-5a75-44ea-9f4c-5d6f78130e88",
     "code": "RW",
     "name": "Rwanda",
     "longName": "Rwandese Republic",
@@ -3165,10 +3165,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649218Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "93d9e36b-68a1-4062-a4c4-7f1024ed2b9e",
+    "id": "1b5fb0e7-3e16-41db-b013-8b762077fe8a",
     "code": "SH",
     "name": "Ascension and Tristan da Cunha\u0022",
     "longName": "\u0022Saint Helena",
@@ -3176,15 +3176,15 @@
     "euTradeMember": false,
     "devolvedAuthority": false,
     "sortOrder": 0,
-    "effectiveStartDate": "1900-01-01T00:00:00Z",
+    "effectiveStartDate": "2025-10-28T19:50:15.1689548Z",
     "effectiveEndDate": "2025-10-09T23:00:00Z",
     "createdBy": "\u0022Saint Helena",
-    "createdDate": "2025-10-21T12:48:36.6649226Z",
+    "createdDate": "2025-10-28T19:50:15.1689538Z",
     "lastModifiedBy": "False",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649244Z"
+    "lastModifiedDate": "2025-10-28T19:50:15.1689552Z"
   },
   {
-    "id": "138b73fd-cec7-4554-ae83-4b5040a02a84",
+    "id": "2c6fc3d1-7b3a-4867-98f9-9e82addd13a0",
     "code": "KN",
     "name": "Saint Kitts and Nevis",
     "longName": "Saint Kitts and Nevis",
@@ -3197,10 +3197,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649263Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "2e72c0e9-1e92-45d5-8632-46232640fc92",
+    "id": "18fbe1f9-a406-4939-9012-153c6bbfec89",
     "code": "LC",
     "name": "Saint Lucia",
     "longName": "Saint Lucia",
@@ -3213,10 +3213,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649331Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "f93aad6b-e92f-434b-9bbc-5fad5075fdab",
+    "id": "eeb45553-54b3-4481-9bbf-f04e3d8b1e1b",
     "code": "VC",
     "name": "Saint Vincent and the Grenadines",
     "longName": "Saint Vincent and the Grenadines",
@@ -3229,10 +3229,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.664935Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "01803b15-ca0c-4fb7-9dd2-36e882ec0bfb",
+    "id": "a887bca2-8513-4e46-9876-de83a598f8f4",
     "code": "WS",
     "name": "Samoa",
     "longName": "Independent State of Samoa",
@@ -3245,10 +3245,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649366Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "c10718a9-d8ef-4777-b1a7-69907b92f9c6",
+    "id": "23f897ea-8abd-4a71-8a4c-8de738b73f3f",
     "code": "ST",
     "name": "Sao Tome and Principe",
     "longName": "Democratic Republic of Sao Tome and Principe",
@@ -3261,10 +3261,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649383Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "76b42ac7-9ee1-4dea-a523-7ec826337bdf",
+    "id": "e68f100a-56d6-41b1-8e9b-21de60fa7724",
     "code": "SA",
     "name": "Saudi Arabia",
     "longName": "Kingdom of Saudi Arabia",
@@ -3277,10 +3277,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.66494Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "1ac27abe-41d2-4625-890b-327fb13076bd",
+    "id": "138c5869-6e4b-4460-be4f-9cd22150bd75",
     "code": "SN",
     "name": "Senegal",
     "longName": "Republic of Senegal",
@@ -3293,10 +3293,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649416Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "42f292c0-055e-4ffe-8ac5-b37c4d13b00a",
+    "id": "1c0c6a4d-e5d2-439d-86e7-c9bc8653f734",
     "code": "SC",
     "name": "Seychelles",
     "longName": "Republic of Seychelles",
@@ -3309,10 +3309,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649432Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "d413fad7-077c-4c28-89e3-55cf9944b3d5",
+    "id": "40188296-ac9d-4476-a5d7-06be191b6358",
     "code": "SL",
     "name": "Sierra Leone",
     "longName": "Republic of Sierra Leone",
@@ -3325,10 +3325,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.664945Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "1e6f4642-f465-4c00-85c9-51ea7b7748fc",
+    "id": "949a458c-0b2a-4479-a671-f5ae18d8c6bd",
     "code": "SG",
     "name": "Singapore",
     "longName": "Republic of Singapore",
@@ -3341,10 +3341,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649466Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "01963da3-f8ac-43a7-b095-a6e6e307bae3",
+    "id": "d1bfc8f4-32ef-4e83-bdc3-fcefa0442a0f",
     "code": "SB",
     "name": "Solomon Islands",
     "longName": "Solomon Islands",
@@ -3357,10 +3357,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649532Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "2563ccf0-f2da-4d51-b9a3-4ce1eae25ecd",
+    "id": "9ed815fa-e488-40b9-bbec-99db340399be",
     "code": "SO",
     "name": "Somalia",
     "longName": "Federal Republic of Somalia",
@@ -3373,10 +3373,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649548Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "88650b1c-3a45-4861-8c03-56011185f2f8",
+    "id": "3284b06b-2eec-40ba-98cf-27a5ad30e66f",
     "code": "ZA",
     "name": "South Africa",
     "longName": "Republic of South Africa",
@@ -3389,10 +3389,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649566Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "a031bb9d-cba1-45c2-a25a-6dc57eca867e",
+    "id": "d8a6027a-6219-4165-801d-5c231a1c86fe",
     "code": "GS",
     "name": "South Georgia and the South Sandwich Islands",
     "longName": "South Georgia and the South Sandwich Islands",
@@ -3405,10 +3405,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649583Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "8f25fc06-bb72-4205-b73e-5405353d7721",
+    "id": "d562e4f6-495b-48ea-952b-790426e8995d",
     "code": "KR",
     "name": "Republic of\u0022",
     "longName": "\u0022Korea",
@@ -3416,15 +3416,15 @@
     "euTradeMember": false,
     "devolvedAuthority": false,
     "sortOrder": 0,
-    "effectiveStartDate": "1900-01-01T00:00:00Z",
+    "effectiveStartDate": "2025-10-28T19:50:15.1689947Z",
     "effectiveEndDate": "2025-10-09T23:00:00Z",
     "createdBy": "\u0022Korea",
-    "createdDate": "2025-10-21T12:48:36.6649591Z",
+    "createdDate": "2025-10-28T19:50:15.1689939Z",
     "lastModifiedBy": "False",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649602Z"
+    "lastModifiedDate": "2025-10-28T19:50:15.1689951Z"
   },
   {
-    "id": "f3b8b313-bf39-4cdc-a795-5314810b6d43",
+    "id": "08f651a9-e128-4060-ba27-19633971066c",
     "code": "LK",
     "name": "Sri Lanka",
     "longName": "Democratic Socialist Republic of Sri Lanka",
@@ -3437,10 +3437,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.664962Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "b1cd9217-9053-4a78-a35d-99b36ce5280c",
+    "id": "e90ff7f7-309e-4908-b308-21e82b13bace",
     "code": "SD",
     "name": "Sudan",
     "longName": "Republic of the Sudan",
@@ -3453,10 +3453,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649638Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "500fd723-a135-465d-8af6-62a4123689ba",
+    "id": "4013509c-c063-429e-95e1-c0d3baaed89b",
     "code": "SZ",
     "name": "Eswatini",
     "longName": "Kingdom of Eswatini",
@@ -3469,10 +3469,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649654Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "b2dd1e77-de75-4c5e-ab31-31759c5128fd",
+    "id": "4b0967cf-5fe2-496a-8d73-a7189316f294",
     "code": "SY",
     "name": "Syrian Arab Republic",
     "longName": "Syrian Arab Republic",
@@ -3485,10 +3485,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649707Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "3c7d5467-8ec3-4701-91e3-d63d96dfe00b",
+    "id": "38b4e402-2550-4817-8148-4316ce3e9b9d",
     "code": "TW",
     "name": "Province of China\u0022",
     "longName": "\u0022Taiwan",
@@ -3496,15 +3496,15 @@
     "euTradeMember": false,
     "devolvedAuthority": false,
     "sortOrder": 0,
-    "effectiveStartDate": "1900-01-01T00:00:00Z",
+    "effectiveStartDate": "2025-10-28T19:50:15.1690056Z",
     "effectiveEndDate": "2025-10-09T23:00:00Z",
     "createdBy": "\u0022Taiwan",
-    "createdDate": "2025-10-21T12:48:36.6649715Z",
+    "createdDate": "2025-10-28T19:50:15.1690048Z",
     "lastModifiedBy": "False",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649726Z"
+    "lastModifiedDate": "2025-10-28T19:50:15.1690058Z"
   },
   {
-    "id": "4f90e5ea-9b34-4d1b-8693-fd708af403b0",
+    "id": "373530a2-b73b-4b3f-9ee6-30e64908d526",
     "code": "TJ",
     "name": "Tajikistan",
     "longName": "Republic of Tajikistan",
@@ -3517,10 +3517,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649743Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "adae58cc-6624-467b-b13a-57fc2fccebca",
+    "id": "ac928855-2550-493c-a33b-38bcb9f4a02e",
     "code": "TZ",
     "name": "\u0022Tanzania",
     "longName": "United Republic of Tanzania",
@@ -3528,15 +3528,15 @@
     "euTradeMember": false,
     "devolvedAuthority": false,
     "sortOrder": 0,
-    "effectiveStartDate": "1900-01-01T00:00:00Z",
+    "effectiveStartDate": "2025-10-28T19:50:15.1690129Z",
     "effectiveEndDate": null,
     "createdBy": "United Republic of\u0022",
-    "createdDate": "2025-10-21T12:48:36.6649751Z",
+    "createdDate": "2025-10-28T19:50:15.1690124Z",
     "lastModifiedBy": "True",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649758Z"
+    "lastModifiedDate": "2025-10-28T19:50:15.1690131Z"
   },
   {
-    "id": "b6ccc1a8-8f89-4615-95fd-f8e88c21d951",
+    "id": "a70c41f3-c105-4d5c-b19b-a8a6388190d6",
     "code": "TH",
     "name": "Thailand",
     "longName": "Kingdom of Thailand",
@@ -3549,10 +3549,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649776Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "692d4b14-f0b6-4fe3-a780-13715eef6aa7",
+    "id": "22d3c17e-5cd3-425e-8f39-2b595b2cf4a9",
     "code": "TL",
     "name": "Timor-Leste",
     "longName": "Democratic Republic of Timor-Leste",
@@ -3565,10 +3565,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649793Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "18a449aa-1a13-420f-ba57-35ab889bd2c5",
+    "id": "5ffd3ebe-a38c-43e0-9e85-6fd405d61683",
     "code": "TG",
     "name": "Togo",
     "longName": "Togolese Republic",
@@ -3581,10 +3581,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649812Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "21beda89-47f8-43d0-a5ba-7635c0924943",
+    "id": "9b9fa344-9f27-4706-be21-6ed1a87694e8",
     "code": "TK",
     "name": "Tokelau",
     "longName": "Tokelau",
@@ -3597,10 +3597,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649828Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "1ad9a746-8d9e-4d5e-bf86-b165a9b04455",
+    "id": "7c59ee8f-a190-4dc8-ab5c-3fe706954466",
     "code": "TO",
     "name": "Tonga",
     "longName": "Kingdom of Tonga",
@@ -3613,10 +3613,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649887Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "c5ead2c0-517a-4327-8534-5ceafb44ec85",
+    "id": "7f87b9d8-c065-4288-ac4b-e35c695d64e5",
     "code": "TT",
     "name": "Trinidad and Tobago",
     "longName": "Republic of Trinidad and Tobago",
@@ -3629,10 +3629,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649905Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "b85b55df-eeb5-4e8d-8e64-0f6612818124",
+    "id": "44ca9969-00d3-41f7-b3ac-5873c3e3db61",
     "code": "TN",
     "name": "Tunisia",
     "longName": "Republic of Tunisia",
@@ -3645,10 +3645,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649923Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "9a95dfbc-3641-4b64-99f0-6d79e73dd13e",
+    "id": "d0e7d2f1-c139-488d-8df3-7b489cbdf531",
     "code": "TM",
     "name": "Turkmenistan",
     "longName": "Turkmenistan",
@@ -3661,10 +3661,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649939Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "c34017d4-c89f-4d74-a670-49363a6a65ee",
+    "id": "b850fdf4-57e7-48ea-8abe-3b4758c15a72",
     "code": "TC",
     "name": "Turks and Caicos Islands",
     "longName": "Turks and Caicos Islands",
@@ -3677,10 +3677,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649955Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "e4c47fa1-7fd9-4228-9c04-66268bbd8c7a",
+    "id": "14c54d58-8b76-42c5-aa0f-d545b276afab",
     "code": "TV",
     "name": "Tuvalu",
     "longName": "Tuvalu",
@@ -3693,10 +3693,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6649972Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "c5b40816-0a97-4401-b62a-9a19a8a5f705",
+    "id": "57eeb981-f32b-4a34-8240-d9cbbd33bb65",
     "code": "UG",
     "name": "Uganda",
     "longName": "Republic of Uganda",
@@ -3709,10 +3709,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.664999Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "b50c7fca-2efc-4213-bd6d-011533d93b11",
+    "id": "98cb824a-b959-4fa4-8058-f2bb30ef547b",
     "code": "AE",
     "name": "United Arab Emirates",
     "longName": "United Arab Emirates",
@@ -3725,10 +3725,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6650006Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "fff6b9fb-a6db-4ad9-9ef9-e022e89fa0b1",
+    "id": "7fc41403-7dfe-483d-89c8-bfdf5fdf87a0",
     "code": "UZ",
     "name": "Uzbekistan",
     "longName": "Republic of Uzbekistan",
@@ -3741,10 +3741,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6650022Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "b0cd94fc-e97d-4c9f-904e-9b6a046009ac",
+    "id": "becd95ab-f9f1-424e-81e7-7e6a10e8eb1c",
     "code": "VU",
     "name": "Vanuatu",
     "longName": "Republic of Vanuatu",
@@ -3757,10 +3757,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6650072Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "b5dc89e4-47d8-48cd-a8e4-a37f98233845",
+    "id": "ba3fa85b-cc3f-449a-9c3e-942d1da32111",
     "code": "VN",
     "name": "Viet Nam",
     "longName": "Socialist Republic of Viet Nam",
@@ -3773,10 +3773,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6650089Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "99dbaf84-d188-47ac-bb6f-1d91395d5334",
+    "id": "933221b9-2ef3-4178-bedb-289c1703f27e",
     "code": "VG",
     "name": "\u0022Virgin Islands",
     "longName": "British Virgin Islands",
@@ -3784,15 +3784,15 @@
     "euTradeMember": false,
     "devolvedAuthority": false,
     "sortOrder": 0,
-    "effectiveStartDate": "1900-01-01T00:00:00Z",
+    "effectiveStartDate": "2025-10-28T19:50:15.1690541Z",
     "effectiveEndDate": null,
     "createdBy": "British\u0022",
-    "createdDate": "2025-10-21T12:48:36.6650096Z",
+    "createdDate": "2025-10-28T19:50:15.1690536Z",
     "lastModifiedBy": "True",
-    "lastModifiedDate": "2025-10-21T12:48:36.6650103Z"
+    "lastModifiedDate": "2025-10-28T19:50:15.1690542Z"
   },
   {
-    "id": "5c749984-6c0c-4ffc-a804-1adc5bd7bb73",
+    "id": "80527d23-78d9-4fe1-97df-85f71448a35b",
     "code": "VI",
     "name": "\u0022Virgin Islands",
     "longName": "Virgin Islands of the United States",
@@ -3800,15 +3800,15 @@
     "euTradeMember": false,
     "devolvedAuthority": false,
     "sortOrder": 0,
-    "effectiveStartDate": "1900-01-01T00:00:00Z",
+    "effectiveStartDate": "2025-10-28T19:50:15.169056Z",
     "effectiveEndDate": null,
     "createdBy": "U.S.\u0022",
-    "createdDate": "2025-10-21T12:48:36.6650111Z",
+    "createdDate": "2025-10-28T19:50:15.1690555Z",
     "lastModifiedBy": "True",
-    "lastModifiedDate": "2025-10-21T12:48:36.6650117Z"
+    "lastModifiedDate": "2025-10-28T19:50:15.1690561Z"
   },
   {
-    "id": "c91a1470-abce-4237-8f4e-8d37e366ccea",
+    "id": "53882bd1-1fc4-4084-acf4-465e6d114d56",
     "code": "WF",
     "name": "Wallis and Futuna",
     "longName": "Wallis and Futuna",
@@ -3821,10 +3821,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6650133Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "01097801-1560-4895-a48e-32e068200c38",
+    "id": "efc9bafe-6ee7-41c8-a30c-1de2a776f430",
     "code": "EH",
     "name": "Western Sahara",
     "longName": "Western Sahara",
@@ -3837,10 +3837,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6650152Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "5c9e8823-4726-4af5-9fb4-e303b0b29cc0",
+    "id": "7aeb8aab-e26d-4ceb-845c-83e457cbee3f",
     "code": "YE",
     "name": "Yemen",
     "longName": "Republic of Yemen",
@@ -3853,10 +3853,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6650168Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "6252bb40-0b88-4720-8b91-2f12512fe60a",
+    "id": "dac4f643-4012-4124-98bf-79962fc1cf7b",
     "code": "ZM",
     "name": "Zambia",
     "longName": "Republic of Zambia",
@@ -3869,10 +3869,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6650185Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "e0cfb805-122a-4346-8f27-e4d89fb50357",
+    "id": "717b45d7-adde-408d-948a-75de06710be8",
     "code": "ZW",
     "name": "Zimbabwe",
     "longName": "Republic of Zimbabwe",
@@ -3885,10 +3885,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6650238Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "7dba2f52-0269-4362-9fae-57e9fe412c97",
+    "id": "ecde127e-27ec-49a2-855a-9ed0e47954c7",
     "code": "CW",
     "name": "Cura\uFFFDao",
     "longName": "Cura\uFFFDao",
@@ -3901,10 +3901,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6650255Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "038f8ab0-fb7a-4ade-8d25-219983db9b9c",
+    "id": "cec3d9a4-6b6b-4041-99ed-c2e9f7439dd9",
     "code": "BL",
     "name": "Saint Barth\uFFFDlemy",
     "longName": "Saint Barth\uFFFDlemy",
@@ -3917,10 +3917,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6650272Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "0fed0d85-74c2-4bcb-a6f2-b8e7a6abd05c",
+    "id": "b08d1e37-ab20-4c53-95c5-6446c123bbe9",
     "code": "MF",
     "name": "Saint Martin (French part)",
     "longName": "Saint Martin (French part)",
@@ -3933,10 +3933,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6650289Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "e6e913cf-30ec-47e3-8675-2b1f917feb3e",
+    "id": "466921e8-3591-4783-a4e6-ba01134496e5",
     "code": "SS",
     "name": "South Sudan",
     "longName": "Republic of South Sudan",
@@ -3949,10 +3949,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6650305Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "0cd44632-a047-454c-8390-b145cc5ed8ff",
+    "id": "c2d71d5f-9fa0-4cfa-9db8-6617e6340fc1",
     "code": "SX",
     "name": "Sint Maarten (Dutch part)",
     "longName": "Sint Maarten (Dutch part)",
@@ -3965,10 +3965,10 @@
     "createdBy": "System",
     "createdDate": "2025-10-09T23:00:00Z",
     "lastModifiedBy": "System",
-    "lastModifiedDate": "2025-10-21T12:48:36.6650323Z"
+    "lastModifiedDate": "2025-10-09T23:00:00Z"
   },
   {
-    "id": "06187af1-5514-4cfd-b2b4-c82d53e723a2",
+    "id": "335b8001-c5ff-4861-bb20-5a804e6b1a9d",
     "code": "BQ",
     "name": "Sint Eustatius and Saba\u0022",
     "longName": "\u0022Bonaire",
@@ -3976,11 +3976,11 @@
     "euTradeMember": false,
     "devolvedAuthority": false,
     "sortOrder": 0,
-    "effectiveStartDate": "1900-01-01T00:00:00Z",
+    "effectiveStartDate": "2025-10-28T19:50:15.1690837Z",
     "effectiveEndDate": "2025-10-09T23:00:00Z",
     "createdBy": "\u0022Bonaire",
-    "createdDate": "2025-10-21T12:48:36.665033Z",
+    "createdDate": "2025-10-28T19:50:15.1690829Z",
     "lastModifiedBy": "False",
-    "lastModifiedDate": "2025-10-21T12:48:36.6650341Z"
+    "lastModifiedDate": "2025-10-28T19:50:15.169084Z"
   }
 ]

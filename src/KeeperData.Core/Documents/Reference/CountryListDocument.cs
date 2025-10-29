@@ -4,7 +4,7 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace KeeperData.Core.Documents.Reference;
 
 [CollectionName("refCountries")]
-public class CountryListDocument
+public class CountryListDocument : IListDocument
 {
     [BsonId]
     public string Id { get; set; } = "all-countries";
