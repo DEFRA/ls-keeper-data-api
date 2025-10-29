@@ -1,12 +1,19 @@
 using KeeperData.Core.Documents;
-using KeeperData.Core.Documents.Reference; // Required for the new CountryListDocument
+using KeeperData.Core.Documents.Reference;
 using KeeperData.Infrastructure.Database.Configuration;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using File = System.IO.File;
 
 namespace KeeperData.Infrastructure.Services;
@@ -15,9 +22,8 @@ public class MongoDataSeeder : IHostedService
 {
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<MongoDataSeeder> _logger;
-    private readonly IMongoCollection<CountryListDocument> _collection;
+    private readonly IMongoDatabase _database;
 
-    // Static fields to help mitigate race conditions in a single process.
     private static DateTime _lastRun = DateTime.MinValue;
     private static readonly object _lock = new object();
 
@@ -29,62 +35,86 @@ public class MongoDataSeeder : IHostedService
     {
         _env = env;
         _logger = logger;
-
-        _collection = client.GetDatabase(config.Value.DatabaseName).GetCollection<CountryListDocument>("refCountries");
+        _database = client.GetDatabase(config.Value.DatabaseName);
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Mongo DB Seeder Service is running (Single-Document Replace Mode).");
+        _logger.LogInformation("Mongo DB Generic Seeder Service is running...");
 
         lock (_lock)
         {
             if (DateTime.UtcNow < _lastRun.AddMinutes(3))
             {
-                _logger.LogInformation("Seeding was performed less than 3 minutes ago within this process. Skipping this run.");
+                _logger.LogInformation("Seeding was performed less than 3 minutes ago. Skipping this run.");
                 return;
             }
             _lastRun = DateTime.UtcNow;
         }
 
-        var targetJsonPath = Path.Combine(_env.ContentRootPath, "Data", "Seed", "countries.json");
-
-        if (!File.Exists(targetJsonPath))
-        {
-            _logger.LogWarning("Seed file '{FileName}' not found. Skipping Mongo data seed.", Path.GetFileName(targetJsonPath));
-            return;
-        }
-
         try
         {
-            var jsonString = await File.ReadAllTextAsync(targetJsonPath, cancellationToken);
-            var countries = JsonSerializer.Deserialize<List<CountryDocument>>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            if (countries == null || !countries.Any())
-            {
-                _logger.LogWarning("No data found in '{FileName}'. Skipping Mongo data seed.", Path.GetFileName(targetJsonPath));
-                return;
-            }
-
-
-            var countryListDocument = new CountryListDocument
-            {
-                Countries = countries,
-                LastUpdatedDate = DateTime.UtcNow
-            };
-
-            var filter = Builders<CountryListDocument>.Filter.Eq(x => x.Id, "all-countries");
-            var options = new ReplaceOptions { IsUpsert = true };
-
-            _logger.LogInformation("Replacing 'all-countries' document in '{CollectionName}' collection...", _collection.CollectionNamespace.CollectionName);
-            await _collection.ReplaceOneAsync(filter, countryListDocument, options, cancellationToken);
-            _logger.LogInformation("Mongo data replacement complete.");
+            await Task.WhenAll(
+                SeedAsync<CountryListDocument, CountryDocument>(cancellationToken),
+                SeedAsync<SpeciesListDocument, SpeciesDocument>(cancellationToken)
+            );
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An error occurred while seeding data from JSON into MongoDB.");
+            _logger.LogError(ex, "A critical error occurred during the data seeding process.");
         }
+
+        _logger.LogInformation("Mongo DB Generic Seeder Service has finished.");
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    private async Task SeedAsync<TDocument, TItem>(CancellationToken cancellationToken)
+        where TDocument : class, IListDocument, new()
+    {
+        var collectionName = typeof(TDocument).GetCustomAttribute<KeeperData.Core.Attributes.CollectionNameAttribute>()?.Name;
+        var documentId = new TDocument().Id;
+        var jsonFileName = $"{collectionName?.Replace("ref", "").ToLower()}.json";
+
+        if (string.IsNullOrEmpty(collectionName))
+        {
+            _logger.LogError("Cannot seed type {TypeName} because it is missing a CollectionName attribute.", typeof(TDocument).Name);
+            return;
+        }
+
+        var targetJsonPath = Path.Combine(_env.ContentRootPath, "Data", "Seed", jsonFileName);
+        if (!File.Exists(targetJsonPath))
+        {
+            _logger.LogInformation("Seed file '{FileName}' not found. Skipping seed for '{CollectionName}'.", jsonFileName, collectionName);
+            return;
+        }
+
+        var jsonString = await File.ReadAllTextAsync(targetJsonPath, cancellationToken);
+        var items = JsonSerializer.Deserialize<List<TItem>>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        if (items == null || !items.Any())
+        {
+            _logger.LogWarning("No data found in '{FileName}'. Skipping.", jsonFileName);
+            return;
+        }
+
+        var documentToSeed = new TDocument { LastUpdatedDate = DateTime.UtcNow };
+
+        var listProperty = typeof(TDocument).GetProperties().FirstOrDefault(p => p.PropertyType == typeof(List<TItem>));
+        if (listProperty == null)
+        {
+            _logger.LogError("Could not find a List<{ItemTypeName}> property on the document type {TypeName}.", typeof(TItem).Name, typeof(TDocument).Name);
+            return;
+        }
+
+        listProperty.SetValue(documentToSeed, items);
+
+        var collection = _database.GetCollection<TDocument>(collectionName);
+        var filter = Builders<TDocument>.Filter.Eq(x => x.Id, documentId);
+        var options = new ReplaceOptions { IsUpsert = true };
+
+        _logger.LogInformation("Replacing '{DocumentId}' document in '{CollectionName}' collection...", documentId, collectionName);
+        await collection.ReplaceOneAsync(filter, documentToSeed, options, cancellationToken);
+        _logger.LogInformation("Data replacement complete for '{CollectionName}'.", collectionName);
+    }
 }
