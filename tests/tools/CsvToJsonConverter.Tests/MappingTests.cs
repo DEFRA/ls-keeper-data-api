@@ -98,4 +98,23 @@ public class MappingTests
         act.Should().Throw<InvalidDataException>()
            .WithMessage("CSV line for species has fewer than 11 columns.");
     }
+
+    [Fact]
+    public void MapPartyRole_WithValidData_CreatesCorrectObject()
+    {
+        // Arrange
+        var csvLine = "LIVESTOCKKEEPER,NEWID(),Livestock Keeper,System,NEWDATE(),,NEWDATE(),True,,System,NEWDATE()";
+        var parts = csvLine.Split(',');
+
+        // Act
+        var result = Program.MapPartyRole(parts);
+
+        // Assert
+        result.Code.Should().Be("LIVESTOCKKEEPER");
+        result.Name.Should().Be("Livestock Keeper");
+        result.IsActive.Should().BeTrue();
+        result.SortOrder.Should().Be(0); // Correctly defaults to 0 as it's empty in the CSV
+        result.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        Guid.TryParse(result.Id, out _).Should().BeTrue();
+    }
 }
