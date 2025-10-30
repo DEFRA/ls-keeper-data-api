@@ -56,7 +56,8 @@ public class MongoDataSeeder : IHostedService
         {
             await Task.WhenAll(
                 SeedAsync<CountryListDocument, CountryDocument>(cancellationToken),
-                SeedAsync<SpeciesListDocument, SpeciesDocument>(cancellationToken)
+                SeedAsync<SpeciesListDocument, SpeciesDocument>(cancellationToken),
+                SeedAsync<PartyRoleListDocument, PartyRoleDocument>(cancellationToken)
             );
         }
         catch (Exception ex)

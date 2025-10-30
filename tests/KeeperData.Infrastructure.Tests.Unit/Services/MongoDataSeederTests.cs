@@ -29,6 +29,7 @@ public class MongoDataSeederTests : IDisposable
     private readonly Mock<IMongoDatabase> _mockDatabase;
     private readonly Mock<IMongoCollection<CountryListDocument>> _mockCountryCollection;
     private readonly Mock<IMongoCollection<SpeciesListDocument>> _mockSpeciesCollection;
+    private readonly Mock<IMongoCollection<PartyRoleListDocument>> _mockPartyRoleCollection;
     private readonly Mock<IOptions<MongoConfig>> _mockConfig;
     private readonly string _testDirectory;
     private readonly string _seedDirectory;
@@ -41,6 +42,7 @@ public class MongoDataSeederTests : IDisposable
         _mockDatabase = new Mock<IMongoDatabase>();
         _mockCountryCollection = new Mock<IMongoCollection<CountryListDocument>>();
         _mockSpeciesCollection = new Mock<IMongoCollection<SpeciesListDocument>>();
+        _mockPartyRoleCollection = new Mock<IMongoCollection<PartyRoleListDocument>>(); // ADDED
         _mockConfig = new Mock<IOptions<MongoConfig>>();
 
         _testDirectory = Path.Combine(Path.GetTempPath(), "MongoSeederTest_" + Guid.NewGuid());
@@ -52,6 +54,7 @@ public class MongoDataSeederTests : IDisposable
 
         _mockDatabase.Setup(d => d.GetCollection<CountryListDocument>("refCountries", null)).Returns(_mockCountryCollection.Object);
         _mockDatabase.Setup(d => d.GetCollection<SpeciesListDocument>("refSpecies", null)).Returns(_mockSpeciesCollection.Object);
+        _mockDatabase.Setup(d => d.GetCollection<PartyRoleListDocument>("refPartyRoles", null)).Returns(_mockPartyRoleCollection.Object); // ADDED
         _mockClient.Setup(c => c.GetDatabase("TestDb", null)).Returns(_mockDatabase.Object);
 
         var lastRunField = typeof(MongoDataSeeder).GetField("_lastRun", BindingFlags.NonPublic | BindingFlags.Static);
@@ -117,6 +120,24 @@ public class MongoDataSeederTests : IDisposable
         };
     }
 
+    private PartyRoleDocument CreateTestPartyRole(string code, string name)
+    {
+        return new PartyRoleDocument
+        {
+            IdentifierId = Guid.NewGuid().ToString(),
+            Code = code,
+            Name = name,
+            IsActive = true,
+            SortOrder = 0,
+            EffectiveStartDate = new DateTime(2023, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            EffectiveEndDate = null,
+            CreatedBy = "Test",
+            CreatedDate = new DateTime(2023, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            LastModifiedBy = null,
+            LastModifiedDate = null
+        };
+    }
+
     [Fact]
     public async Task StartAsync_WhenNoFilesExist_LogsAndSkipsAllDatabaseCalls()
     {
@@ -124,8 +145,11 @@ public class MongoDataSeederTests : IDisposable
         await seeder.StartAsync(CancellationToken.None);
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'countries.json' not found", Times.Once());
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'species.json' not found", Times.Once());
+        _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'partyroles.json' not found", Times.Once());
+
         _mockCountryCollection.VerifyNoOtherCalls();
         _mockSpeciesCollection.VerifyNoOtherCalls();
+        _mockPartyRoleCollection.VerifyNoOtherCalls();
     }
 
     [Fact]
@@ -143,15 +167,17 @@ public class MongoDataSeederTests : IDisposable
     }
 
     [Fact]
-    public async Task StartAsync_WithValidData_ReplacesBothDocuments()
+    public async Task StartAsync_WithValidData_ReplacesAllDocuments()
     {
         var seeder = CreateSeeder();
 
         CreateJsonFile("countries.json", new List<CountryDocument> { CreateTestCountry("US", "USA") });
         CreateJsonFile("species.json", new List<SpeciesDocument> { CreateTestSpecies("CTT", "Cattle") });
+        CreateJsonFile("partyroles.json", new List<PartyRoleDocument> { CreateTestPartyRole("KEEPER", "Livestock Keeper") }); // ADDED
 
         CountryListDocument? capturedCountryDoc = null;
         SpeciesListDocument? capturedSpeciesDoc = null;
+        PartyRoleListDocument? capturedPartyRoleDoc = null; // ADDED
 
         _mockCountryCollection.Setup(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<CountryListDocument>>(), It.IsAny<CountryListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()))
                            .Callback<FilterDefinition<CountryListDocument>, CountryListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedCountryDoc = doc)
@@ -161,16 +187,24 @@ public class MongoDataSeederTests : IDisposable
                            .Callback<FilterDefinition<SpeciesListDocument>, SpeciesListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedSpeciesDoc = doc)
                            .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
 
+        _mockPartyRoleCollection.Setup(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<PartyRoleListDocument>>(), It.IsAny<PartyRoleListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()))
+                           .Callback<FilterDefinition<PartyRoleListDocument>, PartyRoleListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedPartyRoleDoc = doc)
+                           .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
+
         await seeder.StartAsync(CancellationToken.None);
 
         _mockCountryCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<CountryListDocument>>(), It.IsAny<CountryListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockSpeciesCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<SpeciesListDocument>>(), It.IsAny<SpeciesListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockPartyRoleCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<PartyRoleListDocument>>(), It.IsAny<PartyRoleListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once); // ADDED
 
         capturedCountryDoc.Should().NotBeNull();
         capturedCountryDoc!.Countries.Should().Contain(c => c.Code == "US");
 
         capturedSpeciesDoc.Should().NotBeNull();
         capturedSpeciesDoc!.Species.Should().Contain(s => s.Code == "CTT");
+
+        capturedPartyRoleDoc.Should().NotBeNull(); // ADDED
+        capturedPartyRoleDoc!.PartyRoles.Should().Contain(pr => pr.Code == "KEEPER"); // ADDED
     }
 
     [Fact]
