@@ -1,4 +1,3 @@
-using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System;
@@ -6,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
 
-public class SpeciesDocument : INestedEntity
+public class PartyRoleDocument : INestedEntity
 {
     [JsonPropertyName("id")]
     [BsonElement("id")]
@@ -41,27 +40,4 @@ public class SpeciesDocument : INestedEntity
 
     [JsonPropertyName("lastModifiedDate")]
     public DateTime? LastModifiedDate { get; set; }
-
-    public static SpeciesDocument FromDomain(Species m) => new()
-    {
-        IdentifierId = m.Id,
-        Code = m.Code,
-        Name = m.Name,
-        LastModifiedDate = m.LastUpdatedDate,
-
-        IsActive = true,
-        SortOrder = 0,
-        EffectiveStartDate = new DateTime(1900, 1, 1),
-        EffectiveEndDate = null,
-        CreatedBy = "System_FromDomain",
-        CreatedDate = DateTime.UtcNow,
-        LastModifiedBy = null
-    };
-
-    public Species ToDomain() => new(
-        id: IdentifierId,
-        code: Code,
-        name: Name,
-        lastUpdatedDate: LastModifiedDate
-    );
 }

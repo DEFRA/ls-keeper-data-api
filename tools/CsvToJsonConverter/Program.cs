@@ -1,47 +1,169 @@
-using CsvToJsonConverter.Logic;
+using DataConverter.Logic;
+using DataConverter.Models;
+using System.Globalization;
+
 public class Program
 {
     public static async Task Main(string[] args)
     {
-        const string csvInputPath = "countries.csv";
-        const string jsonOutputPath = "countries_generated.json";
-
-        Console.WriteLine("--- CSV to JSON Country Data Generator (Full Schema) ---");
-        Console.WriteLine($"Looking for source file: '{Path.GetFullPath(csvInputPath)}'");
-
-        if (!File.Exists(csvInputPath))
+        if (args.Length == 0)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"\nERROR: Input file '{csvInputPath}' not found.");
-            Console.WriteLine($"Please place 'countries.csv' in the same directory as the CsvToJsonConverter project and try again.");
-            Console.ResetColor();
+            PrintUsage();
             return;
         }
 
-        // 1. Read the source file
-        var lines = await File.ReadAllLinesAsync(csvInputPath);
+        var converter = new GenericCsvConverter();
+        var dataType = args[0].ToLower();
+        string jsonString;
+        string inputPath = "";
+        string outputPath = "";
 
-        // 2. Use the converter to process the data
-        var converter = new Converter();
-        var jsonString = converter.ConvertCsvToJson(lines);
-        var countryCount = jsonString.Split(new[] { "\"id\"" }, StringSplitOptions.None).Length - 1;
+        try
+        {
+            switch (dataType)
+            {
+                case "countries":
+                    inputPath = "countries.csv";
+                    outputPath = "countries_generated.json";
+                    jsonString = await converter.Convert<CountryJson>(inputPath, MapCountry);
+                    break;
 
+                case "species":
+                    inputPath = "species.csv";
+                    outputPath = "species_generated.json";
+                    jsonString = await converter.Convert<SpeciesJson>(inputPath, MapSpecies);
+                    break;
 
-        // 3. Write the output file
-        await File.WriteAllTextAsync(jsonOutputPath, jsonString);
+                case "partyroles":
+                    inputPath = "partyroles.csv";
+                    outputPath = "partyroles_generated.json";
+                    jsonString = await converter.Convert<PartyRoleJson>(inputPath, MapPartyRole);
+                    break;
 
-        // 4. Display all messages and instructions to the developer
+                default:
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"\nERROR: Unknown data type '{dataType}'.");
+                    PrintUsage();
+                    return;
+            }
+
+            await File.WriteAllTextAsync(outputPath, jsonString);
+            PrintSuccess(outputPath, inputPath);
+        }
+        catch (FileNotFoundException)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"\nERROR: Input file '{inputPath}' was not found.");
+            Console.WriteLine("Please place the CSV file in the root of the converter project at the following location:");
+            Console.WriteLine($" -> {Path.GetFullPath(inputPath)}");
+            Console.ResetColor();
+        }
+        catch (Exception ex)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"\nAn unexpected error occurred: {ex.Message}");
+            Console.ResetColor();
+        }
+    }
+
+    public static CountryJson MapCountry(string[] parts)
+    {
+        if (parts.Length < 14) throw new InvalidDataException("CSV line for country has fewer than 14 columns.");
+
+        return new CountryJson(
+            Id: Guid.NewGuid().ToString(),
+            Code: parts[0].Trim(),
+            LongName: parts[2].Trim(),
+            Name: parts[3].Trim(),
+            CreatedBy: parts[4].Trim(),
+            CreatedDate: ParseDateTime(parts[5], DateTime.UtcNow),
+            DevolvedAuthority: ParseBool(parts[6]),
+            EffectiveEndDate: ParseNullableDateTime(parts[7]),
+            EffectiveStartDate: ParseDateTime(parts[8], DateTime.UtcNow),
+            EuTradeMember: ParseBool(parts[9]),
+            IsActive: ParseBool(parts[10]),
+            LastModifiedBy: string.IsNullOrWhiteSpace(parts[11]) ? null : parts[11].Trim(),
+            LastModifiedDate: HandlePlaceholderOrEmptyDate(parts[12], DateTime.UtcNow),
+            SortOrder: ParseInt(parts[13])
+        );
+    }
+
+    public static SpeciesJson MapSpecies(string[] parts)
+    {
+        if (parts.Length < 11) throw new InvalidDataException("CSV line for species has fewer than 11 columns.");
+
+        return new SpeciesJson(
+            Id: HandlePlaceholderId(parts[1]),
+            Code: parts[0].Trim(),
+            Name: parts[2].Trim(),
+            CreatedBy: parts[3].Trim(),
+            CreatedDate: HandlePlaceholderOrEmptyDate(parts[4], DateTime.UtcNow),
+            EffectiveEndDate: ParseNullableDateTime(parts[5]),
+            EffectiveStartDate: HandlePlaceholderOrEmptyDate(parts[6], DateTime.UtcNow),
+            IsActive: ParseBool(parts[7]),
+            SortOrder: ParseInt(parts[8]),
+            LastModifiedBy: parts[9].Trim(),
+            LastModifiedDate: HandlePlaceholderOrEmptyDate(parts[10], DateTime.UtcNow)
+        );
+    }
+
+    public static PartyRoleJson MapPartyRole(string[] parts)
+    {
+        if (parts.Length < 11) throw new InvalidDataException("CSV line for party role has fewer than 11 columns.");
+
+        return new PartyRoleJson(
+            Id: HandlePlaceholderId(parts[1]),
+            Code: parts[0].Trim(),
+            Name: parts[2].Trim(),
+            CreatedBy: parts[3].Trim(),
+            CreatedDate: HandlePlaceholderOrEmptyDate(parts[4], DateTime.UtcNow),
+            EffectiveEndDate: ParseNullableDateTime(parts[5]),
+            EffectiveStartDate: HandlePlaceholderOrEmptyDate(parts[6], DateTime.UtcNow),
+            IsActive: ParseBool(parts[7]),
+            SortOrder: ParseInt(parts[8]), // Note: Your sample CSV has this column empty
+            LastModifiedBy: parts[9].Trim(),
+            LastModifiedDate: HandlePlaceholderOrEmptyDate(parts[10], DateTime.UtcNow)
+        );
+    }
+
+    private static void PrintUsage()
+    {
+        Console.WriteLine("\nUsage: dotnet run <data_type>");
+        Console.WriteLine("Available data types: countries, species, partyroles");
+    }
+
+    private static void PrintSuccess(string outputPath, string inputPath)
+    {
         Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine($"\nSUCCESS: Generated '{jsonOutputPath}' with {countryCount} records.");
+        Console.WriteLine($"\nSUCCESS: Generated '{outputPath}' from '{inputPath}'.");
         Console.ResetColor();
-        Console.WriteLine($"   -> Located at: {Path.GetFullPath(jsonOutputPath)}");
-
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine("\nACTION REQUIRED:");
-        Console.WriteLine("1. Manually copy the newly generated file to the main project.");
-        Console.WriteLine(@"2. Place it at: ..\src\KeeperData.Infrastructure\Data\Seed\countries.json");
-        Console.WriteLine("3. Review and manually edit the new file if needed.");
-        Console.WriteLine("4. Commit the final 'countries.json' file to your Git repository.");
+        Console.WriteLine($"1. Manually copy '{outputPath}' to the main project.");
+        Console.WriteLine(@"   (e.g., ..\src\KeeperData.Infrastructure\Data\Seed\...)");
+        Console.WriteLine("2. Rename the file if necessary (e.g., to 'countries.json').");
+        Console.WriteLine("3. Commit the new JSON file to your Git repository.");
         Console.ResetColor();
     }
+    private static string HandlePlaceholderId(string value) => value.Trim().Equals("NEWID()",
+        StringComparison.OrdinalIgnoreCase) ? Guid.NewGuid().ToString() : value.Trim();
+    private static DateTime HandlePlaceholderOrEmptyDate(string value, DateTime defaultValue)
+    {
+        var trimmedValue = value.Trim();
+
+        if (string.IsNullOrWhiteSpace(trimmedValue) || trimmedValue.Equals("NEWDATE()", StringComparison.OrdinalIgnoreCase))
+        {
+            return DateTime.UtcNow;
+        }
+
+        return ParseDateTime(trimmedValue, defaultValue);
+    }
+    private static bool ParseBool(string value, bool defaultValue = false) =>
+        bool.TryParse(value.Trim(), out var result) ? result : defaultValue;
+    private static int ParseInt(string value, int defaultValue = 0) =>
+        int.TryParse(value.Trim(), out var result) ? result : defaultValue;
+    private static DateTime ParseDateTime(string value, DateTime defaultValue) =>
+        DateTime.TryParse(value.Trim(), CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var result) ? result.ToUniversalTime() : defaultValue;
+    private static DateTime? ParseNullableDateTime(string value) =>
+        DateTime.TryParse(value.Trim(), CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var result) ? (DateTime?)result.ToUniversalTime() : null;
 }
