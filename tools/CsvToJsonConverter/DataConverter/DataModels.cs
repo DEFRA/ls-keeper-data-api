@@ -46,3 +46,17 @@ public record PartyRoleJson(
     [property: JsonPropertyName("lastModifiedBy")] string? LastModifiedBy,
     [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
 );
+
+public record PremisesTypeJson(
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("code")] string Code,
+    [property: JsonPropertyName("name")] string Name,
+    [property: JsonPropertyName("isActive")] bool IsActive,
+    [property: JsonPropertyName("sortOrder")] int SortOrder,
+    [property: JsonPropertyName("effectiveStartDate")] DateTime EffectiveStartDate,
+    [property: JsonPropertyName("effectiveEndDate")] DateTime? EffectiveEndDate,
+    [property: JsonPropertyName("createdBy")] string CreatedBy,
+    [property: JsonPropertyName("createdDate")] DateTime CreatedDate,
+    [property: JsonPropertyName("lastModifiedBy")] string? LastModifiedBy,
+    [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
+);

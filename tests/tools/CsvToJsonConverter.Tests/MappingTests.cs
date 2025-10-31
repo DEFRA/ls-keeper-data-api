@@ -117,4 +117,23 @@ public class MappingTests
         result.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         Guid.TryParse(result.Id, out _).Should().BeTrue();
     }
+
+    [Fact]
+    public void MapPremisesType_WithValidData_CreatesCorrectObject()
+    {
+        // Arrange
+        var csvLine = "AH,NEWID(),Agricultural Holding,System,NEWDATE(),,NEWDATE(),True,,System,NEWDATE()";
+        var parts = csvLine.Split(',');
+
+        // Act
+        var result = Program.MapPremisesType(parts);
+
+        // Assert
+        result.Code.Should().Be("AH");
+        result.Name.Should().Be("Agricultural Holding");
+        result.IsActive.Should().BeTrue();
+        result.SortOrder.Should().Be(0); // Correctly defaults to 0 as it's empty
+        result.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        Guid.TryParse(result.Id, out _).Should().BeTrue();
+    }
 }
