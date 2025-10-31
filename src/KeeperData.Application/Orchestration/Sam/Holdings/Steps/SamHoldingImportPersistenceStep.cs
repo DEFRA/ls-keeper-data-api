@@ -49,21 +49,82 @@ public class SamHoldingImportPersistenceStep(
         await UpsertGoldPartiesAndDeleteOrphansAsync(context.Cph, context.GoldParties, cancellationToken);
     }
 
-    private Task UpsertGoldSiteAsync(
-        SiteDocument incomingHolding,
+    private async Task UpsertGoldSiteAsync(
+        SiteDocument incomingSite,
         CancellationToken cancellationToken)
     {
-        return Task.CompletedTask;
+        var holdingIdentifierType = incomingSite.Identifiers.FirstOrDefault()?.Type
+            ?? HoldingIdentifierType.HoldingNumber.ToString();
+
+        var holdingIdentifier = incomingSite.Identifiers.FirstOrDefault()?.Identifier
+            ?? string.Empty;
+
+        var filter = Builders<SiteDocument>.Filter.ElemMatch(
+            x => x.Identifiers,
+            i => i.Identifier == holdingIdentifier && i.Type == holdingIdentifierType);
+
+        var existingHolding = await _goldSiteRepository.FindOneByFilterAsync(filter, cancellationToken);
+
+        incomingSite.Id = existingHolding?.Id ?? Guid.NewGuid().ToString();
+
+        var siteUpsert = (
+            Filter: filter,
+            Entity: incomingSite);
+
+        await _goldSiteRepository.BulkUpsertWithCustomFilterAsync(
+            [siteUpsert], cancellationToken);
     }
 
-    private Task UpsertGoldPartiesAndDeleteOrphansAsync(
+    private async Task UpsertGoldPartiesAndDeleteOrphansAsync(
         string holdingIdentifier,
         List<PartyDocument> incomingParties,
         CancellationToken cancellationToken)
     {
         incomingParties ??= [];
 
-        return Task.CompletedTask;
+        var incomingCustomerNumbers = incomingParties
+            .Select(p => p.CustomerNumber)
+            .Where(cn => !string.IsNullOrWhiteSpace(cn))
+            .ToHashSet();
+
+        var upserts = new List<(FilterDefinition<PartyDocument> Filter, PartyDocument Entity)>();
+
+        foreach (var incoming in incomingParties)
+        {
+            if (string.IsNullOrWhiteSpace(incoming.CustomerNumber))
+                continue;
+
+            var existing = await _goldPartyRepository.FindOneAsync(
+                x => x.CustomerNumber == incoming.CustomerNumber,
+                cancellationToken);
+
+            incoming.Id = existing?.Id ?? Guid.NewGuid().ToString();
+
+            var filter = Builders<PartyDocument>.Filter.Eq(x => x.CustomerNumber, incoming.CustomerNumber);
+            upserts.Add((filter, incoming));
+        }
+
+        if (upserts.Count > 0)
+        {
+            await _goldPartyRepository.BulkUpsertWithCustomFilterAsync(upserts, cancellationToken);
+        }
+
+        // TODO - We need to think about orphans using PartyRoleRelationships
+
+        /*var allExisting = await _goldPartyRepository.FindAsync(
+            x => x.CountyParishHoldingNumber == holdingIdentifier,
+            cancellationToken) ?? [];
+
+        var orphaned = allExisting
+            .Where(e => !incomingCustomerNumbers.Contains(e.CustomerNumber))
+            .ToList();
+
+        if (orphaned.Count > 0)
+        {
+            var deleteFilter = Builders<PartyDocument>.Filter.In(x => x.Id, orphaned.Select(o => o.Id));
+            await _goldPartyRepository.DeleteManyAsync(deleteFilter, cancellationToken);
+        }
+        */
     }
 
     private async Task UpsertSilverHoldingAsync(

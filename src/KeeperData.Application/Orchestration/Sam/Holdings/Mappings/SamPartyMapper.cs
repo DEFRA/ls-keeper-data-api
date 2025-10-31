@@ -4,6 +4,7 @@ using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Parties;
 using KeeperData.Core.Domain.Parties.Formatters;
 using KeeperData.Core.Domain.Parties.Rules;
+using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Domain.Sites.Formatters;
 
 namespace KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
@@ -94,7 +95,7 @@ public static class SamPartyMapper
             {
                 var (roleTypeId, roleTypeName) = await resolveRoleType(roleNameToLookup, cancellationToken);
 
-                party.Roles.Add(new PartyRoleDocument
+                party.Roles.Add(new Core.Documents.Silver.PartyRoleDocument
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
                     RoleTypeId = roleTypeId,
@@ -123,34 +124,26 @@ public static class SamPartyMapper
         
         var result = new List<PartyDocument>();
 
-        foreach (var party in silverParties ?? [])
+        foreach (var silverParty in silverParties ?? [])
         {
-            // Find in DB
-            PartyDocument? exisingParty = null;
+            PartyDocument? existingParty = null; // TODO - Inject and lookup via Repository
 
-            // Exists? Update
-            if (exisingParty != null)
-            {
-                var updatedParty = await UpdatePartyAsync(
+            var party = existingParty is not null
+                ? await UpdatePartyAsync(
                     currentDateTime,
-                    party,
-                    exisingParty,
+                    silverParty,
+                    existingParty,
+                    getCountryById,
+                    getSpeciesTypeById,
+                    cancellationToken)
+                : await CreatePartyAsync(
+                    currentDateTime,
+                    silverParty,
                     getCountryById,
                     getSpeciesTypeById,
                     cancellationToken);
 
-                result.Add(PartyDocument.FromDomain(updatedParty));
-            }
-
-            // Not Exists? Create
-            var newParty = await CreatePartyAsync(
-                currentDateTime,
-                party,
-                getCountryById,
-                getSpeciesTypeById,
-                cancellationToken);
-
-            result.Add(PartyDocument.FromDomain(newParty));
+            result.Add(PartyDocument.FromDomain(party));
         }
 
         return result;
@@ -163,18 +156,23 @@ public static class SamPartyMapper
         Func<string?, CancellationToken, Task<SpeciesTypeDocument?>> getSpeciesTypeById,
         CancellationToken cancellationToken)
     {
-        var party = Party.Create(
-            batchId: incoming.LastUpdatedBatchId,
-            lastUpdatedDate: currentDateTime,
-            title: incoming.PartyTitleTypeIdentifier,
-            firstName: incoming.PartyFirstName,
-            lastName: incoming.PartyLastName,
-            name: incoming.PartyFullName,
-            customerNumber: incoming.PartyId,
-            partyType: incoming.PartyTypeId,
-            deleted: incoming.Deleted);
+        var country = await GetCountryAsync(
+            incoming.Address?.CountryIdentifier,
+            getCountryById,
+            cancellationToken);
 
-        party.UpdateLastUpdatedDate(currentDateTime);
+        var party = Party.Create(
+            incoming.LastUpdatedBatchId,
+            incoming.PartyTitleTypeIdentifier,
+            incoming.PartyFirstName,
+            incoming.PartyLastName,
+            incoming.PartyFullName,
+            incoming.PartyId,
+            incoming.PartyTypeId,
+            string.Empty, // TODO - Check State
+            incoming.Deleted);
+
+        // TODO - Add remaining fields
 
         return await Task.FromResult(party);
     }
@@ -189,8 +187,103 @@ public static class SamPartyMapper
     {
         var party = existing.ToDomain();
 
-        // TODO
+        var country = await GetCountryAsync(
+            incoming.Address?.CountryIdentifier,
+            getCountryById,
+            cancellationToken);
 
-        return await Task.FromResult(party);
+        party.Update(
+            currentDateTime,
+            incoming.LastUpdatedBatchId,
+            incoming.PartyTitleTypeIdentifier,
+            incoming.PartyFirstName,
+            incoming.PartyLastName,
+            incoming.PartyFullName,
+            incoming.PartyId,
+            incoming.PartyTypeId,
+            string.Empty, // TODO - Check State
+            incoming.Deleted);
+
+        // TODO - Add remaining fields
+
+        return party;
     }
+
+    private static async Task<Country?> GetCountryAsync(
+        string? countryIdentifier,
+        Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
+        CancellationToken cancellationToken)
+    {
+        if (countryIdentifier == null) return null;
+
+        var countryDocument = await getCountryById(countryIdentifier, cancellationToken);
+
+        if (countryDocument == null)
+            return null;
+
+        return countryDocument.ToDomain();
+    }
+
+    /*
+    {
+  "count": 1,
+  "values": [
+    {
+I      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+I      "title": "Mr",
+I      "firstName": "John",
+I      "lastName": "Doe",
+I      "name": "John Doe",
+I      "partyType": "Person",
+      "communication": [
+        {
+          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "email": "john.doe@somecompany.co.uk",
+          "mobile": "07123456789",
+          "landline": "0114 1231234",
+          "lastUpdatedDate": "2025-10-30T15:07:00.047Z"
+        }
+      ],
+      "correspondanceAddress": {
+        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        "uprn": 671544009,
+        "addressLine1": "Hansel & Gretel Farm, Pigs Street",
+        "addressLine2": "Cloverfield",
+        "postTown": "Clover town",
+        "county": "Sussex",
+        "postCode": "S36 2BS",
+        "country": {
+          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "code": "GB-ENG",
+          "name": "England",
+          "longName": "England - United Kingdom",
+          "euTradeMemberFlag": true,
+          "devolvedAuthorityFlag": false,
+          "lastUpdatedDate": "2025-10-30T15:07:00.047Z"
+        },
+        "lastUpdatedDate": "2025-10-30T15:07:00.047Z"
+      },
+      "partyRoles": [
+        {
+          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "role": "Keeper",
+          "startDate": "2025-10-30",
+          "endDate": "2025-10-30",
+          "speciesManagedByRole": [
+            {
+              "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+              "code": "BV",
+              "name": "Bovine",
+              "lastUpdatedDate": "2025-10-30T15:07:00.047Z"
+            }
+          ],
+          "lastUpdatedDate": "2025-10-30T15:07:00.047Z"
+        }
+      ],
+I      "state": "active",
+I      "lastUpdatedDate": "2025-10-30T15:07:00.047Z"
+    }
+  ]
+}
+    */
 }

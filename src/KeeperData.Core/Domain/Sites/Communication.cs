@@ -26,7 +26,11 @@ public class Communication : ValueObject
         LastUpdatedDate = lastUpdatedDate;
     }
 
-    public static Communication Create(string? email, string? mobile, string? landline, bool? primaryContactFlag)
+    public static Communication Create(
+        string? email,
+        string? mobile,
+        string? landline,
+        bool? primaryContactFlag)
     {
         return new Communication(
             Guid.NewGuid().ToString(),
@@ -38,7 +42,32 @@ public class Communication : ValueObject
         );
     }
 
-    protected override IEnumerable<object> GetEqualityComponents()
+    public bool ApplyChanges(
+        DateTime lastUpdatedDate,
+        string? email,
+        string? mobile,
+        string? landline,
+        bool? primaryContactFlag)
+    {
+        var changed = false;
+
+        changed |= Change(Email, email, v => Email = v, lastUpdatedDate);
+        changed |= Change(Mobile, mobile, v => Mobile = v, lastUpdatedDate);
+        changed |= Change(Landline, landline, v => Landline = v, lastUpdatedDate);
+        changed |= Change(PrimaryContactFlag, primaryContactFlag, v => PrimaryContactFlag = v, lastUpdatedDate);
+
+        return changed;
+    }
+
+    private bool Change<T>(T currentValue, T newValue, Action<T> setter, DateTime lastUpdatedAt)
+    {
+        if (EqualityComparer<T>.Default.Equals(currentValue, newValue)) return false;
+        setter(newValue);
+        LastUpdatedDate = lastUpdatedAt;
+        return true;
+    }
+
+    public override IEnumerable<object> GetEqualityComponents()
     {
         yield return Email ?? string.Empty;
         yield return Mobile ?? string.Empty;

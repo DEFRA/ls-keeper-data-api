@@ -39,7 +39,7 @@ public class SiteActivity : ValueObject
             DateTime.UtcNow);
     }
 
-    protected override IEnumerable<object> GetEqualityComponents()
+    public override IEnumerable<object> GetEqualityComponents()
     {
         yield return Activity;
         yield return StartDate;

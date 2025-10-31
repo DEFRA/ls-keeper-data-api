@@ -79,16 +79,10 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 
         if (Location is not null)
         {
-            site.SetLocation(
-                Location.LastUpdatedDate,
-                Location.OsMapReference,
-                Location.Easting,
-                Location.Northing,
-                Location.Address?.ToDomain(),
-                Location.Communication.Select(c => c.ToDomain()),
-                Location.IdentifierId
-            );
+            site.SetLocation(Location.ToDomain());
         }
+
+        // TODO: Add Parties, Species, Marks, Activities etc
 
         return site;
     }

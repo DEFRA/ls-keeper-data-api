@@ -15,7 +15,7 @@ public class Role : ValueObject
         LastUpdatedDate = lastUpdatedDate;
     }
 
-    protected override IEnumerable<object> GetEqualityComponents()
+    public override IEnumerable<object> GetEqualityComponents()
     {
         yield return Name;
     }

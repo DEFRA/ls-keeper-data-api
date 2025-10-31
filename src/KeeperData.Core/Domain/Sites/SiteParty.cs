@@ -51,7 +51,7 @@ public class SiteParty : ValueObject
         );
     }
 
-    protected override IEnumerable<object> GetEqualityComponents()
+    public override IEnumerable<object> GetEqualityComponents()
     {
         yield return Id;
     }

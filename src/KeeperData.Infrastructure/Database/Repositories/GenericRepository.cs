@@ -41,6 +41,12 @@ public class GenericRepository<T> : IGenericRepository<T>
         return await cursor.FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<T?> FindOneByFilterAsync(FilterDefinition<T> filter, CancellationToken cancellationToken = default)
+    {
+        var cursor = await _collection.FindAsync(Session, filter, cancellationToken: cancellationToken);
+        return await cursor.FirstOrDefaultAsync(cancellationToken);
+    }
+
     public Task<List<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default) =>
         _collection.Find(predicate).ToListAsync(cancellationToken);
 

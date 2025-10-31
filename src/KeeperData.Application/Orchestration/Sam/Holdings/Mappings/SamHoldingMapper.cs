@@ -112,31 +112,24 @@ public static class SamHoldingMapper
 
         var primaryHolding = silverHoldings![0];
 
-        // Find in DB
-        SiteDocument? exisingSite = null;
+        SiteDocument? existingSite = null; // TODO - Inject and lookup via Repository
 
-        // Exists? Update
-        if (exisingSite != null)
-        {
-            var updatedSite = await UpdateSiteAsync(
+        var site = existingSite is not null
+            ? await UpdateSiteAsync(
                 currentDateTime,
                 primaryHolding,
-                exisingSite,
+                existingSite,
                 getCountryById,
+                getPremiseTypeById,
+                cancellationToken)
+            : await CreateSiteAsync(
+                currentDateTime,
+                primaryHolding,
+                getCountryById,
+                getPremiseTypeById,
                 cancellationToken);
 
-            return SiteDocument.FromDomain(updatedSite);
-        }
-
-        // Not Exists? Create
-        var newSite = await CreateSiteAsync(
-            currentDateTime,
-            primaryHolding,
-            getCountryById,
-            getPremiseTypeById,
-            cancellationToken);
-
-        return SiteDocument.FromDomain(newSite);
+        return SiteDocument.FromDomain(site);
     }
 
     private static async Task<Site> CreateSiteAsync(
@@ -146,51 +139,52 @@ public static class SamHoldingMapper
         Func<string?, CancellationToken, Task<PremiseTypeDocument?>> getPremiseTypeById,
         CancellationToken cancellationToken)
     {
-        int? addressUprn = int.TryParse(incoming.Location?.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
+        int? uprn = int.TryParse(incoming.Location?.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
 
-        var sitePremiseType = await GetPremiseTypeAsync(
+        var premiseType = await GetPremiseTypeAsync(
             incoming.PremiseTypeIdentifier,
             getPremiseTypeById,
             cancellationToken);
 
-        var siteAddressCountry = await GetCountryAsync(
+        var country = await GetCountryAsync(
             incoming.Location?.Address?.CountryIdentifier,
             getCountryById,
             cancellationToken);
 
-        var siteAddress = Address.Create(
-            uprn: addressUprn,
-            addressLine1: incoming.Location?.Address?.AddressLine ?? string.Empty,
-            addressLine2: incoming.Location?.Address?.AddressStreet,
-            postTown: incoming.Location?.Address?.AddressTown,
-            county: incoming.Location?.Address?.AddressLocality,
-            postCode: incoming.Location?.Address?.AddressPostCode ?? string.Empty,
-            country: siteAddressCountry);
+        var address = Address.Create(
+            uprn,
+            incoming.Location?.Address?.AddressLine ?? string.Empty,
+            incoming.Location?.Address?.AddressStreet,
+            incoming.Location?.Address?.AddressTown,
+            incoming.Location?.Address?.AddressLocality,
+            incoming.Location?.Address?.AddressPostCode ?? string.Empty,
+            country);
 
-        var siteLocation = Location.Create(
-            osMapReference: incoming.Location?.OsMapReference,
-            easting: incoming.Location?.Easting,
-            northing: incoming.Location?.Northing,
-            address: siteAddress,
+        var location = Location.Create(
+            incoming.Location?.OsMapReference,
+            incoming.Location?.Easting,
+            incoming.Location?.Northing,
+            address,
             communication: null);
 
         var site = Site.Create(
-            batchId: incoming.LastUpdatedBatchId,
-            lastUpdatedDate: currentDateTime,
-            type: sitePremiseType?.Code ?? string.Empty,
-            name: incoming.LocationName ?? string.Empty,
-            startDate: incoming.HoldingStartDate,
-            endDate: incoming.HoldingEndDate,
-            state: incoming.HoldingStatus,
-            source: SourceSystemType.SAM.ToString(),
-            destroyIdentityDocumentsFlag: null,
-            deleted: incoming.Deleted,
-            location: siteLocation);
+            incoming.LastUpdatedBatchId,
+            premiseType?.Code ?? string.Empty,
+            incoming.LocationName ?? string.Empty,
+            incoming.HoldingStartDate,
+            incoming.HoldingEndDate,
+            incoming.HoldingStatus,
+            SourceSystemType.SAM.ToString(),
+            null,
+            incoming.Deleted,
+            location);
 
         site.AddSiteIdentifier(
             lastUpdatedDate: currentDateTime,
             identifier: incoming.CountyParishHoldingNumber,
-            type: HoldingIdentifierType.HoldingNumber.ToString());
+            type: HoldingIdentifierType.HoldingNumber.ToString()); // TODO - Need to use LOV
+
+        // TODO - Add additional fields
 
         return site;
     }
@@ -200,13 +194,55 @@ public static class SamHoldingMapper
         SamHoldingDocument incoming,
         SiteDocument existing,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
+        Func<string?, CancellationToken, Task<PremiseTypeDocument?>> getPremiseTypeById,
         CancellationToken cancellationToken)
     {
         var site = existing.ToDomain();
 
-        // TODO
+        int? uprn = int.TryParse(incoming.Location?.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
 
-        return await Task.FromResult(site);
+        var premiseType = await GetPremiseTypeAsync(
+            incoming.PremiseTypeIdentifier,
+            getPremiseTypeById,
+            cancellationToken);
+
+        var country = await GetCountryAsync(
+            incoming.Location?.Address?.CountryIdentifier,
+            getCountryById,
+            cancellationToken);
+
+        site.Update(
+            currentDateTime,
+            incoming.LastUpdatedBatchId,
+            premiseType?.Code ?? string.Empty,
+            incoming.LocationName ?? string.Empty,
+            incoming.HoldingStartDate,
+            incoming.HoldingEndDate,
+            incoming.HoldingStatus,
+            SourceSystemType.SAM.ToString(),
+            null,
+            incoming.Deleted);
+
+        var updatedAddress = Address.Create(
+            uprn,
+            incoming.Location?.Address?.AddressLine ?? string.Empty,
+            incoming.Location?.Address?.AddressStreet,
+            incoming.Location?.Address?.AddressTown,
+            incoming.Location?.Address?.AddressLocality,
+            incoming.Location?.Address?.AddressPostCode ?? string.Empty,
+            country);
+
+        site.UpdateLocation(
+            currentDateTime,
+            incoming.Location?.OsMapReference,
+            incoming.Location?.Easting,
+            incoming.Location?.Northing,
+            updatedAddress,
+            null);
+
+        // TODO - Add additional fields
+
+        return site;
     }
 
     private static async Task<Country?> GetCountryAsync(
@@ -214,6 +250,8 @@ public static class SamHoldingMapper
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
         CancellationToken cancellationToken)
     {
+        if (countryIdentifier == null) return null;
+
         var countryDocument = await getCountryById(countryIdentifier, cancellationToken);
 
         if (countryDocument == null)
@@ -227,6 +265,8 @@ public static class SamHoldingMapper
         Func<string?, CancellationToken, Task<PremiseTypeDocument?>> getPremiseTypeById,
         CancellationToken cancellationToken)
     {
+        if (premiseTypeIdentifier == null) return null;
+
         return await getPremiseTypeById(premiseTypeIdentifier, cancellationToken);
     }
 }

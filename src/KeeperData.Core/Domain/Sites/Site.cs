@@ -1,6 +1,5 @@
 using KeeperData.Core.Domain.BuildingBlocks;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
-using KeeperData.Core.Domain.Parties.DomainEvents;
 using KeeperData.Core.Domain.Sites.DomainEvents;
 using KeeperData.Core.Exceptions;
 
@@ -38,6 +37,10 @@ public class Site : IAggregateRoot
     private readonly List<SiteActivity> _activities = [];
     public IReadOnlyCollection<SiteActivity> Activities => _activities.AsReadOnly();
 
+    private readonly List<IDomainEvent> _domainEvents = [];
+    public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
+    public void ClearDomainEvents() => _domainEvents.Clear();
+
     public Site(
         string id,
         int batchId,
@@ -63,15 +66,11 @@ public class Site : IAggregateRoot
         Source = source;
         DestroyIdentityDocumentsFlag = destroyIdentityDocumentsFlag;
         Deleted = deleted;
-
         _location = location;
-
-        _domainEvents.Add(new SiteCreatedDomainEvent(Id));
     }
 
     public static Site Create(
         int batchId,
-        DateTime lastUpdatedDate,
         string type,
         string name,
         DateTime startDate,
@@ -85,7 +84,7 @@ public class Site : IAggregateRoot
         var site = new Site(
             Guid.NewGuid().ToString(),
             batchId,
-            lastUpdatedDate,
+            DateTime.UtcNow,
             type,
             name,
             startDate,
@@ -94,11 +93,40 @@ public class Site : IAggregateRoot
             source,
             destroyIdentityDocumentsFlag,
             deleted,
-            location
-        );
+            location);
 
         site._domainEvents.Add(new SiteCreatedDomainEvent(site.Id));
         return site;
+    }
+
+    public void Update(
+        DateTime lastUpdatedDate,
+        int batchId,
+        string type,
+        string name,
+        DateTime startDate,
+        DateTime? endDate,
+        string? state,
+        string? source,
+        bool? destroyIdentityDocumentsFlag,
+        bool deleted)
+    {
+        var changed = false;
+
+        changed |= Change(LastUpdatedBatchId, batchId, v => LastUpdatedBatchId = v, lastUpdatedDate);
+        changed |= Change(Type, type, v => Type = v, lastUpdatedDate);
+        changed |= Change(Name, name, v => Name = v, lastUpdatedDate);
+        changed |= Change(StartDate, startDate, v => StartDate = v, lastUpdatedDate);
+        changed |= Change(EndDate, endDate, v => EndDate = v, lastUpdatedDate);
+        changed |= Change(State, state, v => State = v, lastUpdatedDate);
+        changed |= Change(Source, source, v => Source = v, lastUpdatedDate);
+        changed |= Change(DestroyIdentityDocumentsFlag, destroyIdentityDocumentsFlag, v => DestroyIdentityDocumentsFlag = v, lastUpdatedDate);
+        changed |= Change(Deleted, deleted, v => Deleted = v, lastUpdatedDate);
+
+        if (changed)
+        {
+            _domainEvents.Add(new SiteUpdatedDomainEvent(Id));
+        }
     }
 
     public void Delete(int batchId)
@@ -111,151 +139,57 @@ public class Site : IAggregateRoot
         LastUpdatedDate = DateTime.UtcNow;
     }
 
-    public void UpdateLastUpdatedDate(DateTime lastUpdatedDate)
+    public void UpdateLocation(
+        DateTime lastUpdatedDate,
+        string? osMapReference,
+        double? easting,
+        double? northing,
+        Address? address,
+        IEnumerable<Communication>? communication)
     {
-        LastUpdatedDate = lastUpdatedDate;
+        if (_location is null)
+        {
+            _location = Location.Create(osMapReference, easting, northing, address, communication);
+            UpdateLastUpdatedDate(lastUpdatedDate);
+            return;
+        }
+
+        if (_location.ApplyChanges(lastUpdatedDate, osMapReference, easting, northing, address, communication))
+        {
+            UpdateLastUpdatedDate(lastUpdatedDate);
+        }
+    }
+
+    public void SetLocation(Location location)
+    {
+        _location = location;
     }
 
     public void AddSiteIdentifier(DateTime lastUpdatedDate, string identifier, string type, string? id = null)
     {
         if (_identifiers.Any(i => i.Identifier == identifier && i.Type == type))
         {
-            throw new DomainException($"Site already contains an identifier with the same type and value.");
+            throw new DomainException("Site already contains an identifier with the same type and value.");
         }
+
         var siteIdentifier = id is null
             ? SiteIdentifier.Create(identifier, type)
             : new SiteIdentifier(id, lastUpdatedDate, identifier, type);
 
         _identifiers.Add(siteIdentifier);
-        LastUpdatedDate = DateTime.UtcNow;
+        UpdateLastUpdatedDate(DateTime.UtcNow);
     }
 
-    public void RemoveSiteIdentifier(string identifier)
+    private bool Change<T>(T currentValue, T newValue, Action<T> setter, DateTime lastUpdatedAt)
     {
-        var existing = _identifiers.FirstOrDefault(x => x.Identifier == identifier);
-        if (existing is not null)
-        {
-            _identifiers.Remove(existing);
-            LastUpdatedDate = DateTime.UtcNow;
-        }
+        if (EqualityComparer<T>.Default.Equals(currentValue, newValue)) return false;
+        setter(newValue);
+        UpdateLastUpdatedDate(lastUpdatedAt);
+        return true;
     }
 
-    public void SetLocation(DateTime lastUpdatedDate, string? osMapReference, double? easting, double? northing, Address? address, IEnumerable<Communication>? communication, string? id = null)
+    private void UpdateLastUpdatedDate(DateTime lastUpdatedDate)
     {
-        _location = id is null
-            ? Location.Create(osMapReference, easting, northing, address, communication)
-            : new Location(id, lastUpdatedDate, osMapReference, easting, northing, address, communication);
-        LastUpdatedDate = DateTime.UtcNow;
+        LastUpdatedDate = lastUpdatedDate;
     }
-
-    public void AddParty(SiteParty party)
-    {
-        if (_parties.Any(p => p.Id == party.Id))
-        {
-            throw new DomainException($"Party with ID '{party.Id}' already exists on this site.");
-        }
-        _parties.Add(party);
-        LastUpdatedDate = DateTime.UtcNow;
-    }
-
-    public void RemoveParty(string partyId)
-    {
-        var existing = _parties.FirstOrDefault(p => p.Id == partyId);
-        if (existing is not null)
-        {
-            _parties.Remove(existing);
-            LastUpdatedDate = DateTime.UtcNow;
-        }
-    }
-
-    public void AddSpecies(Species species)
-    {
-        if (_species.Any(s => s.Code == species.Code))
-        {
-            throw new DomainException($"Species with code '{species.Code}' already exists on this site.");
-        }
-        _species.Add(species);
-        LastUpdatedDate = DateTime.UtcNow;
-    }
-
-    public void RemoveSpecies(string speciesCode)
-    {
-        var existing = _species.FirstOrDefault(s => s.Code == speciesCode);
-        if (existing is not null)
-        {
-            _species.Remove(existing);
-            LastUpdatedDate = DateTime.UtcNow;
-        }
-    }
-
-    public void AddMark(Marks mark)
-    {
-        if (_marks.Any(m => m.Mark == mark.Mark && m.Species?.Code == mark.Species?.Code && m.StartDate == mark.StartDate))
-        {
-            throw new DomainException($"A mark with the same value, species, and start date already exists on this site.");
-        }
-        _marks.Add(mark);
-        LastUpdatedDate = DateTime.UtcNow;
-    }
-
-    public void RemoveMark(string markId)
-    {
-        var existing = _marks.FirstOrDefault(m => m.Id == markId);
-        if (existing is not null)
-        {
-            _marks.Remove(existing);
-            LastUpdatedDate = DateTime.UtcNow;
-        }
-    }
-
-    public void AddActivity(string activity, string? description, DateTime startDate, DateTime? endDate)
-    {
-        var newActivity = SiteActivity.Create(activity, description, startDate, endDate);
-        _activities.Add(newActivity);
-        LastUpdatedDate = DateTime.UtcNow;
-    }
-
-    public void RemoveActivity(string activityId)
-    {
-        var existing = _activities.FirstOrDefault(a => a.Id == activityId);
-        if (existing is not null)
-        {
-            _activities.Remove(existing);
-            LastUpdatedDate = DateTime.UtcNow;
-        }
-    }
-
-    internal void LoadIdentifiers(IEnumerable<SiteIdentifier> identifiers)
-    {
-        _identifiers.Clear();
-        _identifiers.AddRange(identifiers);
-    }
-
-    internal void LoadParties(IEnumerable<SiteParty> parties)
-    {
-        _parties.Clear();
-        _parties.AddRange(parties);
-    }
-
-    internal void LoadSpecies(IEnumerable<Species> species)
-    {
-        _species.Clear();
-        _species.AddRange(species);
-    }
-
-    internal void LoadMarks(IEnumerable<Marks> marks)
-    {
-        _marks.Clear();
-        _marks.AddRange(marks);
-    }
-
-    internal void LoadActivities(IEnumerable<SiteActivity> activities)
-    {
-        _activities.Clear();
-        _activities.AddRange(activities);
-    }
-
-    private readonly List<IDomainEvent> _domainEvents = [];
-    public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
-    public void ClearDomainEvents() => _domainEvents.Clear();
 }

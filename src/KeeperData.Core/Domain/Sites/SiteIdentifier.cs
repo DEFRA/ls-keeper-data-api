@@ -24,21 +24,28 @@ public class SiteIdentifier(
             type);
     }
 
-    public void Update(
+    public bool ApplyChanges(
+        DateTime lastUpdatedDate,
         string identifier,
         string type)
     {
-        LastUpdatedDate = DateTime.UtcNow;
-        Identifier = identifier;
-        Type = type;
+        var changed = false;
+
+        changed |= Change(Identifier, identifier, v => Identifier = v, lastUpdatedDate);
+        changed |= Change(Type, type, v => Type = v, lastUpdatedDate);
+        
+        return changed;
     }
 
-    public void UpdateLastUpdatedDate(DateTime lastUpdatedDate)
+    private bool Change<T>(T currentValue, T newValue, Action<T> setter, DateTime lastUpdatedAt)
     {
-        LastUpdatedDate = lastUpdatedDate;
+        if (EqualityComparer<T>.Default.Equals(currentValue, newValue)) return false;
+        setter(newValue);
+        LastUpdatedDate = lastUpdatedAt;
+        return true;
     }
 
-    protected override IEnumerable<object> GetEqualityComponents()
+    public override IEnumerable<object> GetEqualityComponents()
     {
         yield return Identifier;
         yield return Type;

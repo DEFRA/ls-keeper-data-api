@@ -37,7 +37,7 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
         silverSamParties.Should().NotBeNull().And.HaveCountGreaterThanOrEqualTo(1);
 
         var partyRoleRelationshipFilter = Builders<PartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
-        var partyRoleRelationships = await fixture.MongoVerifier.FindDocumentsAsync("partyRoleRelationships", partyRoleRelationshipFilter);
+        var partyRoleRelationships = await fixture.MongoVerifier.FindDocumentsAsync("silverPartyRoleRelationships", partyRoleRelationshipFilter);
         partyRoleRelationships.Should().NotBeNull().And.HaveCount(silverSamParties.Count);
 
         var partyIds = silverSamParties.Select(x => x.PartyId).Distinct().ToHashSet();

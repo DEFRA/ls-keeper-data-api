@@ -10,6 +10,7 @@ public class AddressDocument : INestedEntity
     [JsonPropertyName("id")]
     [BsonElement("id")]
     public required string IdentifierId { get; set; }
+
     public int? Uprn { get; set; }
     public required string AddressLine1 { get; set; }
     public string? AddressLine2 { get; set; }
@@ -19,18 +20,17 @@ public class AddressDocument : INestedEntity
     public CountryDocument? Country { get; set; }
     public DateTime? LastUpdatedDate { get; set; }
 
-
-    public static AddressDocument FromDomain(Address m) => new()
+    public static AddressDocument FromDomain(Address address) => new()
     {
-        IdentifierId = m.Id,
-        Uprn = m.Uprn,
-        AddressLine1 = m.AddressLine1,
-        AddressLine2 = m.AddressLine2,
-        PostTown = m.PostTown,
-        County = m.County,
-        PostCode = m.PostCode,
-        Country = m.Country is not null ? CountryDocument.FromDomain(m.Country) : null,
-        LastUpdatedDate = m.LastUpdatedDate
+        IdentifierId = address.Id,
+        Uprn = address.Uprn,
+        AddressLine1 = address.AddressLine1,
+        AddressLine2 = address.AddressLine2,
+        PostTown = address.PostTown,
+        County = address.County,
+        PostCode = address.PostCode,
+        Country = address.Country is not null ? CountryDocument.FromDomain(address.Country) : null,
+        LastUpdatedDate = address.LastUpdatedDate
     };
 
     public Address ToDomain() => new(

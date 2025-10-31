@@ -21,6 +21,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
     public string? Name { get; set; }
     public string? CustomerNumber { get; set; }
     public string? PartyType { get; set; }
+    public string? State { get; set; }
     public bool Deleted { get; set; }
 
     public static PartyDocument FromDomain(Party m) => new()
@@ -34,6 +35,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
         Name = m.Name,
         CustomerNumber = m.CustomerNumber,
         PartyType = m.PartyType,
+        State = m.State,
         Deleted = m.Deleted
     };
 
@@ -49,6 +51,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
             Name,
             CustomerNumber,
             PartyType,
+            State,
             Deleted);
 
         return party;

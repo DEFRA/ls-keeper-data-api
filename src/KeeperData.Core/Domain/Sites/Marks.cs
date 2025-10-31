@@ -40,7 +40,7 @@ public class Marks : ValueObject
         );
     }
 
-    protected override IEnumerable<object> GetEqualityComponents()
+    public override IEnumerable<object> GetEqualityComponents()
     {
 
         yield return Mark;
