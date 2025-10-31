@@ -126,7 +126,7 @@ public class Program
             EffectiveEndDate: ParseNullableDateTime(parts[5]),
             EffectiveStartDate: HandlePlaceholderOrEmptyDate(parts[6], DateTime.UtcNow),
             IsActive: ParseBool(parts[7]),
-            SortOrder: ParseInt(parts[8]), // Note: Your sample CSV has this column empty
+            SortOrder: ParseInt(parts[8]),
             LastModifiedBy: parts[9].Trim(),
             LastModifiedDate: HandlePlaceholderOrEmptyDate(parts[10], DateTime.UtcNow)
         );

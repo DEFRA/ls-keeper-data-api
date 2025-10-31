@@ -113,7 +113,7 @@ public class MappingTests
         result.Code.Should().Be("LIVESTOCKKEEPER");
         result.Name.Should().Be("Livestock Keeper");
         result.IsActive.Should().BeTrue();
-        result.SortOrder.Should().Be(0); // Correctly defaults to 0 as it's empty in the CSV
+        result.SortOrder.Should().Be(0);
         result.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         Guid.TryParse(result.Id, out _).Should().BeTrue();
     }
@@ -132,7 +132,7 @@ public class MappingTests
         result.Code.Should().Be("AH");
         result.Name.Should().Be("Agricultural Holding");
         result.IsActive.Should().BeTrue();
-        result.SortOrder.Should().Be(0); // Correctly defaults to 0 as it's empty
+        result.SortOrder.Should().Be(0);
         result.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         Guid.TryParse(result.Id, out _).Should().BeTrue();
     }

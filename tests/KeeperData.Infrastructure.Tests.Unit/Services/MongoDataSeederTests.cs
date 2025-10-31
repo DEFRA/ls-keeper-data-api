@@ -30,7 +30,7 @@ public class MongoDataSeederTests : IDisposable
     private readonly Mock<IMongoCollection<CountryListDocument>> _mockCountryCollection;
     private readonly Mock<IMongoCollection<SpeciesListDocument>> _mockSpeciesCollection;
     private readonly Mock<IMongoCollection<PartyRoleListDocument>> _mockPartyRoleCollection;
-    private readonly Mock<IMongoCollection<PremisesTypeListDocument>> _mockPremisesTypeCollection; // ADDED
+    private readonly Mock<IMongoCollection<PremisesTypeListDocument>> _mockPremisesTypeCollection;
     private readonly Mock<IOptions<MongoConfig>> _mockConfig;
     private readonly string _testDirectory;
     private readonly string _seedDirectory;
@@ -44,7 +44,7 @@ public class MongoDataSeederTests : IDisposable
         _mockCountryCollection = new Mock<IMongoCollection<CountryListDocument>>();
         _mockSpeciesCollection = new Mock<IMongoCollection<SpeciesListDocument>>();
         _mockPartyRoleCollection = new Mock<IMongoCollection<PartyRoleListDocument>>();
-        _mockPremisesTypeCollection = new Mock<IMongoCollection<PremisesTypeListDocument>>(); // ADDED
+        _mockPremisesTypeCollection = new Mock<IMongoCollection<PremisesTypeListDocument>>();
         _mockConfig = new Mock<IOptions<MongoConfig>>();
 
         _testDirectory = Path.Combine(Path.GetTempPath(), "MongoSeederTest_" + Guid.NewGuid());
@@ -57,7 +57,7 @@ public class MongoDataSeederTests : IDisposable
         _mockDatabase.Setup(d => d.GetCollection<CountryListDocument>("refCountries", null)).Returns(_mockCountryCollection.Object);
         _mockDatabase.Setup(d => d.GetCollection<SpeciesListDocument>("refSpecies", null)).Returns(_mockSpeciesCollection.Object);
         _mockDatabase.Setup(d => d.GetCollection<PartyRoleListDocument>("refPartyRoles", null)).Returns(_mockPartyRoleCollection.Object);
-        _mockDatabase.Setup(d => d.GetCollection<PremisesTypeListDocument>("refPremisesTypes", null)).Returns(_mockPremisesTypeCollection.Object); // ADDED
+        _mockDatabase.Setup(d => d.GetCollection<PremisesTypeListDocument>("refPremisesTypes", null)).Returns(_mockPremisesTypeCollection.Object);
         _mockClient.Setup(c => c.GetDatabase("TestDb", null)).Returns(_mockDatabase.Object);
 
         var lastRunField = typeof(MongoDataSeeder).GetField("_lastRun", BindingFlags.NonPublic | BindingFlags.Static);
@@ -140,7 +140,7 @@ public class MongoDataSeederTests : IDisposable
             LastModifiedDate = null
         };
     }
-    private PremisesTypeDocument CreateTestPremisesType(string code, string name) // ADDED
+    private PremisesTypeDocument CreateTestPremisesType(string code, string name)
     {
         return new PremisesTypeDocument
         {
