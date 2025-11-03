@@ -1,3 +1,4 @@
+using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents.Reference;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,25 +16,18 @@ namespace KeeperData.Infrastructure.Database.Repositories;
 
 public class ReferenceDataRepository<TDocument, TItem> : GenericRepository<TDocument>, IReferenceDataRepository<TDocument, TItem>
     where TDocument : class, IReferenceListDocument<TItem>
+    where TItem : class, INestedEntity
 {
-    private readonly string _documentId;
-    private readonly SemaphoreSlim _refreshLock = new(1, 1);
-    private Lazy<Task<IReadOnlyCollection<TItem>>> _itemsCache;
+    private readonly Lazy<Task<IReadOnlyCollection<TItem>>> _itemsCache;
 
     public ReferenceDataRepository(
         IOptions<MongoConfig> mongoConfig,
         IMongoClient client,
-        IUnitOfWork unitOfWork,
-        string documentId)
+        IUnitOfWork unitOfWork)
         : base(mongoConfig, client, unitOfWork)
     {
-        if (string.IsNullOrWhiteSpace(documentId))
-        {
-            throw new ArgumentException("Document identifier must be provided", nameof(documentId));
-        }
-
-        _documentId = documentId;
-        _itemsCache = CreateLazyCache();
+        _itemsCache = new Lazy<Task<IReadOnlyCollection<TItem>>>(
+            LoadItemsAsync, LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
     public async Task<IReadOnlyCollection<TItem>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -47,37 +42,30 @@ public class ReferenceDataRepository<TDocument, TItem> : GenericRepository<TDocu
         return await cachedTask.ConfigureAwait(false);
     }
 
-    public async Task RefreshAsync(CancellationToken cancellationToken = default)
+    private async Task<IReadOnlyCollection<TItem>> LoadItemsAsync()
     {
-        await _refreshLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        var attribute = typeof(TItem).GetCustomAttribute<ReferenceDataAttribute<TDocument, TItem>>()
+            ?? throw new InvalidOperationException(
+                $"Type {typeof(TItem).Name} must be decorated with [ReferenceData<{typeof(TDocument).Name}, {typeof(TItem).Name}>]");
 
-        try
-        {
-            _itemsCache = CreateLazyCache();
-        }
-        finally
-        {
-            _refreshLock.Release();
-        }
-    }
+        var referenceDocument = await FindOneAsync(x => x.Id == attribute.DocumentId, CancellationToken.None).ConfigureAwait(false);
 
-    private Lazy<Task<IReadOnlyCollection<TItem>>> CreateLazyCache() =>
-        new(() => LoadItemsAsync(CancellationToken.None), LazyThreadSafetyMode.ExecutionAndPublication);
-
-    private async Task<IReadOnlyCollection<TItem>> LoadItemsAsync(CancellationToken cancellationToken)
-    {
-        var referenceDocument = await FindOneAsync(x => x.Id == _documentId, cancellationToken).ConfigureAwait(false);
-
-        if (referenceDocument?.Items == null || referenceDocument.Items.Count == 0)
+        if (referenceDocument == null)
         {
             return Array.Empty<TItem>();
         }
 
-        if (referenceDocument.Items is IReadOnlyCollection<TItem> readOnly)
+        var itemsProperty = typeof(TDocument).GetProperty(attribute.ItemsPropertyName, BindingFlags.IgnoreCase | BindingFlags.Public)
+            ?? throw new InvalidOperationException(
+                $"Property '{attribute.ItemsPropertyName}' not found on {typeof(TDocument).Name}");
+
+        var items = itemsProperty.GetValue(referenceDocument) as IEnumerable<TItem>;
+
+        if (items == null || !items.Any())
         {
-            return readOnly;
+            return Array.Empty<TItem>();
         }
 
-        return referenceDocument.Items.ToArray();
+        return items.ToArray();
     }
 }
