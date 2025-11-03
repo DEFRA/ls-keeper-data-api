@@ -30,6 +30,8 @@ public class MongoDataSeederTests : IDisposable
     private readonly Mock<IMongoCollection<CountryListDocument>> _mockCountryCollection;
     private readonly Mock<IMongoCollection<SpeciesListDocument>> _mockSpeciesCollection;
     private readonly Mock<IMongoCollection<PartyRoleListDocument>> _mockPartyRoleCollection;
+    private readonly Mock<IMongoCollection<PremisesTypeListDocument>> _mockPremisesTypeCollection;
+    private readonly Mock<IMongoCollection<PremisesActivityTypeListDocument>> _mockPremisesActivityTypeCollection;
     private readonly Mock<IOptions<MongoConfig>> _mockConfig;
     private readonly string _testDirectory;
     private readonly string _seedDirectory;
@@ -42,7 +44,9 @@ public class MongoDataSeederTests : IDisposable
         _mockDatabase = new Mock<IMongoDatabase>();
         _mockCountryCollection = new Mock<IMongoCollection<CountryListDocument>>();
         _mockSpeciesCollection = new Mock<IMongoCollection<SpeciesListDocument>>();
-        _mockPartyRoleCollection = new Mock<IMongoCollection<PartyRoleListDocument>>(); // ADDED
+        _mockPartyRoleCollection = new Mock<IMongoCollection<PartyRoleListDocument>>();
+        _mockPremisesTypeCollection = new Mock<IMongoCollection<PremisesTypeListDocument>>();
+        _mockPremisesActivityTypeCollection = new Mock<IMongoCollection<PremisesActivityTypeListDocument>>();
         _mockConfig = new Mock<IOptions<MongoConfig>>();
 
         _testDirectory = Path.Combine(Path.GetTempPath(), "MongoSeederTest_" + Guid.NewGuid());
@@ -54,7 +58,9 @@ public class MongoDataSeederTests : IDisposable
 
         _mockDatabase.Setup(d => d.GetCollection<CountryListDocument>("refCountries", null)).Returns(_mockCountryCollection.Object);
         _mockDatabase.Setup(d => d.GetCollection<SpeciesListDocument>("refSpecies", null)).Returns(_mockSpeciesCollection.Object);
-        _mockDatabase.Setup(d => d.GetCollection<PartyRoleListDocument>("refPartyRoles", null)).Returns(_mockPartyRoleCollection.Object); // ADDED
+        _mockDatabase.Setup(d => d.GetCollection<PartyRoleListDocument>("refPartyRoles", null)).Returns(_mockPartyRoleCollection.Object);
+        _mockDatabase.Setup(d => d.GetCollection<PremisesTypeListDocument>("refPremisesTypes", null)).Returns(_mockPremisesTypeCollection.Object);
+        _mockDatabase.Setup(d => d.GetCollection<PremisesActivityTypeListDocument>("refPremisesActivityTypes", null)).Returns(_mockPremisesActivityTypeCollection.Object);
         _mockClient.Setup(c => c.GetDatabase("TestDb", null)).Returns(_mockDatabase.Object);
 
         var lastRunField = typeof(MongoDataSeeder).GetField("_lastRun", BindingFlags.NonPublic | BindingFlags.Static);
@@ -137,6 +143,33 @@ public class MongoDataSeederTests : IDisposable
             LastModifiedDate = null
         };
     }
+    private PremisesTypeDocument CreateTestPremisesType(string code, string name)
+    {
+        return new PremisesTypeDocument
+        {
+            IdentifierId = Guid.NewGuid().ToString(),
+            Code = code,
+            Name = name,
+            IsActive = true,
+            SortOrder = 0,
+            EffectiveStartDate = new DateTime(2023, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            CreatedDate = new DateTime(2023, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+        };
+    }
+
+    private PremisesActivityTypeDocument CreateTestPremisesActivityType(string code, string name)
+    {
+        return new PremisesActivityTypeDocument
+        {
+            IdentifierId = Guid.NewGuid().ToString(),
+            Code = code,
+            Name = name,
+            IsActive = true,
+            PriorityOrder = 0,
+            EffectiveStartDate = new DateTime(2023, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            CreatedDate = new DateTime(2023, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+        };
+    }
 
     [Fact]
     public async Task StartAsync_WhenNoFilesExist_LogsAndSkipsAllDatabaseCalls()
@@ -146,10 +179,14 @@ public class MongoDataSeederTests : IDisposable
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'countries.json' not found", Times.Once());
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'species.json' not found", Times.Once());
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'partyroles.json' not found", Times.Once());
+        _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'premisestypes.json' not found", Times.Once());
+        _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'premisesactivitytypes.json' not found", Times.Once());
 
         _mockCountryCollection.VerifyNoOtherCalls();
         _mockSpeciesCollection.VerifyNoOtherCalls();
         _mockPartyRoleCollection.VerifyNoOtherCalls();
+        _mockPremisesTypeCollection.VerifyNoOtherCalls();
+        _mockPremisesActivityTypeCollection.VerifyNoOtherCalls();
     }
 
     [Fact]
@@ -173,11 +210,15 @@ public class MongoDataSeederTests : IDisposable
 
         CreateJsonFile("countries.json", new List<CountryDocument> { CreateTestCountry("US", "USA") });
         CreateJsonFile("species.json", new List<SpeciesDocument> { CreateTestSpecies("CTT", "Cattle") });
-        CreateJsonFile("partyroles.json", new List<PartyRoleDocument> { CreateTestPartyRole("KEEPER", "Livestock Keeper") }); // ADDED
+        CreateJsonFile("partyroles.json", new List<PartyRoleDocument> { CreateTestPartyRole("KEEPER", "Livestock Keeper") });
+        CreateJsonFile("premisestypes.json", new List<PremisesTypeDocument> { CreateTestPremisesType("AH", "Agricultural Holding") });
+        CreateJsonFile("premisesactivitytypes.json", new List<PremisesActivityTypeDocument> { CreateTestPremisesActivityType("AFU", "Approved Finishing Unit") });
 
         CountryListDocument? capturedCountryDoc = null;
         SpeciesListDocument? capturedSpeciesDoc = null;
-        PartyRoleListDocument? capturedPartyRoleDoc = null; // ADDED
+        PartyRoleListDocument? capturedPartyRoleDoc = null;
+        PremisesTypeListDocument? capturedPremisesTypeDoc = null;
+        PremisesActivityTypeListDocument? capturedPremisesActivityTypeDoc = null;
 
         _mockCountryCollection.Setup(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<CountryListDocument>>(), It.IsAny<CountryListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()))
                            .Callback<FilterDefinition<CountryListDocument>, CountryListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedCountryDoc = doc)
@@ -191,11 +232,21 @@ public class MongoDataSeederTests : IDisposable
                            .Callback<FilterDefinition<PartyRoleListDocument>, PartyRoleListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedPartyRoleDoc = doc)
                            .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
 
+        _mockPremisesTypeCollection.Setup(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<PremisesTypeListDocument>>(), It.IsAny<PremisesTypeListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()))
+                   .Callback<FilterDefinition<PremisesTypeListDocument>, PremisesTypeListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedPremisesTypeDoc = doc)
+                   .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
+
+        _mockPremisesActivityTypeCollection.Setup(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<PremisesActivityTypeListDocument>>(), It.IsAny<PremisesActivityTypeListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()))
+                           .Callback<FilterDefinition<PremisesActivityTypeListDocument>, PremisesActivityTypeListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedPremisesActivityTypeDoc = doc)
+                           .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
+
         await seeder.StartAsync(CancellationToken.None);
 
         _mockCountryCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<CountryListDocument>>(), It.IsAny<CountryListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockSpeciesCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<SpeciesListDocument>>(), It.IsAny<SpeciesListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
-        _mockPartyRoleCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<PartyRoleListDocument>>(), It.IsAny<PartyRoleListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once); // ADDED
+        _mockPartyRoleCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<PartyRoleListDocument>>(), It.IsAny<PartyRoleListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockPremisesTypeCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<PremisesTypeListDocument>>(), It.IsAny<PremisesTypeListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockPremisesActivityTypeCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<PremisesActivityTypeListDocument>>(), It.IsAny<PremisesActivityTypeListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
 
         capturedCountryDoc.Should().NotBeNull();
         capturedCountryDoc!.Countries.Should().Contain(c => c.Code == "US");
@@ -203,8 +254,14 @@ public class MongoDataSeederTests : IDisposable
         capturedSpeciesDoc.Should().NotBeNull();
         capturedSpeciesDoc!.Species.Should().Contain(s => s.Code == "CTT");
 
-        capturedPartyRoleDoc.Should().NotBeNull(); // ADDED
-        capturedPartyRoleDoc!.PartyRoles.Should().Contain(pr => pr.Code == "KEEPER"); // ADDED
+        capturedPartyRoleDoc.Should().NotBeNull();
+        capturedPartyRoleDoc!.PartyRoles.Should().Contain(pr => pr.Code == "KEEPER");
+
+        capturedPremisesTypeDoc.Should().NotBeNull();
+        capturedPremisesTypeDoc?.PremisesTypes.Should().Contain(pt => pt.Code == "AH");
+
+        capturedPremisesActivityTypeDoc.Should().NotBeNull();
+        capturedPremisesActivityTypeDoc?.PremisesActivityTypes.Should().Contain(pat => pat.Code == "AFU");
     }
 
     [Fact]

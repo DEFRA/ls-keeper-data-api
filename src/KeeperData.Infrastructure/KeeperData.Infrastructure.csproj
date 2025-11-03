@@ -35,6 +35,12 @@
     </Content>
     <Content Include="Data\Seed\partyroles.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>    
+    </Content>
+    <Content Include="Data\Seed\premisestypes.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\Seed\premisesactivitytypes.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>  
   </ItemGroup>  
 </Project>

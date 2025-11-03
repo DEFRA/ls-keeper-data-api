@@ -113,7 +113,45 @@ public class MappingTests
         result.Code.Should().Be("LIVESTOCKKEEPER");
         result.Name.Should().Be("Livestock Keeper");
         result.IsActive.Should().BeTrue();
-        result.SortOrder.Should().Be(0); // Correctly defaults to 0 as it's empty in the CSV
+        result.SortOrder.Should().Be(0);
+        result.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        Guid.TryParse(result.Id, out _).Should().BeTrue();
+    }
+
+    [Fact]
+    public void MapPremisesType_WithValidData_CreatesCorrectObject()
+    {
+        // Arrange
+        var csvLine = "AH,NEWID(),Agricultural Holding,System,NEWDATE(),,NEWDATE(),True,,System,NEWDATE()";
+        var parts = csvLine.Split(',');
+
+        // Act
+        var result = Program.MapPremisesType(parts);
+
+        // Assert
+        result.Code.Should().Be("AH");
+        result.Name.Should().Be("Agricultural Holding");
+        result.IsActive.Should().BeTrue();
+        result.SortOrder.Should().Be(0);
+        result.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        Guid.TryParse(result.Id, out _).Should().BeTrue();
+    }
+
+    [Fact]
+    public void MapPremisesActivityType_WithValidData_CreatesCorrectObject()
+    {
+        // Arrange
+        var csvLine = "AFU,NEWID(),Approved Finishing Unit,System,NEWDATE(),,NEWDATE(),True,150,System,NEWDATE()";
+        var parts = csvLine.Split(',');
+
+        // Act
+        var result = Program.MapPremisesActivityType(parts);
+
+        // Assert
+        result.Code.Should().Be("AFU");
+        result.Name.Should().Be("Approved Finishing Unit");
+        result.IsActive.Should().BeTrue();
+        result.PriorityOrder.Should().Be(150);
         result.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         Guid.TryParse(result.Id, out _).Should().BeTrue();
     }
