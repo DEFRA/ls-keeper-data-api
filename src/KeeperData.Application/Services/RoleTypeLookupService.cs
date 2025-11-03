@@ -11,13 +11,15 @@ public class RoleTypeLookupService : IRoleTypeLookupService
     /// <param name="id"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async Task<RoleTypeDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
+    public async Task<RoleDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(id)) return null;
 
-        return await Task.FromResult(new RoleTypeDocument
+        return await Task.FromResult(new RoleDocument
         {
-            IdentifierId = id
+            IdentifierId = id,
+            Code = "Code",
+            Name = "Name"
         });
     }
 

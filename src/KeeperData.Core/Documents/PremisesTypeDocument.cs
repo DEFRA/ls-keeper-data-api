@@ -1,6 +1,5 @@
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
-using System;
 using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;

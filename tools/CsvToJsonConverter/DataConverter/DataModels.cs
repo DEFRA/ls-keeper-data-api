@@ -33,7 +33,7 @@ public record SpeciesJson(
     [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
 );
 
-public record PartyRoleJson(
+public record RoleJson(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("code")] string Code,
     [property: JsonPropertyName("name")] string Name,

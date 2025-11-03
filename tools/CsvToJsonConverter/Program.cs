@@ -34,10 +34,10 @@ public class Program
                     jsonString = await converter.Convert<SpeciesJson>(inputPath, MapSpecies);
                     break;
 
-                case "partyroles":
-                    inputPath = "partyroles.csv";
-                    outputPath = "partyroles_generated.json";
-                    jsonString = await converter.Convert<PartyRoleJson>(inputPath, MapPartyRole);
+                case "roles":
+                    inputPath = "roles.csv";
+                    outputPath = "roles_generated.json";
+                    jsonString = await converter.Convert<RoleJson>(inputPath, MapRole);
                     break;
 
                 case "premisestypes":
@@ -119,11 +119,11 @@ public class Program
         );
     }
 
-    public static PartyRoleJson MapPartyRole(string[] parts)
+    public static RoleJson MapRole(string[] parts)
     {
         if (parts.Length < 11) throw new InvalidDataException("CSV line for party role has fewer than 11 columns.");
 
-        return new PartyRoleJson(
+        return new RoleJson(
             Id: HandlePlaceholderId(parts[1]),
             Code: parts[0].Trim(),
             Name: parts[2].Trim(),
@@ -179,7 +179,7 @@ public class Program
     private static void PrintUsage()
     {
         Console.WriteLine("\nUsage: dotnet run <data_type>");
-        Console.WriteLine("Available data types: countries, species, partyroles, premisesactivitytypes");
+        Console.WriteLine("Available data types: countries, species, roles, premisesactivitytypes");
     }
 
     private static void PrintSuccess(string outputPath, string inputPath)

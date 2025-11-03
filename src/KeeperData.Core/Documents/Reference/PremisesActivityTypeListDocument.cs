@@ -1,7 +1,5 @@
 using KeeperData.Core.Attributes;
 using MongoDB.Bson.Serialization.Attributes;
-using System;
-using System.Collections.Generic;
 
 namespace KeeperData.Core.Documents.Reference;
 
