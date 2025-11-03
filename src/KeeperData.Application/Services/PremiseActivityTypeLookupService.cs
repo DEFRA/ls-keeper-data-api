@@ -11,13 +11,15 @@ public class PremiseActivityTypeLookupService : IPremiseActivityTypeLookupServic
     /// <param name="id"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async Task<PremiseActivityTypeDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
+    public async Task<PremisesActivityTypeDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(id)) return null;
 
-        return await Task.FromResult(new PremiseActivityTypeDocument
+        return await Task.FromResult(new PremisesActivityTypeDocument
         {
-            IdentifierId = id
+            IdentifierId = id,
+            Code = "ABC",
+            Name = "XYZ"
         });
     }
 

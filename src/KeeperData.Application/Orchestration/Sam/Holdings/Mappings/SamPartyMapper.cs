@@ -116,7 +116,7 @@ public static class SamPartyMapper
         DateTime currentDateTime,
         List<SamPartyDocument> silverParties,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
-        Func<string?, CancellationToken, Task<SpeciesTypeDocument?>> getSpeciesTypeById,
+        Func<string?, CancellationToken, Task<SpeciesDocument?>> getSpeciesTypeById,
         CancellationToken cancellationToken)
     {
         if (silverParties?.Count == 0)
@@ -153,7 +153,7 @@ public static class SamPartyMapper
         DateTime currentDateTime,
         SamPartyDocument incoming,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
-        Func<string?, CancellationToken, Task<SpeciesTypeDocument?>> getSpeciesTypeById,
+        Func<string?, CancellationToken, Task<SpeciesDocument?>> getSpeciesTypeById,
         CancellationToken cancellationToken)
     {
         var country = await GetCountryAsync(
@@ -182,7 +182,7 @@ public static class SamPartyMapper
         SamPartyDocument incoming,
         PartyDocument existing,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
-        Func<string?, CancellationToken, Task<SpeciesTypeDocument?>> getSpeciesTypeById,
+        Func<string?, CancellationToken, Task<SpeciesDocument?>> getSpeciesTypeById,
         CancellationToken cancellationToken)
     {
         var party = existing.ToDomain();

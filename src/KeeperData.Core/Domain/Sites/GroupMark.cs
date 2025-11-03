@@ -3,7 +3,7 @@ using KeeperData.Core.Exceptions;
 
 namespace KeeperData.Core.Domain.Sites;
 
-public class Marks : ValueObject
+public class GroupMark : ValueObject
 {
     public string Id { get; }
     public string Mark { get; }
@@ -11,7 +11,7 @@ public class Marks : ValueObject
     public DateTime StartDate { get; }
     public DateTime? EndDate { get; }
 
-    public Marks(string id, string mark, Species? species, DateTime startDate, DateTime? endDate)
+    public GroupMark(string id, string mark, Species? species, DateTime startDate, DateTime? endDate)
     {
         if (endDate.HasValue && endDate.Value < startDate)
         {
@@ -29,9 +29,9 @@ public class Marks : ValueObject
         EndDate = endDate;
     }
 
-    public static Marks Create(string mark, Species? species, DateTime startDate, DateTime? endDate = null)
+    public static GroupMark Create(string mark, Species? species, DateTime startDate, DateTime? endDate = null)
     {
-        return new Marks(
+        return new GroupMark(
             Guid.NewGuid().ToString(),
             mark,
             species,

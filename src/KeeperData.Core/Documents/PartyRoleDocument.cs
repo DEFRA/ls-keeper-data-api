@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
 
-public class RolesToPartyDocument : INestedEntity
+public class PartyRoleDocument : INestedEntity
 {
     [JsonPropertyName("id")]
     [BsonElement("id")]
@@ -14,7 +14,7 @@ public class RolesToPartyDocument : INestedEntity
     public List<ManagedSpeciesDocument> SpeciesManagedByRole { get; set; } = [];
     public DateTime? LastUpdatedDate { get; set; }
 
-    public static RolesToPartyDocument FromDomain(RolesToParty m) => new()
+    public static PartyRoleDocument FromDomain(PartyRole m) => new()
     {
         IdentifierId = m.Id,
         Role = m.Role?.Name,
@@ -22,13 +22,13 @@ public class RolesToPartyDocument : INestedEntity
         LastUpdatedDate = m.LastUpdatedDate
     };
 
-    public RolesToParty ToDomain()
+    public PartyRole ToDomain()
     {
         var roleObject = Role is not null
             ? new Role(Guid.NewGuid().ToString(), Role, LastUpdatedDate)
             : null;
 
-        return new RolesToParty(
+        return new PartyRole(
             IdentifierId,
             roleObject,
             SpeciesManagedByRole.Select(s => s.ToDomain()),

@@ -26,7 +26,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     public bool Deleted { get; set; }
     public List<SitePartyDocument> Parties { get; set; } = [];
     public List<SpeciesDocument> Species { get; set; } = [];
-    public List<MarksDocument> Marks { get; set; } = [];
+    public List<GroupMarkDocument> Marks { get; set; } = [];
     public List<SiteActivityDocument> Activities { get; set; } = [];
     public List<string> KeeperPartyIds { get; set; } = [];
 
@@ -47,7 +47,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         Deleted = m.Deleted,
         Parties = [.. m.Parties.Select(SitePartyDocument.FromDomain)],
         Species = [.. m.Species.Select(SpeciesDocument.FromDomain)],
-        Marks = [.. m.Marks.Select(MarksDocument.FromDomain)],
+        Marks = [.. m.Marks.Select(GroupMarkDocument.FromDomain)],
         Activities = [.. m.Activities.Select(SiteActivityDocument.FromDomain)],
     };
 

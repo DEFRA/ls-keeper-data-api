@@ -4,7 +4,7 @@ namespace KeeperData.Core.Services;
 
 public interface IPremiseActivityTypeLookupService
 {
-    Task<PremiseActivityTypeDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken);
+    Task<PremisesActivityTypeDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken);
 
     Task<(string? premiseActivityTypeId, string? premiseActivityTypeName)> FindAsync(string? lookupValue, CancellationToken cancellationToken);
 }

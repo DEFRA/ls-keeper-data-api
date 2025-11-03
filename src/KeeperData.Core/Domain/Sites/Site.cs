@@ -31,8 +31,8 @@ public class Site : IAggregateRoot
     private readonly List<Species> _species = [];
     public IReadOnlyCollection<Species> Species => _species.AsReadOnly();
 
-    private readonly List<Marks> _marks = [];
-    public IReadOnlyCollection<Marks> Marks => _marks.AsReadOnly();
+    private readonly List<GroupMark> _marks = [];
+    public IReadOnlyCollection<GroupMark> Marks => _marks.AsReadOnly();
 
     private readonly List<SiteActivity> _activities = [];
     public IReadOnlyCollection<SiteActivity> Activities => _activities.AsReadOnly();

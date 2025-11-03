@@ -11,13 +11,15 @@ public class SpeciesTypeLookupService : ISpeciesTypeLookupService
     /// <param name="id"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async Task<SpeciesTypeDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
+    public async Task<SpeciesDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(id)) return null;
 
-        return await Task.FromResult(new SpeciesTypeDocument
+        return await Task.FromResult(new SpeciesDocument
         {
-            IdentifierId = id
+            IdentifierId = id,
+            Code = "ABC",
+            Name = "XYZ"
         });
     }
 

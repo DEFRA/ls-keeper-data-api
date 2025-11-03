@@ -13,11 +13,11 @@ public class SiteParty : ValueObject
     public string? PartyType { get; private set; }
     public IReadOnlyCollection<Communication> Communication { get; private set; }
     public Address? CorrespondanceAddress { get; private set; }
-    public IReadOnlyCollection<RolesToParty> PartyRoles { get; private set; }
+    public IReadOnlyCollection<PartyRole> PartyRoles { get; private set; }
     public string? State { get; private set; }
     public DateTime? LastUpdatedDate { get; private set; }
 
-    public SiteParty(string id, string? title, string? firstName, string? lastName, string? name, string? customerNumber, string? partyType, IEnumerable<Communication> communication, Address? correspondanceAddress, IEnumerable<RolesToParty> partyRoles, string? state, DateTime? lastUpdatedDate)
+    public SiteParty(string id, string? title, string? firstName, string? lastName, string? name, string? customerNumber, string? partyType, IEnumerable<Communication> communication, Address? correspondanceAddress, IEnumerable<PartyRole> partyRoles, string? state, DateTime? lastUpdatedDate)
     {
         Id = id;
         Title = title;

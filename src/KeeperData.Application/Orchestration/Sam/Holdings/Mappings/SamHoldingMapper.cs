@@ -104,7 +104,7 @@ public static class SamHoldingMapper
         DateTime currentDateTime,
         List<SamHoldingDocument> silverHoldings,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
-        Func<string?, CancellationToken, Task<PremiseTypeDocument?>> getPremiseTypeById,
+        Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
         CancellationToken cancellationToken)
     {
         if (silverHoldings?.Count == 0)
@@ -136,7 +136,7 @@ public static class SamHoldingMapper
         DateTime currentDateTime,
         SamHoldingDocument incoming,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
-        Func<string?, CancellationToken, Task<PremiseTypeDocument?>> getPremiseTypeById,
+        Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
         CancellationToken cancellationToken)
     {
         int? uprn = int.TryParse(incoming.Location?.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
@@ -194,7 +194,7 @@ public static class SamHoldingMapper
         SamHoldingDocument incoming,
         SiteDocument existing,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
-        Func<string?, CancellationToken, Task<PremiseTypeDocument?>> getPremiseTypeById,
+        Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
         CancellationToken cancellationToken)
     {
         var site = existing.ToDomain();
@@ -260,9 +260,9 @@ public static class SamHoldingMapper
         return countryDocument.ToDomain();
     }
 
-    private static async Task<PremiseTypeDocument?> GetPremiseTypeAsync(
+    private static async Task<PremisesTypeDocument?> GetPremiseTypeAsync(
         string? premiseTypeIdentifier,
-        Func<string?, CancellationToken, Task<PremiseTypeDocument?>> getPremiseTypeById,
+        Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
         CancellationToken cancellationToken)
     {
         if (premiseTypeIdentifier == null) return null;

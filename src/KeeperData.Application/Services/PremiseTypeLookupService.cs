@@ -11,11 +11,11 @@ public class PremiseTypeLookupService : IPremiseTypeLookupService
     /// <param name="id"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async Task<PremiseTypeDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
+    public async Task<PremisesTypeDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(id)) return null;
 
-        return await Task.FromResult(new PremiseTypeDocument
+        return await Task.FromResult(new PremisesTypeDocument
         {
             IdentifierId = id,
             Code = Guid.NewGuid().ToString(),
