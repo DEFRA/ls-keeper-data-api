@@ -9,6 +9,4 @@ public interface IReferenceDataRepository<TDocument, TItem> : IGenericRepository
     where TDocument : class, IReferenceListDocument<TItem>
 {
     Task<IReadOnlyCollection<TItem>> GetAllAsync(CancellationToken cancellationToken = default);
-
-    Task RefreshAsync(CancellationToken cancellationToken = default);
 }
