@@ -60,3 +60,17 @@ public record PremisesTypeJson(
     [property: JsonPropertyName("lastModifiedBy")] string? LastModifiedBy,
     [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
 );
+
+public record PremisesActivityTypeJson(
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("code")] string Code,
+    [property: JsonPropertyName("name")] string Name,
+    [property: JsonPropertyName("isActive")] bool IsActive,
+    [property: JsonPropertyName("priorityOrder")] int PriorityOrder,
+    [property: JsonPropertyName("effectiveStartDate")] DateTime EffectiveStartDate,
+    [property: JsonPropertyName("effectiveEndDate")] DateTime? EffectiveEndDate,
+    [property: JsonPropertyName("createdBy")] string CreatedBy,
+    [property: JsonPropertyName("createdDate")] DateTime CreatedDate,
+    [property: JsonPropertyName("lastModifiedBy")] string? LastModifiedBy,
+    [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
+);

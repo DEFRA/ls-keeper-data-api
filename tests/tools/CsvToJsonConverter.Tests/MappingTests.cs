@@ -136,4 +136,23 @@ public class MappingTests
         result.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         Guid.TryParse(result.Id, out _).Should().BeTrue();
     }
+
+    [Fact]
+    public void MapPremisesActivityType_WithValidData_CreatesCorrectObject()
+    {
+        // Arrange
+        var csvLine = "AFU,NEWID(),Approved Finishing Unit,System,NEWDATE(),,NEWDATE(),True,150,System,NEWDATE()";
+        var parts = csvLine.Split(',');
+
+        // Act
+        var result = Program.MapPremisesActivityType(parts);
+
+        // Assert
+        result.Code.Should().Be("AFU");
+        result.Name.Should().Be("Approved Finishing Unit");
+        result.IsActive.Should().BeTrue();
+        result.PriorityOrder.Should().Be(150);
+        result.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        Guid.TryParse(result.Id, out _).Should().BeTrue();
+    }
 }

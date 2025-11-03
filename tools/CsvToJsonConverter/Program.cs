@@ -46,6 +46,12 @@ public class Program
                     jsonString = await converter.Convert<PremisesTypeJson>(inputPath, MapPremisesType);
                     break;
 
+                case "premisesactivitytypes":
+                    inputPath = "premisesactivitytypes.csv";
+                    outputPath = "premisesactivitytypes_generated.json";
+                    jsonString = await converter.Convert<PremisesActivityTypeJson>(inputPath, MapPremisesActivityType);
+                    break;
+
                 default:
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine($"\nERROR: Unknown data type '{dataType}'.");
@@ -151,10 +157,29 @@ public class Program
         );
     }
 
+    public static PremisesActivityTypeJson MapPremisesActivityType(string[] parts)
+    {
+        if (parts.Length < 11) throw new InvalidDataException("CSV line for premises activity type has fewer than 11 columns.");
+
+        return new PremisesActivityTypeJson(
+            Id: HandlePlaceholderId(parts[1]),
+            Code: parts[0].Trim(),
+            Name: parts[2].Trim(),
+            CreatedBy: parts[3].Trim(),
+            CreatedDate: HandlePlaceholderOrEmptyDate(parts[4], DateTime.UtcNow),
+            EffectiveEndDate: ParseNullableDateTime(parts[5]),
+            EffectiveStartDate: HandlePlaceholderOrEmptyDate(parts[6], DateTime.UtcNow),
+            IsActive: ParseBool(parts[7]),
+            PriorityOrder: ParseInt(parts[8]),
+            LastModifiedBy: parts[9].Trim(),
+            LastModifiedDate: HandlePlaceholderOrEmptyDate(parts[10], DateTime.UtcNow)
+        );
+    }
+
     private static void PrintUsage()
     {
         Console.WriteLine("\nUsage: dotnet run <data_type>");
-        Console.WriteLine("Available data types: countries, species, partyroles, premisestypes");
+        Console.WriteLine("Available data types: countries, species, partyroles, premisesactivitytypes");
     }
 
     private static void PrintSuccess(string outputPath, string inputPath)
