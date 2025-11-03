@@ -1,10 +1,13 @@
+using KeeperData.Core.Attributes;
 using KeeperData.Core.Domain.Sites;
+using KeeperData.Core.Documents.Reference;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
 
+[ReferenceData<CountryListDocument, CountryDocument>("all-countries", nameof(CountryListDocument.Countries))]
 public class CountryDocument : INestedEntity
 {
     [JsonPropertyName("id")]
