@@ -1,0 +1,38 @@
+[
+  {
+    "id": "6b4ca299-895d-4cdb-95dd-670de71ff328",
+    "code": "CPHN",
+    "name": "CPH Number",
+    "isActive": true,
+    "effectiveStartDate": "2025-11-03T14:24:58.9808832Z",
+    "effectiveEndDate": null,
+    "createdBy": "System",
+    "createdDate": "2025-11-03T14:24:58.9799777Z",
+    "lastModifiedBy": "System",
+    "lastModifiedDate": "2025-11-03T14:24:58.9810036Z"
+  },
+  {
+    "id": "cb2fb3ee-6368-4125-a413-fc905fec51f0",
+    "code": "FSAN",
+    "name": "FSA Number",
+    "isActive": true,
+    "effectiveStartDate": "2025-11-03T14:24:58.9812631Z",
+    "effectiveEndDate": null,
+    "createdBy": "System",
+    "createdDate": "2025-11-03T14:24:58.9812566Z",
+    "lastModifiedBy": "System",
+    "lastModifiedDate": "2025-11-03T14:24:58.9812634Z"
+  },
+  {
+    "id": "4e135625-2d31-46ce-b9fe-93bc70ad6395",
+    "code": "PRTN",
+    "name": "Port Number",
+    "isActive": true,
+    "effectiveStartDate": "2025-11-03T14:24:58.981266Z",
+    "effectiveEndDate": null,
+    "createdBy": "System",
+    "createdDate": "2025-11-03T14:24:58.9812656Z",
+    "lastModifiedBy": "System",
+    "lastModifiedDate": "2025-11-03T14:24:58.9812661Z"
+  }
+]
