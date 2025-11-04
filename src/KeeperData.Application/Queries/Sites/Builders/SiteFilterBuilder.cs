@@ -30,10 +30,11 @@ public static class SiteFilterBuilder
             filters.Add(builder.Eq(x => x.Id, query.SiteId.Value.ToString()));
         }
 
-        if (query.KeeperPartyId.HasValue)
-        {
-            filters.Add(builder.AnyEq(x => x.KeeperPartyIds, query.KeeperPartyId.Value.ToString()));
-        }
+        // TODO - Update to use site parties
+        //if (query.KeeperPartyId.HasValue)
+        //{
+        //    filters.Add(builder.AnyEq(x => x.KeeperPartyIds, query.KeeperPartyId.Value.ToString()));
+        //}
 
         return filters.Count > 0 ? builder.And(filters) : builder.Empty;
     }

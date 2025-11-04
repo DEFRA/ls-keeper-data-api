@@ -2,7 +2,7 @@ namespace KeeperData.Core.Domain.BuildingBlocks;
 
 public abstract class ValueObject
 {
-    protected abstract IEnumerable<object> GetEqualityComponents();
+    public abstract IEnumerable<object> GetEqualityComponents();
 
     public override bool Equals(object? obj)
     {

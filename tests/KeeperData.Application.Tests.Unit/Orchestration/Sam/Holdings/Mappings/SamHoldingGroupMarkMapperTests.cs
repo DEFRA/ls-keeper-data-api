@@ -98,7 +98,9 @@ public class SamHoldingGroupMarkMapperTests
         var rawHoldings = GenerateSamCphHolding(holdingIdentifier, quantityHoldings);
         var rawHerds = GenerateSamHerds(holdingIdentifier, quantityHerds, quantityParties: 2);
 
-        var silverHoldings = await SamHoldingMapper.ToSilver(rawHoldings,
+        var silverHoldings = await SamHoldingMapper.ToSilver(
+            DateTime.UtcNow,
+            rawHoldings,
             _resolvePremiseActivityType,
             _resolvePremiseType,
             _resolveCountry,
@@ -107,7 +109,9 @@ public class SamHoldingGroupMarkMapperTests
         silverHoldings.Should().NotBeNull();
         silverHoldings.Count.Should().Be(quantityHoldings);
 
-        var silverHerds = await SamHerdMapper.ToSilver(rawHerds,
+        var silverHerds = await SamHerdMapper.ToSilver(
+            DateTime.UtcNow,
+            rawHerds,
             _resolveProductionUsage,
             // _resolveProductionType,
             _resolveSpeciesType,

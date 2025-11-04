@@ -13,6 +13,7 @@ public static class SamHolderMapper
     private const string SaonLabel = "";
 
     public static async Task<List<SamPartyDocument>> ToSilver(
+        DateTime currentDateTime,
         List<SamCphHolder> rawHolders,
         string holdingIdentifier,
         InferredRoleType inferredRoleType,
@@ -40,6 +41,7 @@ public static class SamHolderMapper
                 // Id - Leave to support upsert assigning Id
 
                 LastUpdatedBatchId = p.BATCH_ID,
+                LastUpdatedDate = currentDateTime,
                 Deleted = p.IsDeleted ?? false,
 
                 CountyParishHoldingNumber = holdingIdentifier,
@@ -91,8 +93,8 @@ public static class SamHolderMapper
                         RoleTypeId = roleTypeId,
                         RoleTypeName = roleTypeName,
                         SourceRoleName = roleNameToLookup,
-                        EffectiveFromData = null,
-                        EffectiveToData = null
+                        EffectiveFromDate = null,
+                        EffectiveToDate = null
                     }
                 ]
             };

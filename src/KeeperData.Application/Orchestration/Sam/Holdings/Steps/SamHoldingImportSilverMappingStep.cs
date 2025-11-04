@@ -21,6 +21,7 @@ public class SamHoldingImportSilverMappingStep(
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
     {
         context.SilverHoldings = await SamHoldingMapper.ToSilver(
+            context.CurrentDateTime,
             context.RawHoldings,
             premiseActivityTypeLookupService.FindAsync,
             premiseTypeLookupService.FindAsync,
@@ -29,6 +30,7 @@ public class SamHoldingImportSilverMappingStep(
 
         context.SilverParties = [
             .. await SamHolderMapper.ToSilver(
+                context.CurrentDateTime,
                 context.RawHolders,
                 context.Cph,
                 InferredRoleType.Holder,
@@ -37,6 +39,7 @@ public class SamHoldingImportSilverMappingStep(
                 cancellationToken),
 
             .. await SamPartyMapper.ToSilver(
+                context.CurrentDateTime,
                 context.RawParties,
                 context.Cph,
                 roleTypeLookupService.FindAsync,
@@ -50,6 +53,7 @@ public class SamHoldingImportSilverMappingStep(
             HoldingIdentifierType.HoldingNumber.ToString());
 
         context.SilverHerds = await SamHerdMapper.ToSilver(
+            context.CurrentDateTime,
             context.RawHerds,
             productionUsageLookupService.FindAsync,
             // productionTypeLookupService.FindAsync,

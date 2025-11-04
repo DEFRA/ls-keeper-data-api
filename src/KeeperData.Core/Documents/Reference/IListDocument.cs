@@ -1,5 +1,3 @@
-using System;
-
 namespace KeeperData.Core.Documents.Reference;
 
 public interface IListDocument

@@ -1,6 +1,8 @@
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Domain.Sites.Formatters;
 
 namespace KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
@@ -10,6 +12,7 @@ public static class SamHoldingMapper
     private const string SaonLabel = "";
 
     public static async Task<List<SamHoldingDocument>> ToSilver(
+        DateTime currentDateTime,
         List<SamCphHolding> rawHoldings,
         Func<string?, CancellationToken, Task<(string? PremiseActivityTypeId, string? PremiseActivityTypeName)>> resolvePremiseActivityType,
         Func<string?, CancellationToken, Task<(string? PremiseTypeId, string? PremiseTypeName)>> resolvePremiseType,
@@ -36,6 +39,7 @@ public static class SamHoldingMapper
                 // Id - Leave to support upsert assigning Id
 
                 LastUpdatedBatchId = h.BATCH_ID,
+                LastUpdatedDate = currentDateTime,
                 Deleted = h.IsDeleted ?? false,
 
                 CountyParishHoldingNumber = h.CPH,
@@ -57,13 +61,13 @@ public static class SamHoldingMapper
                 PremiseTypeIdentifier = premiseTypeId,
                 PremiseTypeCode = h.FACILITY_TYPE_CODE,
 
-                Location = new LocationDocument
+                Location = new Core.Documents.Silver.LocationDocument
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
                     Easting = h.EASTING,
                     Northing = h.NORTHING,
                     OsMapReference = h.OS_MAP_REFERENCE,
-                    Address = new AddressDocument
+                    Address = new Core.Documents.Silver.AddressDocument
                     {
                         IdentifierId = Guid.NewGuid().ToString(),
                         AddressLine = addressLine,
@@ -79,7 +83,7 @@ public static class SamHoldingMapper
                     }
                 },
 
-                Communication = new CommunicationDocument
+                Communication = new Core.Documents.Silver.CommunicationDocument
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
                     Email = null,
@@ -94,5 +98,175 @@ public static class SamHoldingMapper
         }
 
         return result;
+    }
+
+    public static async Task<SiteDocument?> ToGold(
+        DateTime currentDateTime,
+        List<SamHoldingDocument> silverHoldings,
+        Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
+        Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
+        CancellationToken cancellationToken)
+    {
+        if (silverHoldings?.Count == 0)
+            return null;
+
+        var primaryHolding = silverHoldings![0];
+
+        SiteDocument? existingSite = null; // TODO - Inject and lookup via Repository
+
+        var site = existingSite is not null
+            ? await UpdateSiteAsync(
+                currentDateTime,
+                primaryHolding,
+                existingSite,
+                getCountryById,
+                getPremiseTypeById,
+                cancellationToken)
+            : await CreateSiteAsync(
+                currentDateTime,
+                primaryHolding,
+                getCountryById,
+                getPremiseTypeById,
+                cancellationToken);
+
+        return SiteDocument.FromDomain(site);
+    }
+
+    private static async Task<Site> CreateSiteAsync(
+        DateTime currentDateTime,
+        SamHoldingDocument incoming,
+        Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
+        Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
+        CancellationToken cancellationToken)
+    {
+        int? uprn = int.TryParse(incoming.Location?.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
+
+        var premiseType = await GetPremiseTypeAsync(
+            incoming.PremiseTypeIdentifier,
+            getPremiseTypeById,
+            cancellationToken);
+
+        var country = await GetCountryAsync(
+            incoming.Location?.Address?.CountryIdentifier,
+            getCountryById,
+            cancellationToken);
+
+        var address = Address.Create(
+            uprn,
+            incoming.Location?.Address?.AddressLine ?? string.Empty,
+            incoming.Location?.Address?.AddressStreet,
+            incoming.Location?.Address?.AddressTown,
+            incoming.Location?.Address?.AddressLocality,
+            incoming.Location?.Address?.AddressPostCode ?? string.Empty,
+            country);
+
+        var location = Location.Create(
+            incoming.Location?.OsMapReference,
+            incoming.Location?.Easting,
+            incoming.Location?.Northing,
+            address,
+            communication: null);
+
+        var site = Site.Create(
+            incoming.LastUpdatedBatchId,
+            premiseType?.Code ?? string.Empty,
+            incoming.LocationName ?? string.Empty,
+            incoming.HoldingStartDate,
+            incoming.HoldingEndDate,
+            incoming.HoldingStatus,
+            SourceSystemType.SAM.ToString(),
+            null,
+            incoming.Deleted,
+            location);
+
+        site.SetSiteIdentifier(
+            lastUpdatedDate: currentDateTime,
+            identifier: incoming.CountyParishHoldingNumber,
+            type: HoldingIdentifierType.HoldingNumber.ToString()); // TODO - Need to use LOV
+
+        // TODO - Add additional fields
+
+        return site;
+    }
+
+    private static async Task<Site> UpdateSiteAsync(
+        DateTime currentDateTime,
+        SamHoldingDocument incoming,
+        SiteDocument existing,
+        Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
+        Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
+        CancellationToken cancellationToken)
+    {
+        var site = existing.ToDomain();
+
+        int? uprn = int.TryParse(incoming.Location?.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
+
+        var premiseType = await GetPremiseTypeAsync(
+            incoming.PremiseTypeIdentifier,
+            getPremiseTypeById,
+            cancellationToken);
+
+        var country = await GetCountryAsync(
+            incoming.Location?.Address?.CountryIdentifier,
+            getCountryById,
+            cancellationToken);
+
+        site.Update(
+            currentDateTime,
+            incoming.LastUpdatedBatchId,
+            premiseType?.Code ?? string.Empty,
+            incoming.LocationName ?? string.Empty,
+            incoming.HoldingStartDate,
+            incoming.HoldingEndDate,
+            incoming.HoldingStatus,
+            SourceSystemType.SAM.ToString(),
+            null,
+            incoming.Deleted);
+
+        var updatedAddress = Address.Create(
+            uprn,
+            incoming.Location?.Address?.AddressLine ?? string.Empty,
+            incoming.Location?.Address?.AddressStreet,
+            incoming.Location?.Address?.AddressTown,
+            incoming.Location?.Address?.AddressLocality,
+            incoming.Location?.Address?.AddressPostCode ?? string.Empty,
+            country);
+
+        site.SetLocation(
+            currentDateTime,
+            incoming.Location?.OsMapReference,
+            incoming.Location?.Easting,
+            incoming.Location?.Northing,
+            updatedAddress,
+            null);
+
+        // TODO - Add additional fields
+
+        return site;
+    }
+
+    private static async Task<Country?> GetCountryAsync(
+        string? countryIdentifier,
+        Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
+        CancellationToken cancellationToken)
+    {
+        if (countryIdentifier == null) return null;
+
+        var countryDocument = await getCountryById(countryIdentifier, cancellationToken);
+
+        if (countryDocument == null)
+            return null;
+
+        return countryDocument.ToDomain();
+    }
+
+    private static async Task<PremisesTypeDocument?> GetPremiseTypeAsync(
+        string? premiseTypeIdentifier,
+        Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
+        CancellationToken cancellationToken)
+    {
+        if (premiseTypeIdentifier == null) return null;
+
+        return await getPremiseTypeById(premiseTypeIdentifier, cancellationToken);
     }
 }

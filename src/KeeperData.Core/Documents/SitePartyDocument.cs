@@ -18,11 +18,11 @@ public class SitePartyDocument : INestedEntity
     public string? PartyType { get; set; }
     public List<CommunicationDocument> Communication { get; set; } = [];
     public AddressDocument? CorrespondanceAddress { get; set; }
-    public List<RolesToPartyDocument> PartyRoles { get; set; } = [];
+    public List<PartyRoleDocument> PartyRoles { get; set; } = [];
     public string? State { get; set; }
     public DateTime? LastUpdatedDate { get; set; }
 
-    public static SitePartyDocument FromDomain(Party m) => new()
+    public static SitePartyDocument FromDomain(SiteParty m) => new()
     {
         IdentifierId = m.Id,
         Title = m.Title,
@@ -33,12 +33,12 @@ public class SitePartyDocument : INestedEntity
         PartyType = m.PartyType,
         Communication = [.. m.Communication.Select(CommunicationDocument.FromDomain)],
         CorrespondanceAddress = m.CorrespondanceAddress is not null ? AddressDocument.FromDomain(m.CorrespondanceAddress) : null,
-        PartyRoles = [.. m.PartyRoles.Select(RolesToPartyDocument.FromDomain)],
+        PartyRoles = [.. m.PartyRoles.Select(PartyRoleDocument.FromDomain)],
         State = m.State,
         LastUpdatedDate = m.LastUpdatedDate
     };
 
-    public Party ToDomain() => new(
+    public SiteParty ToDomain() => new(
         IdentifierId,
         Title,
         FirstName,

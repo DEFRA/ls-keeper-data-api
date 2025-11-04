@@ -10,10 +10,12 @@ public class SamHerdDocument : IEntity, IContainsIndexes, IDeletableEntity
 {
     public string? Id { get; set; }
     public int LastUpdatedBatchId { get; set; }
+    public DateTime LastUpdatedDate { get; set; }
     public bool Deleted { get; set; }
 
     public string Herdmark { get; set; } = string.Empty;
-    public string CountyParishHoldingHerd { get; set; } = string.Empty; // TODO - Stored CPHH and trimmed CPH
+    public string CountyParishHoldingHerd { get; set; } = string.Empty;
+    public string CountyParishHoldingNumber { get; set; } = string.Empty;
 
     public string? SpeciesTypeId { get; set; } // LOV Lookup / Internal Id
     public string? SpeciesTypeCode { get; set; }

@@ -11,6 +11,7 @@ public class CountryDocument : INestedEntity
     [BsonElement("id")]
     public required string IdentifierId { get; set; }
 
+
     [JsonPropertyName("code")]
     public required string Code { get; set; }
 
@@ -50,6 +51,26 @@ public class CountryDocument : INestedEntity
     [JsonPropertyName("lastModifiedDate")]
     public DateTime? LastModifiedDate { get; set; }
 
+    public static CountryDocument FromDomain(Country country) => new()
+    {
+        IdentifierId = country.Id,
+        Code = country.Code,
+        Name = country.Name,
+        LongName = country.LongName,
+        EuTradeMember = country.EuTradeMember,
+        DevolvedAuthority = country.DevolvedAuthority,
+        LastModifiedDate = country.LastUpdatedDate,
+
+        // Persistence metadata defaults
+        IsActive = true,
+        SortOrder = 0,
+        EffectiveStartDate = DateTime.UtcNow,
+        EffectiveEndDate = null,
+        CreatedBy = "System_FromDomain",
+        CreatedDate = DateTime.UtcNow,
+        LastModifiedBy = null
+    };
+
     public Country ToDomain() => new(
         id: IdentifierId,
         code: Code,
@@ -59,22 +80,4 @@ public class CountryDocument : INestedEntity
         devolvedAuthority: DevolvedAuthority,
         lastUpdatedDate: LastModifiedDate
     );
-    public static CountryDocument FromDomain(Country m) => new()
-    {
-        IdentifierId = m.Id,
-        Code = m.Code,
-        Name = m.Name,
-        LongName = m.LongName,
-        EuTradeMember = m.EuTradeMember,
-        DevolvedAuthority = m.DevolvedAuthority,
-        LastModifiedDate = m.LastUpdatedDate,
-
-        IsActive = true,
-        SortOrder = 0,
-        EffectiveStartDate = DateTime.UtcNow,
-        EffectiveEndDate = null,
-        CreatedBy = "System_FromDomain",
-        CreatedDate = DateTime.UtcNow,
-        LastModifiedBy = null
-    };
 }

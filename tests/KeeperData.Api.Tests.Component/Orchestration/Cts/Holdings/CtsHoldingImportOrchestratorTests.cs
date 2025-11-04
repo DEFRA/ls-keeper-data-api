@@ -72,7 +72,8 @@ public class CtsHoldingImportOrchestratorTests
         var context = new CtsHoldingImportContext
         {
             Cph = holdingIdentifier,
-            BatchId = 1
+            BatchId = 1,
+            CurrentDateTime = DateTime.UtcNow
         };
 
         using var scope = factory.Services.CreateAsyncScope();

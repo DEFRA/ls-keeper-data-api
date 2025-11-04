@@ -7,6 +7,7 @@ public interface IGenericRepository<T> where T : IEntity
 {
     Task<T> GetByIdAsync(string id, CancellationToken cancellationToken = default);
     Task<T?> FindOneAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
+    Task<T?> FindOneByFilterAsync(FilterDefinition<T> filter, CancellationToken cancellationToken = default);
     Task<List<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
     Task<List<T>> FindAsync<TNested>(
         Expression<Func<T, IEnumerable<TNested>>> arrayField,

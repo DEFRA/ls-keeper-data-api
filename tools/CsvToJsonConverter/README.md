@@ -24,6 +24,6 @@ dotnet run countries
 
 dotnet run species
 
-**To convert party roles:**
+**To convert roles:**
 
-dotnet run partyroles
+dotnet run roles

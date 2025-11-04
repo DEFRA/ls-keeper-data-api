@@ -24,15 +24,15 @@ public class CtsHoldingImportPersistenceStep(
         if (context.SilverHoldings?.Count > 0)
         {
             var primaryHolding = context.SilverHoldings[0];
-            await UpsertPrimaryHoldingAsync(primaryHolding, cancellationToken);
+            await UpsertSilverHoldingAsync(primaryHolding, cancellationToken);
         }
 
-        await UpsertPartiesAndDeleteOrphansAsync(context.Cph, context.SilverParties, cancellationToken);
+        await UpsertSilverPartiesAndDeleteOrphansAsync(context.Cph, context.SilverParties, cancellationToken);
 
-        await ReplacePartyRolesAsync(context.Cph, context.SilverPartyRoles, cancellationToken);
+        await ReplaceSilverPartyRolesAsync(context.Cph, context.SilverPartyRoles, cancellationToken);
     }
 
-    private async Task UpsertPrimaryHoldingAsync(
+    private async Task UpsertSilverHoldingAsync(
         CtsHoldingDocument incomingHolding,
         CancellationToken cancellationToken)
     {
@@ -51,7 +51,7 @@ public class CtsHoldingImportPersistenceStep(
             [holdingUpsert], cancellationToken);
     }
 
-    private async Task UpsertPartiesAndDeleteOrphansAsync(
+    private async Task UpsertSilverPartiesAndDeleteOrphansAsync(
         string holdingIdentifier,
         List<CtsPartyDocument> incomingParties,
         CancellationToken cancellationToken)
@@ -62,7 +62,7 @@ public class CtsHoldingImportPersistenceStep(
             .Select(p => $"{p.PartyId}::{p.CountyParishHoldingNumber}")
             .ToHashSet();
 
-        var existingParties = await GetExistingPartiesAsync(holdingIdentifier, cancellationToken);
+        var existingParties = await GetExistingSilverPartiesAsync(holdingIdentifier, cancellationToken);
 
         if (incomingParties.Count > 0)
         {
@@ -101,7 +101,7 @@ public class CtsHoldingImportPersistenceStep(
         }
     }
 
-    private async Task<List<CtsPartyDocument>> GetExistingPartiesAsync(
+    private async Task<List<CtsPartyDocument>> GetExistingSilverPartiesAsync(
         string holdingIdentifier,
         CancellationToken cancellationToken)
     {
@@ -110,7 +110,7 @@ public class CtsHoldingImportPersistenceStep(
             cancellationToken) ?? [];
     }
 
-    private async Task ReplacePartyRolesAsync(
+    private async Task ReplaceSilverPartyRolesAsync(
         string holdingIdentifier,
         List<PartyRoleRelationshipDocument> incomingPartyRoles,
         CancellationToken cancellationToken)

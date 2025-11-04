@@ -16,6 +16,8 @@ public class SamHoldingImportPersistenceStep(
     IGenericRepository<SamHerdDocument> silverHerdRepository,
     IGenericRepository<SiteDocument> goldSiteRepository,
     IGenericRepository<PartyDocument> goldPartyRepository,
+    IGenericRepository<SitePartyRoleRelationshipDocument> goldSitePartyRoleRelationshipRepository,
+    IGenericRepository<SiteGroupMarkRelationshipDocument> goldSiteGroupMarkRelationshipRepository,
     ILogger<SamHoldingImportPersistenceStep> logger)
     : ImportStepBase<SamHoldingImportContext>(logger)
 {
@@ -26,23 +28,148 @@ public class SamHoldingImportPersistenceStep(
 
     private readonly IGenericRepository<SiteDocument> _goldSiteRepository = goldSiteRepository;
     private readonly IGenericRepository<PartyDocument> _goldPartyRepository = goldPartyRepository;
+    private readonly IGenericRepository<SitePartyRoleRelationshipDocument> _goldSitePartyRoleRelationshipRepository = goldSitePartyRoleRelationshipRepository;
+    private readonly IGenericRepository<SiteGroupMarkRelationshipDocument> _goldSiteGroupMarkRelationshipRepository = goldSiteGroupMarkRelationshipRepository;
 
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
     {
         if (context.SilverHoldings?.Count > 0)
         {
             var primaryHolding = context.SilverHoldings[0];
-            await UpsertPrimaryHoldingAsync(primaryHolding, cancellationToken);
+            await UpsertSilverHoldingAsync(primaryHolding, cancellationToken);
         }
 
-        await UpsertPartiesAndDeleteOrphansAsync(context.Cph, context.SilverParties, cancellationToken);
+        await UpsertSilverPartiesAndDeleteOrphansAsync(context.Cph, context.SilverParties, cancellationToken);
 
-        await ReplacePartyRolesAsync(context.Cph, context.SilverPartyRoles, cancellationToken);
+        await ReplaceSilverPartyRolesAsync(context.Cph, context.SilverPartyRoles, cancellationToken);
 
-        await ReplaceHerdsAsync(context.Cph, context.SilverHerds, cancellationToken);
+        await ReplaceSilverHerdsAsync(context.Cph, context.SilverHerds, cancellationToken);
+
+        if (context.GoldSite != null)
+        {
+            await UpsertGoldSiteAsync(context.GoldSite, cancellationToken);
+        }
+
+        await UpsertGoldPartiesAndDeleteOrphansAsync(context.Cph, context.GoldParties, cancellationToken);
+
+        await ReplaceGoldSitePartyRolesAsync(context.Cph, context.GoldSitePartyRoles, cancellationToken);
+
+        await ReplaceGoldSiteGroupMarksAsync(context.Cph, context.GoldSiteGroupMarks, cancellationToken);
     }
 
-    private async Task UpsertPrimaryHoldingAsync(
+    private async Task UpsertGoldSiteAsync(
+        SiteDocument incomingSite,
+        CancellationToken cancellationToken)
+    {
+        var holdingIdentifierType = incomingSite.Identifiers.FirstOrDefault()?.Type
+            ?? HoldingIdentifierType.HoldingNumber.ToString();
+
+        var holdingIdentifier = incomingSite.Identifiers.FirstOrDefault()?.Identifier
+            ?? string.Empty;
+
+        var filter = Builders<SiteDocument>.Filter.ElemMatch(
+            x => x.Identifiers,
+            i => i.Identifier == holdingIdentifier && i.Type == holdingIdentifierType);
+
+        var existingHolding = await _goldSiteRepository.FindOneByFilterAsync(filter, cancellationToken);
+
+        incomingSite.Id = existingHolding?.Id ?? Guid.NewGuid().ToString();
+
+        var siteUpsert = (
+            Filter: filter,
+            Entity: incomingSite);
+
+        await _goldSiteRepository.BulkUpsertWithCustomFilterAsync(
+            [siteUpsert], cancellationToken);
+    }
+
+    private async Task UpsertGoldPartiesAndDeleteOrphansAsync(
+        string holdingIdentifier,
+        List<PartyDocument> incomingParties,
+        CancellationToken cancellationToken)
+    {
+        incomingParties ??= [];
+
+        var incomingCustomerNumbers = incomingParties
+            .Select(p => p.CustomerNumber)
+            .Where(cn => !string.IsNullOrWhiteSpace(cn))
+            .ToHashSet();
+
+        var upserts = new List<(FilterDefinition<PartyDocument> Filter, PartyDocument Entity)>();
+
+        foreach (var incoming in incomingParties)
+        {
+            if (string.IsNullOrWhiteSpace(incoming.CustomerNumber))
+                continue;
+
+            var existing = await _goldPartyRepository.FindOneAsync(
+                x => x.CustomerNumber == incoming.CustomerNumber,
+                cancellationToken);
+
+            incoming.Id = existing?.Id ?? Guid.NewGuid().ToString();
+
+            var filter = Builders<PartyDocument>.Filter.Eq(x => x.CustomerNumber, incoming.CustomerNumber);
+            upserts.Add((filter, incoming));
+        }
+
+        if (upserts.Count > 0)
+        {
+            await _goldPartyRepository.BulkUpsertWithCustomFilterAsync(upserts, cancellationToken);
+        }
+
+        // TODO - We need to think about orphans using PartyRoleRelationships
+
+        /*var allExisting = await _goldPartyRepository.FindAsync(
+            x => x.CountyParishHoldingNumber == holdingIdentifier,
+            cancellationToken) ?? [];
+
+        var orphaned = allExisting
+            .Where(e => !incomingCustomerNumbers.Contains(e.CustomerNumber))
+            .ToList();
+
+        if (orphaned.Count > 0)
+        {
+            var deleteFilter = Builders<PartyDocument>.Filter.In(x => x.Id, orphaned.Select(o => o.Id));
+            await _goldPartyRepository.DeleteManyAsync(deleteFilter, cancellationToken);
+        }
+        */
+    }
+
+    private async Task ReplaceGoldSitePartyRolesAsync(
+        string holdingIdentifier,
+        List<SitePartyRoleRelationshipDocument> incomingSitePartyRoles,
+        CancellationToken cancellationToken)
+    {
+        var deleteFilter = Builders<SitePartyRoleRelationshipDocument>.Filter.And(
+            Builders<SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier)
+        );
+
+        await _goldSitePartyRoleRelationshipRepository.DeleteManyAsync(deleteFilter, cancellationToken);
+
+        if (incomingSitePartyRoles?.Count > 0)
+        {
+            await _goldSitePartyRoleRelationshipRepository.AddManyAsync(incomingSitePartyRoles, cancellationToken);
+        }
+    }
+
+    private async Task ReplaceGoldSiteGroupMarksAsync(
+        string holdingIdentifier,
+        List<SiteGroupMarkRelationshipDocument> incomingSiteGroupMarks,
+        CancellationToken cancellationToken)
+    {
+        var deleteFilter = Builders<SiteGroupMarkRelationshipDocument>.Filter.And(
+            Builders<SiteGroupMarkRelationshipDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier)
+        );
+
+        await _goldSiteGroupMarkRelationshipRepository.DeleteManyAsync(deleteFilter, cancellationToken);
+
+        if (incomingSiteGroupMarks?.Count > 0)
+        {
+            await _goldSiteGroupMarkRelationshipRepository.AddManyAsync(incomingSiteGroupMarks, cancellationToken);
+        }
+    }
+
+    private async Task UpsertSilverHoldingAsync(
         SamHoldingDocument incomingHolding,
         CancellationToken cancellationToken)
     {
@@ -61,7 +188,7 @@ public class SamHoldingImportPersistenceStep(
             [holdingUpsert], cancellationToken);
     }
 
-    private async Task UpsertPartiesAndDeleteOrphansAsync(
+    private async Task UpsertSilverPartiesAndDeleteOrphansAsync(
         string holdingIdentifier,
         List<SamPartyDocument> incomingParties,
         CancellationToken cancellationToken)
@@ -72,7 +199,7 @@ public class SamHoldingImportPersistenceStep(
             .Select(p => $"{p.PartyId}::{p.CountyParishHoldingNumber}")
             .ToHashSet();
 
-        var existingParties = await GetExistingPartiesAsync(holdingIdentifier, cancellationToken);
+        var existingParties = await GetExistingSilverPartiesAsync(holdingIdentifier, cancellationToken);
 
         if (incomingParties.Count > 0)
         {
@@ -111,7 +238,7 @@ public class SamHoldingImportPersistenceStep(
         }
     }
 
-    private async Task<List<SamPartyDocument>> GetExistingPartiesAsync(
+    private async Task<List<SamPartyDocument>> GetExistingSilverPartiesAsync(
         string holdingIdentifier,
         CancellationToken cancellationToken)
     {
@@ -120,7 +247,7 @@ public class SamHoldingImportPersistenceStep(
             cancellationToken) ?? [];
     }
 
-    private async Task ReplacePartyRolesAsync(
+    private async Task ReplaceSilverPartyRolesAsync(
         string holdingIdentifier,
         List<PartyRoleRelationshipDocument> incomingPartyRoles,
         CancellationToken cancellationToken)
@@ -140,7 +267,7 @@ public class SamHoldingImportPersistenceStep(
         }
     }
 
-    private async Task ReplaceHerdsAsync(
+    private async Task ReplaceSilverHerdsAsync(
         string holdingIdentifier,
         List<SamHerdDocument> incomingHerds,
         CancellationToken cancellationToken)

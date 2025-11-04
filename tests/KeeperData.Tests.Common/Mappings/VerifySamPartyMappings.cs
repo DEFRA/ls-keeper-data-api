@@ -90,8 +90,8 @@ public static class VerifySamPartyMappings
             role.RoleTypeId.Should().NotBeNullOrWhiteSpace();
             role.RoleTypeName.Should().Be(roleNameToLookup);
             role.SourceRoleName.Should().Be(roleNameToLookup);
-            role.EffectiveFromData.Should().BeNull();
-            role.EffectiveToData.Should().BeNull();
+            role.EffectiveFromDate.Should().BeNull();
+            role.EffectiveToDate.Should().BeNull();
         }
     }
 }
