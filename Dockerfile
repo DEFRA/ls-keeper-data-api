@@ -39,5 +39,7 @@ ENV ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+# Copy seed data files from build context
+COPY ["src/KeeperData.Infrastructure/Data/Seed/", "./Data/Seed/"]
 EXPOSE 8085
 ENTRYPOINT ["dotnet", "KeeperData.Api.dll"]
