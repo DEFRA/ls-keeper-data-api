@@ -52,6 +52,12 @@ public class Program
                     jsonString = await converter.Convert<PremisesActivityTypeJson>(inputPath, MapPremisesActivityType);
                     break;
 
+                case "siteidentifiertypes":
+                    inputPath = "siteidentifiertypes.csv";
+                    outputPath = "siteidentifiertypes_generated.json";
+                    jsonString = await converter.Convert<SiteIdentifierTypeJson>(inputPath, MapSiteIdentifierType);
+                    break;
+
                 default:
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine($"\nERROR: Unknown data type '{dataType}'.");
@@ -176,10 +182,27 @@ public class Program
         );
     }
 
+    public static SiteIdentifierTypeJson MapSiteIdentifierType(string[] parts)
+    {
+        if (parts.Length < 10) throw new InvalidDataException("CSV line for site identifier type has fewer than 10 columns.");
+
+        return new SiteIdentifierTypeJson(
+            Id: HandlePlaceholderId(parts[1]),
+            Code: parts[0].Trim(),
+            Name: parts[2].Trim(),
+            CreatedBy: parts[3].Trim(),
+            CreatedDate: HandlePlaceholderOrEmptyDate(parts[4], DateTime.UtcNow),
+            EffectiveEndDate: ParseNullableDateTime(parts[5]),
+            EffectiveStartDate: HandlePlaceholderOrEmptyDate(parts[6], DateTime.UtcNow),
+            IsActive: ParseBool(parts[7]),
+            LastModifiedBy: parts[8].Trim(),
+            LastModifiedDate: HandlePlaceholderOrEmptyDate(parts[9], DateTime.UtcNow)
+        );
+    }
     private static void PrintUsage()
     {
         Console.WriteLine("\nUsage: dotnet run <data_type>");
-        Console.WriteLine("Available data types: countries, species, partyroles, premisesactivitytypes");
+        Console.WriteLine("Available data types: countries, species, partyroles, premisesactivitytypes, siteidentifiertypes");
     }
 
     private static void PrintSuccess(string outputPath, string inputPath)
