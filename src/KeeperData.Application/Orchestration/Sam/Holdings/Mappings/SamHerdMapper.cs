@@ -1,5 +1,6 @@
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Domain.Sites.Formatters;
 
 namespace KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
 
@@ -33,6 +34,7 @@ public static class SamHerdMapper
 
                 Herdmark = h.HERDMARK,
                 CountyParishHoldingHerd = h.CPHH,
+                CountyParishHoldingNumber = h.CPHH.CphhToCph(),
 
                 SpeciesTypeId = speciesTypeId,
                 SpeciesTypeCode = h.AnimalSpeciesCodeUnwrapped,

@@ -15,7 +15,7 @@ public class CountryIdentifierLookupService : ICountryIdentifierLookupService
     {
         if (string.IsNullOrWhiteSpace(id)) return null;
 
-        return await Task.FromResult(new CountryDocument 
+        return await Task.FromResult(new CountryDocument
         {
             IdentifierId = id,
             Code = "Code",

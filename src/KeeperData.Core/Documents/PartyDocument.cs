@@ -24,6 +24,10 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
     public string? State { get; set; }
     public bool Deleted { get; set; }
 
+    public AddressDocument? CorrespondanceAddress { get; set; }
+    public List<CommunicationDocument> Communication { get; set; } = [];
+    public List<PartyRoleDocument> PartyRoles { get; set; } = [];
+
     public static PartyDocument FromDomain(Party m) => new()
     {
         Id = m.Id,
@@ -36,7 +40,12 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
         CustomerNumber = m.CustomerNumber,
         PartyType = m.PartyType,
         State = m.State,
-        Deleted = m.Deleted
+        Deleted = m.Deleted,
+        CorrespondanceAddress = m.Address is not null
+            ? AddressDocument.FromDomain(m.Address)
+            : null,
+        Communication = [.. m.Communications.Select(CommunicationDocument.FromDomain)],
+        PartyRoles = [.. m.Roles.Select(PartyRoleDocument.FromDomain)]
     };
 
     public Party ToDomain()
@@ -52,7 +61,15 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
             CustomerNumber,
             PartyType,
             State,
-            Deleted);
+            Deleted,
+            CorrespondanceAddress?.ToDomain());
+
+        foreach (var comm in Communication)
+        {
+            party.AddOrUpdatePrimaryCommunication(LastUpdatedDate, comm.ToDomain());
+        }
+
+        party.SetRoles(PartyRoles.Select(r => r.ToDomain()));
 
         return party;
     }

@@ -85,8 +85,8 @@ public class CtsAgentOrKeeperMapperTests
         role.SourceRoleName.Should().Be(InferredRoleType.Agent.GetDescription());
         role.RoleTypeId.Should().BeNull();
         role.RoleTypeName.Should().BeNull();
-        role.EffectiveFromData.Should().Be(records[0].LPR_EFFECTIVE_FROM_DATE);
-        role.EffectiveToData.Should().Be(records[0].LPR_EFFECTIVE_TO_DATE);
+        role.EffectiveFromDate.Should().Be(records[0].LPR_EFFECTIVE_FROM_DATE);
+        role.EffectiveToDate.Should().Be(records[0].LPR_EFFECTIVE_TO_DATE);
     }
 
     [Theory]

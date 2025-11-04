@@ -10,28 +10,41 @@ public class PartyRoleDocument : INestedEntity
     [JsonPropertyName("id")]
     [BsonElement("id")]
     public required string IdentifierId { get; set; }
-    public string? Role { get; set; }
+    public string RoleId { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+
+    public DateTime StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
     public List<ManagedSpeciesDocument> SpeciesManagedByRole { get; set; } = [];
     public DateTime? LastUpdatedDate { get; set; }
 
     public static PartyRoleDocument FromDomain(PartyRole m) => new()
     {
         IdentifierId = m.Id,
-        Role = m.Role?.Name,
+        RoleId = m.Role.RoleId,
+        Role = m.Role.Name,
+        StartDate = m.Role.StartDate ?? default,
+        EndDate = m.Role.EndDate,
         SpeciesManagedByRole = [.. m.SpeciesManagedByRole.Select(ManagedSpeciesDocument.FromDomain)],
         LastUpdatedDate = m.LastUpdatedDate
     };
 
     public PartyRole ToDomain()
     {
-        var roleObject = Role is not null
-            ? new Role(Guid.NewGuid().ToString(), Role, LastUpdatedDate)
-            : null;
+        var role = new Role(
+            roleId: RoleId,
+            name: Role,
+            startDate: StartDate,
+            endDate: EndDate,
+            lastUpdatedDate: LastUpdatedDate ?? DateTime.UtcNow
+        );
+
+        var species = SpeciesManagedByRole.Select(s => s.ToDomain());
 
         return new PartyRole(
             IdentifierId,
-            roleObject,
-            SpeciesManagedByRole.Select(s => s.ToDomain()),
+            role,
+            species,
             LastUpdatedDate
         );
     }

@@ -5,14 +5,14 @@ using MongoDB.Driver;
 
 namespace KeeperData.Core.Documents;
 
-[CollectionName("sitePartyRelationships")]
-public class SitePartyRelationshipDocument : IEntity, IContainsIndexes
+[CollectionName("sitePartyRoleRelationships")]
+public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
 {
     public string? Id { get; set; }
 
     public string PartyId { get; set; } = string.Empty;
     public string PartyTypeId { get; set; } = string.Empty; // LOV Lookup / Internal Id
-    
+
     public string HoldingIdentifier { get; set; } = string.Empty;
     public string HoldingIdentifierType { get; set; } = string.Empty;
 

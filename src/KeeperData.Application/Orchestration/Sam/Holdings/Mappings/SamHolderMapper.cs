@@ -93,8 +93,8 @@ public static class SamHolderMapper
                         RoleTypeId = roleTypeId,
                         RoleTypeName = roleTypeName,
                         SourceRoleName = roleNameToLookup,
-                        EffectiveFromData = null,
-                        EffectiveToData = null
+                        EffectiveFromDate = null,
+                        EffectiveToDate = null
                     }
                 ]
             };

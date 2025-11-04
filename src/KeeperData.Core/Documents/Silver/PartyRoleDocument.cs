@@ -14,6 +14,6 @@ public class PartyRoleDocument : INestedEntity
     public string? RoleTypeName { get; set; } // LOV Lookup / Internal Name
     public string? SourceRoleName { get; set; }
 
-    public DateTime? EffectiveFromData { get; set; }
-    public DateTime? EffectiveToData { get; set; }
+    public DateTime? EffectiveFromDate { get; set; }
+    public DateTime? EffectiveToDate { get; set; }
 }

@@ -179,7 +179,7 @@ public static class SamHoldingMapper
             incoming.Deleted,
             location);
 
-        site.AddSiteIdentifier(
+        site.SetSiteIdentifier(
             lastUpdatedDate: currentDateTime,
             identifier: incoming.CountyParishHoldingNumber,
             type: HoldingIdentifierType.HoldingNumber.ToString()); // TODO - Need to use LOV
@@ -232,7 +232,7 @@ public static class SamHoldingMapper
             incoming.Location?.Address?.AddressPostCode ?? string.Empty,
             country);
 
-        site.UpdateLocation(
+        site.SetLocation(
             currentDateTime,
             incoming.Location?.OsMapReference,
             incoming.Location?.Easting,

@@ -24,11 +24,12 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     public bool? DestroyIdentityDocumentsFlag { get; set; }
     public LocationDocument? Location { get; set; }
     public bool Deleted { get; set; }
-    public List<SitePartyDocument> Parties { get; set; } = [];
-    public List<SpeciesDocument> Species { get; set; } = [];
-    public List<GroupMarkDocument> Marks { get; set; } = [];
-    public List<SiteActivityDocument> Activities { get; set; } = [];
-    public List<string> KeeperPartyIds { get; set; } = [];
+
+    // TODO
+    // public List<SitePartyDocument> Parties { get; set; } = [];
+    // public List<SiteSpeciesDocument> Species { get; set; } = [];
+    // public List<SiteGroupMarkDocument> Marks { get; set; } = [];
+    // public List<string> Activities { get; set; } = [];
 
     public static SiteDocument FromDomain(Site m) => new()
     {
@@ -44,11 +45,11 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         EndDate = m.EndDate,
         Source = m.Source,
         DestroyIdentityDocumentsFlag = m.DestroyIdentityDocumentsFlag,
-        Deleted = m.Deleted,
-        Parties = [.. m.Parties.Select(SitePartyDocument.FromDomain)],
-        Species = [.. m.Species.Select(SpeciesDocument.FromDomain)],
-        Marks = [.. m.Marks.Select(GroupMarkDocument.FromDomain)],
-        Activities = [.. m.Activities.Select(SiteActivityDocument.FromDomain)],
+        Deleted = m.Deleted //,
+        // Parties = [.. m.Parties.Select(SitePartyDocument.FromDomain)],
+        // Species = [.. m.Species.Select(SpeciesDocument.FromDomain)],
+        // Marks = [.. m.Marks.Select(GroupMarkDocument.FromDomain)],
+        // Activities = [.. m.Activities.Select(SiteActivityDocument.FromDomain)],
     };
 
     public Site ToDomain()
@@ -70,7 +71,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 
         foreach (var si in Identifiers)
         {
-            site.AddSiteIdentifier(
+            site.SetSiteIdentifier(
                 si.LastUpdatedDate,
                 si.Identifier,
                 si.Type,

@@ -8,22 +8,22 @@ public class Communication : ValueObject
     public string? Mobile { get; private set; }
     public string? Landline { get; private set; }
     public bool? PrimaryContactFlag { get; private set; }
-    public DateTime? LastUpdatedDate { get; private set; }
+    public DateTime LastUpdatedDate { get; private set; }
 
     public Communication(
         string id,
+        DateTime lastUpdatedDate,
         string? email,
         string? mobile,
         string? landline,
-        bool? primaryContactFlag,
-        DateTime? lastUpdatedDate)
+        bool? primaryContactFlag)
     {
         Id = id;
+        LastUpdatedDate = lastUpdatedDate;
         Email = email;
         Mobile = mobile;
         Landline = landline;
         PrimaryContactFlag = primaryContactFlag;
-        LastUpdatedDate = lastUpdatedDate;
     }
 
     public static Communication Create(
@@ -34,11 +34,11 @@ public class Communication : ValueObject
     {
         return new Communication(
             Guid.NewGuid().ToString(),
+            DateTime.UtcNow,
             email,
             mobile,
             landline,
-            primaryContactFlag,
-            DateTime.UtcNow
+            primaryContactFlag
         );
     }
 

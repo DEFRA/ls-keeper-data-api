@@ -33,7 +33,7 @@ public static class SamHoldingGroupMarkMapper
                 IdentifierId = Guid.NewGuid().ToString(),
 
                 GroupMark = herd.Herdmark,
-                CountyParishHoldingNumber = herd.CountyParishHoldingHerd,
+                CountyParishHoldingNumber = herd.CountyParishHoldingNumber,
 
                 GroupMarkStartDate = herd.GroupMarkStartDate,
                 GroupMarkEndDate = herd.GroupMarkEndDate,

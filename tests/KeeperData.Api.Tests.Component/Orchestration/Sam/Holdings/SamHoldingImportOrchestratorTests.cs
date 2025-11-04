@@ -84,6 +84,7 @@ public class SamHoldingImportOrchestratorTests
 
         VerifyRawDataTypes(result, holdingIdentifier, parties);
         VerifySilverDataTypes(result, holdingIdentifier);
+        VerifyGoldDataTypes(result, holdingIdentifier);
     }
 
     private static async Task<SamHoldingImportContext> ExecuteTestAsync(AppWebApplicationFactory factory, string holdingIdentifier)
@@ -156,9 +157,16 @@ public class SamHoldingImportOrchestratorTests
         }
 
         context.SilverHerds.Should().NotBeNull().And.HaveCount(1);
-        context.SilverHerds[0].CountyParishHoldingHerd.Should().Be(holdingIdentifier);
+        context.SilverHerds[0].CountyParishHoldingHerd.Should().Contain(holdingIdentifier);
+        context.SilverHerds[0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
+    }
 
-        // TODO - Add Gold
+    private static void VerifyGoldDataTypes(SamHoldingImportContext context, string holdingIdentifier)
+    {
+        // TODO - Verify SiteDocument
+        // TODO - Verify PartyDocuments
+        // TODO - Verify SitePartyRoleRelationshipDocuments
+        // TODO - Verify SiteGroupMarkRelationshipDocuments
     }
 
     private static (string holdingsUri, string holdersUri, string herdsUri, string partiesUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)

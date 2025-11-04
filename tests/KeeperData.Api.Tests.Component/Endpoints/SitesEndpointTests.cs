@@ -44,8 +44,7 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>
             Id = siteId.ToString(),
             Name = "Site A",
             Type = "Type1",
-            State = "Active",
-            KeeperPartyIds = [keeperPartyId.ToString()]
+            State = "Active"
         };
         site.Identifiers.Add(new SiteIdentifierDocument { IdentifierId = "test-id-1", Identifier = "ID1", Type = "CPH", LastUpdatedDate = DateTime.UtcNow });
         var sites = new List<SiteDocument> { site };

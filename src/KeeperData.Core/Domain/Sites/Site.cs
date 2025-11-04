@@ -1,7 +1,6 @@
 using KeeperData.Core.Domain.BuildingBlocks;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
 using KeeperData.Core.Domain.Sites.DomainEvents;
-using KeeperData.Core.Exceptions;
 
 namespace KeeperData.Core.Domain.Sites;
 
@@ -139,7 +138,12 @@ public class Site : IAggregateRoot
         LastUpdatedDate = DateTime.UtcNow;
     }
 
-    public void UpdateLocation(
+    public void SetLocation(Location location)
+    {
+        _location = location;
+    }
+
+    public void SetLocation(
         DateTime lastUpdatedDate,
         string? osMapReference,
         double? easting,
@@ -160,16 +164,18 @@ public class Site : IAggregateRoot
         }
     }
 
-    public void SetLocation(Location location)
+    public void SetSiteIdentifier(DateTime lastUpdatedDate, string identifier, string type, string? id = null)
     {
-        _location = location;
-    }
+        var existing = _identifiers.FirstOrDefault(i => i.Type == type);
 
-    public void AddSiteIdentifier(DateTime lastUpdatedDate, string identifier, string type, string? id = null)
-    {
-        if (_identifiers.Any(i => i.Identifier == identifier && i.Type == type))
+        if (existing is not null)
         {
-            throw new DomainException("Site already contains an identifier with the same type and value.");
+            var changed = existing.ApplyChanges(lastUpdatedDate, identifier, type);
+            if (changed)
+            {
+                UpdateLastUpdatedDate(DateTime.UtcNow);
+            }
+            return;
         }
 
         var siteIdentifier = id is null

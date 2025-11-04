@@ -1,5 +1,6 @@
 using KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
 using KeeperData.Core.Attributes;
+using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Services;
 using Microsoft.Extensions.Logging;
 
@@ -22,13 +23,31 @@ public class SamHoldingImportGoldMappingStep(
             premiseTypeLookupService.GetByIdAsync,
             cancellationToken);
 
+        context.GoldSiteGroupMarks = SiteGroupMarkMapper.ToGold(
+            context.CurrentDateTime,
+            context.SilverHerds,
+            context.Cph,
+            HoldingIdentifierType.HoldingNumber.ToString());
+
         context.GoldParties = await SamPartyMapper.ToGold(
             context.CurrentDateTime,
             context.SilverParties,
+            context.GoldSiteGroupMarks,
             countryIdentifierLookupService.GetByIdAsync,
             speciesTypeLookupService.GetByIdAsync,
             cancellationToken);
 
-        // TODO - Add Gold SiteParty
+        context.GoldSitePartyRoles = SitePartyRoleMapper.ToGold(
+            context.CurrentDateTime,
+            context.GoldParties,
+            context.GoldSiteGroupMarks);
+
+        context.GoldSite = SitePartyRoleMapper.EnrichSiteWithParties(
+            context.GoldSite,
+            context.GoldParties);
+
+        context.GoldSite = SiteGroupMarkMapper.EnrichSiteWithGroupMarks(
+            context.GoldSite,
+            context.GoldSiteGroupMarks);
     }
 }

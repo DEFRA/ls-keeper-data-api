@@ -31,7 +31,7 @@ public class SamHoldingImportSilverMappingStep(
         context.SilverParties = [
             .. await SamHolderMapper.ToSilver(
                 context.CurrentDateTime,
-            context.RawHolders,
+                context.RawHolders,
                 context.Cph,
                 InferredRoleType.Holder,
                 roleTypeLookupService.FindAsync,
@@ -40,7 +40,7 @@ public class SamHoldingImportSilverMappingStep(
 
             .. await SamPartyMapper.ToSilver(
                 context.CurrentDateTime,
-            context.RawParties,
+                context.RawParties,
                 context.Cph,
                 roleTypeLookupService.FindAsync,
                 countryIdentifierLookupService.FindAsync,

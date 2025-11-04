@@ -73,8 +73,8 @@ public static class CtsAgentOrKeeperMapper
                         RoleTypeId = roleTypeId,
                         RoleTypeName = roleTypeName,
                         SourceRoleName = roleNameToLookup,
-                        EffectiveFromData = p.LPR_EFFECTIVE_FROM_DATE,
-                        EffectiveToData = p.LPR_EFFECTIVE_TO_DATE
+                        EffectiveFromDate = p.LPR_EFFECTIVE_FROM_DATE,
+                        EffectiveToDate = p.LPR_EFFECTIVE_TO_DATE
                     }
                 ]
             };

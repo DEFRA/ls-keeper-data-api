@@ -16,6 +16,8 @@ public class SamHoldingImportPersistenceStep(
     IGenericRepository<SamHerdDocument> silverHerdRepository,
     IGenericRepository<SiteDocument> goldSiteRepository,
     IGenericRepository<PartyDocument> goldPartyRepository,
+    IGenericRepository<SitePartyRoleRelationshipDocument> goldSitePartyRoleRelationshipRepository,
+    IGenericRepository<SiteGroupMarkRelationshipDocument> goldSiteGroupMarkRelationshipRepository,
     ILogger<SamHoldingImportPersistenceStep> logger)
     : ImportStepBase<SamHoldingImportContext>(logger)
 {
@@ -26,6 +28,8 @@ public class SamHoldingImportPersistenceStep(
 
     private readonly IGenericRepository<SiteDocument> _goldSiteRepository = goldSiteRepository;
     private readonly IGenericRepository<PartyDocument> _goldPartyRepository = goldPartyRepository;
+    private readonly IGenericRepository<SitePartyRoleRelationshipDocument> _goldSitePartyRoleRelationshipRepository = goldSitePartyRoleRelationshipRepository;
+    private readonly IGenericRepository<SiteGroupMarkRelationshipDocument> _goldSiteGroupMarkRelationshipRepository = goldSiteGroupMarkRelationshipRepository;
 
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
     {
@@ -47,6 +51,10 @@ public class SamHoldingImportPersistenceStep(
         }
 
         await UpsertGoldPartiesAndDeleteOrphansAsync(context.Cph, context.GoldParties, cancellationToken);
+
+        await ReplaceGoldSitePartyRolesAsync(context.Cph, context.GoldSitePartyRoles, cancellationToken);
+
+        await ReplaceGoldSiteGroupMarksAsync(context.Cph, context.GoldSiteGroupMarks, cancellationToken);
     }
 
     private async Task UpsertGoldSiteAsync(
@@ -125,6 +133,40 @@ public class SamHoldingImportPersistenceStep(
             await _goldPartyRepository.DeleteManyAsync(deleteFilter, cancellationToken);
         }
         */
+    }
+
+    private async Task ReplaceGoldSitePartyRolesAsync(
+        string holdingIdentifier,
+        List<SitePartyRoleRelationshipDocument> incomingSitePartyRoles,
+        CancellationToken cancellationToken)
+    {
+        var deleteFilter = Builders<SitePartyRoleRelationshipDocument>.Filter.And(
+            Builders<SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier)
+        );
+
+        await _goldSitePartyRoleRelationshipRepository.DeleteManyAsync(deleteFilter, cancellationToken);
+
+        if (incomingSitePartyRoles?.Count > 0)
+        {
+            await _goldSitePartyRoleRelationshipRepository.AddManyAsync(incomingSitePartyRoles, cancellationToken);
+        }
+    }
+
+    private async Task ReplaceGoldSiteGroupMarksAsync(
+        string holdingIdentifier,
+        List<SiteGroupMarkRelationshipDocument> incomingSiteGroupMarks,
+        CancellationToken cancellationToken)
+    {
+        var deleteFilter = Builders<SiteGroupMarkRelationshipDocument>.Filter.And(
+            Builders<SiteGroupMarkRelationshipDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier)
+        );
+
+        await _goldSiteGroupMarkRelationshipRepository.DeleteManyAsync(deleteFilter, cancellationToken);
+
+        if (incomingSiteGroupMarks?.Count > 0)
+        {
+            await _goldSiteGroupMarkRelationshipRepository.AddManyAsync(incomingSiteGroupMarks, cancellationToken);
+        }
     }
 
     private async Task UpsertSilverHoldingAsync(

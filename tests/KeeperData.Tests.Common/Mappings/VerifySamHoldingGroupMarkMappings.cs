@@ -23,7 +23,7 @@ public static class VerifySamHoldingGroupMarkMappings
             target.Should().NotBeNull();
 
             target.GroupMark.Should().Be(source.Herdmark);
-            target.CountyParishHoldingNumber.Should().Be(source.CountyParishHoldingHerd);
+            target.CountyParishHoldingNumber.Should().Be(source.CountyParishHoldingNumber);
 
             target.SpeciesTypeId.Should().NotBeNullOrWhiteSpace();
             target.SpeciesTypeCode.Should().Be(source.SpeciesTypeCode);

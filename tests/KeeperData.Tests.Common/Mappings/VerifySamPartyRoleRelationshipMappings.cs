@@ -31,8 +31,8 @@ public static class VerifySamPartyRoleRelationshipMappings
         target.RoleTypeName.Should().Be(matchingRole.RoleTypeName);
         target.SourceRoleName.Should().Be(matchingRole.SourceRoleName);
 
-        target.EffectiveFromData.Should().Be(matchingRole.EffectiveFromData);
-        target.EffectiveToData.Should().Be(matchingRole.EffectiveToData);
+        target.EffectiveFromData.Should().Be(matchingRole.EffectiveFromDate);
+        target.EffectiveToData.Should().Be(matchingRole.EffectiveToDate);
 
         target.LastUpdatedBatchId.Should().Be(source.LastUpdatedBatchId);
     }

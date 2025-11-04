@@ -101,8 +101,8 @@ public static class SamPartyMapper
                     RoleTypeId = roleTypeId,
                     RoleTypeName = roleTypeName,
                     SourceRoleName = roleNameToLookup,
-                    EffectiveFromData = null,
-                    EffectiveToData = null
+                    EffectiveFromDate = null,
+                    EffectiveToDate = null
                 });
             }
 
@@ -115,13 +115,14 @@ public static class SamPartyMapper
     public static async Task<List<PartyDocument>> ToGold(
         DateTime currentDateTime,
         List<SamPartyDocument> silverParties,
+        List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
         Func<string?, CancellationToken, Task<SpeciesDocument?>> getSpeciesTypeById,
         CancellationToken cancellationToken)
     {
         if (silverParties?.Count == 0)
             return [];
-        
+
         var result = new List<PartyDocument>();
 
         foreach (var silverParty in silverParties ?? [])
@@ -133,12 +134,14 @@ public static class SamPartyMapper
                     currentDateTime,
                     silverParty,
                     existingParty,
+                    goldSiteGroupMarks,
                     getCountryById,
                     getSpeciesTypeById,
                     cancellationToken)
                 : await CreatePartyAsync(
                     currentDateTime,
                     silverParty,
+                    goldSiteGroupMarks,
                     getCountryById,
                     getSpeciesTypeById,
                     cancellationToken);
@@ -152,14 +155,32 @@ public static class SamPartyMapper
     private static async Task<Party> CreatePartyAsync(
         DateTime currentDateTime,
         SamPartyDocument incoming,
+        List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
         Func<string?, CancellationToken, Task<SpeciesDocument?>> getSpeciesTypeById,
         CancellationToken cancellationToken)
     {
+        int? uprn = int.TryParse(incoming.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
+
         var country = await GetCountryAsync(
             incoming.Address?.CountryIdentifier,
             getCountryById,
             cancellationToken);
+
+        var address = Address.Create(
+            uprn,
+            incoming.Address?.AddressLine ?? string.Empty,
+            incoming.Address?.AddressStreet,
+            incoming.Address?.AddressTown,
+            incoming.Address?.AddressLocality,
+            incoming.Address?.AddressPostCode ?? string.Empty,
+            country);
+
+        var communication = Communication.Create(
+            incoming.Communication?.Email,
+            incoming.Communication?.Mobile,
+            incoming.Communication?.Landline,
+            false);
 
         var party = Party.Create(
             incoming.LastUpdatedBatchId,
@@ -170,7 +191,40 @@ public static class SamPartyMapper
             incoming.PartyId,
             incoming.PartyTypeId,
             string.Empty, // TODO - Check State
-            incoming.Deleted);
+            incoming.Deleted,
+            address);
+
+        party.AddOrUpdatePrimaryCommunication(
+            currentDateTime,
+            communication);
+
+        var roleList = incoming.Roles?
+            .Where(x => !string.IsNullOrWhiteSpace(x.RoleTypeId))
+            .ToList();
+
+        if (roleList?.Count > 0)
+        {
+            var partyRoles = new List<PartyRole>();
+
+            foreach (var r in roleList)
+            {
+                var role = Role.Create(
+                    r.RoleTypeId ?? string.Empty,
+                    r.RoleTypeName ?? string.Empty,
+                    r.EffectiveFromDate,
+                    r.EffectiveToDate
+                );
+
+                var speciesManaged = new List<ManagedSpecies>();
+
+                // TODO: Populate speciesManaged from goldSiteGroupMarks
+
+                var partyRole = PartyRole.Create(role, speciesManaged);
+                partyRoles.Add(partyRole);
+            }
+
+            party.SetRoles(partyRoles);
+        }
 
         // TODO - Add remaining fields
 
@@ -181,16 +235,34 @@ public static class SamPartyMapper
         DateTime currentDateTime,
         SamPartyDocument incoming,
         PartyDocument existing,
+        List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
         Func<string?, CancellationToken, Task<SpeciesDocument?>> getSpeciesTypeById,
         CancellationToken cancellationToken)
     {
         var party = existing.ToDomain();
 
+        int? uprn = int.TryParse(incoming.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
+
         var country = await GetCountryAsync(
             incoming.Address?.CountryIdentifier,
             getCountryById,
             cancellationToken);
+
+        var updatedAddress = Address.Create(
+            uprn,
+            incoming.Address?.AddressLine ?? string.Empty,
+            incoming.Address?.AddressStreet,
+            incoming.Address?.AddressTown,
+            incoming.Address?.AddressLocality,
+            incoming.Address?.AddressPostCode ?? string.Empty,
+            country);
+
+        var updatedCommunication = Communication.Create(
+            incoming.Communication?.Email,
+            incoming.Communication?.Mobile,
+            incoming.Communication?.Landline,
+            false);
 
         party.Update(
             currentDateTime,
@@ -203,6 +275,43 @@ public static class SamPartyMapper
             incoming.PartyTypeId,
             string.Empty, // TODO - Check State
             incoming.Deleted);
+
+        party.SetAddress(
+            currentDateTime,
+            updatedAddress);
+
+        party.AddOrUpdatePrimaryCommunication(
+            currentDateTime,
+            updatedCommunication);
+
+        var roleList = incoming.Roles?
+            .Where(r => !string.IsNullOrWhiteSpace(r.RoleTypeId))
+            .ToList();
+
+        if (roleList?.Count > 0)
+        {
+            foreach (var r in roleList)
+            {
+                var role = Role.Create(
+                    r.RoleTypeId ?? string.Empty,
+                    r.RoleTypeName ?? string.Empty,
+                    r.EffectiveFromDate,
+                    r.EffectiveToDate
+                );
+
+                var speciesManaged = new List<ManagedSpecies>();
+
+                // TODO: Populate speciesManaged from goldSiteGroupMarks
+
+                var partyRole = PartyRole.Create(role, speciesManaged);
+
+                party.AddOrUpdateRole(currentDateTime, partyRole);
+            }
+        }
+        else if (party.Roles.Any())
+        {
+            party.SetRoles([]);
+        }
 
         // TODO - Add remaining fields
 
@@ -229,46 +338,46 @@ public static class SamPartyMapper
   "count": 1,
   "values": [
     {
-I      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-I      "title": "Mr",
-I      "firstName": "John",
-I      "lastName": "Doe",
-I      "name": "John Doe",
-I      "partyType": "Person",
-      "communication": [
+IU      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+IU      "title": "Mr",
+IU      "firstName": "John",
+IU      "lastName": "Doe",
+IU      "name": "John Doe",
+IU      "partyType": "Person",
+IU      "communication": [
         {
-          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-          "email": "john.doe@somecompany.co.uk",
-          "mobile": "07123456789",
-          "landline": "0114 1231234",
+IU          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+IU          "email": "john.doe@somecompany.co.uk",
+IU          "mobile": "07123456789",
+IU          "landline": "0114 1231234",
           "lastUpdatedDate": "2025-10-30T15:07:00.047Z"
         }
       ],
-      "correspondanceAddress": {
-        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-        "uprn": 671544009,
-        "addressLine1": "Hansel & Gretel Farm, Pigs Street",
-        "addressLine2": "Cloverfield",
-        "postTown": "Clover town",
-        "county": "Sussex",
-        "postCode": "S36 2BS",
-        "country": {
-          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-          "code": "GB-ENG",
-          "name": "England",
-          "longName": "England - United Kingdom",
-          "euTradeMemberFlag": true,
-          "devolvedAuthorityFlag": false,
+IU      "correspondanceAddress": {
+IU       "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+IU        "uprn": 671544009,
+IU        "addressLine1": "Hansel & Gretel Farm, Pigs Street",
+IU        "addressLine2": "Cloverfield",
+IU        "postTown": "Clover town",
+IU        "county": "Sussex",
+IU        "postCode": "S36 2BS",
+IU        "country": {
+IU          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+IU          "code": "GB-ENG",
+IU          "name": "England",
+IU          "longName": "England - United Kingdom",
+IU          "euTradeMemberFlag": true,
+IU          "devolvedAuthorityFlag": false,
           "lastUpdatedDate": "2025-10-30T15:07:00.047Z"
         },
         "lastUpdatedDate": "2025-10-30T15:07:00.047Z"
       },
       "partyRoles": [
         {
-          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-          "role": "Keeper",
-          "startDate": "2025-10-30",
-          "endDate": "2025-10-30",
+IU          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+IU          "role": "Keeper",
+IU          "startDate": "2025-10-30",
+IU          "endDate": "2025-10-30",
           "speciesManagedByRole": [
             {
               "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
@@ -280,8 +389,8 @@ I      "partyType": "Person",
           "lastUpdatedDate": "2025-10-30T15:07:00.047Z"
         }
       ],
-I      "state": "active",
-I      "lastUpdatedDate": "2025-10-30T15:07:00.047Z"
+      "state": "active",
+IU     "lastUpdatedDate": "2025-10-30T15:07:00.047Z"
     }
   ]
 }

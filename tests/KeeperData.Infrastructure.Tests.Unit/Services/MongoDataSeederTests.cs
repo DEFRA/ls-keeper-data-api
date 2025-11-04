@@ -56,7 +56,7 @@ public class MongoDataSeederTests : IDisposable
         _mockDatabase.Setup(d => d.GetCollection<PremisesActivityTypeListDocument>("refPremisesActivityTypes", null)).Returns(_mockPremisesActivityTypeCollection.Object);
         _mockClient.Setup(c => c.GetDatabase("TestDb", null)).Returns(_mockDatabase.Object);
 
-        var lastRunField = typeof(MongoDataSeeder).GetField("_lastRun", BindingFlags.NonPublic | BindingFlags.Static);
+        var lastRunField = typeof(MongoDataSeeder).GetField("s_lastRun", BindingFlags.NonPublic | BindingFlags.Static);
         lastRunField?.SetValue(null, DateTime.MinValue);
     }
 
@@ -223,24 +223,24 @@ public class MongoDataSeederTests : IDisposable
         PremisesActivityTypeListDocument? capturedPremisesActivityTypeDoc = null;
 
         _mockCountryCollection.Setup(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<CountryListDocument>>(), It.IsAny<CountryListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()))
-                           .Callback<FilterDefinition<CountryListDocument>, CountryListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedCountryDoc = doc)
-                           .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
+            .Callback<FilterDefinition<CountryListDocument>, CountryListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedCountryDoc = doc)
+            .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
 
         _mockSpeciesCollection.Setup(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<SpeciesListDocument>>(), It.IsAny<SpeciesListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()))
-                           .Callback<FilterDefinition<SpeciesListDocument>, SpeciesListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedSpeciesDoc = doc)
-                           .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
+            .Callback<FilterDefinition<SpeciesListDocument>, SpeciesListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedSpeciesDoc = doc)
+            .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
 
         _mockRoleCollection.Setup(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<RoleListDocument>>(), It.IsAny<RoleListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()))
-                           .Callback<FilterDefinition<RoleListDocument>, RoleListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedRoleDoc = doc)
-                           .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
+            .Callback<FilterDefinition<RoleListDocument>, RoleListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedRoleDoc = doc)
+            .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
 
         _mockPremisesTypeCollection.Setup(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<PremisesTypeListDocument>>(), It.IsAny<PremisesTypeListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()))
-                   .Callback<FilterDefinition<PremisesTypeListDocument>, PremisesTypeListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedPremisesTypeDoc = doc)
-                   .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
+            .Callback<FilterDefinition<PremisesTypeListDocument>, PremisesTypeListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedPremisesTypeDoc = doc)
+            .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
 
         _mockPremisesActivityTypeCollection.Setup(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<PremisesActivityTypeListDocument>>(), It.IsAny<PremisesActivityTypeListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()))
-                           .Callback<FilterDefinition<PremisesActivityTypeListDocument>, PremisesActivityTypeListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedPremisesActivityTypeDoc = doc)
-                           .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
+            .Callback<FilterDefinition<PremisesActivityTypeListDocument>, PremisesActivityTypeListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedPremisesActivityTypeDoc = doc)
+            .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
 
         await seeder.StartAsync(CancellationToken.None);
 

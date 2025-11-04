@@ -33,7 +33,7 @@ public class SiteIdentifier(
 
         changed |= Change(Identifier, identifier, v => Identifier = v, lastUpdatedDate);
         changed |= Change(Type, type, v => Type = v, lastUpdatedDate);
-        
+
         return changed;
     }
 

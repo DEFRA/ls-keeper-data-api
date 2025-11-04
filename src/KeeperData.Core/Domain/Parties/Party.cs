@@ -1,6 +1,7 @@
 using KeeperData.Core.Domain.BuildingBlocks;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
 using KeeperData.Core.Domain.Parties.DomainEvents;
+using KeeperData.Core.Domain.Sites;
 
 namespace KeeperData.Core.Domain.Parties;
 
@@ -18,6 +19,15 @@ public class Party : IAggregateRoot
     public string? State { get; private set; }
     public bool Deleted { get; private set; }
 
+    private Address? _address;
+    public Address? Address => _address;
+
+    private readonly List<Communication> _communications = [];
+    public IReadOnlyCollection<Communication> Communications => _communications.AsReadOnly();
+
+    private readonly List<PartyRole> _roles = [];
+    public IReadOnlyCollection<PartyRole> Roles => _roles.AsReadOnly();
+
     private readonly List<IDomainEvent> _domainEvents = [];
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
     public void ClearDomainEvents() => _domainEvents.Clear();
@@ -33,7 +43,8 @@ public class Party : IAggregateRoot
         string? customerNumber,
         string? partyType,
         string? state,
-        bool deleted)
+        bool deleted,
+        Address? address = null)
     {
         Id = id;
         LastUpdatedBatchId = batchId;
@@ -46,6 +57,7 @@ public class Party : IAggregateRoot
         PartyType = partyType;
         State = state;
         Deleted = deleted;
+        _address = address;
     }
 
     public static Party Create(
@@ -57,7 +69,8 @@ public class Party : IAggregateRoot
         string? customerNumber,
         string? partyType,
         string? state,
-        bool deleted)
+        bool deleted,
+        Address? address = null)
     {
         var party = new Party(
             Guid.NewGuid().ToString(),
@@ -70,7 +83,8 @@ public class Party : IAggregateRoot
             customerNumber,
             partyType,
             state,
-            deleted);
+            deleted,
+            address);
 
         party._domainEvents.Add(new PartyCreatedDomainEvent(party.Id));
         return party;
@@ -116,11 +130,112 @@ public class Party : IAggregateRoot
         LastUpdatedDate = DateTime.UtcNow;
     }
 
+    public void SetAddress(Address address)
+    {
+        _address = address;
+    }
+
+    public void SetAddress(
+        DateTime lastUpdatedDate,
+        Address address)
+    {
+        if (_address is null)
+        {
+            _address = Address.Create(
+                address.Uprn,
+                address.AddressLine1,
+                address.AddressLine2,
+                address.PostTown,
+                address.County,
+                address.PostCode,
+                address.Country);
+            UpdateLastUpdatedDate(lastUpdatedDate);
+            return;
+        }
+
+        if (_address.ApplyChanges(
+            lastUpdatedDate,
+            address.Uprn,
+            address.AddressLine1,
+            address.AddressLine2,
+            address.PostTown,
+            address.County,
+            address.PostCode,
+            address.Country))
+        {
+            UpdateLastUpdatedDate(lastUpdatedDate);
+        }
+    }
+
+    public void SetCommunications(Communication communication)
+    {
+        _communications.Clear();
+        _communications.Add(communication);
+    }
+
+    public void AddOrUpdatePrimaryCommunication(
+        DateTime lastUpdatedDate,
+        Communication communication)
+    {
+        var existing = _communications.FirstOrDefault();
+
+        if (existing is null)
+        {
+            var newCommunication = Communication.Create(
+                communication.Email,
+                communication.Mobile,
+                communication.Landline,
+                communication.PrimaryContactFlag);
+            _communications.Add(newCommunication);
+            UpdateLastUpdatedDate(DateTime.UtcNow);
+            return;
+        }
+
+        if (existing.ApplyChanges(
+            lastUpdatedDate,
+            communication.Email,
+            communication.Mobile,
+            communication.Landline,
+            communication.PrimaryContactFlag))
+        {
+            UpdateLastUpdatedDate(lastUpdatedDate);
+        }
+    }
+
+    public void SetRoles(IEnumerable<PartyRole> roles)
+    {
+        _roles.Clear();
+        _roles.AddRange(roles);
+    }
+
+    public void AddOrUpdateRole(DateTime lastUpdatedDate, PartyRole incoming)
+    {
+        var existing = _roles.FirstOrDefault(r => r.Id == incoming.Id);
+
+        if (existing is null)
+        {
+            var newRole = PartyRole.Create(incoming.Role, incoming.SpeciesManagedByRole);
+            _roles.Add(newRole);
+            UpdateLastUpdatedDate(lastUpdatedDate);
+            return;
+        }
+
+        if (existing.ApplyChanges(incoming.Role, incoming.SpeciesManagedByRole, lastUpdatedDate))
+        {
+            UpdateLastUpdatedDate(lastUpdatedDate);
+        }
+    }
+
     private bool Change<T>(T currentValue, T newValue, Action<T> setter, DateTime lastUpdatedAt)
     {
         if (EqualityComparer<T>.Default.Equals(currentValue, newValue)) return false;
         setter(newValue);
         LastUpdatedDate = lastUpdatedAt;
         return true;
+    }
+
+    private void UpdateLastUpdatedDate(DateTime lastUpdatedDate)
+    {
+        LastUpdatedDate = lastUpdatedDate;
     }
 }
