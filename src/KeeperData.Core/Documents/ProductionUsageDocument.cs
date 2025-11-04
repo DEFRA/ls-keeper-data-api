@@ -12,10 +12,10 @@ public class ProductionUsageDocument : INestedEntity
     public required string IdentifierId { get; set; }
 
     [JsonPropertyName("code")]
-    public required string Code { get; set; }
+    public string Code { get; set; }
 
     [JsonPropertyName("description")]
-    public required string Description { get; set; }
+    public string Description { get; set; }
 
     [JsonPropertyName("isActive")]
     public bool IsActive { get; set; }
