@@ -151,4 +151,22 @@ public class MappingTests
         result.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         Guid.TryParse(result.Id, out _).Should().BeTrue();
     }
+
+    [Fact]
+    public void MapSiteIdentifierType_WithValidData_CreatesCorrectObject()
+    {
+        // Arrange
+        var csvLine = "CPHN,NEWID(),CPH Number,System,NEWDATE(),,NEWDATE(),True,System,NEWDATE()";
+        var parts = csvLine.Split(',');
+
+        // Act
+        var result = Program.MapSiteIdentifierType(parts);
+
+        // Assert
+        result.Code.Should().Be("CPHN");
+        result.Name.Should().Be("CPH Number");
+        result.IsActive.Should().BeTrue();
+        result.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        Guid.TryParse(result.Id, out _).Should().BeTrue();
+    }
 }
