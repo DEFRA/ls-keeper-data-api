@@ -58,6 +58,12 @@ public class Program
                     jsonString = await converter.Convert<SiteIdentifierTypeJson>(inputPath, MapSiteIdentifierType);
                     break;
 
+                case "productionusages":
+                    inputPath = "productionusages.csv";
+                    outputPath = "productionusages_generated.json";
+                    jsonString = await converter.Convert<ProductionUsageJson>(inputPath, MapProductionUsage);
+                    break;
+
                 default:
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine($"\nERROR: Unknown data type '{dataType}'.");
@@ -199,10 +205,29 @@ public class Program
             LastModifiedDate: HandlePlaceholderOrEmptyDate(parts[9], DateTime.UtcNow)
         );
     }
+    public static ProductionUsageJson MapProductionUsage(string[] parts)
+    {
+        if (parts.Length < 11) throw new InvalidDataException("CSV line for production usage has fewer than 11 columns.");
+
+        return new ProductionUsageJson(
+            Id: HandlePlaceholderId(parts[1]),
+            Code: parts[0].Trim(),
+            Description: parts[2].Trim(),
+            CreatedBy: parts[3].Trim(),
+            CreatedDate: HandlePlaceholderOrEmptyDate(parts[4], DateTime.UtcNow),
+            EffectiveEndDate: ParseNullableDateTime(parts[5]),
+            EffectiveStartDate: HandlePlaceholderOrEmptyDate(parts[6], DateTime.UtcNow),
+            IsActive: ParseBool(parts[7]),
+            LastModifiedBy: parts[9].Trim(),
+            LastModifiedDate: HandlePlaceholderOrEmptyDate(parts[10], DateTime.UtcNow)
+        );
+    }
+
     private static void PrintUsage()
     {
         Console.WriteLine("\nUsage: dotnet run <data_type>");
-        Console.WriteLine("Available data types: countries, species, partyroles, premisesactivitytypes, siteidentifiertypes");
+        Console.WriteLine("Available data types: countries, species, partyroles, " +
+            "premisesactivitytypes, siteidentifiertypes, productionusages");
     }
 
     private static void PrintSuccess(string outputPath, string inputPath)

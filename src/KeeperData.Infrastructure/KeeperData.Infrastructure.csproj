@@ -45,5 +45,8 @@
     <Content Include="Data\Seed\siteidentifiertypes.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Data\Seed\productionusages.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>  
 </Project>

@@ -173,4 +173,22 @@ public class MappingTests
         result.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         Guid.TryParse(result.Id, out _).Should().BeTrue();
     }
+
+    [Fact]
+    public void MapProductionUsage_WithValidData_CreatesCorrectObject()
+    {
+        // Arrange
+        var csvLine = "BEEF,NEWID(),Beef,System,NEWDATE(),,NEWDATE(),True,,System,NEWDATE()";
+        var parts = csvLine.Split(',');
+
+        // Act
+        var result = Program.MapProductionUsage(parts);
+
+        // Assert
+        result.Code.Should().Be("BEEF");
+        result.Description.Should().Be("Beef");
+        result.IsActive.Should().BeTrue();
+        result.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        Guid.TryParse(result.Id, out _).Should().BeTrue();
+    }
 }
