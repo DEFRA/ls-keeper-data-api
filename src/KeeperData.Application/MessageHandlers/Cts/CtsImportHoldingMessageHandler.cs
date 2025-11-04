@@ -27,7 +27,8 @@ public class CtsImportHoldingMessageHandler(CtsHoldingImportOrchestrator orchest
         var context = new CtsHoldingImportContext
         {
             Cph = messagePayload.Identifier,
-            BatchId = messagePayload.BatchId
+            BatchId = messagePayload.BatchId,
+            CurrentDateTime = DateTime.UtcNow
         };
 
         await _orchestrator.ExecuteAsync(context, cancellationToken);

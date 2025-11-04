@@ -8,6 +8,7 @@ public class SamHoldingImportContext
 {
     public required string Cph { get; init; }
     public int BatchId { get; init; }
+    public DateTime CurrentDateTime { get; init; }
 
     public List<SamCphHolding> RawHoldings { get; set; } = [];
     public List<SamCphHolder> RawHolders { get; set; } = [];
@@ -21,4 +22,6 @@ public class SamHoldingImportContext
 
     public SiteDocument? GoldSite { get; set; }
     public List<PartyDocument> GoldParties { get; set; } = [];
+    public List<SitePartyRoleRelationshipDocument> GoldSitePartyRoles { get; set; } = [];
+    public List<SiteGroupMarkRelationshipDocument> GoldSiteGroupMarks { get; set; } = [];
 }

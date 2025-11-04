@@ -61,6 +61,7 @@ public class CtsHoldingImportPersistenceStepTests
         var context = new CtsHoldingImportContext
         {
             Cph = Guid.NewGuid().ToString(),
+            CurrentDateTime = DateTime.UtcNow,
             SilverParties = []
         };
 
@@ -93,6 +94,7 @@ public class CtsHoldingImportPersistenceStepTests
         var context = new CtsHoldingImportContext
         {
             Cph = Guid.NewGuid().ToString(),
+            CurrentDateTime = DateTime.UtcNow,
             SilverParties = [incomingParties]
         };
 
@@ -126,6 +128,7 @@ public class CtsHoldingImportPersistenceStepTests
         var context = new CtsHoldingImportContext
         {
             Cph = Guid.NewGuid().ToString(),
+            CurrentDateTime = DateTime.UtcNow,
             SilverParties = [incomingParties]
         };
 
@@ -153,6 +156,7 @@ public class CtsHoldingImportPersistenceStepTests
         var context = new CtsHoldingImportContext
         {
             Cph = Guid.NewGuid().ToString(),
+            CurrentDateTime = DateTime.UtcNow,
             SilverPartyRoles = []
         };
 
@@ -178,6 +182,7 @@ public class CtsHoldingImportPersistenceStepTests
         var context = new CtsHoldingImportContext
         {
             Cph = Guid.NewGuid().ToString(),
+            CurrentDateTime = DateTime.UtcNow,
             SilverPartyRoles = roles
         };
 

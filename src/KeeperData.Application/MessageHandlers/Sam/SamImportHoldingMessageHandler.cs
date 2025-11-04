@@ -27,7 +27,8 @@ public class SamImportHoldingMessageHandler(SamHoldingImportOrchestrator orchest
         var context = new SamHoldingImportContext
         {
             Cph = messagePayload.Identifier,
-            BatchId = messagePayload.BatchId
+            BatchId = messagePayload.BatchId,
+            CurrentDateTime = DateTime.UtcNow
         };
 
         await _orchestrator.ExecuteAsync(context, cancellationToken);

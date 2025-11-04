@@ -66,7 +66,7 @@ public static class VerifyCtsAgentOrKeeperMappings
         role.RoleTypeId.Should().Be(expectedRoleTypeId);
         role.RoleTypeName.Should().Be(expectedRoleTypeName);
         role.SourceRoleName.Should().Be(roleNameToLookup);
-        role.EffectiveFromData.Should().Be(source.LPR_EFFECTIVE_FROM_DATE);
-        role.EffectiveToData.Should().Be(source.LPR_EFFECTIVE_TO_DATE);
+        role.EffectiveFromDate.Should().Be(source.LPR_EFFECTIVE_FROM_DATE);
+        role.EffectiveToDate.Should().Be(source.LPR_EFFECTIVE_TO_DATE);
     }
 }

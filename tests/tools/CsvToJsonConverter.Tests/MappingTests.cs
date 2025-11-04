@@ -1,8 +1,4 @@
-using System;
-using System.IO;
-using DataConverter.Models;
 using FluentAssertions;
-using Xunit;
 
 namespace CsvToJsonConverter.Tests;
 
@@ -100,14 +96,14 @@ public class MappingTests
     }
 
     [Fact]
-    public void MapPartyRole_WithValidData_CreatesCorrectObject()
+    public void MapRole_WithValidData_CreatesCorrectObject()
     {
         // Arrange
         var csvLine = "LIVESTOCKKEEPER,NEWID(),Livestock Keeper,System,NEWDATE(),,NEWDATE(),True,,System,NEWDATE()";
         var parts = csvLine.Split(',');
 
         // Act
-        var result = Program.MapPartyRole(parts);
+        var result = Program.MapRole(parts);
 
         // Assert
         result.Code.Should().Be("LIVESTOCKKEEPER");

@@ -63,7 +63,9 @@ public class SamPartyRoleRelationshipMapperTests
         var holdingIdentifier = Guid.NewGuid().ToString();
         var holdingIdentifierType = Guid.NewGuid().ToString();
 
-        var silverParties = await SamPartyMapper.ToSilver(records,
+        var silverParties = await SamPartyMapper.ToSilver(
+            DateTime.UtcNow,
+            records,
             holdingIdentifier,
             _resolveRoleType,
             _resolveCountry,

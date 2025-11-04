@@ -6,14 +6,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using File = System.IO.File;
 
 namespace KeeperData.Infrastructure.Services;
@@ -24,8 +18,9 @@ public class MongoDataSeeder : IHostedService
     private readonly ILogger<MongoDataSeeder> _logger;
     private readonly IMongoDatabase _database;
 
-    private static DateTime _lastRun = DateTime.MinValue;
-    private static readonly object _lock = new object();
+    private static DateTime s_lastRun = DateTime.MinValue;
+    private static readonly object s_lock = new();
+    private static readonly JsonSerializerOptions s_jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
 
     public MongoDataSeeder(
         IWebHostEnvironment env,
@@ -42,14 +37,14 @@ public class MongoDataSeeder : IHostedService
     {
         _logger.LogInformation("Mongo DB Generic Seeder Service is running...");
 
-        lock (_lock)
+        lock (s_lock)
         {
-            if (DateTime.UtcNow < _lastRun.AddMinutes(3))
+            if (DateTime.UtcNow < s_lastRun.AddMinutes(3))
             {
                 _logger.LogInformation("Seeding was performed less than 3 minutes ago. Skipping this run.");
                 return;
             }
-            _lastRun = DateTime.UtcNow;
+            s_lastRun = DateTime.UtcNow;
         }
 
         try
@@ -57,7 +52,7 @@ public class MongoDataSeeder : IHostedService
             await Task.WhenAll(
                 SeedAsync<CountryListDocument, CountryDocument>(cancellationToken),
                 SeedAsync<SpeciesListDocument, SpeciesDocument>(cancellationToken),
-                SeedAsync<PartyRoleListDocument, PartyRoleDocument>(cancellationToken),
+                SeedAsync<RoleListDocument, RoleDocument>(cancellationToken),
                 SeedAsync<PremisesTypeListDocument, PremisesTypeDocument>(cancellationToken),
                 SeedAsync<PremisesActivityTypeListDocument, PremisesActivityTypeDocument>(cancellationToken),
                 SeedAsync<SiteIdentifierTypeListDocument, SiteIdentifierTypeDocument>(cancellationToken),
@@ -95,9 +90,9 @@ public class MongoDataSeeder : IHostedService
         }
 
         var jsonString = await File.ReadAllTextAsync(targetJsonPath, cancellationToken);
-        var items = JsonSerializer.Deserialize<List<TItem>>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var items = JsonSerializer.Deserialize<List<TItem>>(jsonString, s_jsonSerializerOptions);
 
-        if (items == null || !items.Any())
+        if (items == null || items.Count == 0)
         {
             _logger.LogWarning("No data found in '{FileName}'. Skipping.", jsonFileName);
             return;

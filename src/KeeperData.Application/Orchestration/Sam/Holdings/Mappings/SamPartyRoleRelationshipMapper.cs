@@ -25,8 +25,8 @@ public static class SamPartyRoleRelationshipMapper
                 RoleTypeName = role.RoleTypeName,
                 SourceRoleName = role.SourceRoleName,
 
-                EffectiveFromData = role.EffectiveFromData,
-                EffectiveToData = role.EffectiveToData,
+                EffectiveFromData = role.EffectiveFromDate,
+                EffectiveToData = role.EffectiveToDate,
 
                 LastUpdatedBatchId = party.LastUpdatedBatchId
             });

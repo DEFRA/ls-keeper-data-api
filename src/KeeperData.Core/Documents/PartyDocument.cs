@@ -21,7 +21,12 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
     public string? Name { get; set; }
     public string? CustomerNumber { get; set; }
     public string? PartyType { get; set; }
+    public string? State { get; set; }
     public bool Deleted { get; set; }
+
+    public AddressDocument? CorrespondanceAddress { get; set; }
+    public List<CommunicationDocument> Communication { get; set; } = [];
+    public List<PartyRoleDocument> PartyRoles { get; set; } = [];
 
     public static PartyDocument FromDomain(Party m) => new()
     {
@@ -33,12 +38,19 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
         LastName = m.LastName,
         Name = m.Name,
         CustomerNumber = m.CustomerNumber,
-        PartyType = m.PartyType
+        PartyType = m.PartyType,
+        State = m.State,
+        Deleted = m.Deleted,
+        CorrespondanceAddress = m.Address is not null
+            ? AddressDocument.FromDomain(m.Address)
+            : null,
+        Communication = [.. m.Communications.Select(CommunicationDocument.FromDomain)],
+        PartyRoles = [.. m.Roles.Select(PartyRoleDocument.FromDomain)]
     };
 
     public Party ToDomain()
     {
-        var site = new Party(
+        var party = new Party(
             Id,
             LastUpdatedBatchId,
             LastUpdatedDate,
@@ -47,9 +59,19 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
             LastName,
             Name,
             CustomerNumber,
-            PartyType);
+            PartyType,
+            State,
+            Deleted,
+            CorrespondanceAddress?.ToDomain());
 
-        return site;
+        foreach (var comm in Communication)
+        {
+            party.AddOrUpdatePrimaryCommunication(LastUpdatedDate, comm.ToDomain());
+        }
+
+        party.SetRoles(PartyRoles.Select(r => r.ToDomain()));
+
+        return party;
     }
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()

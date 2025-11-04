@@ -33,7 +33,9 @@ public class CtsAgentOrKeeperMapperTests
     [Fact]
     public async Task GivenNullableRawAgentOrKeepers_WhenCallingToSilver_ShouldReturnEmptyList()
     {
-        var results = await CtsAgentOrKeeperMapper.ToSilver(null!,
+        var results = await CtsAgentOrKeeperMapper.ToSilver(
+            DateTime.UtcNow,
+            null!,
             InferredRoleType.Agent,
             _resolveRoleType,
             CancellationToken.None);
@@ -45,7 +47,9 @@ public class CtsAgentOrKeeperMapperTests
     [Fact]
     public async Task GivenEmptyRawAgentOrKeepers_WhenCallingToSilver_ShouldReturnEmptyList()
     {
-        var results = await CtsAgentOrKeeperMapper.ToSilver([],
+        var results = await CtsAgentOrKeeperMapper.ToSilver(
+            DateTime.UtcNow,
+            [],
             InferredRoleType.Agent,
             _resolveRoleType,
             CancellationToken.None);
@@ -63,7 +67,9 @@ public class CtsAgentOrKeeperMapperTests
 
         var records = GenerateCtsAgentOrKeeper(1);
 
-        var results = await CtsAgentOrKeeperMapper.ToSilver(records,
+        var results = await CtsAgentOrKeeperMapper.ToSilver(
+            DateTime.UtcNow,
+            records,
             InferredRoleType.Agent,
             _resolveRoleType,
             CancellationToken.None);
@@ -79,8 +85,8 @@ public class CtsAgentOrKeeperMapperTests
         role.SourceRoleName.Should().Be(InferredRoleType.Agent.GetDescription());
         role.RoleTypeId.Should().BeNull();
         role.RoleTypeName.Should().BeNull();
-        role.EffectiveFromData.Should().Be(records[0].LPR_EFFECTIVE_FROM_DATE);
-        role.EffectiveToData.Should().Be(records[0].LPR_EFFECTIVE_TO_DATE);
+        role.EffectiveFromDate.Should().Be(records[0].LPR_EFFECTIVE_FROM_DATE);
+        role.EffectiveToDate.Should().Be(records[0].LPR_EFFECTIVE_TO_DATE);
     }
 
     [Theory]
@@ -92,7 +98,9 @@ public class CtsAgentOrKeeperMapperTests
     {
         var records = GenerateCtsAgentOrKeeper(quantity);
 
-        var results = await CtsAgentOrKeeperMapper.ToSilver(records,
+        var results = await CtsAgentOrKeeperMapper.ToSilver(
+            DateTime.UtcNow,
+            records,
             inferredRoleType,
             _resolveRoleType,
             CancellationToken.None);

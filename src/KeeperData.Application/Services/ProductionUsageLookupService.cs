@@ -1,9 +1,26 @@
+using KeeperData.Core.Documents;
 using KeeperData.Core.Services;
 
 namespace KeeperData.Application.Services;
 
 public class ProductionUsageLookupService : IProductionUsageLookupService
 {
+    /// <summary>
+    /// To complete implementation when seeding is completed or to replace.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public async Task<ProductionUsageDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return null;
+
+        return await Task.FromResult(new ProductionUsageDocument
+        {
+            IdentifierId = id
+        });
+    }
+
     /// <summary>
     /// To complete implementation when seeding is completed or to replace.
     /// </summary>

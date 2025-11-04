@@ -10,6 +10,7 @@ public class LocationDocument : INestedEntity
     [JsonPropertyName("id")]
     [BsonElement("id")]
     public required string IdentifierId { get; set; }
+
     public DateTime LastUpdatedDate { get; set; }
     public string? OsMapReference { get; set; }
     public double? Easting { get; set; }
@@ -17,15 +18,15 @@ public class LocationDocument : INestedEntity
     public AddressDocument? Address { get; set; }
     public List<CommunicationDocument> Communication { get; set; } = [];
 
-    public static LocationDocument FromDomain(Location m) => new()
+    public static LocationDocument FromDomain(Location location) => new()
     {
-        IdentifierId = m.Id,
-        LastUpdatedDate = m.LastUpdatedDate,
-        OsMapReference = m.OsMapReference,
-        Easting = m.Easting,
-        Northing = m.Northing,
-        Address = m.Address is not null ? AddressDocument.FromDomain(m.Address) : null,
-        Communication = [.. m.Communication.Select(CommunicationDocument.FromDomain)]
+        IdentifierId = location.Id,
+        LastUpdatedDate = location.LastUpdatedDate,
+        OsMapReference = location.OsMapReference,
+        Easting = location.Easting,
+        Northing = location.Northing,
+        Address = location.Address is not null ? AddressDocument.FromDomain(location.Address) : null,
+        Communication = [.. location.Communication.Select(CommunicationDocument.FromDomain)]
     };
 
     public Location ToDomain() => new(
@@ -35,5 +36,5 @@ public class LocationDocument : INestedEntity
         Easting,
         Northing,
         Address?.ToDomain(),
-        [.. Communication.Select(c => c.ToDomain())]);
+        Communication.Select(c => c.ToDomain()));
 }

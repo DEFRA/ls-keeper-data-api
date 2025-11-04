@@ -10,6 +10,7 @@ public class CtsPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IC
 {
     public string? Id { get; set; }
     public int LastUpdatedBatchId { get; set; }
+    public DateTime LastUpdatedDate { get; set; }
     public bool Deleted { get; set; }
 
     public string CountyParishHoldingNumber { get; set; } = string.Empty;

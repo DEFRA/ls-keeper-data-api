@@ -1,6 +1,7 @@
 using FluentAssertions;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Domain.Sites.Formatters;
 
 namespace KeeperData.Tests.Common.Mappings;
 
@@ -17,6 +18,7 @@ public static class VerifySamHerdMappings
 
         target.Herdmark.Should().Be(source.HERDMARK);
         target.CountyParishHoldingHerd.Should().Be(source.CPHH);
+        target.CountyParishHoldingNumber.Should().Be(source.CPHH.CphhToCph());
 
         target.SpeciesTypeId.Should().NotBeNullOrWhiteSpace();
         target.SpeciesTypeCode.Should().Be(source.AnimalSpeciesCodeUnwrapped);

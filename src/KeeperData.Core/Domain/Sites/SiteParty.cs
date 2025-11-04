@@ -2,7 +2,7 @@ using KeeperData.Core.Domain.BuildingBlocks;
 
 namespace KeeperData.Core.Domain.Sites;
 
-public class Party : ValueObject
+public class SiteParty : ValueObject
 {
     public string Id { get; }
     public string? Title { get; private set; }
@@ -13,11 +13,11 @@ public class Party : ValueObject
     public string? PartyType { get; private set; }
     public IReadOnlyCollection<Communication> Communication { get; private set; }
     public Address? CorrespondanceAddress { get; private set; }
-    public IReadOnlyCollection<RolesToParty> PartyRoles { get; private set; }
+    public IReadOnlyCollection<PartyRole> PartyRoles { get; private set; }
     public string? State { get; private set; }
     public DateTime? LastUpdatedDate { get; private set; }
 
-    public Party(string id, string? title, string? firstName, string? lastName, string? name, string? customerNumber, string? partyType, IEnumerable<Communication> communication, Address? correspondanceAddress, IEnumerable<RolesToParty> partyRoles, string? state, DateTime? lastUpdatedDate)
+    public SiteParty(string id, string? title, string? firstName, string? lastName, string? name, string? customerNumber, string? partyType, IEnumerable<Communication> communication, Address? correspondanceAddress, IEnumerable<PartyRole> partyRoles, string? state, DateTime? lastUpdatedDate)
     {
         Id = id;
         Title = title;
@@ -26,16 +26,16 @@ public class Party : ValueObject
         Name = name;
         CustomerNumber = customerNumber;
         PartyType = partyType;
-        Communication = new List<Communication>(communication);
+        Communication = [.. communication];
         CorrespondanceAddress = correspondanceAddress;
-        PartyRoles = new List<RolesToParty>(partyRoles);
+        PartyRoles = [.. partyRoles];
         State = state;
         LastUpdatedDate = lastUpdatedDate;
     }
 
-    public static Party Create(string partyId, string? title, string? firstName, string? lastName, string? name, string? customerNumber, string? partyType, string? state)
+    public static SiteParty Create(string partyId, string? title, string? firstName, string? lastName, string? name, string? customerNumber, string? partyType, string? state)
     {
-        return new Party(
+        return new SiteParty(
             partyId,
             title,
             firstName,
@@ -43,15 +43,15 @@ public class Party : ValueObject
             name,
             customerNumber,
             partyType,
-            Enumerable.Empty<Communication>(),
+            [],
             null,
-            Enumerable.Empty<RolesToParty>(),
+            [],
             state,
             DateTime.UtcNow
         );
     }
 
-    protected override IEnumerable<object> GetEqualityComponents()
+    public override IEnumerable<object> GetEqualityComponents()
     {
         yield return Id;
     }

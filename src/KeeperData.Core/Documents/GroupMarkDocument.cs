@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
 
-public class MarksDocument : INestedEntity
+public class GroupMarkDocument : INestedEntity
 {
     [JsonPropertyName("id")]
     [BsonElement("id")]
@@ -15,7 +15,7 @@ public class MarksDocument : INestedEntity
     public DateTime StartDate { get; set; }
     public DateTime? EndDate { get; set; }
 
-    public static MarksDocument FromDomain(Marks m) => new()
+    public static GroupMarkDocument FromDomain(GroupMark m) => new()
     {
         IdentifierId = m.Id,
         Mark = m.Mark,
@@ -24,7 +24,7 @@ public class MarksDocument : INestedEntity
         EndDate = m.EndDate
     };
 
-    public Marks ToDomain() => new(
+    public GroupMark ToDomain() => new(
         IdentifierId,
         Mark,
         Species?.ToDomain(),
