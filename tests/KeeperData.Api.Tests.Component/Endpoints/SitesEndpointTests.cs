@@ -13,23 +13,21 @@ namespace KeeperData.Api.Tests.Component.Endpoints;
 
 public class SitesEndpointTests : IClassFixture<AppTestFixture>
 {
-    private readonly AppWebApplicationFactory _factory;
-    private readonly Mock<ISitesRepository> _sitesRepositoryMock;
+    private readonly Mock<ISitesRepository> _sitesRepositoryMock = new();
     private readonly HttpClient _client;
 
     public SitesEndpointTests(AppTestFixture fixture)
     {
-        _factory = fixture.AppWebApplicationFactory;
-        _sitesRepositoryMock = new Mock<ISitesRepository>();
-
-        _client = _factory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureTestServices(services =>
+        _client = fixture.AppWebApplicationFactory
+            .WithWebHostBuilder(builder =>
             {
-                services.RemoveAll<ISitesRepository>();
-                services.AddScoped(_ => _sitesRepositoryMock.Object);
-            });
-        }).CreateClient();
+                builder.ConfigureTestServices(services =>
+                {
+                    services.RemoveAll<ISitesRepository>();
+                    services.AddScoped(_ => _sitesRepositoryMock.Object);
+                });
+            })
+            .CreateClient();
     }
 
     [Fact]
@@ -38,22 +36,9 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>
         // Arrange
         var siteId = Guid.NewGuid();
         var keeperPartyId = Guid.NewGuid();
+        var sites = new List<SiteDocument> { CreateSite("Site A", "Type1", "ID1") };
 
-        var site = new SiteDocument
-        {
-            Id = siteId.ToString(),
-            Name = "Site A",
-            Type = "Type1",
-            State = "Active"
-        };
-        site.Identifiers.Add(new SiteIdentifierDocument { IdentifierId = "test-id-1", Identifier = "ID1", Type = "CPH", LastUpdatedDate = DateTime.UtcNow });
-        var sites = new List<SiteDocument> { site };
-
-
-        _sitesRepositoryMock.Setup(r => r.FindAsync(It.IsAny<MongoDB.Driver.FilterDefinition<SiteDocument>>(), It.IsAny<MongoDB.Driver.SortDefinition<SiteDocument>>(), 0, 10, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(sites);
-        _sitesRepositoryMock.Setup(r => r.CountAsync(It.IsAny<MongoDB.Driver.FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(1);
+        SetupRepository(sites, totalCount: 1);
 
         var query = $"?siteIdentifier=ID1&type=Type1&siteId={siteId}&keeperPartyId={keeperPartyId}&order=name&sort=asc";
 
@@ -61,55 +46,74 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>
         var response = await _client.GetAsync($"/api/site{query}");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<PaginatedResult<SiteDocument>>();
-        result.Should().NotBeNull();
-        result!.Count.Should().Be(1);
-        result.Values.Should().HaveCount(1);
-        result.Values[0].Name.Should().Be("Site A");
-
-        _sitesRepositoryMock.Verify(r => r.FindAsync(It.IsAny<MongoDB.Driver.FilterDefinition<SiteDocument>>(), It.IsAny<MongoDB.Driver.SortDefinition<SiteDocument>>(), 0, 10, It.IsAny<CancellationToken>()), Times.Once);
+        await AssertPaginatedResponse(response, expectedCount: 1, expectedNames: ["Site A"]);
     }
 
     [Fact]
     public async Task GetSites_WithoutParameters_ReturnsDefaultOkResult()
     {
         // Arrange
-        var siteA = new SiteDocument
+        var sites = new List<SiteDocument>
         {
-            Id = Guid.NewGuid().ToString(),
-            Name = "Site A",
-            Type = "Type1",
-            State = "Active"
+            CreateSite("Site B", "Type2", "ID2"),
+            CreateSite("Site A", "Type1", "ID1")
         };
-        siteA.Identifiers.Add(new SiteIdentifierDocument { IdentifierId = "test-id-1", Identifier = "ID1", Type = "CPH", LastUpdatedDate = DateTime.UtcNow });
 
-        var siteB = new SiteDocument
-        {
-            Id = Guid.NewGuid().ToString(),
-            Name = "Site B",
-            Type = "Type2",
-            State = "Inactive"
-        };
-        siteB.Identifiers.Add(new SiteIdentifierDocument { IdentifierId = "test-id-2", Identifier = "ID2", Type = "CPH", LastUpdatedDate = DateTime.UtcNow });
-
-        var sites = new List<SiteDocument> { siteB, siteA };
-
-        _sitesRepositoryMock.Setup(r => r.FindAsync(It.IsAny<MongoDB.Driver.FilterDefinition<SiteDocument>>(), It.IsAny<MongoDB.Driver.SortDefinition<SiteDocument>>(), 0, 10, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(sites);
-        _sitesRepositoryMock.Setup(r => r.CountAsync(It.IsAny<MongoDB.Driver.FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(2);
+        SetupRepository(sites, totalCount: 2);
 
         // Act
         var response = await _client.GetAsync("/api/site");
 
         // Assert
+        await AssertPaginatedResponse(response, expectedCount: 2, expectedNames: ["Site B", "Site A"]);
+    }
+
+    private static SiteDocument CreateSite(string name, string type, string identifier)
+    {
+        var site = new SiteDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = name,
+            Type = type,
+            State = "Active"
+        };
+
+        site.Identifiers.Add(new SiteIdentifierDocument
+        {
+            IdentifierId = $"test-id-{identifier}",
+            Identifier = identifier,
+            Type = "CPH",
+            LastUpdatedDate = DateTime.UtcNow
+        });
+
+        return site;
+    }
+
+    private void SetupRepository(List<SiteDocument> sites, int totalCount)
+    {
+        _sitesRepositoryMock
+            .Setup(r => r.FindAsync(
+                It.IsAny<MongoDB.Driver.FilterDefinition<SiteDocument>>(),
+                It.IsAny<MongoDB.Driver.SortDefinition<SiteDocument>>(),
+                0, 10, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sites);
+
+        _sitesRepositoryMock
+            .Setup(r => r.CountAsync(
+                It.IsAny<MongoDB.Driver.FilterDefinition<SiteDocument>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(totalCount);
+    }
+
+    private static async Task AssertPaginatedResponse(HttpResponseMessage response, int expectedCount, IEnumerable<string> expectedNames)
+    {
         response.StatusCode.Should().Be(HttpStatusCode.OK);
+
         var result = await response.Content.ReadFromJsonAsync<PaginatedResult<SiteDocument>>();
         result.Should().NotBeNull();
-        result!.Count.Should().Be(2);
-        result.Values.Should().HaveCount(2);
+        result!.Count.Should().Be(expectedCount);
+        result.Values.Should().HaveCount(expectedCount);
 
-        _sitesRepositoryMock.Verify(r => r.FindAsync(It.IsAny<MongoDB.Driver.FilterDefinition<SiteDocument>>(), It.IsAny<MongoDB.Driver.SortDefinition<SiteDocument>>(), 0, 10, It.IsAny<CancellationToken>()), Times.Once);
+        result.Values.Select(v => v.Name).Should().BeEquivalentTo(expectedNames);
     }
 }
