@@ -8,17 +8,13 @@ using Microsoft.Extensions.Options;
 
 namespace KeeperData.Infrastructure.Database.Repositories;
 
-public class CountryRepository : ReferenceDataRepository<CountryListDocument, CountryDocument>, ICountryRepository
+public class CountryRepository(
+    IOptions<MongoConfig> mongoConfig,
+    IMongoClient client,
+    IUnitOfWork unitOfWork)
+    : ReferenceDataRepository<CountryListDocument, CountryDocument>(mongoConfig, client, unitOfWork), ICountryRepository
 {
-    public CountryRepository(
-        IOptions<MongoConfig> mongoConfig,
-        IMongoClient client,
-        IUnitOfWork unitOfWork)
-        : base(mongoConfig, client, unitOfWork)
-    {
-    }
-
-    public async Task<CountryDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken = default)
+    public new async Task<CountryDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(id))
             return null;
