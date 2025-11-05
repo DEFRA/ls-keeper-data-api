@@ -19,5 +19,10 @@
     <ProjectReference Include="..\KeeperData.Infrastructure\KeeperData.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\KeeperData.Infrastructure\Data\Seed\*.json" Link="Data\Seed\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 
 </Project>
