@@ -43,7 +43,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(sp => sp.GetRequiredService<IMongoDbClientFactory>().CreateClient());
 
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-        services.AddScoped(typeof(IReferenceDataRepository<,>), typeof(ReferenceDataRepository<,>));
+        services.AddScoped<ICountryRepository, CountryRepository>();
         services.AddScoped<ISitesRepository, SitesRepository>();
 
         services.AddScoped<IUnitOfWork, MongoUnitOfWork>();

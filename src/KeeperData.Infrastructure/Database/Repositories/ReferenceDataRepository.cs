@@ -14,13 +14,13 @@ using System.Threading.Tasks;
 
 namespace KeeperData.Infrastructure.Database.Repositories;
 
-public class ReferenceDataRepository<TDocument, TItem> : GenericRepository<TDocument>, IReferenceDataRepository<TDocument, TItem>
+public abstract class ReferenceDataRepository<TDocument, TItem> : GenericRepository<TDocument>, IReferenceDataRepository<TDocument, TItem>
     where TDocument : class, IReferenceListDocument<TItem>
     where TItem : class, INestedEntity
 {
     private readonly Lazy<Task<IReadOnlyCollection<TItem>>> _itemsCache;
 
-    public ReferenceDataRepository(
+    protected ReferenceDataRepository(
         IOptions<MongoConfig> mongoConfig,
         IMongoClient client,
         IUnitOfWork unitOfWork)
@@ -55,7 +55,7 @@ public class ReferenceDataRepository<TDocument, TItem> : GenericRepository<TDocu
             return Array.Empty<TItem>();
         }
 
-        var itemsProperty = typeof(TDocument).GetProperty(attribute.ItemsPropertyName, BindingFlags.IgnoreCase | BindingFlags.Public)
+        var itemsProperty = typeof(TDocument).GetProperty(attribute.ItemsPropertyName, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)
             ?? throw new InvalidOperationException(
                 $"Property '{attribute.ItemsPropertyName}' not found on {typeof(TDocument).Name}");
 
