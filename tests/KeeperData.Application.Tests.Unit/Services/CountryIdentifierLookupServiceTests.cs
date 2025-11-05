@@ -28,7 +28,7 @@ public class CountryIdentifierLookupServiceTests
             Name = "United Kingdom",
             IsActive = true
         };
-        
+
         _mockCountryRepository
             .Setup(x => x.GetByIdAsync(countryId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedCountry);
@@ -48,7 +48,7 @@ public class CountryIdentifierLookupServiceTests
     {
         // Arrange
         var countryId = "XX";
-        
+
         _mockCountryRepository
             .Setup(x => x.GetByIdAsync(countryId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((CountryDocument?)null);
@@ -67,7 +67,7 @@ public class CountryIdentifierLookupServiceTests
         // Arrange
         var lookupValue = "GB";
         var expectedResult = ("GB", "United Kingdom");
-        
+
         _mockCountryRepository
             .Setup(x => x.FindAsync(lookupValue, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
@@ -87,7 +87,7 @@ public class CountryIdentifierLookupServiceTests
         // Arrange
         var lookupValue = "Unknown";
         var expectedResult = ((string?)null, (string?)null);
-        
+
         _mockCountryRepository
             .Setup(x => x.FindAsync(lookupValue, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
