@@ -55,7 +55,8 @@ public class MongoDataSeeder : IHostedService
                 SeedAsync<RoleListDocument, RoleDocument>(cancellationToken),
                 SeedAsync<PremisesTypeListDocument, PremisesTypeDocument>(cancellationToken),
                 SeedAsync<PremisesActivityTypeListDocument, PremisesActivityTypeDocument>(cancellationToken),
-                SeedAsync<SiteIdentifierTypeListDocument, SiteIdentifierTypeDocument>(cancellationToken)
+                SeedAsync<SiteIdentifierTypeListDocument, SiteIdentifierTypeDocument>(cancellationToken),
+                SeedAsync<ProductionUsageListDocument, ProductionUsageDocument>(cancellationToken)
             );
         }
         catch (Exception ex)

@@ -87,3 +87,16 @@ public record SiteIdentifierTypeJson(
     [property: JsonPropertyName("lastModifiedBy")] string? LastModifiedBy,
     [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
 );
+
+public record ProductionUsageJson(
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("code")] string Code,
+    [property: JsonPropertyName("description")] string Description,
+    [property: JsonPropertyName("isActive")] bool IsActive,
+    [property: JsonPropertyName("effectiveStartDate")] DateTime EffectiveStartDate,
+    [property: JsonPropertyName("effectiveEndDate")] DateTime? EffectiveEndDate,
+    [property: JsonPropertyName("createdBy")] string CreatedBy,
+    [property: JsonPropertyName("createdDate")] DateTime CreatedDate,
+    [property: JsonPropertyName("lastModifiedBy")] string? LastModifiedBy,
+    [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
+);

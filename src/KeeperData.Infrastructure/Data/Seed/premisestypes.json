@@ -288,7 +288,7 @@
   {
     "id": "21646738-7a33-403f-a13d-e186cb55eab6",
     "code": "KY",
-    "name": "Knacker\u0027s Yard",
+    "name": "Knacker's Yard",
     "isActive": true,
     "sortOrder": 0,
     "effectiveStartDate": "2025-10-30T15:26:16.634386Z",
@@ -509,12 +509,12 @@
   {
     "id": "1f000a5a-adc4-4827-9d10-5019e50c9dd9",
     "code": "SM",
-    "name": "\u0022S/H Both",
+    "name": "S/H Both, MP & Cs",
     "isActive": false,
     "sortOrder": 0,
     "effectiveStartDate": "2025-10-30T15:26:16.6374832Z",
     "effectiveEndDate": null,
-    "createdBy": "MP \u0026 Cs\u0022",
+    "createdBy": "System",
     "createdDate": "2025-10-30T15:26:16.6344187Z",
     "lastModifiedBy": "",
     "lastModifiedDate": "2025-10-30T15:26:16.6374932Z"
