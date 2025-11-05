@@ -36,12 +36,12 @@ public class CountryRepository : ReferenceDataRepository<CountryListDocument, Co
 
         // Try exact match on Code first (case-insensitive)
         var country = countries.FirstOrDefault(c => c.Code?.Equals(lookupValue, StringComparison.OrdinalIgnoreCase) == true);
-        
+
         // If not found by code, try name match
         country ??= countries.FirstOrDefault(c => c.Name?.Equals(lookupValue, StringComparison.OrdinalIgnoreCase) == true);
 
-        return country != null 
-            ? (country.Code, country.Name) 
+        return country != null
+            ? (country.Code, country.Name)
             : (null, null);
     }
 }

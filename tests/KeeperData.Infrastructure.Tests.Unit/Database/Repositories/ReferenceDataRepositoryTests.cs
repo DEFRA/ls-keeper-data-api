@@ -145,7 +145,7 @@ public class ReferenceDataRepositoryTests
     {
         // Arrange
         var mockCollectionWithoutAttr = new Mock<IMongoCollection<TestReferenceListDocumentWithoutAttribute>>();
-        
+
         _mongoDatabaseMock
             .Setup(db => db.GetCollection<TestReferenceListDocumentWithoutAttribute>(It.IsAny<string>(), It.IsAny<MongoCollectionSettings>()))
             .Returns(mockCollectionWithoutAttr.Object);
