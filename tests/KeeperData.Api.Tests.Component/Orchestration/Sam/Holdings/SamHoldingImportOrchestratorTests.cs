@@ -73,6 +73,15 @@ public class SamHoldingImportOrchestratorTests
         factory.OverrideServiceAsScoped(_goldPartyRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_goldSitePartyRoleRelationshipRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_goldSiteGroupMarkRelationshipRepositoryMock.Object);
+        
+        // Register lookup service mocks
+        factory.OverrideServiceAsScoped(_countryIdentifierLookupServiceMock.Object);
+        factory.OverrideServiceAsScoped(_premiseActivityTypeLookupServiceMock.Object);
+        factory.OverrideServiceAsScoped(_premiseTypeLookupServiceMock.Object);
+        factory.OverrideServiceAsScoped(_productionTypeLookupServiceMock.Object);
+        factory.OverrideServiceAsScoped(_productionUsageLookupServiceMock.Object);
+        factory.OverrideServiceAsScoped(_roleTypeLookupServiceMock.Object);
+        factory.OverrideServiceAsScoped(_speciesTypeLookupServiceMock.Object);
 
         SetupDataBridgeApiRequest(factory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContent(holdings));
         SetupDataBridgeApiRequest(factory, holdersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContent(holders));
