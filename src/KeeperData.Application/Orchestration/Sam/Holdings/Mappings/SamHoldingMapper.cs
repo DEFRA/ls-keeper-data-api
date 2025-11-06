@@ -45,8 +45,15 @@ public static class SamHoldingMapper
                 CountyParishHoldingNumber = h.CPH,
                 AlternativeHoldingIdentifier = null,
 
+                CphRelationshipType = h.CPH_RELATIONSHIP_TYPE,
+                SecondaryCph = h.SecondaryCphUnwrapped,
+
                 CphTypeIdentifier = h.CPH_TYPE,
                 LocationName = h.FEATURE_NAME,
+
+                DiseaseType = h.DISEASE_TYPE,
+                Interval = h.INTERVAL,
+                IntervalUnitOfTime = h.INTERVAL_UNIT_OF_TIME,
 
                 HoldingStartDate = h.FEATURE_ADDRESS_FROM_DATE,
                 HoldingEndDate = h.FEATURE_ADDRESS_TO_DATE,
@@ -54,9 +61,15 @@ public static class SamHoldingMapper
 
                 PremiseActivityTypeId = premiseActivityTypeId,
                 PremiseActivityTypeCode = h.FACILITY_BUSINSS_ACTVTY_CODE,
+                PremiseSubActivityTypeCode = h.FCLTY_SUB_BSNSS_ACTVTY_CODE,
+
+                MovementRestrictionReasonCode = h.MOVEMENT_RSTRCTN_RSN_CODE,
 
                 PremiseTypeIdentifier = premiseTypeId,
                 PremiseTypeCode = h.FACILITY_TYPE_CODE,
+
+                SpeciesTypeCode = h.AnimalSpeciesCodeUnwrapped,
+                ProductionUsageCodeList = h.AnimalProductionUsageCodeList,
 
                 Location = new Core.Documents.Silver.LocationDocument
                 {
@@ -72,6 +85,7 @@ public static class SamHoldingMapper
                         AddressStreet = h.STREET,
                         AddressTown = h.TOWN,
                         AddressPostCode = h.POSTCODE,
+                        CountrySubDivision = h.UK_INTERNAL_CODE,
 
                         CountryIdentifier = countryId,
                         CountryCode = h.COUNTRY_CODE,

@@ -26,8 +26,11 @@ public class SamHerdDocument : IEntity, IContainsIndexes, IDeletableEntity
     public string? ProductionTypeId { get; set; } // LOV Lookup / Internal Id
     public string? ProductionTypeCode { get; set; }
 
+    public string? DiseaseType { get; set; }
     public decimal? Interval { get; set; }
     public string? IntervalUnitOfTime { get; set; }
+
+    public string? MovementRestrictionReasonCode { get; set; }
 
     public DateTime GroupMarkStartDate { get; set; } = default;
     public DateTime? GroupMarkEndDate { get; set; }

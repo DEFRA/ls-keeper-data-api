@@ -55,6 +55,7 @@ public static class VerifySamHolderMappings
         address.AddressStreet.Should().Be(source.STREET);
         address.AddressTown.Should().Be(source.TOWN);
         address.AddressPostCode.Should().Be(source.POSTCODE);
+        address.CountrySubDivision.Should().Be(source.UK_INTERNAL_CODE);
         address.CountryIdentifier.Should().NotBeNullOrWhiteSpace();
         address.CountryCode.Should().Be(source.COUNTRY_CODE);
         address.UniquePropertyReferenceNumber.Should().Be(source.UDPRN);

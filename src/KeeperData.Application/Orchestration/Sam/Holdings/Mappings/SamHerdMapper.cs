@@ -46,8 +46,11 @@ public static class SamHerdMapper
                 // ProductionTypeId = productionTypeId,
                 // ProductionTypeCode = herd.TBC,
 
+                DiseaseType = h.DISEASE_TYPE,
                 Interval = h.INTERVAL,
                 IntervalUnitOfTime = h.INTERVAL_UNIT_OF_TIME,
+
+                MovementRestrictionReasonCode = h.MOVEMENT_RSTRCTN_RSN_CODE,
 
                 GroupMarkStartDate = h.ANIMAL_GROUP_ID_MCH_FRM_DAT,
                 GroupMarkEndDate = h.ANIMAL_GROUP_ID_MCH_TO_DAT,

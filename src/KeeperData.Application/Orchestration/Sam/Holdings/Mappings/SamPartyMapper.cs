@@ -65,6 +65,7 @@ public static class SamPartyMapper
                     AddressStreet = p.STREET,
                     AddressTown = p.TOWN,
                     AddressPostCode = p.POSTCODE,
+                    CountrySubDivision = p.UK_INTERNAL_CODE,
 
                     CountryIdentifier = countryId,
                     CountryCode = p.COUNTRY_CODE,

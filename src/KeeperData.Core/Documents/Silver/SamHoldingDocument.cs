@@ -13,6 +13,16 @@ public class SamHoldingDocument : BaseHoldingDocument, IEntity, IDeletableEntity
     public DateTime LastUpdatedDate { get; set; }
     public bool Deleted { get; set; }
 
+    public string? CphRelationshipType { get; set; }
+    public string? SecondaryCph { get; set; }
+    public string? DiseaseType { get; set; }
+    public decimal? Interval { get; set; }
+    public string? IntervalUnitOfTime { get; set; }
+    public string? PremiseSubActivityTypeCode { get; set; }
+    public string? MovementRestrictionReasonCode { get; set; }
+    public string? SpeciesTypeCode { get; set; }
+    public List<string> ProductionUsageCodeList { get; set; } = [];
+
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
         return
