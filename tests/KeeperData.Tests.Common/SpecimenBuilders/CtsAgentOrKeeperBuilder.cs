@@ -28,7 +28,7 @@ public class CtsAgentOrKeeperBuilder(
 
             return new CtsAgentOrKeeper
             {
-                PAR_ID = _random.NextInt64(10000000000, 99999999999),
+                PAR_ID = _random.NextInt64(10000000000, 99999999999).ToString(),
                 LID_FULL_IDENTIFIER = _holdingIdentifier,
 
                 PAR_TITLE = title,

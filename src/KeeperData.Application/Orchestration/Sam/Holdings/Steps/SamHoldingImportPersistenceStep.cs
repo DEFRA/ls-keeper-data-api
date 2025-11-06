@@ -62,7 +62,7 @@ public class SamHoldingImportPersistenceStep(
         CancellationToken cancellationToken)
     {
         var holdingIdentifierType = incomingSite.Identifiers.FirstOrDefault()?.Type
-            ?? HoldingIdentifierType.HoldingNumber.ToString();
+            ?? HoldingIdentifierType.CphNumber.ToString();
 
         var holdingIdentifier = incomingSite.Identifiers.FirstOrDefault()?.Identifier
             ?? string.Empty;

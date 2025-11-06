@@ -23,8 +23,8 @@ public class SamHolderMapperTests
     public SamHolderMapperTests()
     {
         _roleTypeLookupServiceMock
-            .Setup(x => x.FindAsync("Holder", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .Setup(x => x.FindAsync(EnumExtensions.GetDescription(InferredRoleType.CphHolder), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), InferredRoleType.CphHolder.ToString()));
 
         _countryIdentifierLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
@@ -41,7 +41,7 @@ public class SamHolderMapperTests
             DateTime.UtcNow,
             null!,
             Guid.NewGuid().ToString(),
-            InferredRoleType.Holder,
+            InferredRoleType.CphHolder,
             _resolveRoleType,
             _resolveCountry,
             CancellationToken.None);
@@ -57,7 +57,7 @@ public class SamHolderMapperTests
             DateTime.UtcNow,
             [],
             Guid.NewGuid().ToString(),
-            InferredRoleType.Holder,
+            InferredRoleType.CphHolder,
             _resolveRoleType,
             _resolveCountry,
             CancellationToken.None);
@@ -79,7 +79,7 @@ public class SamHolderMapperTests
             DateTime.UtcNow,
             records,
             Guid.NewGuid().ToString(),
-            InferredRoleType.Holder,
+            InferredRoleType.CphHolder,
             _resolveRoleType,
             _resolveCountry,
             CancellationToken.None);
@@ -92,7 +92,7 @@ public class SamHolderMapperTests
 
         var role = result.Roles[0];
         role.IdentifierId.Should().NotBeNullOrWhiteSpace();
-        role.SourceRoleName.Should().Be(InferredRoleType.Holder.GetDescription());
+        role.SourceRoleName.Should().Be(InferredRoleType.CphHolder.GetDescription());
         role.RoleTypeId.Should().BeNull();
         role.RoleTypeName.Should().BeNull();
     }
@@ -110,7 +110,7 @@ public class SamHolderMapperTests
             DateTime.UtcNow,
             records,
             Guid.NewGuid().ToString(),
-            InferredRoleType.Holder,
+            InferredRoleType.CphHolder,
             _resolveRoleType,
             _resolveCountry,
             CancellationToken.None);
@@ -128,13 +128,13 @@ public class SamHolderMapperTests
     }
 
     [Theory]
-    [InlineData(1, InferredRoleType.Holder)]
-    [InlineData(2, InferredRoleType.Holder)]
+    [InlineData(1, InferredRoleType.CphHolder)]
+    [InlineData(2, InferredRoleType.CphHolder)]
     public async Task GivenRawHolders_WhenCallingToSilver_ShouldReturnPopulatedList(int quantity, InferredRoleType inferredRoleType)
     {
         var records = GenerateSamCphHolder(quantity);
 
-        var holdingIdentifier = Guid.NewGuid().ToString();
+        var holdingIdentifier = CphGenerator.GenerateFormattedCph();
 
         var results = await SamHolderMapper.ToSilver(
             DateTime.UtcNow,

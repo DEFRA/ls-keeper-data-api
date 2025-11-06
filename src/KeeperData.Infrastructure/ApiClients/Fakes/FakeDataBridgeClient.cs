@@ -125,7 +125,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
                 BATCH_ID = 1,
                 CHANGE_TYPE = "I",
                 IsDeleted = false,
-                PAR_ID = _random.NextInt64(10000000000, 99999999999),
+                PAR_ID = _random.NextInt64(10000000000, 99999999999).ToString(),
                 LID_FULL_IDENTIFIER = id,
                 PAR_SURNAME = Guid.NewGuid().ToString(),
                 ADR_NAME = Guid.NewGuid().ToString(),

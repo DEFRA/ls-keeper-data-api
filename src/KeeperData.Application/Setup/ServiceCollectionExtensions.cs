@@ -69,5 +69,6 @@ public static class ServiceCollectionExtensions
         services.AddTransient<IProductionUsageLookupService, ProductionUsageLookupService>();
         services.AddTransient<IRoleTypeLookupService, RoleTypeLookupService>();
         services.AddTransient<ISpeciesTypeLookupService, SpeciesTypeLookupService>();
+        services.AddTransient<ISiteIdentifierTypeLookupService, SiteIdentifierTypeLookupService>();
     }
 }

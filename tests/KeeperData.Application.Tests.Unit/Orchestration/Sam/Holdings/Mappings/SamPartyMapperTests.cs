@@ -4,6 +4,7 @@ using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Services;
 using KeeperData.Tests.Common.Factories;
+using KeeperData.Tests.Common.Generators;
 using KeeperData.Tests.Common.Mappings;
 using Moq;
 
@@ -135,7 +136,7 @@ public class SamPartyMapperTests
     {
         var records = GenerateSamParty(quantity);
 
-        var holdingIdentifier = Guid.NewGuid().ToString();
+        var holdingIdentifier = CphGenerator.GenerateFormattedCph();
 
         var results = await SamPartyMapper.ToSilver(
             DateTime.UtcNow,

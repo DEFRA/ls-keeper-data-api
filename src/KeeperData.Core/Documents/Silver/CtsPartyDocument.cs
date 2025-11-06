@@ -14,6 +14,7 @@ public class CtsPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IC
     public bool Deleted { get; set; }
 
     public string CountyParishHoldingNumber { get; set; } = string.Empty;
+    public string HoldingIdentifierType { get; set; } = string.Empty;
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {

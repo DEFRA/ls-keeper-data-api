@@ -8,19 +8,19 @@ namespace KeeperData.Core.Tests.Unit.Parties;
 public class PartyTypeRulesTests
 {
     [Theory]
-    [InlineData("Smith", "J", PartyType.Person)]
+    [InlineData("Smith", "Mr", PartyType.Person)]
     [InlineData("Smith", null, PartyType.Business)]
-    [InlineData(null, "J", PartyType.Business)]
+    [InlineData(null, "Miss", PartyType.Business)]
     [InlineData(null, null, PartyType.Business)]
-    [InlineData(" ", "J", PartyType.Business)]
+    [InlineData(" ", "Mrs", PartyType.Business)]
     [InlineData("Smith", " ", PartyType.Business)]
     public void DeterminePartyType_CtsAgentOrKeeper_ShouldReturnExpectedType(
-        string? surname, string? initials, PartyType expected)
+        string? surname, string? title, PartyType expected)
     {
         var party = new CtsAgentOrKeeper
         {
             PAR_SURNAME = surname,
-            PAR_INITIALS = initials
+            PAR_TITLE = title
         };
 
         var result = party.DeterminePartyType();

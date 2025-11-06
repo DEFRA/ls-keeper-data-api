@@ -27,7 +27,7 @@ public class SamHoldingImportGoldMappingStep(
             context.CurrentDateTime,
             context.SilverHerds,
             context.Cph,
-            HoldingIdentifierType.HoldingNumber.ToString());
+            HoldingIdentifierType.CphNumber.ToString());
 
         context.GoldParties = await SamPartyMapper.ToGold(
             context.CurrentDateTime,

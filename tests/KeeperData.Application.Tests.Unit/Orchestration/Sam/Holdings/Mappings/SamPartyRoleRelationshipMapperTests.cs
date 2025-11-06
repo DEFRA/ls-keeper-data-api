@@ -2,8 +2,10 @@ using FluentAssertions;
 using KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Services;
 using KeeperData.Tests.Common.Factories;
+using KeeperData.Tests.Common.Generators;
 using KeeperData.Tests.Common.Mappings;
 using Moq;
 
@@ -60,8 +62,8 @@ public class SamPartyRoleRelationshipMapperTests
     {
         var records = GenerateSamParty(quantity);
 
-        var holdingIdentifier = Guid.NewGuid().ToString();
-        var holdingIdentifierType = Guid.NewGuid().ToString();
+        var holdingIdentifier = CphGenerator.GenerateFormattedCph();
+        var holdingIdentifierType = HoldingIdentifierType.CphNumber.ToString();
 
         var silverParties = await SamPartyMapper.ToSilver(
             DateTime.UtcNow,

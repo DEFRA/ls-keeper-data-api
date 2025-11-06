@@ -5,6 +5,7 @@ using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
+using KeeperData.Tests.Common.Generators;
 using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Sam;
@@ -16,7 +17,7 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
     public async Task GivenSamImportHoldingMessage_WhenReceivedOnTheQueue_ShouldComplete()
     {
         var correlationId = Guid.NewGuid().ToString();
-        var holdingIdentifier = Guid.NewGuid().ToString();
+        var holdingIdentifier = CphGenerator.GenerateFormattedCph();
         var message = GetSamImportHoldingMessage(holdingIdentifier);
 
         await ExecuteQueueTest(correlationId, message);
@@ -59,7 +60,7 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
 
     private async Task VerifyGoldDataTypesAsync(string holdingIdentifier)
     {
-        var holdingIdentifierType = HoldingIdentifierType.HoldingNumber.ToString();
+        var holdingIdentifierType = HoldingIdentifierType.CphNumber.ToString();
 
         var siteFilter = Builders<SiteDocument>.Filter.ElemMatch(
             x => x.Identifiers,

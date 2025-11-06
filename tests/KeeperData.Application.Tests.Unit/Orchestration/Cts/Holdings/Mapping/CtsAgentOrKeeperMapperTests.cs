@@ -20,12 +20,12 @@ public class CtsAgentOrKeeperMapperTests
     public CtsAgentOrKeeperMapperTests()
     {
         _roleTypeLookupServiceMock
-            .Setup(x => x.FindAsync("Agent", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("AgentId", "Agent"));
+            .Setup(x => x.FindAsync(EnumExtensions.GetDescription(InferredRoleType.Agent), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), InferredRoleType.Agent.ToString()));
 
         _roleTypeLookupServiceMock
-            .Setup(x => x.FindAsync("Keeper", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("KeeperId", "Keeper"));
+            .Setup(x => x.FindAsync(EnumExtensions.GetDescription(InferredRoleType.LivestockKeeper), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), InferredRoleType.LivestockKeeper.ToString()));
 
         _resolveRoleType = _roleTypeLookupServiceMock.Object.FindAsync;
     }
@@ -36,6 +36,7 @@ public class CtsAgentOrKeeperMapperTests
         var results = await CtsAgentOrKeeperMapper.ToSilver(
             DateTime.UtcNow,
             null!,
+            HoldingIdentifierType.CphNumber,
             InferredRoleType.Agent,
             _resolveRoleType,
             CancellationToken.None);
@@ -50,6 +51,7 @@ public class CtsAgentOrKeeperMapperTests
         var results = await CtsAgentOrKeeperMapper.ToSilver(
             DateTime.UtcNow,
             [],
+            HoldingIdentifierType.CphNumber,
             InferredRoleType.Agent,
             _resolveRoleType,
             CancellationToken.None);
@@ -70,6 +72,7 @@ public class CtsAgentOrKeeperMapperTests
         var results = await CtsAgentOrKeeperMapper.ToSilver(
             DateTime.UtcNow,
             records,
+            HoldingIdentifierType.CphNumber,
             InferredRoleType.Agent,
             _resolveRoleType,
             CancellationToken.None);
@@ -92,8 +95,8 @@ public class CtsAgentOrKeeperMapperTests
     [Theory]
     [InlineData(1, InferredRoleType.Agent)]
     [InlineData(2, InferredRoleType.Agent)]
-    [InlineData(1, InferredRoleType.PrimaryKeeper)]
-    [InlineData(2, InferredRoleType.PrimaryKeeper)]
+    [InlineData(1, InferredRoleType.LivestockKeeper)]
+    [InlineData(2, InferredRoleType.LivestockKeeper)]
     public async Task GivenRawAgentOrKeepers_WhenCallingToSilver_ShouldReturnPopulatedList(int quantity, InferredRoleType inferredRoleType)
     {
         var records = GenerateCtsAgentOrKeeper(quantity);
@@ -101,6 +104,7 @@ public class CtsAgentOrKeeperMapperTests
         var results = await CtsAgentOrKeeperMapper.ToSilver(
             DateTime.UtcNow,
             records,
+            HoldingIdentifierType.CphNumber,
             inferredRoleType,
             _resolveRoleType,
             CancellationToken.None);

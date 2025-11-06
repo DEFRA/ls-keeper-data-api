@@ -2,7 +2,9 @@ using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
+using KeeperData.Tests.Common.Generators;
 using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Cts;
@@ -14,7 +16,7 @@ public class CtsImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
     public async Task GivenCtsImportHoldingMessage_WhenReceivedOnTheQueue_ShouldComplete()
     {
         var correlationId = Guid.NewGuid().ToString();
-        var holdingIdentifier = Guid.NewGuid().ToString();
+        var holdingIdentifier = CphGenerator.GenerateCtsFormattedLidIdentifier("AH");
         var message = GetCtsImportHoldingMessage(holdingIdentifier);
 
         await ExecuteQueueTest(correlationId, message);
@@ -28,15 +30,17 @@ public class CtsImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
 
         foundMessageProcesseEntryInLogs.Should().BeTrue();
 
-        var silverCtsHoldingFilter = Builders<CtsHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
+        var verifyHoldingIdentifier = holdingIdentifier.LidIdentifierToCph();
+
+        var silverCtsHoldingFilter = Builders<CtsHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, verifyHoldingIdentifier);
         var silverCtsHoldings = await fixture.MongoVerifier.FindDocumentsAsync("ctsHoldings", silverCtsHoldingFilter);
         silverCtsHoldings.Should().NotBeNull().And.HaveCount(1);
 
-        var silverCtsPartyFilter = Builders<CtsPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
+        var silverCtsPartyFilter = Builders<CtsPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, verifyHoldingIdentifier);
         var silverCtsParties = await fixture.MongoVerifier.FindDocumentsAsync("ctsParties", silverCtsPartyFilter);
         silverCtsParties.Should().NotBeNull().And.HaveCount(2);
 
-        var partyRoleRelationshipFilter = Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
+        var partyRoleRelationshipFilter = Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, verifyHoldingIdentifier);
         var partyRoleRelationships = await fixture.MongoVerifier.FindDocumentsAsync("silverSitePartyRoleRelationships", partyRoleRelationshipFilter);
         partyRoleRelationships.Should().NotBeNull().And.HaveCount(2);
 

@@ -21,22 +21,21 @@ public class CtsHoldingImportSilverMappingStep(
         context.SilverParties = [
             .. await CtsAgentOrKeeperMapper.ToSilver(
                 context.CurrentDateTime,
-            context.RawAgents,
+                context.RawAgents,
+                HoldingIdentifierType.CphNumber,
                 InferredRoleType.Agent,
                 roleTypeLookupService.FindAsync,
                 cancellationToken),
 
             .. await CtsAgentOrKeeperMapper.ToSilver(
                 context.CurrentDateTime,
-            context.RawKeepers,
-                InferredRoleType.PrimaryKeeper,
+                context.RawKeepers,
+                HoldingIdentifierType.CphNumber,
+                InferredRoleType.LivestockKeeper,
                 roleTypeLookupService.FindAsync,
                 cancellationToken)
         ];
 
-        context.SilverPartyRoles = CtsPartyRoleRelationshipMapper.ToSilver(
-            context.SilverParties,
-            context.Cph,
-            HoldingIdentifierType.HoldingNumber.ToString());
+        context.SilverPartyRoles = CtsPartyRoleRelationshipMapper.ToSilver(context.SilverParties);
     }
 }

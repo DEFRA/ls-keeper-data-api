@@ -50,10 +50,7 @@ public static class SamHoldingMapper
 
                 HoldingStartDate = h.FEATURE_ADDRESS_FROM_DATE,
                 HoldingEndDate = h.FEATURE_ADDRESS_TO_DATE,
-                HoldingStatus = h.FEATURE_ADDRESS_TO_DATE.HasValue
-                                    && h.FEATURE_ADDRESS_TO_DATE != default
-                                    ? HoldingStatusType.Inactive.ToString()
-                                    : HoldingStatusType.Active.ToString(),
+                HoldingStatus = HoldingStatusFormatters.FormatHoldingStatus(h.FEATURE_ADDRESS_TO_DATE),
 
                 PremiseActivityTypeId = premiseActivityTypeId,
                 PremiseActivityTypeCode = h.FACILITY_BUSINSS_ACTVTY_CODE,
@@ -182,7 +179,7 @@ public static class SamHoldingMapper
         site.SetSiteIdentifier(
             lastUpdatedDate: currentDateTime,
             identifier: incoming.CountyParishHoldingNumber,
-            type: HoldingIdentifierType.HoldingNumber.ToString()); // TODO - Need to use LOV
+            type: HoldingIdentifierType.CphNumber.ToString());
 
         // TODO - Add additional fields
 

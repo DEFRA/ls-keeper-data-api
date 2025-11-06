@@ -3,6 +3,7 @@ using KeeperData.Application.Orchestration.Cts.Holdings.Mappings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Services;
 using KeeperData.Tests.Common.Factories;
 using KeeperData.Tests.Common.Generators;
@@ -32,9 +33,7 @@ public class CtsPartyRoleRelationshipMapperTests
     [Fact]
     public void GivenNullableParties_WhenCallingToSilver_ShouldReturnEmptyList()
     {
-        var results = CtsPartyRoleRelationshipMapper.ToSilver(null!,
-            Guid.NewGuid().ToString(),
-            Guid.NewGuid().ToString());
+        var results = CtsPartyRoleRelationshipMapper.ToSilver(null!);
 
         results.Should().NotBeNull();
         results.Count.Should().Be(0);
@@ -43,9 +42,7 @@ public class CtsPartyRoleRelationshipMapperTests
     [Fact]
     public void GivenEmptyParties_WhenCallingToSilver_ShouldReturnEmptyList()
     {
-        var results = CtsPartyRoleRelationshipMapper.ToSilver([],
-            Guid.NewGuid().ToString(),
-            Guid.NewGuid().ToString());
+        var results = CtsPartyRoleRelationshipMapper.ToSilver([]);
 
         results.Should().NotBeNull();
         results.Count.Should().Be(0);
@@ -54,25 +51,23 @@ public class CtsPartyRoleRelationshipMapperTests
     [Theory]
     [InlineData(1, InferredRoleType.Agent)]
     [InlineData(2, InferredRoleType.Agent)]
-    [InlineData(1, InferredRoleType.PrimaryKeeper)]
-    [InlineData(2, InferredRoleType.PrimaryKeeper)]
+    [InlineData(1, InferredRoleType.LivestockKeeper)]
+    [InlineData(2, InferredRoleType.LivestockKeeper)]
     public async Task GivenPartiesExist_WhenCallingToSilver_ShouldReturnPopulatedList(int quantity, InferredRoleType inferredRoleType)
     {
-        var records = GenerateCtsAgentOrKeeper(quantity);
+        var holdingIdentifier = CphGenerator.GenerateCtsFormattedLidIdentifier("AH");
+
+        var records = GenerateCtsAgentOrKeeper(quantity, holdingIdentifier);
 
         var silverParties = await CtsAgentOrKeeperMapper.ToSilver(
             DateTime.UtcNow,
             records,
+            HoldingIdentifierType.CphNumber,
             inferredRoleType,
             _resolveRoleType,
             CancellationToken.None);
 
-        var holdingIdentifier = Guid.NewGuid().ToString();
-        var holdingIdentifierType = Guid.NewGuid().ToString();
-
-        var results = CtsPartyRoleRelationshipMapper.ToSilver(silverParties,
-            holdingIdentifier,
-            holdingIdentifierType);
+        var results = CtsPartyRoleRelationshipMapper.ToSilver(silverParties);
 
         foreach (var party in silverParties)
         {
@@ -85,13 +80,13 @@ public class CtsPartyRoleRelationshipMapperTests
                 VerifyCtsPartyRoleRelationshipMappings.VerifyMapping_From_CtsPartyDocument_To_PartyRoleRelationshipDocument(
                     party,
                     mapped,
-                    holdingIdentifier,
-                    holdingIdentifierType);
+                    holdingIdentifier.LidIdentifierToCph(),
+                    HoldingIdentifierType.CphNumber.ToString());
             }
         }
     }
 
-    private static List<CtsAgentOrKeeper> GenerateCtsAgentOrKeeper(int quantity)
+    private static List<CtsAgentOrKeeper> GenerateCtsAgentOrKeeper(int quantity, string holdingIdentifier)
     {
         var records = new List<CtsAgentOrKeeper>();
         var factory = new MockCtsRawDataFactory();
@@ -100,7 +95,7 @@ public class CtsPartyRoleRelationshipMapperTests
             records.Add(factory.CreateMockAgentOrKeeper(
                 changeType: DataBridgeConstants.ChangeTypeInsert,
                 batchId: 1,
-                holdingIdentifier: CphGenerator.GenerateFormattedCph(),
+                holdingIdentifier: holdingIdentifier,
                 endDate: DateTime.UtcNow.Date));
         }
         return records;
