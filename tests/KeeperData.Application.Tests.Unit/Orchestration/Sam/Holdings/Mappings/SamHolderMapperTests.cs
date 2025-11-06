@@ -40,7 +40,6 @@ public class SamHolderMapperTests
         var results = await SamHolderMapper.ToSilver(
             DateTime.UtcNow,
             null!,
-            Guid.NewGuid().ToString(),
             InferredRoleType.CphHolder,
             _resolveRoleType,
             _resolveCountry,
@@ -56,7 +55,6 @@ public class SamHolderMapperTests
         var results = await SamHolderMapper.ToSilver(
             DateTime.UtcNow,
             [],
-            Guid.NewGuid().ToString(),
             InferredRoleType.CphHolder,
             _resolveRoleType,
             _resolveCountry,
@@ -78,7 +76,6 @@ public class SamHolderMapperTests
         var results = await SamHolderMapper.ToSilver(
             DateTime.UtcNow,
             records,
-            Guid.NewGuid().ToString(),
             InferredRoleType.CphHolder,
             _resolveRoleType,
             _resolveCountry,
@@ -109,7 +106,6 @@ public class SamHolderMapperTests
         var results = await SamHolderMapper.ToSilver(
             DateTime.UtcNow,
             records,
-            Guid.NewGuid().ToString(),
             InferredRoleType.CphHolder,
             _resolveRoleType,
             _resolveCountry,
@@ -139,7 +135,6 @@ public class SamHolderMapperTests
         var results = await SamHolderMapper.ToSilver(
             DateTime.UtcNow,
             records,
-            holdingIdentifier,
             inferredRoleType,
             _resolveRoleType,
             _resolveCountry,
@@ -150,7 +145,7 @@ public class SamHolderMapperTests
 
         for (var i = 0; i < quantity; i++)
         {
-            VerifySamHolderMappings.VerifyMapping_From_SamCphHolder_To_SamPartyDocument(holdingIdentifier, records[i], results[i], inferredRoleType);
+            VerifySamHolderMappings.VerifyMapping_From_SamCphHolder_To_SamPartyDocument(records[i], results[i], inferredRoleType);
         }
     }
 

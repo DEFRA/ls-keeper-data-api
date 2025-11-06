@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using Moq;
 using System.Linq.Expressions;
+using System.Threading;
 
 namespace KeeperData.Application.Tests.Unit.Orchestration.Sam.Holdings.Steps;
 
@@ -17,7 +18,7 @@ public class SamHoldingImportPersistenceStepTests
 
     private readonly Mock<IGenericRepository<SamHoldingDocument>> _silverHoldingRepositoryMock = new();
     private readonly Mock<IGenericRepository<SamPartyDocument>> _silverPartyRepositoryMock = new();
-    private readonly Mock<IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument>> _silverPartyRoleRelationshipRepositoryMock = new();
+    private readonly Mock<ISilverSitePartyRoleRelationshipRepository> _silverSitePartyRoleRelationshipRepositoryMock = new();
     private readonly Mock<IGenericRepository<SamHerdDocument>> _silverHerdRepositoryMock = new();
 
     private readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
@@ -47,7 +48,7 @@ public class SamHoldingImportPersistenceStepTests
         var sut = new SamHoldingImportPersistenceStep(
             _silverHoldingRepositoryMock.Object,
             Mock.Of<IGenericRepository<SamPartyDocument>>(),
-            Mock.Of<IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(),
+            _silverSitePartyRoleRelationshipRepositoryMock.Object,
             Mock.Of<IGenericRepository<SamHerdDocument>>(),
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
@@ -67,7 +68,6 @@ public class SamHoldingImportPersistenceStepTests
     {
         var existingParties = _fixture.Build<SamPartyDocument>()
             .With(p => p.PartyId, "P2") // Orphan
-            .With(p => p.CountyParishHoldingNumber, "CPH1")
             .Create();
 
         var context = new SamHoldingImportContext
@@ -79,14 +79,21 @@ public class SamHoldingImportPersistenceStepTests
 
         SetupDefaultRepositoryMocks();
 
+        _silverSitePartyRoleRelationshipRepositoryMock
+            .Setup(r => r.FindPartyIdsByHoldingIdentifierAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(["P2"]);
+
         _silverPartyRepositoryMock
-            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamPartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.FindAsync(It.IsAny<FilterDefinition<SamPartyDocument>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([existingParties]);
 
         var step = new SamHoldingImportPersistenceStep(
             Mock.Of<IGenericRepository<SamHoldingDocument>>(),
             _silverPartyRepositoryMock.Object,
-            Mock.Of<IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(),
+            _silverSitePartyRoleRelationshipRepositoryMock.Object,
             Mock.Of<IGenericRepository<SamHerdDocument>>(),
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
@@ -105,7 +112,6 @@ public class SamHoldingImportPersistenceStepTests
     {
         var incomingParties = _fixture.Build<SamPartyDocument>()
             .With(p => p.PartyId, "P1")
-            .With(p => p.CountyParishHoldingNumber, "CPH1")
             .Create();
 
         var context = new SamHoldingImportContext
@@ -120,7 +126,7 @@ public class SamHoldingImportPersistenceStepTests
         var step = new SamHoldingImportPersistenceStep(
             Mock.Of<IGenericRepository<SamHoldingDocument>>(),
             _silverPartyRepositoryMock.Object,
-            Mock.Of<IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(),
+            _silverSitePartyRoleRelationshipRepositoryMock.Object,
             Mock.Of<IGenericRepository<SamHerdDocument>>(),
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
@@ -139,12 +145,10 @@ public class SamHoldingImportPersistenceStepTests
     {
         var incomingParties = _fixture.Build<SamPartyDocument>()
             .With(p => p.PartyId, "P1")
-            .With(p => p.CountyParishHoldingNumber, "CPH1")
             .Create();
 
         var existingParties = _fixture.Build<SamPartyDocument>()
             .With(p => p.PartyId, "P2") // Orphan
-            .With(p => p.CountyParishHoldingNumber, "CPH1")
             .Create();
 
         var context = new SamHoldingImportContext
@@ -156,14 +160,21 @@ public class SamHoldingImportPersistenceStepTests
 
         SetupDefaultRepositoryMocks();
 
+        _silverSitePartyRoleRelationshipRepositoryMock
+            .Setup(r => r.FindPartyIdsByHoldingIdentifierAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(["P2"]);
+
         _silverPartyRepositoryMock
-            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamPartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.FindAsync(It.IsAny<FilterDefinition<SamPartyDocument>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([existingParties]);
 
         var step = new SamHoldingImportPersistenceStep(
             Mock.Of<IGenericRepository<SamHoldingDocument>>(),
             _silverPartyRepositoryMock.Object,
-            Mock.Of<IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(),
+            _silverSitePartyRoleRelationshipRepositoryMock.Object,
             Mock.Of<IGenericRepository<SamHerdDocument>>(),
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
@@ -192,7 +203,7 @@ public class SamHoldingImportPersistenceStepTests
         var step = new SamHoldingImportPersistenceStep(
             Mock.Of<IGenericRepository<SamHoldingDocument>>(),
             Mock.Of<IGenericRepository<SamPartyDocument>>(),
-            _silverPartyRoleRelationshipRepositoryMock.Object,
+            _silverSitePartyRoleRelationshipRepositoryMock.Object,
             Mock.Of<IGenericRepository<SamHerdDocument>>(),
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
@@ -202,8 +213,9 @@ public class SamHoldingImportPersistenceStepTests
 
         await step.ExecuteAsync(context, CancellationToken.None);
 
-        _silverPartyRoleRelationshipRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()), Times.Once);
-        _silverPartyRoleRelationshipRepositoryMock.Verify(r => r.AddManyAsync(It.IsAny<IEnumerable<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()), Times.Never);
+        _silverSitePartyRoleRelationshipRepositoryMock.Verify(r => r.FindPartyIdsByHoldingIdentifierAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        _silverSitePartyRoleRelationshipRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()), Times.Once);
+        _silverSitePartyRoleRelationshipRepositoryMock.Verify(r => r.AddManyAsync(It.IsAny<IEnumerable<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -223,7 +235,7 @@ public class SamHoldingImportPersistenceStepTests
         var step = new SamHoldingImportPersistenceStep(
             Mock.Of<IGenericRepository<SamHoldingDocument>>(),
             Mock.Of<IGenericRepository<SamPartyDocument>>(),
-            _silverPartyRoleRelationshipRepositoryMock.Object,
+            _silverSitePartyRoleRelationshipRepositoryMock.Object,
             Mock.Of<IGenericRepository<SamHerdDocument>>(),
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
@@ -233,8 +245,8 @@ public class SamHoldingImportPersistenceStepTests
 
         await step.ExecuteAsync(context, CancellationToken.None);
 
-        _silverPartyRoleRelationshipRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()), Times.Once);
-        _silverPartyRoleRelationshipRepositoryMock.Verify(r => r.AddManyAsync(It.Is<IEnumerable<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(x => x.Count() == 3), It.IsAny<CancellationToken>()), Times.Once);
+        _silverSitePartyRoleRelationshipRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()), Times.Once);
+        _silverSitePartyRoleRelationshipRepositoryMock.Verify(r => r.AddManyAsync(It.Is<IEnumerable<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(x => x.Count() == 3), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -252,7 +264,7 @@ public class SamHoldingImportPersistenceStepTests
         var step = new SamHoldingImportPersistenceStep(
             Mock.Of<IGenericRepository<SamHoldingDocument>>(),
             Mock.Of<IGenericRepository<SamPartyDocument>>(),
-            Mock.Of<IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(),
+            _silverSitePartyRoleRelationshipRepositoryMock.Object,
             _silverHerdRepositoryMock.Object,
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
@@ -283,7 +295,7 @@ public class SamHoldingImportPersistenceStepTests
         var step = new SamHoldingImportPersistenceStep(
             Mock.Of<IGenericRepository<SamHoldingDocument>>(),
             Mock.Of<IGenericRepository<SamPartyDocument>>(),
-            Mock.Of<IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(),
+            _silverSitePartyRoleRelationshipRepositoryMock.Object,
             _silverHerdRepositoryMock.Object,
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
@@ -312,7 +324,7 @@ public class SamHoldingImportPersistenceStepTests
 
         // Silver Party
         _silverPartyRepositoryMock
-            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamPartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.FindAsync(It.IsAny<FilterDefinition<SamPartyDocument>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
         _silverPartyRepositoryMock
@@ -324,13 +336,20 @@ public class SamHoldingImportPersistenceStepTests
             .Returns(Task.CompletedTask);
 
         // Silver Role Relationships
-        _silverPartyRoleRelationshipRepositoryMock
+        _silverSitePartyRoleRelationshipRepositoryMock
             .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _silverPartyRoleRelationshipRepositoryMock
+        _silverSitePartyRoleRelationshipRepositoryMock
             .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+
+        _silverSitePartyRoleRelationshipRepositoryMock
+            .Setup(r => r.FindPartyIdsByHoldingIdentifierAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
 
         // Silver Herds
         _silverHerdRepositoryMock

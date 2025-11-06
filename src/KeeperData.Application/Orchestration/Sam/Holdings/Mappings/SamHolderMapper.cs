@@ -15,7 +15,6 @@ public static class SamHolderMapper
     public static async Task<List<SamPartyDocument>> ToSilver(
         DateTime currentDateTime,
         List<SamCphHolder> rawHolders,
-        string holdingIdentifier,
         InferredRoleType inferredRoleType,
         Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
         Func<string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
@@ -43,8 +42,6 @@ public static class SamHolderMapper
                 LastUpdatedBatchId = p.BATCH_ID,
                 LastUpdatedDate = currentDateTime,
                 Deleted = p.IsDeleted ?? false,
-
-                CountyParishHoldingNumber = holdingIdentifier,
 
                 PartyId = p.PARTY_ID.ToString(),
                 PartyTypeId = partyTypeId,

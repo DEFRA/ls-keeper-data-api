@@ -23,7 +23,7 @@ public class SamHoldingImportOrchestratorTests
 {
     private readonly Mock<IGenericRepository<SamHoldingDocument>> _silverHoldingRepositoryMock = new();
     private readonly Mock<IGenericRepository<SamPartyDocument>> _silverPartyRepositoryMock = new();
-    private readonly Mock<IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument>> _silverPartyRoleRelationshipRepositoryMock = new();
+    private readonly Mock<ISilverSitePartyRoleRelationshipRepository> _silverSitePartyRoleRelationshipRepositoryMock = new();
     private readonly Mock<IGenericRepository<SamHerdDocument>> _silverHerdRepositoryMock = new();
 
     private readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
@@ -67,7 +67,7 @@ public class SamHoldingImportOrchestratorTests
         var factory = new AppWebApplicationFactory();
         factory.OverrideServiceAsScoped(_silverHoldingRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_silverPartyRepositoryMock.Object);
-        factory.OverrideServiceAsScoped(_silverPartyRoleRelationshipRepositoryMock.Object);
+        factory.OverrideServiceAsScoped(_silverSitePartyRoleRelationshipRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_silverHerdRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_goldSiteRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_goldPartyRepositoryMock.Object);
@@ -145,8 +145,6 @@ public class SamHoldingImportOrchestratorTests
         context.SilverHoldings![0].GroupMarks![0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
 
         context.SilverParties.Should().NotBeNull().And.HaveCount(2);
-        context.SilverParties[0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
-        context.SilverParties[1].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
 
         var roleList = context.RawParties[0].ROLES?.Split(",")
             .Where(role => !string.IsNullOrWhiteSpace(role))
@@ -241,13 +239,20 @@ public class SamHoldingImportOrchestratorTests
             .Returns(Task.CompletedTask);
 
         // Silver Role Relationships
-        _silverPartyRoleRelationshipRepositoryMock
+        _silverSitePartyRoleRelationshipRepositoryMock
             .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _silverPartyRoleRelationshipRepositoryMock
+        _silverSitePartyRoleRelationshipRepositoryMock
             .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+
+        _silverSitePartyRoleRelationshipRepositoryMock
+            .Setup(r => r.FindPartyIdsByHoldingIdentifierAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
 
         // Silver Herds
         _silverHerdRepositoryMock

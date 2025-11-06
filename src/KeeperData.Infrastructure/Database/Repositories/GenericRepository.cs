@@ -59,6 +59,12 @@ public class GenericRepository<T> : IGenericRepository<T>
         return await _collection.Find(filter).ToListAsync(cancellationToken);
     }
 
+    public Task<List<T>> FindAsync(FilterDefinition<T> filter, CancellationToken cancellationToken = default) =>
+        _collection.Find(filter).ToListAsync(cancellationToken);
+
+    public Task<List<T>> FindAsync(FilterDefinition<T> filter, SortDefinition<T> sort, CancellationToken cancellationToken = default) =>
+        _collection.Find(filter).Sort(sort).ToListAsync(cancellationToken);
+
     public Task AddAsync(T entity, CancellationToken cancellationToken = default) =>
         _collection.InsertOneAsync(Session, entity, new InsertOneOptions { BypassDocumentValidation = true }, cancellationToken);
 

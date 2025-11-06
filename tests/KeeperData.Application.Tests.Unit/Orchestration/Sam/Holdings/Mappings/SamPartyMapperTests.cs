@@ -38,7 +38,6 @@ public class SamPartyMapperTests
         var results = await SamPartyMapper.ToSilver(
             DateTime.UtcNow,
             null!,
-            Guid.NewGuid().ToString(),
             _resolveRoleType,
             _resolveCountry,
             CancellationToken.None);
@@ -53,7 +52,6 @@ public class SamPartyMapperTests
         var results = await SamPartyMapper.ToSilver(
             DateTime.UtcNow,
             [],
-            Guid.NewGuid().ToString(),
             _resolveRoleType,
             _resolveCountry,
             CancellationToken.None);
@@ -74,7 +72,6 @@ public class SamPartyMapperTests
         var results = await SamPartyMapper.ToSilver(
             DateTime.UtcNow,
             records,
-            Guid.NewGuid().ToString(),
             _resolveRoleType,
             _resolveCountry,
             CancellationToken.None);
@@ -112,7 +109,6 @@ public class SamPartyMapperTests
         var results = await SamPartyMapper.ToSilver(
             DateTime.UtcNow,
             records,
-            Guid.NewGuid().ToString(),
             _resolveRoleType,
             _resolveCountry,
             CancellationToken.None);
@@ -141,7 +137,6 @@ public class SamPartyMapperTests
         var results = await SamPartyMapper.ToSilver(
             DateTime.UtcNow,
             records,
-            holdingIdentifier,
             _resolveRoleType,
             _resolveCountry,
             CancellationToken.None);
@@ -151,7 +146,7 @@ public class SamPartyMapperTests
 
         for (var i = 0; i < quantity; i++)
         {
-            VerifySamPartyMappings.VerifyMapping_From_SamParty_To_SamPartyDocument(holdingIdentifier, records[i], results[i]);
+            VerifySamPartyMappings.VerifyMapping_From_SamParty_To_SamPartyDocument(records[i], results[i]);
         }
     }
 

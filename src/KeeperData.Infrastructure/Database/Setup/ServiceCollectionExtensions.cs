@@ -42,6 +42,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         services.AddScoped<ISitesRepository, SitesRepository>();
+        services.AddScoped<ISilverSitePartyRoleRelationshipRepository, SilverSitePartyRoleRelationshipRepository>();
 
         services.AddScoped<IUnitOfWork, MongoUnitOfWork>();
         services.AddScoped(sp => (ITransactionManager)sp.GetRequiredService<IUnitOfWork>());

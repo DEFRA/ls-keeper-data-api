@@ -68,7 +68,6 @@ public class SamPartyRoleRelationshipMapperTests
         var silverParties = await SamPartyMapper.ToSilver(
             DateTime.UtcNow,
             records,
-            holdingIdentifier,
             _resolveRoleType,
             _resolveCountry,
             CancellationToken.None);

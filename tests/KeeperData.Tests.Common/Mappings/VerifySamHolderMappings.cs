@@ -10,7 +10,7 @@ namespace KeeperData.Tests.Common.Mappings;
 
 public static class VerifySamHolderMappings
 {
-    public static void VerifyMapping_From_SamCphHolder_To_SamPartyDocument(string holdingIdentifier, SamCphHolder source, SamPartyDocument target, InferredRoleType inferredRoleType)
+    public static void VerifyMapping_From_SamCphHolder_To_SamPartyDocument(SamCphHolder source, SamPartyDocument target, InferredRoleType inferredRoleType)
     {
         var addressLine = AddressFormatters.FormatAddressRange(
                             source.SAON_START_NUMBER, source.SAON_START_NUMBER_SUFFIX,
@@ -25,8 +25,6 @@ public static class VerifySamHolderMappings
         target.Id.Should().BeNull();
         target.LastUpdatedBatchId.Should().Be(source.BATCH_ID);
         target.Deleted.Should().BeFalse();
-
-        target.CountyParishHoldingNumber.Should().Be(holdingIdentifier);
 
         target.PartyId.Should().Be(source.PARTY_ID);
 

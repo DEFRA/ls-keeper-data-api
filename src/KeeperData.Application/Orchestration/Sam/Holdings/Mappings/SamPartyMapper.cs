@@ -16,7 +16,6 @@ public static class SamPartyMapper
     public static async Task<List<SamPartyDocument>> ToSilver(
         DateTime currentDateTime,
         List<SamParty> rawParties,
-        string holdingIdentifier,
         Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
         Func<string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
         CancellationToken cancellationToken)
@@ -41,8 +40,6 @@ public static class SamPartyMapper
                 LastUpdatedBatchId = p.BATCH_ID,
                 LastUpdatedDate = currentDateTime,
                 Deleted = p.IsDeleted ?? false,
-
-                CountyParishHoldingNumber = holdingIdentifier,
 
                 PartyId = p.PARTY_ID.ToString(),
                 PartyTypeId = partyTypeId,
@@ -308,7 +305,7 @@ public static class SamPartyMapper
                 party.AddOrUpdateRole(currentDateTime, partyRole);
             }
         }
-        else if (party.Roles.Any())
+        else if (party.Roles.Count != 0)
         {
             party.SetRoles([]);
         }

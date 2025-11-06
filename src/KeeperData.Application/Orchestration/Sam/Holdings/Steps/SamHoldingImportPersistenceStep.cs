@@ -12,7 +12,7 @@ namespace KeeperData.Application.Orchestration.Sam.Holdings.Steps;
 public class SamHoldingImportPersistenceStep(
     IGenericRepository<SamHoldingDocument> silverHoldingRepository,
     IGenericRepository<SamPartyDocument> silverPartyRepository,
-    IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument> silverPartyRoleRelationshipRepository,
+    ISilverSitePartyRoleRelationshipRepository silverSitePartyRoleRelationshipRepository,
     IGenericRepository<SamHerdDocument> silverHerdRepository,
     IGenericRepository<SiteDocument> goldSiteRepository,
     IGenericRepository<PartyDocument> goldPartyRepository,
@@ -23,7 +23,7 @@ public class SamHoldingImportPersistenceStep(
 {
     private readonly IGenericRepository<SamHoldingDocument> _silverHoldingRepository = silverHoldingRepository;
     private readonly IGenericRepository<SamPartyDocument> _silverPartyRepository = silverPartyRepository;
-    private readonly IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument> _silverPartyRoleRelationshipRepository = silverPartyRoleRelationshipRepository;
+    private readonly ISilverSitePartyRoleRelationshipRepository _silverSitePartyRoleRelationshipRepository = silverSitePartyRoleRelationshipRepository;
     private readonly IGenericRepository<SamHerdDocument> _silverHerdRepository = silverHerdRepository;
 
     private readonly IGenericRepository<SiteDocument> _goldSiteRepository = goldSiteRepository;
@@ -195,8 +195,8 @@ public class SamHoldingImportPersistenceStep(
     {
         incomingParties ??= [];
 
-        var incomingKeys = incomingParties
-            .Select(p => $"{p.PartyId}::{p.CountyParishHoldingNumber}")
+        var incomingPartyIds = incomingParties
+            .Select(p => p.PartyId)
             .ToHashSet();
 
         var existingParties = await GetExistingSilverPartiesAsync(holdingIdentifier, cancellationToken);
@@ -205,27 +205,19 @@ public class SamHoldingImportPersistenceStep(
         {
             var partyUpserts = incomingParties.Select(p =>
             {
-                var existing = existingParties.FirstOrDefault(e =>
-                    e.PartyId == p.PartyId &&
-                    e.CountyParishHoldingNumber == p.CountyParishHoldingNumber);
-
+                var existing = existingParties.FirstOrDefault(e => e.PartyId == p.PartyId);
                 p.Id = existing?.Id ?? Guid.NewGuid().ToString();
 
-                return (
-                    Filter: Builders<SamPartyDocument>.Filter.And(
-                        Builders<SamPartyDocument>.Filter.Eq(x => x.PartyId, p.PartyId),
-                        Builders<SamPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, p.CountyParishHoldingNumber)
-                    ),
-                    Entity: p
-                );
+                var filter = Builders<SamPartyDocument>.Filter.Eq(x => x.Id, p.Id);
+                return (Filter: filter, Entity: p);
             });
 
             await _silverPartyRepository.BulkUpsertWithCustomFilterAsync(partyUpserts, cancellationToken);
         }
 
-        var orphanedParties = existingParties?
-            .Where(e => !incomingKeys.Contains($"{e.PartyId}::{e.CountyParishHoldingNumber}"))
-            .ToList() ?? [];
+        var orphanedParties = existingParties
+            .Where(e => !incomingPartyIds.Contains(e.PartyId))
+            .ToList();
 
         if (orphanedParties?.Count > 0)
         {
@@ -242,8 +234,18 @@ public class SamHoldingImportPersistenceStep(
         string holdingIdentifier,
         CancellationToken cancellationToken)
     {
+        var sitePartyIds = await _silverSitePartyRoleRelationshipRepository.FindPartyIdsByHoldingIdentifierAsync(
+            holdingIdentifier,
+            SourceSystemType.SAM.ToString(),
+            cancellationToken);
+
+        if (sitePartyIds.Count == 0)
+            return [];
+
+        var partiesFilter = Builders<SamPartyDocument>.Filter.In(x => x.PartyId, sitePartyIds);
+
         return await _silverPartyRepository.FindAsync(
-            x => x.CountyParishHoldingNumber == holdingIdentifier,
+            partiesFilter,
             cancellationToken) ?? [];
     }
 
@@ -252,18 +254,16 @@ public class SamHoldingImportPersistenceStep(
         List<Core.Documents.Silver.SitePartyRoleRelationshipDocument> incomingPartyRoles,
         CancellationToken cancellationToken)
     {
-        var sourceAsSam = SourceSystemType.SAM.ToString();
-
         var deleteFilter = Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.And(
             Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier),
-            Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.Source, sourceAsSam)
+            Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.Source, SourceSystemType.SAM.ToString())
         );
 
-        await _silverPartyRoleRelationshipRepository.DeleteManyAsync(deleteFilter, cancellationToken);
+        await _silverSitePartyRoleRelationshipRepository.DeleteManyAsync(deleteFilter, cancellationToken);
 
         if (incomingPartyRoles?.Count > 0)
         {
-            await _silverPartyRoleRelationshipRepository.AddManyAsync(incomingPartyRoles, cancellationToken);
+            await _silverSitePartyRoleRelationshipRepository.AddManyAsync(incomingPartyRoles, cancellationToken);
         }
     }
 
