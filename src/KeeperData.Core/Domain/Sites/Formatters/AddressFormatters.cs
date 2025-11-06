@@ -7,25 +7,42 @@ public static class AddressFormatters
         short? saonEnd, char? saonEndSuffix,
         short? paonStart, char? paonStartSuffix,
         short? paonEnd, char? paonEndSuffix,
-        string saonLabel = "")
+        string? saonDescription = null,
+        string? paonDescription = null)
     {
         var parts = new List<string>();
 
-        var saonStartFormatted = FormatNumberWithSuffix(saonStart, saonStartSuffix);
-        var saonEndFormatted = FormatNumberWithSuffix(saonEnd, saonEndSuffix);
+        // SAON
+        if (!string.IsNullOrWhiteSpace(saonDescription))
+        {
+            parts.Add(saonDescription);
+        }
+        else
+        {
+            var saonStartFormatted = FormatNumberWithSuffix(saonStart, saonStartSuffix);
+            var saonEndFormatted = FormatNumberWithSuffix(saonEnd, saonEndSuffix);
 
-        if (!string.IsNullOrEmpty(saonStartFormatted) && !string.IsNullOrEmpty(saonEndFormatted) && saonStartFormatted != saonEndFormatted)
-            parts.Add(AddSaonLabel($"{saonStartFormatted}-{saonEndFormatted}", saonLabel));
-        else if (!string.IsNullOrEmpty(saonStartFormatted))
-            parts.Add(AddSaonLabel($"{saonStartFormatted}", saonLabel));
+            if (!string.IsNullOrEmpty(saonStartFormatted) && !string.IsNullOrEmpty(saonEndFormatted) && saonStartFormatted != saonEndFormatted)
+                parts.Add($"{saonStartFormatted}-{saonEndFormatted}");
+            else if (!string.IsNullOrEmpty(saonStartFormatted))
+                parts.Add(saonStartFormatted);
+        }
 
-        var paonStartFormatted = FormatNumberWithSuffix(paonStart, paonStartSuffix);
-        var paonEndFormatted = FormatNumberWithSuffix(paonEnd, paonEndSuffix);
+        // PAON
+        if (!string.IsNullOrWhiteSpace(paonDescription))
+        {
+            parts.Add(paonDescription);
+        }
+        else
+        {
+            var paonStartFormatted = FormatNumberWithSuffix(paonStart, paonStartSuffix);
+            var paonEndFormatted = FormatNumberWithSuffix(paonEnd, paonEndSuffix);
 
-        if (!string.IsNullOrEmpty(paonStartFormatted) && !string.IsNullOrEmpty(paonEndFormatted) && paonStartFormatted != paonEndFormatted)
-            parts.Add($"{paonStartFormatted}-{paonEndFormatted}");
-        else if (!string.IsNullOrEmpty(paonStartFormatted))
-            parts.Add($"{paonStartFormatted}");
+            if (!string.IsNullOrEmpty(paonStartFormatted) && !string.IsNullOrEmpty(paonEndFormatted) && paonStartFormatted != paonEndFormatted)
+                parts.Add($"{paonStartFormatted}-{paonEndFormatted}");
+            else if (!string.IsNullOrEmpty(paonStartFormatted))
+                parts.Add(paonStartFormatted);
+        }
 
         return string.Join(", ", parts);
     }
@@ -35,21 +52,38 @@ public static class AddressFormatters
         short? saonEnd,
         short? paonStart,
         short? paonEnd,
-        string saonLabel = "")
+        string? saonDescription = null,
+        string? paonDescription = null)
     {
         var parts = new List<string>();
 
-        // SAON (e.g., Flat 1-3)
-        if (saonStart.HasValue && saonEnd.HasValue && saonStart != saonEnd)
-            parts.Add(AddSaonLabel($"{saonStart}-{saonEnd}", saonLabel));
+        // SAON
+        if (!string.IsNullOrWhiteSpace(saonDescription))
+        {
+            parts.Add(saonDescription);
+        }
+        else if (saonStart.HasValue && saonEnd.HasValue && saonStart != saonEnd)
+        {
+            parts.Add($"{saonStart}-{saonEnd}");
+        }
         else if (saonStart.HasValue)
-            parts.Add(AddSaonLabel($"{saonStart}", saonLabel));
+        {
+            parts.Add($"{saonStart}");
+        }
 
-        // PAON (e.g., 10-12)
-        if (paonStart.HasValue && paonEnd.HasValue && paonStart != paonEnd)
+        // PAON
+        if (!string.IsNullOrWhiteSpace(paonDescription))
+        {
+            parts.Add(paonDescription);
+        }
+        else if (paonStart.HasValue && paonEnd.HasValue && paonStart != paonEnd)
+        {
             parts.Add($"{paonStart}-{paonEnd}");
+        }
         else if (paonStart.HasValue)
+        {
             parts.Add($"{paonStart}");
+        }
 
         return string.Join(", ", parts);
     }

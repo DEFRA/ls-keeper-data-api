@@ -28,7 +28,7 @@ public static class SamHoldingMapper
                             h.SAON_END_NUMBER, h.SAON_END_NUMBER_SUFFIX,
                             h.PAON_START_NUMBER, h.PAON_START_NUMBER_SUFFIX,
                             h.PAON_END_NUMBER, h.PAON_END_NUMBER_SUFFIX,
-                            saonLabel: SaonLabel);
+                            h.SAON_DESCRIPTION, h.PAON_DESCRIPTION);
 
             var (premiseActivityTypeId, premiseActivityTypeName) = await resolvePremiseActivityType(h.FACILITY_BUSINSS_ACTVTY_CODE, cancellationToken);
             var (premiseTypeId, premiseTypeName) = await resolvePremiseType(h.FACILITY_TYPE_CODE, cancellationToken);

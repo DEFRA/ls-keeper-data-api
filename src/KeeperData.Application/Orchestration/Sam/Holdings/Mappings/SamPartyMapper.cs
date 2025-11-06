@@ -31,7 +31,7 @@ public static class SamPartyMapper
                             p.SAON_END_NUMBER, p.SAON_END_NUMBER_SUFFIX,
                             p.PAON_START_NUMBER, p.PAON_START_NUMBER_SUFFIX,
                             p.PAON_END_NUMBER, p.PAON_END_NUMBER_SUFFIX,
-                            saonLabel: SaonLabel);
+                            p.SAON_DESCRIPTION, p.PAON_DESCRIPTION);
 
             var party = new SamPartyDocument
             {

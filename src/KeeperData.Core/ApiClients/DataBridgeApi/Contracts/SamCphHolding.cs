@@ -13,11 +13,13 @@ public class SamCphHolding : BronzeBase
     public char? SAON_START_NUMBER_SUFFIX { get; set; }
     public short? SAON_END_NUMBER { get; set; }
     public char? SAON_END_NUMBER_SUFFIX { get; set; }
+    public string? SAON_DESCRIPTION { get; set; }
 
     public short? PAON_START_NUMBER { get; set; }
     public char? PAON_START_NUMBER_SUFFIX { get; set; }
     public short? PAON_END_NUMBER { get; set; }
     public char? PAON_END_NUMBER_SUFFIX { get; set; }
+    public string? PAON_DESCRIPTION { get; set; }
 
     public string? STREET { get; set; }
     public string? TOWN { get; set; }

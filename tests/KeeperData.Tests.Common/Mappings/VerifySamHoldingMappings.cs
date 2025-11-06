@@ -15,7 +15,7 @@ public static class VerifySamHoldingMappings
                             source.SAON_END_NUMBER, source.SAON_END_NUMBER_SUFFIX,
                             source.PAON_START_NUMBER, source.PAON_START_NUMBER_SUFFIX,
                             source.PAON_END_NUMBER, source.PAON_END_NUMBER_SUFFIX,
-                            saonLabel: string.Empty);
+                            source.SAON_DESCRIPTION, source.PAON_DESCRIPTION);
 
         source.Should().NotBeNull();
         target.Should().NotBeNull();
