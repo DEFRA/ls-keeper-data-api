@@ -36,8 +36,8 @@ public class CtsImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
         var silverCtsParties = await fixture.MongoVerifier.FindDocumentsAsync("ctsParties", silverCtsPartyFilter);
         silverCtsParties.Should().NotBeNull().And.HaveCount(2);
 
-        var partyRoleRelationshipFilter = Builders<PartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
-        var partyRoleRelationships = await fixture.MongoVerifier.FindDocumentsAsync("silverPartyRoleRelationships", partyRoleRelationshipFilter);
+        var partyRoleRelationshipFilter = Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
+        var partyRoleRelationships = await fixture.MongoVerifier.FindDocumentsAsync("silverSitePartyRoleRelationships", partyRoleRelationshipFilter);
         partyRoleRelationships.Should().NotBeNull().And.HaveCount(2);
 
         var partyIds = silverCtsParties.Select(x => x.PartyId).Distinct().ToHashSet();

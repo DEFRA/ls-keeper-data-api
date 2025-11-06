@@ -5,8 +5,8 @@ using MongoDB.Driver;
 
 namespace KeeperData.Core.Documents.Silver;
 
-[CollectionName("silverPartyRoleRelationships")]
-public class PartyRoleRelationshipDocument : IEntity, IContainsIndexes
+[CollectionName("silverSitePartyRoleRelationships")]
+public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
 {
     public string? Id { get; set; }
     public string PartyId { get; set; } = string.Empty;

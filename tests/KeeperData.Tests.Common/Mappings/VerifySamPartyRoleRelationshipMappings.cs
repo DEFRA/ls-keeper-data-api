@@ -8,7 +8,7 @@ public static class VerifySamPartyRoleRelationshipMappings
 {
     public static void VerifyMapping_From_SamPartyDocument_To_PartyRoleRelationshipDocument(
         SamPartyDocument source,
-        PartyRoleRelationshipDocument target,
+        Core.Documents.Silver.SitePartyRoleRelationshipDocument target,
         string expectedHoldingIdentifier,
         string expectedHoldingIdentifierType)
     {

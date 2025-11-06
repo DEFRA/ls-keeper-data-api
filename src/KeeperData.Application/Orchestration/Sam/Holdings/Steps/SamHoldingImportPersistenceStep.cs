@@ -12,23 +12,23 @@ namespace KeeperData.Application.Orchestration.Sam.Holdings.Steps;
 public class SamHoldingImportPersistenceStep(
     IGenericRepository<SamHoldingDocument> silverHoldingRepository,
     IGenericRepository<SamPartyDocument> silverPartyRepository,
-    IGenericRepository<PartyRoleRelationshipDocument> silverPartyRoleRelationshipRepository,
+    IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument> silverPartyRoleRelationshipRepository,
     IGenericRepository<SamHerdDocument> silverHerdRepository,
     IGenericRepository<SiteDocument> goldSiteRepository,
     IGenericRepository<PartyDocument> goldPartyRepository,
-    IGenericRepository<SitePartyRoleRelationshipDocument> goldSitePartyRoleRelationshipRepository,
+    IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument> goldSitePartyRoleRelationshipRepository,
     IGenericRepository<SiteGroupMarkRelationshipDocument> goldSiteGroupMarkRelationshipRepository,
     ILogger<SamHoldingImportPersistenceStep> logger)
     : ImportStepBase<SamHoldingImportContext>(logger)
 {
     private readonly IGenericRepository<SamHoldingDocument> _silverHoldingRepository = silverHoldingRepository;
     private readonly IGenericRepository<SamPartyDocument> _silverPartyRepository = silverPartyRepository;
-    private readonly IGenericRepository<PartyRoleRelationshipDocument> _silverPartyRoleRelationshipRepository = silverPartyRoleRelationshipRepository;
+    private readonly IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument> _silverPartyRoleRelationshipRepository = silverPartyRoleRelationshipRepository;
     private readonly IGenericRepository<SamHerdDocument> _silverHerdRepository = silverHerdRepository;
 
     private readonly IGenericRepository<SiteDocument> _goldSiteRepository = goldSiteRepository;
     private readonly IGenericRepository<PartyDocument> _goldPartyRepository = goldPartyRepository;
-    private readonly IGenericRepository<SitePartyRoleRelationshipDocument> _goldSitePartyRoleRelationshipRepository = goldSitePartyRoleRelationshipRepository;
+    private readonly IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument> _goldSitePartyRoleRelationshipRepository = goldSitePartyRoleRelationshipRepository;
     private readonly IGenericRepository<SiteGroupMarkRelationshipDocument> _goldSiteGroupMarkRelationshipRepository = goldSiteGroupMarkRelationshipRepository;
 
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
@@ -137,11 +137,11 @@ public class SamHoldingImportPersistenceStep(
 
     private async Task ReplaceGoldSitePartyRolesAsync(
         string holdingIdentifier,
-        List<SitePartyRoleRelationshipDocument> incomingSitePartyRoles,
+        List<Core.Documents.SitePartyRoleRelationshipDocument> incomingSitePartyRoles,
         CancellationToken cancellationToken)
     {
-        var deleteFilter = Builders<SitePartyRoleRelationshipDocument>.Filter.And(
-            Builders<SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier)
+        var deleteFilter = Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.And(
+            Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier)
         );
 
         await _goldSitePartyRoleRelationshipRepository.DeleteManyAsync(deleteFilter, cancellationToken);
@@ -249,14 +249,14 @@ public class SamHoldingImportPersistenceStep(
 
     private async Task ReplaceSilverPartyRolesAsync(
         string holdingIdentifier,
-        List<PartyRoleRelationshipDocument> incomingPartyRoles,
+        List<Core.Documents.Silver.SitePartyRoleRelationshipDocument> incomingPartyRoles,
         CancellationToken cancellationToken)
     {
         var sourceAsSam = SourceSystemType.SAM.ToString();
 
-        var deleteFilter = Builders<PartyRoleRelationshipDocument>.Filter.And(
-            Builders<PartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier),
-            Builders<PartyRoleRelationshipDocument>.Filter.Eq(x => x.Source, sourceAsSam)
+        var deleteFilter = Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.And(
+            Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier),
+            Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.Source, sourceAsSam)
         );
 
         await _silverPartyRoleRelationshipRepository.DeleteManyAsync(deleteFilter, cancellationToken);

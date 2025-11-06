@@ -4,7 +4,7 @@ namespace KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
 
 public static class SitePartyRoleMapper
 {
-    public static List<SitePartyRoleRelationshipDocument> ToGold(
+    public static List<Core.Documents.SitePartyRoleRelationshipDocument> ToGold(
         DateTime currentDateTime,
         List<PartyDocument> goldParties,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks)

@@ -17,11 +17,11 @@ public class SamHoldingImportContext
 
     public List<SamHoldingDocument> SilverHoldings { get; set; } = [];
     public List<SamPartyDocument> SilverParties { get; set; } = [];
-    public List<PartyRoleRelationshipDocument> SilverPartyRoles { get; set; } = [];
+    public List<Core.Documents.Silver.SitePartyRoleRelationshipDocument> SilverPartyRoles { get; set; } = [];
     public List<SamHerdDocument> SilverHerds { get; set; } = [];
 
     public SiteDocument? GoldSite { get; set; }
     public List<PartyDocument> GoldParties { get; set; } = [];
-    public List<SitePartyRoleRelationshipDocument> GoldSitePartyRoles { get; set; } = [];
+    public List<Core.Documents.SitePartyRoleRelationshipDocument> GoldSitePartyRoles { get; set; } = [];
     public List<SiteGroupMarkRelationshipDocument> GoldSiteGroupMarks { get; set; } = [];
 }

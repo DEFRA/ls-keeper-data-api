@@ -8,7 +8,7 @@ public static class VerifyCtsPartyRoleRelationshipMappings
 {
     public static void VerifyMapping_From_CtsPartyDocument_To_PartyRoleRelationshipDocument(
         CtsPartyDocument source,
-        PartyRoleRelationshipDocument target,
+        Core.Documents.Silver.SitePartyRoleRelationshipDocument target,
         string expectedHoldingIdentifier,
         string expectedHoldingIdentifierType)
     {
