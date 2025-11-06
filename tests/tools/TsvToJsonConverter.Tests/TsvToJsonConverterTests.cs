@@ -2,7 +2,7 @@ using CsvToJsonConverter.Logic;
 using FluentAssertions;
 using System.Text.Json;
 
-namespace CsvToJsonConverter.Tests;
+namespace TsvToJsonConverter.Tests;
 
 public class ConverterTests
 {
