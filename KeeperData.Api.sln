@@ -31,13 +31,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeeperData.Application.Test
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{81DDED9D-158B-E303-5F62-77A2896D2A5A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsvToJsonConverter", "tools\CsvToJsonConverter\CsvToJsonConverter.csproj", "{A2C28CB8-2575-4718-96CB-4733FA26AE72}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TsvToJsonConverter", "tools\TsvToJsonConverter\TsvToJsonConverter.csproj", "{A2C28CB8-2575-4718-96CB-4733FA26AE72}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{7F45D16B-5574-42AC-8A54-EA8B13D43464}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsvToJsonConverter.Tests", "tests\tools\CsvToJsonConverter.Tests\CsvToJsonConverter.Tests.csproj", "{0E4C5414-9159-B828-984E-CE9620A852E9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TsvToJsonConverter.Tests", "tests\tools\TsvToJsonConverter.Tests\TsvToJsonConverter.Tests.csproj", "{0E4C5414-9159-B828-984E-CE9620A852E9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeeperData.Tests.Common", "tests\KeeperData.Tests.Common\KeeperData.Tests.Common.csproj", "{20FC1D32-DCBA-40B6-B67D-CF4E4592D26B}"
 EndProject

@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <Compile Remove="CsvToJsonConverterTests.cs" />
+    <Compile Remove="TsvToJsonConverterTests.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\tools\CsvToJsonConverter\CsvToJsonConverter.csproj" />
+    <ProjectReference Include="..\..\..\tools\CsvToJsonConverter\TsvToJsonConverter.csproj" />
   </ItemGroup>
 
   <ItemGroup>
