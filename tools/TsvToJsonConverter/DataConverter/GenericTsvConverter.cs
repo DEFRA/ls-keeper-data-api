@@ -22,8 +22,11 @@ public class GenericTsvConverter
             records.Add(record);
         }
 
-        var options = new JsonSerializerOptions { WriteIndented = true, 
-            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        };
         return JsonSerializer.Serialize(records, options);
     }
 }
