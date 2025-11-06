@@ -92,7 +92,7 @@ public class Program
 
     public static CountryJson MapCountry(string[] parts)
     {
-        if (parts.Length < 14) throw new InvalidDataException("TSV line for country has fewer than 13 columns.");
+        if (parts.Length < 14) throw new InvalidDataException("TSV line for country has fewer than 14 columns.");
 
         return new CountryJson(
             Id: Guid.NewGuid().ToString(),
