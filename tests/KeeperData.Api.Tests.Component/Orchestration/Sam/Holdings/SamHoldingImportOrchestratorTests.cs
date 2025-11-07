@@ -73,7 +73,7 @@ public class SamHoldingImportOrchestratorTests
         factory.OverrideServiceAsScoped(_goldPartyRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_goldSitePartyRoleRelationshipRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_goldSiteGroupMarkRelationshipRepositoryMock.Object);
-        
+
         // Register lookup service mocks
         factory.OverrideServiceAsScoped(_countryIdentifierLookupServiceMock.Object);
         factory.OverrideServiceAsScoped(_premiseActivityTypeLookupServiceMock.Object);
