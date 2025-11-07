@@ -1,7 +1,7 @@
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
 
-namespace KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
+namespace KeeperData.Application.Orchestration.Sam.Mappings;
 
 public static class SiteGroupMarkMapper
 {

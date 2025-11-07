@@ -7,7 +7,7 @@ using KeeperData.Core.Domain.Parties.Rules;
 using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Domain.Sites.Formatters;
 
-namespace KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
+namespace KeeperData.Application.Orchestration.Sam.Mappings;
 
 public static class SamPartyMapper
 {

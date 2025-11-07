@@ -1,5 +1,5 @@
 using FluentAssertions;
-using KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
+using KeeperData.Application.Orchestration.Sam.Mappings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Services;
@@ -8,7 +8,7 @@ using KeeperData.Tests.Common.Generators;
 using KeeperData.Tests.Common.Mappings;
 using Moq;
 
-namespace KeeperData.Application.Tests.Unit.Orchestration.Sam.Holdings.Mappings;
+namespace KeeperData.Application.Tests.Unit.Orchestration.Sam.Mappings;
 
 public class SamHerdMapperTests
 {

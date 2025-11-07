@@ -1,6 +1,6 @@
 using KeeperData.Core.Documents;
 
-namespace KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
+namespace KeeperData.Application.Orchestration.Sam.Mappings;
 
 public static class SitePartyRoleMapper
 {

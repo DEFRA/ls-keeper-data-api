@@ -1,4 +1,4 @@
-using KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
+using KeeperData.Application.Orchestration.Sam.Mappings;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Services;

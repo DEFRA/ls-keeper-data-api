@@ -1,7 +1,7 @@
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 
-namespace KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
+namespace KeeperData.Application.Orchestration.Sam.Mappings;
 
 public static class SamPartyRoleRelationshipMapper
 {
