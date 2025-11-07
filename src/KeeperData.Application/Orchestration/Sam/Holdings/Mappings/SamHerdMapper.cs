@@ -26,7 +26,7 @@ public static class SamHerdMapper
 
             var herd = new SamHerdDocument
             {
-                Id = Guid.NewGuid().ToString(),
+                // Id - Leave to support upsert assigning Id
 
                 LastUpdatedBatchId = h.BATCH_ID,
                 LastUpdatedDate = currentDateTime,

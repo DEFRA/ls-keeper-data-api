@@ -17,6 +17,8 @@ public class SamPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IC
     public bool Deleted { get; set; }
     public bool IsHolder { get; set; }
 
+    public List<string> CphList { get; set; } = [];
+
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
         return

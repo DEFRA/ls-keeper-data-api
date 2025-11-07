@@ -34,6 +34,14 @@ public static class DataBridgeQueries
         };
     }
 
+    public static Dictionary<string, string> SamHolderByPartyId(string id)
+    {
+        return new Dictionary<string, string>
+        {
+            ["$filter"] = $"PARTY_ID eq '{id}'"
+        };
+    }
+
     public static Dictionary<string, string> SamHoldersByCph(string id)
     {
         return new Dictionary<string, string>

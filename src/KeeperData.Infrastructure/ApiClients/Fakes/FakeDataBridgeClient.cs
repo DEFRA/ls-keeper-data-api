@@ -12,9 +12,14 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult(GetSamCphHolding(id));
     }
 
-    public Task<List<SamCphHolder>> GetSamHoldersAsync(string id, CancellationToken cancellationToken)
+    public Task<List<SamCphHolder>> GetSamHoldersByPartyIdAsync(string id, CancellationToken cancellationToken)
     {
-        return Task.FromResult(GetSamCphHolder(id));
+        return Task.FromResult(GetSamCphHoldersByPartyId(id));
+    }
+
+    public Task<List<SamCphHolder>> GetSamHoldersByCphAsync(string id, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(GetSamCphHoldersByCph(id));
     }
 
     public Task<List<SamHerd>> GetSamHerdsAsync(string id, CancellationToken cancellationToken)
@@ -61,7 +66,21 @@ public class FakeDataBridgeClient : IDataBridgeClient
             }];
     }
 
-    private List<SamCphHolder> GetSamCphHolder(string id)
+    private List<SamCphHolder> GetSamCphHoldersByPartyId(string? partyId = null, string? holdingIdentifier = null)
+    {
+        return [
+            new SamCphHolder
+            {
+                BATCH_ID = 1,
+                CHANGE_TYPE = "I",
+                IsDeleted = false,
+                CPHS = string.Join(",", [holdingIdentifier ??= "XX/XXX/XXXX"]),
+                PARTY_ID = partyId ??= $"C{_random.Next(1, 9):D6}",
+                ORGANISATION_NAME = Guid.NewGuid().ToString()
+            }];
+    }
+
+    private List<SamCphHolder> GetSamCphHoldersByCph(string id)
     {
         return [
             new SamCphHolder {

@@ -35,12 +35,14 @@ public class MockSamRawDataFactory
     public SamCphHolder CreateMockHolder(
         string changeType,
         int batchId,
-        List<string> holdingIdentifiers)
+        List<string> holdingIdentifiers,
+        string? partyId = null)
     {
         _fixture.Customizations.Add(new SamCphHolderBuilder(
             changeType,
             batchId,
-            holdingIdentifiers));
+            holdingIdentifiers,
+            partyId));
 
         return _fixture.Create<SamCphHolder>();
     }

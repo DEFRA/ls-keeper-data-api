@@ -26,7 +26,18 @@ public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClie
             cancellationToken);
     }
 
-    public async Task<List<SamCphHolder>> GetSamHoldersAsync(string id, CancellationToken cancellationToken)
+    public async Task<List<SamCphHolder>> GetSamHoldersByPartyIdAsync(string id, CancellationToken cancellationToken)
+    {
+        var query = DataBridgeQueries.SamHolderByPartyId(id);
+        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHolders, new { }, query);
+
+        return await GetFromApiAsync<List<SamCphHolder>>(
+            uri,
+            $"Sam holder for PARTY_ID '{id}'",
+            cancellationToken);
+    }
+
+    public async Task<List<SamCphHolder>> GetSamHoldersByCphAsync(string id, CancellationToken cancellationToken)
     {
         var query = DataBridgeQueries.SamHoldersByCph(id);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHolders, new { }, query);

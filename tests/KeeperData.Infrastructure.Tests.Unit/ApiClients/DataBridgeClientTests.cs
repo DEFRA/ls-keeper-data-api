@@ -8,6 +8,7 @@ using KeeperData.Tests.Common.Utilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Contrib.HttpClient;
+using System;
 using System.Net;
 
 namespace KeeperData.Infrastructure.Tests.Unit.ApiClients;
@@ -57,7 +58,29 @@ public class DataBridgeClientTests
     }
 
     [Fact]
-    public async Task GetSamHoldersAsync_ShouldReturnHoldings_WhenApiReturnsSuccess()
+    public async Task GetSamHolderAsync_ShouldReturnHolder_WhenApiReturnsSuccess()
+    {
+        var partyId = $"C{new Random().Next(1, 9):D6}";
+        var holdingIdentifier = "XX/XXX/XXXX";
+        var expectedResponse = MockSamData.GetSamHolderResponse(partyId, [holdingIdentifier]);
+
+        var uri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamHolders,
+            new { },
+            DataBridgeQueries.SamHolderByPartyId(partyId));
+
+        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
+            .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
+
+        var result = await _client.GetSamHoldersByPartyIdAsync(partyId, CancellationToken.None);
+
+        result.Should().NotBeNull().And.HaveCount(1);
+        result[0].PARTY_ID.Should().Contain(partyId);
+        result[0].CphList.Should().Contain(holdingIdentifier);
+    }
+
+    [Fact]
+    public async Task GetSamHoldersAsync_ShouldReturnHolders_WhenApiReturnsSuccess()
     {
         var id = CphGenerator.GenerateFormattedCph();
         var expectedResponse = MockSamData.GetSamHoldersResponse(id);
@@ -70,14 +93,14 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetSamHoldersAsync(id, CancellationToken.None);
+        var result = await _client.GetSamHoldersByCphAsync(id, CancellationToken.None);
 
         result.Should().NotBeNull().And.HaveCount(1);
         result[0].CphList.Should().Contain(id);
     }
 
     [Fact]
-    public async Task GetSamHerdsAsync_ShouldReturnHoldings_WhenApiReturnsSuccess()
+    public async Task GetSamHerdsAsync_ShouldReturnHerds_WhenApiReturnsSuccess()
     {
         var id = CphGenerator.GenerateFormattedCph();
         var partyId = Guid.NewGuid().ToString();
@@ -100,7 +123,7 @@ public class DataBridgeClientTests
     }
 
     [Fact]
-    public async Task GetSamPartyAsync_ShouldReturnHoldings_WhenApiReturnsSuccess()
+    public async Task GetSamPartyAsync_ShouldReturnParty_WhenApiReturnsSuccess()
     {
         var partyId = Guid.NewGuid().ToString();
         var expectedResponse = MockSamData.GetSamPartyResponse(partyId);
@@ -120,7 +143,7 @@ public class DataBridgeClientTests
     }
 
     [Fact]
-    public async Task GetSamPartiesAsync_ShouldReturnHoldings_WhenApiReturnsSuccess()
+    public async Task GetSamPartiesAsync_ShouldReturnParties_WhenApiReturnsSuccess()
     {
         var partyId = Guid.NewGuid().ToString();
         var expectedResponse = MockSamData.GetSamPartiesResponse(partyId);

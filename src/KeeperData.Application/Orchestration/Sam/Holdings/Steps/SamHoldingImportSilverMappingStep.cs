@@ -29,14 +29,6 @@ public class SamHoldingImportSilverMappingStep(
             cancellationToken);
 
         context.SilverParties = [
-            .. await SamHolderMapper.ToSilver(
-                context.CurrentDateTime,
-                context.RawHolders,
-                InferredRoleType.CphHolder,
-                roleTypeLookupService.FindAsync,
-                countryIdentifierLookupService.FindAsync,
-                cancellationToken),
-
             .. await SamPartyMapper.ToSilver(
                 context.CurrentDateTime,
                 context.RawParties,
@@ -46,9 +38,9 @@ public class SamHoldingImportSilverMappingStep(
         ];
 
         context.SilverPartyRoles = SamPartyRoleRelationshipMapper.ToSilver(
-            context.SilverParties,
-            context.Cph,
-            HoldingIdentifierType.CphNumber.ToString());
+            context.SilverParties,            
+            HoldingIdentifierType.CphNumber.ToString(),
+            context.Cph);
 
         context.SilverHerds = await SamHerdMapper.ToSilver(
             context.CurrentDateTime,

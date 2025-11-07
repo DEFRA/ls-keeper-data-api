@@ -17,10 +17,11 @@ public static class VerifySamPartyRoleRelationshipMappings
 
         source.Roles.Should().NotBeNullOrEmpty();
 
-        var matchingRole = source.Roles.SingleOrDefault(r => r.IdentifierId == target.Id);
-        matchingRole.Should().NotBeNull($"Expected role with ID {target.Id} to exist in source.Roles");
+        var matchingRole = source.Roles.SingleOrDefault(r => r.RoleTypeId == target.RoleTypeId);
+        matchingRole.Should().NotBeNull($"Expected role with RoleTypeId {target.RoleTypeId} to exist in source.Roles");
 
-        target.Id.Should().Be(matchingRole.IdentifierId);
+        target.Id.Should().BeNull();
+
         target.PartyId.Should().Be(source.PartyId);
         target.PartyTypeId.Should().Be(source.PartyTypeId);
         target.IsHolder.Should().Be(source.IsHolder);

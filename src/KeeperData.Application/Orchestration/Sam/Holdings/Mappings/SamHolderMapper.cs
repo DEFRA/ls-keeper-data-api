@@ -62,6 +62,8 @@ public static class SamHolderMapper
                 PartyInitials = p.PERSON_INITIALS,
                 PartyLastName = p.PERSON_FAMILY_NAME,
 
+                CphList = p.CphList ?? [],
+
                 Address = new AddressDocument
                 {
                     IdentifierId = Guid.NewGuid().ToString(),

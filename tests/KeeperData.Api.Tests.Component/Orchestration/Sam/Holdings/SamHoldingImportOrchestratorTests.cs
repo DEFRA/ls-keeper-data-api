@@ -82,7 +82,7 @@ public class SamHoldingImportOrchestratorTests
         var result = await ExecuteTestAsync(factory, holdingIdentifier);
 
         VerifyDataBridgeApiEndpointCalled(factory, holdingsUri, Times.Once());
-        VerifyDataBridgeApiEndpointCalled(factory, holdersUri, Times.Once());
+        VerifyDataBridgeApiEndpointCalled(factory, holdersUri, Times.Never());
         VerifyDataBridgeApiEndpointCalled(factory, herdsUri, Times.Once());
         VerifyDataBridgeApiEndpointCalled(factory, partiesUri, Times.Once());
 
@@ -126,9 +126,6 @@ public class SamHoldingImportOrchestratorTests
         context.RawHoldings.Should().NotBeNull().And.HaveCount(1);
         context.RawHoldings[0].CPH.Should().Be(holdingIdentifier);
 
-        context.RawHolders.Should().NotBeNull().And.HaveCount(1);
-        context.RawHolders[0].CphList.Should().NotBeNull().And.Contain(holdingIdentifier);
-
         context.RawHerds.Should().NotBeNull().And.HaveCount(1);
         context.RawHerds[0].CPHH.Should().Be(holdingIdentifier);
 
@@ -144,14 +141,14 @@ public class SamHoldingImportOrchestratorTests
         context.SilverHoldings![0].GroupMarks![0].Should().NotBeNull();
         context.SilverHoldings![0].GroupMarks![0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
 
-        context.SilverParties.Should().NotBeNull().And.HaveCount(2);
+        context.SilverParties.Should().NotBeNull().And.HaveCount(1);
 
         var roleList = context.RawParties[0].ROLES?.Split(",")
             .Where(role => !string.IsNullOrWhiteSpace(role))
             .Select(role => role.Trim())
             .ToArray() ?? [];
 
-        context.SilverPartyRoles.Should().NotBeNull().And.HaveCount(roleList.Length + 1);
+        context.SilverPartyRoles.Should().NotBeNull().And.HaveCount(roleList.Length);
 
         for (var i = 0; i < context.SilverPartyRoles.Count; i++)
         {

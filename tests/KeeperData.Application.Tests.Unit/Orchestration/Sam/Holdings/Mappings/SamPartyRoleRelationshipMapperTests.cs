@@ -73,8 +73,8 @@ public class SamPartyRoleRelationshipMapperTests
             CancellationToken.None);
 
         var results = SamPartyRoleRelationshipMapper.ToSilver(silverParties,
-            holdingIdentifier,
-            holdingIdentifierType);
+            holdingIdentifierType,
+            holdingIdentifier);
 
         foreach (var party in silverParties)
         {
@@ -83,7 +83,7 @@ public class SamPartyRoleRelationshipMapperTests
 
             foreach (var role in party.Roles)
             {
-                var mapped = results.Single(r => r.Id == role.IdentifierId);
+                var mapped = results.Single(r => r.RoleTypeId == role.RoleTypeId);
                 VerifySamPartyRoleRelationshipMappings.VerifyMapping_From_SamPartyDocument_To_PartyRoleRelationshipDocument(
                     party,
                     mapped,
