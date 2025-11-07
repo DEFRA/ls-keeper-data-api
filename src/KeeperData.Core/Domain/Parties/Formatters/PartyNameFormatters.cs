@@ -12,6 +12,7 @@ public static class PartyNameFormatters
         string? title,
         string? givenName,
         string? givenName2,
+        string? initials,
         string? familyName)
     {
         if (!string.IsNullOrWhiteSpace(organisationName))
@@ -19,7 +20,7 @@ public static class PartyNameFormatters
             return organisationName;
         }
 
-        var parts = new[] { title, givenName, givenName2, familyName }
+        var parts = new[] { title, givenName, givenName2, initials, familyName }
             .Where(x => !string.IsNullOrWhiteSpace(x));
 
         return string.Join(" ", parts);

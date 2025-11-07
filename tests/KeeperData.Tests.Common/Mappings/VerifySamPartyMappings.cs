@@ -37,12 +37,14 @@ public static class VerifySamPartyMappings
             source.PERSON_TITLE,
             source.PERSON_GIVEN_NAME,
             source.PERSON_GIVEN_NAME2,
+            source.PERSON_INITIALS,
             source.PERSON_FAMILY_NAME));
 
         target.PartyTitleTypeIdentifier.Should().Be(source.PERSON_TITLE);
         target.PartyFirstName.Should().Be(PartyNameFormatters.FormatPartyFirstName(
             source.PERSON_GIVEN_NAME,
             source.PERSON_GIVEN_NAME2));
+        target.PartyInitials.Should().Be(source.PERSON_INITIALS);
         target.PartyLastName.Should().Be(source.PERSON_FAMILY_NAME);
 
         // Address

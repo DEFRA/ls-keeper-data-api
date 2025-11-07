@@ -51,12 +51,14 @@ public static class SamHolderMapper
                     p.PERSON_TITLE,
                     p.PERSON_GIVEN_NAME,
                     p.PERSON_GIVEN_NAME2,
+                    p.PERSON_INITIALS,
                     p.PERSON_FAMILY_NAME),
 
                 PartyTitleTypeIdentifier = p.PERSON_TITLE,
                 PartyFirstName = PartyNameFormatters.FormatPartyFirstName(
                     p.PERSON_GIVEN_NAME,
                     p.PERSON_GIVEN_NAME2),
+                PartyInitials = p.PERSON_INITIALS,
                 PartyLastName = p.PERSON_FAMILY_NAME,
 
                 Address = new AddressDocument

@@ -9,6 +9,7 @@ public class BasePartyDocument
 
     public string? PartyTitleTypeIdentifier { get; set; }
     public string? PartyFirstName { get; set; }
+    public string? PartyInitials { get; set; }
     public string? PartyLastName { get; set; }
 
     public AddressDocument? Address { get; set; }
