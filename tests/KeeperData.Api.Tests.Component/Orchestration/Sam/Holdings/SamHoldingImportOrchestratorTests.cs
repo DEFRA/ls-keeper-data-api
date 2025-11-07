@@ -256,6 +256,7 @@ public class SamHoldingImportOrchestratorTests
             .Setup(r => r.FindPartyIdsByHoldingIdentifierAsync(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
+                It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 

@@ -210,6 +210,7 @@ public class SamHoldingImportPersistenceStepTests
             .Setup(r => r.FindPartyIdsByHoldingIdentifierAsync(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
+                It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(["C1000001", "C1000002"]);
 
@@ -306,6 +307,7 @@ public class SamHoldingImportPersistenceStepTests
             .Setup(r => r.FindPartyIdsByHoldingIdentifierAsync(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
+                It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(["C1000001", "C1000099"]);
 
@@ -682,6 +684,7 @@ public class SamHoldingImportPersistenceStepTests
             .Setup(r => r.FindPartyIdsByHoldingIdentifierAsync(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
+                It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 

@@ -31,6 +31,8 @@ public class SamHoldingImportPersistenceStep(
     private readonly IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument> _goldSitePartyRoleRelationshipRepository = goldSitePartyRoleRelationshipRepository;
     private readonly IGenericRepository<SiteGroupMarkRelationshipDocument> _goldSiteGroupMarkRelationshipRepository = goldSiteGroupMarkRelationshipRepository;
 
+    private const bool IsHolderPartyType = false;
+
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
     {
         await UpsertSilverHoldingsAndDeleteOrphansAsync(context.Cph, context.SilverHoldings, cancellationToken);
@@ -214,7 +216,7 @@ public class SamHoldingImportPersistenceStep(
 
         var existingSitePartyRoles = await GetExistingSilverSitePartyRoleRelationshipsAsync(
             holdingIdentifier,
-            isHolder: true,
+            IsHolderPartyType,
             cancellationToken);
 
         if (incomingSitePartyRoles.Count > 0)
@@ -391,6 +393,7 @@ public class SamHoldingImportPersistenceStep(
         var sitePartyIds = await _silverSitePartyRoleRelationshipRepository.FindPartyIdsByHoldingIdentifierAsync(
             holdingIdentifier,
             SourceSystemType.SAM.ToString(),
+            IsHolderPartyType,
             cancellationToken);
 
         if (sitePartyIds.Count == 0)
