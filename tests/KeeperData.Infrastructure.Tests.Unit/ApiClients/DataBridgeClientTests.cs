@@ -8,7 +8,6 @@ using KeeperData.Tests.Common.Utilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Contrib.HttpClient;
-using System;
 using System.Net;
 
 namespace KeeperData.Infrastructure.Tests.Unit.ApiClients;
