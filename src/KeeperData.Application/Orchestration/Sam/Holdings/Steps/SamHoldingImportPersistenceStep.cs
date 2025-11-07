@@ -33,11 +33,7 @@ public class SamHoldingImportPersistenceStep(
 
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
     {
-        if (context.SilverHoldings?.Count > 0)
-        {
-            var primaryHolding = context.SilverHoldings[0];
-            await UpsertSilverHoldingAsync(primaryHolding, cancellationToken);
-        }
+        await UpsertSilverHoldingsAndDeleteOrphansAsync(context.Cph, context.SilverHoldings, cancellationToken);
 
         await UpsertSilverPartiesAndDeleteOrphansAsync(context.Cph, context.SilverParties, cancellationToken);
 
@@ -169,23 +165,58 @@ public class SamHoldingImportPersistenceStep(
         }
     }
 
-    private async Task UpsertSilverHoldingAsync(
-        SamHoldingDocument incomingHolding,
+    private async Task UpsertSilverHoldingsAndDeleteOrphansAsync(
+        string holdingIdentifier,
+        List<SamHoldingDocument> incomingHoldings,
         CancellationToken cancellationToken)
     {
-        var existingHolding = await _silverHoldingRepository.FindOneAsync(
-            x => x.CountyParishHoldingNumber == incomingHolding.CountyParishHoldingNumber,
-            cancellationToken);
+        incomingHoldings ??= [];
 
-        incomingHolding.Id = existingHolding?.Id ?? Guid.NewGuid().ToString();
+        var incomingKeys = incomingHoldings
+            .Select(p => $"{p.CountyParishHoldingNumber}::{p.LocationName}::{p.SecondaryCph}::{p.SpeciesTypeCode}")
+            .ToHashSet();
 
-        var holdingUpsert = (
-            Filter: Builders<SamHoldingDocument>.Filter.Eq(
-                x => x.CountyParishHoldingNumber, incomingHolding.CountyParishHoldingNumber),
-            Entity: incomingHolding);
+        var existingHoldings = await GetExistingSilverHoldingsAsync(holdingIdentifier, cancellationToken);
 
-        await _silverHoldingRepository.BulkUpsertWithCustomFilterAsync(
-            [holdingUpsert], cancellationToken);
+        if (incomingHoldings.Count > 0)
+        {
+            var holdingUpserts = incomingHoldings.Select(p =>
+            {
+                var existing = existingHoldings.FirstOrDefault(e =>
+                    e.CountyParishHoldingNumber == p.CountyParishHoldingNumber 
+                    && e.LocationName == p.LocationName
+                    && e.SpeciesTypeCode == p.SpeciesTypeCode
+                    && e.SecondaryCph == p.SecondaryCph);
+
+                p.Id = existing?.Id ?? Guid.NewGuid().ToString();
+
+                return (
+                    Filter: Builders<SamHoldingDocument>.Filter.And(
+                        Builders<SamHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, p.CountyParishHoldingNumber),
+                        Builders<SamHoldingDocument>.Filter.Eq(x => x.LocationName, p.LocationName),
+                        Builders<SamHoldingDocument>.Filter.Eq(x => x.SpeciesTypeCode, p.SpeciesTypeCode),
+                        Builders<SamHoldingDocument>.Filter.Eq(x => x.SecondaryCph, p.SecondaryCph)
+                    ),
+                    Entity: p
+                );
+            });
+
+            await _silverHoldingRepository.BulkUpsertWithCustomFilterAsync(holdingUpserts, cancellationToken);
+        }
+
+        var orphanedHoldings = existingHoldings?
+            .Where(e => !incomingKeys.Contains($"{e.CountyParishHoldingNumber}::{e.LocationName}::{e.SecondaryCph}::{e.SpeciesTypeCode}"))
+            .ToList() ?? [];
+
+        if (orphanedHoldings?.Count > 0)
+        {
+            var deleteFilter = Builders<SamHoldingDocument>.Filter.In(
+                x => x.Id,
+                orphanedHoldings.Select(d => d.Id)
+            );
+
+            await _silverHoldingRepository.DeleteManyAsync(deleteFilter, cancellationToken);
+        }
     }
 
     private async Task UpsertSilverPartiesAndDeleteOrphansAsync(
@@ -228,6 +259,15 @@ public class SamHoldingImportPersistenceStep(
 
             await _silverPartyRepository.DeleteManyAsync(deleteFilter, cancellationToken);
         }
+    }
+
+    private async Task<List<SamHoldingDocument>> GetExistingSilverHoldingsAsync(
+        string holdingIdentifier,
+        CancellationToken cancellationToken)
+    {
+        return await _silverHoldingRepository.FindAsync(
+            x => x.CountyParishHoldingNumber == holdingIdentifier,
+            cancellationToken) ?? [];
     }
 
     private async Task<List<SamPartyDocument>> GetExistingSilverPartiesAsync(

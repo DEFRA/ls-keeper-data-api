@@ -8,7 +8,6 @@ using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using Moq;
 using System.Linq.Expressions;
-using System.Threading;
 
 namespace KeeperData.Application.Tests.Unit.Orchestration.Sam.Holdings.Steps;
 
@@ -61,6 +60,76 @@ public class SamHoldingImportPersistenceStepTests
         _silverHoldingRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(
             It.Is<IEnumerable<(FilterDefinition<SamHoldingDocument>, SamHoldingDocument)>>(items => items.Count() == 1),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GivenExistingAndIncomingHoldingsDiffer_WhenStepExecuted_ShouldInsertAndDeleteHoldings()
+    {
+        var incomingHoldings = new List<SamHoldingDocument>
+        {
+            _fixture.Build<SamHoldingDocument>()
+                .With(p => p.CountyParishHoldingNumber, "12/345/6789")
+                .With(p => p.LocationName, "North Market Farm")
+                .With(p => p.SecondaryCph, "12/345/7890")
+                .With(p => p.SpeciesTypeCode, "CTT")
+                .Create(),
+            _fixture.Build<SamHoldingDocument>()
+                .With(p => p.CountyParishHoldingNumber, "12/345/6789")
+                .With(p => p.LocationName, "North Market Farm")
+                .With(p => p.SecondaryCph, "12/345/7890")
+                .With(p => p.SpeciesTypeCode, "SHP")
+                .Create(),
+            _fixture.Build<SamHoldingDocument>()
+                .With(p => p.CountyParishHoldingNumber, "12/345/6789")
+                .With(p => p.LocationName, "North Market Farm")
+                .With(p => p.SecondaryCph, "12/345/9876")
+                .With(p => p.SpeciesTypeCode, "SHP")
+                .Create()
+        };
+
+        var existingHoldings = new List<SamHoldingDocument>
+        {
+            _fixture.Build<SamHoldingDocument>()
+                .With(p => p.CountyParishHoldingNumber, "12/345/6789")
+                .With(p => p.LocationName, "North Market Farm")
+                .With(p => p.SecondaryCph, "12/345/7890")
+                .With(p => p.SpeciesTypeCode, "CTT")
+                .Create(),
+            _fixture.Build<SamHoldingDocument>()
+                .With(p => p.CountyParishHoldingNumber, "12/345/6789")
+                .With(p => p.LocationName, "North Market Farm")
+                .With(p => p.SecondaryCph, "XX/XXX/XXXX")
+                .With(p => p.SpeciesTypeCode, "SHP")
+                .Create()
+        };
+
+        var context = _fixture.Build<SamHoldingImportContext>()
+            .With(c => c.SilverHoldings, incomingHoldings)
+            .With(c => c.SilverParties, [])
+            .With(c => c.SilverPartyRoles, [])
+            .Create();
+
+        SetupDefaultRepositoryMocks();
+
+        _silverHoldingRepositoryMock
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHoldingDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingHoldings);
+
+        var sut = new SamHoldingImportPersistenceStep(
+            _silverHoldingRepositoryMock.Object,
+            Mock.Of<IGenericRepository<SamPartyDocument>>(),
+            _silverSitePartyRoleRelationshipRepositoryMock.Object,
+            Mock.Of<IGenericRepository<SamHerdDocument>>(),
+            Mock.Of<IGenericRepository<SiteDocument>>(),
+            Mock.Of<IGenericRepository<PartyDocument>>(),
+            Mock.Of<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>>(),
+            Mock.Of<IGenericRepository<SiteGroupMarkRelationshipDocument>>(),
+            Mock.Of<ILogger<SamHoldingImportPersistenceStep>>());
+
+        await sut.ExecuteAsync(context, CancellationToken.None);
+
+        _silverHoldingRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamHoldingDocument>, SamHoldingDocument)>>(), It.IsAny<CancellationToken>()), Times.Once);
+        _silverHoldingRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamHoldingDocument>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -315,11 +384,15 @@ public class SamHoldingImportPersistenceStepTests
     {
         // Silver Holding
         _silverHoldingRepositoryMock
-            .Setup(r => r.FindOneAsync(It.IsAny<Expression<Func<SamHoldingDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((SamHoldingDocument?)null);
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHoldingDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
 
         _silverHoldingRepositoryMock
             .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamHoldingDocument>, SamHoldingDocument)>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _silverHoldingRepositoryMock
+            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamHoldingDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Silver Party
