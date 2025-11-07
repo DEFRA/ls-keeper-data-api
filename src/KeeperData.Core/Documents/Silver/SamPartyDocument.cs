@@ -5,6 +5,9 @@ using MongoDB.Driver;
 
 namespace KeeperData.Core.Documents.Silver;
 
+/// <summary>
+/// Composite key: PartyId
+/// </summary>
 [CollectionName("samParties")]
 public class SamPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IContainsIndexes
 {
@@ -12,6 +15,7 @@ public class SamPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IC
     public int LastUpdatedBatchId { get; set; }
     public DateTime LastUpdatedDate { get; set; }
     public bool Deleted { get; set; }
+    public bool IsHolder { get; set; }
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {

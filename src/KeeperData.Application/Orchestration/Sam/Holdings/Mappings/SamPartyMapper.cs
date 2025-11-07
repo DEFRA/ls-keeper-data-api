@@ -40,6 +40,7 @@ public static class SamPartyMapper
                 LastUpdatedBatchId = p.BATCH_ID,
                 LastUpdatedDate = currentDateTime,
                 Deleted = p.IsDeleted ?? false,
+                IsHolder = false,
 
                 PartyId = p.PARTY_ID.ToString(),
                 PartyTypeId = partyTypeId,

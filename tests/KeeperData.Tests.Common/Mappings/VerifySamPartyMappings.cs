@@ -24,6 +24,7 @@ public static class VerifySamPartyMappings
         target.Id.Should().BeNull();
         target.LastUpdatedBatchId.Should().Be(source.BATCH_ID);
         target.Deleted.Should().BeFalse();
+        target.IsHolder.Should().BeFalse();
 
         target.PartyId.Should().Be(source.PARTY_ID);
 

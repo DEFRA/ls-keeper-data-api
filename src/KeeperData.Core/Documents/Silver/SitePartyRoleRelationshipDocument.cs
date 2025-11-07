@@ -5,12 +5,18 @@ using MongoDB.Driver;
 
 namespace KeeperData.Core.Documents.Silver;
 
+/// <summary>
+/// Composite key: Source, HoldingIdentifier, IsHolder, PartyId, RoleTypeId
+/// </summary>
 [CollectionName("silverSitePartyRoleRelationships")]
 public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
 {
     public string? Id { get; set; }
+
     public string PartyId { get; set; } = string.Empty;
     public string PartyTypeId { get; set; } = string.Empty; // LOV Lookup / Internal Id
+    public bool IsHolder { get; set; }
+
     public string HoldingIdentifier { get; set; } = string.Empty;
     public string HoldingIdentifierType { get; set; } = string.Empty;
     public string Source { get; set; } = string.Empty; // Enum or string value
@@ -50,7 +56,11 @@ public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
 
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("Source"),
-                new CreateIndexOptions { Name = "idx_source" })
+                new CreateIndexOptions { Name = "idx_source" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("IsHolder"),
+                new CreateIndexOptions { Name = "idx_isHolder" })
         ];
     }
 }

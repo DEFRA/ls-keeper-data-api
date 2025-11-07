@@ -5,6 +5,9 @@ using MongoDB.Driver;
 
 namespace KeeperData.Core.Documents.Silver;
 
+/// <summary>
+/// Composite key: CountyParishHoldingHerd, ProductionUsageCode, Herdmark
+/// </summary>
 [CollectionName("samHerds")]
 public class SamHerdDocument : IEntity, IContainsIndexes, IDeletableEntity
 {
@@ -48,7 +51,11 @@ public class SamHerdDocument : IEntity, IContainsIndexes, IDeletableEntity
 
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("CountyParishHoldingNumber"),
-                new CreateIndexOptions { Name = "idx_countyParishHoldingNumber" })
+                new CreateIndexOptions { Name = "idx_countyParishHoldingNumber" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("ProductionUsageCode"),
+                new CreateIndexOptions { Name = "idx_productionUsageCode" })
         ];
     }
 }
