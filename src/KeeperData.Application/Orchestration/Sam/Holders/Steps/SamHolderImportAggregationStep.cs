@@ -13,6 +13,6 @@ public class SamHolderImportAggregationStep(
 
     protected override async Task ExecuteCoreAsync(SamHolderImportContext context, CancellationToken cancellationToken)
     {
-        context.RawHolders = await _dataBridgeClient.GetSamHoldersByCphAsync(context.PartyId, cancellationToken);
+        context.RawHolders = await _dataBridgeClient.GetSamHoldersByPartyIdAsync(context.PartyId, cancellationToken);
     }
 }

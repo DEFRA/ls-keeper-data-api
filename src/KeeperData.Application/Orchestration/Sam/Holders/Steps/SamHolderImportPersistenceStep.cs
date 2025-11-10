@@ -29,7 +29,10 @@ public class SamHolderImportPersistenceStep(
     {
         await UpsertSilverPartiesAndDeleteOrphansAsync(context.SilverParties, cancellationToken);
 
-        await UpsertSilverPartyRolesAndDeleteOrphansAsync(context.SilverPartyRoles, cancellationToken);
+        await UpsertSilverPartyRolesAndDeleteOrphansAsync(
+            context.SilverParties.Select(x => x.PartyId),
+            context.SilverPartyRoles,
+            cancellationToken);
 
         // TODO - Add Gold in
         // await UpsertGoldPartiesAndDeleteOrphansAsync(context.Cph, context.GoldParties, cancellationToken);
@@ -68,53 +71,56 @@ public class SamHolderImportPersistenceStep(
     }
 
     private async Task UpsertSilverPartyRolesAndDeleteOrphansAsync(
+        IEnumerable<string> incomingPartyIds,
         List<Core.Documents.Silver.SitePartyRoleRelationshipDocument> incomingSitePartyRoles,
         CancellationToken cancellationToken)
     {
         incomingSitePartyRoles ??= [];
 
-        var groupedByPartyId = incomingSitePartyRoles
-            .GroupBy(r => r.PartyId)
-            .ToList();
-
-        foreach (var group in groupedByPartyId)
+        foreach(var partyId in incomingPartyIds)
         {
-            var partyId = group.Key;
-            var incomingRoles = group.ToList();
-
-            var incomingKeys = incomingRoles
-                .Select(p => $"{p.Source}::{p.HoldingIdentifier}::{p.IsHolder}::{p.PartyId}::{p.RoleTypeId}")
-                .ToHashSet();
+            var incomingRoles = incomingSitePartyRoles
+                .Where(r => r.PartyId == partyId)
+                .ToList();
 
             var existingRoles = await _silverSitePartyRoleRelationshipRepository.FindAsync(
-                x => x.PartyId == partyId
-                    && x.Source == SourceSystemType.SAM.ToString()
-                    && x.IsHolder == IsHolderPartyType,
-                cancellationToken) ?? [];
+                    x => x.PartyId == partyId
+                        && x.Source == SourceSystemType.SAM.ToString()
+                        && x.IsHolder == IsHolderPartyType,
+                    cancellationToken) ?? [];
 
-            var upserts = incomingRoles.Select(p =>
+            HashSet<string> incomingKeys = [];
+
+            if (incomingRoles.Count > 0)
             {
-                var existing = existingRoles.FirstOrDefault(e =>
-                    e.Source == p.Source &&
-                    e.HoldingIdentifier == p.HoldingIdentifier &&
-                    e.IsHolder == p.IsHolder &&
-                    e.PartyId == p.PartyId &&
-                    e.RoleTypeId == p.RoleTypeId);
+                incomingKeys = incomingRoles
+                    .Select(p => $"{p.Source}::{p.HoldingIdentifier}::{p.IsHolder}::{p.PartyId}::{p.RoleTypeId}")
+                    .ToHashSet();
 
-                p.Id = existing?.Id ?? Guid.NewGuid().ToString();
+                var upserts = incomingRoles.Select(p =>
+                {
+                    var existing = existingRoles.FirstOrDefault(e =>
+                        e.Source == p.Source &&
+                        e.HoldingIdentifier == p.HoldingIdentifier &&
+                        e.IsHolder == p.IsHolder &&
+                        e.PartyId == p.PartyId &&
+                        e.RoleTypeId == p.RoleTypeId);
 
-                var filter = Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.And(
-                    Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.Source, p.Source),
-                    Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, p.HoldingIdentifier),
-                    Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.IsHolder, p.IsHolder),
-                    Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.PartyId, p.PartyId),
-                    Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.RoleTypeId, p.RoleTypeId)
-                );
+                    p.Id = existing?.Id ?? Guid.NewGuid().ToString();
 
-                return (Filter: filter, Entity: p);
-            });
+                    var filter = Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.And(
+                        Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.Source, p.Source),
+                        Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, p.HoldingIdentifier),
+                        Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.IsHolder, p.IsHolder),
+                        Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.PartyId, p.PartyId),
+                        Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.RoleTypeId, p.RoleTypeId)
+                    );
 
-            await _silverSitePartyRoleRelationshipRepository.BulkUpsertWithCustomFilterAsync(upserts, cancellationToken);
+                    return (Filter: filter, Entity: p);
+                });
+
+                await _silverSitePartyRoleRelationshipRepository.BulkUpsertWithCustomFilterAsync(upserts, cancellationToken);
+            }
 
             var orphaned = existingRoles
                 .Where(e => !incomingKeys.Contains($"{e.Source}::{e.HoldingIdentifier}::{e.IsHolder}::{e.PartyId}::{e.RoleTypeId}"))
