@@ -59,7 +59,7 @@ public class SamHoldingImportOrchestratorTests
             herdCount: 1,
             partyCount: 1);
 
-        var (holdingsUri, holdersUri, herdsUri, partiesUri) = GetAllQueryUris(holdingIdentifier, parties.Select(x => x.PARTY_ID));
+        var (holdingsUri, herdsUri, partiesUri) = GetAllQueryUris(holdingIdentifier, parties.Select(x => x.PARTY_ID));
 
         SetupRepositoryMocks();
         SetupLookupServiceMocks();
@@ -75,14 +75,12 @@ public class SamHoldingImportOrchestratorTests
         factory.OverrideServiceAsScoped(_goldSiteGroupMarkRelationshipRepositoryMock.Object);
 
         SetupDataBridgeApiRequest(factory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContent(holdings));
-        SetupDataBridgeApiRequest(factory, holdersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContent(holders));
         SetupDataBridgeApiRequest(factory, herdsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContent(herds));
         SetupDataBridgeApiRequest(factory, partiesUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContent(parties));
 
         var result = await ExecuteTestAsync(factory, holdingIdentifier);
 
         VerifyDataBridgeApiEndpointCalled(factory, holdingsUri, Times.Once());
-        VerifyDataBridgeApiEndpointCalled(factory, holdersUri, Times.Never());
         VerifyDataBridgeApiEndpointCalled(factory, herdsUri, Times.Once());
         VerifyDataBridgeApiEndpointCalled(factory, partiesUri, Times.Once());
 
@@ -168,17 +166,12 @@ public class SamHoldingImportOrchestratorTests
         // TODO - Verify SiteGroupMarkRelationshipDocuments
     }
 
-    private static (string holdingsUri, string holdersUri, string herdsUri, string partiesUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)
+    private static (string holdingsUri, string herdsUri, string partiesUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)
     {
         var holdingsUri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamHoldings,
             new { },
             DataBridgeQueries.SamHoldingsByCph(holdingIdentifier));
-
-        var holdersUri = RequestUriUtilities.GetQueryUri(
-            DataBridgeApiRoutes.GetSamHolders,
-            new { },
-            DataBridgeQueries.SamHoldersByCph(holdingIdentifier));
 
         var herdsUri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamHerds,
@@ -190,7 +183,7 @@ public class SamHoldingImportOrchestratorTests
             new { },
             DataBridgeQueries.SamPartiesByPartyIds(partyIds));
 
-        return (holdingsUri, holdersUri, herdsUri, partiesUri);
+        return (holdingsUri, herdsUri, partiesUri);
     }
 
     private void SetupRepositoryMocks(

@@ -15,7 +15,7 @@ public class CtsImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
     [Fact]
     public async Task GivenCtsImportHoldingMessage_WhenReceivedOnTheQueue_ShouldComplete()
     {
-        var correlationId = Guid.NewGuid().ToString();
+        var correlationId = "AG-3000158"; // Guid.NewGuid().ToString();
         var holdingIdentifier = CphGenerator.GenerateCtsFormattedLidIdentifier("AH");
         var message = GetCtsImportHoldingMessage(holdingIdentifier);
 

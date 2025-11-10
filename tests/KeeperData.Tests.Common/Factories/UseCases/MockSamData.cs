@@ -7,55 +7,74 @@ namespace KeeperData.Tests.Common.Factories.UseCases;
 public static class MockSamData
 {
     public static StringContent GetSamHoldingsResponse(string holdingIdentifier) =>
-        HttpContentUtility.CreateResponseContent(new List<SamCphHolding>
-        {
-            new MockSamRawDataFactory().CreateMockHolding(
-                changeType: DataBridgeConstants.ChangeTypeInsert,
-                batchId: 1,
-                holdingIdentifier: holdingIdentifier)
-        });
+        HttpContentUtility.CreateResponseContent(
+            new DataBridgeResponse<SamCphHolding>
+            {
+                CollectionName = "collection",
+                Data =
+                [
+                    new MockSamRawDataFactory().CreateMockHolding(
+                        changeType: DataBridgeConstants.ChangeTypeInsert,
+                        batchId: 1,
+                        holdingIdentifier: holdingIdentifier)
+                ]
+            });
     
     public static StringContent GetSamHolderResponse(string partyId, List<string> holdingIdentifiers) =>
-        HttpContentUtility.CreateResponseContent(new List<SamCphHolder>
-        {
-            new MockSamRawDataFactory().CreateMockHolder(
-                changeType: DataBridgeConstants.ChangeTypeInsert,
-                batchId: 1,
-                holdingIdentifiers: holdingIdentifiers,
-                partyId: partyId)
-        });
-
-    public static StringContent GetSamHoldersResponse(string holdingIdentifier) =>
-        HttpContentUtility.CreateResponseContent(new List<SamCphHolder>
-        {
-            new MockSamRawDataFactory().CreateMockHolder(
-                changeType: DataBridgeConstants.ChangeTypeInsert,
-                batchId: 1,
-                holdingIdentifiers: [holdingIdentifier])
-        });
+        HttpContentUtility.CreateResponseContent(
+            new DataBridgeResponse<SamCphHolder>
+            {
+                CollectionName = "collection",
+                Data =
+                [
+                    new MockSamRawDataFactory().CreateMockHolder(
+                        changeType: DataBridgeConstants.ChangeTypeInsert,
+                        batchId: 1,
+                        holdingIdentifiers: holdingIdentifiers,
+                        partyId: partyId)
+                ]
+            });
 
     public static StringContent GetSamHerdsResponse(string holdingIdentifier, string partyId) =>
-        HttpContentUtility.CreateResponseContent(new List<SamHerd>
-        {
-            new MockSamRawDataFactory().CreateMockHerd(
-                changeType: DataBridgeConstants.ChangeTypeInsert,
-                batchId: 1,
-                holdingIdentifier: holdingIdentifier,
-                partyIds: [partyId])
-        });
+        HttpContentUtility.CreateResponseContent(
+            new DataBridgeResponse<SamHerd>
+            {
+                CollectionName = "collection",
+                Data =
+                [
+                    new MockSamRawDataFactory().CreateMockHerd(
+                        changeType: DataBridgeConstants.ChangeTypeInsert,
+                        batchId: 1,
+                        holdingIdentifier: holdingIdentifier,
+                        partyIds: [partyId])
+                ]
+            });
 
     public static StringContent GetSamPartyResponse(string partyId) =>
-        HttpContentUtility.CreateResponseContent(new MockSamRawDataFactory().CreateMockParty(
-            changeType: DataBridgeConstants.ChangeTypeInsert,
-            batchId: 1,
-            partyIds: [partyId]));
+        HttpContentUtility.CreateResponseContent(
+            new DataBridgeResponse<SamParty>
+            {
+                CollectionName = "collection",
+                Data =
+                [
+                    new MockSamRawDataFactory().CreateMockParty(
+                        changeType: DataBridgeConstants.ChangeTypeInsert,
+                        batchId: 1,
+                        partyIds: [partyId])
+                ]
+            });
 
     public static StringContent GetSamPartiesResponse(string partyId) =>
-        HttpContentUtility.CreateResponseContent(new List<SamParty>
-        {
-            new MockSamRawDataFactory().CreateMockParty(
-                changeType: DataBridgeConstants.ChangeTypeInsert,
-                batchId: 1,
-                partyIds: [partyId])
-        });
+        HttpContentUtility.CreateResponseContent(
+            new DataBridgeResponse<SamParty>
+            {
+                CollectionName = "collection",
+                Data =
+                [
+                    new MockSamRawDataFactory().CreateMockParty(
+                        changeType: DataBridgeConstants.ChangeTypeInsert,
+                        batchId: 1,
+                        partyIds: [partyId])
+                ]
+            });
 }

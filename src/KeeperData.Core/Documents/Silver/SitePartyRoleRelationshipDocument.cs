@@ -28,7 +28,7 @@ public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
     public DateTime? EffectiveFromData { get; set; }
     public DateTime? EffectiveToData { get; set; }
 
-    public int LastUpdatedBatchId { get; set; }
+    public int? LastUpdatedBatchId { get; set; }
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {

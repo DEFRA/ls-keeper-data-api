@@ -12,7 +12,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 {
     [BsonId]
     public required string Id { get; set; }
-    public int LastUpdatedBatchId { get; set; }
+    public int? LastUpdatedBatchId { get; set; }
     public DateTime LastUpdatedDate { get; set; }
     public string Type { get; set; } = default!;
     public string Name { get; set; } = default!;

@@ -55,7 +55,7 @@ public class MockCtsRawDataFactory
         int agentCount,
         int keeperCount)
     {
-        var holdingIdentifier = CphGenerator.GenerateFormattedCph();
+        var holdingIdentifier = CphGenerator.GenerateCtsFormattedLidIdentifier("AH");
         var batchId = 1;
 
         _fixture.Customizations.Add(new CtsCphHoldingBuilder(changeType, batchId, holdingIdentifier));

@@ -12,7 +12,7 @@ namespace KeeperData.Core.Documents.Silver;
 public class SamPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IContainsIndexes
 {
     public string? Id { get; set; }
-    public int LastUpdatedBatchId { get; set; }
+    public int? LastUpdatedBatchId { get; set; }
     public DateTime LastUpdatedDate { get; set; }
     public bool Deleted { get; set; }
     public bool IsHolder { get; set; }

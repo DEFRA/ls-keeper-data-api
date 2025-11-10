@@ -8,7 +8,7 @@ namespace KeeperData.Core.Domain.Parties;
 public class Party : IAggregateRoot
 {
     public string Id { get; private set; }
-    public int LastUpdatedBatchId { get; private set; }
+    public int? LastUpdatedBatchId { get; private set; }
     public DateTime LastUpdatedDate { get; private set; }
     public string? Title { get; private set; }
     public string? FirstName { get; private set; }
@@ -34,7 +34,7 @@ public class Party : IAggregateRoot
 
     public Party(
         string id,
-        int batchId,
+        int? batchId,
         DateTime lastUpdatedDate,
         string? title,
         string? firstName,
@@ -61,7 +61,7 @@ public class Party : IAggregateRoot
     }
 
     public static Party Create(
-        int batchId,
+        int? batchId,
         string? title,
         string? firstName,
         string? lastName,
@@ -92,7 +92,7 @@ public class Party : IAggregateRoot
 
     public void Update(
         DateTime lastUpdatedDate,
-        int batchId,
+        int? batchId,
         string? title,
         string? firstName,
         string? lastName,

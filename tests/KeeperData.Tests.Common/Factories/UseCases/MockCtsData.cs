@@ -7,20 +7,30 @@ namespace KeeperData.Tests.Common.Factories.UseCases;
 public static class MockCtsData
 {
     public static StringContent GetCtsHoldingsResponse(string holdingIdentifier) =>
-        HttpContentUtility.CreateResponseContent(new List<CtsCphHolding>
-        {
-            new MockCtsRawDataFactory().CreateMockHolding(
-                changeType: DataBridgeConstants.ChangeTypeInsert,
-                batchId: 1,
-                holdingIdentifier: holdingIdentifier)
-        });
+        HttpContentUtility.CreateResponseContent(
+            new DataBridgeResponse<CtsCphHolding>
+            {
+                CollectionName = "collection",
+                Data =
+                [
+                    new MockCtsRawDataFactory().CreateMockHolding(
+                        changeType: DataBridgeConstants.ChangeTypeInsert,
+                        batchId: 1,
+                        holdingIdentifier: holdingIdentifier)
+                ]
+            });
 
     public static StringContent GetCtsAgentOrKeeperResponse(string holdingIdentifier) =>
-        HttpContentUtility.CreateResponseContent(new List<CtsAgentOrKeeper>
-        {
-            new MockCtsRawDataFactory().CreateMockAgentOrKeeper(
-                changeType: DataBridgeConstants.ChangeTypeInsert,
-                batchId: 1,
-                holdingIdentifier: holdingIdentifier)
-        });
+        HttpContentUtility.CreateResponseContent(
+            new DataBridgeResponse<CtsAgentOrKeeper>
+            {
+                CollectionName = "collection",
+                Data =
+                [
+                    new MockCtsRawDataFactory().CreateMockAgentOrKeeper(
+                        changeType: DataBridgeConstants.ChangeTypeInsert,
+                        batchId: 1,
+                        holdingIdentifier: holdingIdentifier)
+                ]
+            });
 }

@@ -17,19 +17,14 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult(GetSamCphHoldersByPartyId(id));
     }
 
-    public Task<List<SamCphHolder>> GetSamHoldersByCphAsync(string id, CancellationToken cancellationToken)
-    {
-        return Task.FromResult(GetSamCphHoldersByCph(id));
-    }
-
     public Task<List<SamHerd>> GetSamHerdsAsync(string id, CancellationToken cancellationToken)
     {
         return Task.FromResult(GetSamHerd(id));
     }
 
-    public Task<SamParty> GetSamPartyAsync(string id, CancellationToken cancellationToken)
+    public Task<SamParty?> GetSamPartyAsync(string id, CancellationToken cancellationToken)
     {
-        return Task.FromResult(GetSamParty(id));
+        return Task.FromResult<SamParty?>(GetSamParty(id));
     }
 
     public Task<List<SamParty>> GetSamPartiesAsync(IEnumerable<string> ids, CancellationToken cancellationToken)

@@ -6,9 +6,8 @@ public interface IDataBridgeClient
 {
     Task<List<SamCphHolding>> GetSamHoldingsAsync(string id, CancellationToken cancellationToken);
     Task<List<SamCphHolder>> GetSamHoldersByPartyIdAsync(string id, CancellationToken cancellationToken);
-    Task<List<SamCphHolder>> GetSamHoldersByCphAsync(string id, CancellationToken cancellationToken);
     Task<List<SamHerd>> GetSamHerdsAsync(string id, CancellationToken cancellationToken);
-    Task<SamParty> GetSamPartyAsync(string id, CancellationToken cancellationToken);
+    Task<SamParty?> GetSamPartyAsync(string id, CancellationToken cancellationToken);
     Task<List<SamParty>> GetSamPartiesAsync(IEnumerable<string> ids, CancellationToken cancellationToken);
 
 

@@ -1,11 +1,13 @@
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Domain.Sites.Formatters;
 
 namespace KeeperData.Application.Orchestration.Cts.Holdings;
 
 public class CtsHoldingImportContext
 {
     public required string Cph { get; init; }
+    public string CphTrimmed => Cph.LidIdentifierToCph();
     public int BatchId { get; init; }
     public DateTime CurrentDateTime { get; init; }
 

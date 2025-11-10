@@ -50,8 +50,8 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
 
             ConfigureDatabase(services);
 
-            services.AddHttpClient("DataBridgeApi")
-                .ConfigurePrimaryHttpMessageHandler(() => DataBridgeApiClientHttpMessageHandlerMock.Object);
+            // services.AddHttpClient("DataBridgeApi")
+            //    .ConfigurePrimaryHttpMessageHandler(() => DataBridgeApiClientHttpMessageHandlerMock.Object);
 
             foreach (var applyOverride in _overrideServices)
             {

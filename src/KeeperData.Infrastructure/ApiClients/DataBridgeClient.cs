@@ -20,10 +20,12 @@ public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClie
         var query = DataBridgeQueries.SamHoldingsByCph(id);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHoldings, new { }, query);
 
-        return await GetFromApiAsync<List<SamCphHolding>>(
+        var result = await GetFromApiAsync<SamCphHolding>(
             uri,
             $"Sam holdings for ID '{id}'",
             cancellationToken);
+
+        return result.Data;
     }
 
     public async Task<List<SamCphHolder>> GetSamHoldersByPartyIdAsync(string id, CancellationToken cancellationToken)
@@ -31,21 +33,12 @@ public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClie
         var query = DataBridgeQueries.SamHolderByPartyId(id);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHolders, new { }, query);
 
-        return await GetFromApiAsync<List<SamCphHolder>>(
+        var result = await GetFromApiAsync<SamCphHolder>(
             uri,
             $"Sam holder for PARTY_ID '{id}'",
             cancellationToken);
-    }
 
-    public async Task<List<SamCphHolder>> GetSamHoldersByCphAsync(string id, CancellationToken cancellationToken)
-    {
-        var query = DataBridgeQueries.SamHoldersByCph(id);
-        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHolders, new { }, query);
-
-        return await GetFromApiAsync<List<SamCphHolder>>(
-            uri,
-            $"Sam holders for ID '{id}'",
-            cancellationToken);
+        return result.Data;
     }
 
     public async Task<List<SamHerd>> GetSamHerdsAsync(string id, CancellationToken cancellationToken)
@@ -53,21 +46,25 @@ public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClie
         var query = DataBridgeQueries.SamHerdsByCph(id);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHerds, new { }, query);
 
-        return await GetFromApiAsync<List<SamHerd>>(
+        var result = await GetFromApiAsync<SamHerd>(
             uri,
             $"Sam herds for ID '{id}'",
             cancellationToken);
+
+        return result.Data;
     }
 
-    public async Task<SamParty> GetSamPartyAsync(string id, CancellationToken cancellationToken)
+    public async Task<SamParty?> GetSamPartyAsync(string id, CancellationToken cancellationToken)
     {
         var query = DataBridgeQueries.SamPartyByPartyId(id);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamParties, new { }, query);
 
-        return await GetFromApiAsync<SamParty>(
+        var result = await GetFromApiAsync<SamParty>(
             uri,
             $"Sam party for ID '{id}'",
             cancellationToken);
+
+        return result.Data?.FirstOrDefault() ?? null;
     }
 
     public async Task<List<SamParty>> GetSamPartiesAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
@@ -75,10 +72,12 @@ public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClie
         var query = DataBridgeQueries.SamPartiesByPartyIds(ids);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamParties, new { }, query);
 
-        return await GetFromApiAsync<List<SamParty>>(
+        var result = await GetFromApiAsync<SamParty>(
             uri,
             $"Sam parties for IDs '{string.Join(",", ids)}'",
             cancellationToken);
+
+        return result.Data;
     }
 
     public async Task<List<CtsCphHolding>> GetCtsHoldingsAsync(string id, CancellationToken cancellationToken)
@@ -86,10 +85,12 @@ public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClie
         var query = DataBridgeQueries.CtsHoldingsByLidFullIdentifier(id);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetCtsHoldings, new { }, query);
 
-        return await GetFromApiAsync<List<CtsCphHolding>>(
+        var result = await GetFromApiAsync<CtsCphHolding>(
             uri,
             $"CTS holdings for ID '{id}'",
             cancellationToken);
+
+        return result.Data;
     }
 
     public async Task<List<CtsAgentOrKeeper>> GetCtsAgentsAsync(string id, CancellationToken cancellationToken)
@@ -97,10 +98,12 @@ public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClie
         var query = DataBridgeQueries.CtsAgentsByLidFullIdentifier(id);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetCtsAgents, new { }, query);
 
-        return await GetFromApiAsync<List<CtsAgentOrKeeper>>(
+        var result = await GetFromApiAsync<CtsAgentOrKeeper>(
             uri,
             $"CTS agents for ID '{id}'",
             cancellationToken);
+
+        return result.Data;
     }
 
     public async Task<List<CtsAgentOrKeeper>> GetCtsKeepersAsync(string id, CancellationToken cancellationToken)
@@ -108,13 +111,15 @@ public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClie
         var query = DataBridgeQueries.CtsKeepersByLidFullIdentifier(id);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetCtsKeepers, new { }, query);
 
-        return await GetFromApiAsync<List<CtsAgentOrKeeper>>(
+        var result = await GetFromApiAsync<CtsAgentOrKeeper>(
             uri,
             $"CTS keepers for ID '{id}'",
             cancellationToken);
+
+        return result.Data;
     }
 
-    private async Task<T> GetFromApiAsync<T>(string requestUri, string context, CancellationToken cancellationToken)
+    private async Task<DataBridgeResponse<T>> GetFromApiAsync<T>(string requestUri, string context, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Initiating API call: {context}, URI: {uri}", context, requestUri);
 
@@ -142,7 +147,7 @@ public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClie
             }
 
             var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            var result = await JsonSerializer.DeserializeAsync<T>(
+            var result = await JsonSerializer.DeserializeAsync<DataBridgeResponse<T>>(
                 stream,
                 JsonDefaults.DefaultOptionsWithDataBridgeApiSupport,
                 cancellationToken);

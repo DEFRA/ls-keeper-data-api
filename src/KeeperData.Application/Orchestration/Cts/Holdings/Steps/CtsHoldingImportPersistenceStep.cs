@@ -27,9 +27,9 @@ public class CtsHoldingImportPersistenceStep(
             await UpsertSilverHoldingAsync(primaryHolding, cancellationToken);
         }
 
-        await UpsertSilverPartiesAndDeleteOrphansAsync(context.Cph, context.SilverParties, cancellationToken);
+        await UpsertSilverPartiesAndDeleteOrphansAsync(context.CphTrimmed, context.SilverParties, cancellationToken);
 
-        await ReplaceSilverPartyRolesAsync(context.Cph, context.SilverPartyRoles, cancellationToken);
+        await ReplaceSilverPartyRolesAsync(context.CphTrimmed, context.SilverPartyRoles, cancellationToken);
     }
 
     private async Task UpsertSilverHoldingAsync(

@@ -3,6 +3,7 @@ using KeeperData.Application.Orchestration.Cts.Holdings;
 using KeeperData.Application.Orchestration.Cts.Holdings.Steps;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Repositories;
+using KeeperData.Tests.Common.Generators;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using Moq;
@@ -60,7 +61,7 @@ public class CtsHoldingImportPersistenceStepTests
 
         var context = new CtsHoldingImportContext
         {
-            Cph = Guid.NewGuid().ToString(),
+            Cph = CphGenerator.GenerateCtsFormattedLidIdentifier("AH"),
             CurrentDateTime = DateTime.UtcNow,
             SilverParties = []
         };
@@ -93,7 +94,7 @@ public class CtsHoldingImportPersistenceStepTests
 
         var context = new CtsHoldingImportContext
         {
-            Cph = Guid.NewGuid().ToString(),
+            Cph = CphGenerator.GenerateCtsFormattedLidIdentifier("AH"),
             CurrentDateTime = DateTime.UtcNow,
             SilverParties = [incomingParties]
         };
@@ -127,7 +128,7 @@ public class CtsHoldingImportPersistenceStepTests
 
         var context = new CtsHoldingImportContext
         {
-            Cph = Guid.NewGuid().ToString(),
+            Cph = CphGenerator.GenerateCtsFormattedLidIdentifier("AH"),
             CurrentDateTime = DateTime.UtcNow,
             SilverParties = [incomingParties]
         };
@@ -155,7 +156,7 @@ public class CtsHoldingImportPersistenceStepTests
     {
         var context = new CtsHoldingImportContext
         {
-            Cph = Guid.NewGuid().ToString(),
+            Cph = CphGenerator.GenerateCtsFormattedLidIdentifier("AH"),
             CurrentDateTime = DateTime.UtcNow,
             SilverPartyRoles = []
         };
@@ -181,7 +182,7 @@ public class CtsHoldingImportPersistenceStepTests
 
         var context = new CtsHoldingImportContext
         {
-            Cph = Guid.NewGuid().ToString(),
+            Cph = CphGenerator.GenerateCtsFormattedLidIdentifier("AH"),
             CurrentDateTime = DateTime.UtcNow,
             SilverPartyRoles = roles
         };

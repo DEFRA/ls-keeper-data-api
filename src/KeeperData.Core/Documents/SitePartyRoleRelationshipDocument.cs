@@ -26,7 +26,7 @@ public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
     public DateTime? EffectiveFromData { get; set; }
     public DateTime? EffectiveToData { get; set; }
 
-    public int LastUpdatedBatchId { get; set; }
+    public int? LastUpdatedBatchId { get; set; }
 
     public List<ManagedSpeciesDocument> SpeciesManagedByRole { get; set; } = [];
 

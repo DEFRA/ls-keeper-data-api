@@ -79,26 +79,6 @@ public class DataBridgeClientTests
     }
 
     [Fact]
-    public async Task GetSamHoldersAsync_ShouldReturnHolders_WhenApiReturnsSuccess()
-    {
-        var id = CphGenerator.GenerateFormattedCph();
-        var expectedResponse = MockSamData.GetSamHoldersResponse(id);
-
-        var uri = RequestUriUtilities.GetQueryUri(
-            DataBridgeApiRoutes.GetSamHolders,
-            new { },
-            DataBridgeQueries.SamHoldersByCph(id));
-
-        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
-            .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
-
-        var result = await _client.GetSamHoldersByCphAsync(id, CancellationToken.None);
-
-        result.Should().NotBeNull().And.HaveCount(1);
-        result[0].CphList.Should().Contain(id);
-    }
-
-    [Fact]
     public async Task GetSamHerdsAsync_ShouldReturnHerds_WhenApiReturnsSuccess()
     {
         var id = CphGenerator.GenerateFormattedCph();

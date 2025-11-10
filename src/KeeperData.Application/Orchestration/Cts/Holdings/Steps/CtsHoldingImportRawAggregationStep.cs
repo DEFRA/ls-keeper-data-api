@@ -19,12 +19,14 @@ public class CtsHoldingImportRawAggregationStep(
 
         await Task.WhenAll(
             getHoldingsTask,
-            getAgentsTask,
+            // TODO - Add in when collection is available on Data Bridge
+            // getAgentsTask,
             getKeepersTask);
 
         context.RawHoldings = getHoldingsTask.Result;
 
-        context.RawAgents = getAgentsTask.Result;
+        // TODO - Add in when collection is available on Data Bridge
+        // context.RawAgents = getAgentsTask.Result;
 
         context.RawKeepers = getKeepersTask.Result;
     }
