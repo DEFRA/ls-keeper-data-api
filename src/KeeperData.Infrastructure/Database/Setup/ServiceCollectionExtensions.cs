@@ -45,6 +45,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         services.AddScoped<ICountryRepository, CountryRepository>();
         services.AddScoped<ISitesRepository, SitesRepository>();
+        services.AddScoped<IPartiesRepository, PartiesRepository>();
         services.AddScoped<ISilverSitePartyRoleRelationshipRepository, SilverSitePartyRoleRelationshipRepository>();
 
         services.AddScoped<IUnitOfWork, MongoUnitOfWork>();

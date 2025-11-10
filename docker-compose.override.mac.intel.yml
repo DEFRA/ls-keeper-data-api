@@ -2,7 +2,7 @@ services:
   keeperdata_api:
     build:
       args:
-        TARGETARCH: arm64
+        TARGETARCH: x64
     labels:
       com.microsoft.visual-studio.project-name: "KeeperData.Api"
     environment:

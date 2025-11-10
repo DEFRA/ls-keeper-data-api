@@ -2,6 +2,7 @@ using FluentValidation;
 using KeeperData.Application.Orchestration;
 using KeeperData.Application.Orchestration.Sam.Holdings;
 using KeeperData.Application.Orchestration.Sam.Holdings.Steps;
+using KeeperData.Application.Queries.Parties.Adapters;
 using KeeperData.Application.Queries.Sites.Adapters;
 using KeeperData.Application.Services;
 using KeeperData.Core.Attributes;
@@ -24,6 +25,7 @@ public static class ServiceCollectionExtensions
         services.AddValidatorsFromAssemblyContaining<IRequestExecutor>();
 
         services.AddScoped<SitesQueryAdapter>();
+        services.AddScoped<PartiesQueryAdapter>();
 
         RegisterOrchestrators(services, typeof(SamHoldingImportOrchestrator).Assembly);
         RegisterSteps(services, typeof(SamHoldingImportAggregationStep).Assembly);
