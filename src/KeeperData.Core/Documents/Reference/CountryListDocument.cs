@@ -10,8 +10,10 @@ namespace KeeperData.Core.Documents.Reference;
 [CollectionName("refCountries")]
 public class CountryListDocument : IListDocument, IReferenceListDocument<CountryDocument>
 {
+    public static string DocumentId => "all-countries";
+
     [BsonId]
-    public string Id { get; set; } = "all-countries";
+    public string Id { get; set; } = DocumentId;
 
     public int LastUpdatedBatchId { get; set; }
 
