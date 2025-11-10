@@ -74,7 +74,7 @@ public class ReferenceDataRepositoryTests
         var listDocument = new TestReferenceListDocument
         {
             Id = "test-list",
-            Items = items
+            TestItems = items
         };
 
         _asyncCursorMock.SetupGet(c => c.Current).Returns([listDocument]);
@@ -100,7 +100,7 @@ public class ReferenceDataRepositoryTests
         var listDocument = new TestReferenceListDocument
         {
             Id = "test-list",
-            Items = items
+            TestItems = items
         };
 
         _asyncCursorMock.SetupGet(c => c.Current).Returns([listDocument]);
@@ -139,35 +139,9 @@ public class ReferenceDataRepositoryTests
         // Assert
         result.Should().BeEmpty();
     }
-
-    [Fact]
-    public async Task GetAllAsync_ThrowsInvalidOperationException_WhenAttributeMissing()
-    {
-        // Arrange
-        var mockCollectionWithoutAttr = new Mock<IMongoCollection<TestReferenceListDocumentWithoutAttribute>>();
-
-        _mongoDatabaseMock
-            .Setup(db => db.GetCollection<TestReferenceListDocumentWithoutAttribute>(It.IsAny<string>(), It.IsAny<MongoCollectionSettings>()))
-            .Returns(mockCollectionWithoutAttr.Object);
-
-        var repoWithoutAttribute = new TestReferenceRepositoryWithoutAttribute(
-            _mongoConfig, _mongoClientMock.Object, _unitOfWorkMock.Object);
-
-        typeof(GenericRepository<TestReferenceListDocumentWithoutAttribute>)
-            .GetField("_collection", BindingFlags.NonPublic | BindingFlags.Instance)!
-            .SetValue(repoWithoutAttribute, mockCollectionWithoutAttr.Object);
-
-        // Act
-        var act = async () => await repoWithoutAttribute.GetAllAsync(CancellationToken.None);
-
-        // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*must be decorated with*ReferenceData*");
-    }
 }
 
 // Test implementation classes
-[ReferenceData<TestReferenceListDocument, TestReferenceDocument>("test-list", nameof(TestReferenceListDocument.Items))]
 public class TestReferenceDocument : INestedEntity
 {
     public string IdentifierId { get; set; } = default!;
@@ -177,44 +151,18 @@ public class TestReferenceDocument : INestedEntity
 [CollectionName("testReferenceData")]
 public class TestReferenceListDocument : IReferenceListDocument<TestReferenceDocument>, IListDocument
 {
-    public string Id { get; set; } = "test-list";
+    public static string DocumentId => "test-list";
+
+    public string Id { get; set; } = DocumentId;
     public int LastUpdatedBatchId { get; set; }
     public DateTime LastUpdatedDate { get; set; }
-    public List<TestReferenceDocument> Items { get; set; } = [];
-    IReadOnlyCollection<TestReferenceDocument> IReferenceListDocument<TestReferenceDocument>.Items => Items.AsReadOnly();
+    public List<TestReferenceDocument> TestItems { get; set; } = [];
+    public IReadOnlyCollection<TestReferenceDocument> Items => TestItems.AsReadOnly();
 }
 
 public class TestReferenceRepository : ReferenceDataRepository<TestReferenceListDocument, TestReferenceDocument>
 {
     public TestReferenceRepository(
-        IOptions<MongoConfig> mongoConfig,
-        IMongoClient client,
-        IUnitOfWork unitOfWork)
-        : base(mongoConfig, client, unitOfWork)
-    {
-    }
-}
-
-// Test classes WITHOUT attributes to verify error handling
-public class TestReferenceDocumentWithoutAttribute : INestedEntity
-{
-    public string IdentifierId { get; set; } = default!;
-    public string Name { get; set; } = default!;
-}
-
-[CollectionName("testReferenceDataWithoutAttribute")]
-public class TestReferenceListDocumentWithoutAttribute : IReferenceListDocument<TestReferenceDocumentWithoutAttribute>, IListDocument
-{
-    public string Id { get; set; } = "test-list-no-attr";
-    public int LastUpdatedBatchId { get; set; }
-    public DateTime LastUpdatedDate { get; set; }
-    public List<TestReferenceDocumentWithoutAttribute> Items { get; set; } = [];
-    IReadOnlyCollection<TestReferenceDocumentWithoutAttribute> IReferenceListDocument<TestReferenceDocumentWithoutAttribute>.Items => Items.AsReadOnly();
-}
-
-public class TestReferenceRepositoryWithoutAttribute : ReferenceDataRepository<TestReferenceListDocumentWithoutAttribute, TestReferenceDocumentWithoutAttribute>
-{
-    public TestReferenceRepositoryWithoutAttribute(
         IOptions<MongoConfig> mongoConfig,
         IMongoClient client,
         IUnitOfWork unitOfWork)
