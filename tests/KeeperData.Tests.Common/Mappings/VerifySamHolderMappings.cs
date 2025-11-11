@@ -10,14 +10,14 @@ namespace KeeperData.Tests.Common.Mappings;
 
 public static class VerifySamHolderMappings
 {
-    public static void VerifyMapping_From_SamCphHolder_To_SamPartyDocument(string holdingIdentifier, SamCphHolder source, SamPartyDocument target, InferredRoleType inferredRoleType)
+    public static void VerifyMapping_From_SamCphHolder_To_SamPartyDocument(SamCphHolder source, SamPartyDocument target, InferredRoleType inferredRoleType)
     {
         var addressLine = AddressFormatters.FormatAddressRange(
                             source.SAON_START_NUMBER, source.SAON_START_NUMBER_SUFFIX,
                             source.SAON_END_NUMBER, source.SAON_END_NUMBER_SUFFIX,
                             source.PAON_START_NUMBER, source.PAON_START_NUMBER_SUFFIX,
                             source.PAON_END_NUMBER, source.PAON_END_NUMBER_SUFFIX,
-                            saonLabel: string.Empty);
+                            source.SAON_DESCRIPTION, source.PAON_DESCRIPTION);
 
         source.Should().NotBeNull();
         target.Should().NotBeNull();
@@ -25,8 +25,7 @@ public static class VerifySamHolderMappings
         target.Id.Should().BeNull();
         target.LastUpdatedBatchId.Should().Be(source.BATCH_ID);
         target.Deleted.Should().BeFalse();
-
-        target.CountyParishHoldingNumber.Should().Be(holdingIdentifier);
+        target.IsHolder.Should().BeTrue();
 
         target.PartyId.Should().Be(source.PARTY_ID);
 
@@ -40,12 +39,14 @@ public static class VerifySamHolderMappings
             source.PERSON_TITLE,
             source.PERSON_GIVEN_NAME,
             source.PERSON_GIVEN_NAME2,
+            source.PERSON_INITIALS,
             source.PERSON_FAMILY_NAME));
 
         target.PartyTitleTypeIdentifier.Should().Be(source.PERSON_TITLE);
         target.PartyFirstName.Should().Be(PartyNameFormatters.FormatPartyFirstName(
             source.PERSON_GIVEN_NAME,
             source.PERSON_GIVEN_NAME2));
+        target.PartyInitials.Should().Be(source.PERSON_INITIALS);
         target.PartyLastName.Should().Be(source.PERSON_FAMILY_NAME);
 
         // Address
@@ -57,6 +58,7 @@ public static class VerifySamHolderMappings
         address.AddressStreet.Should().Be(source.STREET);
         address.AddressTown.Should().Be(source.TOWN);
         address.AddressPostCode.Should().Be(source.POSTCODE);
+        address.CountrySubDivision.Should().Be(source.UK_INTERNAL_CODE);
         address.CountryIdentifier.Should().NotBeNullOrWhiteSpace();
         address.CountryCode.Should().Be(source.COUNTRY_CODE);
         address.UniquePropertyReferenceNumber.Should().Be(source.UDPRN);
@@ -78,7 +80,7 @@ public static class VerifySamHolderMappings
         role.Should().NotBeNull();
         role.IdentifierId.Should().NotBeNullOrWhiteSpace();
         role.RoleTypeId.Should().NotBeNullOrWhiteSpace();
-        role.RoleTypeName.Should().Be(roleNameToLookup);
+        role.RoleTypeName.Should().Be(inferredRoleType.ToString());
         role.SourceRoleName.Should().Be(roleNameToLookup);
         role.EffectiveFromDate.Should().BeNull();
         role.EffectiveToDate.Should().BeNull();

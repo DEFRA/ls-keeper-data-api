@@ -23,12 +23,12 @@ public class SamHoldingImportOrchestratorTests
 {
     private readonly Mock<IGenericRepository<SamHoldingDocument>> _silverHoldingRepositoryMock = new();
     private readonly Mock<IGenericRepository<SamPartyDocument>> _silverPartyRepositoryMock = new();
-    private readonly Mock<IGenericRepository<PartyRoleRelationshipDocument>> _silverPartyRoleRelationshipRepositoryMock = new();
+    private readonly Mock<ISilverSitePartyRoleRelationshipRepository> _silverSitePartyRoleRelationshipRepositoryMock = new();
     private readonly Mock<IGenericRepository<SamHerdDocument>> _silverHerdRepositoryMock = new();
 
     private readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
     private readonly Mock<IGenericRepository<PartyDocument>> _goldPartyRepositoryMock = new();
-    private readonly Mock<IGenericRepository<SitePartyRoleRelationshipDocument>> _goldSitePartyRoleRelationshipRepositoryMock = new();
+    private readonly Mock<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>> _goldSitePartyRoleRelationshipRepositoryMock = new();
     private readonly Mock<IGenericRepository<SiteGroupMarkRelationshipDocument>> _goldSiteGroupMarkRelationshipRepositoryMock = new();
 
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
@@ -59,7 +59,7 @@ public class SamHoldingImportOrchestratorTests
             herdCount: 1,
             partyCount: 1);
 
-        var (holdingsUri, holdersUri, herdsUri, partiesUri) = GetAllQueryUris(holdingIdentifier, parties.Select(x => x.PARTY_ID));
+        var (holdingsUri, herdsUri, partiesUri) = GetAllQueryUris(holdingIdentifier, parties.Select(x => x.PARTY_ID));
 
         SetupRepositoryMocks();
         SetupLookupServiceMocks();
@@ -67,22 +67,20 @@ public class SamHoldingImportOrchestratorTests
         var factory = new AppWebApplicationFactory();
         factory.OverrideServiceAsScoped(_silverHoldingRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_silverPartyRepositoryMock.Object);
-        factory.OverrideServiceAsScoped(_silverPartyRoleRelationshipRepositoryMock.Object);
+        factory.OverrideServiceAsScoped(_silverSitePartyRoleRelationshipRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_silverHerdRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_goldSiteRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_goldPartyRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_goldSitePartyRoleRelationshipRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_goldSiteGroupMarkRelationshipRepositoryMock.Object);
 
-        SetupDataBridgeApiRequest(factory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContent(holdings));
-        SetupDataBridgeApiRequest(factory, holdersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContent(holders));
-        SetupDataBridgeApiRequest(factory, herdsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContent(herds));
-        SetupDataBridgeApiRequest(factory, partiesUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContent(parties));
+        SetupDataBridgeApiRequest(factory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holdings));
+        SetupDataBridgeApiRequest(factory, herdsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(herds));
+        SetupDataBridgeApiRequest(factory, partiesUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(parties));
 
         var result = await ExecuteTestAsync(factory, holdingIdentifier);
 
         VerifyDataBridgeApiEndpointCalled(factory, holdingsUri, Times.Once());
-        VerifyDataBridgeApiEndpointCalled(factory, holdersUri, Times.Once());
         VerifyDataBridgeApiEndpointCalled(factory, herdsUri, Times.Once());
         VerifyDataBridgeApiEndpointCalled(factory, partiesUri, Times.Once());
 
@@ -126,9 +124,6 @@ public class SamHoldingImportOrchestratorTests
         context.RawHoldings.Should().NotBeNull().And.HaveCount(1);
         context.RawHoldings[0].CPH.Should().Be(holdingIdentifier);
 
-        context.RawHolders.Should().NotBeNull().And.HaveCount(1);
-        context.RawHolders[0].CphList.Should().NotBeNull().And.Contain(holdingIdentifier);
-
         context.RawHerds.Should().NotBeNull().And.HaveCount(1);
         context.RawHerds[0].CPHH.Should().Be(holdingIdentifier);
 
@@ -144,16 +139,14 @@ public class SamHoldingImportOrchestratorTests
         context.SilverHoldings![0].GroupMarks![0].Should().NotBeNull();
         context.SilverHoldings![0].GroupMarks![0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
 
-        context.SilverParties.Should().NotBeNull().And.HaveCount(2);
-        context.SilverParties[0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
-        context.SilverParties[1].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
+        context.SilverParties.Should().NotBeNull().And.HaveCount(1);
 
         var roleList = context.RawParties[0].ROLES?.Split(",")
             .Where(role => !string.IsNullOrWhiteSpace(role))
             .Select(role => role.Trim())
             .ToArray() ?? [];
 
-        context.SilverPartyRoles.Should().NotBeNull().And.HaveCount(roleList.Length + 1);
+        context.SilverPartyRoles.Should().NotBeNull().And.HaveCount(roleList.Length);
 
         for (var i = 0; i < context.SilverPartyRoles.Count; i++)
         {
@@ -173,17 +166,12 @@ public class SamHoldingImportOrchestratorTests
         // TODO - Verify SiteGroupMarkRelationshipDocuments
     }
 
-    private static (string holdingsUri, string holdersUri, string herdsUri, string partiesUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)
+    private static (string holdingsUri, string herdsUri, string partiesUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)
     {
         var holdingsUri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamHoldings,
             new { },
             DataBridgeQueries.SamHoldingsByCph(holdingIdentifier));
-
-        var holdersUri = RequestUriUtilities.GetQueryUri(
-            DataBridgeApiRoutes.GetSamHolders,
-            new { },
-            DataBridgeQueries.SamHoldersByCph(holdingIdentifier));
 
         var herdsUri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamHerds,
@@ -195,7 +183,7 @@ public class SamHoldingImportOrchestratorTests
             new { },
             DataBridgeQueries.SamPartiesByPartyIds(partyIds));
 
-        return (holdingsUri, holdersUri, herdsUri, partiesUri);
+        return (holdingsUri, herdsUri, partiesUri);
     }
 
     private void SetupRepositoryMocks(
@@ -220,11 +208,15 @@ public class SamHoldingImportOrchestratorTests
 
         // Silver Holding
         _silverHoldingRepositoryMock
-            .Setup(r => r.FindOneAsync(It.IsAny<Expression<Func<SamHoldingDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingSilverHolding);
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHoldingDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
 
         _silverHoldingRepositoryMock
             .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamHoldingDocument>, SamHoldingDocument)>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _silverHoldingRepositoryMock
+            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamHoldingDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Silver Party
@@ -241,21 +233,37 @@ public class SamHoldingImportOrchestratorTests
             .Returns(Task.CompletedTask);
 
         // Silver Role Relationships
-        _silverPartyRoleRelationshipRepositoryMock
-            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<PartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
+        _silverSitePartyRoleRelationshipRepositoryMock
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Core.Documents.Silver.SitePartyRoleRelationshipDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        _silverSitePartyRoleRelationshipRepositoryMock
+            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _silverPartyRoleRelationshipRepositoryMock
-            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<PartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
+        _silverSitePartyRoleRelationshipRepositoryMock
+            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>, Core.Documents.Silver.SitePartyRoleRelationshipDocument)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+
+        _silverSitePartyRoleRelationshipRepositoryMock
+            .Setup(r => r.FindPartyIdsByHoldingIdentifierAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<bool>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
 
         // Silver Herds
         _silverHerdRepositoryMock
-            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamHerdDocument>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHerdDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        _silverHerdRepositoryMock
+            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamHerdDocument>, SamHerdDocument)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _silverHerdRepositoryMock
-            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<SamHerdDocument>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamHerdDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Gold Site
@@ -280,13 +288,13 @@ public class SamHoldingImportOrchestratorTests
             .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<PartyDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        // Gold Site Party Rol eRelationships
+        // Gold Site Party Role Relationships
         _goldSitePartyRoleRelationshipRepositoryMock
-            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<Core.Documents.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _goldSitePartyRoleRelationshipRepositoryMock
-            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<Core.Documents.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Gold Site Group Mark Relationships

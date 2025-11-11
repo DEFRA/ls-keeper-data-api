@@ -1,4 +1,4 @@
-using KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
+using KeeperData.Application.Orchestration.Sam.Mappings;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Services;
@@ -29,19 +29,9 @@ public class SamHoldingImportSilverMappingStep(
             cancellationToken);
 
         context.SilverParties = [
-            .. await SamHolderMapper.ToSilver(
-                context.CurrentDateTime,
-                context.RawHolders,
-                context.Cph,
-                InferredRoleType.Holder,
-                roleTypeLookupService.FindAsync,
-                countryIdentifierLookupService.FindAsync,
-                cancellationToken),
-
             .. await SamPartyMapper.ToSilver(
                 context.CurrentDateTime,
                 context.RawParties,
-                context.Cph,
                 roleTypeLookupService.FindAsync,
                 countryIdentifierLookupService.FindAsync,
                 cancellationToken)
@@ -49,8 +39,8 @@ public class SamHoldingImportSilverMappingStep(
 
         context.SilverPartyRoles = SamPartyRoleRelationshipMapper.ToSilver(
             context.SilverParties,
-            context.Cph,
-            HoldingIdentifierType.HoldingNumber.ToString());
+            HoldingIdentifierType.CphNumber.ToString(),
+            context.Cph);
 
         context.SilverHerds = await SamHerdMapper.ToSilver(
             context.CurrentDateTime,

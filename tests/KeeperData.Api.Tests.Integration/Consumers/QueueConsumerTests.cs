@@ -3,6 +3,7 @@ using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
+using KeeperData.Tests.Common.Generators;
 
 namespace KeeperData.Api.Tests.Integration.Consumers;
 
@@ -13,7 +14,7 @@ public class QueueConsumerTests(IntegrationTestFixture fixture) : IClassFixture<
     public async Task GivenMessagePublishedToTopic_WhenReceivedOnTheQueue_ShouldComplete()
     {
         var correlationId = Guid.NewGuid().ToString();
-        var holdingIdentifier = Guid.NewGuid().ToString();
+        var holdingIdentifier = CphGenerator.GenerateFormattedCph();
         var message = GetCtsImportHoldingMessage(holdingIdentifier);
 
         await ExecuteTopicTest(correlationId, message);
@@ -32,7 +33,7 @@ public class QueueConsumerTests(IntegrationTestFixture fixture) : IClassFixture<
     public async Task GivenMessagePublishedToQueue_WhenReceivedOnTheQueue_ShouldComplete()
     {
         var correlationId = Guid.NewGuid().ToString();
-        var holdingIdentifier = Guid.NewGuid().ToString();
+        var holdingIdentifier = CphGenerator.GenerateFormattedCph();
         var message = GetCtsImportHoldingMessage(holdingIdentifier);
 
         await ExecuteQueueTest(correlationId, message);

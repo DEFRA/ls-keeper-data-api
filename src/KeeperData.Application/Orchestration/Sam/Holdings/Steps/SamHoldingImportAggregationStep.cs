@@ -15,23 +15,17 @@ public class SamHoldingImportAggregationStep(
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
     {
         var getHoldingsTask = _dataBridgeClient.GetSamHoldingsAsync(context.Cph, cancellationToken);
-        var getHoldersTask = _dataBridgeClient.GetSamHoldersAsync(context.Cph, cancellationToken);
         var getHerdsTask = _dataBridgeClient.GetSamHerdsAsync(context.Cph, cancellationToken);
 
         await Task.WhenAll(
             getHoldingsTask,
-            getHoldersTask,
             getHerdsTask);
 
         context.RawHoldings = getHoldingsTask.Result;
 
-        context.RawHolders = getHoldersTask.Result;
-
         context.RawHerds = getHerdsTask.Result;
 
         context.RawParties = await GetSamPartiesAsync(context, cancellationToken);
-
-        await Task.CompletedTask;
     }
 
     private async Task<List<SamParty>> GetSamPartiesAsync(SamHoldingImportContext context, CancellationToken cancellationToken)

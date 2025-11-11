@@ -9,6 +9,7 @@ namespace KeeperData.Core.Messaging.Contracts.Serializers;
     Converters = []
 )]
 [JsonSerializable(typeof(SamImportHoldingMessage))]
+[JsonSerializable(typeof(SamImportHolderMessage))]
 [JsonSerializable(typeof(CtsImportHoldingMessage))]
 public partial class MessageIdentifierSerializerContext : JsonSerializerContext
 {

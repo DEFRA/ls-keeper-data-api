@@ -72,7 +72,7 @@ public class MockCtsRawDataFactoryTests
 
         holder.CHANGE_TYPE.Should().Be(DataBridgeConstants.ChangeTypeInsert);
         holder.LID_FULL_IDENTIFIER.Should().NotBeNull();
-        holder.LID_FULL_IDENTIFIER.Length.Should().Be(11);
+        holder.LID_FULL_IDENTIFIER.Length.Should().Be(14);
 
         var agent = agents[0];
 

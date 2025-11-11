@@ -10,6 +10,18 @@ public static class CphGenerator
         return FormatCph(raw);
     }
 
+    public static string GenerateCtsFormattedLidIdentifier(string prefix)
+    {
+        var cph = GenerateFormattedCph();
+        return $"{prefix}-{cph}";
+    }
+
+    public static string GenerateFormattedCphh(string suffix)
+    {
+        var cph = GenerateFormattedCph();
+        return $"{cph}-{suffix}";
+    }
+
     private static string GenerateRawCph()
     {
         return $"{s_random.Next(10, 99)}{s_random.Next(100, 999)}{s_random.Next(1000, 9999)}";

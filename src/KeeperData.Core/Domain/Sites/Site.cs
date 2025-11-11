@@ -7,7 +7,7 @@ namespace KeeperData.Core.Domain.Sites;
 public class Site : IAggregateRoot
 {
     public string Id { get; private set; }
-    public int LastUpdatedBatchId { get; private set; }
+    public int? LastUpdatedBatchId { get; private set; }
     public DateTime LastUpdatedDate { get; private set; }
     public string Type { get; private set; }
     public string Name { get; private set; }
@@ -42,7 +42,7 @@ public class Site : IAggregateRoot
 
     public Site(
         string id,
-        int batchId,
+        int? batchId,
         DateTime lastUpdatedDate,
         string type,
         string name,
@@ -69,7 +69,7 @@ public class Site : IAggregateRoot
     }
 
     public static Site Create(
-        int batchId,
+        int? batchId,
         string type,
         string name,
         DateTime startDate,
@@ -100,7 +100,7 @@ public class Site : IAggregateRoot
 
     public void Update(
         DateTime lastUpdatedDate,
-        int batchId,
+        int? batchId,
         string type,
         string name,
         DateTime startDate,

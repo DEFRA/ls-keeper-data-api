@@ -5,6 +5,7 @@ using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
+using KeeperData.Tests.Common.Generators;
 using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Sam;
@@ -16,7 +17,7 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
     public async Task GivenSamImportHoldingMessage_WhenReceivedOnTheQueue_ShouldComplete()
     {
         var correlationId = Guid.NewGuid().ToString();
-        var holdingIdentifier = Guid.NewGuid().ToString();
+        var holdingIdentifier = CphGenerator.GenerateFormattedCph();
         var message = GetSamImportHoldingMessage(holdingIdentifier);
 
         await ExecuteQueueTest(correlationId, message);
@@ -38,18 +39,18 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
     {
         var silverSamHoldingFilter = Builders<SamHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
         var silverSamHoldings = await fixture.MongoVerifier.FindDocumentsAsync("samHoldings", silverSamHoldingFilter);
-        silverSamHoldings.Should().NotBeNull().And.HaveCount(1);
 
-        var silverSamPartyFilter = Builders<SamPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
+        var partyRoleRelationshipFilter = Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
+        var partyRoleRelationships = await fixture.MongoVerifier.FindDocumentsAsync("silverSitePartyRoleRelationships", partyRoleRelationshipFilter);
+        var partyRolePartyIds = partyRoleRelationships.Select(r => r.PartyId).Distinct().ToList();
+
+        var silverSamPartyFilter = Builders<SamPartyDocument>.Filter.In(x => x.PartyId, partyRolePartyIds);
         var silverSamParties = await fixture.MongoVerifier.FindDocumentsAsync("samParties", silverSamPartyFilter);
-        silverSamParties.Should().NotBeNull().And.HaveCountGreaterThanOrEqualTo(1);
-
-        var partyRoleRelationshipFilter = Builders<PartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
-        var partyRoleRelationships = await fixture.MongoVerifier.FindDocumentsAsync("silverPartyRoleRelationships", partyRoleRelationshipFilter);
-        partyRoleRelationships.Should().NotBeNull().And.HaveCount(silverSamParties.Count);
-
         var partyIds = silverSamParties.Select(x => x.PartyId).Distinct().ToHashSet();
-        var partyRolePartyIds = partyRoleRelationships.Select(x => x.PartyId).Distinct().ToHashSet();
+
+        silverSamHoldings.Should().NotBeNull().And.HaveCount(1);
+        silverSamParties.Should().NotBeNull().And.HaveCountGreaterThanOrEqualTo(1);
+        partyRoleRelationships.Should().NotBeNull().And.HaveCount(silverSamParties.Count);
         partyIds.SetEquals(partyRolePartyIds).Should().BeTrue();
 
         var silverSamHerdFilter = Builders<SamHerdDocument>.Filter.Eq(x => x.CountyParishHoldingHerd, holdingIdentifier);
@@ -59,7 +60,7 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
 
     private async Task VerifyGoldDataTypesAsync(string holdingIdentifier)
     {
-        var holdingIdentifierType = HoldingIdentifierType.HoldingNumber.ToString();
+        var holdingIdentifierType = HoldingIdentifierType.CphNumber.ToString();
 
         var siteFilter = Builders<SiteDocument>.Filter.ElemMatch(
             x => x.Identifiers,

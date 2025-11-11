@@ -3,6 +3,7 @@ using KeeperData.Application.Extensions;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Domain.Sites.Formatters;
 
 namespace KeeperData.Tests.Common.Mappings;
 
@@ -17,12 +18,12 @@ public static class VerifyCtsAgentOrKeeperMappings
         target.LastUpdatedBatchId.Should().Be(source.BATCH_ID);
         target.Deleted.Should().BeFalse();
 
-        target.CountyParishHoldingNumber.Should().Be(source.LID_FULL_IDENTIFIER);
+        target.CountyParishHoldingNumber.Should().Be(source.LID_FULL_IDENTIFIER.LidIdentifierToCph());
 
-        target.PartyId.Should().Be($"{source.PAR_ID}");
+        target.PartyId.Should().Be(source.PAR_ID);
 
         var expectedPartyTypeId = !string.IsNullOrWhiteSpace(source.PAR_SURNAME)
-            && !string.IsNullOrWhiteSpace(source.PAR_INITIALS) ? PartyType.Person.ToString()
+            && !string.IsNullOrWhiteSpace(source.PAR_TITLE) ? PartyType.Person.ToString()
             : PartyType.Business.ToString();
         target.PartyTypeId.Should().Be(expectedPartyTypeId);
 
@@ -57,13 +58,14 @@ public static class VerifyCtsAgentOrKeeperMappings
         target.Roles.Should().NotBeNull().And.HaveCount(1);
 
         var roleNameToLookup = EnumExtensions.GetDescription(inferredRoleType);
-        var expectedRoleTypeId = inferredRoleType == InferredRoleType.Agent ? "AgentId" : "KeeperId";
-        var expectedRoleTypeName = inferredRoleType == InferredRoleType.Agent ? "Agent" : "Keeper";
+        var expectedRoleTypeName = inferredRoleType == InferredRoleType.Agent
+            ? "Agent"
+            : "LivestockKeeper";
 
         var role = target.Roles[0];
         role.Should().NotBeNull();
         role.IdentifierId.Should().NotBeNullOrWhiteSpace();
-        role.RoleTypeId.Should().Be(expectedRoleTypeId);
+        role.RoleTypeId.Should().NotBeNullOrWhiteSpace();
         role.RoleTypeName.Should().Be(expectedRoleTypeName);
         role.SourceRoleName.Should().Be(roleNameToLookup);
         role.EffectiveFromDate.Should().Be(source.LPR_EFFECTIVE_FROM_DATE);

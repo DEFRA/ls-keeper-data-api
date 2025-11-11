@@ -3,6 +3,7 @@ using KeeperData.Application.Orchestration.Cts.Holdings;
 using KeeperData.Application.Orchestration.Cts.Holdings.Steps;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Repositories;
+using KeeperData.Tests.Common.Generators;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using Moq;
@@ -16,7 +17,7 @@ public class CtsHoldingImportPersistenceStepTests
 
     private readonly Mock<IGenericRepository<CtsHoldingDocument>> _ctsHoldingRepositoryMock = new();
     private readonly Mock<IGenericRepository<CtsPartyDocument>> _ctsPartyRepositoryMock = new();
-    private readonly Mock<IGenericRepository<PartyRoleRelationshipDocument>> _partyRoleRelationshipRepositoryMock = new();
+    private readonly Mock<IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument>> _partyRoleRelationshipRepositoryMock = new();
 
     public CtsHoldingImportPersistenceStepTests()
     {
@@ -40,7 +41,7 @@ public class CtsHoldingImportPersistenceStepTests
         var sut = new CtsHoldingImportPersistenceStep(
             _ctsHoldingRepositoryMock.Object,
             Mock.Of<IGenericRepository<CtsPartyDocument>>(),
-            Mock.Of<IGenericRepository<PartyRoleRelationshipDocument>>(),
+            Mock.Of<IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(),
             Mock.Of<ILogger<CtsHoldingImportPersistenceStep>>());
 
         await sut.ExecuteAsync(context, CancellationToken.None);
@@ -60,7 +61,7 @@ public class CtsHoldingImportPersistenceStepTests
 
         var context = new CtsHoldingImportContext
         {
-            Cph = Guid.NewGuid().ToString(),
+            Cph = CphGenerator.GenerateCtsFormattedLidIdentifier("AH"),
             CurrentDateTime = DateTime.UtcNow,
             SilverParties = []
         };
@@ -74,7 +75,7 @@ public class CtsHoldingImportPersistenceStepTests
         var step = new CtsHoldingImportPersistenceStep(
             Mock.Of<IGenericRepository<CtsHoldingDocument>>(),
             _ctsPartyRepositoryMock.Object,
-            Mock.Of<IGenericRepository<PartyRoleRelationshipDocument>>(),
+            Mock.Of<IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(),
             Mock.Of<ILogger<CtsHoldingImportPersistenceStep>>());
 
         await step.ExecuteAsync(context, CancellationToken.None);
@@ -93,7 +94,7 @@ public class CtsHoldingImportPersistenceStepTests
 
         var context = new CtsHoldingImportContext
         {
-            Cph = Guid.NewGuid().ToString(),
+            Cph = CphGenerator.GenerateCtsFormattedLidIdentifier("AH"),
             CurrentDateTime = DateTime.UtcNow,
             SilverParties = [incomingParties]
         };
@@ -103,7 +104,7 @@ public class CtsHoldingImportPersistenceStepTests
         var step = new CtsHoldingImportPersistenceStep(
             Mock.Of<IGenericRepository<CtsHoldingDocument>>(),
             _ctsPartyRepositoryMock.Object,
-            Mock.Of<IGenericRepository<PartyRoleRelationshipDocument>>(),
+            Mock.Of<IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(),
             Mock.Of<ILogger<CtsHoldingImportPersistenceStep>>());
 
         await step.ExecuteAsync(context, CancellationToken.None);
@@ -127,7 +128,7 @@ public class CtsHoldingImportPersistenceStepTests
 
         var context = new CtsHoldingImportContext
         {
-            Cph = Guid.NewGuid().ToString(),
+            Cph = CphGenerator.GenerateCtsFormattedLidIdentifier("AH"),
             CurrentDateTime = DateTime.UtcNow,
             SilverParties = [incomingParties]
         };
@@ -141,7 +142,7 @@ public class CtsHoldingImportPersistenceStepTests
         var step = new CtsHoldingImportPersistenceStep(
             Mock.Of<IGenericRepository<CtsHoldingDocument>>(),
             _ctsPartyRepositoryMock.Object,
-            Mock.Of<IGenericRepository<PartyRoleRelationshipDocument>>(),
+            Mock.Of<IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(),
             Mock.Of<ILogger<CtsHoldingImportPersistenceStep>>());
 
         await step.ExecuteAsync(context, CancellationToken.None);
@@ -155,7 +156,7 @@ public class CtsHoldingImportPersistenceStepTests
     {
         var context = new CtsHoldingImportContext
         {
-            Cph = Guid.NewGuid().ToString(),
+            Cph = CphGenerator.GenerateCtsFormattedLidIdentifier("AH"),
             CurrentDateTime = DateTime.UtcNow,
             SilverPartyRoles = []
         };
@@ -170,18 +171,18 @@ public class CtsHoldingImportPersistenceStepTests
 
         await step.ExecuteAsync(context, CancellationToken.None);
 
-        _partyRoleRelationshipRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<PartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()), Times.Once);
-        _partyRoleRelationshipRepositoryMock.Verify(r => r.AddManyAsync(It.Is<IEnumerable<PartyRoleRelationshipDocument>>(x => x.Count() == 3), It.IsAny<CancellationToken>()), Times.Never);
+        _partyRoleRelationshipRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()), Times.Once);
+        _partyRoleRelationshipRepositoryMock.Verify(r => r.AddManyAsync(It.Is<IEnumerable<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(x => x.Count() == 3), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task GivenExistingPartyRoles_WhenStepExecuted_ShouldReplaceAllPartyRoles()
     {
-        var roles = _fixture.CreateMany<PartyRoleRelationshipDocument>(3).ToList();
+        var roles = _fixture.CreateMany<Core.Documents.Silver.SitePartyRoleRelationshipDocument>(3).ToList();
 
         var context = new CtsHoldingImportContext
         {
-            Cph = Guid.NewGuid().ToString(),
+            Cph = CphGenerator.GenerateCtsFormattedLidIdentifier("AH"),
             CurrentDateTime = DateTime.UtcNow,
             SilverPartyRoles = roles
         };
@@ -196,8 +197,8 @@ public class CtsHoldingImportPersistenceStepTests
 
         await step.ExecuteAsync(context, CancellationToken.None);
 
-        _partyRoleRelationshipRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<PartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()), Times.Once);
-        _partyRoleRelationshipRepositoryMock.Verify(r => r.AddManyAsync(It.Is<IEnumerable<PartyRoleRelationshipDocument>>(x => x.Count() == 3), It.IsAny<CancellationToken>()), Times.Once);
+        _partyRoleRelationshipRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()), Times.Once);
+        _partyRoleRelationshipRepositoryMock.Verify(r => r.AddManyAsync(It.Is<IEnumerable<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(x => x.Count() == 3), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     private void SetupDefaultRepositoryMocks()
@@ -226,11 +227,11 @@ public class CtsHoldingImportPersistenceStepTests
 
         // RoleRelationships
         _partyRoleRelationshipRepositoryMock
-            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<PartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _partyRoleRelationshipRepositoryMock
-            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<PartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
     }
 }

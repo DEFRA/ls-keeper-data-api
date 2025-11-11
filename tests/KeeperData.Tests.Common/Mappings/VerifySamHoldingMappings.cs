@@ -15,7 +15,7 @@ public static class VerifySamHoldingMappings
                             source.SAON_END_NUMBER, source.SAON_END_NUMBER_SUFFIX,
                             source.PAON_START_NUMBER, source.PAON_START_NUMBER_SUFFIX,
                             source.PAON_END_NUMBER, source.PAON_END_NUMBER_SUFFIX,
-                            saonLabel: string.Empty);
+                            source.SAON_DESCRIPTION, source.PAON_DESCRIPTION);
 
         source.Should().NotBeNull();
         target.Should().NotBeNull();
@@ -27,8 +27,15 @@ public static class VerifySamHoldingMappings
         target.CountyParishHoldingNumber.Should().Be(source.CPH);
         target.AlternativeHoldingIdentifier.Should().BeNull();
 
+        target.CphRelationshipType.Should().Be(source.CPH_RELATIONSHIP_TYPE);
+        target.SecondaryCph.Should().Be(source.SecondaryCphUnwrapped);
+
         target.CphTypeIdentifier.Should().Be(source.CPH_TYPE);
         target.LocationName.Should().Be(source.FEATURE_NAME);
+
+        target.DiseaseType.Should().Be(source.DISEASE_TYPE);
+        target.Interval.Should().Be(source.INTERVAL);
+        target.IntervalUnitOfTime.Should().Be(source.INTERVAL_UNIT_OF_TIME);
 
         target.HoldingStartDate.Should().Be(source.FEATURE_ADDRESS_FROM_DATE);
         target.HoldingEndDate.Should().Be(source.FEATURE_ADDRESS_TO_DATE);
@@ -40,8 +47,24 @@ public static class VerifySamHoldingMappings
 
         target.PremiseActivityTypeId.Should().NotBeNullOrWhiteSpace();
         target.PremiseActivityTypeCode.Should().Be(source.FACILITY_BUSINSS_ACTVTY_CODE);
+        target.PremiseSubActivityTypeCode.Should().Be(source.FCLTY_SUB_BSNSS_ACTVTY_CODE);
+
+        target.MovementRestrictionReasonCode.Should().Be(source.MOVEMENT_RSTRCTN_RSN_CODE);
+
         target.PremiseTypeIdentifier.Should().NotBeNullOrWhiteSpace();
         target.PremiseTypeCode.Should().Be(source.FACILITY_TYPE_CODE);
+
+        target.SpeciesTypeCode.Should().Be(source.AnimalSpeciesCodeUnwrapped);
+
+        var targetProductionUsageCodes = target.ProductionUsageCodeList
+            .Select(p => p)
+            .OrderBy(p => p)
+            .ToHashSet();
+        var sourceProductionUsageCodes = source.AnimalProductionUsageCodeList
+            .Select(p => p)
+            .OrderBy(p => p)
+            .ToHashSet();
+        targetProductionUsageCodes.Should().BeEquivalentTo(sourceProductionUsageCodes);
 
         // Location
         target.Location.Should().NotBeNull();
@@ -59,6 +82,7 @@ public static class VerifySamHoldingMappings
         address.AddressStreet.Should().Be(source.STREET);
         address.AddressTown.Should().Be(source.TOWN);
         address.AddressPostCode.Should().Be(source.POSTCODE);
+        address.CountrySubDivision.Should().Be(source.UK_INTERNAL_CODE);
         address.CountryIdentifier.Should().NotBeNullOrWhiteSpace();
         address.CountryCode.Should().Be(source.COUNTRY_CODE);
         address.UniquePropertyReferenceNumber.Should().Be(source.UDPRN);

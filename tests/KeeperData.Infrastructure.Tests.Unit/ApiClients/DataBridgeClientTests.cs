@@ -5,6 +5,7 @@ using KeeperData.Infrastructure.ApiClients;
 using KeeperData.Tests.Common.Factories.UseCases;
 using KeeperData.Tests.Common.Generators;
 using KeeperData.Tests.Common.Utilities;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Contrib.HttpClient;
@@ -33,7 +34,24 @@ public class DataBridgeClientTests
             .Setup(f => f.CreateClient("DataBridgeApi"))
             .Returns(_httpClient);
 
-        _client = new DataBridgeClient(_httpClientFactoryMock.Object, _loggerMock.Object);
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { "ApiClients:DataBridgeApi:ServiceName", "" },
+                { "DataBridgeCollectionFlags:CtsAgentsEnabled", "true" },
+                { "DataBridgeCollectionFlags:CtsKeepersEnabled", "true" },
+                { "DataBridgeCollectionFlags:CtsHoldingsEnabled", "true" },
+                { "DataBridgeCollectionFlags:SamHoldingsEnabled", "true" },
+                { "DataBridgeCollectionFlags:SamHoldersEnabled", "true" },
+                { "DataBridgeCollectionFlags:SamHerdsEnabled", "true" },
+                { "DataBridgeCollectionFlags:SamPartiesEnabled", "true" },
+            })
+            .Build();
+
+        _client = new DataBridgeClient(
+            _httpClientFactoryMock.Object,
+            config,
+            _loggerMock.Object);
     }
 
     [Fact]
@@ -57,27 +75,29 @@ public class DataBridgeClientTests
     }
 
     [Fact]
-    public async Task GetSamHoldersAsync_ShouldReturnHoldings_WhenApiReturnsSuccess()
+    public async Task GetSamHolderAsync_ShouldReturnHolder_WhenApiReturnsSuccess()
     {
-        var id = CphGenerator.GenerateFormattedCph();
-        var expectedResponse = MockSamData.GetSamHoldersResponse(id);
+        var partyId = $"C{new Random().Next(1, 9):D6}";
+        var holdingIdentifier = "XX/XXX/XXXX";
+        var expectedResponse = MockSamData.GetSamHolderResponse(partyId, [holdingIdentifier]);
 
         var uri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamHolders,
             new { },
-            DataBridgeQueries.SamHoldersByCph(id));
+            DataBridgeQueries.SamHolderByPartyId(partyId));
 
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetSamHoldersAsync(id, CancellationToken.None);
+        var result = await _client.GetSamHoldersByPartyIdAsync(partyId, CancellationToken.None);
 
         result.Should().NotBeNull().And.HaveCount(1);
-        result[0].CphList.Should().Contain(id);
+        result[0].PARTY_ID.Should().Contain(partyId);
+        result[0].CphList.Should().Contain(holdingIdentifier);
     }
 
     [Fact]
-    public async Task GetSamHerdsAsync_ShouldReturnHoldings_WhenApiReturnsSuccess()
+    public async Task GetSamHerdsAsync_ShouldReturnHerds_WhenApiReturnsSuccess()
     {
         var id = CphGenerator.GenerateFormattedCph();
         var partyId = Guid.NewGuid().ToString();
@@ -100,7 +120,7 @@ public class DataBridgeClientTests
     }
 
     [Fact]
-    public async Task GetSamPartyAsync_ShouldReturnHoldings_WhenApiReturnsSuccess()
+    public async Task GetSamPartyAsync_ShouldReturnParty_WhenApiReturnsSuccess()
     {
         var partyId = Guid.NewGuid().ToString();
         var expectedResponse = MockSamData.GetSamPartyResponse(partyId);
@@ -120,7 +140,7 @@ public class DataBridgeClientTests
     }
 
     [Fact]
-    public async Task GetSamPartiesAsync_ShouldReturnHoldings_WhenApiReturnsSuccess()
+    public async Task GetSamPartiesAsync_ShouldReturnParties_WhenApiReturnsSuccess()
     {
         var partyId = Guid.NewGuid().ToString();
         var expectedResponse = MockSamData.GetSamPartiesResponse(partyId);

@@ -1,4 +1,4 @@
-using KeeperData.Application.Orchestration.Sam.Holdings.Mappings;
+using KeeperData.Application.Orchestration.Sam.Mappings;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Services;
@@ -27,7 +27,7 @@ public class SamHoldingImportGoldMappingStep(
             context.CurrentDateTime,
             context.SilverHerds,
             context.Cph,
-            HoldingIdentifierType.HoldingNumber.ToString());
+            HoldingIdentifierType.CphNumber.ToString());
 
         context.GoldParties = await SamPartyMapper.ToGold(
             context.CurrentDateTime,

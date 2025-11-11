@@ -8,6 +8,7 @@ public class SamCphHolderBuilder(
     string fixedChangeType,
     int batchId,
     List<string> holdingIdentifiers,
+    string? partyId = null,
     bool allowNulls = true) : ISpecimenBuilder
 {
     private readonly Random _random = new();
@@ -21,7 +22,7 @@ public class SamCphHolderBuilder(
     {
         if (request is Type type && type == typeof(SamCphHolder))
         {
-            var partyId = $"C{_random.Next(1, 9):D6}";
+            partyId ??= $"C{_random.Next(1, 9):D6}";
 
             var (
                 saonStart,

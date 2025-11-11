@@ -8,6 +8,15 @@ public static class HoldingIdentifierFormatters
             return string.Empty;
 
         var dashIndex = cphh.IndexOf('-');
-        return dashIndex >= 0 ? cphh.Substring(0, dashIndex) : cphh;
+        return dashIndex >= 0 ? cphh[..dashIndex] : cphh;
+    }
+
+    public static string LidIdentifierToCph(this string? lidIdentifier)
+    {
+        if (string.IsNullOrWhiteSpace(lidIdentifier))
+            return string.Empty;
+
+        var dashIndex = lidIdentifier.IndexOf('-');
+        return dashIndex >= 0 ? lidIdentifier[(dashIndex + 1)..] : lidIdentifier;
     }
 }

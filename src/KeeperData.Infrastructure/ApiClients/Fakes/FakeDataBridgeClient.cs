@@ -12,9 +12,9 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult(GetSamCphHolding(id));
     }
 
-    public Task<List<SamCphHolder>> GetSamHoldersAsync(string id, CancellationToken cancellationToken)
+    public Task<List<SamCphHolder>> GetSamHoldersByPartyIdAsync(string id, CancellationToken cancellationToken)
     {
-        return Task.FromResult(GetSamCphHolder(id));
+        return Task.FromResult(GetSamCphHoldersByPartyId(id));
     }
 
     public Task<List<SamHerd>> GetSamHerdsAsync(string id, CancellationToken cancellationToken)
@@ -22,9 +22,9 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult(GetSamHerd(id));
     }
 
-    public Task<SamParty> GetSamPartyAsync(string id, CancellationToken cancellationToken)
+    public Task<SamParty?> GetSamPartyAsync(string id, CancellationToken cancellationToken)
     {
-        return Task.FromResult(GetSamParty(id));
+        return Task.FromResult<SamParty?>(GetSamParty(id));
     }
 
     public Task<List<SamParty>> GetSamPartiesAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
@@ -61,15 +61,16 @@ public class FakeDataBridgeClient : IDataBridgeClient
             }];
     }
 
-    private List<SamCphHolder> GetSamCphHolder(string id)
+    private List<SamCphHolder> GetSamCphHoldersByPartyId(string? partyId = null, string? holdingIdentifier = null)
     {
         return [
-            new SamCphHolder {
+            new SamCphHolder
+            {
                 BATCH_ID = 1,
                 CHANGE_TYPE = "I",
                 IsDeleted = false,
-                CPHS = string.Join(",", [id]),
-                PARTY_ID = $"C{_random.Next(1, 9):D6}",
+                CPHS = string.Join(",", [holdingIdentifier ??= "XX/XXX/XXXX"]),
+                PARTY_ID = partyId ??= $"C{_random.Next(1, 9):D6}",
                 ORGANISATION_NAME = Guid.NewGuid().ToString()
             }];
     }
@@ -125,7 +126,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
                 BATCH_ID = 1,
                 CHANGE_TYPE = "I",
                 IsDeleted = false,
-                PAR_ID = _random.NextInt64(10000000000, 99999999999),
+                PAR_ID = _random.NextInt64(10000000000, 99999999999).ToString(),
                 LID_FULL_IDENTIFIER = id,
                 PAR_SURNAME = Guid.NewGuid().ToString(),
                 ADR_NAME = Guid.NewGuid().ToString(),

@@ -1,6 +1,6 @@
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents.Silver;
-using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Domain.Sites.Formatters;
 
 namespace KeeperData.Application.Orchestration.Cts.Holdings.Mappings;
 
@@ -20,7 +20,7 @@ public static class CtsHoldingMapper
                 LastUpdatedDate = currentDateTime,
                 Deleted = h.IsDeleted ?? false,
 
-                CountyParishHoldingNumber = h.LID_FULL_IDENTIFIER, // TODO - Need to strip out prefix.
+                CountyParishHoldingNumber = h.LID_FULL_IDENTIFIER.LidIdentifierToCph(),
                 AlternativeHoldingIdentifier = null,
 
                 CphTypeIdentifier = h.LTY_LOC_TYPE,
@@ -28,10 +28,7 @@ public static class CtsHoldingMapper
 
                 HoldingStartDate = h.LOC_EFFECTIVE_FROM,
                 HoldingEndDate = h.LOC_EFFECTIVE_TO,
-                HoldingStatus = h.LOC_EFFECTIVE_TO.HasValue
-                                    && h.LOC_EFFECTIVE_TO != default
-                                    ? HoldingStatusType.Inactive.ToString()
-                                    : HoldingStatusType.Active.ToString(),
+                HoldingStatus = HoldingStatusFormatters.FormatHoldingStatus(h.LOC_EFFECTIVE_TO),
 
                 PremiseActivityTypeId = null,
                 PremiseActivityTypeCode = null,

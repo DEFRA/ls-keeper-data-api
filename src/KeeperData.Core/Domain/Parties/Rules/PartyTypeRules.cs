@@ -12,8 +12,8 @@ public static class PartyTypeRules
     /// <returns></returns>
     public static PartyType DeterminePartyType(this CtsAgentOrKeeper party)
     {
-        if (!string.IsNullOrWhiteSpace(party.PAR_SURNAME)
-            && !string.IsNullOrWhiteSpace(party.PAR_INITIALS))
+        if (!string.IsNullOrWhiteSpace(party.PAR_TITLE)
+            && !string.IsNullOrWhiteSpace(party.PAR_SURNAME))
             return PartyType.Person;
 
         return PartyType.Business;

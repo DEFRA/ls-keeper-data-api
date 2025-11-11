@@ -5,6 +5,9 @@ using MongoDB.Driver;
 
 namespace KeeperData.Core.Documents;
 
+/// <summary>
+/// Composite key: HoldingIdentifier, IsHolder, PartyId, RoleTypeId
+/// </summary>
 [CollectionName("sitePartyRoleRelationships")]
 public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
 {
@@ -12,6 +15,7 @@ public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
 
     public string PartyId { get; set; } = string.Empty;
     public string PartyTypeId { get; set; } = string.Empty; // LOV Lookup / Internal Id
+    public bool IsHolder { get; set; }
 
     public string HoldingIdentifier { get; set; } = string.Empty;
     public string HoldingIdentifierType { get; set; } = string.Empty;
@@ -22,7 +26,7 @@ public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
     public DateTime? EffectiveFromData { get; set; }
     public DateTime? EffectiveToData { get; set; }
 
-    public int LastUpdatedBatchId { get; set; }
+    public int? LastUpdatedBatchId { get; set; }
 
     public List<ManagedSpeciesDocument> SpeciesManagedByRole { get; set; } = [];
 
@@ -48,7 +52,11 @@ public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
 
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("RoleTypeId"),
-                new CreateIndexOptions { Name = "idx_roleTypeId" })
+                new CreateIndexOptions { Name = "idx_roleTypeId" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("IsHolder"),
+                new CreateIndexOptions { Name = "idx_isHolder" })
         ];
     }
 }

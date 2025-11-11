@@ -11,13 +11,13 @@ namespace KeeperData.Application.Orchestration.Cts.Holdings.Steps;
 public class CtsHoldingImportPersistenceStep(
     IGenericRepository<CtsHoldingDocument> silverHoldingRepository,
     IGenericRepository<CtsPartyDocument> silverPartyRepository,
-    IGenericRepository<PartyRoleRelationshipDocument> silverPartyRoleRelationshipRepository,
+    IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument> silverPartyRoleRelationshipRepository,
     ILogger<CtsHoldingImportPersistenceStep> logger)
     : ImportStepBase<CtsHoldingImportContext>(logger)
 {
     private readonly IGenericRepository<CtsHoldingDocument> _silverHoldingRepository = silverHoldingRepository;
     private readonly IGenericRepository<CtsPartyDocument> _silverPartyRepository = silverPartyRepository;
-    private readonly IGenericRepository<PartyRoleRelationshipDocument> _silverPartyRoleRelationshipRepository = silverPartyRoleRelationshipRepository;
+    private readonly IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument> _silverPartyRoleRelationshipRepository = silverPartyRoleRelationshipRepository;
 
     protected override async Task ExecuteCoreAsync(CtsHoldingImportContext context, CancellationToken cancellationToken)
     {
@@ -27,9 +27,9 @@ public class CtsHoldingImportPersistenceStep(
             await UpsertSilverHoldingAsync(primaryHolding, cancellationToken);
         }
 
-        await UpsertSilverPartiesAndDeleteOrphansAsync(context.Cph, context.SilverParties, cancellationToken);
+        await UpsertSilverPartiesAndDeleteOrphansAsync(context.CphTrimmed, context.SilverParties, cancellationToken);
 
-        await ReplaceSilverPartyRolesAsync(context.Cph, context.SilverPartyRoles, cancellationToken);
+        await ReplaceSilverPartyRolesAsync(context.CphTrimmed, context.SilverPartyRoles, cancellationToken);
     }
 
     private async Task UpsertSilverHoldingAsync(
@@ -112,14 +112,14 @@ public class CtsHoldingImportPersistenceStep(
 
     private async Task ReplaceSilverPartyRolesAsync(
         string holdingIdentifier,
-        List<PartyRoleRelationshipDocument> incomingPartyRoles,
+        List<Core.Documents.Silver.SitePartyRoleRelationshipDocument> incomingPartyRoles,
         CancellationToken cancellationToken)
     {
         var sourceAsCts = SourceSystemType.CTS.ToString();
 
-        var deleteFilter = Builders<PartyRoleRelationshipDocument>.Filter.And(
-            Builders<PartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier),
-            Builders<PartyRoleRelationshipDocument>.Filter.Eq(x => x.Source, sourceAsCts)
+        var deleteFilter = Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.And(
+            Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier),
+            Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.Source, sourceAsCts)
         );
 
         await _silverPartyRoleRelationshipRepository.DeleteManyAsync(deleteFilter, cancellationToken);

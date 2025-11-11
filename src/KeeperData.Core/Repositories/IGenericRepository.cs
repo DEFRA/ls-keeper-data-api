@@ -13,6 +13,8 @@ public interface IGenericRepository<T> where T : IEntity
         Expression<Func<T, IEnumerable<TNested>>> arrayField,
         FilterDefinition<TNested> nestedFilter,
         CancellationToken cancellationToken = default);
+    Task<List<T>> FindAsync(FilterDefinition<T> filter, CancellationToken cancellationToken = default);
+    Task<List<T>> FindAsync(FilterDefinition<T> filter, SortDefinition<T> sort, CancellationToken cancellationToken = default);
 
     Task AddAsync(T entity, CancellationToken cancellationToken = default);
     Task AddManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);

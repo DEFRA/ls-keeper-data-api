@@ -13,7 +13,7 @@ public class AggregateTrackerTests
 
         public string Id { get; set; } = Guid.NewGuid().ToString();
 
-        public int LastUpdatedBatchId { get; set; } = 1;
+        public int? LastUpdatedBatchId { get; set; } = 1;
 
         public void ClearDomainEvents() { }
     }

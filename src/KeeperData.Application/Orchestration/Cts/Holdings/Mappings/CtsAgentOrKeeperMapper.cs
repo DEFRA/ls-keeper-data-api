@@ -3,6 +3,7 @@ using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Parties.Rules;
+using KeeperData.Core.Domain.Sites.Formatters;
 
 namespace KeeperData.Application.Orchestration.Cts.Holdings.Mappings;
 
@@ -11,6 +12,7 @@ public static class CtsAgentOrKeeperMapper
     public static async Task<List<CtsPartyDocument>> ToSilver(
         DateTime currentDateTime,
         List<CtsAgentOrKeeper> rawParties,
+        HoldingIdentifierType holdingIdentifierType,
         InferredRoleType inferredRoleType,
         Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
         CancellationToken cancellationToken)
@@ -31,9 +33,10 @@ public static class CtsAgentOrKeeperMapper
                 LastUpdatedDate = currentDateTime,
                 Deleted = p.IsDeleted ?? false,
 
-                CountyParishHoldingNumber = p.LID_FULL_IDENTIFIER,
+                CountyParishHoldingNumber = p.LID_FULL_IDENTIFIER.LidIdentifierToCph(),
+                HoldingIdentifierType = holdingIdentifierType.ToString(),
 
-                PartyId = p.PAR_ID.ToString(),
+                PartyId = p.PAR_ID,
                 PartyTypeId = partyTypeId,
 
                 PartyFullName = null,

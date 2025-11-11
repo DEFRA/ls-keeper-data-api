@@ -5,11 +5,14 @@ using MongoDB.Driver;
 
 namespace KeeperData.Core.Documents.Silver;
 
+/// <summary>
+/// Composite key: CountyParishHoldingHerd, ProductionUsageCode, Herdmark
+/// </summary>
 [CollectionName("samHerds")]
 public class SamHerdDocument : IEntity, IContainsIndexes, IDeletableEntity
 {
     public string? Id { get; set; }
-    public int LastUpdatedBatchId { get; set; }
+    public int? LastUpdatedBatchId { get; set; }
     public DateTime LastUpdatedDate { get; set; }
     public bool Deleted { get; set; }
 
@@ -26,8 +29,11 @@ public class SamHerdDocument : IEntity, IContainsIndexes, IDeletableEntity
     public string? ProductionTypeId { get; set; } // LOV Lookup / Internal Id
     public string? ProductionTypeCode { get; set; }
 
+    public string? DiseaseType { get; set; }
     public decimal? Interval { get; set; }
     public string? IntervalUnitOfTime { get; set; }
+
+    public string? MovementRestrictionReasonCode { get; set; }
 
     public DateTime GroupMarkStartDate { get; set; } = default;
     public DateTime? GroupMarkEndDate { get; set; }
@@ -45,7 +51,11 @@ public class SamHerdDocument : IEntity, IContainsIndexes, IDeletableEntity
 
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("CountyParishHoldingNumber"),
-                new CreateIndexOptions { Name = "idx_countyParishHoldingNumber" })
+                new CreateIndexOptions { Name = "idx_countyParishHoldingNumber" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("ProductionUsageCode"),
+                new CreateIndexOptions { Name = "idx_productionUsageCode" })
         ];
     }
 }

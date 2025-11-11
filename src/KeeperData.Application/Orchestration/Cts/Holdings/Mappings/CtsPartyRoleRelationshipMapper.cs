@@ -5,20 +5,17 @@ namespace KeeperData.Application.Orchestration.Cts.Holdings.Mappings;
 
 public static class CtsPartyRoleRelationshipMapper
 {
-    public static List<PartyRoleRelationshipDocument> ToSilver(
-        List<CtsPartyDocument> silverParties,
-        string holdingIdentifier,
-        string holdingIdentifierType)
+    public static List<Core.Documents.Silver.SitePartyRoleRelationshipDocument> ToSilver(List<CtsPartyDocument> silverParties)
     {
         var result = silverParties?
             .Where(x => x.Roles != null)
-            .SelectMany(x => x.Roles!, (party, role) => new PartyRoleRelationshipDocument
+            .SelectMany(x => x.Roles!, (party, role) => new Core.Documents.Silver.SitePartyRoleRelationshipDocument
             {
                 Id = role.IdentifierId,
                 PartyId = party.PartyId,
                 PartyTypeId = party.PartyTypeId,
-                HoldingIdentifier = holdingIdentifier,
-                HoldingIdentifierType = holdingIdentifierType,
+                HoldingIdentifier = party.CountyParishHoldingNumber,
+                HoldingIdentifierType = party.HoldingIdentifierType,
                 Source = SourceSystemType.CTS.ToString(),
 
                 RoleTypeId = role.RoleTypeId,
