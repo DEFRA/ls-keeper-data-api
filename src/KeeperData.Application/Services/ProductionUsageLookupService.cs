@@ -17,7 +17,14 @@ public class ProductionUsageLookupService : IProductionUsageLookupService
 
         return await Task.FromResult(new ProductionUsageDocument
         {
-            IdentifierId = id
+            IdentifierId = id,
+            Code = "PLACEHOLDER_CODE",
+            Description = "Placeholder Description",
+
+            // other non-nullable properties we need
+            IsActive = false,
+            EffectiveStartDate = System.DateTime.MinValue,
+            CreatedDate = System.DateTime.MinValue
         });
     }
 

@@ -262,7 +262,7 @@
   {
     "id": "e6bfe558-17a2-48d2-984c-bf4614c46921",
     "code": "RWM",
-    "name": "Red \u0026 White Meat",
+    "name": "Red & White Meat",
     "isActive": true,
     "priorityOrder": 190,
     "effectiveStartDate": "2025-10-31T16:40:17.126571Z",
@@ -431,7 +431,7 @@
   {
     "id": "3840c288-9db1-4633-afcb-c56b2bef41b1",
     "code": "MPC",
-    "name": "Meat Processing \u0026 Coldstore",
+    "name": "Meat Processing & Coldstore",
     "isActive": true,
     "priorityOrder": 320,
     "effectiveStartDate": "2025-10-31T16:40:17.1265909Z",
@@ -678,7 +678,7 @@
   {
     "id": "c8fe0e06-801e-49a8-a24a-32904384ff2c",
     "code": "VPB",
-    "name": "Veterinary Practice (AH \u0026 private work)",
+    "name": "Veterinary Practice (AH & private work)",
     "isActive": true,
     "priorityOrder": 510,
     "effectiveStartDate": "2025-10-31T16:40:17.126624Z",

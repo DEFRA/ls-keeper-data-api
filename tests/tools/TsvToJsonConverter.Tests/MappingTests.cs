@@ -1,6 +1,6 @@
 using FluentAssertions;
 
-namespace CsvToJsonConverter.Tests;
+namespace TsvToJsonConverter.Tests;
 
 public class MappingTests
 {
@@ -8,8 +8,8 @@ public class MappingTests
     public void MapCountry_WithValidData_CreatesCorrectObject()
     {
         // Arrange
-        var csvLine = "GB,,United Kingdom of Great Britain and Northern Ireland,United Kingdom,System,2023-01-01,false,,1900-01-01,false,true,System,2024-01-01,10";
-        var parts = csvLine.Split(',');
+        var tsvLine = "GB\t\tUnited Kingdom of Great Britain and Northern Ireland\tUnited Kingdom\tSystem\t2023-01-01\tfalse\t\t1900-01-01\tfalse\ttrue\tSystem\t2024-01-01\t10";
+        var parts = tsvLine.Split('\t');
 
         // Act
         var result = Program.MapCountry(parts);
@@ -32,8 +32,8 @@ public class MappingTests
     public void MapCountry_WithEmptyLastModifiedDate_UsesCurrentTime()
     {
         // Arrange
-        var csvLine = "GB,,United Kingdom,UK,System,2023-01-01,false,,1900-01-01,false,true,System,,10";
-        var parts = csvLine.Split(',');
+        var tsvLine = "GB\t\tUnited Kingdom\tUK\tSystem\t2023-01-01\tfalse\t\t1900-01-01\tfalse\ttrue\tSystem\t\t10";
+        var parts = tsvLine.Split('\t');
 
         // Act
         var result = Program.MapCountry(parts);
@@ -46,23 +46,23 @@ public class MappingTests
     public void MapCountry_WithTooFewColumns_ThrowsInvalidDataException()
     {
         // Arrange
-        var csvLine = "GB,United Kingdom"; // Not enough columns
-        var parts = csvLine.Split(',');
+        var tsvLine = "GB\tUnited Kingdom"; // Not enough columns
+        var parts = tsvLine.Split('\t');
 
         // Act
         Action act = () => Program.MapCountry(parts);
 
         // Assert
         act.Should().Throw<InvalidDataException>()
-           .WithMessage("CSV line for country has fewer than 14 columns.");
+           .WithMessage("TSV line for country has fewer than 14 columns.");
     }
 
     [Fact]
     public void MapSpecies_WithValidData_CreatesCorrectObject()
     {
         // Arrange
-        var csvLine = "CTT,NEWID(),Cattle,System,NEWDATE(),,NEWDATE(),True,10,System,NEWDATE()";
-        var parts = csvLine.Split(',');
+        var tsvLine = "CTT\tNEWID()\tCattle\tSystem\tNEWDATE()\t\tNEWDATE()\tTrue\t10\tSystem\tNEWDATE()";
+        var parts = tsvLine.Split('\t');
 
         // Act
         var result = Program.MapSpecies(parts);
@@ -84,23 +84,23 @@ public class MappingTests
     public void MapSpecies_WithTooFewColumns_ThrowsInvalidDataException()
     {
         // Arrange
-        var csvLine = "CTT,Cattle";
-        var parts = csvLine.Split(',');
+        var tsvLine = "CTT\tCattle";
+        var parts = tsvLine.Split('\t');
 
         // Act
         Action act = () => Program.MapSpecies(parts);
 
         // Assert
         act.Should().Throw<InvalidDataException>()
-           .WithMessage("CSV line for species has fewer than 11 columns.");
+           .WithMessage("TSV line for species has fewer than 11 columns.");
     }
 
     [Fact]
     public void MapRole_WithValidData_CreatesCorrectObject()
     {
         // Arrange
-        var csvLine = "LIVESTOCKKEEPER,NEWID(),Livestock Keeper,System,NEWDATE(),,NEWDATE(),True,,System,NEWDATE()";
-        var parts = csvLine.Split(',');
+        var tsvLine = "LIVESTOCKKEEPER\tNEWID()\tLivestock Keeper\tSystem\tNEWDATE()\t\tNEWDATE()\tTrue\t\tSystem\tNEWDATE()";
+        var parts = tsvLine.Split('\t');
 
         // Act
         var result = Program.MapRole(parts);
@@ -118,8 +118,8 @@ public class MappingTests
     public void MapPremisesType_WithValidData_CreatesCorrectObject()
     {
         // Arrange
-        var csvLine = "AH,NEWID(),Agricultural Holding,System,NEWDATE(),,NEWDATE(),True,,System,NEWDATE()";
-        var parts = csvLine.Split(',');
+        var tsvLine = "AH\tNEWID()\tAgricultural Holding\tSystem\tNEWDATE()\t\tNEWDATE()\tTrue\t\tSystem\tNEWDATE()";
+        var parts = tsvLine.Split('\t');
 
         // Act
         var result = Program.MapPremisesType(parts);
@@ -137,8 +137,8 @@ public class MappingTests
     public void MapPremisesActivityType_WithValidData_CreatesCorrectObject()
     {
         // Arrange
-        var csvLine = "AFU,NEWID(),Approved Finishing Unit,System,NEWDATE(),,NEWDATE(),True,150,System,NEWDATE()";
-        var parts = csvLine.Split(',');
+        var tsvLine = "AFU\tNEWID()\tApproved Finishing Unit\tSystem\tNEWDATE()\t\tNEWDATE()\tTrue\t150\tSystem\tNEWDATE()";
+        var parts = tsvLine.Split('\t');
 
         // Act
         var result = Program.MapPremisesActivityType(parts);
@@ -156,8 +156,8 @@ public class MappingTests
     public void MapSiteIdentifierType_WithValidData_CreatesCorrectObject()
     {
         // Arrange
-        var csvLine = "CPHN,NEWID(),CPH Number,System,NEWDATE(),,NEWDATE(),True,System,NEWDATE()";
-        var parts = csvLine.Split(',');
+        var tsvLine = "CPHN\tNEWID()\tCPH Number\tSystem\tNEWDATE()\t\tNEWDATE()\tTrue\tSystem\tNEWDATE()";
+        var parts = tsvLine.Split('\t');
 
         // Act
         var result = Program.MapSiteIdentifierType(parts);
@@ -165,6 +165,24 @@ public class MappingTests
         // Assert
         result.Code.Should().Be("CPHN");
         result.Name.Should().Be("CPH Number");
+        result.IsActive.Should().BeTrue();
+        result.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        Guid.TryParse(result.Id, out _).Should().BeTrue();
+    }
+
+    [Fact]
+    public void MapProductionUsage_WithValidData_CreatesCorrectObject()
+    {
+        // Arrange
+        var tsvLine = "BEEF\tNEWID()\tBeef\tSystem\tNEWDATE()\t\tNEWDATE()\tTrue\t\tSystem\tNEWDATE()";
+        var parts = tsvLine.Split('\t');
+
+        // Act
+        var result = Program.MapProductionUsage(parts);
+
+        // Assert
+        result.Code.Should().Be("BEEF");
+        result.Description.Should().Be("Beef");
         result.IsActive.Should().BeTrue();
         result.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         Guid.TryParse(result.Id, out _).Should().BeTrue();
