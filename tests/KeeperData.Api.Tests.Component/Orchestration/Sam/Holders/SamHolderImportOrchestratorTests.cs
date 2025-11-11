@@ -1,7 +1,7 @@
 using AutoFixture;
 using FluentAssertions;
 using KeeperData.Application.Extensions;
-using KeeperData.Application.Orchestration.Sam.Holders;
+using KeeperData.Application.Orchestration.Imports.Sam.Holders;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;

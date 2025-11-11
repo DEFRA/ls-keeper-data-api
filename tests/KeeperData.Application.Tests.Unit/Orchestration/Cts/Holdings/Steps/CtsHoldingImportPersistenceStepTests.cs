@@ -1,6 +1,6 @@
 using AutoFixture;
-using KeeperData.Application.Orchestration.Cts.Holdings;
-using KeeperData.Application.Orchestration.Cts.Holdings.Steps;
+using KeeperData.Application.Orchestration.Imports.Cts.Holdings;
+using KeeperData.Application.Orchestration.Imports.Cts.Holdings.Steps;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Repositories;
 using KeeperData.Tests.Common.Generators;

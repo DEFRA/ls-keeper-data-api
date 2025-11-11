@@ -1,0 +1,18 @@
+using KeeperData.Core.ApiClients.DataBridgeApi;
+using KeeperData.Core.Attributes;
+using Microsoft.Extensions.Logging;
+
+namespace KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk.Steps;
+
+[StepOrder(2)]
+public class SamHoldingBulkScanStep(
+    IDataBridgeClient dataBridgeClient,
+    ILogger<SamHoldingBulkScanStep> logger) : ScanStepBase<SamBulkScanContext>(logger)
+{
+    private readonly IDataBridgeClient _dataBridgeClient = dataBridgeClient;
+
+    protected override Task ExecuteCoreAsync(SamBulkScanContext context, CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+}

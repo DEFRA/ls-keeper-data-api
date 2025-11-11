@@ -1,6 +1,6 @@
 using AutoFixture;
-using KeeperData.Application.Orchestration.Sam.Holdings;
-using KeeperData.Application.Orchestration.Sam.Holdings.Steps;
+using KeeperData.Application.Orchestration.Imports.Sam.Holdings;
+using KeeperData.Application.Orchestration.Imports.Sam.Holdings.Steps;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Repositories;
