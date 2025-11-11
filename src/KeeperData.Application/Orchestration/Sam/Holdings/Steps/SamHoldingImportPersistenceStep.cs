@@ -366,7 +366,7 @@ public class SamHoldingImportPersistenceStep(
     {
         // TODO - Look to follow with Silver method
         var deleteFilter = Builders<SiteGroupMarkRelationshipDocument>.Filter.And(
-            Builders<SiteGroupMarkRelationshipDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier)
+            Builders<SiteGroupMarkRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier)
         );
 
         await _goldSiteGroupMarkRelationshipRepository.DeleteManyAsync(deleteFilter, cancellationToken);
