@@ -20,7 +20,7 @@ public class CountryRepository(
             return null;
 
         var countries = await GetAllAsync(cancellationToken);
-        return countries.FirstOrDefault(c => c.Code?.Equals(id, StringComparison.OrdinalIgnoreCase) == true);
+        return countries.FirstOrDefault(c => c.IdentifierId?.Equals(id, StringComparison.OrdinalIgnoreCase) == true);
     }
 
     public async Task<(string? countryId, string? countryName)> FindAsync(string? lookupValue, CancellationToken cancellationToken = default)

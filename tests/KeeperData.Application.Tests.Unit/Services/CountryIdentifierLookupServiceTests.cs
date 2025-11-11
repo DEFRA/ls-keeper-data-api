@@ -1,3 +1,4 @@
+using FluentAssertions;
 using KeeperData.Application.Services;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Repositories;
@@ -17,16 +18,20 @@ public class CountryIdentifierLookupServiceTests
     }
 
     [Fact]
-    public async Task GetByIdAsync_ReturnsCountry_WhenFound()
+    public async Task GetByIdAsync_WhenCountryFound_ReturnsCountry()
     {
         // Arrange
-        var countryId = "GB";
+        var countryId = Guid.NewGuid().ToString();
         var expectedCountry = new CountryDocument
         {
             IdentifierId = countryId,
             Code = "GB",
             Name = "United Kingdom",
-            IsActive = true
+            IsActive = true,
+            SortOrder = 10,
+            EffectiveStartDate = DateTime.UtcNow,
+            CreatedBy = "System",
+            CreatedDate = DateTime.UtcNow
         };
 
         _mockCountryRepository
@@ -37,17 +42,17 @@ public class CountryIdentifierLookupServiceTests
         var result = await _sut.GetByIdAsync(countryId, CancellationToken.None);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(expectedCountry.Code, result.Code);
-        Assert.Equal(expectedCountry.Name, result.Name);
+        result.Should().NotBeNull();
+        result!.Code.Should().Be(expectedCountry.Code);
+        result.Name.Should().Be(expectedCountry.Name);
         _mockCountryRepository.Verify(x => x.GetByIdAsync(countryId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task GetByIdAsync_ReturnsNull_WhenNotFound()
+    public async Task GetByIdAsync_WhenCountryNotFound_ReturnsNull()
     {
         // Arrange
-        var countryId = "XX";
+        var countryId = Guid.NewGuid().ToString();
 
         _mockCountryRepository
             .Setup(x => x.GetByIdAsync(countryId, It.IsAny<CancellationToken>()))
@@ -57,12 +62,12 @@ public class CountryIdentifierLookupServiceTests
         var result = await _sut.GetByIdAsync(countryId, CancellationToken.None);
 
         // Assert
-        Assert.Null(result);
+        result.Should().BeNull();
         _mockCountryRepository.Verify(x => x.GetByIdAsync(countryId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task FindAsync_ReturnsCountryIdAndName_WhenFound()
+    public async Task FindAsync_WhenCountryFound_ReturnsCountryIdAndName()
     {
         // Arrange
         var lookupValue = "GB";
@@ -76,13 +81,13 @@ public class CountryIdentifierLookupServiceTests
         var result = await _sut.FindAsync(lookupValue, CancellationToken.None);
 
         // Assert
-        Assert.Equal(expectedResult.Item1, result.countryId);
-        Assert.Equal(expectedResult.Item2, result.countryName);
+        result.countryId.Should().Be(expectedResult.Item1);
+        result.countryName.Should().Be(expectedResult.Item2);
         _mockCountryRepository.Verify(x => x.FindAsync(lookupValue, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task FindAsync_ReturnsNulls_WhenNotFound()
+    public async Task FindAsync_WhenCountryNotFound_ReturnsNulls()
     {
         // Arrange
         var lookupValue = "Unknown";
@@ -96,8 +101,8 @@ public class CountryIdentifierLookupServiceTests
         var result = await _sut.FindAsync(lookupValue, CancellationToken.None);
 
         // Assert
-        Assert.Null(result.countryId);
-        Assert.Null(result.countryName);
+        result.countryId.Should().BeNull();
+        result.countryName.Should().BeNull();
         _mockCountryRepository.Verify(x => x.FindAsync(lookupValue, It.IsAny<CancellationToken>()), Times.Once);
     }
 }
