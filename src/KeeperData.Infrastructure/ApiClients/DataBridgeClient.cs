@@ -2,21 +2,41 @@ using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Exceptions;
 using KeeperData.Infrastructure.ApiClients.Extensions;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Text.Json;
 
 namespace KeeperData.Infrastructure.ApiClients;
 
-public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClient> logger) : IDataBridgeClient
+public class DataBridgeClient(
+    IHttpClientFactory factory,
+    IConfiguration configuration,
+    ILogger<DataBridgeClient> logger) : IDataBridgeClient
 {
     private readonly HttpClient _httpClient = factory.CreateClient(ClientName);
     private readonly ILogger<DataBridgeClient> _logger = logger;
 
+    private readonly string? _serviceName = configuration.GetValue<string>("ApiClients:DataBridgeApi:ServiceName");
+    private readonly bool _serviceNameExists = !string.IsNullOrWhiteSpace(configuration.GetValue<string>("ApiClients:DataBridgeApi:ServiceName"));
+
+    private readonly bool _ctsAgentsEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:CtsAgentsEnabled");
+    private readonly bool _ctsKeepersEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:CtsKeepersEnabled");
+    private readonly bool _ctsHoldingsEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:CtsHoldingsEnabled");
+
+    private readonly bool _samHoldingsEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamHoldingsEnabled");
+    private readonly bool _samHoldersEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamHoldersEnabled");
+    private readonly bool _samHerdsEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamHerdsEnabled");
+    private readonly bool _samPartiesEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamPartiesEnabled");
+
     private const string ClientName = "DataBridgeApi";
+
+    private string GetUri(string path) => _serviceNameExists ? $"{_serviceName}/{path}" : path;
 
     public async Task<List<SamCphHolding>> GetSamHoldingsAsync(string id, CancellationToken cancellationToken)
     {
+        if (!_samHoldingsEnabled) return [];
+
         var query = DataBridgeQueries.SamHoldingsByCph(id);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHoldings, new { }, query);
 
@@ -30,6 +50,8 @@ public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClie
 
     public async Task<List<SamCphHolder>> GetSamHoldersByPartyIdAsync(string id, CancellationToken cancellationToken)
     {
+        if (!_samHoldersEnabled) return [];
+
         var query = DataBridgeQueries.SamHolderByPartyId(id);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHolders, new { }, query);
 
@@ -43,6 +65,8 @@ public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClie
 
     public async Task<List<SamHerd>> GetSamHerdsAsync(string id, CancellationToken cancellationToken)
     {
+        if (!_samHerdsEnabled) return [];
+
         var query = DataBridgeQueries.SamHerdsByCph(id);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHerds, new { }, query);
 
@@ -56,6 +80,8 @@ public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClie
 
     public async Task<SamParty?> GetSamPartyAsync(string id, CancellationToken cancellationToken)
     {
+        if (!_samPartiesEnabled) return null;
+
         var query = DataBridgeQueries.SamPartyByPartyId(id);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamParties, new { }, query);
 
@@ -69,6 +95,8 @@ public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClie
 
     public async Task<List<SamParty>> GetSamPartiesAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
     {
+        if (!_samPartiesEnabled) return [];
+
         var query = DataBridgeQueries.SamPartiesByPartyIds(ids);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamParties, new { }, query);
 
@@ -82,6 +110,8 @@ public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClie
 
     public async Task<List<CtsCphHolding>> GetCtsHoldingsAsync(string id, CancellationToken cancellationToken)
     {
+        if (!_ctsHoldingsEnabled) return [];
+
         var query = DataBridgeQueries.CtsHoldingsByLidFullIdentifier(id);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetCtsHoldings, new { }, query);
 
@@ -95,6 +125,8 @@ public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClie
 
     public async Task<List<CtsAgentOrKeeper>> GetCtsAgentsAsync(string id, CancellationToken cancellationToken)
     {
+        if (!_ctsAgentsEnabled) return [];
+
         var query = DataBridgeQueries.CtsAgentsByLidFullIdentifier(id);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetCtsAgents, new { }, query);
 
@@ -108,6 +140,8 @@ public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClie
 
     public async Task<List<CtsAgentOrKeeper>> GetCtsKeepersAsync(string id, CancellationToken cancellationToken)
     {
+        if (!_ctsKeepersEnabled) return [];
+
         var query = DataBridgeQueries.CtsKeepersByLidFullIdentifier(id);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetCtsKeepers, new { }, query);
 
@@ -125,7 +159,7 @@ public class DataBridgeClient(IHttpClientFactory factory, ILogger<DataBridgeClie
 
         try
         {
-            using var response = await _httpClient.GetAsync(requestUri, cancellationToken);
+            using var response = await _httpClient.GetAsync(GetUri(requestUri), cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {

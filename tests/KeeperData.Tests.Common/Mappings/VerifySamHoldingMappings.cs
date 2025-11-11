@@ -55,7 +55,7 @@ public static class VerifySamHoldingMappings
         target.PremiseTypeCode.Should().Be(source.FACILITY_TYPE_CODE);
 
         target.SpeciesTypeCode.Should().Be(source.AnimalSpeciesCodeUnwrapped);
-        
+
         var targetProductionUsageCodes = target.ProductionUsageCodeList
             .Select(p => p)
             .OrderBy(p => p)

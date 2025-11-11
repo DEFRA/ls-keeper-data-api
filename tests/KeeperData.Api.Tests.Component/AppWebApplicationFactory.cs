@@ -50,8 +50,8 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
 
             ConfigureDatabase(services);
 
-            // services.AddHttpClient("DataBridgeApi")
-            //    .ConfigurePrimaryHttpMessageHandler(() => DataBridgeApiClientHttpMessageHandlerMock.Object);
+            services.AddHttpClient("DataBridgeApi")
+                .ConfigurePrimaryHttpMessageHandler(() => DataBridgeApiClientHttpMessageHandlerMock.Object);
 
             foreach (var applyOverride in _overrideServices)
             {
@@ -103,6 +103,7 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("ApiClients__DataBridgeApi__HealthcheckEnabled", "true");
         Environment.SetEnvironmentVariable("ApiClients__DataBridgeApi__BaseUrl", TestConstants.DataBridgeApiBaseUrl);
         Environment.SetEnvironmentVariable("ServiceBusSenderConfiguration__IntakeEventQueue__QueueUrl", "http://localhost:4566/000000000000/test-queue");
+        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__CtsAgentsEnabled", "true");
     }
 
     private static void ConfigureAwsOptions(IServiceCollection services)

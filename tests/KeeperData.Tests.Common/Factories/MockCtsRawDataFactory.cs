@@ -1,7 +1,9 @@
 using AutoFixture;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using KeeperData.Infrastructure;
 using KeeperData.Tests.Common.Generators;
 using KeeperData.Tests.Common.SpecimenBuilders;
+using System.Text.Json;
 
 namespace KeeperData.Tests.Common.Factories;
 
@@ -60,13 +62,19 @@ public class MockCtsRawDataFactory
 
         _fixture.Customizations.Add(new CtsCphHoldingBuilder(changeType, batchId, holdingIdentifier));
 
-        var holdings = _fixture.CreateMany<CtsCphHolding>(holdingCount).ToList();
+        var holdings = RoundTripViaJson(_fixture.CreateMany<CtsCphHolding>(holdingCount).ToList());
 
         _fixture.Customizations.Add(new CtsAgentOrKeeperBuilder(changeType, batchId, holdingIdentifier));
 
-        var agents = _fixture.CreateMany<CtsAgentOrKeeper>(agentCount).ToList();
-        var keepers = _fixture.CreateMany<CtsAgentOrKeeper>(keeperCount).ToList();
+        var agents = RoundTripViaJson(_fixture.CreateMany<CtsAgentOrKeeper>(agentCount).ToList());
+        var keepers = RoundTripViaJson(_fixture.CreateMany<CtsAgentOrKeeper>(keeperCount).ToList());
 
         return (holdingIdentifier, holdings, agents, keepers);
+    }
+
+    public static T RoundTripViaJson<T>(T obj)
+    {
+        var json = JsonSerializer.Serialize(obj);
+        return JsonSerializer.Deserialize<T>(json, JsonDefaults.DefaultOptionsWithDataBridgeApiSupport)!;
     }
 }

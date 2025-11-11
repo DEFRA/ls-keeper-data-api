@@ -19,7 +19,7 @@ public static class MockSamData
                         holdingIdentifier: holdingIdentifier)
                 ]
             });
-    
+
     public static StringContent GetSamHolderResponse(string partyId, List<string> holdingIdentifiers) =>
         HttpContentUtility.CreateResponseContent(
             new DataBridgeResponse<SamCphHolder>

@@ -77,7 +77,7 @@ public class SamHolderImportPersistenceStep(
     {
         incomingSitePartyRoles ??= [];
 
-        foreach(var partyId in incomingPartyIds)
+        foreach (var partyId in incomingPartyIds)
         {
             var incomingRoles = incomingSitePartyRoles
                 .Where(r => r.PartyId == partyId)

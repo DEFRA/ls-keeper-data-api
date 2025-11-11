@@ -1,7 +1,9 @@
 using AutoFixture;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using KeeperData.Infrastructure;
 using KeeperData.Tests.Common.Generators;
 using KeeperData.Tests.Common.SpecimenBuilders;
+using System.Text.Json;
 
 namespace KeeperData.Tests.Common.Factories;
 
@@ -89,38 +91,26 @@ public class MockSamRawDataFactory
 
         _fixture.Customizations.Add(new SamCphHoldingBuilder(changeType, batchId, holdingIdentifier));
 
-        var holdings = _fixture.CreateMany<SamCphHolding>(holdingCount).ToList();
+        var holdings = RoundTripViaJson(_fixture.CreateMany<SamCphHolding>(holdingCount).ToList());
 
         _fixture.Customizations.Add(new SamCphHolderBuilder(changeType, batchId, [holdingIdentifier]));
 
-        var holders = _fixture.CreateMany<SamCphHolder>(holderCount).ToList();
+        var holders = RoundTripViaJson(_fixture.CreateMany<SamCphHolder>(holderCount).ToList());
 
         _fixture.Customizations.Add(new SamHerdBuilder(changeType, batchId, holdingIdentifier, partyIds));
 
-        var herds = _fixture.CreateMany<SamHerd>(herdCount).ToList();
+        var herds = RoundTripViaJson(_fixture.CreateMany<SamHerd>(herdCount).ToList());
 
         _fixture.Customizations.Add(new SamPartyBuilder(changeType, batchId, partyIds));
 
-        var parties = _fixture.CreateMany<SamParty>(partyCount).ToList();
+        var parties = RoundTripViaJson(_fixture.CreateMany<SamParty>(partyCount).ToList());
 
         return (holdingIdentifier, holdings, holders, herds, parties);
     }
 
-    private static Dictionary<(string animalSpeciesCode, string animalProductionUsageCode), List<string>> GetHerdSpeciesPartyAssociations(int herdCount, int partyCount)
+    public static T RoundTripViaJson<T>(T obj)
     {
-        var herdSpeciesParties = new Dictionary<(string animalSpeciesCode, string animalProductionUsageCode), List<string>>();
-
-        var animalSpeciesAndProductionUsageCodes = Enumerable.Range(1, herdCount)
-            .Select(i => FacilityGenerator.GenerateAnimalSpeciesAndProductionUsageCodes(allowNulls: false))
-            .ToList();
-
-        foreach (var item in animalSpeciesAndProductionUsageCodes)
-        {
-            herdSpeciesParties.Add(
-                item,
-                PersonGenerator.GetPartyIds(partyCount));
-        }
-
-        return herdSpeciesParties;
+        var json = JsonSerializer.Serialize(obj);
+        return JsonSerializer.Deserialize<T>(json, JsonDefaults.DefaultOptionsWithDataBridgeApiSupport)!;
     }
 }

@@ -73,7 +73,7 @@ public class SamHoldingImportPersistenceStep(
             var holdingUpserts = incomingHoldings.Select(p =>
             {
                 var existing = existingHoldings.FirstOrDefault(e =>
-                    e.CountyParishHoldingNumber == p.CountyParishHoldingNumber 
+                    e.CountyParishHoldingNumber == p.CountyParishHoldingNumber
                     && e.LocationName == p.LocationName
                     && e.SpeciesTypeCode == p.SpeciesTypeCode
                     && e.SecondaryCph == p.SecondaryCph);

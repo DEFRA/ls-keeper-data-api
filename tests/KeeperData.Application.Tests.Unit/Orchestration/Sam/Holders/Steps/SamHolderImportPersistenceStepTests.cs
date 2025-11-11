@@ -294,7 +294,7 @@ public class SamHolderImportPersistenceStepTests
 
         _silverSitePartyRoleRelationshipRepositoryMock
             .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>, Core.Documents.Silver.SitePartyRoleRelationshipDocument)>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);       
+            .Returns(Task.CompletedTask);
 
         // Gold Party
         _goldPartyRepositoryMock

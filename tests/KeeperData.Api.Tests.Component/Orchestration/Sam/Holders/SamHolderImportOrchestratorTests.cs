@@ -27,10 +27,10 @@ public class SamHolderImportOrchestratorTests
 
     private readonly Mock<IGenericRepository<PartyDocument>> _goldPartyRepositoryMock = new();
     private readonly Mock<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>> _goldSitePartyRoleRelationshipRepositoryMock = new();
-    
+
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
     private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
-    
+
     private readonly Fixture _fixture;
 
     public SamHolderImportOrchestratorTests()
@@ -64,8 +64,8 @@ public class SamHolderImportOrchestratorTests
         factory.OverrideServiceAsScoped(_goldPartyRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_goldSitePartyRoleRelationshipRepositoryMock.Object);
 
-        SetupDataBridgeApiRequest(factory, holdersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContent(holders));
-        
+        SetupDataBridgeApiRequest(factory, holdersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holders));
+
         var result = await ExecuteTestAsync(factory, holderIdentifier);
 
         VerifyDataBridgeApiEndpointCalled(factory, holdersUri, Times.Once());

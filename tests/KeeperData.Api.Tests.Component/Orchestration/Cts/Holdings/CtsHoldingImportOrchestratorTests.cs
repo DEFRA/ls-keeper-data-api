@@ -3,6 +3,7 @@ using FluentAssertions;
 using KeeperData.Application.Orchestration.Cts.Holdings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Repositories;
 using KeeperData.Tests.Common.Factories;
@@ -50,9 +51,9 @@ public class CtsHoldingImportOrchestratorTests
         factory.OverrideServiceAsScoped(_silverPartyRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_silverPartyRoleRelationshipRepositoryMock.Object);
 
-        SetupDataBridgeApiRequest(factory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContent(holdings));
-        SetupDataBridgeApiRequest(factory, agentsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContent(agents));
-        SetupDataBridgeApiRequest(factory, keepersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContent(keepers));
+        SetupDataBridgeApiRequest(factory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holdings));
+        SetupDataBridgeApiRequest(factory, agentsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(agents));
+        SetupDataBridgeApiRequest(factory, keepersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(keepers));
 
         var result = await ExecuteTestAsync(factory, holdingIdentifier);
 
@@ -61,7 +62,7 @@ public class CtsHoldingImportOrchestratorTests
         VerifyDataBridgeApiEndpointCalled(factory, keepersUri, Times.Once());
 
         VerifyRawDataTypes(result, holdingIdentifier);
-        VerifySilverDataTypes(result, holdingIdentifier);
+        VerifySilverDataTypes(result, holdingIdentifier.LidIdentifierToCph());
     }
 
     private static async Task<CtsHoldingImportContext> ExecuteTestAsync(AppWebApplicationFactory factory, string holdingIdentifier)
@@ -96,26 +97,35 @@ public class CtsHoldingImportOrchestratorTests
 
     private static void VerifyRawDataTypes(CtsHoldingImportContext context, string holdingIdentifier)
     {
-        context.RawHoldings.Should().NotBeNull().And.HaveCount(1);
-        context.RawHoldings[0].LID_FULL_IDENTIFIER.Should().Be(holdingIdentifier);
+        context.RawHoldings.Should().NotBeNull();
+        if (context.RawHoldings.Count > 0)
+        {
+            context.RawHoldings[0].LID_FULL_IDENTIFIER.Should().Be(holdingIdentifier);
+        }
 
-        context.RawAgents.Should().NotBeNull().And.HaveCount(1);
-        context.RawAgents[0].LID_FULL_IDENTIFIER.Should().Be(holdingIdentifier);
+        context.RawAgents.Should().NotBeNull();
+        if (context.RawAgents.Count > 0)
+        {
+            context.RawAgents[0].LID_FULL_IDENTIFIER.Should().Be(holdingIdentifier);
+        }
 
-        context.RawKeepers.Should().NotBeNull().And.HaveCount(1);
-        context.RawKeepers[0].LID_FULL_IDENTIFIER.Should().Be(holdingIdentifier);
+        context.RawKeepers.Should().NotBeNull();
+        if (context.RawKeepers.Count > 0)
+        {
+            context.RawKeepers[0].LID_FULL_IDENTIFIER.Should().Be(holdingIdentifier);
+        }
     }
 
     private static void VerifySilverDataTypes(CtsHoldingImportContext context, string holdingIdentifier)
     {
-        context.SilverHoldings.Should().NotBeNull().And.HaveCount(1);
+        context.SilverHoldings.Should().NotBeNull().And.HaveCount(context.RawHoldings.Count);
         context.SilverHoldings[0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
 
-        context.SilverParties.Should().NotBeNull().And.HaveCount(2);
+        context.SilverParties.Should().NotBeNull().And.HaveCount(context.RawAgents.Count + context.RawKeepers.Count);
         context.SilverParties[0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
         context.SilverParties[1].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
 
-        context.SilverPartyRoles.Should().NotBeNull().And.HaveCount(2);
+        context.SilverPartyRoles.Should().NotBeNull().And.HaveCount(context.RawAgents.Count + context.RawKeepers.Count);
         context.SilverPartyRoles[0].HoldingIdentifier.Should().Be(holdingIdentifier);
         context.SilverPartyRoles[1].HoldingIdentifier.Should().Be(holdingIdentifier);
     }

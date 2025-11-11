@@ -5,7 +5,7 @@ namespace KeeperData.Infrastructure.ApiClients.Setup;
 public class ApiClientHealthCheck(
     IHttpClientFactory httpClientFactory,
     string clientName,
-    string healthEndpoint = "/ls-keeper-data-bridge-backend/health",
+    string healthEndpoint = "/health",
     int timeoutSeconds = 10) : IHealthCheck
 {
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;

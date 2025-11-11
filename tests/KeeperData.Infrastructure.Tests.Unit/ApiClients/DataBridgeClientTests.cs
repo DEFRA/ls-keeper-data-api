@@ -5,6 +5,7 @@ using KeeperData.Infrastructure.ApiClients;
 using KeeperData.Tests.Common.Factories.UseCases;
 using KeeperData.Tests.Common.Generators;
 using KeeperData.Tests.Common.Utilities;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Contrib.HttpClient;
@@ -33,7 +34,24 @@ public class DataBridgeClientTests
             .Setup(f => f.CreateClient("DataBridgeApi"))
             .Returns(_httpClient);
 
-        _client = new DataBridgeClient(_httpClientFactoryMock.Object, _loggerMock.Object);
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { "ApiClients:DataBridgeApi:ServiceName", "" },
+                { "DataBridgeCollectionFlags:CtsAgentsEnabled", "true" },
+                { "DataBridgeCollectionFlags:CtsKeepersEnabled", "true" },
+                { "DataBridgeCollectionFlags:CtsHoldingsEnabled", "true" },
+                { "DataBridgeCollectionFlags:SamHoldingsEnabled", "true" },
+                { "DataBridgeCollectionFlags:SamHoldersEnabled", "true" },
+                { "DataBridgeCollectionFlags:SamHerdsEnabled", "true" },
+                { "DataBridgeCollectionFlags:SamPartiesEnabled", "true" },
+            })
+            .Build();
+
+        _client = new DataBridgeClient(
+            _httpClientFactoryMock.Object,
+            config,
+            _loggerMock.Object);
     }
 
     [Fact]

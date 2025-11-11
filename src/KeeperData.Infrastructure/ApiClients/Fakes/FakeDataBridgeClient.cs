@@ -75,19 +75,6 @@ public class FakeDataBridgeClient : IDataBridgeClient
             }];
     }
 
-    private List<SamCphHolder> GetSamCphHoldersByCph(string id)
-    {
-        return [
-            new SamCphHolder {
-                BATCH_ID = 1,
-                CHANGE_TYPE = "I",
-                IsDeleted = false,
-                CPHS = string.Join(",", [id]),
-                PARTY_ID = $"C{_random.Next(1, 9):D6}",
-                ORGANISATION_NAME = Guid.NewGuid().ToString()
-            }];
-    }
-
     private List<SamHerd> GetSamHerd(string id)
     {
         return [

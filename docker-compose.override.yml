@@ -10,6 +10,8 @@ services:
       - StorageConfiguration__ComparisonReportsStorage__BucketName=test-comparison-reports-bucket
       - QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl=http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue
       - ApiClients__DataBridgeApi__BaseUrl=http://keeperdata_bridge:5560/
+      - ApiClients__DataBridgeApi__ServiceName=
+      - ApiClients__DataBridgeApi__XApiKey=
       - ApiClients__DataBridgeApi__UseFakeClient=true
       - ServiceBusSenderConfiguration__IntakeEventQueue__QueueUrl=http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue
     ports:
