@@ -154,7 +154,7 @@ public class TestReferenceListDocument : IReferenceListDocument<TestReferenceDoc
     public static string DocumentId => "test-list";
 
     public string Id { get; set; } = DocumentId;
-    public int LastUpdatedBatchId { get; set; }
+    public int? LastUpdatedBatchId { get; set; }
     public DateTime LastUpdatedDate { get; set; }
     public List<TestReferenceDocument> TestItems { get; set; } = [];
     public IReadOnlyCollection<TestReferenceDocument> Items => TestItems.AsReadOnly();

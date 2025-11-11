@@ -15,7 +15,7 @@ public class CountryListDocument : IListDocument, IReferenceListDocument<Country
     [BsonId]
     public string Id { get; set; } = DocumentId;
 
-    public int LastUpdatedBatchId { get; set; }
+    public int? LastUpdatedBatchId { get; set; }
 
     public DateTime LastUpdatedDate { get; set; }
 
