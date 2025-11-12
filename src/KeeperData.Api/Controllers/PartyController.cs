@@ -30,12 +30,11 @@ namespace KeeperData.Api.Controllers
             return Ok(result);
         }
 
-        /*
         [HttpGet("{id}")]
         public async Task<IActionResult> GetPartyById(string id)
-        { TODO
+        {
             var result = await _executor.ExecuteQuery(new GetPartyByIdQuery(id));
             return Ok(result);
-        }*/
+        }
     }
 }

@@ -87,7 +87,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
                 new CreateIndexOptions { Name = "idx_firstName" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("LastName"),
+                Builders<BsonDocument>.IndexKeys.Ascending("LastName"),  //TODO casing
                 new CreateIndexOptions { Name = "idx_lastName" }),
 
             new CreateIndexModel<BsonDocument>(
