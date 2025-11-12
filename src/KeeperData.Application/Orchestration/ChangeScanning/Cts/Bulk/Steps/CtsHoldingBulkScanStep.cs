@@ -13,7 +13,7 @@ public class CtsHoldingBulkScanStep(
     ILogger<CtsHoldingBulkScanStep> logger) : ScanStepBase<CtsBulkScanContext>(logger)
 {
     private readonly IDataBridgeClient _dataBridgeClient = dataBridgeClient;
-    IMessagePublisher<IntakeEventsQueueClient> _intakeMessagePublisher = intakeMessagePublisher;
+    private readonly IMessagePublisher<IntakeEventsQueueClient> _intakeMessagePublisher = intakeMessagePublisher;
 
     protected override Task ExecuteCoreAsync(CtsBulkScanContext context, CancellationToken cancellationToken)
     {

@@ -1,3 +1,4 @@
+using AutoFixture;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Tests.Common.Utilities;
@@ -6,6 +7,18 @@ namespace KeeperData.Tests.Common.Factories.UseCases;
 
 public static class MockSamData
 {
+    private static readonly Fixture s_fixture = new();
+
+    public static StringContent GetSamHoldingsResponse(int top, int skip) =>
+        HttpContentUtility.CreateResponseContent(
+            new DataBridgeResponse<SamCphHolding>
+            {
+                CollectionName = "collection",
+                Top = top,
+                Skip = skip,
+                Data = [.. s_fixture.CreateMany<SamCphHolding>(top)]
+            });
+
     public static StringContent GetSamHoldingsResponse(string holdingIdentifier) =>
         HttpContentUtility.CreateResponseContent(
             new DataBridgeResponse<SamCphHolding>
@@ -18,6 +31,16 @@ public static class MockSamData
                         batchId: 1,
                         holdingIdentifier: holdingIdentifier)
                 ]
+            });
+
+    public static StringContent GetSamHolderResponse(int top, int skip) =>
+        HttpContentUtility.CreateResponseContent(
+            new DataBridgeResponse<SamCphHolder>
+            {
+                CollectionName = "collection",
+                Top = top,
+                Skip = skip,
+                Data = [.. s_fixture.CreateMany<SamCphHolder>(top)]
             });
 
     public static StringContent GetSamHolderResponse(string partyId, List<string> holdingIdentifiers) =>
@@ -33,6 +56,16 @@ public static class MockSamData
                         holdingIdentifiers: holdingIdentifiers,
                         partyId: partyId)
                 ]
+            });
+
+    public static StringContent GetSamHerdsResponse(int top, int skip) =>
+        HttpContentUtility.CreateResponseContent(
+            new DataBridgeResponse<SamHerd>
+            {
+                CollectionName = "collection",
+                Top = top,
+                Skip = skip,
+                Data = [.. s_fixture.CreateMany<SamHerd>(top)]
             });
 
     public static StringContent GetSamHerdsResponse(string holdingIdentifier, string partyId) =>
@@ -62,6 +95,16 @@ public static class MockSamData
                         batchId: 1,
                         partyIds: [partyId])
                 ]
+            });
+
+    public static StringContent GetSamPartiesResponse(int top, int skip) =>
+        HttpContentUtility.CreateResponseContent(
+            new DataBridgeResponse<SamParty>
+            {
+                CollectionName = "collection",
+                Top = top,
+                Skip = skip,
+                Data = [.. s_fixture.CreateMany<SamParty>(top)]
             });
 
     public static StringContent GetSamPartiesResponse(string partyId) =>

@@ -13,7 +13,7 @@ public class CtsHoldingDailyScanStep(
     ILogger<CtsHoldingDailyScanStep> logger) : ScanStepBase<CtsDailyScanContext>(logger)
 {
     private readonly IDataBridgeClient _dataBridgeClient = dataBridgeClient;
-    IMessagePublisher<IntakeEventsQueueClient> _intakeMessagePublisher = intakeMessagePublisher;
+    private readonly IMessagePublisher<IntakeEventsQueueClient> _intakeMessagePublisher = intakeMessagePublisher;
 
     protected override Task ExecuteCoreAsync(CtsDailyScanContext context, CancellationToken cancellationToken)
     {
