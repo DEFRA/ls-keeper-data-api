@@ -28,10 +28,7 @@ fi
 
 echo "Bootstrapping SQS setup..."
 
-# =================================================================
-# === DLQ SETUP ===================================================
-# =================================================================
-# 1. Create the Dead-Letter Queue (DLQ) first.
+# Create the Dead-Letter Queue (DLQ) first.
 dlq_url=$(awslocal sqs create-queue \
   --queue-name ls_keeper_data_intake_queue-deadletter \
   --endpoint-url=http://localhost:4566 \
@@ -39,7 +36,7 @@ dlq_url=$(awslocal sqs create-queue \
   --query 'QueueUrl')
 echo "SQS Dead-Letter Queue created: $dlq_url"
 
-# 2. Get the ARN of the DLQ, which is needed for the main queue's redrive policy.
+# Get the ARN of the DLQ, which is needed for the main queue's redrive policy.
 dlq_arn=$(awslocal sqs get-queue-attributes \
   --queue-url "$dlq_url" \
   --attribute-names QueueArn \
@@ -47,7 +44,6 @@ dlq_arn=$(awslocal sqs get-queue-attributes \
   --output text \
   --query 'Attributes.QueueArn')
 echo "DLQ ARN: $dlq_arn"
-# =================================================================
 
 # Create the main SQS queue.
 queue_url=$(awslocal sqs create-queue \
@@ -57,11 +53,8 @@ queue_url=$(awslocal sqs create-queue \
   --query 'QueueUrl')
 echo "SQS Main Queue created: $queue_url"
 
-# =================================================================
-# === CONFIGURE REDRIVE POLICY ====================================
-# =================================================================
-# 3. Define the Redrive Policy, linking the main queue to the DLQ.
-#    maxReceiveCount is the number of times a message is received before being moved.
+
+# Define the Redrive Policy, linking the main queue to the DLQ.
 redrive_policy_json=$(cat <<EOF
 {
   "deadLetterTargetArn": "$dlq_arn",
@@ -70,7 +63,7 @@ redrive_policy_json=$(cat <<EOF
 EOF
 )
 
-# 4. Apply the Redrive Policy to the main queue.
+# Apply the Redrive Policy to the main queue.
 echo "Configuring Redrive Policy..."
 awslocal sqs set-queue-attributes \
   --queue-url "$queue_url" \
@@ -78,7 +71,7 @@ awslocal sqs set-queue-attributes \
   --endpoint-url=$ENDPOINT_URL
 # =================================================================
 
-# Get the main SQS Queue ARN for the SNS subscription policy.
+# Get the SQS Queue ARN
 queue_arn=$(awslocal sqs get-queue-attributes \
   --queue-url "$queue_url" \
   --attribute-name QueueArn \
