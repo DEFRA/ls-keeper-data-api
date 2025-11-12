@@ -9,7 +9,18 @@ public static class MockSamData
 {
     private static readonly Fixture s_fixture = new();
 
-    public static StringContent GetSamHoldingsResponse(int top, int skip) =>
+    public static DataBridgeResponse<SamCphHolding> GetSamHoldingsDataBridgeResponse(int top, int count, int totalCount) =>
+        new()
+        {
+            CollectionName = "collection",
+            Top = top,
+            Skip = top,
+            Count = count,
+            TotalCount = totalCount,
+            Data = [.. s_fixture.CreateMany<SamCphHolding>(count)]
+        };
+
+    public static StringContent GetSamHoldingsStringContentResponse(int top, int skip) =>
         HttpContentUtility.CreateResponseContent(
             new DataBridgeResponse<SamCphHolding>
             {
@@ -19,7 +30,7 @@ public static class MockSamData
                 Data = [.. s_fixture.CreateMany<SamCphHolding>(top)]
             });
 
-    public static StringContent GetSamHoldingsResponse(string holdingIdentifier) =>
+    public static StringContent GetSamHoldingsStringContentResponse(string holdingIdentifier) =>
         HttpContentUtility.CreateResponseContent(
             new DataBridgeResponse<SamCphHolding>
             {
@@ -33,7 +44,18 @@ public static class MockSamData
                 ]
             });
 
-    public static StringContent GetSamHolderResponse(int top, int skip) =>
+    public static DataBridgeResponse<SamCphHolder> GetSamHolderDataBridgeResponse(int top, int count, int totalCount) =>
+        new()
+        {
+            CollectionName = "collection",
+            Top = top,
+            Skip = top,
+            Count = count,
+            TotalCount = totalCount,
+            Data = [.. s_fixture.CreateMany<SamCphHolder>(count)]
+        };
+
+    public static StringContent GetSamHolderStringContentResponse(int top, int skip) =>
         HttpContentUtility.CreateResponseContent(
             new DataBridgeResponse<SamCphHolder>
             {
@@ -43,7 +65,7 @@ public static class MockSamData
                 Data = [.. s_fixture.CreateMany<SamCphHolder>(top)]
             });
 
-    public static StringContent GetSamHolderResponse(string partyId, List<string> holdingIdentifiers) =>
+    public static StringContent GetSamHolderStringContentResponse(string partyId, List<string> holdingIdentifiers) =>
         HttpContentUtility.CreateResponseContent(
             new DataBridgeResponse<SamCphHolder>
             {
@@ -58,7 +80,18 @@ public static class MockSamData
                 ]
             });
 
-    public static StringContent GetSamHerdsResponse(int top, int skip) =>
+    public static DataBridgeResponse<SamHerd> GetSamHerdsDataBridgeResponse(int top, int count, int totalCount) =>
+        new()
+        {
+            CollectionName = "collection",
+            Top = top,
+            Skip = top,
+            Count = count,
+            TotalCount = totalCount,
+            Data = [.. s_fixture.CreateMany<SamHerd>(count)]
+        };
+
+    public static StringContent GetSamHerdsStringContentResponse(int top, int skip) =>
         HttpContentUtility.CreateResponseContent(
             new DataBridgeResponse<SamHerd>
             {
@@ -68,7 +101,7 @@ public static class MockSamData
                 Data = [.. s_fixture.CreateMany<SamHerd>(top)]
             });
 
-    public static StringContent GetSamHerdsResponse(string holdingIdentifier, string partyId) =>
+    public static StringContent GetSamHerdsStringContentResponse(string holdingIdentifier, string partyId) =>
         HttpContentUtility.CreateResponseContent(
             new DataBridgeResponse<SamHerd>
             {
@@ -83,7 +116,7 @@ public static class MockSamData
                 ]
             });
 
-    public static StringContent GetSamPartyResponse(string partyId) =>
+    public static StringContent GetSamPartyStringContentResponse(string partyId) =>
         HttpContentUtility.CreateResponseContent(
             new DataBridgeResponse<SamParty>
             {
@@ -97,7 +130,18 @@ public static class MockSamData
                 ]
             });
 
-    public static StringContent GetSamPartiesResponse(int top, int skip) =>
+    public static DataBridgeResponse<SamParty> GetSamPartiesDataBridgeResponse(int top, int count, int totalCount) =>
+        new()
+        {
+            CollectionName = "collection",
+            Top = top,
+            Skip = top,
+            Count = count,
+            TotalCount = totalCount,
+            Data = [.. s_fixture.CreateMany<SamParty>(count)]
+        };
+
+    public static StringContent GetSamPartiesStringContentResponse(int top, int skip) =>
         HttpContentUtility.CreateResponseContent(
             new DataBridgeResponse<SamParty>
             {
@@ -107,7 +151,7 @@ public static class MockSamData
                 Data = [.. s_fixture.CreateMany<SamParty>(top)]
             });
 
-    public static StringContent GetSamPartiesResponse(string partyId) =>
+    public static StringContent GetSamPartiesStringContentResponse(string partyId) =>
         HttpContentUtility.CreateResponseContent(
             new DataBridgeResponse<SamParty>
             {

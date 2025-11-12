@@ -22,7 +22,7 @@ public class CtsHoldingBulkScanStep(
     private readonly DataBridgeScanConfiguration _dataBridgeScanConfiguration = dataBridgeScanConfiguration;
     private readonly IDelayProvider _delayProvider = delayProvider;
 
-    private const string SelectFields = "BATCH_ID,LID_FULL_IDENTIFIER,UpdatedAtUtc";
+    private const string SelectFields = "LID_FULL_IDENTIFIER";
 
     protected override async Task ExecuteCoreAsync(CtsBulkScanContext context, CancellationToken cancellationToken)
     {
@@ -45,16 +45,18 @@ public class CtsHoldingBulkScanStep(
                 break;
             }
 
-            foreach (var item in queryResponse.Data)
-            {
-                if (string.IsNullOrWhiteSpace(item.LID_FULL_IDENTIFIER))
-                    continue;
+            var identifiers = queryResponse.Data
+                .Select(x => x.LID_FULL_IDENTIFIER)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct()
+                .ToList();
 
+            foreach (var id in identifiers)
+            {
                 var message = new CtsImportHoldingMessage
                 {
                     Id = Guid.NewGuid(),
-                    BatchId = item.BATCH_ID ?? 0,
-                    Identifier = item.LID_FULL_IDENTIFIER
+                    Identifier = id
                 };
 
                 await _intakeMessagePublisher.PublishAsync(message, cancellationToken);

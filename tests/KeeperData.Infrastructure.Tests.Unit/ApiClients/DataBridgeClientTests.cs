@@ -57,7 +57,7 @@ public class DataBridgeClientTests
     [Fact]
     public async Task GetSamHoldingsAsPagedResponseAsync_ShouldReturnHoldings_WhenApiReturnsSuccess()
     {
-        var expectedResponse = MockSamData.GetSamHoldingsResponse(10, 0);
+        var expectedResponse = MockSamData.GetSamHoldingsStringContentResponse(10, 0);
 
         var uri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamHoldings,
@@ -78,7 +78,7 @@ public class DataBridgeClientTests
     public async Task GetSamHoldingsAsync_ShouldReturnHoldings_WhenApiReturnsSuccess()
     {
         var id = CphGenerator.GenerateFormattedCph();
-        var expectedResponse = MockSamData.GetSamHoldingsResponse(id);
+        var expectedResponse = MockSamData.GetSamHoldingsStringContentResponse(id);
 
         var uri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamHoldings,
@@ -97,7 +97,7 @@ public class DataBridgeClientTests
     [Fact]
     public async Task GetSamHoldersAsPagedResponseAsync_ShouldReturnHolder_WhenApiReturnsSuccess()
     {
-        var expectedResponse = MockSamData.GetSamHolderResponse(10, 0);
+        var expectedResponse = MockSamData.GetSamHolderStringContentResponse(10, 0);
 
         var uri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamHolders,
@@ -119,7 +119,7 @@ public class DataBridgeClientTests
     {
         var partyId = $"C{new Random().Next(1, 9):D6}";
         var holdingIdentifier = "XX/XXX/XXXX";
-        var expectedResponse = MockSamData.GetSamHolderResponse(partyId, [holdingIdentifier]);
+        var expectedResponse = MockSamData.GetSamHolderStringContentResponse(partyId, [holdingIdentifier]);
 
         var uri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamHolders,
@@ -139,7 +139,7 @@ public class DataBridgeClientTests
     [Fact]
     public async Task GetSamHerdsAsPagedResponseAsync_ShouldReturnHerds_WhenApiReturnsSuccess()
     {
-        var expectedResponse = MockSamData.GetSamHerdsResponse(10, 0);
+        var expectedResponse = MockSamData.GetSamHerdsStringContentResponse(10, 0);
 
         var uri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamHerds,
@@ -161,7 +161,7 @@ public class DataBridgeClientTests
     {
         var id = CphGenerator.GenerateFormattedCph();
         var partyId = Guid.NewGuid().ToString();
-        var expectedResponse = MockSamData.GetSamHerdsResponse(id, partyId);
+        var expectedResponse = MockSamData.GetSamHerdsStringContentResponse(id, partyId);
 
         var uri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamHerds,
@@ -183,7 +183,7 @@ public class DataBridgeClientTests
     public async Task GetSamPartyAsync_ShouldReturnParty_WhenApiReturnsSuccess()
     {
         var partyId = Guid.NewGuid().ToString();
-        var expectedResponse = MockSamData.GetSamPartyResponse(partyId);
+        var expectedResponse = MockSamData.GetSamPartyStringContentResponse(partyId);
 
         var uri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamParties,
@@ -202,7 +202,7 @@ public class DataBridgeClientTests
     [Fact]
     public async Task GetSamPartiesAsPagedResponseAsync_ShouldReturnParties_WhenApiReturnsSuccess()
     {
-        var expectedResponse = MockSamData.GetSamPartiesResponse(10, 0);
+        var expectedResponse = MockSamData.GetSamPartiesStringContentResponse(10, 0);
 
         var uri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamParties,
@@ -223,7 +223,7 @@ public class DataBridgeClientTests
     public async Task GetSamPartiesAsync_ShouldReturnParties_WhenApiReturnsSuccess()
     {
         var partyId = Guid.NewGuid().ToString();
-        var expectedResponse = MockSamData.GetSamPartiesResponse(partyId);
+        var expectedResponse = MockSamData.GetSamPartiesStringContentResponse(partyId);
 
         var uri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamParties,
