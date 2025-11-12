@@ -1,4 +1,6 @@
 using KeeperData.Core.Attributes;
+using KeeperData.Core.Documents;
+using KeeperData.Core.Documents.Reference;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
@@ -41,6 +43,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(sp => sp.GetRequiredService<IMongoDbClientFactory>().CreateClient());
 
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+        services.AddScoped<ICountryRepository, CountryRepository>();
         services.AddScoped<ISitesRepository, SitesRepository>();
         services.AddScoped<ISilverSitePartyRoleRelationshipRepository, SilverSitePartyRoleRelationshipRepository>();
 
