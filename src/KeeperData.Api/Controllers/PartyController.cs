@@ -16,16 +16,14 @@ namespace KeeperData.Api.Controllers
         {
             var query = new GetPartiesQuery
             {
-                /*  TODO  
-                 SiteIdentifier = request.SiteIdentifier,
-                    Type = request.Type,
-                    SiteId = request.SiteId,
-                    KeeperPartyId = request.KeeperPartyId,
-                    LastUpdatedDate = request.LastUpdatedDate,
-                    Page = request.Page ?? 1,
-                    PageSize = request.PageSize ?? 10,
-                    Order = request.Order,
-                    Sort = request.Sort*/
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                Email = request.Email,
+                LastUpdatedDate = request.LastUpdatedDate,
+                Page = request.Page ?? 1,
+                PageSize = request.PageSize ?? 10,
+                Order = request.Order,
+                Sort = request.Sort
             };
 
             var result = await _executor.ExecuteQuery(query);

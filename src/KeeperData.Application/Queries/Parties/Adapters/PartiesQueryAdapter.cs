@@ -1,4 +1,4 @@
-using KeeperData.Application.Queries.Sites.Builders;
+using KeeperData.Application.Queries.Parties.Builders;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Repositories;
 
@@ -12,15 +12,15 @@ public class PartiesQueryAdapter(IPartiesRepository repository)
         GetPartiesQuery query,
         CancellationToken cancellationToken = default)
     {
-        /* TODO
+        /* TODO untested */
         var filterDefinition = PartyFilterBuilder.Build(query);
         var sortDefinition = PartySortBuilder.Build(query);
-*/
-        var totalCount = await _repository.CountAsync(null, cancellationToken);
+
+        var totalCount = await _repository.CountAsync(filterDefinition, cancellationToken);
 
         var items = await _repository.FindAsync(
-            filter: null,
-            sort: null,
+            filter: filterDefinition,
+            sort: sortDefinition,
             skip: (query.Page - 1) * query.PageSize,
             take: query.PageSize,
             cancellationToken: cancellationToken);

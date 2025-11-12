@@ -7,7 +7,7 @@ public class GetPartiesQuery : IPagedQuery<PartyDocument>
 {
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
-    public string? Email { get; set; }
+    public string? Email { get; set; } //TODO
     public DateTime? LastUpdatedDate { get; set; }
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 10;
