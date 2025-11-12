@@ -2,13 +2,22 @@ namespace KeeperData.Core.ApiClients.DataBridgeApi;
 
 public static class DataBridgeQueries
 {
-    public static Dictionary<string, string> PagedRecords(int top, int skip, DateTime? updatedSinceDateTime = null)
+    public static Dictionary<string, string> PagedRecords(
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null)
     {
         var query = new Dictionary<string, string>
         {
             ["$top"] = top.ToString(),
             ["$skip"] = skip.ToString()
         };
+
+        if (!string.IsNullOrWhiteSpace(selectFields))
+        {
+            query["$select"] = selectFields;
+        }
 
         if (updatedSinceDateTime.HasValue)
         {

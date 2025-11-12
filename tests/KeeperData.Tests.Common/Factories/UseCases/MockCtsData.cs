@@ -9,7 +9,18 @@ public static class MockCtsData
 {
     private static readonly Fixture s_fixture = new();
 
-    public static StringContent GetCtsHoldingsResponse(int top, int skip) =>
+    public static DataBridgeResponse<CtsCphHolding> GetCtsHoldingsDataBridgeResponse(int top, int count, int totalCount) =>
+        new()
+        {
+            CollectionName = "collection",
+            Top = top,
+            Skip = top,
+            Count = count,
+            TotalCount = totalCount,
+            Data = [.. s_fixture.CreateMany<CtsCphHolding>(count)]
+        };            
+
+    public static StringContent GetCtsHoldingsStringContentResponse(int top, int skip) =>
         HttpContentUtility.CreateResponseContent(
             new DataBridgeResponse<CtsCphHolding>
             {
@@ -19,7 +30,7 @@ public static class MockCtsData
                 Data = [.. s_fixture.CreateMany<CtsCphHolding>(top)]
             });
 
-    public static StringContent GetCtsHoldingsResponse(string holdingIdentifier) =>
+    public static StringContent GetCtsHoldingsStringContentResponse(string holdingIdentifier) =>
         HttpContentUtility.CreateResponseContent(
             new DataBridgeResponse<CtsCphHolding>
             {
@@ -33,7 +44,18 @@ public static class MockCtsData
                 ]
             });
 
-    public static StringContent GetCtsAgentOrKeeperResponse(int top, int skip) =>
+    public static DataBridgeResponse<CtsAgentOrKeeper> GetCtsAgentOrKeeperDataBridgeResponse(int top, int count, int totalCount) =>
+        new()
+        {
+            CollectionName = "collection",
+            Top = top,
+            Skip = top,
+            Count = count,
+            TotalCount = totalCount,
+            Data = [.. s_fixture.CreateMany<CtsAgentOrKeeper>(count)]
+        };
+
+    public static StringContent GetCtsAgentOrKeeperStringContentResponse(int top, int skip) =>
         HttpContentUtility.CreateResponseContent(
             new DataBridgeResponse<CtsAgentOrKeeper>
             {
@@ -43,7 +65,7 @@ public static class MockCtsData
                 Data = [.. s_fixture.CreateMany<CtsAgentOrKeeper>(top)]
             });
 
-    public static StringContent GetCtsAgentOrKeeperResponse(string holdingIdentifier) =>
+    public static StringContent GetCtsAgentOrKeeperStringContentResponse(string holdingIdentifier) =>
         HttpContentUtility.CreateResponseContent(
             new DataBridgeResponse<CtsAgentOrKeeper>
             {

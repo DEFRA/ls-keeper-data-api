@@ -1,0 +1,156 @@
+using FluentAssertions;
+using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
+using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk.Steps;
+using KeeperData.Core.ApiClients.DataBridgeApi;
+using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
+using KeeperData.Core.Messaging.Contracts.V1.Cts;
+using KeeperData.Core.Messaging.MessagePublishers;
+using KeeperData.Core.Messaging.MessagePublishers.Clients;
+using KeeperData.Core.Providers;
+using KeeperData.Tests.Common.Factories.UseCases;
+using Microsoft.Extensions.Logging;
+using Moq;
+
+namespace KeeperData.Application.Tests.Unit.Orchestration.ChangeScanning.Cts;
+
+public class CtsHoldingBulkScanStepTests
+{
+    private readonly Mock<IDataBridgeClient> _dataBridgeClientMock = new();
+    private readonly Mock<IMessagePublisher<IntakeEventsQueueClient>> _messagePublisherMock = new();
+    private readonly Mock<ILogger<CtsHoldingBulkScanStep>> _loggerMock = new();
+    private readonly DataBridgeScanConfiguration _config = new() { QueryPageSize = 5, DelayBetweenQueriesSeconds = 0 };
+    private readonly Mock<IDelayProvider> _delayProviderMock = new();
+
+    private readonly CtsHoldingBulkScanStep _scanStep;
+    private readonly CtsBulkScanContext _context;
+
+    public CtsHoldingBulkScanStepTests()
+    {
+        _scanStep = new CtsHoldingBulkScanStep(
+            _dataBridgeClientMock.Object,
+            _messagePublisherMock.Object,
+            _config,
+            _delayProviderMock.Object,
+            _loggerMock.Object);
+
+        _context = new CtsBulkScanContext
+        {
+            Holdings = new()
+        };
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_ShouldPublishMessages_AndUpdateContext_WhenDataReturned()
+    {
+        var responseMock = MockCtsData.GetCtsHoldingsDataBridgeResponse(
+            top: 5,
+            count: 5,
+            totalCount: 5);
+
+        _dataBridgeClientMock
+            .Setup(c => c.GetCtsHoldingsAsync(5, 0, It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(responseMock);
+
+        await _scanStep.ExecuteAsync(_context, CancellationToken.None);
+
+        _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<CtsImportHoldingMessage>(), It.IsAny<CancellationToken>()), Times.Exactly(5));
+        _context.Holdings.CurrentSkip.Should().Be(5);
+        _context.Holdings.ScanCompleted.Should().BeTrue();
+
+        _delayProviderMock.Verify(d => d.DelayAsync(
+            It.IsAny<TimeSpan>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_ShouldCompleteScan_WhenNoDataReturned()
+    {
+        var responseMock = MockCtsData.GetCtsHoldingsDataBridgeResponse(
+            top: 5,
+            count: 0,
+            totalCount: 0);
+
+        _dataBridgeClientMock
+            .Setup(c => c.GetCtsHoldingsAsync(5, 0, It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(responseMock);
+
+        await _scanStep.ExecuteAsync(_context, CancellationToken.None);
+
+        _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<CtsImportHoldingMessage>(), It.IsAny<CancellationToken>()), Times.Never);
+        _context.Holdings.ScanCompleted.Should().BeTrue();
+
+        _delayProviderMock.Verify(d => d.DelayAsync(
+            It.IsAny<TimeSpan>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_ShouldLoopThroughPages_WhenMoreDataAvailable()
+    {
+        var page1ResponseMock = MockCtsData.GetCtsHoldingsDataBridgeResponse(
+            top: 5,
+            count: 5,
+            totalCount: 8);
+        var page2ResponseMock = MockCtsData.GetCtsHoldingsDataBridgeResponse(
+            top: 5,
+            count: 3,
+            totalCount: 8);
+
+        _dataBridgeClientMock
+            .SetupSequence(c => c.GetCtsHoldingsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(page1ResponseMock)
+            .ReturnsAsync(page2ResponseMock);
+
+        await _scanStep.ExecuteAsync(_context, CancellationToken.None);
+
+        _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<CtsImportHoldingMessage>(), It.IsAny<CancellationToken>()), Times.Exactly(8));
+        _context.Holdings.CurrentSkip.Should().Be(8);
+        _context.Holdings.ScanCompleted.Should().BeTrue();
+
+        _delayProviderMock.Verify(d => d.DelayAsync(
+            It.IsAny<TimeSpan>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_ShouldRespectCancellationToken()
+    {
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await _scanStep.ExecuteAsync(_context, cts.Token);
+
+        _dataBridgeClientMock.Verify(c => c.GetCtsHoldingsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()), Times.Never);
+        _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<CtsImportHoldingMessage>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GivenDelaySet_WhenExecuteCoreAsync_ThenShouldLoopThroughPagesWithDelay()
+    {
+        _config.DelayBetweenQueriesSeconds = 2;
+
+        var page1ResponseMock = MockCtsData.GetCtsHoldingsDataBridgeResponse(
+            top: 5,
+            count: 5,
+            totalCount: 8);
+        var page2ResponseMock = MockCtsData.GetCtsHoldingsDataBridgeResponse(
+            top: 5,
+            count: 3,
+            totalCount: 8);
+
+        _dataBridgeClientMock
+            .SetupSequence(c => c.GetCtsHoldingsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(page1ResponseMock)
+            .ReturnsAsync(page2ResponseMock);
+
+        await _scanStep.ExecuteAsync(_context, CancellationToken.None);
+
+        _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<CtsImportHoldingMessage>(), It.IsAny<CancellationToken>()), Times.Exactly(8));
+        _context.Holdings.CurrentSkip.Should().Be(8);
+        _context.Holdings.ScanCompleted.Should().BeTrue();
+
+        _delayProviderMock.Verify(d => d.DelayAsync(
+            TimeSpan.FromSeconds(_config.DelayBetweenQueriesSeconds),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+}

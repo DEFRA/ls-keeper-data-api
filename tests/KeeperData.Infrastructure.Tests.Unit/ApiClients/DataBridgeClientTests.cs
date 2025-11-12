@@ -67,7 +67,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetSamHoldingsAsync(10, 0, null, CancellationToken.None);
+        var result = await _client.GetSamHoldingsAsync(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
@@ -107,7 +107,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetSamHoldersAsync(10, 0, null, CancellationToken.None);
+        var result = await _client.GetSamHoldersAsync(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
@@ -149,7 +149,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetSamHerdsAsync(10, 0, null, CancellationToken.None);
+        var result = await _client.GetSamHerdsAsync(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
@@ -212,7 +212,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetSamPartiesAsync(10, 0, null, CancellationToken.None);
+        var result = await _client.GetSamPartiesAsync(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
@@ -242,7 +242,7 @@ public class DataBridgeClientTests
     [Fact]
     public async Task GetCtsHoldingsAsPagedResponseAsync_ShouldReturnHoldings_WhenApiReturnsSuccess()
     {
-        var expectedResponse = MockCtsData.GetCtsHoldingsResponse(10, 0);
+        var expectedResponse = MockCtsData.GetCtsHoldingsStringContentResponse(10, 0);
 
         var uri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetCtsHoldings,
@@ -252,7 +252,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetCtsHoldingsAsync(10, 0, null, CancellationToken.None);
+        var result = await _client.GetCtsHoldingsAsync(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
@@ -263,7 +263,7 @@ public class DataBridgeClientTests
     public async Task GetCtsHoldingsAsync_ShouldReturnHoldings_WhenApiReturnsSuccess()
     {
         var id = CphGenerator.GenerateFormattedCph();
-        var expectedResponse = MockCtsData.GetCtsHoldingsResponse(id);
+        var expectedResponse = MockCtsData.GetCtsHoldingsStringContentResponse(id);
 
         var uri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetCtsHoldings,
@@ -282,7 +282,7 @@ public class DataBridgeClientTests
     [Fact]
     public async Task GetCtsAgentsAsPagedResponseAsync_ShouldReturnAgents_WhenApiReturnsSuccess()
     {
-        var expectedResponse = MockCtsData.GetCtsAgentOrKeeperResponse(10, 0);
+        var expectedResponse = MockCtsData.GetCtsAgentOrKeeperStringContentResponse(10, 0);
 
         var uri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetCtsAgents,
@@ -292,7 +292,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetCtsAgentsAsync(10, 0, null, CancellationToken.None);
+        var result = await _client.GetCtsAgentsAsync(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
@@ -303,7 +303,7 @@ public class DataBridgeClientTests
     public async Task GetCtsAgentsAsync_ShouldReturnAgents_WhenApiReturnsSuccess()
     {
         var id = CphGenerator.GenerateFormattedCph();
-        var expectedResponse = MockCtsData.GetCtsAgentOrKeeperResponse(id);
+        var expectedResponse = MockCtsData.GetCtsAgentOrKeeperStringContentResponse(id);
 
         var uri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetCtsAgents,
@@ -322,7 +322,7 @@ public class DataBridgeClientTests
     [Fact]
     public async Task GetCtsKeepersAsPagedResponseAsync_ShouldReturnKeepers_WhenApiReturnsSuccess()
     {
-        var expectedResponse = MockCtsData.GetCtsAgentOrKeeperResponse(10, 0);
+        var expectedResponse = MockCtsData.GetCtsAgentOrKeeperStringContentResponse(10, 0);
 
         var uri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetCtsKeepers,
@@ -332,7 +332,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetCtsKeepersAsync(10, 0, null, CancellationToken.None);
+        var result = await _client.GetCtsKeepersAsync(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
@@ -343,7 +343,7 @@ public class DataBridgeClientTests
     public async Task GetCtsKeepersAsync_ShouldReturnKeepers_WhenApiReturnsSuccess()
     {
         var id = CphGenerator.GenerateFormattedCph();
-        var expectedResponse = MockCtsData.GetCtsAgentOrKeeperResponse(id);
+        var expectedResponse = MockCtsData.GetCtsAgentOrKeeperStringContentResponse(id);
 
         var uri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetCtsKeepers,
