@@ -31,7 +31,7 @@ public static class VerifySamHerdMappings
         target.ProductionTypeCode.Should().BeNull();
 
         target.DiseaseType.Should().Be(source.DISEASE_TYPE);
-        target.Interval.Should().Be(source.INTERVAL);
+        target.Interval.Should().Be(source.INTERVALS);
         target.IntervalUnitOfTime.Should().Be(source.INTERVAL_UNIT_OF_TIME);
 
         target.MovementRestrictionReasonCode.Should().Be(source.MOVEMENT_RSTRCTN_RSN_CODE);

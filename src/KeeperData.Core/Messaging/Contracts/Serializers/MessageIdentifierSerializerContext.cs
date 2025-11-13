@@ -11,6 +11,8 @@ namespace KeeperData.Core.Messaging.Contracts.Serializers;
 [JsonSerializable(typeof(SamImportHoldingMessage))]
 [JsonSerializable(typeof(SamImportHolderMessage))]
 [JsonSerializable(typeof(CtsImportHoldingMessage))]
+[JsonSerializable(typeof(SamBulkScanMessage))]
+[JsonSerializable(typeof(CtsBulkScanMessage))]
 public partial class MessageIdentifierSerializerContext : JsonSerializerContext
 {
 }

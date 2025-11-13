@@ -20,9 +20,9 @@ public class SamHerd : BronzeBase
     [JsonPropertyName("DISEASE_TYPE")]
     public string? DISEASE_TYPE { get; set; }
 
-    [JsonPropertyName("INTERVAL")]
+    [JsonPropertyName("INTERVALS")]
     [JsonConverter(typeof(SafeNullableDecimalConverter))]
-    public decimal? INTERVAL { get; set; }
+    public decimal? INTERVALS { get; set; }
 
     [JsonPropertyName("INTERVAL_UNIT_OF_TIME")]
     public string? INTERVAL_UNIT_OF_TIME { get; set; }
