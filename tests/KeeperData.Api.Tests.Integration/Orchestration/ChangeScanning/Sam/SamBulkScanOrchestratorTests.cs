@@ -5,6 +5,7 @@ using KeeperData.Core.Messaging.Contracts.V1.Sam;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.ChangeScanning.Sam;
 
+[Trait("Dependence", "localstack")]
 public class SamBulkScanOrchestratorTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
 {
     private const int ProcessingTimeCircuitBreakerSeconds = 30;
