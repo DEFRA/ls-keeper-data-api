@@ -56,8 +56,8 @@ public class SamHolderBulkScanStepTests
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
 
         _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<SamImportHolderMessage>(), It.IsAny<CancellationToken>()), Times.Exactly(5));
-        _context.Holdings.CurrentSkip.Should().Be(5);
-        _context.Holdings.ScanCompleted.Should().BeTrue();
+        _context.Holders.CurrentSkip.Should().Be(5);
+        _context.Holders.ScanCompleted.Should().BeTrue();
 
         _delayProviderMock.Verify(d => d.DelayAsync(
             It.IsAny<TimeSpan>(),
@@ -79,7 +79,7 @@ public class SamHolderBulkScanStepTests
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
 
         _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<SamImportHolderMessage>(), It.IsAny<CancellationToken>()), Times.Never);
-        _context.Holdings.ScanCompleted.Should().BeTrue();
+        _context.Holders.ScanCompleted.Should().BeTrue();
 
         _delayProviderMock.Verify(d => d.DelayAsync(
             It.IsAny<TimeSpan>(),
@@ -106,8 +106,8 @@ public class SamHolderBulkScanStepTests
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
 
         _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<SamImportHolderMessage>(), It.IsAny<CancellationToken>()), Times.Exactly(8));
-        _context.Holdings.CurrentSkip.Should().Be(8);
-        _context.Holdings.ScanCompleted.Should().BeTrue();
+        _context.Holders.CurrentSkip.Should().Be(8);
+        _context.Holders.ScanCompleted.Should().BeTrue();
 
         _delayProviderMock.Verify(d => d.DelayAsync(
             It.IsAny<TimeSpan>(),
@@ -144,8 +144,8 @@ public class SamHolderBulkScanStepTests
 
         _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<SamImportHolderMessage>(), It.IsAny<CancellationToken>()), Times.Exactly(4));
 
-        _context.Holdings.CurrentSkip.Should().Be(5);
-        _context.Holdings.ScanCompleted.Should().BeTrue();
+        _context.Holders.CurrentSkip.Should().Be(5);
+        _context.Holders.ScanCompleted.Should().BeTrue();
     }
 
     [Fact]
@@ -182,8 +182,8 @@ public class SamHolderBulkScanStepTests
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
 
         _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<SamImportHolderMessage>(), It.IsAny<CancellationToken>()), Times.Exactly(8));
-        _context.Holdings.CurrentSkip.Should().Be(8);
-        _context.Holdings.ScanCompleted.Should().BeTrue();
+        _context.Holders.CurrentSkip.Should().Be(8);
+        _context.Holders.ScanCompleted.Should().BeTrue();
 
         _delayProviderMock.Verify(d => d.DelayAsync(
             TimeSpan.FromSeconds(_config.DelayBetweenQueriesSeconds),

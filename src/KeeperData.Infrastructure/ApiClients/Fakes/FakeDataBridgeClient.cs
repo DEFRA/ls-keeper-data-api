@@ -134,7 +134,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
     private static DataBridgeResponse<T> GetDataBridgeResponse<T>(List<T> data, int top, int skip)
     {
         return new DataBridgeResponse<T>
-        { 
+        {
             CollectionName = "collection",
             Count = data.Count,
             Data = data,

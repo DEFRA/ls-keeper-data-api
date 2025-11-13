@@ -7,8 +7,10 @@ public static class HoldingIdentifierFormatters
         if (string.IsNullOrWhiteSpace(cphh))
             return string.Empty;
 
-        var lastSlashIndex = cphh.LastIndexOf('/');
-        return lastSlashIndex > 0 ? cphh[..lastSlashIndex] : cphh;
+        var segments = cphh.Split('/');
+        return segments.Length > 3
+            ? string.Join('/', segments[..^1])
+            : cphh;
     }
 
     public static string LidIdentifierToCph(this string? lidIdentifier)

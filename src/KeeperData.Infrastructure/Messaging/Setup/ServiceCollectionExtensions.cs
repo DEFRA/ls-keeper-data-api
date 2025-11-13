@@ -79,7 +79,9 @@ public static class ServiceCollectionExtensions
         {
             typeof(SamImportHoldingMessage),
             typeof(SamImportHolderMessage),
-            typeof(CtsImportHoldingMessage)
+            typeof(CtsImportHoldingMessage),
+            typeof(SamBulkScanMessage),
+            typeof(CtsBulkScanMessage)
         };
 
         foreach (var messageType in messageIdentifierTypes)

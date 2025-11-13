@@ -18,7 +18,7 @@ public static class MockCtsData
             Count = count,
             TotalCount = totalCount,
             Data = [.. s_fixture.CreateMany<CtsCphHolding>(count)]
-        };            
+        };
 
     public static StringContent GetCtsHoldingsStringContentResponse(int top, int skip) =>
         HttpContentUtility.CreateResponseContent(

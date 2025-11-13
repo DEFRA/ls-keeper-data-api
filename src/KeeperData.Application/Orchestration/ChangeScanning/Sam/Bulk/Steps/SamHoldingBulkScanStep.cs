@@ -65,7 +65,11 @@ public class SamHoldingBulkScanStep(
             context.Holdings.TotalCount = queryResponse.TotalCount;
             context.Holdings.CurrentCount = queryResponse.Count;
             context.Holdings.CurrentSkip += queryResponse.Count;
-            context.Holdings.ScanCompleted = queryResponse.Count < context.Holdings.CurrentTop;
+
+            var hasReachedLimit = _dataBridgeScanConfiguration.LimitScanTotalBatchSize > 0
+                && context.Holdings.CurrentSkip >= _dataBridgeScanConfiguration.LimitScanTotalBatchSize;
+
+            context.Holdings.ScanCompleted = queryResponse.Count < context.Holdings.CurrentTop || hasReachedLimit;
 
             if (!context.Holdings.ScanCompleted
                 && _dataBridgeScanConfiguration.DelayBetweenQueriesSeconds > 0)

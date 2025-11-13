@@ -26,22 +26,22 @@ public class SamHolderBulkScanStep(
 
     protected override async Task ExecuteCoreAsync(SamBulkScanContext context, CancellationToken cancellationToken)
     {
-        context.Holdings.CurrentTop = context.Holdings.CurrentTop > 0
-            ? context.Holdings.CurrentTop
+        context.Holders.CurrentTop = context.Holders.CurrentTop > 0
+            ? context.Holders.CurrentTop
             : _dataBridgeScanConfiguration.QueryPageSize;
 
-        while (!context.Holdings.ScanCompleted && !cancellationToken.IsCancellationRequested)
+        while (!context.Holders.ScanCompleted && !cancellationToken.IsCancellationRequested)
         {
             var queryResponse = await _dataBridgeClient.GetSamHoldersAsync(
-                context.Holdings.CurrentTop,
-                context.Holdings.CurrentSkip,
+                context.Holders.CurrentTop,
+                context.Holders.CurrentSkip,
                 SelectFields,
                 context.UpdatedSinceDateTime,
                 cancellationToken);
 
             if (queryResponse == null || queryResponse.Data.Count == 0)
             {
-                context.Holdings.ScanCompleted = true;
+                context.Holders.ScanCompleted = true;
                 break;
             }
 
@@ -62,12 +62,16 @@ public class SamHolderBulkScanStep(
                 await _intakeMessagePublisher.PublishAsync(message, cancellationToken);
             }
 
-            context.Holdings.TotalCount = queryResponse.TotalCount;
-            context.Holdings.CurrentCount = queryResponse.Count;
-            context.Holdings.CurrentSkip += queryResponse.Count;
-            context.Holdings.ScanCompleted = queryResponse.Count < context.Holdings.CurrentTop;
+            context.Holders.TotalCount = queryResponse.TotalCount;
+            context.Holders.CurrentCount = queryResponse.Count;
+            context.Holders.CurrentSkip += queryResponse.Count;
 
-            if (!context.Holdings.ScanCompleted
+            var hasReachedLimit = _dataBridgeScanConfiguration.LimitScanTotalBatchSize > 0
+                && context.Holders.CurrentSkip >= _dataBridgeScanConfiguration.LimitScanTotalBatchSize;
+
+            context.Holders.ScanCompleted = queryResponse.Count < context.Holders.CurrentTop || hasReachedLimit;
+
+            if (!context.Holders.ScanCompleted
                 && _dataBridgeScanConfiguration.DelayBetweenQueriesSeconds > 0)
             {
                 await _delayProvider.DelayAsync(
