@@ -22,6 +22,7 @@ public class CtsHoldingImportOrchestratorTests
     private readonly Mock<IGenericRepository<CtsHoldingDocument>> _silverHoldingRepositoryMock = new();
     private readonly Mock<IGenericRepository<CtsPartyDocument>> _silverPartyRepositoryMock = new();
     private readonly Mock<IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument>> _silverPartyRoleRelationshipRepositoryMock = new();
+    private readonly Mock<IRoleRepository> _roleRepositoryMock = new();
 
     private readonly Fixture _fixture;
 
@@ -45,11 +46,13 @@ public class CtsHoldingImportOrchestratorTests
         var (holdingsUri, agentsUri, keepersUri) = GetAllQueryUris(holdingIdentifier);
 
         SetupRepositoryMocks(1, 2);
+        SetupRoleRepositoryMock();
 
         var factory = new AppWebApplicationFactory();
         factory.OverrideServiceAsScoped(_silverHoldingRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_silverPartyRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_silverPartyRoleRelationshipRepositoryMock.Object);
+        factory.OverrideServiceAsScoped(_roleRepositoryMock.Object);
 
         SetupDataBridgeApiRequest(factory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holdings));
         SetupDataBridgeApiRequest(factory, agentsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(agents));
@@ -191,5 +194,13 @@ public class CtsHoldingImportOrchestratorTests
         _silverPartyRoleRelationshipRepositoryMock
             .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+    }
+
+    private void SetupRoleRepositoryMock()
+    {
+        // Setup FindAsync to return role data for common roles used in tests
+        _roleRepositoryMock
+            .Setup(r => r.FindAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("AGENT", "Agent"));
     }
 }
