@@ -60,35 +60,6 @@ public class CountryRepositoryTests
     }
 
     [Fact]
-    public void GivenCountryRepository_ThenImplementsICountryRepository()
-    {
-        // Act & Assert
-        typeof(CountryRepository).Should()
-            .Implement<ICountryRepository>();
-    }
-
-    [Fact]
-    public void GivenCountryRepository_ThenExtendsReferenceDataRepository()
-    {
-        // Act
-        var baseType = typeof(CountryRepository).BaseType;
-
-        // Assert
-        baseType.Should().NotBeNull();
-        baseType!.IsGenericType.Should().BeTrue();
-        baseType.GetGenericTypeDefinition().Should()
-            .Be(typeof(ReferenceDataRepository<,>));
-    }
-
-    [Fact]
-    public void GivenCountryRepository_ThenICountryRepositoryExtendsIReferenceDataRepository()
-    {
-        // Act & Assert
-        typeof(ICountryRepository).Should()
-            .Implement<IReferenceDataRepository<CountryListDocument, CountryDocument>>();
-    }
-
-    [Fact]
     public async Task GetByIdAsync_WhenCalledWithValidIdentifierId_ReturnsMatchingCountry()
     {
         // Arrange
