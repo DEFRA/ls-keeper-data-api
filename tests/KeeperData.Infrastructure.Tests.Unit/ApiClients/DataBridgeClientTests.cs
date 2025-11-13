@@ -118,7 +118,7 @@ public class DataBridgeClientTests
     public async Task GetSamHoldersByPartyIdAsync_ShouldReturnHolder_WhenApiReturnsSuccess()
     {
         var partyId = $"C{new Random().Next(1, 9):D6}";
-        var holdingIdentifier = "XX/XXX/XXXX";
+        var holdingIdentifier = Guid.NewGuid().ToString();
         var expectedResponse = MockSamData.GetSamHolderStringContentResponse(partyId, [holdingIdentifier]);
 
         var uri = RequestUriUtilities.GetQueryUri(

@@ -30,17 +30,9 @@ public class CtsBulkScanOrchestratorTests(IntegrationTestFixture fixture) : ICla
 
         await VerifyCtsBulkScanMessageCompleted(correlationId, timeout, pollInterval);
 
-        await VerifyCtsHoldingImportPersistenceStepsCompleted(testExecutedOn, timeout, pollInterval, expectedEntries: LimitScanTotalBatchSize);
+        await VerifyCtsHoldingImportPersistenceStepsCompleted(correlationId, testExecutedOn, timeout, pollInterval, expectedEntries: LimitScanTotalBatchSize);
     }
 
-    /// <summary>
-    /// Looking for log entry:
-    /// keeperdata_api | 2025-11-13T13:04:30.3440250+00:00 [INFO] (///KeeperData.Infrastructure.Messaging.Consumers.QueuePoller.) Handled message with correlationId: "d12cd3f8-0229-47a3-a9da-7d0e17005861"
-    /// </summary>
-    /// <param name="correlationId"></param>
-    /// <param name="timeout"></param>
-    /// <param name="pollInterval"></param>
-    /// <returns></returns>
     private static async Task VerifyCtsBulkScanMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
     {
         var startTime = DateTime.UtcNow;
@@ -61,19 +53,10 @@ public class CtsBulkScanOrchestratorTests(IntegrationTestFixture fixture) : ICla
         foundLogEntry.Should().BeTrue($"Expected log entry within {ProcessingTimeCircuitBreakerSeconds} seconds but none was found.");
     }
 
-    /// <summary>
-    /// Looking for log entries:
-    /// keeperdata_api | 2025-11-13T13:04:30.3379762+00:00 [INFO] (///KeeperData.Application.Orchestration.Imports.Cts.Holdings.Steps.CtsHoldingImportPersistenceStep.) Completed import step: "CtsHoldingImportPersistenceStep" in 6ms
-    /// </summary>
-    /// <param name="testExecutedOn"></param>
-    /// <param name="timeout"></param>
-    /// <param name="pollInterval"></param>
-    /// <param name="expectedEntries"></param>
-    /// <returns></returns>
-    private static async Task VerifyCtsHoldingImportPersistenceStepsCompleted(DateTime testExecutedOn, TimeSpan timeout, TimeSpan pollInterval, int expectedEntries)
+    private static async Task VerifyCtsHoldingImportPersistenceStepsCompleted(string correlationId, DateTime testExecutedOn, TimeSpan timeout, TimeSpan pollInterval, int expectedEntries)
     {
         var startTime = DateTime.UtcNow;
-        var logFragment = "Completed import step: \"CtsHoldingImportPersistenceStep\"";
+        var logFragment = $"Completed import step: \"CtsHoldingImportPersistenceStep\" correlationId: \"{correlationId}\"";
         var matchingLogCount = 0;
 
         while (DateTime.UtcNow - startTime < timeout)

@@ -13,26 +13,46 @@ namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Sam;
 [Trait("Dependence", "localstack")]
 public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
 {
+    private const int ProcessingTimeCircuitBreakerSeconds = 30;
+
     [Fact]
     public async Task GivenSamImportHoldingMessage_WhenReceivedOnTheQueue_ShouldComplete()
     {
         var correlationId = Guid.NewGuid().ToString();
         var holdingIdentifier = CphGenerator.GenerateFormattedCph();
         var message = GetSamImportHoldingMessage(holdingIdentifier);
+        var testExecutedOn = DateTime.UtcNow;
 
         await ExecuteQueueTest(correlationId, message);
 
-        // Wait briefly to allow processing
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        var timeout = TimeSpan.FromSeconds(ProcessingTimeCircuitBreakerSeconds);
+        var pollInterval = TimeSpan.FromSeconds(2);
 
-        var foundMessageProcesseEntryInLogs = await ContainerLoggingUtility.FindContainerLogEntryAsync(
-            ContainerLoggingUtility.ServiceNameApi,
-            $"Handled message with correlationId: \"{correlationId}\"");
-
-        foundMessageProcesseEntryInLogs.Should().BeTrue();
+        await VerifySamImportHoldingMessageCompleted(correlationId, timeout, pollInterval);
 
         await VerifySilverDataTypesAsync(holdingIdentifier);
+
         await VerifyGoldDataTypesAsync(holdingIdentifier);
+    }
+
+    private static async Task VerifySamImportHoldingMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
+    {
+        var startTime = DateTime.UtcNow;
+        var foundLogEntry = false;
+
+        while (DateTime.UtcNow - startTime < timeout)
+        {
+            foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
+                ContainerLoggingUtility.ServiceNameApi,
+                $"Handled message with correlationId: \"{correlationId}\"");
+
+            if (foundLogEntry)
+                break;
+
+            await Task.Delay(pollInterval);
+        }
+
+        foundLogEntry.Should().BeTrue($"Expected log entry within {ProcessingTimeCircuitBreakerSeconds} seconds but none was found.");
     }
 
     private async Task VerifySilverDataTypesAsync(string holdingIdentifier)
@@ -53,7 +73,7 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
         partyRoleRelationships.Should().NotBeNull().And.HaveCount(silverSamParties.Count);
         partyIds.SetEquals(partyRolePartyIds).Should().BeTrue();
 
-        var silverSamHerdFilter = Builders<SamHerdDocument>.Filter.Eq(x => x.CountyParishHoldingHerd, holdingIdentifier);
+        var silverSamHerdFilter = Builders<SamHerdDocument>.Filter.Eq(x => x.CountyParishHoldingHerd, $"{holdingIdentifier}/01");
         var silverSamHerds = await fixture.MongoVerifier.FindDocumentsAsync("samHerds", silverSamHerdFilter);
         silverSamHerds.Should().NotBeNull().And.HaveCount(1);
     }

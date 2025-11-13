@@ -12,24 +12,50 @@ namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Cts;
 [Trait("Dependence", "localstack")]
 public class CtsImportHoldingMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
 {
+    private const int ProcessingTimeCircuitBreakerSeconds = 30;
+
     [Fact]
     public async Task GivenCtsImportHoldingMessage_WhenReceivedOnTheQueue_ShouldComplete()
     {
-        var correlationId = "AG-3000158"; // Guid.NewGuid().ToString();
+        var correlationId = Guid.NewGuid().ToString();
         var holdingIdentifier = CphGenerator.GenerateCtsFormattedLidIdentifier("AH");
         var message = GetCtsImportHoldingMessage(holdingIdentifier);
+        var testExecutedOn = DateTime.UtcNow;
 
         await ExecuteQueueTest(correlationId, message);
 
-        // Wait briefly to allow processing
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        var timeout = TimeSpan.FromSeconds(ProcessingTimeCircuitBreakerSeconds);
+        var pollInterval = TimeSpan.FromSeconds(2);
 
-        var foundMessageProcesseEntryInLogs = await ContainerLoggingUtility.FindContainerLogEntryAsync(
-            ContainerLoggingUtility.ServiceNameApi,
-            $"Handled message with correlationId: \"{correlationId}\"");
+        await VerifyCtsImportHoldingMessageCompleted(correlationId, timeout, pollInterval);
 
-        foundMessageProcesseEntryInLogs.Should().BeTrue();
+        await VerifySilverDataTypesAsync(holdingIdentifier);
 
+        await VerifyGoldDataTypesAsync(holdingIdentifier);
+    }
+
+    private static async Task VerifyCtsImportHoldingMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
+    {
+        var startTime = DateTime.UtcNow;
+        var foundLogEntry = false;
+
+        while (DateTime.UtcNow - startTime < timeout)
+        {
+            foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
+                ContainerLoggingUtility.ServiceNameApi,
+                $"Handled message with correlationId: \"{correlationId}\"");
+
+            if (foundLogEntry)
+                break;
+
+            await Task.Delay(pollInterval);
+        }
+
+        foundLogEntry.Should().BeTrue($"Expected log entry within {ProcessingTimeCircuitBreakerSeconds} seconds but none was found.");
+    }
+
+    private async Task VerifySilverDataTypesAsync(string holdingIdentifier)
+    {
         var verifyHoldingIdentifier = holdingIdentifier.LidIdentifierToCph();
 
         var silverCtsHoldingFilter = Builders<CtsHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, verifyHoldingIdentifier);
@@ -47,8 +73,13 @@ public class CtsImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
         var partyIds = silverCtsParties.Select(x => x.PartyId).Distinct().ToHashSet();
         var partyRolePartyIds = partyRoleRelationships.Select(x => x.PartyId).Distinct().ToHashSet();
         partyIds.SetEquals(partyRolePartyIds).Should().BeTrue();
+    }
 
+    private Task VerifyGoldDataTypesAsync(string holdingIdentifier)
+    {
         // TODO - Add Gold
+
+        return Task.CompletedTask;
     }
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)

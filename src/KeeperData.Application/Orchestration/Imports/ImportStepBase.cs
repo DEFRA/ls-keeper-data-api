@@ -1,3 +1,4 @@
+using KeeperData.Core.Messaging;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -14,9 +15,9 @@ public abstract class ImportStepBase<TContext>(ILogger logger) : IImportStep<TCo
 
         try
         {
-            _logger.LogInformation("Starting import step: {StepName}", stepName);
+            _logger.LogInformation("Starting import step: {StepName} correlationId: {CorrelationId}", stepName, CorrelationIdContext.Value);
             await ExecuteCoreAsync(context, cancellationToken);
-            _logger.LogInformation("Completed import step: {StepName} in {ElapsedMs}ms", stepName, stopwatch.ElapsedMilliseconds);
+            _logger.LogInformation("Completed import step: {StepName} correlationId: {CorrelationId} in {ElapsedMs}ms", stepName, CorrelationIdContext.Value, stopwatch.ElapsedMilliseconds);
         }
         catch (Exception ex)
         {

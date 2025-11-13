@@ -30,17 +30,11 @@ public class SamBulkScanOrchestratorTests(IntegrationTestFixture fixture) : ICla
 
         await VerifySamBulkScanMessageCompleted(correlationId, timeout, pollInterval);
 
-        await VerifySamHoldingImportPersistenceStepsCompleted(testExecutedOn, timeout, pollInterval, expectedEntries: LimitScanTotalBatchSize);
+        await VerifySamHolderImportPersistenceStepsCompleted(correlationId, testExecutedOn, timeout, pollInterval, expectedEntries: LimitScanTotalBatchSize);
+
+        await VerifySamHoldingImportPersistenceStepsCompleted(correlationId, testExecutedOn, timeout, pollInterval, expectedEntries: LimitScanTotalBatchSize);
     }
 
-    /// <summary>
-    /// Looking for log entry:
-    /// keeperdata_api | 2025-11-13T13:04:30.3440250+00:00 [INFO] (///KeeperData.Infrastructure.Messaging.Consumers.QueuePoller.) Handled message with correlationId: "d12cd3f8-0229-47a3-a9da-7d0e17005861"
-    /// </summary>
-    /// <param name="correlationId"></param>
-    /// <param name="timeout"></param>
-    /// <param name="pollInterval"></param>
-    /// <returns></returns>
     private static async Task VerifySamBulkScanMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
     {
         var startTime = DateTime.UtcNow;
@@ -61,19 +55,41 @@ public class SamBulkScanOrchestratorTests(IntegrationTestFixture fixture) : ICla
         foundLogEntry.Should().BeTrue($"Expected log entry within {ProcessingTimeCircuitBreakerSeconds} seconds but none was found.");
     }
 
-    /// <summary>
-    /// Looking for log entries:
-    /// keeperdata_api | 2025-11-13T13:04:30.3379762+00:00 [INFO] (///KeeperData.Application.Orchestration.Imports.Sam.Holdings.Steps.SamHoldingImportPersistenceStep.) Completed import step: "SamHoldingImportPersistenceStep" in 6ms
-    /// </summary>
-    /// <param name="testExecutedOn"></param>
-    /// <param name="timeout"></param>
-    /// <param name="pollInterval"></param>
-    /// <param name="expectedEntries"></param>
-    /// <returns></returns>
-    private static async Task VerifySamHoldingImportPersistenceStepsCompleted(DateTime testExecutedOn, TimeSpan timeout, TimeSpan pollInterval, int expectedEntries)
+    private static async Task VerifySamHolderImportPersistenceStepsCompleted(string correlationId, DateTime testExecutedOn, TimeSpan timeout, TimeSpan pollInterval, int expectedEntries)
     {
         var startTime = DateTime.UtcNow;
-        var logFragment = "Completed import step: \"SamHoldingImportPersistenceStep\"";
+        var logFragment = $"Completed import step: \"SamHolderImportPersistenceStep\" correlationId: \"{correlationId}\"";
+        var matchingLogCount = 0;
+
+        while (DateTime.UtcNow - startTime < timeout)
+        {
+            var logs = await ContainerLoggingUtility.FindContainerLogEntriesAsync(
+                ContainerLoggingUtility.ServiceNameApi,
+                logFragment);
+
+            matchingLogCount = logs
+                .Select(log =>
+                {
+                    var timestampToken = log.Split(' ').FirstOrDefault();
+                    return DateTime.TryParse(timestampToken, out var timestamp) ? timestamp : (DateTime?)null;
+                })
+                .Where(ts => ts.HasValue && ts.Value >= testExecutedOn)
+                .Count();
+
+            if (matchingLogCount >= expectedEntries)
+                break;
+
+            await Task.Delay(pollInterval);
+        }
+
+        matchingLogCount.Should().Be(expectedEntries,
+            $"Expected {expectedEntries} import step completions after {testExecutedOn:o} within {timeout.TotalSeconds} seconds.");
+    }
+
+    private static async Task VerifySamHoldingImportPersistenceStepsCompleted(string correlationId, DateTime testExecutedOn, TimeSpan timeout, TimeSpan pollInterval, int expectedEntries)
+    {
+        var startTime = DateTime.UtcNow;
+        var logFragment = $"Completed import step: \"SamHoldingImportPersistenceStep\" correlationId: \"{correlationId}\"";
         var matchingLogCount = 0;
 
         while (DateTime.UtcNow - startTime < timeout)

@@ -3,7 +3,6 @@ using KeeperData.Api.Tests.Integration.Consumers.Helpers;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
-using KeeperData.Tests.Common.Generators;
 using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Sam;
@@ -11,26 +10,46 @@ namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Sam;
 [Trait("Dependence", "localstack")]
 public class SamImportHoldersMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
 {
+    private const int ProcessingTimeCircuitBreakerSeconds = 30;
+
     [Fact]
     public async Task GivenSamImportHolderMessage_WhenReceivedOnTheQueue_ShouldComplete()
     {
         var correlationId = Guid.NewGuid().ToString();
-        var partyId = CphGenerator.GenerateFormattedCph();
+        var partyId = Guid.NewGuid().ToString();
         var message = GetSamImportHolderMessage(partyId);
+        var testExecutedOn = DateTime.UtcNow;
 
         await ExecuteQueueTest(correlationId, message);
 
-        // Wait briefly to allow processing
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        var timeout = TimeSpan.FromSeconds(ProcessingTimeCircuitBreakerSeconds);
+        var pollInterval = TimeSpan.FromSeconds(2);
 
-        var foundMessageProcesseEntryInLogs = await ContainerLoggingUtility.FindContainerLogEntryAsync(
-            ContainerLoggingUtility.ServiceNameApi,
-            $"Handled message with correlationId: \"{correlationId}\"");
-
-        foundMessageProcesseEntryInLogs.Should().BeTrue();
+        await VerifySamImportHolderMessageCompleted(correlationId, timeout, pollInterval);
 
         await VerifySilverDataTypesAsync(partyId);
+
         await VerifyGoldDataTypesAsync(partyId);
+    }
+
+    private static async Task VerifySamImportHolderMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
+    {
+        var startTime = DateTime.UtcNow;
+        var foundLogEntry = false;
+
+        while (DateTime.UtcNow - startTime < timeout)
+        {
+            foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
+                ContainerLoggingUtility.ServiceNameApi,
+                $"Handled message with correlationId: \"{correlationId}\"");
+
+            if (foundLogEntry)
+                break;
+
+            await Task.Delay(pollInterval);
+        }
+
+        foundLogEntry.Should().BeTrue($"Expected log entry within {ProcessingTimeCircuitBreakerSeconds} seconds but none was found.");
     }
 
     private async Task VerifySilverDataTypesAsync(string partyId)

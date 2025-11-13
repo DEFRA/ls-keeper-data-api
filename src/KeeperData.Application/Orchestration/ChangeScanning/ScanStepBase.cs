@@ -1,3 +1,4 @@
+using KeeperData.Core.Messaging;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -14,9 +15,9 @@ public abstract class ScanStepBase<TContext>(ILogger logger) : IScanStep<TContex
 
         try
         {
-            _logger.LogInformation("Starting scan step: {StepName}", stepName);
+            _logger.LogInformation("Starting scan step: {StepName} correlationId: {CorrelationId}", stepName, CorrelationIdContext.Value);
             await ExecuteCoreAsync(context, cancellationToken);
-            _logger.LogInformation("Completed scan step: {StepName} in {ElapsedMs}ms", stepName, stopwatch.ElapsedMilliseconds);
+            _logger.LogInformation("Completed scan step: {StepName} correlationId: {CorrelationId} in {ElapsedMs}ms", stepName, CorrelationIdContext.Value, stopwatch.ElapsedMilliseconds);
         }
         catch (Exception ex)
         {

@@ -165,8 +165,8 @@ public class FakeDataBridgeClient : IDataBridgeClient
                 BATCH_ID = 1,
                 CHANGE_TYPE = "I",
                 IsDeleted = false,
-                CPHS = string.Join(",", [holdingIdentifier ?? "XX/XXX/XXXX"]),
-                PARTY_ID = partyId ?? $"C{_random.Next(1, 9):D6}",
+                CPHS = string.Join(",", [holdingIdentifier ?? Guid.NewGuid().ToString()]),
+                PARTY_ID = partyId ?? $"C{Guid.NewGuid().ToString("N")[..8]}",
                 ORGANISATION_NAME = Guid.NewGuid().ToString()
             }];
     }
@@ -179,11 +179,11 @@ public class FakeDataBridgeClient : IDataBridgeClient
                 CHANGE_TYPE = "I",
                 IsDeleted = false,
                 HERDMARK = Guid.NewGuid().ToString(),
-                CPHH = id ?? $"{_random.Next(10, 99)}{_random.Next(100, 999)}{_random.Next(1000, 9999)}/01",
+                CPHH = !string.IsNullOrWhiteSpace(id) ? $"{id}/01" : $"{_random.Next(10, 99)}{_random.Next(100, 999)}{_random.Next(1000, 9999)}/01",
                 ANIMAL_SPECIES_CODE = "CTT",
                 ANIMAL_PURPOSE_CODE = "CTT-BEEF",
-                KEEPER_PARTY_IDS = string.Join(",", [$"C{_random.Next(1, 9):D6}"]),
-                OWNER_PARTY_IDS = string.Join(",", [$"C{_random.Next(1, 9):D6}"]),
+                KEEPER_PARTY_IDS = string.Join(",", [$"C{Guid.NewGuid().ToString("N")[..8]}"]),
+                OWNER_PARTY_IDS = string.Join(",", [$"C{Guid.NewGuid().ToString("N")[..8]}"]),
                 ANIMAL_GROUP_ID_MCH_FRM_DAT = DateTime.Today.AddDays(-1)
             }];
     }
@@ -195,7 +195,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
             BATCH_ID = 1,
             CHANGE_TYPE = "I",
             IsDeleted = false,
-            PARTY_ID = id ?? $"C{_random.Next(1, 9):D6}",
+            PARTY_ID = id ?? $"C{Guid.NewGuid().ToString("N")[..8]}",
             ORGANISATION_NAME = Guid.NewGuid().ToString(),
             PARTY_ROLE_FROM_DATE = DateTime.Today.AddDays(-1),
             ROLES = "Agent"
@@ -210,7 +210,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
                 BATCH_ID = 1,
                 CHANGE_TYPE = "I",
                 IsDeleted = false,
-                PARTY_ID = id ?? $"C{_random.Next(1, 9):D6}",
+                PARTY_ID = id ?? $"C{Guid.NewGuid().ToString("N")[..8]}",
                 ORGANISATION_NAME = Guid.NewGuid().ToString(),
                 PARTY_ROLE_FROM_DATE = DateTime.Today.AddDays(-1),
                 ROLES = "Agent"
