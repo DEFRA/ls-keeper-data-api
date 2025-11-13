@@ -9,8 +9,6 @@ namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 
 public static class SamHoldingMapper
 {
-    private const string SaonLabel = "";
-
     public static async Task<List<SamHoldingDocument>> ToSilver(
         DateTime currentDateTime,
         List<SamCphHolding> rawHoldings,
@@ -23,90 +21,109 @@ public static class SamHoldingMapper
 
         foreach (var h in rawHoldings?.Where(x => x.CPH != null) ?? [])
         {
-            var addressLine = AddressFormatters.FormatAddressRange(
+            var holding = await ToSilver(
+                currentDateTime,
+                h,
+                resolvePremiseActivityType,
+                resolvePremiseType,
+                resolveCountry,
+                cancellationToken);
+
+            result.Add(holding);
+        }
+
+        return result;
+    }
+
+    public static async Task<SamHoldingDocument> ToSilver(
+        DateTime currentDateTime,
+        SamCphHolding h,
+        Func<string?, CancellationToken, Task<(string? PremiseActivityTypeId, string? PremiseActivityTypeName)>> resolvePremiseActivityType,
+        Func<string?, CancellationToken, Task<(string? PremiseTypeId, string? PremiseTypeName)>> resolvePremiseType,
+        Func<string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
+        CancellationToken cancellationToken)
+    {
+        var addressLine = AddressFormatters.FormatAddressRange(
                             h.SAON_START_NUMBER, h.SAON_START_NUMBER_SUFFIX,
                             h.SAON_END_NUMBER, h.SAON_END_NUMBER_SUFFIX,
                             h.PAON_START_NUMBER, h.PAON_START_NUMBER_SUFFIX,
                             h.PAON_END_NUMBER, h.PAON_END_NUMBER_SUFFIX,
                             h.SAON_DESCRIPTION, h.PAON_DESCRIPTION);
 
-            var (premiseActivityTypeId, premiseActivityTypeName) = await resolvePremiseActivityType(h.FACILITY_BUSINSS_ACTVTY_CODE, cancellationToken);
-            var (premiseTypeId, premiseTypeName) = await resolvePremiseType(h.FACILITY_TYPE_CODE, cancellationToken);
-            var (countryId, countryName) = await resolveCountry(h.COUNTRY_CODE, cancellationToken);
+        var (premiseActivityTypeId, premiseActivityTypeName) = await resolvePremiseActivityType(h.FACILITY_BUSINSS_ACTVTY_CODE, cancellationToken);
+        var (premiseTypeId, premiseTypeName) = await resolvePremiseType(h.FACILITY_TYPE_CODE, cancellationToken);
+        var (countryId, countryName) = await resolveCountry(h.COUNTRY_CODE, cancellationToken);
 
-            var holder = new SamHoldingDocument
+        var result = new SamHoldingDocument
+        {
+            // Id - Leave to support upsert assigning Id
+
+            LastUpdatedBatchId = h.BATCH_ID,
+            LastUpdatedDate = currentDateTime,
+            Deleted = h.IsDeleted ?? false,
+
+            CountyParishHoldingNumber = h.CPH,
+            AlternativeHoldingIdentifier = null,
+
+            CphRelationshipType = h.CPH_RELATIONSHIP_TYPE,
+            SecondaryCph = h.SecondaryCphUnwrapped,
+
+            CphTypeIdentifier = h.CPH_TYPE,
+            LocationName = h.FEATURE_NAME,
+
+            DiseaseType = h.DISEASE_TYPE,
+            Interval = h.INTERVAL,
+            IntervalUnitOfTime = h.INTERVAL_UNIT_OF_TIME,
+
+            HoldingStartDate = h.FEATURE_ADDRESS_FROM_DATE,
+            HoldingEndDate = h.FEATURE_ADDRESS_TO_DATE,
+            HoldingStatus = HoldingStatusFormatters.FormatHoldingStatus(h.FEATURE_ADDRESS_TO_DATE),
+
+            PremiseActivityTypeId = premiseActivityTypeId,
+            PremiseActivityTypeCode = h.FACILITY_BUSINSS_ACTVTY_CODE,
+            PremiseSubActivityTypeCode = h.FCLTY_SUB_BSNSS_ACTVTY_CODE,
+
+            MovementRestrictionReasonCode = h.MOVEMENT_RSTRCTN_RSN_CODE,
+
+            PremiseTypeIdentifier = premiseTypeId,
+            PremiseTypeCode = h.FACILITY_TYPE_CODE,
+
+            SpeciesTypeCode = h.AnimalSpeciesCodeUnwrapped,
+            ProductionUsageCodeList = h.AnimalProductionUsageCodeList,
+
+            Location = new Core.Documents.Silver.LocationDocument
             {
-                // Id - Leave to support upsert assigning Id
-
-                LastUpdatedBatchId = h.BATCH_ID,
-                LastUpdatedDate = currentDateTime,
-                Deleted = h.IsDeleted ?? false,
-
-                CountyParishHoldingNumber = h.CPH,
-                AlternativeHoldingIdentifier = null,
-
-                CphRelationshipType = h.CPH_RELATIONSHIP_TYPE,
-                SecondaryCph = h.SecondaryCphUnwrapped,
-
-                CphTypeIdentifier = h.CPH_TYPE,
-                LocationName = h.FEATURE_NAME,
-
-                DiseaseType = h.DISEASE_TYPE,
-                Interval = h.INTERVAL,
-                IntervalUnitOfTime = h.INTERVAL_UNIT_OF_TIME,
-
-                HoldingStartDate = h.FEATURE_ADDRESS_FROM_DATE,
-                HoldingEndDate = h.FEATURE_ADDRESS_TO_DATE,
-                HoldingStatus = HoldingStatusFormatters.FormatHoldingStatus(h.FEATURE_ADDRESS_TO_DATE),
-
-                PremiseActivityTypeId = premiseActivityTypeId,
-                PremiseActivityTypeCode = h.FACILITY_BUSINSS_ACTVTY_CODE,
-                PremiseSubActivityTypeCode = h.FCLTY_SUB_BSNSS_ACTVTY_CODE,
-
-                MovementRestrictionReasonCode = h.MOVEMENT_RSTRCTN_RSN_CODE,
-
-                PremiseTypeIdentifier = premiseTypeId,
-                PremiseTypeCode = h.FACILITY_TYPE_CODE,
-
-                SpeciesTypeCode = h.AnimalSpeciesCodeUnwrapped,
-                ProductionUsageCodeList = h.AnimalProductionUsageCodeList,
-
-                Location = new Core.Documents.Silver.LocationDocument
+                IdentifierId = Guid.NewGuid().ToString(),
+                Easting = h.EASTING,
+                Northing = h.NORTHING,
+                OsMapReference = h.OS_MAP_REFERENCE,
+                Address = new Core.Documents.Silver.AddressDocument
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
-                    Easting = h.EASTING,
-                    Northing = h.NORTHING,
-                    OsMapReference = h.OS_MAP_REFERENCE,
-                    Address = new Core.Documents.Silver.AddressDocument
-                    {
-                        IdentifierId = Guid.NewGuid().ToString(),
-                        AddressLine = addressLine,
-                        AddressLocality = h.LOCALITY,
-                        AddressStreet = h.STREET,
-                        AddressTown = h.TOWN,
-                        AddressPostCode = h.POSTCODE,
-                        CountrySubDivision = h.UK_INTERNAL_CODE,
+                    AddressLine = addressLine,
+                    AddressLocality = h.LOCALITY,
+                    AddressStreet = h.STREET,
+                    AddressTown = h.TOWN,
+                    AddressPostCode = h.POSTCODE,
+                    CountrySubDivision = h.UK_INTERNAL_CODE,
 
-                        CountryIdentifier = countryId,
-                        CountryCode = h.COUNTRY_CODE,
+                    CountryIdentifier = countryId,
+                    CountryCode = h.COUNTRY_CODE,
 
-                        UniquePropertyReferenceNumber = h.UDPRN
-                    }
-                },
+                    UniquePropertyReferenceNumber = h.UDPRN
+                }
+            },
 
-                Communication = new Core.Documents.Silver.CommunicationDocument
-                {
-                    IdentifierId = Guid.NewGuid().ToString(),
-                    Email = null,
-                    Mobile = null,
-                    Landline = null
-                },
+            Communication = new Core.Documents.Silver.CommunicationDocument
+            {
+                IdentifierId = Guid.NewGuid().ToString(),
+                Email = null,
+                Mobile = null,
+                Landline = null
+            },
 
-                GroupMarks = []
-            };
-
-            result.Add(holder);
-        }
+            GroupMarks = []
+        };
 
         return result;
     }

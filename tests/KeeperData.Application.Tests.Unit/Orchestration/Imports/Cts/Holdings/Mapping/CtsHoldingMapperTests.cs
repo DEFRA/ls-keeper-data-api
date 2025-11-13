@@ -1,5 +1,5 @@
 using FluentAssertions;
-using KeeperData.Application.Orchestration.Imports.Cts.Holdings.Mappings;
+using KeeperData.Application.Orchestration.Imports.Cts.Mappings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Tests.Common.Factories;
@@ -15,7 +15,7 @@ public class CtsHoldingMapperTests
     {
         var results = CtsHoldingMapper.ToSilver(
             DateTime.UtcNow,
-            null!);
+            (List<CtsCphHolding>?)null!);
 
         results.Should().NotBeNull();
         results.Count.Should().Be(0);

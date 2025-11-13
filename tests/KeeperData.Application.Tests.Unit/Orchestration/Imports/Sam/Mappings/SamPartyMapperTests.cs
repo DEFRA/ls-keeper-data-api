@@ -37,7 +37,7 @@ public class SamPartyMapperTests
     {
         var results = await SamPartyMapper.ToSilver(
             DateTime.UtcNow,
-            null!,
+            (List<SamParty>?)null!,
             _resolveRoleType,
             _resolveCountry,
             CancellationToken.None);

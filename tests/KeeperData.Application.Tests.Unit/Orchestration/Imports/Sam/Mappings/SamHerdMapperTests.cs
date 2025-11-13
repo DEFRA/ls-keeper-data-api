@@ -40,7 +40,7 @@ public class SamHerdMapperTests
     {
         var results = await SamHerdMapper.ToSilver(
             DateTime.UtcNow,
-            null!,
+            (List<SamHerd>?)null!,
             _resolveProductionUsage,
             // _resolveProductionType,
             _resolveSpeciesType,
