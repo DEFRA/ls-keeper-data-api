@@ -44,6 +44,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         services.AddScoped<ICountryRepository, CountryRepository>();
+        services.AddScoped<ISpeciesRepository, SpeciesRepository>();
         services.AddScoped<ISitesRepository, SitesRepository>();
         services.AddScoped<ISilverSitePartyRoleRelationshipRepository, SilverSitePartyRoleRelationshipRepository>();
 
