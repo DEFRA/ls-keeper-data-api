@@ -80,7 +80,7 @@ public static class DataBridgeQueries
     {
         return new Dictionary<string, string>
         {
-            ["$filter"] = $"CPHH eq '{id}'"
+            ["$filter"] = $"startswith(CPHH,'{id}')"
         };
     }
 

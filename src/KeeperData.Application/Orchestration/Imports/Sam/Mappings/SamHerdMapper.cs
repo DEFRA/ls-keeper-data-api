@@ -47,7 +47,7 @@ public static class SamHerdMapper
                 // ProductionTypeCode = herd.TBC,
 
                 DiseaseType = h.DISEASE_TYPE,
-                Interval = h.INTERVAL,
+                Interval = h.INTERVALS,
                 IntervalUnitOfTime = h.INTERVAL_UNIT_OF_TIME,
 
                 MovementRestrictionReasonCode = h.MOVEMENT_RSTRCTN_RSN_CODE,
