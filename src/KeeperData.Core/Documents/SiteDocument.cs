@@ -85,7 +85,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         Species = [.. m.Species.Select(SpeciesSummaryDocument.FromDomain)],
         Marks = [.. m.Marks.Select(GroupMarkDocument.FromDomain)],
         SiteActivities = [.. m.Activities.Select(SiteActivityDocument.FromDomain)],
-        Activities = [.. m.Activities.Select(a => a.Description)]
+        Activities = [.. m.Activities.Select(a => a.Description ?? string.Empty)]
     };
 
     public Site ToDomain()
