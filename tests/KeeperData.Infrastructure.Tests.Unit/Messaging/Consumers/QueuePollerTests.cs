@@ -7,6 +7,7 @@ using KeeperData.Core.Messaging.Observers;
 using KeeperData.Core.Messaging.Serializers;
 using KeeperData.Infrastructure.Messaging.Configuration;
 using KeeperData.Infrastructure.Messaging.Consumers;
+using KeeperData.Infrastructure.Messaging.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -23,6 +24,7 @@ public class QueuePollerTests
     private readonly Mock<ILogger<QueuePoller>> _loggerMock = new();
     private readonly Mock<IServiceScope> _scopeMock = new();
     private readonly Mock<IServiceProvider> _providerMock = new();
+    private readonly Mock<IDeadLetterQueueService> _deadLetterQueueServiceMock = new();
 
     private readonly IntakeEventQueueOptions _options = new()
     {
@@ -44,6 +46,7 @@ public class QueuePollerTests
             _sqsMock.Object,
             _handlerManagerMock.Object,
             _serializerMock.Object,
+            _deadLetterQueueServiceMock.Object,
             Options.Create(_options),
             _loggerMock.Object);
     }

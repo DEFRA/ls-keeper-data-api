@@ -17,7 +17,7 @@ public static class SamPartyRoleRelationshipMapper
             .SelectMany(party =>
             {
                 var cphs = party.IsHolder ? party.CphList : null;
-                var holdingIdentifiers = cphs?.Count > 0 ? cphs : [holdingIdentifier];
+                var holdingIdentifiers = cphs?.Count > 0 ? cphs : (holdingIdentifier != null ? [holdingIdentifier] : []);
 
                 return holdingIdentifiers.SelectMany(cph => party.Roles!.Select(role =>
                     new Core.Documents.Silver.SitePartyRoleRelationshipDocument

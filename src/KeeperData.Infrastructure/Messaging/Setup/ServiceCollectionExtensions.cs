@@ -16,6 +16,7 @@ using KeeperData.Infrastructure.Messaging.Factories.Implementations;
 using KeeperData.Infrastructure.Messaging.MessageHandlers;
 using KeeperData.Infrastructure.Messaging.Publishers;
 using KeeperData.Infrastructure.Messaging.Publishers.Configuration;
+using KeeperData.Infrastructure.Messaging.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -69,6 +70,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddHostedService<QueueListener>()
             .AddSingleton<IQueuePoller, QueuePoller>();
+        services.AddSingleton<IDeadLetterQueueService, DeadLetterQueueService>();
     }
 
     private static void AdddMessageSerializers(this IServiceCollection services)
