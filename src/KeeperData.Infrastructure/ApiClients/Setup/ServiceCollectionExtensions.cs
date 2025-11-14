@@ -1,4 +1,5 @@
 using KeeperData.Core.ApiClients.DataBridgeApi;
+using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Infrastructure.ApiClients.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,9 +18,14 @@ public static class ServiceCollectionExtensions
             .GetSection("ApiClients")
             .Get<Dictionary<string, ApiClientConfiguration>>();
 
+        var dataBridgeScanConfiguration = configuration
+            .GetSection("DataBridgeScanConfiguration")
+            .Get<DataBridgeScanConfiguration>();
+
         if (apiClientConfigurations == null) return;
 
         services.AddSingleton(apiClientConfigurations);
+        services.AddSingleton(dataBridgeScanConfiguration ?? new DataBridgeScanConfiguration());
 
         if (configuration.GetValue<bool>("ApiClients:DataBridgeApi:UseFakeClient"))
         {

@@ -7,6 +7,7 @@ using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.MessagePublishers;
+using KeeperData.Core.Messaging.MessagePublishers.Clients;
 using KeeperData.Core.Messaging.Serializers;
 using KeeperData.Infrastructure.Messaging.Configuration;
 using KeeperData.Infrastructure.Messaging.Consumers;
@@ -14,7 +15,6 @@ using KeeperData.Infrastructure.Messaging.Factories;
 using KeeperData.Infrastructure.Messaging.Factories.Implementations;
 using KeeperData.Infrastructure.Messaging.MessageHandlers;
 using KeeperData.Infrastructure.Messaging.Publishers;
-using KeeperData.Infrastructure.Messaging.Publishers.Clients;
 using KeeperData.Infrastructure.Messaging.Publishers.Configuration;
 using KeeperData.Infrastructure.Messaging.Services;
 using Microsoft.Extensions.Configuration;
@@ -81,7 +81,9 @@ public static class ServiceCollectionExtensions
         {
             typeof(SamImportHoldingMessage),
             typeof(SamImportHolderMessage),
-            typeof(CtsImportHoldingMessage)
+            typeof(CtsImportHoldingMessage),
+            typeof(SamBulkScanMessage),
+            typeof(CtsBulkScanMessage)
         };
 
         foreach (var messageType in messageIdentifierTypes)

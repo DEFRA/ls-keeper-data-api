@@ -27,4 +27,30 @@ public static class ContainerLoggingUtility
 
         return logs.Contains(entryToMatch);
     }
+
+    public static async Task<List<string>> FindContainerLogEntriesAsync(string containerServiceName, string entryFragment)
+    {
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "docker",
+                Arguments = $"logs {containerServiceName}",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            }
+        };
+
+        process.Start();
+        var logs = await process.StandardOutput.ReadToEndAsync();
+        process.WaitForExit();
+
+        var matchingLines = logs
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Where(line => line.Contains(entryFragment))
+            .ToList();
+
+        return matchingLines;
+    }
 }

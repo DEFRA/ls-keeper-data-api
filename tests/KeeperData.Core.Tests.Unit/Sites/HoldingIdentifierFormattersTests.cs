@@ -6,9 +6,9 @@ namespace KeeperData.Core.Tests.Unit.Sites;
 public class HoldingIdentifierFormattersTests
 {
     [Theory]
-    [InlineData("12/345/6789-01", "12/345/6789")]
-    [InlineData("AB/CDE/FGHI-99", "AB/CDE/FGHI")]
-    [InlineData("XX/XXX/XXXX-YY", "XX/XXX/XXXX")]
+    [InlineData("12/345/6789/01", "12/345/6789")]
+    [InlineData("AB/CDE/FGHI/99", "AB/CDE/FGHI")]
+    [InlineData("XX/XXX/XXXX/YY", "XX/XXX/XXXX")]
     public void CphhToCph_ValidCphh_TrimsSuffix(string input, string expected)
     {
         var result = input.CphhToCph();
