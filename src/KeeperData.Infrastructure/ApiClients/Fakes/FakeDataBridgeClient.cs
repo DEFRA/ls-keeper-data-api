@@ -14,8 +14,12 @@ public class FakeDataBridgeClient : IDataBridgeClient
         DateTime? updatedSinceDateTime = null,
         CancellationToken cancellationToken = default)
     {
-        var data = Enumerable.Range(0, top).Select(_ => GetSamCphHolding()).SelectMany(x => x).ToList();
-        var response = GetDataBridgeResponse(data, top, skip);
+        var totalRecords = 10;
+        var remainingRecords = Math.Max(0, totalRecords - skip);
+        var recordsToReturn = Math.Min(top, remainingRecords);
+
+        var data = Enumerable.Range(0, recordsToReturn).Select(_ => GetSamCphHolding()).SelectMany(x => x).ToList();
+        var response = GetDataBridgeResponse(data, top, skip, totalRecords);
         return Task.FromResult<DataBridgeResponse<SamCphHolding>?>(response);
     }
 
@@ -31,8 +35,12 @@ public class FakeDataBridgeClient : IDataBridgeClient
         DateTime? updatedSinceDateTime = null,
         CancellationToken cancellationToken = default)
     {
-        var data = Enumerable.Range(0, top).Select(_ => GetSamCphHoldersByPartyId()).SelectMany(x => x).ToList();
-        var response = GetDataBridgeResponse(data, top, skip);
+        var totalRecords = 10;
+        var remainingRecords = Math.Max(0, totalRecords - skip);
+        var recordsToReturn = Math.Min(top, remainingRecords);
+
+        var data = Enumerable.Range(0, recordsToReturn).Select(_ => GetSamCphHoldersByPartyId()).SelectMany(x => x).ToList();
+        var response = GetDataBridgeResponse(data, top, skip, totalRecords);
         return Task.FromResult<DataBridgeResponse<SamCphHolder>?>(response);
     }
 
@@ -48,8 +56,12 @@ public class FakeDataBridgeClient : IDataBridgeClient
         DateTime? updatedSinceDateTime = null,
         CancellationToken cancellationToken = default)
     {
-        var data = Enumerable.Range(0, top).Select(_ => GetSamHerd()).SelectMany(x => x).ToList();
-        var response = GetDataBridgeResponse(data, top, skip);
+        var totalRecords = 12;
+        var remainingRecords = Math.Max(0, totalRecords - skip);
+        var recordsToReturn = Math.Min(top, remainingRecords);
+
+        var data = Enumerable.Range(0, recordsToReturn).Select(_ => GetSamHerd()).SelectMany(x => x).ToList();
+        var response = GetDataBridgeResponse(data, top, skip, totalRecords);
         return Task.FromResult<DataBridgeResponse<SamHerd>?>(response);
     }
 
@@ -70,8 +82,12 @@ public class FakeDataBridgeClient : IDataBridgeClient
         DateTime? updatedSinceDateTime = null,
         CancellationToken cancellationToken = default)
     {
-        var data = Enumerable.Range(0, top).Select(_ => GetSamParties()).SelectMany(x => x).ToList();
-        var response = GetDataBridgeResponse(data, top, skip);
+        var totalRecords = 12;
+        var remainingRecords = Math.Max(0, totalRecords - skip);
+        var recordsToReturn = Math.Min(top, remainingRecords);
+
+        var data = Enumerable.Range(0, recordsToReturn).Select(_ => GetSamParties()).SelectMany(x => x).ToList();
+        var response = GetDataBridgeResponse(data, top, skip, totalRecords);
         return Task.FromResult<DataBridgeResponse<SamParty>?>(response);
     }
 
@@ -87,8 +103,12 @@ public class FakeDataBridgeClient : IDataBridgeClient
         DateTime? updatedSinceDateTime = null,
         CancellationToken cancellationToken = default)
     {
-        var data = Enumerable.Range(0, top).Select(_ => GetCtsCphHolding()).SelectMany(x => x).ToList();
-        var response = GetDataBridgeResponse(data, top, skip);
+        var totalRecords = 10;
+        var remainingRecords = Math.Max(0, totalRecords - skip);
+        var recordsToReturn = Math.Min(top, remainingRecords);
+
+        var data = Enumerable.Range(0, recordsToReturn).Select(_ => GetCtsCphHolding()).SelectMany(x => x).ToList();
+        var response = GetDataBridgeResponse(data, top, skip, totalRecords);
         return Task.FromResult<DataBridgeResponse<CtsCphHolding>?>(response);
     }
 
@@ -104,8 +124,12 @@ public class FakeDataBridgeClient : IDataBridgeClient
         DateTime? updatedSinceDateTime = null,
         CancellationToken cancellationToken = default)
     {
-        var data = Enumerable.Range(0, top).Select(_ => GetCtsAgentOrKeeper()).SelectMany(x => x).ToList();
-        var response = GetDataBridgeResponse(data, top, skip);
+        var totalRecords = 12;
+        var remainingRecords = Math.Max(0, totalRecords - skip);
+        var recordsToReturn = Math.Min(top, remainingRecords);
+
+        var data = Enumerable.Range(0, recordsToReturn).Select(_ => GetCtsAgentOrKeeper()).SelectMany(x => x).ToList();
+        var response = GetDataBridgeResponse(data, top, skip, totalRecords);
         return Task.FromResult<DataBridgeResponse<CtsAgentOrKeeper>?>(response);
     }
 
@@ -121,8 +145,12 @@ public class FakeDataBridgeClient : IDataBridgeClient
         DateTime? updatedSinceDateTime = null,
         CancellationToken cancellationToken = default)
     {
-        var data = Enumerable.Range(0, top).Select(_ => GetCtsAgentOrKeeper()).SelectMany(x => x).ToList();
-        var response = GetDataBridgeResponse(data, top, skip);
+        var totalRecords = 12;
+        var remainingRecords = Math.Max(0, totalRecords - skip);
+        var recordsToReturn = Math.Min(top, remainingRecords);
+
+        var data = Enumerable.Range(0, recordsToReturn).Select(_ => GetCtsAgentOrKeeper()).SelectMany(x => x).ToList();
+        var response = GetDataBridgeResponse(data, top, skip, totalRecords);
         return Task.FromResult<DataBridgeResponse<CtsAgentOrKeeper>?>(response);
     }
 
@@ -131,12 +159,13 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult(GetCtsAgentOrKeeper(id));
     }
 
-    private static DataBridgeResponse<T> GetDataBridgeResponse<T>(List<T> data, int top, int skip)
+    private static DataBridgeResponse<T> GetDataBridgeResponse<T>(List<T> data, int top, int skip, int totalCount)
     {
         return new DataBridgeResponse<T>
         {
             CollectionName = "collection",
             Count = data.Count,
+            TotalCount = totalCount,
             Data = data,
             Top = top,
             Skip = skip
