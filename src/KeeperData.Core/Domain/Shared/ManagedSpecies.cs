@@ -1,37 +1,41 @@
 using KeeperData.Core.Domain.BuildingBlocks;
 
-namespace KeeperData.Core.Domain.Sites;
+namespace KeeperData.Core.Domain.Shared;
 
-public class Role : ValueObject
+public class ManagedSpecies : ValueObject
 {
-    public string RoleId { get; private set; }
+    public string Id { get; private set; }
+    public string Code { get; private set; }
     public string Name { get; private set; }
-    public DateTime? StartDate { get; private set; }
+    public DateTime StartDate { get; private set; }
     public DateTime? EndDate { get; private set; }
     public DateTime LastUpdatedDate { get; private set; }
 
-    public Role(
-        string roleId,
+    public ManagedSpecies(
+        string id,
+        string code,
         string name,
-        DateTime? startDate,
+        DateTime startDate,
         DateTime? endDate,
         DateTime lastUpdatedDate)
     {
-        RoleId = roleId;
+        Id = id;
+        Code = code;
         Name = name;
         StartDate = startDate;
         EndDate = endDate;
         LastUpdatedDate = lastUpdatedDate;
     }
 
-    public static Role Create(
-        string roleId,
+    public static ManagedSpecies Create(
+        string code,
         string name,
-        DateTime? startDate,
+        DateTime startDate,
         DateTime? endDate)
     {
-        return new Role(
-            roleId,
+        return new ManagedSpecies(
+            Guid.NewGuid().ToString(),
+            code,
             name,
             startDate,
             endDate,
@@ -40,15 +44,15 @@ public class Role : ValueObject
     }
 
     public bool ApplyChanges(
-        string roleId,
+        string code,
         string name,
-        DateTime? startDate,
+        DateTime startDate,
         DateTime? endDate,
         DateTime lastUpdatedDate)
     {
         var changed = false;
 
-        changed |= Change(RoleId, roleId, v => RoleId = v);
+        changed |= Change(Code, code, v => Code = v);
         changed |= Change(Name, name, v => Name = v);
         changed |= Change(StartDate, startDate, v => StartDate = v);
         changed |= Change(EndDate, endDate, v => EndDate = v);
@@ -70,9 +74,9 @@ public class Role : ValueObject
 
     public override IEnumerable<object> GetEqualityComponents()
     {
-        yield return RoleId;
+        yield return Code;
         yield return Name;
-        yield return StartDate ?? default;
+        yield return StartDate;
         yield return EndDate ?? default;
     }
 }

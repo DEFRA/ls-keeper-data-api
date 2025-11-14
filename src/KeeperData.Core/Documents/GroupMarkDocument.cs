@@ -1,4 +1,4 @@
-using KeeperData.Core.Domain.Sites; // Add this using
+using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
@@ -7,28 +7,40 @@ namespace KeeperData.Core.Documents;
 
 public class GroupMarkDocument : INestedEntity
 {
-    [JsonPropertyName("id")]
     [BsonElement("id")]
+    [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
+
+    [JsonPropertyName("mark")]
     public required string Mark { get; set; }
-    public SpeciesDocument? Species { get; set; }
+
+    [JsonPropertyName("startDate")]
     public DateTime StartDate { get; set; }
+
+    [JsonPropertyName("endDate")]
     public DateTime? EndDate { get; set; }
+
+    [JsonPropertyName("species")]
+    public SpeciesSummaryDocument? Species { get; set; }
+
+    [JsonPropertyName("lastUpdatedDate")]
+    public DateTime LastUpdatedDate { get; set; }
 
     public static GroupMarkDocument FromDomain(GroupMark m) => new()
     {
         IdentifierId = m.Id,
         Mark = m.Mark,
-        Species = m.Species is not null ? SpeciesDocument.FromDomain(m.Species) : null,
         StartDate = m.StartDate,
-        EndDate = m.EndDate
+        EndDate = m.EndDate,
+        Species = m.Species is not null ? SpeciesSummaryDocument.FromDomain(m.Species) : null,
+        LastUpdatedDate = m.LastUpdatedDate
     };
 
     public GroupMark ToDomain() => new(
         IdentifierId,
+        LastUpdatedDate,
         Mark,
-        Species?.ToDomain(),
         StartDate,
-        EndDate
-    );
+        EndDate,
+        Species?.ToDomain());
 }

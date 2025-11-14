@@ -4,6 +4,7 @@ using KeeperData.Core.Repositories;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
+using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
 
@@ -11,27 +12,52 @@ namespace KeeperData.Core.Documents;
 public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 {
     [BsonId]
+    [JsonPropertyName("id")]
     public required string Id { get; set; }
-    public int? LastUpdatedBatchId { get; set; }
+
+    [JsonPropertyName("createdDate")]
+    public DateTime CreatedDate { get; private set; }
+
+    [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
 
+    [JsonPropertyName("title")]
     public string? Title { get; set; }
+
+    [JsonPropertyName("firstName")]
     public string? FirstName { get; set; }
+
+    [JsonPropertyName("lastName")]
     public string? LastName { get; set; }
+
+    [JsonPropertyName("name")]
     public string? Name { get; set; }
+
+    [JsonPropertyName("customerNumber")]
     public string? CustomerNumber { get; set; }
+
+    [JsonPropertyName("partyType")]
     public string? PartyType { get; set; }
+
+    [JsonPropertyName("state")]
     public string? State { get; set; }
+
+    [JsonPropertyName("deleted")]
     public bool Deleted { get; set; }
 
-    public AddressDocument? CorrespondanceAddress { get; set; }
+    [JsonPropertyName("communication")]
     public List<CommunicationDocument> Communication { get; set; } = [];
+
+    [JsonPropertyName("correspondanceAddress")]
+    public AddressDocument? CorrespondanceAddress { get; set; }
+
+    [JsonPropertyName("partyRoles")]
     public List<PartyRoleDocument> PartyRoles { get; set; } = [];
 
     public static PartyDocument FromDomain(Party m) => new()
     {
         Id = m.Id,
-        LastUpdatedBatchId = m.LastUpdatedBatchId,
+        CreatedDate = m.CreatedDate,
         LastUpdatedDate = m.LastUpdatedDate,
         Title = m.Title,
         FirstName = m.FirstName,
@@ -52,7 +78,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
     {
         var party = new Party(
             Id,
-            LastUpdatedBatchId,
+            CreatedDate,
             LastUpdatedDate,
             Title,
             FirstName,
@@ -96,7 +122,15 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("PartyType"),
-                new CreateIndexOptions { Name = "idx_partyType" })
+                new CreateIndexOptions { Name = "idx_partyType" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("CreatedDate"),
+                new CreateIndexOptions { Name = "idx_createdDate" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("LastUpdatedDate"),
+                new CreateIndexOptions { Name = "idx_lastUpdatedDate" }),
         ];
     }
 }

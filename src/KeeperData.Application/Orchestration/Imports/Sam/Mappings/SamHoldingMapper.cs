@@ -2,6 +2,7 @@ using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Domain.Sites.Formatters;
 
@@ -196,7 +197,6 @@ public static class SamHoldingMapper
             communication: null);
 
         var site = Site.Create(
-            incoming.LastUpdatedBatchId,
             premiseType?.Code ?? string.Empty,
             incoming.LocationName ?? string.Empty,
             incoming.HoldingStartDate,
@@ -241,7 +241,6 @@ public static class SamHoldingMapper
 
         site.Update(
             currentDateTime,
-            incoming.LastUpdatedBatchId,
             premiseType?.Code ?? string.Empty,
             incoming.LocationName ?? string.Empty,
             incoming.HoldingStartDate,

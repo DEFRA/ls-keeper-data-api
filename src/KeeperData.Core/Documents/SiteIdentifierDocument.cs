@@ -7,12 +7,18 @@ namespace KeeperData.Core.Documents;
 
 public class SiteIdentifierDocument : INestedEntity
 {
-    [JsonPropertyName("id")]
     [BsonElement("id")]
+    [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
-    public DateTime LastUpdatedDate { get; set; }
+
+    [JsonPropertyName("identifier")]
     public string Identifier { get; set; } = default!;
+
+    [JsonPropertyName("type")]
     public string Type { get; set; } = default!;
+
+    [JsonPropertyName("lastUpdatedDate")]
+    public DateTime LastUpdatedDate { get; set; }
 
     public static SiteIdentifierDocument FromDomain(SiteIdentifier si) => new()
     {

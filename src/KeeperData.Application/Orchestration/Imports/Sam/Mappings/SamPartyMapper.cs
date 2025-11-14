@@ -4,7 +4,7 @@ using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Parties;
 using KeeperData.Core.Domain.Parties.Formatters;
 using KeeperData.Core.Domain.Parties.Rules;
-using KeeperData.Core.Domain.Sites;
+using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Domain.Sites.Formatters;
 
 namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
@@ -199,7 +199,6 @@ public static class SamPartyMapper
             false);
 
         var party = Party.Create(
-            incoming.LastUpdatedBatchId,
             incoming.PartyTitleTypeIdentifier,
             incoming.PartyFirstName,
             incoming.PartyLastName,
@@ -282,7 +281,6 @@ public static class SamPartyMapper
 
         party.Update(
             currentDateTime,
-            incoming.LastUpdatedBatchId,
             incoming.PartyTitleTypeIdentifier,
             incoming.PartyFirstName,
             incoming.PartyLastName,

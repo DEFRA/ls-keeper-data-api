@@ -1,14 +1,14 @@
 using KeeperData.Core.Domain.BuildingBlocks;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
 using KeeperData.Core.Domain.Parties.DomainEvents;
-using KeeperData.Core.Domain.Sites;
+using KeeperData.Core.Domain.Shared;
 
 namespace KeeperData.Core.Domain.Parties;
 
 public class Party : IAggregateRoot
 {
     public string Id { get; private set; }
-    public int? LastUpdatedBatchId { get; private set; }
+    public DateTime CreatedDate { get; private set; }
     public DateTime LastUpdatedDate { get; private set; }
     public string? Title { get; private set; }
     public string? FirstName { get; private set; }
@@ -19,11 +19,11 @@ public class Party : IAggregateRoot
     public string? State { get; private set; }
     public bool Deleted { get; private set; }
 
-    private Address? _address;
-    public Address? Address => _address;
-
     private readonly List<Communication> _communications = [];
     public IReadOnlyCollection<Communication> Communications => _communications.AsReadOnly();
+
+    private Address? _address;
+    public Address? Address => _address;
 
     private readonly List<PartyRole> _roles = [];
     public IReadOnlyCollection<PartyRole> Roles => _roles.AsReadOnly();
@@ -34,7 +34,7 @@ public class Party : IAggregateRoot
 
     public Party(
         string id,
-        int? batchId,
+        DateTime createdDate,
         DateTime lastUpdatedDate,
         string? title,
         string? firstName,
@@ -47,7 +47,7 @@ public class Party : IAggregateRoot
         Address? address = null)
     {
         Id = id;
-        LastUpdatedBatchId = batchId;
+        CreatedDate = createdDate;
         LastUpdatedDate = lastUpdatedDate;
         Title = title;
         FirstName = firstName;
@@ -61,7 +61,6 @@ public class Party : IAggregateRoot
     }
 
     public static Party Create(
-        int? batchId,
         string? title,
         string? firstName,
         string? lastName,
@@ -74,7 +73,7 @@ public class Party : IAggregateRoot
     {
         var party = new Party(
             Guid.NewGuid().ToString(),
-            batchId,
+            DateTime.UtcNow,
             DateTime.UtcNow,
             title,
             firstName,
@@ -92,7 +91,6 @@ public class Party : IAggregateRoot
 
     public void Update(
         DateTime lastUpdatedDate,
-        int? batchId,
         string? title,
         string? firstName,
         string? lastName,
@@ -104,7 +102,6 @@ public class Party : IAggregateRoot
     {
         var changed = false;
 
-        changed |= Change(LastUpdatedBatchId, batchId, v => LastUpdatedBatchId = v, lastUpdatedDate);
         changed |= Change(Title, title, v => Title = v, lastUpdatedDate);
         changed |= Change(FirstName, firstName, v => FirstName = v, lastUpdatedDate);
         changed |= Change(LastName, lastName, v => LastName = v, lastUpdatedDate);
@@ -120,13 +117,12 @@ public class Party : IAggregateRoot
         }
     }
 
-    public void Delete(int batchId)
+    public void Delete()
     {
         if (Deleted) return;
 
         Deleted = true;
         State = "Inactive";
-        LastUpdatedBatchId = batchId;
         LastUpdatedDate = DateTime.UtcNow;
     }
 

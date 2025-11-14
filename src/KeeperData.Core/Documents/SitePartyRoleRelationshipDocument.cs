@@ -2,6 +2,7 @@ using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
 
@@ -11,23 +12,43 @@ namespace KeeperData.Core.Documents;
 [CollectionName("sitePartyRoleRelationships")]
 public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
 {
+    [JsonPropertyName("id")]
     public string? Id { get; set; }
 
+    [JsonPropertyName("lastUpdatedDate")]
+    public DateTime LastUpdatedDate { get; set; }
+
+    [JsonPropertyName("deleted")]
+    public bool Deleted { get; set; }
+
+    [JsonPropertyName("partyId")]
     public string PartyId { get; set; } = string.Empty;
-    public string PartyTypeId { get; set; } = string.Empty; // LOV Lookup / Internal Id
+
+    [JsonPropertyName("partyTypeId")]
+    public string PartyTypeId { get; set; } = string.Empty;
+
+    [JsonPropertyName("isHolder")]
     public bool IsHolder { get; set; }
 
+    [JsonPropertyName("holdingIdentifier")]
     public string HoldingIdentifier { get; set; } = string.Empty;
+
+    [JsonPropertyName("holdingIdentifierType")]
     public string HoldingIdentifierType { get; set; } = string.Empty;
 
-    public string? RoleTypeId { get; set; } // LOV Lookup / Internal Id
-    public string? RoleTypeName { get; set; } // LOV Lookup / Internal Name
+    [JsonPropertyName("roleTypeId")]
+    public string? RoleTypeId { get; set; }
 
+    [JsonPropertyName("roleTypeName")]
+    public string? RoleTypeName { get; set; }
+
+    [JsonPropertyName("effectiveFromData")]
     public DateTime? EffectiveFromData { get; set; }
+
+    [JsonPropertyName("effectiveToData")]
     public DateTime? EffectiveToData { get; set; }
 
-    public int? LastUpdatedBatchId { get; set; }
-
+    [JsonPropertyName("speciesManagedByRole")]
     public List<ManagedSpeciesDocument> SpeciesManagedByRole { get; set; } = [];
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()

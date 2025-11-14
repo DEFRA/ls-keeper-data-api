@@ -1,6 +1,6 @@
 using KeeperData.Core.Domain.BuildingBlocks;
 
-namespace KeeperData.Core.Domain.Sites;
+namespace KeeperData.Core.Domain.Shared;
 
 public class Location : ValueObject
 {

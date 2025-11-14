@@ -1,6 +1,6 @@
 using KeeperData.Core.Domain.BuildingBlocks;
 
-namespace KeeperData.Core.Domain.Sites;
+namespace KeeperData.Core.Domain.Shared;
 
 public class Country : ValueObject
 {
@@ -8,8 +8,8 @@ public class Country : ValueObject
     public string Code { get; private set; }
     public string Name { get; private set; }
     public string? LongName { get; private set; }
-    public bool EuTradeMember { get; private set; }
-    public bool DevolvedAuthority { get; private set; }
+    public bool EuTradeMemberFlag { get; private set; }
+    public bool DevolvedAuthorityFlag { get; private set; }
     public DateTime? LastUpdatedDate { get; private set; }
 
     public Country(
@@ -17,16 +17,16 @@ public class Country : ValueObject
         string code,
         string name,
         string? longName,
-        bool euTradeMember,
-        bool devolvedAuthority,
+        bool euTradeMemberFlag,
+        bool devolvedAuthorityFlag,
         DateTime? lastUpdatedDate)
     {
         Id = id;
         Code = code;
         Name = name;
         LongName = longName;
-        EuTradeMember = euTradeMember;
-        DevolvedAuthority = devolvedAuthority;
+        EuTradeMemberFlag = euTradeMemberFlag;
+        DevolvedAuthorityFlag = devolvedAuthorityFlag;
         LastUpdatedDate = lastUpdatedDate;
     }
 
@@ -35,16 +35,16 @@ public class Country : ValueObject
         string code,
         string name,
         string? longName,
-        bool euTradeMember,
-        bool devolvedAuthority)
+        bool euTradeMemberFlag,
+        bool devolvedAuthorityFlag)
     {
         var changed = false;
 
         changed |= Change(Code, code, v => Code = v, lastUpdatedDate);
         changed |= Change(Name, name, v => Name = v, lastUpdatedDate);
         changed |= Change(LongName, longName, v => LongName = v, lastUpdatedDate);
-        changed |= Change(EuTradeMember, euTradeMember, v => EuTradeMember = v, lastUpdatedDate);
-        changed |= Change(DevolvedAuthority, devolvedAuthority, v => DevolvedAuthority = v, lastUpdatedDate);
+        changed |= Change(EuTradeMemberFlag, euTradeMemberFlag, v => EuTradeMemberFlag = v, lastUpdatedDate);
+        changed |= Change(DevolvedAuthorityFlag, devolvedAuthorityFlag, v => DevolvedAuthorityFlag = v, lastUpdatedDate);
 
         return changed;
     }
@@ -62,7 +62,7 @@ public class Country : ValueObject
         yield return Code ?? string.Empty;
         yield return Name;
         yield return LongName ?? string.Empty;
-        yield return EuTradeMember;
-        yield return DevolvedAuthority;
+        yield return EuTradeMemberFlag;
+        yield return DevolvedAuthorityFlag;
     }
 }
