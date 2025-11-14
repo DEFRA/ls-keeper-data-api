@@ -1,6 +1,7 @@
 using KeeperData.Core.Domain.BuildingBlocks;
 
 namespace KeeperData.Core.Domain.Shared;
+
 public class Communication : ValueObject
 {
     public string Id { get; private set; }
