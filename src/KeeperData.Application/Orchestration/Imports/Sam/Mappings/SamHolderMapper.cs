@@ -10,8 +10,6 @@ namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 
 public static class SamHolderMapper
 {
-    private const string SaonLabel = "";
-
     public static async Task<List<SamPartyDocument>> ToSilver(
         DateTime currentDateTime,
         List<SamCphHolder> rawHolders,
@@ -22,88 +20,106 @@ public static class SamHolderMapper
     {
         var result = new List<SamPartyDocument>();
 
+        var roleNameToLookup = EnumExtensions.GetDescription(inferredRoleType);
+        var (roleTypeId, roleTypeName) = await resolveRoleType(roleNameToLookup, cancellationToken);
+
         foreach (var p in rawHolders?.Where(x => x.PARTY_ID != null) ?? [])
         {
-            var roleNameToLookup = EnumExtensions.GetDescription(inferredRoleType);
-            var (roleTypeId, roleTypeName) = await resolveRoleType(roleNameToLookup, cancellationToken);
-            var (countryId, countryName) = await resolveCountry(p.COUNTRY_CODE, cancellationToken);
-            var partyTypeId = p.DeterminePartyType().ToString();
-            var addressLine = AddressFormatters.FormatAddressRange(
-                            p.SAON_START_NUMBER, p.SAON_START_NUMBER_SUFFIX,
-                            p.SAON_END_NUMBER, p.SAON_END_NUMBER_SUFFIX,
-                            p.PAON_START_NUMBER, p.PAON_START_NUMBER_SUFFIX,
-                            p.PAON_END_NUMBER, p.PAON_END_NUMBER_SUFFIX,
-                            p.SAON_DESCRIPTION, p.PAON_DESCRIPTION);
-
-            var party = new SamPartyDocument
-            {
-                // Id - Leave to support upsert assigning Id
-
-                LastUpdatedBatchId = p.BATCH_ID,
-                LastUpdatedDate = currentDateTime,
-                Deleted = p.IsDeleted ?? false,
-                IsHolder = true,
-
-                PartyId = p.PARTY_ID.ToString(),
-                PartyTypeId = partyTypeId,
-
-                PartyFullName = PartyNameFormatters.FormatPartyFullName(
-                    p.ORGANISATION_NAME,
-                    p.PERSON_TITLE,
-                    p.PERSON_GIVEN_NAME,
-                    p.PERSON_GIVEN_NAME2,
-                    p.PERSON_INITIALS,
-                    p.PERSON_FAMILY_NAME),
-
-                PartyTitleTypeIdentifier = p.PERSON_TITLE,
-                PartyFirstName = PartyNameFormatters.FormatPartyFirstName(
-                    p.PERSON_GIVEN_NAME,
-                    p.PERSON_GIVEN_NAME2),
-                PartyInitials = p.PERSON_INITIALS,
-                PartyLastName = p.PERSON_FAMILY_NAME,
-
-                CphList = p.CphList ?? [],
-
-                Address = new AddressDocument
-                {
-                    IdentifierId = Guid.NewGuid().ToString(),
-                    AddressLine = addressLine,
-                    AddressLocality = p.LOCALITY,
-                    AddressStreet = p.STREET,
-                    AddressTown = p.TOWN,
-                    AddressPostCode = p.POSTCODE,
-                    CountrySubDivision = p.UK_INTERNAL_CODE,
-
-                    CountryIdentifier = countryId,
-                    CountryCode = p.COUNTRY_CODE,
-
-                    UniquePropertyReferenceNumber = p.UDPRN
-                },
-
-                Communication = new CommunicationDocument
-                {
-                    IdentifierId = Guid.NewGuid().ToString(),
-                    Email = p.INTERNET_EMAIL_ADDRESS,
-                    Mobile = p.MOBILE_NUMBER,
-                    Landline = p.TELEPHONE_NUMBER
-                },
-
-                Roles =
-                [
-                    new PartyRoleDocument
-                    {
-                        IdentifierId = Guid.NewGuid().ToString(),
-                        RoleTypeId = roleTypeId,
-                        RoleTypeName = roleTypeName,
-                        SourceRoleName = roleNameToLookup,
-                        EffectiveFromDate = null,
-                        EffectiveToDate = null
-                    }
-                ]
-            };
+            var party = await ToSilver(
+                currentDateTime,
+                p,
+                (roleNameToLookup, roleTypeId, roleTypeName),
+                resolveCountry,
+                cancellationToken);
 
             result.Add(party);
         }
+
+        return result;
+    }
+
+    public static async Task<SamPartyDocument> ToSilver(
+        DateTime currentDateTime,
+        SamCphHolder p,
+        (string? RoleNameToLookup, string? RoleTypeId, string? RoleTypeName) roleTypeInfo,
+        Func<string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
+        CancellationToken cancellationToken)
+    {
+        var (countryId, countryName) = await resolveCountry(p.COUNTRY_CODE, cancellationToken);
+        var partyTypeId = p.DeterminePartyType().ToString();
+        var addressLine = AddressFormatters.FormatAddressRange(
+                        p.SAON_START_NUMBER, p.SAON_START_NUMBER_SUFFIX,
+                        p.SAON_END_NUMBER, p.SAON_END_NUMBER_SUFFIX,
+                        p.PAON_START_NUMBER, p.PAON_START_NUMBER_SUFFIX,
+                        p.PAON_END_NUMBER, p.PAON_END_NUMBER_SUFFIX,
+                        p.SAON_DESCRIPTION, p.PAON_DESCRIPTION);
+
+        var result = new SamPartyDocument
+        {
+            // Id - Leave to support upsert assigning Id
+
+            LastUpdatedBatchId = p.BATCH_ID,
+            LastUpdatedDate = currentDateTime,
+            Deleted = p.IsDeleted ?? false,
+            IsHolder = true,
+
+            PartyId = p.PARTY_ID.ToString(),
+            PartyTypeId = partyTypeId,
+
+            PartyFullName = PartyNameFormatters.FormatPartyFullName(
+                p.ORGANISATION_NAME,
+                p.PERSON_TITLE,
+                p.PERSON_GIVEN_NAME,
+                p.PERSON_GIVEN_NAME2,
+                p.PERSON_INITIALS,
+                p.PERSON_FAMILY_NAME),
+
+            PartyTitleTypeIdentifier = p.PERSON_TITLE,
+            PartyFirstName = PartyNameFormatters.FormatPartyFirstName(
+                p.PERSON_GIVEN_NAME,
+                p.PERSON_GIVEN_NAME2),
+            PartyInitials = p.PERSON_INITIALS,
+            PartyLastName = p.PERSON_FAMILY_NAME,
+
+            CphList = p.CphList ?? [],
+
+            Address = new AddressDocument
+            {
+                IdentifierId = Guid.NewGuid().ToString(),
+                AddressLine = addressLine,
+                AddressLocality = p.LOCALITY,
+                AddressStreet = p.STREET,
+                AddressTown = p.TOWN,
+                AddressPostCode = p.POSTCODE,
+                CountrySubDivision = p.UK_INTERNAL_CODE,
+
+                CountryIdentifier = countryId,
+                CountryCode = p.COUNTRY_CODE,
+
+                UniquePropertyReferenceNumber = p.UDPRN
+            },
+
+            Communication = new CommunicationDocument
+            {
+                IdentifierId = Guid.NewGuid().ToString(),
+                Email = p.INTERNET_EMAIL_ADDRESS,
+                Mobile = p.MOBILE_NUMBER,
+                Landline = p.TELEPHONE_NUMBER
+            },
+
+            Roles =
+            [
+                new PartyRoleDocument
+                    {
+                        IdentifierId = Guid.NewGuid().ToString(),
+                        RoleTypeId = roleTypeInfo.RoleTypeId,
+                        RoleTypeName = roleTypeInfo.RoleTypeName,
+                        SourceRoleName = roleTypeInfo.RoleNameToLookup,
+                        EffectiveFromDate = null,
+                        EffectiveToDate = null
+                    }
+            ]
+        };
 
         return result;
     }

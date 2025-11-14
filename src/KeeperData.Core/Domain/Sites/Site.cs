@@ -1,5 +1,6 @@
 using KeeperData.Core.Domain.BuildingBlocks;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
+using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Domain.Sites.DomainEvents;
 
 namespace KeeperData.Core.Domain.Sites;
@@ -7,7 +8,7 @@ namespace KeeperData.Core.Domain.Sites;
 public class Site : IAggregateRoot
 {
     public string Id { get; private set; }
-    public int? LastUpdatedBatchId { get; private set; }
+    public DateTime CreatedDate { get; private set; }
     public DateTime LastUpdatedDate { get; private set; }
     public string Type { get; private set; }
     public string Name { get; private set; }
@@ -42,7 +43,7 @@ public class Site : IAggregateRoot
 
     public Site(
         string id,
-        int? batchId,
+        DateTime createdDate,
         DateTime lastUpdatedDate,
         string type,
         string name,
@@ -55,7 +56,7 @@ public class Site : IAggregateRoot
         Location? location)
     {
         Id = id;
-        LastUpdatedBatchId = batchId;
+        CreatedDate = createdDate;
         LastUpdatedDate = lastUpdatedDate;
         Type = type;
         Name = name;
@@ -69,7 +70,6 @@ public class Site : IAggregateRoot
     }
 
     public static Site Create(
-        int? batchId,
         string type,
         string name,
         DateTime startDate,
@@ -82,7 +82,7 @@ public class Site : IAggregateRoot
     {
         var site = new Site(
             Guid.NewGuid().ToString(),
-            batchId,
+            DateTime.UtcNow,
             DateTime.UtcNow,
             type,
             name,
@@ -100,7 +100,6 @@ public class Site : IAggregateRoot
 
     public void Update(
         DateTime lastUpdatedDate,
-        int? batchId,
         string type,
         string name,
         DateTime startDate,
@@ -112,7 +111,6 @@ public class Site : IAggregateRoot
     {
         var changed = false;
 
-        changed |= Change(LastUpdatedBatchId, batchId, v => LastUpdatedBatchId = v, lastUpdatedDate);
         changed |= Change(Type, type, v => Type = v, lastUpdatedDate);
         changed |= Change(Name, name, v => Name = v, lastUpdatedDate);
         changed |= Change(StartDate, startDate, v => StartDate = v, lastUpdatedDate);
@@ -128,13 +126,12 @@ public class Site : IAggregateRoot
         }
     }
 
-    public void Delete(int batchId)
+    public void Delete()
     {
         if (Deleted) return;
 
         Deleted = true;
         State = "Inactive";
-        LastUpdatedBatchId = batchId;
         LastUpdatedDate = DateTime.UtcNow;
     }
 

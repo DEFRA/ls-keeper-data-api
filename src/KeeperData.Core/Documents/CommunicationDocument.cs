@@ -1,4 +1,4 @@
-using KeeperData.Core.Domain.Sites;
+using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
@@ -7,13 +7,23 @@ namespace KeeperData.Core.Documents;
 
 public class CommunicationDocument : INestedEntity
 {
-    [JsonPropertyName("id")]
     [BsonElement("id")]
+    [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
+
+    [JsonPropertyName("email")]
     public string? Email { get; set; }
+
+    [JsonPropertyName("mobile")]
     public string? Mobile { get; set; }
+
+    [JsonPropertyName("landline")]
     public string? Landline { get; set; }
+
+    [JsonPropertyName("primaryContactFlag")]
     public bool? PrimaryContactFlag { get; set; }
+
+    [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
 
     public static CommunicationDocument FromDomain(Communication m) => new()
