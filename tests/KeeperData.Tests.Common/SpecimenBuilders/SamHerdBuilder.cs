@@ -47,7 +47,7 @@ public class SamHerdBuilder(
                 ANIMAL_PURPOSE_CODE = animalProductionUsageCode,
 
                 DISEASE_TYPE = _allowNulls && _random.Next(2) == 0 ? null : Guid.NewGuid().ToString(),
-                INTERVAL = interval,
+                INTERVALS = interval,
                 INTERVAL_UNIT_OF_TIME = intervalUnit,
                 MOVEMENT_RSTRCTN_RSN_CODE = movementRestrictionCode,
 

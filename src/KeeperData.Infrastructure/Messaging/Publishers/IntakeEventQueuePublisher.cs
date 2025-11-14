@@ -2,8 +2,8 @@ using Amazon.SQS;
 using KeeperData.Core.Messaging;
 using KeeperData.Core.Messaging.Exceptions;
 using KeeperData.Core.Messaging.MessagePublishers;
+using KeeperData.Core.Messaging.MessagePublishers.Clients;
 using KeeperData.Infrastructure.Messaging.Factories;
-using KeeperData.Infrastructure.Messaging.Publishers.Clients;
 using KeeperData.Infrastructure.Messaging.Publishers.Configuration;
 
 namespace KeeperData.Infrastructure.Messaging.Publishers;

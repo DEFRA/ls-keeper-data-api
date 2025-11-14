@@ -2,6 +2,32 @@ namespace KeeperData.Core.ApiClients.DataBridgeApi;
 
 public static class DataBridgeQueries
 {
+    public static Dictionary<string, string> PagedRecords(
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null)
+    {
+        var query = new Dictionary<string, string>
+        {
+            ["$top"] = top.ToString(),
+            ["$skip"] = skip.ToString()
+        };
+
+        if (!string.IsNullOrWhiteSpace(selectFields))
+        {
+            query["$select"] = selectFields;
+        }
+
+        if (updatedSinceDateTime.HasValue)
+        {
+            var formattedDate = updatedSinceDateTime.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
+            query["$filter"] = $"UpdatedAtUtc ge {formattedDate}";
+        }
+
+        return query;
+    }
+
     public static Dictionary<string, string> CtsHoldingsByLidFullIdentifier(string id)
     {
         return new Dictionary<string, string>
@@ -54,7 +80,7 @@ public static class DataBridgeQueries
     {
         return new Dictionary<string, string>
         {
-            ["$filter"] = $"CPHH eq '{id}'"
+            ["$filter"] = $"startswith(CPHH,'{id}')"
         };
     }
 

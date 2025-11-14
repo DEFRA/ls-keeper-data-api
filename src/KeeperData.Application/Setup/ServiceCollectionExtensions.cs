@@ -1,10 +1,15 @@
 using FluentValidation;
-using KeeperData.Application.Orchestration;
-using KeeperData.Application.Orchestration.Sam.Holdings;
-using KeeperData.Application.Orchestration.Sam.Holdings.Steps;
+using KeeperData.Application.Orchestration.ChangeScanning;
+using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
+using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk.Steps;
+using KeeperData.Application.Orchestration.Imports;
+using KeeperData.Application.Orchestration.Imports.Sam.Holdings;
+using KeeperData.Application.Orchestration.Imports.Sam.Holdings.Steps;
+using KeeperData.Application.Providers;
 using KeeperData.Application.Queries.Sites.Adapters;
 using KeeperData.Application.Services;
 using KeeperData.Core.Attributes;
+using KeeperData.Core.Providers;
 using KeeperData.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
@@ -24,13 +29,16 @@ public static class ServiceCollectionExtensions
         services.AddValidatorsFromAssemblyContaining<IRequestExecutor>();
 
         services.AddScoped<SitesQueryAdapter>();
+        services.AddTransient<IDelayProvider, RealDelayProvider>();
 
-        RegisterOrchestrators(services, typeof(SamHoldingImportOrchestrator).Assembly);
-        RegisterSteps(services, typeof(SamHoldingImportAggregationStep).Assembly);
+        RegisterImportOrchestrators(services, typeof(SamHoldingImportOrchestrator).Assembly);
+        RegisterImportSteps(services, typeof(SamHoldingImportAggregationStep).Assembly);
+        RegisterScanOrchestrators(services, typeof(SamBulkScanOrchestrator).Assembly);
+        RegisterScanSteps(services, typeof(SamHoldingBulkScanStep).Assembly);
         RegisterLookupServices(services);
     }
 
-    public static void RegisterOrchestrators(IServiceCollection services, Assembly assembly)
+    public static void RegisterImportOrchestrators(IServiceCollection services, Assembly assembly)
     {
         var orchestratorTypes = assembly.GetTypes()
             .Where(t => !t.IsAbstract && !t.IsInterface)
@@ -43,12 +51,42 @@ public static class ServiceCollectionExtensions
         }
     }
 
-    public static void RegisterSteps(IServiceCollection services, Assembly assembly)
+    public static void RegisterImportSteps(IServiceCollection services, Assembly assembly)
     {
         var stepTypes = assembly.GetTypes()
             .Where(t => !t.IsAbstract && !t.IsInterface)
             .SelectMany(t => t.GetInterfaces()
                 .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IImportStep<>))
+                .Select(i => new { Implementation = t, Service = i }));
+
+        var orderedSteps = stepTypes
+            .OrderBy(t => t.Implementation.GetCustomAttribute<StepOrderAttribute>()?.Order ?? int.MaxValue);
+
+        foreach (var step in orderedSteps)
+        {
+            services.AddScoped(step.Service, step.Implementation);
+        }
+    }
+
+    public static void RegisterScanOrchestrators(IServiceCollection services, Assembly assembly)
+    {
+        var orchestratorTypes = assembly.GetTypes()
+            .Where(t => !t.IsAbstract && !t.IsInterface)
+            .Where(t => t.BaseType?.IsGenericType == true &&
+                        t.BaseType.GetGenericTypeDefinition() == typeof(ScanOrchestrator<>));
+
+        foreach (var orchestrator in orchestratorTypes)
+        {
+            services.AddScoped(orchestrator);
+        }
+    }
+
+    public static void RegisterScanSteps(IServiceCollection services, Assembly assembly)
+    {
+        var stepTypes = assembly.GetTypes()
+            .Where(t => !t.IsAbstract && !t.IsInterface)
+            .SelectMany(t => t.GetInterfaces()
+                .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IScanStep<>))
                 .Select(i => new { Implementation = t, Service = i }));
 
         var orderedSteps = stepTypes

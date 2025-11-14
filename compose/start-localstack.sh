@@ -5,6 +5,7 @@ export AWS_REGION=eu-west-2
 export AWS_DEFAULT_REGION=eu-west-2
 export AWS_ACCESS_KEY_ID=test
 export AWS_SECRET_ACCESS_KEY=test
+export ENDPOINT_URL=http://localhost:4566
 
 set -e
 
@@ -27,35 +28,68 @@ fi
 
 echo "Bootstrapping SQS setup..."
 
-# Create SQS resources
-queue_url=$(awslocal sqs create-queue  \
+# Create the Dead-Letter Queue (DLQ) first.
+dlq_url=$(awslocal sqs create-queue \
+  --queue-name ls_keeper_data_intake_queue-deadletter \
+  --endpoint-url=http://localhost:4566 \
+  --output text \
+  --query 'QueueUrl')
+echo "SQS Dead-Letter Queue created: $dlq_url"
+
+# Get the ARN of the DLQ, which is needed for the main queue's redrive policy.
+dlq_arn=$(awslocal sqs get-queue-attributes \
+  --queue-url "$dlq_url" \
+  --attribute-names QueueArn \
+  --endpoint-url=http://localhost:4566 \
+  --output text \
+  --query 'Attributes.QueueArn')
+echo "DLQ ARN: $dlq_arn"
+
+# Create the main SQS queue.
+queue_url=$(awslocal sqs create-queue \
   --queue-name ls_keeper_data_intake_queue \
   --endpoint-url=http://localhost:4566 \
   --output text \
   --query 'QueueUrl')
+echo "SQS Main Queue created: $queue_url"
 
-echo "SQS Queue created: $queue_url"
+
+# Define the Redrive Policy, linking the main queue to the DLQ.
+redrive_policy_json=$(cat <<EOF
+{
+  "deadLetterTargetArn": "$dlq_arn",
+  "maxReceiveCount": "3"
+}
+EOF
+)
+
+# Apply the Redrive Policy to the main queue.
+echo "Configuring Redrive Policy..."
+awslocal sqs set-queue-attributes \
+  --queue-url "$queue_url" \
+  --attributes "{\"RedrivePolicy\":\"{\\\"deadLetterTargetArn\\\":\\\"$dlq_arn\\\",\\\"maxReceiveCount\\\":\\\"3\\\"}\"}" \
+  --endpoint-url=$ENDPOINT_URL
+# =================================================================
 
 # Get the SQS Queue ARN
 queue_arn=$(awslocal sqs get-queue-attributes \
   --queue-url "$queue_url" \
   --attribute-name QueueArn \
+  --endpoint-url=http://localhost:4566 \
   --output text \
   --query 'Attributes.QueueArn')
+echo "SQS Main Queue ARN: $queue_arn"
 
-echo "SQS Queue ARN: $queue_arn"
-
-# Create SNS Topics
+# Create SNS Topic.
 topic_arn=$(awslocal sns create-topic \
   --name ls-keeper-data-bridge-events \
   --endpoint-url=http://localhost:4566 \
   --output text \
   --query 'TopicArn')
-
 echo "SNS Topic created: $topic_arn"
 
 # Construct the policy JSON inline with escaped quotes
-policy_json=$(cat <<EOF
+policy_escaped=$(cat <<EOF | tr -d '\n' | sed 's/"/\\"/g'
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -75,19 +109,22 @@ policy_json=$(cat <<EOF
 EOF
 )
 
-# Set SQS policy
+# Set the SQS policy on the main queue.
 awslocal sqs set-queue-attributes \
   --queue-url "$queue_url" \
-  --attributes "{\"Policy\": \"$(
-    echo "$policy_json" | jq -c
-  )\"}"
+  --attributes "{\"Policy\": \"$policy_escaped\"}" \
+  --endpoint-url=$ENDPOINT_URL
 
-# Subscribe the Queue to the Topic
-awslocal sns subscribe \
+echo "SQS policy configured successfully"
+
+# Subscribe the main SQS queue to the SNS Topic.
+subscription_arn=$(awslocal sns subscribe \
   --topic-arn "$topic_arn" \
   --protocol sqs \
-  --notification-endpoint "$queue_arn"
-
-echo "SNS Topic subscription complete"
+  --notification-endpoint "$queue_arn" \
+  --endpoint-url=$ENDPOINT_URL \
+  --output text \
+  --query 'SubscriptionArn')
+echo "SNS Topic subscription complete for main queue: $subscription_arn"
 
 echo "Bootstrapping Complete"
