@@ -1,42 +1,25 @@
 using KeeperData.Core.Documents;
+using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
 
 namespace KeeperData.Application.Services;
 
 public class CountryIdentifierLookupService : ICountryIdentifierLookupService
 {
-    /// <summary>
-    /// To complete implementation when seeding is completed or to replace.
-    /// </summary>
-    /// <param name="id"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    public async Task<CountryDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(id)) return null;
+    private readonly ICountryRepository _countryRepository;
 
-        return await Task.FromResult(new CountryDocument
-        {
-            IdentifierId = id,
-            Code = "Code",
-            Name = "Name",
-            IsActive = true
-        });
+    public CountryIdentifierLookupService(ICountryRepository countryRepository)
+    {
+        _countryRepository = countryRepository;
     }
 
-    /// <summary>
-    /// To complete implementation when seeding is completed or to replace.
-    /// </summary>
-    /// <param name="lookupValue"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    public async Task<CountryDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
+    {
+        return await _countryRepository.GetByIdAsync(id, cancellationToken);
+    }
+
     public async Task<(string? countryId, string? countryName)> FindAsync(string? lookupValue, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(lookupValue)) return (null, null);
-
-        string? countryId = null;
-        string? countryName = null;
-
-        return await Task.FromResult((countryId, countryName));
+        return await _countryRepository.FindAsync(lookupValue, cancellationToken);
     }
 }

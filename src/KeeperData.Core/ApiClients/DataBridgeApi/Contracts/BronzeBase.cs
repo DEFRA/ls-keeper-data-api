@@ -15,6 +15,14 @@ public class BronzeBase
     [JsonPropertyName("IsDeleted")]
     public bool? IsDeleted { get; set; }
 
+    [JsonPropertyName("CreatedAtUtc")]
+    [JsonConverter(typeof(SafeNullableDateTimeConverter))]
+    public DateTime? CreatedAtUtc { get; set; }
+
+    [JsonPropertyName("UpdatedAtUtc")]
+    [JsonConverter(typeof(SafeNullableDateTimeConverter))]
+    public DateTime? UpdatedAtUtc { get; set; }
+
     protected static List<string> SplitCommaSeparatedIds(string ids) =>
         string.IsNullOrWhiteSpace(ids)
             ? []

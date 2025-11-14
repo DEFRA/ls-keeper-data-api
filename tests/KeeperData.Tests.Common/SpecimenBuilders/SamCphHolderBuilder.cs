@@ -22,7 +22,7 @@ public class SamCphHolderBuilder(
     {
         if (request is Type type && type == typeof(SamCphHolder))
         {
-            partyId ??= $"C{_random.Next(1, 9):D6}";
+            partyId ??= $"C{Guid.NewGuid().ToString("N")[..8]}";
 
             var (
                 saonStart,
