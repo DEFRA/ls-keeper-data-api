@@ -8,6 +8,7 @@ using KeeperData.Infrastructure.Storage.Setup;
 using KeeperData.Infrastructure.Telemetry;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Text.Json.Serialization;
+using KeeperData.Api.Worker.Setup;
 
 namespace KeeperData.Api.Setup;
 
@@ -36,6 +37,8 @@ public static class ServiceCollectionExtensions
         services.AddStorageDependencies(configuration);
 
         services.AddApiClientDependencies(configuration);
+
+        services.AddBackgroundJobDependencies(configuration);
 
         services.AddKeeperDataMetrics();
 

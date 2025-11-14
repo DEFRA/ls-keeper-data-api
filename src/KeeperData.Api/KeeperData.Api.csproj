@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\KeeperData.Api.Worker\KeeperData.Api.Worker.csproj" />
     <ProjectReference Include="..\KeeperData.Infrastructure\KeeperData.Infrastructure.csproj" />
   </ItemGroup>
 

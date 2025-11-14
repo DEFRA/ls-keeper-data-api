@@ -19,6 +19,7 @@
     </None>
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
+    <None Include="tests\KeeperData.Api.Tests.Component\Scheduling\TaskScanCTSBulkFilesTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <DockerComposeServiceReference Include="keeperdata_api">
