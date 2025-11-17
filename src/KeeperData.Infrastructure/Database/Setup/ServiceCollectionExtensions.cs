@@ -1,5 +1,6 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
+using KeeperData.Core.Locking;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Behaviors;
@@ -8,6 +9,7 @@ using KeeperData.Infrastructure.Database.Factories;
 using KeeperData.Infrastructure.Database.Factories.Implementations;
 using KeeperData.Infrastructure.Database.Repositories;
 using KeeperData.Infrastructure.Database.Transactions;
+using KeeperData.Infrastructure.Locking;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,6 +55,8 @@ public static class ServiceCollectionExtensions
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(UnitOfWorkTransactionBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(DomainEventDispatchingBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AggregateRootChangedBehavior<,>));
+
+        services.AddSingleton<IDistributedLock, MongoDistributedLock>();
 
         if (mongoConfig.HealthcheckEnabled)
         {

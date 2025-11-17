@@ -1,3 +1,4 @@
+using KeeperData.Api.Worker.Setup;
 using KeeperData.Application.Setup;
 using KeeperData.Infrastructure.ApiClients.Setup;
 using KeeperData.Infrastructure.Config;
@@ -36,6 +37,8 @@ public static class ServiceCollectionExtensions
         services.AddStorageDependencies(configuration);
 
         services.AddApiClientDependencies(configuration);
+
+        services.AddBackgroundJobDependencies(configuration);
 
         services.AddKeeperDataMetrics();
 
