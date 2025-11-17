@@ -11,27 +11,35 @@ public class AddressDocument : INestedEntity
     [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
 
+    [BsonElement("uprn")]
     [JsonPropertyName("uprn")]
     public int? Uprn { get; set; }
 
+    [BsonElement("addressLine1")]
     [JsonPropertyName("addressLine1")]
     public required string AddressLine1 { get; set; }
 
+    [BsonElement("addressLine2")]
     [JsonPropertyName("addressLine2")]
     public string? AddressLine2 { get; set; }
 
+    [BsonElement("postTown")]
     [JsonPropertyName("postTown")]
     public string? PostTown { get; set; }
 
+    [BsonElement("county")]
     [JsonPropertyName("county")]
     public string? County { get; set; }
 
+    [BsonElement("postCode")]
     [JsonPropertyName("postCode")]
     public required string PostCode { get; set; }
 
+    [BsonElement("country")]
     [JsonPropertyName("country")]
     public CountrySummaryDocument? Country { get; set; }
 
+    [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
 

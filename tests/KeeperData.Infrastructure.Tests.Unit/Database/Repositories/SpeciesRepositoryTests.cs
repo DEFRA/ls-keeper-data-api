@@ -1,7 +1,6 @@
 using FluentAssertions;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Reference;
-using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Infrastructure.Database.Repositories;

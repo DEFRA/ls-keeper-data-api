@@ -1,7 +1,6 @@
 using KeeperData.Core.Attributes;
-using KeeperData.Core.Documents;
-using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
+using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents.Reference;
 
@@ -11,12 +10,16 @@ public class RoleListDocument : IListDocument, IReferenceListDocument<RoleDocume
     public static string DocumentId => "all-roles";
 
     [BsonId]
+    [BsonElement("id")]
+    [JsonPropertyName("id")]
     public string Id { get; set; } = DocumentId;
 
-    public int? LastUpdatedBatchId { get; set; }
-
+    [BsonElement("lastUpdatedDate")]
+    [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
 
+    [BsonElement("roles")]
+    [JsonPropertyName("roles")]
     public List<RoleDocument> Roles { get; set; } = [];
 
     public IReadOnlyCollection<RoleDocument> Items => Roles.AsReadOnly();

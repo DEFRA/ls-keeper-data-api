@@ -20,12 +20,12 @@ public class CtsPartyRoleRelationshipMapperTests
     public CtsPartyRoleRelationshipMapperTests()
     {
         _roleTypeLookupServiceMock
-            .Setup(x => x.FindAsync("Agent", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("AgentId", "Agent"));
+            .Setup(x => x.FindAsync("AGENT", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("8184ae3d-c3c4-4904-b1b8-539eeadbf245", "Agent"));
 
         _roleTypeLookupServiceMock
-            .Setup(x => x.FindAsync("Keeper", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("KeeperId", "Keeper"));
+            .Setup(x => x.FindAsync("LIVESTOCKKEEPER", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("b2637b72-2196-4a19-bdf0-85c7ff66cf60", "Livestock Keeper"));
 
         _resolveRoleType = _roleTypeLookupServiceMock.Object.FindAsync;
     }
@@ -76,7 +76,7 @@ public class CtsPartyRoleRelationshipMapperTests
 
             foreach (var role in party.Roles)
             {
-                var mapped = results.Single(r => r.Id == role.IdentifierId);
+                var mapped = results.Single(r => r.PartyId == party.PartyId && r.RoleTypeId == role.RoleTypeId);
                 VerifyCtsPartyRoleRelationshipMappings.VerifyMapping_From_CtsPartyDocument_To_PartyRoleRelationshipDocument(
                     party,
                     mapped,

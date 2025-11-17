@@ -11,18 +11,23 @@ public class SiteActivityDocument : INestedEntity
     [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
 
+    [BsonElement("activity")]
     [JsonPropertyName("activity")]
     public string? Activity { get; set; }
 
+    [BsonElement("description")]
     [JsonPropertyName("description")]
     public string? Description { get; set; }
 
+    [BsonElement("startDate")]
     [JsonPropertyName("startDate")]
     public DateTime? StartDate { get; set; }
 
+    [BsonElement("endDate")]
     [JsonPropertyName("endDate")]
     public DateTime? EndDate { get; set; }
 
+    [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
 
