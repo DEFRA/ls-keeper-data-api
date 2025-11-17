@@ -1,14 +1,8 @@
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using KeeperData.Infrastructure.Messaging.Configuration;
-using KeeperData.Infrastructure.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KeeperData.Infrastructure.Messaging.Services
 {
