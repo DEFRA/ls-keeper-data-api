@@ -4,6 +4,7 @@ using KeeperData.Core.Repositories;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
+using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
 
@@ -11,30 +12,64 @@ namespace KeeperData.Core.Documents;
 public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 {
     [BsonId]
+    [JsonPropertyName("id")]
     public required string Id { get; set; }
-    public int? LastUpdatedBatchId { get; set; }
+
+    [JsonPropertyName("createdDate")]
+    public DateTime CreatedDate { get; private set; }
+
+    [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
+
+    [JsonPropertyName("type")]
     public string Type { get; set; } = default!;
+
+    [JsonPropertyName("name")]
     public string Name { get; set; } = default!;
+
+    [JsonPropertyName("state")]
     public string? State { get; set; } = default!;
-    public List<SiteIdentifierDocument> Identifiers { get; private set; } = [];
+
+    [JsonPropertyName("startDate")]
     public DateTime StartDate { get; set; }
+
+    [JsonPropertyName("endDate")]
     public DateTime? EndDate { get; set; }
+
+    [JsonPropertyName("source")]
     public string? Source { get; set; }
+
+    [JsonPropertyName("destroyIdentityDocumentsFlag")]
     public bool? DestroyIdentityDocumentsFlag { get; set; }
-    public LocationDocument? Location { get; set; }
+
+    [JsonPropertyName("deleted")]
     public bool Deleted { get; set; }
 
-    // TODO
-    // public List<SitePartyDocument> Parties { get; set; } = [];
-    // public List<SiteSpeciesDocument> Species { get; set; } = [];
-    // public List<SiteGroupMarkDocument> Marks { get; set; } = [];
-    // public List<string> Activities { get; set; } = [];
+    [JsonPropertyName("location")]
+    public LocationDocument? Location { get; set; }
+
+    [JsonPropertyName("identifiers")]
+    public List<SiteIdentifierDocument> Identifiers { get; private set; } = [];
+
+    [JsonPropertyName("parties")]
+    public List<SitePartyDocument> Parties { get; set; } = [];
+
+    [JsonPropertyName("species")]
+    public List<SpeciesSummaryDocument> Species { get; set; } = [];
+
+    [JsonPropertyName("marks")]
+    public List<GroupMarkDocument> Marks { get; set; } = [];
+
+    [JsonPropertyName("siteActivities")]
+    public List<SiteActivityDocument> SiteActivities { get; set; } = [];
+
+    [JsonPropertyName("activities")]
+    public List<string> Activities { get; set; } = [];
 
     public static SiteDocument FromDomain(Site m) => new()
     {
         Id = m.Id,
-        LastUpdatedBatchId = m.LastUpdatedBatchId,
+        CreatedDate = m.CreatedDate,
         LastUpdatedDate = m.LastUpdatedDate,
         Type = m.Type,
         Name = m.Name,
@@ -45,18 +80,19 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         EndDate = m.EndDate,
         Source = m.Source,
         DestroyIdentityDocumentsFlag = m.DestroyIdentityDocumentsFlag,
-        Deleted = m.Deleted //,
-        // Parties = [.. m.Parties.Select(SitePartyDocument.FromDomain)],
-        // Species = [.. m.Species.Select(SpeciesDocument.FromDomain)],
-        // Marks = [.. m.Marks.Select(GroupMarkDocument.FromDomain)],
-        // Activities = [.. m.Activities.Select(SiteActivityDocument.FromDomain)],
+        Deleted = m.Deleted,
+        Parties = [.. m.Parties.Select(SitePartyDocument.FromDomain)],
+        Species = [.. m.Species.Select(SpeciesSummaryDocument.FromDomain)],
+        Marks = [.. m.Marks.Select(GroupMarkDocument.FromDomain)],
+        SiteActivities = [.. m.Activities.Select(SiteActivityDocument.FromDomain)],
+        Activities = [.. m.Activities.Select(a => a.Description ?? string.Empty)]
     };
 
     public Site ToDomain()
     {
         var site = new Site(
             Id,
-            LastUpdatedBatchId,
+            CreatedDate,
             LastUpdatedDate,
             Type,
             Name,
@@ -105,8 +141,12 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
                 new CreateIndexOptions { Name = "idx_state" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("keeperPartyIds"),
-                new CreateIndexOptions { Name = "idx_keeperPartyIds" }),
+                Builders<BsonDocument>.IndexKeys.Ascending("CreatedDate"),
+                new CreateIndexOptions { Name = "idx_createdDate" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("LastUpdatedDate"),
+                new CreateIndexOptions { Name = "idx_lastUpdatedDate" }),
 
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("identifiers.identifier"),

@@ -1,4 +1,4 @@
-using KeeperData.Core.Domain.Sites;
+using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
@@ -7,18 +7,33 @@ namespace KeeperData.Core.Documents;
 
 public class AddressDocument : INestedEntity
 {
-    [JsonPropertyName("id")]
     [BsonElement("id")]
+    [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
 
+    [JsonPropertyName("uprn")]
     public int? Uprn { get; set; }
+
+    [JsonPropertyName("addressLine1")]
     public required string AddressLine1 { get; set; }
+
+    [JsonPropertyName("addressLine2")]
     public string? AddressLine2 { get; set; }
+
+    [JsonPropertyName("postTown")]
     public string? PostTown { get; set; }
+
+    [JsonPropertyName("county")]
     public string? County { get; set; }
+
+    [JsonPropertyName("postCode")]
     public required string PostCode { get; set; }
-    public CountryDocument? Country { get; set; }
-    public DateTime? LastUpdatedDate { get; set; }
+
+    [JsonPropertyName("country")]
+    public CountrySummaryDocument? Country { get; set; }
+
+    [JsonPropertyName("lastUpdatedDate")]
+    public DateTime LastUpdatedDate { get; set; }
 
     public static AddressDocument FromDomain(Address address) => new()
     {
@@ -29,7 +44,7 @@ public class AddressDocument : INestedEntity
         PostTown = address.PostTown,
         County = address.County,
         PostCode = address.PostCode,
-        Country = address.Country is not null ? CountryDocument.FromDomain(address.Country) : null,
+        Country = address.Country is not null ? CountrySummaryDocument.FromDomain(address.Country) : null,
         LastUpdatedDate = address.LastUpdatedDate
     };
 

@@ -44,7 +44,7 @@ public class SamHoldingMapperTests
     {
         var results = await SamHoldingMapper.ToSilver(
             DateTime.UtcNow,
-            null!,
+            (List<SamCphHolding>?)null!,
             _resolvePremiseActivityType,
             _resolvePremiseType,
             _resolveCountry,

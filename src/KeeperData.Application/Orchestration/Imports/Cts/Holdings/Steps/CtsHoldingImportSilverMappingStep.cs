@@ -1,4 +1,4 @@
-using KeeperData.Application.Orchestration.Imports.Cts.Holdings.Mappings;
+using KeeperData.Application.Orchestration.Imports.Cts.Mappings;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Services;

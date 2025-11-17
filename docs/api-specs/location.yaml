@@ -21,7 +21,7 @@ info:
     name: Livestock Data Services Agreement
     url: https://www.defra.gov.uk/services-agreement/
   
-  version: 1.0.0
+  version: 1.1.0
 
   # Change History
   # 0.1.0 - Initial Draft
@@ -29,7 +29,8 @@ info:
   # 0.3.0 - Amendments based on review from LI Ltd.
   # 0.4.0 - Amendments based on further review comments from internal stakeholders and LI Ltd.
   # 0.5.0 - Amendments based on further review comments from LI Ltd.
-  # 1.0.0 - KRDS Location API specification has now been baselined on the 06/10/2025.
+  # 1.0.0 - KRDS API specification has now been baselined on the 06/10/2025.
+  # 1.1.0 - Amended the Site types enumeration list after the final list confirmed by business stakeholders.
  
 externalDocs:
   description: Defra website
@@ -841,30 +842,29 @@ paths:
             items:
               type: string
               enum: 
-                - AI Sub Centre
+                - Assembly Centre
                 - Agricultural Holding
-                - Article 18 Premises
+                - Airport
                 - Calf Collection Centre
-                - Cold Store
                 - Collection Centre
-                - Embryo Transfer Unit
-                - Export Assembly Centre
-                - Head Boning Plant
+                - Haulier
                 - Hunt Kennel
-                - Imported Protein Premise
-                - Incinerator
-                - Knackers Yard
-                - Landless Keeper
+                - Knacker's Yard
+                - Lairage
+                - Laboratory/Research Establishment
                 - Market
-                - Meat Products Plant
-                - Protein Processing Plant
-                - Semen Shop
+                - Quarantine
                 - Showground
-                - Slaughterhouse (Red Meat)
-                - Slaughterhouse (White Meat)
-                - Slaughterhouse, both MP and Cold Store
-                - Temporary Holding
-                - Waste Food Premises
+                - S/H Both, MP & Cs
+                - Seaport
+                - Slaughter House (Red Meat)
+                - Staging Post
+                - Slaughter House (White Meat)
+                - Veterinary Practice/Hospital/School
+                - Veterinary Investigation Centre
+                - Wildlife Park
+                - Zoo
+                - Common Land
         - name: siteId
           in: query
           description: This parameter accepts the id of the site.

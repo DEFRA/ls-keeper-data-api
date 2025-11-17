@@ -1,6 +1,6 @@
 using FluentAssertions;
 using KeeperData.Application.Extensions;
-using KeeperData.Application.Orchestration.Imports.Cts.Holdings.Mappings;
+using KeeperData.Application.Orchestration.Imports.Cts.Mappings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Domain.Enums;

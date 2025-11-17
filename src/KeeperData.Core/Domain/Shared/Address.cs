@@ -1,6 +1,6 @@
 using KeeperData.Core.Domain.BuildingBlocks;
 
-namespace KeeperData.Core.Domain.Sites;
+namespace KeeperData.Core.Domain.Shared;
 
 public class Address : ValueObject
 {
@@ -12,7 +12,7 @@ public class Address : ValueObject
     public string? County { get; private set; }
     public string PostCode { get; private set; }
     public Country? Country { get; private set; }
-    public DateTime? LastUpdatedDate { get; private set; }
+    public DateTime LastUpdatedDate { get; private set; }
 
     public Address(
         string id,
@@ -23,7 +23,7 @@ public class Address : ValueObject
         string? county,
         string postCode,
         Country? country,
-        DateTime? lastUpdatedDate)
+        DateTime lastUpdatedDate)
     {
         Id = id;
         Uprn = uprn;

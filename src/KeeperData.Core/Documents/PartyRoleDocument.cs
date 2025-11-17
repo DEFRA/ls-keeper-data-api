@@ -1,3 +1,4 @@
+using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
@@ -7,16 +8,27 @@ namespace KeeperData.Core.Documents;
 
 public class PartyRoleDocument : INestedEntity
 {
-    [JsonPropertyName("id")]
     [BsonElement("id")]
+    [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
+
+    [JsonPropertyName("roleId")]
     public string RoleId { get; set; } = string.Empty;
+
+    [JsonPropertyName("role")]
     public string Role { get; set; } = string.Empty;
 
+    [JsonPropertyName("startDate")]
     public DateTime StartDate { get; set; }
+
+    [JsonPropertyName("endDate")]
     public DateTime? EndDate { get; set; }
-    public List<ManagedSpeciesDocument> SpeciesManagedByRole { get; set; } = [];
+
+    [JsonPropertyName("lastUpdatedDate")]
     public DateTime? LastUpdatedDate { get; set; }
+
+    [JsonPropertyName("speciesManagedByRole")]
+    public List<ManagedSpeciesDocument> SpeciesManagedByRole { get; set; } = [];
 
     public static PartyRoleDocument FromDomain(PartyRole m) => new()
     {
