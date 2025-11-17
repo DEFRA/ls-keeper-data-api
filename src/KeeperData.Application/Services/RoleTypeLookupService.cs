@@ -1,40 +1,25 @@
 using KeeperData.Core.Documents;
+using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
 
 namespace KeeperData.Application.Services;
 
 public class RoleTypeLookupService : IRoleTypeLookupService
 {
-    /// <summary>
-    /// To complete implementation when seeding is completed or to replace.
-    /// </summary>
-    /// <param name="id"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    public async Task<RoleDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(id)) return null;
+    private readonly IRoleRepository _roleRepository;
 
-        return await Task.FromResult(new RoleDocument
-        {
-            IdentifierId = id,
-            Code = "Code",
-            Name = "Name"
-        });
+    public RoleTypeLookupService(IRoleRepository roleRepository)
+    {
+        _roleRepository = roleRepository;
     }
 
-    /// <summary>
-    /// To complete implementation when seeding is completed or to replace.
-    /// </summary>
-    /// <param name="roleName"></param>
-    /// <returns></returns>
+    public async Task<RoleDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
+    {
+        return await _roleRepository.GetByIdAsync(id, cancellationToken);
+    }
+
     public async Task<(string? roleTypeId, string? roleTypeName)> FindAsync(string? lookupValue, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(lookupValue)) return (null, null);
-
-        string? roleTypeId = null;
-        string? roleTypeName = null;
-
-        return await Task.FromResult((roleTypeId, roleTypeName));
+        return await _roleRepository.FindAsync(lookupValue, cancellationToken);
     }
 }
