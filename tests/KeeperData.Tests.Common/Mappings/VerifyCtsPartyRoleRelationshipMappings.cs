@@ -20,7 +20,7 @@ public static class VerifyCtsPartyRoleRelationshipMappings
         var matchingRole = source.Roles.SingleOrDefault(r => r.RoleTypeId == target.RoleTypeId);
         matchingRole.Should().NotBeNull($"Expected role with ID {target.RoleTypeId} to exist in source.Roles");
 
-        target.Id.Should().BeNull();
+        target.Id.Should().NotBeNullOrWhiteSpace();
 
         target.PartyId.Should().Be(source.PartyId);
         target.PartyTypeId.Should().Be(source.PartyTypeId);
