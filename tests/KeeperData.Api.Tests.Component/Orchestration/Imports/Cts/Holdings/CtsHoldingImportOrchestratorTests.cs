@@ -201,6 +201,6 @@ public class CtsHoldingImportOrchestratorTests
         // Setup FindAsync to return role data for common roles used in tests
         _roleRepositoryMock
             .Setup(r => r.FindAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("AGENT", "Agent"));
+            .ReturnsAsync(("8184ae3d-c3c4-4904-b1b8-539eeadbf245", "Agent"));
     }
 }

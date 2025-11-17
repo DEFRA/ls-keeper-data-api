@@ -198,7 +198,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
             PARTY_ID = id ?? $"C{Guid.NewGuid().ToString("N")[..8]}",
             ORGANISATION_NAME = Guid.NewGuid().ToString(),
             PARTY_ROLE_FROM_DATE = DateTime.Today.AddDays(-1),
-            ROLES = "Agent"
+            ROLES = "AGENT"
         };
     }
 
@@ -213,7 +213,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
                 PARTY_ID = id ?? $"C{Guid.NewGuid().ToString("N")[..8]}",
                 ORGANISATION_NAME = Guid.NewGuid().ToString(),
                 PARTY_ROLE_FROM_DATE = DateTime.Today.AddDays(-1),
-                ROLES = "Agent"
+                ROLES = "AGENT"
             }];
     }
 

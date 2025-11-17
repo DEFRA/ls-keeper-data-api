@@ -11,7 +11,7 @@ public static class CtsPartyRoleRelationshipMapper
             .Where(x => x.Roles != null)
             .SelectMany(x => x.Roles!, (party, role) => new SitePartyRoleRelationshipDocument
             {
-                // Id - Leave to support upsert assigning Id
+                Id = Guid.NewGuid().ToString(),
 
                 PartyId = party.PartyId,
                 PartyTypeId = party.PartyTypeId,
