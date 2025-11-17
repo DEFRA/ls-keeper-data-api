@@ -1,14 +1,13 @@
 namespace KeeperData.Api.Tests.Component.Scheduling;
 
-using System.Threading.Tasks;
 using KeeperData.Api.Worker.Jobs;
 using KeeperData.Api.Worker.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Quartz;
 using Quartz.Impl;
 using Quartz.Spi;
+using System.Threading.Tasks;
 using Xunit;
 
 public class SchedulerTests
@@ -46,7 +45,6 @@ public class SchedulerTests
         taskMock.Verify(t => t.RunAsync(It.IsAny<System.Threading.CancellationToken>()), Times.AtLeastOnce);
     }
 
-    // Repeat similar tests for other jobs
     [Fact]
     public async Task Scheduler_Should_Execute_ScanSAMBulkFilesJob()
     {

@@ -1,3 +1,4 @@
+using KeeperData.Api.Worker.Setup;
 using KeeperData.Application.Setup;
 using KeeperData.Infrastructure.ApiClients.Setup;
 using KeeperData.Infrastructure.Config;
@@ -8,7 +9,6 @@ using KeeperData.Infrastructure.Storage.Setup;
 using KeeperData.Infrastructure.Telemetry;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Text.Json.Serialization;
-using KeeperData.Api.Worker.Setup;
 
 namespace KeeperData.Api.Setup;
 

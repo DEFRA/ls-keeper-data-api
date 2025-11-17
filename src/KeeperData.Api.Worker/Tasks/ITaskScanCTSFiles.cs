@@ -1,6 +1,7 @@
 namespace KeeperData.Api.Worker.Tasks;
 
-public interface ITaskScanCTSFiles : ITask {
+public interface ITaskScanCTSFiles : ITask
+{
 
     /// <summary>
     /// Starts the scan process asynchronously and returns immediately after acquiring the lock.

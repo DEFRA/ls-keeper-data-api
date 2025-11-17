@@ -1,13 +1,13 @@
 namespace KeeperData.Api.Tests.Component.Tasks;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using KeeperData.Api.Worker.Tasks.Implementations;
 using KeeperData.Core.Locking;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 public class TaskScanCTSBulkFilesTests
@@ -57,9 +57,9 @@ public class TaskScanCTSBulkFilesTests
         loggerMock.Verify(l => l.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Could not acquire lock")),
+            It.Is<It.IsAnyType>((v, t) => v != null && v.ToString() != null && v.ToString()!.Contains("Could not acquire lock")),
             It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()
         ), Times.Once);
     }
 }

@@ -1,4 +1,3 @@
-using KeeperData.Api.Worker.Tasks;
 using KeeperData.Core.Locking;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -7,7 +6,7 @@ namespace KeeperData.Api.Worker.Tasks.Implementations;
 
 public class TaskScanCTSFiles(
     ILogger<TaskScanCTSFiles> logger,
-    IDistributedLock distributedLock,    
+    IDistributedLock distributedLock,
     IHostApplicationLifetime applicationLifetime) : ITaskScanCTSFiles
 {
     private const string LockName = nameof(TaskScanCTSFiles);

@@ -1,4 +1,4 @@
-using KeeperData.Core.Domain.Entities;
+using KeeperData.Core.Documents;
 using KeeperData.Core.Locking;
 using KeeperData.Infrastructure.Database.Configuration;
 using Microsoft.Extensions.Options;
