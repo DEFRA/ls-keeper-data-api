@@ -19,11 +19,13 @@ ENV BUILD_CONFIGURATION=${BUILD_CONFIGURATION}
 WORKDIR /src
 
 COPY ["src/KeeperData.Api/KeeperData.Api.csproj", "KeeperData.Api/"]
+COPY ["src/KeeperData.Api.Worker/KeeperData.Api.Worker.csproj", "KeeperData.Api.Worker/"]
 COPY ["src/KeeperData.Infrastructure/KeeperData.Infrastructure.csproj", "KeeperData.Infrastructure/"]
 COPY ["src/KeeperData.Application/KeeperData.Application.csproj", "KeeperData.Application/"]
 COPY ["src/KeeperData.Core/KeeperData.Core.csproj", "KeeperData.Core/"]
 
 RUN dotnet restore "KeeperData.Api/KeeperData.Api.csproj" -r linux-${TARGETARCH} -v n
+RUN dotnet restore "KeeperData.Api.Worker/KeeperData.Api.Worker.csproj" -r linux-${TARGETARCH} -v n
 RUN dotnet restore "KeeperData.Infrastructure/KeeperData.Infrastructure.csproj" -r linux-${TARGETARCH} -v n
 RUN dotnet restore "KeeperData.Application/KeeperData.Application.csproj" -r linux-${TARGETARCH} -v n
 RUN dotnet restore "KeeperData.Core/KeeperData.Core.csproj" -r linux-${TARGETARCH} -v n

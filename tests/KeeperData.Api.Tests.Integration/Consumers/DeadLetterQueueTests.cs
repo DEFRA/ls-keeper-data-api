@@ -1,12 +1,9 @@
 using Amazon.SimpleNotificationService;
-using Amazon.SimpleNotificationService.Model;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using FluentAssertions;
-using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Xunit;
 
 namespace KeeperData.Api.Tests.Integration.Consumers;
 

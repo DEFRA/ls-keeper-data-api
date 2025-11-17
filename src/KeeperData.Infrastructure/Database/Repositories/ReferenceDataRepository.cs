@@ -2,12 +2,8 @@ using KeeperData.Core.Documents.Reference;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
-using MongoDB.Driver;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+using MongoDB.Driver;
 
 namespace KeeperData.Infrastructure.Database.Repositories;
 

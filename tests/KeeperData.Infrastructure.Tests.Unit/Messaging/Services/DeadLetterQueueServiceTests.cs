@@ -1,13 +1,11 @@
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using KeeperData.Core.Exceptions;
-using KeeperData.Infrastructure.Messaging;
 using KeeperData.Infrastructure.Messaging.Configuration;
 using KeeperData.Infrastructure.Messaging.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using Xunit;
 
 namespace KeeperData.Infrastructure.Tests.Unit.Messaging.Services
 {
