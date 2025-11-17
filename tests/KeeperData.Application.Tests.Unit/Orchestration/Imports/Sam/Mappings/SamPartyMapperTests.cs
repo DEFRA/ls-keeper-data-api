@@ -85,16 +85,7 @@ public class SamPartyMapperTests
             .ToArray() ?? [];
 
         var result = results[0];
-        result.Roles.Should().NotBeNull().And.HaveCount(sourceRoleList.Length);
-
-        if (sourceRoleList.Length > 0)
-        {
-            var role = result.Roles.FirstOrDefault(x => x.SourceRoleName == sourceRoleList[0]);
-            role!.IdentifierId.Should().NotBeNullOrWhiteSpace();
-            role.SourceRoleName.Should().Be(sourceRoleList[0]);
-            role.RoleTypeId.Should().BeNull();
-            role.RoleTypeName.Should().BeNull();
-        }
+        result.Roles.Should().NotBeNull().And.HaveCount(0);
     }
 
     [Fact]

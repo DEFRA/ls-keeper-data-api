@@ -1,6 +1,7 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 using System.Text.Json.Serialization;
 
@@ -9,6 +10,7 @@ namespace KeeperData.Core.Documents;
 [CollectionName("siteGroupMarkRelationships")]
 public class SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes, IDeletableEntity
 {
+    [BsonId]
     [JsonPropertyName("id")]
     public string? Id { get; set; }
 

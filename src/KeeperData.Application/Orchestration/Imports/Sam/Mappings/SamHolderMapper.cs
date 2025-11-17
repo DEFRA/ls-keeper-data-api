@@ -107,9 +107,9 @@ public static class SamHolderMapper
                 Landline = p.TELEPHONE_NUMBER
             },
 
-            Roles =
-            [
-                new PartyRoleDocument
+            Roles = roleTypeInfo.RoleTypeId != null
+                ? [
+                    new PartyRoleDocument
                     {
                         IdentifierId = Guid.NewGuid().ToString(),
                         RoleTypeId = roleTypeInfo.RoleTypeId,
@@ -118,7 +118,8 @@ public static class SamHolderMapper
                         EffectiveFromDate = null,
                         EffectiveToDate = null
                     }
-            ]
+                  ] 
+                : []
         };
 
         return result;
