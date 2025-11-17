@@ -10,7 +10,7 @@ public class TaskScanSAMFiles(
     IHostApplicationLifetime applicationLifetime) : ITaskScanSAMFiles
 {
     private const string LockName = nameof(TaskScanSAMFiles);
-    private static readonly TimeSpan s_LockDuration = TimeSpan.FromMinutes(4);
+    private static readonly TimeSpan s_lockDuration = TimeSpan.FromMinutes(4);
 
     public async Task<Guid?> StartAsync(string sourceType, CancellationToken cancellationToken = default)
     {
@@ -19,7 +19,7 @@ public class TaskScanSAMFiles(
 
         logger.LogInformation("Attempting to acquire lock for {LockName} with sourceType={sourceType} (scanId={scanId}).", LockName, sourceType, scanId);
 
-        var @lock = await distributedLock.TryAcquireAsync(LockName, s_LockDuration, cancellationToken);
+        var @lock = await distributedLock.TryAcquireAsync(LockName, s_lockDuration, cancellationToken);
 
         if (@lock == null)
         {
@@ -73,7 +73,7 @@ public class TaskScanSAMFiles(
 
         logger.LogInformation("Attempting to acquire lock for {LockName} (scanId={scanId}).", LockName, scanId);
 
-        await using var @lock = await distributedLock.TryAcquireAsync(LockName, s_LockDuration, cancellationToken);
+        await using var @lock = await distributedLock.TryAcquireAsync(LockName, s_lockDuration, cancellationToken);
 
         if (@lock == null)
         {
