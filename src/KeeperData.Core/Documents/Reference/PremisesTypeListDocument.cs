@@ -1,5 +1,4 @@
 using KeeperData.Core.Attributes;
-using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
 
@@ -8,12 +7,12 @@ namespace KeeperData.Core.Documents.Reference;
 [CollectionName("refPremisesTypes")]
 public class PremisesTypeListDocument : IListDocument, IReferenceListDocument<PremisesTypeDocument>
 {
-    public static string DocumentId => DocumentId;
+    public static string DocumentId => "all-premisestypes";
 
     [BsonId]
     [BsonElement("id")]
     [JsonPropertyName("id")]
-    public string Id { get; set; } = "all-premisestypes";
+    public string Id { get; set; } = DocumentId;
 
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
