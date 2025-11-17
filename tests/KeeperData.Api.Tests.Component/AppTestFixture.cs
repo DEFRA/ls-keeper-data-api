@@ -2,7 +2,7 @@ using Moq;
 
 namespace KeeperData.Api.Tests.Component;
 
-public class AppTestFixture : IDisposable
+public class AppTestFixture
 {
     public readonly HttpClient HttpClient;
     public readonly AppWebApplicationFactory AppWebApplicationFactory;
@@ -13,19 +13,5 @@ public class AppTestFixture : IDisposable
         AppWebApplicationFactory = new AppWebApplicationFactory();
         HttpClient = AppWebApplicationFactory.CreateClient();
         DataBridgeApiClientHttpMessageHandlerMock = AppWebApplicationFactory.DataBridgeApiClientHttpMessageHandlerMock;
-    }
-
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            AppWebApplicationFactory?.Dispose();
-        }
     }
 }
