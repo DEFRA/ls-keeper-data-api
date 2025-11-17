@@ -1,3 +1,6 @@
+using KeeperData.Core.Attributes;
+using KeeperData.Core.Documents;
+using KeeperData.Core.Documents.Reference;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
@@ -10,11 +13,14 @@ using KeeperData.Infrastructure.Database.Transactions;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Driver;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 
 namespace KeeperData.Infrastructure.Database.Setup;
 
@@ -35,7 +41,11 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped(sp => sp.GetRequiredService<IMongoSessionFactory>().GetSession());
         services.AddSingleton(sp => sp.GetRequiredService<IMongoDbClientFactory>().CreateClient());
+
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+        services.AddScoped<ICountryRepository, CountryRepository>();
+        services.AddScoped<ISitesRepository, SitesRepository>();
+        services.AddScoped<ISilverSitePartyRoleRelationshipRepository, SilverSitePartyRoleRelationshipRepository>();
 
         services.AddScoped<IUnitOfWork, MongoUnitOfWork>();
         services.AddScoped(sp => (ITransactionManager)sp.GetRequiredService<IUnitOfWork>());
@@ -51,6 +61,32 @@ public static class ServiceCollectionExtensions
             services.AddHealthChecks()
                 .AddCheck<MongoDbHealthCheck>("mongodb", tags: ["db", "mongo"]);
         }
+
+        services.AddHostedService<MongoIndexInitializer>();
+    }
+
+    public static async Task EnsureMongoIndexesAsync(IServiceProvider serviceProvider)
+    {
+        var client = serviceProvider.GetRequiredService<IMongoClient>();
+        var config = serviceProvider.GetRequiredService<IOptions<MongoConfig>>().Value;
+        var database = client.GetDatabase(config.DatabaseName);
+
+        var indexableTypes = AppDomain.CurrentDomain.GetAssemblies()
+            .Where(a => !a.IsDynamic)
+            .SelectMany(x => x.GetTypes())
+            .Where(t => typeof(IContainsIndexes).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface);
+
+        foreach (var type in indexableTypes)
+        {
+            var collectionName = type.GetCustomAttribute<CollectionNameAttribute>()?.Name ?? type.Name;
+            var collection = database.GetCollection<BsonDocument>(collectionName);
+
+            var getIndexesMethod = type.GetMethod("GetIndexModels", BindingFlags.Public | BindingFlags.Static);
+            if (getIndexesMethod?.Invoke(null, null) is IEnumerable<CreateIndexModel<BsonDocument>> indexModels)
+            {
+                await collection.Indexes.CreateManyAsync(indexModels);
+            }
+        }
     }
 
     private static void RegisterMongoDbGlobals()
@@ -64,7 +100,23 @@ public static class ServiceCollectionExtensions
                     BsonSerializer.RegisterSerializer(typeof(Guid), new GuidSerializer(GuidRepresentation.Standard));
                     ConventionRegistry.Register("CamelCase", new ConventionPack { new CamelCaseElementNameConvention() }, _ => true);
                     s_mongoSerializersRegistered = true;
+
+                    RegisterAllDocumentsFromAssembly(typeof(INestedEntity).Assembly);
                 }
+            }
+        }
+    }
+
+    private static void RegisterAllDocumentsFromAssembly(Assembly assembly)
+    {
+        var documentTypes = assembly.GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && typeof(INestedEntity).IsAssignableFrom(t));
+
+        foreach (var type in documentTypes)
+        {
+            if (!BsonClassMap.IsClassMapRegistered(type))
+            {
+                BsonClassMap.LookupClassMap(type);
             }
         }
     }

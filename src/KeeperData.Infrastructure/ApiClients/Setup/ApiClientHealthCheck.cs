@@ -6,7 +6,7 @@ public class ApiClientHealthCheck(
     IHttpClientFactory httpClientFactory,
     string clientName,
     string healthEndpoint = "/health",
-    int timeoutSeconds = 5) : IHealthCheck
+    int timeoutSeconds = 10) : IHealthCheck
 {
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
     private readonly string _clientName = clientName;

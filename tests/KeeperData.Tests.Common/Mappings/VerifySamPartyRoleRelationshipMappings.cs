@@ -1,0 +1,41 @@
+using FluentAssertions;
+using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Domain.Enums;
+
+namespace KeeperData.Tests.Common.Mappings;
+
+public static class VerifySamPartyRoleRelationshipMappings
+{
+    public static void VerifyMapping_From_SamPartyDocument_To_PartyRoleRelationshipDocument(
+        SamPartyDocument source,
+        Core.Documents.Silver.SitePartyRoleRelationshipDocument target,
+        string expectedHoldingIdentifier,
+        string expectedHoldingIdentifierType)
+    {
+        source.Should().NotBeNull();
+        target.Should().NotBeNull();
+
+        source.Roles.Should().NotBeNullOrEmpty();
+
+        var matchingRole = source.Roles.SingleOrDefault(r => r.RoleTypeId == target.RoleTypeId);
+        matchingRole.Should().NotBeNull($"Expected role with RoleTypeId {target.RoleTypeId} to exist in source.Roles");
+
+        target.Id.Should().BeNull();
+
+        target.PartyId.Should().Be(source.PartyId);
+        target.PartyTypeId.Should().Be(source.PartyTypeId);
+        target.IsHolder.Should().Be(source.IsHolder);
+        target.HoldingIdentifier.Should().Be(expectedHoldingIdentifier);
+        target.HoldingIdentifierType.Should().Be(expectedHoldingIdentifierType);
+        target.Source.Should().Be(SourceSystemType.SAM.ToString());
+
+        target.RoleTypeId.Should().Be(matchingRole.RoleTypeId);
+        target.RoleTypeName.Should().Be(matchingRole.RoleTypeName);
+        target.SourceRoleName.Should().Be(matchingRole.SourceRoleName);
+
+        target.EffectiveFromData.Should().Be(matchingRole.EffectiveFromDate);
+        target.EffectiveToData.Should().Be(matchingRole.EffectiveToDate);
+
+        target.LastUpdatedBatchId.Should().Be(source.LastUpdatedBatchId);
+    }
+}

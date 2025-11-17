@@ -3,6 +3,7 @@ using Amazon.Runtime;
 using Amazon.SQS;
 using FluentAssertions;
 using KeeperData.Infrastructure.Messaging.Configuration;
+using KeeperData.Infrastructure.Messaging.Publishers.Configuration;
 using KeeperData.Infrastructure.Messaging.Setup;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,7 +20,8 @@ public class AddMessagingDependenciesTests
         {
             ["QueueConsumerOptions:IntakeEventQueueOptions:QueueUrl"] = "http://localhost:4566/000000000000/test-queue",
             ["QueueConsumerOptions:IntakeEventQueueOptions:WaitTimeSeconds"] = "5",
-            ["QueueConsumerOptions:IntakeEventQueueOptions:MaxNumberOfMessages"] = "10"
+            ["QueueConsumerOptions:IntakeEventQueueOptions:MaxNumberOfMessages"] = "10",
+            ["ServiceBusSenderConfiguration:IntakeEventQueue:QueueUrl"] = "http://localhost:4566/000000000000/test-queue"
         };
 
         var config = new ConfigurationBuilder()
@@ -39,10 +41,13 @@ public class AddMessagingDependenciesTests
         var provider = services.BuildServiceProvider();
 
         // Assert
-        var options = provider.GetRequiredService<IntakeEventQueueOptions>();
-        options.QueueUrl.Should().Be("http://localhost:4566/000000000000/test-queue");
-        options.WaitTimeSeconds.Should().Be(5);
-        options.MaxNumberOfMessages.Should().Be(10);
+        var intakeEventQueueOptions = provider.GetRequiredService<IntakeEventQueueOptions>();
+        intakeEventQueueOptions.QueueUrl.Should().Be("http://localhost:4566/000000000000/test-queue");
+        intakeEventQueueOptions.WaitTimeSeconds.Should().Be(5);
+        intakeEventQueueOptions.MaxNumberOfMessages.Should().Be(10);
+
+        var serviceBusSenderConfiguration = provider.GetRequiredService<IServiceBusSenderConfiguration>();
+        serviceBusSenderConfiguration.IntakeEventQueue.QueueUrl.Should().Be("http://localhost:4566/000000000000/test-queue");
 
         provider.GetRequiredService<IAmazonSQS>().Should().NotBeNull();
     }
@@ -56,7 +61,8 @@ public class AddMessagingDependenciesTests
             ["LOCALSTACK_ENDPOINT"] = "true",
             ["AWS:ServiceURL"] = "http://localhost:4566/",
             ["AWS:Region"] = "eu-west-2",
-            ["QueueConsumerOptions:IntakeEventQueueOptions:QueueUrl"] = "http://localhost:4566/000000000000/test-queue"
+            ["QueueConsumerOptions:IntakeEventQueueOptions:QueueUrl"] = "http://localhost:4566/000000000000/test-queue",
+            ["ServiceBusSenderConfiguration:IntakeEventQueue:QueueUrl"] = "http://localhost:4566/000000000000/test-queue"
         };
 
         var config = new ConfigurationBuilder()

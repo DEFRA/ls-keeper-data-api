@@ -1,4 +1,5 @@
 using KeeperData.Api.Middleware;
+using KeeperData.Infrastructure.Telemetry;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Diagnostics.CodeAnalysis;
@@ -13,6 +14,8 @@ public static class WebApplicationExtensions
         var env = app.Services.GetRequiredService<IWebHostEnvironment>();
         var applicationLifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
         var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        var configuration = app.Services.GetRequiredService<IConfiguration>();
+        var healthcheckMaskingEnabled = configuration.GetValue<bool>("HealthcheckMaskingEnabled");
 
         applicationLifetime.ApplicationStarted.Register(() =>
             logger.LogInformation("{applicationName} started", env.ApplicationName));
@@ -21,10 +24,7 @@ public static class WebApplicationExtensions
         applicationLifetime.ApplicationStopped.Register(() =>
             logger.LogInformation("{applicationName} stopped", env.ApplicationName));
 
-        var versionSet = app.NewApiVersionSet()
-            .HasApiVersion(new Asp.Versioning.ApiVersion(1.0))
-            .ReportApiVersions()
-            .Build();
+        app.UseEmfExporter();
 
         app.UseMiddleware<ExceptionHandlingMiddleware>();
 
@@ -37,7 +37,7 @@ public static class WebApplicationExtensions
             ResponseWriter = (context, healthReport) =>
             {
                 context.Response.ContentType = "application/json; charset=utf-8";
-                return context.Response.WriteAsync(HealthCheckWriter.WriteHealthStatusAsJson(healthReport, excludeHealthy: false, indented: true));
+                return context.Response.WriteAsync(HealthCheckWriter.WriteHealthStatusAsJson(healthReport, healthcheckMaskingEnabled: healthcheckMaskingEnabled, excludeHealthy: false, indented: true));
             },
             ResultStatusCodes =
             {
@@ -45,9 +45,9 @@ public static class WebApplicationExtensions
                 [HealthStatus.Degraded] = StatusCodes.Status200OK,
                 [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable
             }
-        }).WithApiVersionSet(versionSet).IsApiVersionNeutral();
+        });
 
-        app.MapGet("/", () => "Alive!").WithApiVersionSet(versionSet).IsApiVersionNeutral();
+        app.MapGet("/", () => "Alive!");
 
         app.MapControllers();
     }

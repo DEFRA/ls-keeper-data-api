@@ -1,6 +1,7 @@
 using FluentAssertions;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;
+using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Infrastructure.Database.Repositories;
 using Microsoft.Extensions.Options;
@@ -14,6 +15,8 @@ public class GenericRepositoryTests
 {
     private readonly IOptions<MongoConfig> _mongoConfig;
     private readonly Mock<IMongoClient> _mongoClientMock = new();
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
+    private readonly Mock<IClientSessionHandle> _clientSessionHandleMock = new();
     private readonly Mock<IMongoDatabase> _mongoDatabaseMock = new();
     private readonly Mock<IAsyncCursor<TestEntity>> _asyncCursorMock = new();
     private readonly Mock<IMongoCollection<TestEntity>> _mongoCollectionMock = new();
@@ -39,21 +42,29 @@ public class GenericRepositoryTests
 
         _mongoCollectionMock
             .Setup(c => c.FindAsync(
+                It.IsAny<IClientSessionHandle?>(),
                 It.IsAny<FilterDefinition<TestEntity>>(),
                 It.IsAny<FindOptions<TestEntity, TestEntity>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(_asyncCursorMock.Object);
 
-        _sut = new GenericRepository<TestEntity>(_mongoConfig, _mongoClientMock.Object);
+        _unitOfWorkMock.Setup(u => u.Session)
+            .Returns(_clientSessionHandleMock.Object);
+
+        _sut = new GenericRepository<TestEntity>(_mongoConfig, _mongoClientMock.Object, _unitOfWorkMock.Object);
 
         typeof(GenericRepository<TestEntity>)
             .GetField("_collection", BindingFlags.NonPublic | BindingFlags.Instance)!
             .SetValue(_sut, _mongoCollectionMock.Object);
     }
 
-    [Fact]
-    public async Task GivenValidId_WhenCallingGetByIdAsync_ThenReturnsExpectedEntity()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task GivenValidId_WhenCallingGetByIdAsync_ThenReturnsExpectedEntity(bool useTransaction)
     {
+        _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(useTransaction);
+
         var expected = new TestEntity { Id = Guid.NewGuid().ToString(), Name = "Test Entity" };
 
         _asyncCursorMock
@@ -65,13 +76,39 @@ public class GenericRepositoryTests
         result.Should().BeEquivalentTo(expected);
     }
 
-    [Fact]
-    public async Task GivenEntity_WhenCallingAddAsync_ThenInsertOneIsCalled()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task GivenValidId_WhenCallingFindOneAsync_ThenReturnsExpectedEntity(bool useTransaction)
     {
+        _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(useTransaction);
+
+        var expected = new TestEntity { Id = Guid.NewGuid().ToString(), Name = "Test Entity" };
+
+        _asyncCursorMock
+            .SetupGet(c => c.Current)
+            .Returns([expected]);
+
+        var result = await _sut.FindOneAsync(x => x.Id == expected.Id, CancellationToken.None);
+
+        result.Should().BeEquivalentTo(expected);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task GivenEntity_WhenCallingAddAsync_ThenInsertOneIsCalled(bool useTransaction)
+    {
+        _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(useTransaction);
+
         var entity = new TestEntity { Id = Guid.NewGuid().ToString(), Name = "New Entity" };
 
         _mongoCollectionMock
-            .Setup(c => c.InsertOneAsync(entity, It.IsAny<InsertOneOptions>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.InsertOneAsync(
+                It.IsAny<IClientSessionHandle?>(),
+                entity,
+                It.IsAny<InsertOneOptions>(),
+                It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask)
             .Verifiable();
 
@@ -80,9 +117,37 @@ public class GenericRepositoryTests
         _mongoCollectionMock.Verify();
     }
 
-    [Fact]
-    public async Task GivenEntity_WhenCallingUpdateAsync_ThenReplaceOneIsCalled()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task GivenEntity_WhenCallingAddManyAsync_ThenInsertManyAsyncCalled(bool useTransaction)
     {
+        _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(useTransaction);
+
+        var entity = new TestEntity { Id = Guid.NewGuid().ToString(), Name = "New Entity" };
+        IEnumerable<TestEntity> entities = [entity];
+
+        _mongoCollectionMock
+            .Setup(c => c.InsertManyAsync(
+                It.IsAny<IClientSessionHandle?>(),
+                entities,
+                It.IsAny<InsertManyOptions>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask)
+            .Verifiable();
+
+        await _sut.AddManyAsync([entity], CancellationToken.None);
+
+        _mongoCollectionMock.Verify();
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task GivenEntity_WhenCallingUpdateAsync_ThenReplaceOneIsCalled(bool useTransaction)
+    {
+        _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(useTransaction);
+
         var entity = new TestEntity { Id = Guid.NewGuid().ToString(), Name = "Updated Entity" };
 
         var replaceResultMock = new Mock<ReplaceOneResult>();
@@ -90,6 +155,7 @@ public class GenericRepositoryTests
 
         _mongoCollectionMock
             .Setup(c => c.ReplaceOneAsync(
+                It.IsAny<IClientSessionHandle?>(),
                 It.IsAny<FilterDefinition<TestEntity>>(),
                 entity,
                 It.IsAny<ReplaceOptions>(),
@@ -102,9 +168,13 @@ public class GenericRepositoryTests
         _mongoCollectionMock.Verify();
     }
 
-    [Fact]
-    public async Task GivenEntities_WhenCallingBulkUpsertAsync_ThenBulkWriteIsCalledWithUpsert()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task GivenEntities_WhenCallingBulkUpsertAsync_ThenBulkWriteIsCalledWithUpsert(bool useTransaction)
     {
+        _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(useTransaction);
+
         var entities = new[]
         {
             new TestEntity { Id = Guid.NewGuid().ToString(), Name = "Test Entity 1" },
@@ -112,8 +182,12 @@ public class GenericRepositoryTests
         };
 
         IEnumerable<WriteModel<TestEntity>>? capturedModels = null;
-        _mongoCollectionMock.Setup(c => c.BulkWriteAsync(It.IsAny<IEnumerable<WriteModel<TestEntity>>>(), null, It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<WriteModel<TestEntity>>, BulkWriteOptions?, CancellationToken>((models, _, _) =>
+        _mongoCollectionMock.Setup(c => c.BulkWriteAsync(
+            It.IsAny<IClientSessionHandle?>(),
+            It.IsAny<IEnumerable<WriteModel<TestEntity>>>(),
+            null,
+            It.IsAny<CancellationToken>()))
+            .Callback<IClientSessionHandle?, IEnumerable<WriteModel<TestEntity>>, BulkWriteOptions?, CancellationToken>((_, models, _, _) =>
             {
                 capturedModels = models;
             })
@@ -121,7 +195,11 @@ public class GenericRepositoryTests
 
         await _sut.BulkUpsertAsync(entities, CancellationToken.None);
 
-        _mongoCollectionMock.Verify(c => c.BulkWriteAsync(It.IsAny<IEnumerable<WriteModel<TestEntity>>>(), null, It.IsAny<CancellationToken>()),
+        _mongoCollectionMock.Verify(c => c.BulkWriteAsync(
+            It.IsAny<IClientSessionHandle?>(),
+            It.IsAny<IEnumerable<WriteModel<TestEntity>>>(),
+            null,
+            It.IsAny<CancellationToken>()),
             Times.Once);
 
         capturedModels.Should().NotBeNull().And.HaveCount(2);
@@ -130,9 +208,13 @@ public class GenericRepositoryTests
             && entities.Any(e => e.Id == model.Replacement.Id)).Should().BeTrue();
     }
 
-    [Fact]
-    public async Task GivenFilteredEntities_WhenCallingBulkUpsertWithCustomFilterAsync_ThenBulkWriteIsCalledWithUpsert()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task GivenFilteredEntities_WhenCallingBulkUpsertWithCustomFilterAsync_ThenBulkWriteIsCalledWithUpsert(bool useTransaction)
     {
+        _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(useTransaction);
+
         var items = new (FilterDefinition<TestEntity> Filter, TestEntity Entity)[]
         {
             (Builders<TestEntity>.Filter.Eq(x => x.Name, "One"), new TestEntity { Id = "1", Name = "One" }),
@@ -140,8 +222,12 @@ public class GenericRepositoryTests
         };
 
         IEnumerable<WriteModel<TestEntity>>? capturedModels = null;
-        _mongoCollectionMock.Setup(c => c.BulkWriteAsync(It.IsAny<IEnumerable<WriteModel<TestEntity>>>(), null, It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<WriteModel<TestEntity>>, BulkWriteOptions?, CancellationToken>((models, _, _) =>
+        _mongoCollectionMock.Setup(c => c.BulkWriteAsync(
+            It.IsAny<IClientSessionHandle?>(),
+            It.IsAny<IEnumerable<WriteModel<TestEntity>>>(),
+            null,
+            It.IsAny<CancellationToken>()))
+            .Callback<IClientSessionHandle?, IEnumerable<WriteModel<TestEntity>>, BulkWriteOptions?, CancellationToken>((_, models, _, _) =>
             {
                 capturedModels = models;
             })
@@ -149,7 +235,11 @@ public class GenericRepositoryTests
 
         await _sut.BulkUpsertWithCustomFilterAsync(items, CancellationToken.None);
 
-        _mongoCollectionMock.Verify(c => c.BulkWriteAsync(It.IsAny<IEnumerable<WriteModel<TestEntity>>>(), null, It.IsAny<CancellationToken>()),
+        _mongoCollectionMock.Verify(c => c.BulkWriteAsync(
+            It.IsAny<IClientSessionHandle?>(),
+            It.IsAny<IEnumerable<WriteModel<TestEntity>>>(),
+            null,
+            It.IsAny<CancellationToken>()),
             Times.Once);
 
         capturedModels.Should().NotBeNull().And.HaveCount(2);
@@ -162,19 +252,50 @@ public class GenericRepositoryTests
         }).Should().BeTrue();
     }
 
-    [Fact]
-    public async Task GivenValidId_WhenCallingDeleteAsync_ThenDeleteOneIsCalled()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task GivenValidId_WhenCallingDeleteAsync_ThenDeleteOneIsCalled(bool useTransaction)
     {
+        _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(useTransaction);
+
         var id = Guid.NewGuid().ToString();
 
         _mongoCollectionMock
             .Setup(c => c.DeleteOneAsync(
+                It.IsAny<IClientSessionHandle>(),
                 It.IsAny<FilterDefinition<TestEntity>>(),
+                It.IsAny<DeleteOptions>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Mock.Of<DeleteResult>())
             .Verifiable();
 
         await _sut.DeleteAsync(id, CancellationToken.None);
+
+        _mongoCollectionMock.Verify();
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task GivenValidId_WhenCallingDeleteManyAsync_ThenDeleteManyIsCalled(bool useTransaction)
+    {
+        _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(useTransaction);
+
+        var id = Guid.NewGuid().ToString();
+
+        _mongoCollectionMock
+            .Setup(c => c.DeleteManyAsync(
+                It.IsAny<IClientSessionHandle>(),
+                It.IsAny<FilterDefinition<TestEntity>>(),
+                It.IsAny<DeleteOptions>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Mock.Of<DeleteResult>())
+            .Verifiable();
+
+        var deleteFilter = Builders<TestEntity>.Filter.In(x => x.Id, [id]);
+
+        await _sut.DeleteManyAsync(id, CancellationToken.None);
 
         _mongoCollectionMock.Verify();
     }
@@ -184,5 +305,6 @@ public class GenericRepositoryTests
 public class TestEntity : IEntity
 {
     public string Id { get; set; } = default!;
+    public int? LastUpdatedBatchId { get; set; }
     public string Name { get; set; } = default!;
 }

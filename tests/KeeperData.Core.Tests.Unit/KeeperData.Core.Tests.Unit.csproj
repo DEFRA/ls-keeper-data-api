@@ -10,6 +10,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <Compile Remove="Extensions\**" />
+      <EmbeddedResource Remove="Extensions\**" />
+      <None Remove="Extensions\**" />
+    </ItemGroup>
+
+    <ItemGroup>
       <PackageReference Include="FluentAssertions" Version="8.6.0" />
       <PackageReference Include="coverlet.collector" Version="6.0.2">
         <PrivateAssets>all</PrivateAssets>
@@ -34,6 +40,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\KeeperData.Core\KeeperData.Core.csproj" />
+      <ProjectReference Include="..\KeeperData.Tests.Common\KeeperData.Tests.Common.csproj" />
     </ItemGroup>
 
 </Project>

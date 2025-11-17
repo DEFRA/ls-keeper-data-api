@@ -3,6 +3,7 @@ using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Behaviors;
 using KeeperData.Infrastructure.Database.Configuration;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Moq;
@@ -25,7 +26,7 @@ public class UnitOfWorkTransactionBehaviorTests
     public async Task GivenTransactionsEnabledAndNotInTransaction_WhenHandled_ThenStartsAndCommitsTransaction()
     {
         _sessionMock.SetupGet(s => s.IsInTransaction).Returns(false);
-        var behavior = new UnitOfWorkTransactionBehavior<TransactionTestRequest, string>(_mongoConfig, _unitOfWorkMock.Object);
+        var behavior = new UnitOfWorkTransactionBehavior<TransactionTestRequest, string>(_mongoConfig, _unitOfWorkMock.Object, Mock.Of<ILogger<UnitOfWorkTransactionBehavior<TransactionTestRequest, string>>>());
 
         static Task<string> next(CancellationToken token = default) => Task.FromResult("Success");
 
@@ -41,7 +42,7 @@ public class UnitOfWorkTransactionBehaviorTests
     public async Task GivenTransactionsDisabled_WhenHandled_ThenDoesNotStartOrCommitTransaction()
     {
         var config = Options.Create(new MongoConfig { EnableTransactions = false });
-        var behavior = new UnitOfWorkTransactionBehavior<TransactionTestRequest, string>(config, _unitOfWorkMock.Object);
+        var behavior = new UnitOfWorkTransactionBehavior<TransactionTestRequest, string>(config, _unitOfWorkMock.Object, Mock.Of<ILogger<UnitOfWorkTransactionBehavior<TransactionTestRequest, string>>>());
 
         static Task<string> next(CancellationToken token = default) => Task.FromResult("Success");
 
@@ -60,7 +61,7 @@ public class UnitOfWorkTransactionBehaviorTests
             .Returns(false)
             .Returns(true);
 
-        var behavior = new UnitOfWorkTransactionBehavior<TransactionTestRequest, string>(_mongoConfig, _unitOfWorkMock.Object);
+        var behavior = new UnitOfWorkTransactionBehavior<TransactionTestRequest, string>(_mongoConfig, _unitOfWorkMock.Object, Mock.Of<ILogger<UnitOfWorkTransactionBehavior<TransactionTestRequest, string>>>());
 
         static Task<string> next(CancellationToken token = default) => throw new InvalidOperationException("Boom");
 
@@ -77,7 +78,7 @@ public class UnitOfWorkTransactionBehaviorTests
     public async Task GivenAlreadyInTransaction_WhenHandled_ThenDoesNotStartNewTransaction()
     {
         _sessionMock.SetupGet(s => s.IsInTransaction).Returns(true);
-        var behavior = new UnitOfWorkTransactionBehavior<TransactionTestRequest, string>(_mongoConfig, _unitOfWorkMock.Object);
+        var behavior = new UnitOfWorkTransactionBehavior<TransactionTestRequest, string>(_mongoConfig, _unitOfWorkMock.Object, Mock.Of<ILogger<UnitOfWorkTransactionBehavior<TransactionTestRequest, string>>>());
 
         static Task<string> next(CancellationToken token = default) => Task.FromResult("Success");
 

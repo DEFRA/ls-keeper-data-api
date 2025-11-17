@@ -1,3 +1,5 @@
+using KeeperData.Core.ApiClients.DataBridgeApi;
+using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Infrastructure.ApiClients.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,7 +18,23 @@ public static class ServiceCollectionExtensions
             .GetSection("ApiClients")
             .Get<Dictionary<string, ApiClientConfiguration>>();
 
+        var dataBridgeScanConfiguration = configuration
+            .GetSection("DataBridgeScanConfiguration")
+            .Get<DataBridgeScanConfiguration>();
+
         if (apiClientConfigurations == null) return;
+
+        services.AddSingleton(apiClientConfigurations);
+        services.AddSingleton(dataBridgeScanConfiguration ?? new DataBridgeScanConfiguration());
+
+        if (configuration.GetValue<bool>("ApiClients:DataBridgeApi:UseFakeClient"))
+        {
+            services.AddScoped<IDataBridgeClient, Fakes.FakeDataBridgeClient>();
+        }
+        else
+        {
+            services.AddScoped<IDataBridgeClient, DataBridgeClient>();
+        }
 
         var healthChecksBuilder = services.AddHealthChecks();
 
@@ -30,9 +48,16 @@ public static class ServiceCollectionExtensions
 
             if (config.HealthcheckEnabled)
             {
+                var healthEndpoint = !string.IsNullOrWhiteSpace(config.ServiceName)
+                    ? $"{config.ServiceName}/health"
+                    : "/health";
+
                 healthChecksBuilder.Add(new HealthCheckRegistration(
                     name: $"http-client-{clientName}",
-                    factory: sp => new ApiClientHealthCheck(sp.GetRequiredService<IHttpClientFactory>(), clientName),
+                    factory: sp => new ApiClientHealthCheck(
+                        sp.GetRequiredService<IHttpClientFactory>(),
+                        clientName,
+                        healthEndpoint: healthEndpoint),
                     failureStatus: HealthStatus.Unhealthy,
                     tags: ["http-client"]));
             }
@@ -50,6 +75,10 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient(clientName, client =>
         {
             client.BaseAddress = new Uri(config.BaseUrl!.TrimEnd('/'));
+            if (config.XApiKey != null)
+            {
+                client.DefaultRequestHeaders.Add("x-api-key", config.XApiKey);
+            }
         })
             .AddResilienceHandler(clientName, (builder, context) =>
             {

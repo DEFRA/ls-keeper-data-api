@@ -1,6 +1,7 @@
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using KeeperData.Core.Exceptions;
+using KeeperData.Core.Messaging;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Extensions;
@@ -8,6 +9,7 @@ using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Observers;
 using KeeperData.Core.Messaging.Serializers;
 using KeeperData.Infrastructure.Messaging.Configuration;
+using KeeperData.Infrastructure.Messaging.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -18,6 +20,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
     IAmazonSQS amazonSQS,
     IMessageHandlerManager messageHandlerManager,
     IMessageSerializer<SnsEnvelope> messageSerializer,
+    IDeadLetterQueueService deadLetterQueueService,
     IOptions<IntakeEventQueueOptions> options,
     ILogger<QueuePoller> logger) : IQueuePoller, IAsyncDisposable
 {
@@ -25,6 +28,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
     private readonly IAmazonSQS _amazonSQS = amazonSQS;
     private readonly IMessageHandlerManager _messageHandlerManager = messageHandlerManager;
     private readonly IMessageSerializer<SnsEnvelope> _messageSerializer = messageSerializer;
+    private readonly IDeadLetterQueueService _deadLetterQueueService = deadLetterQueueService;
     private readonly IntakeEventQueueOptions _queueConsumerOptions = options.Value;
     private readonly ILogger<QueuePoller> _logger = logger;
 
@@ -146,6 +150,11 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         try
         {
             var unwrappedMessage = message.Unwrap(_messageSerializer);
+            CorrelationIdContext.Value = string.IsNullOrWhiteSpace(unwrappedMessage.CorrelationId)
+                ? Guid.NewGuid().ToString()
+                : unwrappedMessage.CorrelationId;
+
+            _logger.LogDebug("HandleMessageAsync using correlationId: {correlationId}", CorrelationIdContext.Value);
 
             var handlerTypes = _messageHandlerManager.GetHandlersForMessage(unwrappedMessage.Subject);
             foreach (var handlerInfo in handlerTypes)
@@ -161,7 +170,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
 
                 await _amazonSQS.DeleteMessageAsync(queueUrl, message.ReceiptHandle, cancellationToken);
 
-                _logger.LogInformation("Handled message with CorrelationId: {correlationId}", unwrappedMessage.CorrelationId);
+                _logger.LogInformation("Handled message with correlationId: {correlationId}", CorrelationIdContext.Value);
 
                 _observer?.OnMessageHandled(message.MessageId, DateTime.UtcNow, messagePayload, message);
             }
@@ -170,24 +179,24 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         {
             // SQS doesn't support abandon so let visibility timeout expire.
 
-            _logger.LogError("RetryableException in queue: {queue}, messageId: {messageId}, Exception: {ex}",
-                _queueConsumerOptions.QueueUrl, message.MessageId, ex);
+            _logger.LogError("RetryableException in queue: {queue}, correlationId: {correlationId}, messageId: {messageId}, Exception: {ex}",
+                _queueConsumerOptions.QueueUrl, CorrelationIdContext.Value, message.MessageId, ex);
 
             _observer?.OnMessageFailed(message.MessageId, DateTime.UtcNow, ex, message);
         }
         catch (NonRetryableException ex)
         {
-            // "Move to a DLQ by configuration" - TODO
-
-            _logger.LogError("NonRetryableException in queue: {queue}, messageId: {messageId}, Exception: {ex}",
-                _queueConsumerOptions.QueueUrl, message.MessageId, ex);
+            _logger.LogError("NonRetryableException in queue: {queue}, correlationId: {correlationId}, messageId: {messageId}, Exception: {ex}",
+                _queueConsumerOptions.QueueUrl, CorrelationIdContext.Value, message.MessageId, ex);
+            //Can check DLQ move result if needed
+            await _deadLetterQueueService.MoveToDeadLetterQueueAsync(message, queueUrl, ex, cancellationToken);
 
             _observer?.OnMessageFailed(message.MessageId, DateTime.UtcNow, ex, message);
         }
         catch (Exception ex)
         {
-            _logger.LogError("Unhandled Exception in queue: {queue}, messageId: {messageId}, Exception: {ex}",
-                _queueConsumerOptions.QueueUrl, message.MessageId, ex);
+            _logger.LogError("Unhandled Exception in queue: {queue}, correlationId: {correlationId}, messageId: {messageId}, Exception: {ex}",
+                _queueConsumerOptions.QueueUrl, CorrelationIdContext.Value, message.MessageId, ex);
 
             _observer?.OnMessageFailed(message.MessageId, DateTime.UtcNow, ex, message);
         }
