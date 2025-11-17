@@ -1,16 +1,21 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Reference;
+using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
 
+namespace KeeperData.Core.Documents.Reference;
+
 [CollectionName("refSpecies")]
-public class SpeciesListDocument : IListDocument
+public class SpeciesListDocument : IListDocument, IReferenceListDocument<SpeciesDocument>
 {
+    public static string DocumentId => "all-species";
+
     [BsonId]
     [BsonElement("id")]
     [JsonPropertyName("id")]
-    public string Id { get; set; } = "all-species";
+    public string Id { get; set; } = DocumentId;
 
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
@@ -19,4 +24,6 @@ public class SpeciesListDocument : IListDocument
     [BsonElement("species")]
     [JsonPropertyName("species")]
     public List<SpeciesDocument> Species { get; set; } = [];
+
+    public IReadOnlyCollection<SpeciesDocument> Items => Species.AsReadOnly();
 }

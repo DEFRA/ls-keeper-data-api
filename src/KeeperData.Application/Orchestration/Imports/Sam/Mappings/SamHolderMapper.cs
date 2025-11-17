@@ -118,7 +118,7 @@ public static class SamHolderMapper
                         EffectiveFromDate = null,
                         EffectiveToDate = null
                     }
-                  ] 
+                  ]
                 : []
         };
 

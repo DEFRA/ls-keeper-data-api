@@ -1,16 +1,19 @@
 using KeeperData.Core.Attributes;
+using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents.Reference;
 
 [CollectionName("refPremisesActivityTypes")]
-public class PremisesActivityTypeListDocument : IListDocument
+public class PremisesActivityTypeListDocument : IListDocument, IReferenceListDocument<PremisesActivityTypeDocument>
 {
+    public static string DocumentId => "all-premisesactivitytypes";
+
     [BsonId]
     [BsonElement("id")]
     [JsonPropertyName("id")]
-    public string Id { get; set; } = "all-premisesactivitytypes";
+    public string Id { get; set; } = DocumentId;
 
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
@@ -19,4 +22,6 @@ public class PremisesActivityTypeListDocument : IListDocument
     [BsonElement("premisesActivityTypes")]
     [JsonPropertyName("premisesActivityTypes")]
     public List<PremisesActivityTypeDocument> PremisesActivityTypes { get; set; } = [];
+
+    public IReadOnlyCollection<PremisesActivityTypeDocument> Items => PremisesActivityTypes.AsReadOnly();
 }

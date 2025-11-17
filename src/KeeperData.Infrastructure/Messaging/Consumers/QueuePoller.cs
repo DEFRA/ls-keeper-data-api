@@ -157,7 +157,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
 
             _logger.LogDebug("HandleMessageAsync using correlationId: {correlationId}", CorrelationIdContext.Value);
 
-            
+
             var handlerTypes = _messageHandlerManager.GetHandlersForMessage(unwrappedMessage.Subject);
             foreach (var handlerInfo in handlerTypes)
             {
@@ -190,7 +190,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         {
             _logger.LogError("NonRetryableException in queue: {queue}, correlationId: {correlationId}, messageId: {messageId}, Exception: {ex}",
                 _queueConsumerOptions.QueueUrl, CorrelationIdContext.Value, message.MessageId, ex);
-            
+
             await _deadLetterQueueService.MoveToDeadLetterQueueAsync(message, queueUrl, ex, cancellationToken);
 
             _observer?.OnMessageFailed(message.MessageId, DateTime.UtcNow, ex, message);
