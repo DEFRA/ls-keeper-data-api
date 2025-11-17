@@ -11,21 +11,27 @@ public class LocationDocument : INestedEntity
     [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
 
+    [BsonElement("osMapReference")]
     [JsonPropertyName("osMapReference")]
     public string? OsMapReference { get; set; }
 
+    [BsonElement("easting")]
     [JsonPropertyName("easting")]
     public double? Easting { get; set; }
 
+    [BsonElement("northing")]
     [JsonPropertyName("northing")]
     public double? Northing { get; set; }
 
+    [BsonElement("address")]
     [JsonPropertyName("address")]
     public AddressDocument? Address { get; set; }
 
+    [BsonElement("communication")]
     [JsonPropertyName("communication")]
     public List<CommunicationDocument> Communication { get; set; } = [];
 
+    [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
 

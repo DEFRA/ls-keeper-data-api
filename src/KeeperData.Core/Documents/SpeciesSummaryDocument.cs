@@ -11,12 +11,15 @@ public class SpeciesSummaryDocument : INestedEntity
     [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
 
+    [BsonElement("code")]
     [JsonPropertyName("code")]
     public required string Code { get; set; }
 
+    [BsonElement("name")]
     [JsonPropertyName("name")]
     public required string Name { get; set; }
 
+    [BsonElement("lastModifiedDate")]
     [JsonPropertyName("lastModifiedDate")]
     public DateTime? LastModifiedDate { get; set; }
 

@@ -1,7 +1,9 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
+using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents.Silver;
 
@@ -11,12 +13,29 @@ namespace KeeperData.Core.Documents.Silver;
 [CollectionName("samParties")]
 public class SamPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IContainsIndexes
 {
+    [BsonId]
+    [JsonPropertyName("id")]
+    [BsonElement("id")]
     public string? Id { get; set; }
+
+    [JsonPropertyName("lastUpdatedBatchId")]
+    [BsonElement("lastUpdatedBatchId")]
     public int? LastUpdatedBatchId { get; set; }
+
+    [JsonPropertyName("lastUpdatedDate")]
+    [BsonElement("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
+
+    [JsonPropertyName("deleted")]
+    [BsonElement("deleted")]
     public bool Deleted { get; set; }
+
+    [JsonPropertyName("isHolder")]
+    [BsonElement("isHolder")]
     public bool IsHolder { get; set; }
 
+    [JsonPropertyName("cphList")]
+    [BsonElement("cphList")]
     public List<string> CphList { get; set; } = [];
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()

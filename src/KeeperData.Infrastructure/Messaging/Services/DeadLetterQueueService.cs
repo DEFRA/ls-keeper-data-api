@@ -1,14 +1,9 @@
 using Amazon.SQS;
 using Amazon.SQS.Model;
+using KeeperData.Core.Messaging;
 using KeeperData.Infrastructure.Messaging.Configuration;
-using KeeperData.Infrastructure.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KeeperData.Infrastructure.Messaging.Services
 {
@@ -57,6 +52,19 @@ namespace KeeperData.Infrastructure.Messaging.Services
                 attributes["DLQ_FailureTimestamp"] = new MessageAttributeValue { StringValue = DateTime.UtcNow.ToString("O"), DataType = "String" };
                 attributes["DLQ_OriginalMessageId"] = new MessageAttributeValue { StringValue = message.MessageId, DataType = "String" };
                 attributes["DLQ_ReceiveCount"] = new MessageAttributeValue { StringValue = message.Attributes.GetValueOrDefault("ApproximateReceiveCount", "0"), DataType = "Number" };
+                attributes["DLQ_ReceiveCount"] = new MessageAttributeValue
+                {
+                    StringValue = (message.Attributes ?? []).GetValueOrDefault("ApproximateReceiveCount", "0"),
+                    DataType = "Number"
+                };
+                if (!attributes.ContainsKey("CorrelationId"))
+                {
+                    attributes["CorrelationId"] = new MessageAttributeValue
+                    {
+                        DataType = "String",
+                        StringValue = CorrelationIdContext.Value
+                    };
+                }
 
                 var sendRequest = new SendMessageRequest
                 {

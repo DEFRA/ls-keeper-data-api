@@ -1,6 +1,4 @@
 using KeeperData.Core.Attributes;
-using KeeperData.Core.Documents;
-using KeeperData.Core.Documents.Reference;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;

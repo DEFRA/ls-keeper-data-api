@@ -15,23 +15,55 @@ public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
 {
     [BsonId]
     [JsonPropertyName("id")]
+    [BsonElement("id")]
     public string? Id { get; set; }
 
+    [JsonPropertyName("partyId")]
+    [BsonElement("partyId")]
     public string PartyId { get; set; } = string.Empty;
+
+    [JsonPropertyName("partyTypeId")]
+    [BsonElement("partyTypeId")]
     public string PartyTypeId { get; set; } = string.Empty; // LOV Lookup / Internal Id
+
+    [JsonPropertyName("isHolder")]
+    [BsonElement("isHolder")]
     public bool IsHolder { get; set; }
 
+    [JsonPropertyName("holdingIdentifier")]
+    [BsonElement("holdingIdentifier")]
     public string HoldingIdentifier { get; set; } = string.Empty;
+
+    [JsonPropertyName("holdingIdentifierType")]
+    [BsonElement("holdingIdentifierType")]
     public string HoldingIdentifierType { get; set; } = string.Empty;
+
+    [JsonPropertyName("source")]
+    [BsonElement("source")]
     public string Source { get; set; } = string.Empty; // Enum or string value
 
+    [JsonPropertyName("roleTypeId")]
+    [BsonElement("roleTypeId")]
     public string? RoleTypeId { get; set; } // LOV Lookup / Internal Id
+
+    [JsonPropertyName("roleTypeName")]
+    [BsonElement("roleTypeName")]
     public string? RoleTypeName { get; set; } // LOV Lookup / Internal Name
+
+    [JsonPropertyName("sourceRoleName")]
+    [BsonElement("sourceRoleName")]
     public string? SourceRoleName { get; set; }
 
+    [JsonPropertyName("effectiveFromData")]
+    [BsonElement("effectiveFromData")]
     public DateTime? EffectiveFromData { get; set; }
+
+    [JsonPropertyName("effectiveToData")]
+    [BsonElement("effectiveToData")]
     public DateTime? EffectiveToData { get; set; }
 
+    [JsonPropertyName("lastUpdatedBatchId")]
+    [BsonElement("lastUpdatedBatchId")]
     public int? LastUpdatedBatchId { get; set; }
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()

@@ -15,41 +15,54 @@ public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
 {
     [BsonId]
     [JsonPropertyName("id")]
+    [BsonElement("id")]
     public string? Id { get; set; }
 
+    [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
 
+    [BsonElement("deleted")]
     [JsonPropertyName("deleted")]
     public bool Deleted { get; set; }
 
+    [BsonElement("partyId")]
     [JsonPropertyName("partyId")]
     public string PartyId { get; set; } = string.Empty;
 
+    [BsonElement("partyTypeId")]
     [JsonPropertyName("partyTypeId")]
     public string PartyTypeId { get; set; } = string.Empty;
 
+    [BsonElement("isHolder")]
     [JsonPropertyName("isHolder")]
     public bool IsHolder { get; set; }
 
+    [BsonElement("holdingIdentifier")]
     [JsonPropertyName("holdingIdentifier")]
     public string HoldingIdentifier { get; set; } = string.Empty;
 
+    [BsonElement("holdingIdentifierType")]
     [JsonPropertyName("holdingIdentifierType")]
     public string HoldingIdentifierType { get; set; } = string.Empty;
 
+    [BsonElement("roleTypeId")]
     [JsonPropertyName("roleTypeId")]
     public string? RoleTypeId { get; set; }
 
+    [BsonElement("roleTypeName")]
     [JsonPropertyName("roleTypeName")]
     public string? RoleTypeName { get; set; }
 
+    [BsonElement("effectiveFromData")]
     [JsonPropertyName("effectiveFromData")]
     public DateTime? EffectiveFromData { get; set; }
 
+    [BsonElement("effectiveToData")]
     [JsonPropertyName("effectiveToData")]
     public DateTime? EffectiveToData { get; set; }
 
+    [BsonElement("speciesManagedByRole")]
     [JsonPropertyName("speciesManagedByRole")]
     public List<ManagedSpeciesDocument> SpeciesManagedByRole { get; set; } = [];
 

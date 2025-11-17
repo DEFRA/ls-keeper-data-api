@@ -115,7 +115,8 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
                     QueueUrl = _queueConsumerOptions.QueueUrl,
                     MaxNumberOfMessages = _queueConsumerOptions.MaxNumberOfMessages,
                     WaitTimeSeconds = _queueConsumerOptions.WaitTimeSeconds,
-                    MessageAttributeNames = ["All"]
+                    MessageAttributeNames = ["All"],
+                    MessageSystemAttributeNames = ["All"]
                 }, cancellationToken);
 
                 var messages = response?.Messages;
@@ -156,6 +157,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
 
             _logger.LogDebug("HandleMessageAsync using correlationId: {correlationId}", CorrelationIdContext.Value);
 
+            
             var handlerTypes = _messageHandlerManager.GetHandlersForMessage(unwrappedMessage.Subject);
             foreach (var handlerInfo in handlerTypes)
             {
