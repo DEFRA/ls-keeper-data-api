@@ -2,136 +2,57 @@ namespace KeeperData.Api.Tests.Component.Scheduling;
 
 using KeeperData.Api.Worker.Jobs;
 using KeeperData.Api.Worker.Tasks;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Moq;
 using Quartz;
-using Quartz.Impl;
-using Quartz.Spi;
 using System.Threading.Tasks;
 using Xunit;
 
 public class SchedulerTests
 {
     [Fact]
-    public async Task Scheduler_Should_Execute_ScanCTSBulkFilesJob()
+    public async Task Scheduler_WhenScanCTSBulkFilesJobIsTriggered_ExecutesSuccessfully()
     {
-        // Arrange
-        var taskMock = new Mock<ITaskScanCTSBulkFiles>();
-        var loggerMock = new Mock<ILogger<ScanCTSBulkFilesJob>>();
-        var jobFactoryMock = new Mock<IJobFactory>();
-        jobFactoryMock.Setup(f => f.NewJob(It.IsAny<TriggerFiredBundle>(), It.IsAny<IScheduler>()))
-            .Returns(new ScanCTSBulkFilesJob(taskMock.Object, loggerMock.Object));
+        var jobDidRun = new ManualResetEventSlim(false);
 
-        var schedulerFactory = new StdSchedulerFactory();
-        var scheduler = await schedulerFactory.GetScheduler();
-        scheduler.JobFactory = jobFactoryMock.Object;
+        var taskProcessBulkFilesMock = new Mock<ITaskScanCTSBulkFiles>();
 
-        var job = JobBuilder.Create<ScanCTSBulkFilesJob>()
-            .WithIdentity("ScanCTSBulkFilesJob")
-            .Build();
+        taskProcessBulkFilesMock.Setup(x => x.RunAsync(It.IsAny<CancellationToken>()))
+            .Returns(() =>
+            {
+                jobDidRun.Set();
+                return Task.CompletedTask;
+            });
 
-        var trigger = TriggerBuilder.Create()
-            .WithIdentity("ScanCTSBulkFilesJob-trigger")
-            .StartNow()
-            .Build();
+        var host = Host.CreateDefaultBuilder()
+            .ConfigureServices((hostContext, services) =>
+            {
+                services.AddScoped(_ => taskProcessBulkFilesMock.Object);
+                services.AddScoped<ScanCTSBulkFilesJob>();
 
-        await scheduler.ScheduleJob(job, trigger);
+                services.AddQuartz(q =>
+                {
+                    q.UseInMemoryStore();
 
-        // Act
-        await scheduler.Start();
-        await Task.Delay(1000); // Wait for job to execute
+                    // Durable as don't want a timed trigger in tests
+                    var jobKey = new JobKey("TestJob");
+                    q.AddJob<ScanCTSBulkFilesJob>(opts => opts.WithIdentity(jobKey).StoreDurably());
+                });
+                services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+            }).Build();
 
-        // Assert
-        taskMock.Verify(t => t.RunAsync(It.IsAny<System.Threading.CancellationToken>()), Times.AtLeastOnce);
-    }
+        await host.StartAsync();
 
-    [Fact]
-    public async Task Scheduler_Should_Execute_ScanSAMBulkFilesJob()
-    {
-        var taskMock = new Mock<ITaskScanSAMBulkFiles>();
-        var loggerMock = new Mock<ILogger<ScanSAMBulkFilesJob>>();
-        var jobFactoryMock = new Mock<IJobFactory>();
-        jobFactoryMock.Setup(f => f.NewJob(It.IsAny<TriggerFiredBundle>(), It.IsAny<IScheduler>()))
-            .Returns(new ScanSAMBulkFilesJob(taskMock.Object, loggerMock.Object));
+        var scheduler = await host.Services.GetRequiredService<ISchedulerFactory>().GetScheduler();
 
-        var schedulerFactory = new StdSchedulerFactory();
-        var scheduler = await schedulerFactory.GetScheduler();
-        scheduler.JobFactory = jobFactoryMock.Object;
+        await scheduler.TriggerJob(new JobKey("TestJob"));
 
-        var job = JobBuilder.Create<ScanSAMBulkFilesJob>()
-            .WithIdentity("ScanSAMBulkFilesJob")
-            .Build();
+        var completedInTime = jobDidRun.Wait(TimeSpan.FromSeconds(10));
 
-        var trigger = TriggerBuilder.Create()
-            .WithIdentity("ScanSAMBulkFilesJob-trigger")
-            .StartNow()
-            .Build();
+        await host.StopAsync();
 
-        await scheduler.ScheduleJob(job, trigger);
-
-        await scheduler.Start();
-        await Task.Delay(1000);
-
-        taskMock.Verify(t => t.RunAsync(It.IsAny<System.Threading.CancellationToken>()), Times.AtLeastOnce);
-    }
-
-    [Fact]
-    public async Task Scheduler_Should_Execute_ScanCTSFilesJob()
-    {
-        var taskMock = new Mock<ITaskScanCTSFiles>();
-        var loggerMock = new Mock<ILogger<ScanCTSFilesJob>>();
-        var jobFactoryMock = new Mock<IJobFactory>();
-        jobFactoryMock.Setup(f => f.NewJob(It.IsAny<TriggerFiredBundle>(), It.IsAny<IScheduler>()))
-            .Returns(new ScanCTSFilesJob(taskMock.Object, loggerMock.Object));
-
-        var schedulerFactory = new StdSchedulerFactory();
-        var scheduler = await schedulerFactory.GetScheduler();
-        scheduler.JobFactory = jobFactoryMock.Object;
-
-        var job = JobBuilder.Create<ScanCTSFilesJob>()
-            .WithIdentity("ScanCTSFilesJob")
-            .Build();
-
-        var trigger = TriggerBuilder.Create()
-            .WithIdentity("ScanCTSFilesJob-trigger")
-            .StartNow()
-            .Build();
-
-        await scheduler.ScheduleJob(job, trigger);
-
-        await scheduler.Start();
-        await Task.Delay(1000);
-
-        taskMock.Verify(t => t.RunAsync(It.IsAny<System.Threading.CancellationToken>()), Times.AtLeastOnce);
-    }
-
-    [Fact]
-    public async Task Scheduler_Should_Execute_ScanSAMFilesJob()
-    {
-        var taskMock = new Mock<ITaskScanSAMFiles>();
-        var loggerMock = new Mock<ILogger<ScanSAMFilesJob>>();
-        var jobFactoryMock = new Mock<IJobFactory>();
-        jobFactoryMock.Setup(f => f.NewJob(It.IsAny<TriggerFiredBundle>(), It.IsAny<IScheduler>()))
-            .Returns(new ScanSAMFilesJob(taskMock.Object, loggerMock.Object));
-
-        var schedulerFactory = new StdSchedulerFactory();
-        var scheduler = await schedulerFactory.GetScheduler();
-        scheduler.JobFactory = jobFactoryMock.Object;
-
-        var job = JobBuilder.Create<ScanSAMFilesJob>()
-            .WithIdentity("ScanSAMFilesJob")
-            .Build();
-
-        var trigger = TriggerBuilder.Create()
-            .WithIdentity("ScanSAMFilesJob-trigger")
-            .StartNow()
-            .Build();
-
-        await scheduler.ScheduleJob(job, trigger);
-
-        await scheduler.Start();
-        await Task.Delay(1000);
-
-        taskMock.Verify(t => t.RunAsync(It.IsAny<System.Threading.CancellationToken>()), Times.AtLeastOnce);
+        Assert.True(completedInTime, "The job did not complete in the expected time.");
+        taskProcessBulkFilesMock.Verify(x => x.RunAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

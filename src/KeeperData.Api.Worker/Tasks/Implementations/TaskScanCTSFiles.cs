@@ -12,30 +12,27 @@ public class TaskScanCTSFiles(
     private const string LockName = nameof(TaskScanCTSFiles);
     private static readonly TimeSpan s_lockDuration = TimeSpan.FromMinutes(4);
 
-    public async Task<Guid?> StartAsync(string sourceType, CancellationToken cancellationToken = default)
+    public async Task<Guid?> StartAsync(CancellationToken cancellationToken = default)
     {
-        var scanId = Guid.NewGuid();
-        logger.LogInformation("StartAsync called for {LockName} with sourceType={sourceType} (scanId={scanId})", LockName, sourceType, scanId);
+        var scanCorrelationId = Guid.NewGuid();
 
-        logger.LogInformation("Attempting to acquire lock for {LockName} with sourceType={sourceType} (scanId={scanId}).", LockName, sourceType, scanId);
+        logger.LogInformation("Attempting to acquire lock for {LockName} with scanCorrelationId: {scanCorrelationId}.", LockName, scanCorrelationId);
 
         var @lock = await distributedLock.TryAcquireAsync(LockName, s_lockDuration, cancellationToken);
 
         if (@lock == null)
         {
-            logger.LogInformation("Could not acquire lock for {LockName}, another instance is likely running (scanId={scanId}).", LockName, scanId);
-            logger.LogInformation("StartAsync exiting early for {LockName} (scanId={scanId})", LockName, scanId);
+            logger.LogInformation("Could not acquire lock for {LockName}, another instance is likely running scanCorrelationId: {scanCorrelationId}.", LockName, scanCorrelationId);
             return null;
         }
 
-        logger.LogInformation("Lock acquired for {LockName}. Starting scan in background with sourceType={sourceType} (scanId={scanId}).", LockName, sourceType, scanId);
+        logger.LogInformation("Lock acquired for {LockName}. Task started at {startTime} scanCorrelationId: {scanCorrelationId}.", LockName, DateTime.UtcNow, scanCorrelationId);
 
         var stoppingToken = applicationLifetime.ApplicationStopping;
 
         _ = Task.Factory.StartNew(
             async () =>
             {
-                logger.LogInformation("Background scan started for {LockName} (scanId={scanId})", LockName, scanId);
                 try
                 {
                     await using (@lock)
@@ -44,17 +41,16 @@ public class TaskScanCTSFiles(
                             cancellationToken,
                             stoppingToken);
 
-                        // TODO: Add implementation in future story
-                        return;
+                        await ExecuteTaskAsync(@lock, scanCorrelationId, cancellationToken);
                     }
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                 {
-                    logger.LogWarning("Application is shutting down, scan cancelled (scanId={scanId})", scanId);
+                    logger.LogWarning("Application is shutting down, task cancelled scanCorrelationId: {scanCorrelationId}", scanCorrelationId);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Background scan failed (scanId={scanId})", scanId);
+                    logger.LogError(ex, "Background task failed scanCorrelationId: {scanCorrelationId}", scanCorrelationId);
                 }
             },
             CancellationToken.None,
@@ -62,29 +58,37 @@ public class TaskScanCTSFiles(
             TaskScheduler.Default
         ).Unwrap();
 
-        logger.LogInformation("StartAsync completed for {LockName} (scanId={scanId})", LockName, scanId);
-        return scanId;
+        return scanCorrelationId;
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
     {
-        var scanId = Guid.NewGuid();
-        logger.LogInformation("RunAsync called for {LockName} (scanId={scanId})", LockName, scanId);
+        var scanCorrelationId = Guid.NewGuid();
 
-        logger.LogInformation("Attempting to acquire lock for {LockName} (scanId={scanId}).", LockName, scanId);
+        logger.LogInformation("Attempting to acquire lock for {LockName} scanCorrelationId: {scanCorrelationId}.", LockName, scanCorrelationId);
 
         await using var @lock = await distributedLock.TryAcquireAsync(LockName, s_lockDuration, cancellationToken);
 
         if (@lock == null)
         {
-            logger.LogInformation("Could not acquire lock for {LockName}, another instance is likely running  (scanId={scanId}).", LockName, scanId);
-            logger.LogInformation("RunAsync exiting early for {LockName} (scanId={scanId})", LockName, scanId);
+            logger.LogInformation("Could not acquire lock for {LockName}, another instance is likely running scanCorrelationId: {scanCorrelationId}.", LockName, scanCorrelationId);
             return;
         }
 
-        logger.LogInformation("Lock acquired for {LockName}. Task started at {startTime} (scanId={scanId}).", LockName, DateTime.UtcNow, scanId);
+        logger.LogInformation("Lock acquired for {LockName}. Task started at {startTime} scanCorrelationId: {scanCorrelationId}.", LockName, DateTime.UtcNow, scanCorrelationId);
+
+        await ExecuteTaskAsync(@lock, scanCorrelationId, cancellationToken);
+    }
+
+    private async Task ExecuteTaskAsync(
+        IDistributedLockHandle lockHandle,
+        Guid scanCorrelationId,
+        CancellationToken externalCancellationToken)
+    {
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken);
 
         // TODO: Add implementation in future story
-        return;
+
+        await Task.Delay(TimeSpan.FromSeconds(10), linkedCts.Token);
     }
 }
