@@ -11,7 +11,7 @@ using System.Net.Http.Json;
 
 namespace KeeperData.Api.Tests.Component.Endpoints;
 
-public class SitesEndpointTests : IClassFixture<AppTestFixture>
+public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
 {
     private readonly Mock<ISitesRepository> _sitesRepositoryMock = new();
     private readonly HttpClient _client;
@@ -66,6 +66,20 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>
 
         // Assert
         await AssertPaginatedResponse(response, expectedCount: 2, expectedNames: ["Site B", "Site A"]);
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _client?.Dispose();
+        }
     }
 
     private static SiteDocument CreateSite(string name, string type, string identifier)
