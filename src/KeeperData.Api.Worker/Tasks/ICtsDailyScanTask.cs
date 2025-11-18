@@ -1,6 +1,6 @@
 namespace KeeperData.Api.Worker.Tasks;
 
-public interface ITaskScanCTSFiles : ITask
+public interface ICtsDailyScanTask : ITask
 {
     Task<Guid?> StartAsync(CancellationToken cancellationToken = default);
 }
