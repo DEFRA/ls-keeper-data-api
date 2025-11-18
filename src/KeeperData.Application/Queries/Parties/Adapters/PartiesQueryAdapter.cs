@@ -12,7 +12,6 @@ public class PartiesQueryAdapter(IPartiesRepository repository)
         GetPartiesQuery query,
         CancellationToken cancellationToken = default)
     {
-        /* TODO untested */
         var filterDefinition = PartyFilterBuilder.Build(query);
         var sortDefinition = PartySortBuilder.Build(query);
 

@@ -1,4 +1,4 @@
-using KeeperData.Api.Controllers.RequestDtos.Sites;
+using KeeperData.Api.Controllers.RequestDtos.Parties;
 using KeeperData.Application;
 using KeeperData.Application.Queries.Parties;
 using Microsoft.AspNetCore.Mvc;

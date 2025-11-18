@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace KeeperData.Api.Controllers.RequestDtos.Sites;
+namespace KeeperData.Api.Controllers.RequestDtos.Parties;
 
 public class GetPartiesRequest
 {
