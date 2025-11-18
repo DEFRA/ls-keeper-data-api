@@ -20,8 +20,11 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
     private const string SiteBIdentifier2 = "eddab507-c4c4-466a-a319-c2d099614a4b";
     private const string SiteCId = "bd750b7c-672c-4880-bf5f-620ddc1dcad2";
     private const string SiteCIdentifier1 = "ecb0f3d9-7692-406f-b967-fdacf86692af";
-    private List<SiteDocument> GivenTheseSites { get {
-        var sites = new List<SiteDocument>
+    private List<SiteDocument> GivenTheseSites
+    {
+        get
+        {
+            var sites = new List<SiteDocument>
         {
             new SiteDocument
             {
@@ -45,14 +48,15 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
                 LastUpdatedDate = new DateTime(2012,01,01)
             },
         };
-        sites[1].Identifiers.AddRange(new [] {
-                    new SiteIdentifierDocument {IdentifierId = "d41773fd-e9cd-453d-bdd5-ed698686c2cd", Identifier = SiteBIdentifier1 }, 
+            sites[1].Identifiers.AddRange(new[] {
+                    new SiteIdentifierDocument {IdentifierId = "d41773fd-e9cd-453d-bdd5-ed698686c2cd", Identifier = SiteBIdentifier1 },
                     new SiteIdentifierDocument {IdentifierId = "24082208-a389-463c-ace6-075fdf357458", Identifier = SiteBIdentifier2 }});
 
-        sites[2].Identifiers.AddRange(new [] {
+            sites[2].Identifiers.AddRange(new[] {
                     new SiteIdentifierDocument {IdentifierId = "ac87a68c-cb01-4a87-a3d4-2947da32b63e", Identifier = SiteCIdentifier1 }});
-        return sites;
-    }}
+            return sites;
+        }
+    }
 
     [Theory]
     [InlineData("WithoutParamsShouldReturnAll", null, null, null, 3, "")]
@@ -63,9 +67,10 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
     [InlineData("WhenSearchingByDate", null, null, "2011-01-01", 2, SiteBId + "," + SiteCId)]
     [InlineData("WhenSearchingByDateAndType", "Other", null, "2011-01-01", 1, SiteBId)]
     // TODO case insensitive search [InlineData("WhenSearchingCaseInsensitive", "john", "smith", 1, JohnSmithId)]
-    public async Task GivenASearchRequest_ShouldHaveExpectedResults(string scenario, string type, string identifier, string dateStr, int expectedCount, string expectedIdCsv)
+    public async Task GivenASearchRequest_ShouldHaveExpectedResults(string scenario, string? type, string? identifier, string? dateStr, int expectedCount, string expectedIdCsv)
     {
-        var date = !string.IsNullOrEmpty(dateStr) ? (DateTime?) DateTime.Parse(dateStr) : null;
+        Console.WriteLine(scenario);
+        var date = !string.IsNullOrEmpty(dateStr) ? (DateTime?)DateTime.Parse(dateStr) : null;
         var response = await _httpClient.GetAsync("api/site?" + BuildQueryString(type, identifier, date));
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -76,7 +81,7 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
         result.Count.Should().Be(expectedCount);
 
         var expectedIds = expectedIdCsv.Split(',').Where(s => !String.IsNullOrEmpty(s));
-        foreach(var id in expectedIds)
+        foreach (var id in expectedIds)
             result.Values.Should().Contain(x => x.Id == id);
     }
 
@@ -86,6 +91,7 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
     [InlineData("WhenSearchingForIdThatDoesNotExist", "00000000-0000-0000-0000-000000000000", HttpStatusCode.InternalServerError, "not found")] //TODO should this be 404
     public async Task GivenAnRecordRequestById_ShouldHaveExpectedResults(string scenario, string requestedId, HttpStatusCode expectedHttpCode, string responseShouldContain)
     {
+        Console.WriteLine(scenario);
         var response = await _httpClient.GetAsync($"api/site/{requestedId}");
         var responseBody = await response.Content.ReadAsStringAsync();
         response.StatusCode.Should().Be(expectedHttpCode);
@@ -101,7 +107,7 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
 
     private static string BuildQueryString(string type, string identifier, DateTime? lastUpdatedDate)
     {
-        var parameters= new [] { 
+        var parameters = new[] {
             type != null ? $"type={HttpUtility.UrlEncode(type)}" : null,
             identifier != null ? $"siteIdentifier={HttpUtility.UrlEncode(identifier)}" : null,
             lastUpdatedDate != null ? $"lastUpdatedDate={HttpUtility.UrlEncode(lastUpdatedDate.ToString())}" : null

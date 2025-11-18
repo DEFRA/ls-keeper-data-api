@@ -25,6 +25,6 @@ public class PartiesQueryAdapter(IPartiesRepository repository)
             cancellationToken: cancellationToken);
 
         return (items, totalCount);
-        
+
     }
 }

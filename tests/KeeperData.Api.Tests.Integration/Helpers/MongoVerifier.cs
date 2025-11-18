@@ -41,20 +41,20 @@ public class MongoVerifier
         var collection = _database.GetCollection<T>(collectionName);
         await collection.InsertManyAsync(entities, new InsertManyOptions { BypassDocumentValidation = true });
     }
-    
+
     public async Task Delete<T>(IEnumerable<T> entities) where T : IEntity
     {
         var collectionName = typeof(T).GetCustomAttribute<CollectionNameAttribute>()?.Name ?? typeof(T).Name;
         var collection = _database.GetCollection<T>(collectionName);
 
         var ids = entities.Select(e => e.Id).ToList();
-        await collection.DeleteManyAsync(Builders<T>.Filter.In("_id", ids)); 
+        await collection.DeleteManyAsync(Builders<T>.Filter.In("_id", ids));
     }
 
     public async Task DeleteAll<T>() where T : IEntity
     {
         var collectionName = typeof(T).GetCustomAttribute<CollectionNameAttribute>()?.Name ?? typeof(T).Name;
         var collection = _database.GetCollection<T>(collectionName);
-        await collection.DeleteManyAsync(FilterDefinition<T>.Empty); 
+        await collection.DeleteManyAsync(FilterDefinition<T>.Empty);
     }
 }

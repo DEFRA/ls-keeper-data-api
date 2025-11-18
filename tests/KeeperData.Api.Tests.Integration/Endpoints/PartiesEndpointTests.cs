@@ -53,9 +53,10 @@ public class PartiesEndpointTests(IntegrationTestFixture fixture) : IClassFixtur
     [InlineData("WhenSearchingForRecordsThatDoNotExist", null, "Smythe", null, 0, "")]
     [InlineData("WhenSearchingByDate", null, null, "2011-01-01", 2, MarkSmithId + "," + HueyNewsId)]
     // TODO case insensitive search [InlineData("WhenSearchingCaseInsensitive", "john", "smith", 1, JohnSmithId)]
-    public async Task GivenASearchRequest_ShouldHaveExpectedResults(string scenario, string firstName, string lastName, string dateStr, int expectedCount, string expectedIdCsv)
+    public async Task GivenASearchRequest_ShouldHaveExpectedResults(string scenario, string? firstName, string? lastName, string? dateStr, int expectedCount, string expectedIdCsv)
     {
-        var date = !string.IsNullOrEmpty(dateStr) ? (DateTime?) DateTime.Parse(dateStr) : null;
+        Console.WriteLine(scenario);
+        var date = !string.IsNullOrEmpty(dateStr) ? (DateTime?)DateTime.Parse(dateStr) : null;
         var response = await _httpClient.GetAsync("api/party?" + BuildQueryString(firstName, lastName, date));
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -66,7 +67,7 @@ public class PartiesEndpointTests(IntegrationTestFixture fixture) : IClassFixtur
         result.Count.Should().Be(expectedCount);
 
         var expectedIds = expectedIdCsv.Split(',').Where(s => !String.IsNullOrEmpty(s));
-        foreach(var id in expectedIds)
+        foreach (var id in expectedIds)
             result.Values.Should().Contain(x => x.Id == id);
     }
 
@@ -76,6 +77,7 @@ public class PartiesEndpointTests(IntegrationTestFixture fixture) : IClassFixtur
     [InlineData("WhenSearchingForIdThatDoesNotExist", "00000000-0000-0000-0000-000000000000", HttpStatusCode.InternalServerError, "not found")] //TODO should this be 404
     public async Task GivenAnRecordRequestById_ShouldHaveExpectedResults(string scenario, string requestedId, HttpStatusCode expectedHttpCode, string responseShouldContain)
     {
+        Console.WriteLine(scenario);
         var response = await _httpClient.GetAsync($"api/party/{requestedId}");
         var responseBody = await response.Content.ReadAsStringAsync();
         response.StatusCode.Should().Be(expectedHttpCode);
@@ -91,7 +93,7 @@ public class PartiesEndpointTests(IntegrationTestFixture fixture) : IClassFixtur
 
     private static string BuildQueryString(string firstName, string lastName, DateTime? lastUpdatedDate)
     {
-        var parameters= new [] { 
+        var parameters = new[] {
             firstName != null ? $"firstName={HttpUtility.UrlEncode(firstName)}" : null,
             lastName != null ? $"lastName={HttpUtility.UrlEncode(lastName)}" : null,
             lastUpdatedDate != null ? $"lastUpdatedDate={HttpUtility.UrlEncode(lastUpdatedDate.ToString())}" : null
