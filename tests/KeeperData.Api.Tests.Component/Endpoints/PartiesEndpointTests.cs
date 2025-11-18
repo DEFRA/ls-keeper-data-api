@@ -52,7 +52,7 @@ public class PartiesEndpointTests : IClassFixture<AppTestFixture>
     }
 
     [Fact]
-    public async Task GetSites_WithoutParameters_ReturnsDefaultOkResult()
+    public async Task GetParties_WithoutParameters_ReturnsDefaultOkResult()
     {
         // Arrange
         var parties = new List<PartyDocument> { CreateParty("Party A"), CreateParty("Party B") };
