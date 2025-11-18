@@ -105,7 +105,7 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
         responseBody.Should().Contain(responseShouldContain);
     }
 
-    private static string BuildQueryString(string type, string identifier, DateTime? lastUpdatedDate)
+    private static string BuildQueryString(string? type, string? identifier, DateTime? lastUpdatedDate)
     {
         var parameters = new[] {
             type != null ? $"type={HttpUtility.UrlEncode(type)}" : null,

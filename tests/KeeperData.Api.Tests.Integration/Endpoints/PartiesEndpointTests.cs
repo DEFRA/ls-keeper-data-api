@@ -91,7 +91,7 @@ public class PartiesEndpointTests(IntegrationTestFixture fixture) : IClassFixtur
         responseBody.Should().Contain(responseShouldContain);
     }
 
-    private static string BuildQueryString(string firstName, string lastName, DateTime? lastUpdatedDate)
+    private static string BuildQueryString(string? firstName, string? lastName, DateTime? lastUpdatedDate)
     {
         var parameters = new[] {
             firstName != null ? $"firstName={HttpUtility.UrlEncode(firstName)}" : null,
