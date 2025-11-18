@@ -5,13 +5,15 @@ using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
+using KeeperData.Infrastructure.Database.Repositories;
 using KeeperData.Tests.Common.Generators;
 using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Sam;
 
 [Trait("Dependence", "localstack")]
-public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
+[Collection("Database collection")]
+public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>, IAsyncLifetime
 {
     [Fact]
     public async Task GivenSamImportHoldingMessage_WhenReceivedOnTheQueue_ShouldComplete()
@@ -88,4 +90,20 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
     {
         Identifier = holdingIdentifier
     };
+
+    public async Task InitializeAsync()
+    {
+        await Task.CompletedTask;
+    }
+
+    public async Task DisposeAsync()
+    {
+        await fixture.MongoVerifier.DeleteAll<PartyDocument>();
+        await fixture.MongoVerifier.DeleteAll<SiteDocument>();
+        await fixture.MongoVerifier.DeleteAll<SamPartyDocument>();
+        await fixture.MongoVerifier.DeleteAll<SamHerdDocument>();
+        await fixture.MongoVerifier.DeleteAll<SamHoldingDocument>();
+        await fixture.MongoVerifier.DeleteAll<Core.Documents.Silver.SitePartyRoleRelationshipDocument>();
+        await fixture.MongoVerifier.DeleteAll<CtsHoldingDocument>();
+    }
 }
