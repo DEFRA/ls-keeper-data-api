@@ -26,48 +26,48 @@ public static class ServiceCollectionExtensions
 
         services.AddQuartz(q =>
         {
-            var scanCTSBulkFilesConfig = scheduledJobConfiguration.FirstOrDefault(x => x.JobType == nameof(ScanCTSBulkFilesJob));
-            if (scanCTSBulkFilesConfig?.CronSchedule != null)
+            var ctsBulkScanJobConfig = scheduledJobConfiguration.FirstOrDefault(x => x.JobType == nameof(CtsBulkScanJob));
+            if (ctsBulkScanJobConfig?.CronSchedule != null)
             {
-                q.AddJob<ScanCTSBulkFilesJob>(opts => opts.WithIdentity(scanCTSBulkFilesConfig.JobType));
+                q.AddJob<CtsBulkScanJob>(opts => opts.WithIdentity(ctsBulkScanJobConfig.JobType));
 
                 q.AddTrigger(opts => opts
-                    .ForJob(scanCTSBulkFilesConfig.JobType)
-                    .WithIdentity($"{scanCTSBulkFilesConfig.JobType}-trigger")
-                    .WithCronSchedule(scanCTSBulkFilesConfig.CronSchedule));
+                    .ForJob(ctsBulkScanJobConfig.JobType)
+                    .WithIdentity($"{ctsBulkScanJobConfig.JobType}-trigger")
+                    .WithCronSchedule(ctsBulkScanJobConfig.CronSchedule));
             }
 
-            var scanSAMBulkFilesConfig = scheduledJobConfiguration.FirstOrDefault(x => x.JobType == nameof(ScanSAMBulkFilesJob));
-            if (scanSAMBulkFilesConfig?.CronSchedule != null)
+            var samBulkScanJobConfig = scheduledJobConfiguration.FirstOrDefault(x => x.JobType == nameof(SamBulkScanJob));
+            if (samBulkScanJobConfig?.CronSchedule != null)
             {
-                q.AddJob<ScanCTSBulkFilesJob>(opts => opts.WithIdentity(scanSAMBulkFilesConfig.JobType));
+                q.AddJob<CtsBulkScanJob>(opts => opts.WithIdentity(samBulkScanJobConfig.JobType));
 
                 q.AddTrigger(opts => opts
-                    .ForJob(scanSAMBulkFilesConfig.JobType)
-                    .WithIdentity($"{scanSAMBulkFilesConfig.JobType}-trigger")
-                    .WithCronSchedule(scanSAMBulkFilesConfig.CronSchedule));
+                    .ForJob(samBulkScanJobConfig.JobType)
+                    .WithIdentity($"{samBulkScanJobConfig.JobType}-trigger")
+                    .WithCronSchedule(samBulkScanJobConfig.CronSchedule));
             }
 
-            var scanCTSFilesConfig = scheduledJobConfiguration.FirstOrDefault(x => x.JobType == nameof(ScanCTSFilesJob));
-            if (scanCTSFilesConfig?.CronSchedule != null)
+            var ctsDailyScanJobConfig = scheduledJobConfiguration.FirstOrDefault(x => x.JobType == nameof(CtsDailyScanJob));
+            if (ctsDailyScanJobConfig?.CronSchedule != null)
             {
-                q.AddJob<ScanCTSFilesJob>(opts => opts.WithIdentity(scanCTSFilesConfig.JobType));
+                q.AddJob<CtsDailyScanJob>(opts => opts.WithIdentity(ctsDailyScanJobConfig.JobType));
 
                 q.AddTrigger(opts => opts
-                    .ForJob(scanCTSFilesConfig.JobType)
-                    .WithIdentity($"{scanCTSFilesConfig.JobType}-trigger")
-                    .WithCronSchedule(scanCTSFilesConfig.CronSchedule));
+                    .ForJob(ctsDailyScanJobConfig.JobType)
+                    .WithIdentity($"{ctsDailyScanJobConfig.JobType}-trigger")
+                    .WithCronSchedule(ctsDailyScanJobConfig.CronSchedule));
             }
 
-            var scanSAMFilesConfig = scheduledJobConfiguration.FirstOrDefault(x => x.JobType == nameof(ScanSAMFilesJob));
-            if (scanSAMFilesConfig?.CronSchedule != null)
+            var samDailyScanJobConfig = scheduledJobConfiguration.FirstOrDefault(x => x.JobType == nameof(SamDailyScanJob));
+            if (samDailyScanJobConfig?.CronSchedule != null)
             {
-                q.AddJob<ScanSAMFilesJob>(opts => opts.WithIdentity(scanSAMFilesConfig.JobType));
+                q.AddJob<SamDailyScanJob>(opts => opts.WithIdentity(samDailyScanJobConfig.JobType));
 
                 q.AddTrigger(opts => opts
-                    .ForJob(scanSAMFilesConfig.JobType)
-                    .WithIdentity($"{scanSAMFilesConfig.JobType}-trigger")
-                    .WithCronSchedule(scanSAMFilesConfig.CronSchedule));
+                    .ForJob(samDailyScanJobConfig.JobType)
+                    .WithIdentity($"{samDailyScanJobConfig.JobType}-trigger")
+                    .WithCronSchedule(samDailyScanJobConfig.CronSchedule));
             }
         });
 
@@ -81,20 +81,20 @@ public static class ServiceCollectionExtensions
 
     private static IServiceCollection AddJobs(this IServiceCollection services)
     {
-        services.AddScoped<ScanCTSBulkFilesJob>();
-        services.AddScoped<ScanSAMBulkFilesJob>();
-        services.AddScoped<ScanCTSFilesJob>();
-        services.AddScoped<ScanSAMFilesJob>();
+        services.AddScoped<CtsBulkScanJob>();
+        services.AddScoped<SamBulkScanJob>();
+        services.AddScoped<CtsDailyScanJob>();
+        services.AddScoped<SamDailyScanJob>();
 
         return services;
     }
 
     private static IServiceCollection AddTasks(this IServiceCollection services)
     {
-        services.AddScoped<ITaskScanCTSBulkFiles, TaskScanCTSBulkFiles>();
-        services.AddScoped<ITaskScanSAMBulkFiles, TaskScanSAMBulkFiles>();
-        services.AddScoped<ITaskScanCTSFiles, TaskScanCTSFiles>();
-        services.AddScoped<ITaskScanSAMFiles, TaskScanSAMFiles>();
+        services.AddScoped<ICtsBulkScanTask, CtsBulkScanTask>();
+        services.AddScoped<ISamBulkScanTask, SamBulkScanTask>();
+        services.AddScoped<ICtsDailyScanTask, CtsDailyScanTask>();
+        services.AddScoped<ISamDailyScanTask, SamDailyScanTask>();
 
         return services;
     }

@@ -16,7 +16,7 @@ public class SchedulerTests
     {
         var jobDidRun = new ManualResetEventSlim(false);
 
-        var taskProcessBulkFilesMock = new Mock<ITaskScanCTSBulkFiles>();
+        var taskProcessBulkFilesMock = new Mock<ICtsBulkScanTask>();
 
         taskProcessBulkFilesMock.Setup(x => x.RunAsync(It.IsAny<CancellationToken>()))
             .Returns(() =>
@@ -29,7 +29,7 @@ public class SchedulerTests
             .ConfigureServices((hostContext, services) =>
             {
                 services.AddScoped(_ => taskProcessBulkFilesMock.Object);
-                services.AddScoped<ScanCTSBulkFilesJob>();
+                services.AddScoped<CtsBulkScanJob>();
 
                 services.AddQuartz(q =>
                 {
@@ -37,7 +37,7 @@ public class SchedulerTests
 
                     // Durable as don't want a timed trigger in tests
                     var jobKey = new JobKey("TestJob");
-                    q.AddJob<ScanCTSBulkFilesJob>(opts => opts.WithIdentity(jobKey).StoreDurably());
+                    q.AddJob<CtsBulkScanJob>(opts => opts.WithIdentity(jobKey).StoreDurably());
                 });
                 services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
             }).Build();

@@ -1,6 +1,8 @@
 namespace KeeperData.Api.Tests.Component.Tasks;
 
 using KeeperData.Api.Worker.Tasks.Implementations;
+using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily;
+using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Locking;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -10,13 +12,23 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-public class TaskScanSAMBulkFilesTests
+public class SamDailyScanTaskTests
 {
+    private readonly DataBridgeScanConfiguration _dataBridgeScanConfiguration = new()
+    {
+        QueryPageSize = 100,
+        DelayBetweenQueriesSeconds = 0,
+        LimitScanTotalBatchSize = 0,
+        DailyScanIncludeChangesWithinTotalHours = 24
+    };
+
+    private readonly SamDailyScanOrchestrator _orchestrator = new([]);
+
     [Fact]
     public async Task RunAsync_Should_Execute_When_Lock_Acquired()
     {
         // Arrange
-        var loggerMock = new Mock<ILogger<TaskScanSAMBulkFiles>>();
+        var loggerMock = new Mock<ILogger<SamDailyScanTask>>();
         var lockHandleMock = new Mock<IDistributedLockHandle>();
         var distributedLockMock = new Mock<IDistributedLock>();
         distributedLockMock
@@ -24,7 +36,12 @@ public class TaskScanSAMBulkFilesTests
             .ReturnsAsync(lockHandleMock.Object);
 
         var appLifetimeMock = new Mock<IHostApplicationLifetime>();
-        var task = new TaskScanSAMBulkFiles(loggerMock.Object, distributedLockMock.Object, appLifetimeMock.Object);
+        var task = new SamDailyScanTask(
+            _orchestrator,
+            _dataBridgeScanConfiguration,
+            distributedLockMock.Object,
+            appLifetimeMock.Object,
+            loggerMock.Object);
 
         // Act
         await task.RunAsync(CancellationToken.None);
@@ -38,14 +55,19 @@ public class TaskScanSAMBulkFilesTests
     public async Task RunAsync_Should_Not_Execute_When_Lock_Not_Acquired()
     {
         // Arrange
-        var loggerMock = new Mock<ILogger<TaskScanSAMBulkFiles>>();
+        var loggerMock = new Mock<ILogger<SamDailyScanTask>>();
         var distributedLockMock = new Mock<IDistributedLock>();
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((IDistributedLockHandle?)null);
 
         var appLifetimeMock = new Mock<IHostApplicationLifetime>();
-        var task = new TaskScanSAMBulkFiles(loggerMock.Object, distributedLockMock.Object, appLifetimeMock.Object);
+        var task = new SamDailyScanTask(
+            _orchestrator,
+            _dataBridgeScanConfiguration,
+            distributedLockMock.Object,
+            appLifetimeMock.Object,
+            loggerMock.Object);
 
         // Act
         await task.RunAsync(CancellationToken.None);
