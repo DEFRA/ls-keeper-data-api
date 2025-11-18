@@ -1,4 +1,4 @@
-using KeeperData.Core.Domain.Sites;
+using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
@@ -7,14 +7,29 @@ namespace KeeperData.Core.Documents;
 
 public class ManagedSpeciesDocument : INestedEntity
 {
-    [JsonPropertyName("id")]
     [BsonElement("id")]
+    [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
+
+    [BsonElement("code")]
+    [JsonPropertyName("code")]
     public string Code { get; set; } = string.Empty;
+
+    [BsonElement("name")]
+    [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
+
+    [BsonElement("startDate")]
+    [JsonPropertyName("startDate")]
     public DateTime StartDate { get; set; }
+
+    [BsonElement("endDate")]
+    [JsonPropertyName("endDate")]
     public DateTime? EndDate { get; set; }
-    public DateTime? LastUpdatedDate { get; set; }
+
+    [BsonElement("lastUpdatedDate")]
+    [JsonPropertyName("lastUpdatedDate")]
+    public DateTime LastUpdatedDate { get; set; }
 
     public static ManagedSpeciesDocument FromDomain(ManagedSpecies m) => new()
     {

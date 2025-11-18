@@ -1,4 +1,4 @@
-using KeeperData.Application.Orchestration.Cts.Holdings;
+using KeeperData.Application.Orchestration.Imports.Cts.Holdings;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;

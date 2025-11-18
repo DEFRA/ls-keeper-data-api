@@ -1,7 +1,9 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
+using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
 
@@ -11,23 +13,57 @@ namespace KeeperData.Core.Documents;
 [CollectionName("sitePartyRoleRelationships")]
 public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
 {
+    [BsonId]
+    [JsonPropertyName("id")]
+    [BsonElement("id")]
     public string? Id { get; set; }
 
+    [BsonElement("lastUpdatedDate")]
+    [JsonPropertyName("lastUpdatedDate")]
+    public DateTime LastUpdatedDate { get; set; }
+
+    [BsonElement("deleted")]
+    [JsonPropertyName("deleted")]
+    public bool Deleted { get; set; }
+
+    [BsonElement("partyId")]
+    [JsonPropertyName("partyId")]
     public string PartyId { get; set; } = string.Empty;
-    public string PartyTypeId { get; set; } = string.Empty; // LOV Lookup / Internal Id
+
+    [BsonElement("partyTypeId")]
+    [JsonPropertyName("partyTypeId")]
+    public string PartyTypeId { get; set; } = string.Empty;
+
+    [BsonElement("isHolder")]
+    [JsonPropertyName("isHolder")]
     public bool IsHolder { get; set; }
 
+    [BsonElement("holdingIdentifier")]
+    [JsonPropertyName("holdingIdentifier")]
     public string HoldingIdentifier { get; set; } = string.Empty;
+
+    [BsonElement("holdingIdentifierType")]
+    [JsonPropertyName("holdingIdentifierType")]
     public string HoldingIdentifierType { get; set; } = string.Empty;
 
-    public string? RoleTypeId { get; set; } // LOV Lookup / Internal Id
-    public string? RoleTypeName { get; set; } // LOV Lookup / Internal Name
+    [BsonElement("roleTypeId")]
+    [JsonPropertyName("roleTypeId")]
+    public string? RoleTypeId { get; set; }
 
+    [BsonElement("roleTypeName")]
+    [JsonPropertyName("roleTypeName")]
+    public string? RoleTypeName { get; set; }
+
+    [BsonElement("effectiveFromData")]
+    [JsonPropertyName("effectiveFromData")]
     public DateTime? EffectiveFromData { get; set; }
+
+    [BsonElement("effectiveToData")]
+    [JsonPropertyName("effectiveToData")]
     public DateTime? EffectiveToData { get; set; }
 
-    public int? LastUpdatedBatchId { get; set; }
-
+    [BsonElement("speciesManagedByRole")]
+    [JsonPropertyName("speciesManagedByRole")]
     public List<ManagedSpeciesDocument> SpeciesManagedByRole { get; set; } = [];
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()

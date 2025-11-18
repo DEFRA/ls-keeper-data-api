@@ -1,4 +1,4 @@
-using KeeperData.Core.Domain.Sites;
+using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
@@ -7,16 +7,33 @@ namespace KeeperData.Core.Documents;
 
 public class LocationDocument : INestedEntity
 {
-    [JsonPropertyName("id")]
     [BsonElement("id")]
+    [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
 
-    public DateTime LastUpdatedDate { get; set; }
+    [BsonElement("osMapReference")]
+    [JsonPropertyName("osMapReference")]
     public string? OsMapReference { get; set; }
+
+    [BsonElement("easting")]
+    [JsonPropertyName("easting")]
     public double? Easting { get; set; }
+
+    [BsonElement("northing")]
+    [JsonPropertyName("northing")]
     public double? Northing { get; set; }
+
+    [BsonElement("address")]
+    [JsonPropertyName("address")]
     public AddressDocument? Address { get; set; }
+
+    [BsonElement("communication")]
+    [JsonPropertyName("communication")]
     public List<CommunicationDocument> Communication { get; set; } = [];
+
+    [BsonElement("lastUpdatedDate")]
+    [JsonPropertyName("lastUpdatedDate")]
+    public DateTime LastUpdatedDate { get; set; }
 
     public static LocationDocument FromDomain(Location location) => new()
     {

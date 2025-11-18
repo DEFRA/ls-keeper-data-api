@@ -1,4 +1,4 @@
-using KeeperData.Core.Domain.Sites; // Add this using
+using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
@@ -7,14 +7,29 @@ namespace KeeperData.Core.Documents;
 
 public class SiteActivityDocument : INestedEntity
 {
-    [JsonPropertyName("id")]
     [BsonElement("id")]
+    [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
+
+    [BsonElement("activity")]
+    [JsonPropertyName("activity")]
     public string? Activity { get; set; }
+
+    [BsonElement("description")]
+    [JsonPropertyName("description")]
     public string? Description { get; set; }
+
+    [BsonElement("startDate")]
+    [JsonPropertyName("startDate")]
     public DateTime? StartDate { get; set; }
+
+    [BsonElement("endDate")]
+    [JsonPropertyName("endDate")]
     public DateTime? EndDate { get; set; }
-    public DateTime? LastUpdatedDate { get; set; }
+
+    [BsonElement("lastUpdatedDate")]
+    [JsonPropertyName("lastUpdatedDate")]
+    public DateTime LastUpdatedDate { get; set; }
 
     public static SiteActivityDocument FromDomain(SiteActivity m) => new()
     {

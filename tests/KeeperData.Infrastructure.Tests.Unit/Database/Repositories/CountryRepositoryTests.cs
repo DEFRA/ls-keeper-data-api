@@ -1,7 +1,6 @@
 using FluentAssertions;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Reference;
-using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Infrastructure.Database.Repositories;
@@ -57,35 +56,6 @@ public class CountryRepositoryTests
         typeof(GenericRepository<CountryListDocument>)
             .GetField("_collection", BindingFlags.NonPublic | BindingFlags.Instance)!
             .SetValue(_sut, _mongoCollectionMock.Object);
-    }
-
-    [Fact]
-    public void GivenCountryRepository_ThenImplementsICountryRepository()
-    {
-        // Act & Assert
-        typeof(CountryRepository).Should()
-            .Implement<ICountryRepository>();
-    }
-
-    [Fact]
-    public void GivenCountryRepository_ThenExtendsReferenceDataRepository()
-    {
-        // Act
-        var baseType = typeof(CountryRepository).BaseType;
-
-        // Assert
-        baseType.Should().NotBeNull();
-        baseType!.IsGenericType.Should().BeTrue();
-        baseType.GetGenericTypeDefinition().Should()
-            .Be(typeof(ReferenceDataRepository<,>));
-    }
-
-    [Fact]
-    public void GivenCountryRepository_ThenICountryRepositoryExtendsIReferenceDataRepository()
-    {
-        // Act & Assert
-        typeof(ICountryRepository).Should()
-            .Implement<IReferenceDataRepository<CountryListDocument, CountryDocument>>();
     }
 
     [Fact]

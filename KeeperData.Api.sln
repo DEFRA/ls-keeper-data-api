@@ -41,6 +41,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TsvToJsonConverter.Tests", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeeperData.Tests.Common", "tests\KeeperData.Tests.Common\KeeperData.Tests.Common.csproj", "{20FC1D32-DCBA-40B6-B67D-CF4E4592D26B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeeperData.Api.Worker", "src\KeeperData.Api.Worker\KeeperData.Api.Worker.csproj", "{49A32D49-9CD1-4142-87D2-9AF2FAE6BBEF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -203,6 +205,18 @@ Global
 		{20FC1D32-DCBA-40B6-B67D-CF4E4592D26B}.Release|x64.Build.0 = Release|Any CPU
 		{20FC1D32-DCBA-40B6-B67D-CF4E4592D26B}.Release|x86.ActiveCfg = Release|Any CPU
 		{20FC1D32-DCBA-40B6-B67D-CF4E4592D26B}.Release|x86.Build.0 = Release|Any CPU
+		{49A32D49-9CD1-4142-87D2-9AF2FAE6BBEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49A32D49-9CD1-4142-87D2-9AF2FAE6BBEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49A32D49-9CD1-4142-87D2-9AF2FAE6BBEF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{49A32D49-9CD1-4142-87D2-9AF2FAE6BBEF}.Debug|x64.Build.0 = Debug|Any CPU
+		{49A32D49-9CD1-4142-87D2-9AF2FAE6BBEF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{49A32D49-9CD1-4142-87D2-9AF2FAE6BBEF}.Debug|x86.Build.0 = Debug|Any CPU
+		{49A32D49-9CD1-4142-87D2-9AF2FAE6BBEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49A32D49-9CD1-4142-87D2-9AF2FAE6BBEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49A32D49-9CD1-4142-87D2-9AF2FAE6BBEF}.Release|x64.ActiveCfg = Release|Any CPU
+		{49A32D49-9CD1-4142-87D2-9AF2FAE6BBEF}.Release|x64.Build.0 = Release|Any CPU
+		{49A32D49-9CD1-4142-87D2-9AF2FAE6BBEF}.Release|x86.ActiveCfg = Release|Any CPU
+		{49A32D49-9CD1-4142-87D2-9AF2FAE6BBEF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

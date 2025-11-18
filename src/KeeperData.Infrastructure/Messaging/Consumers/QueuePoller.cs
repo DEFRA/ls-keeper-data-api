@@ -9,6 +9,7 @@ using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Observers;
 using KeeperData.Core.Messaging.Serializers;
 using KeeperData.Infrastructure.Messaging.Configuration;
+using KeeperData.Infrastructure.Messaging.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -19,6 +20,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
     IAmazonSQS amazonSQS,
     IMessageHandlerManager messageHandlerManager,
     IMessageSerializer<SnsEnvelope> messageSerializer,
+    IDeadLetterQueueService deadLetterQueueService,
     IOptions<IntakeEventQueueOptions> options,
     ILogger<QueuePoller> logger) : IQueuePoller, IAsyncDisposable
 {
@@ -26,6 +28,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
     private readonly IAmazonSQS _amazonSQS = amazonSQS;
     private readonly IMessageHandlerManager _messageHandlerManager = messageHandlerManager;
     private readonly IMessageSerializer<SnsEnvelope> _messageSerializer = messageSerializer;
+    private readonly IDeadLetterQueueService _deadLetterQueueService = deadLetterQueueService;
     private readonly IntakeEventQueueOptions _queueConsumerOptions = options.Value;
     private readonly ILogger<QueuePoller> _logger = logger;
 
@@ -112,7 +115,8 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
                     QueueUrl = _queueConsumerOptions.QueueUrl,
                     MaxNumberOfMessages = _queueConsumerOptions.MaxNumberOfMessages,
                     WaitTimeSeconds = _queueConsumerOptions.WaitTimeSeconds,
-                    MessageAttributeNames = ["All"]
+                    MessageAttributeNames = ["All"],
+                    MessageSystemAttributeNames = ["All"]
                 }, cancellationToken);
 
                 var messages = response?.Messages;
@@ -153,6 +157,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
 
             _logger.LogDebug("HandleMessageAsync using correlationId: {correlationId}", CorrelationIdContext.Value);
 
+
             var handlerTypes = _messageHandlerManager.GetHandlersForMessage(unwrappedMessage.Subject);
             foreach (var handlerInfo in handlerTypes)
             {
@@ -183,10 +188,10 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         }
         catch (NonRetryableException ex)
         {
-            // "Move to a DLQ by configuration" - TODO
-
             _logger.LogError("NonRetryableException in queue: {queue}, correlationId: {correlationId}, messageId: {messageId}, Exception: {ex}",
                 _queueConsumerOptions.QueueUrl, CorrelationIdContext.Value, message.MessageId, ex);
+
+            await _deadLetterQueueService.MoveToDeadLetterQueueAsync(message, queueUrl, ex, cancellationToken);
 
             _observer?.OnMessageFailed(message.MessageId, DateTime.UtcNow, ex, message);
         }
@@ -194,6 +199,8 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         {
             _logger.LogError("Unhandled Exception in queue: {queue}, correlationId: {correlationId}, messageId: {messageId}, Exception: {ex}",
                 _queueConsumerOptions.QueueUrl, CorrelationIdContext.Value, message.MessageId, ex);
+
+            await _deadLetterQueueService.MoveToDeadLetterQueueAsync(message, queueUrl, ex, cancellationToken);
 
             _observer?.OnMessageFailed(message.MessageId, DateTime.UtcNow, ex, message);
         }
