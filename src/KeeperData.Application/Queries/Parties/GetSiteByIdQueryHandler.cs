@@ -3,7 +3,7 @@ using KeeperData.Core.Repositories;
 
 namespace KeeperData.Application.Queries.Parties;
 
-public class GetSiteByIdQueryHandler(IGenericRepository<PartyDocument> repository) : IQueryHandler<GetPartyByIdQuery, PartyDocument>
+public class GetPartyByIdQueryHandler(IGenericRepository<PartyDocument> repository) : IQueryHandler<GetPartyByIdQuery, PartyDocument>
 {
     private readonly IGenericRepository<PartyDocument> _repository = repository;
 

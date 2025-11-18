@@ -11,8 +11,8 @@ public static class PartyFilterBuilder
         var builder = Builders<PartyDocument>.Filter;
 
         if (query.LastUpdatedDate.HasValue)
-        { //TODO untested
-         //   filters.Add(builder.Gte(x => x.LastUpdatedDate, query.LastUpdatedDate.Value));
+        {
+            filters.Add(builder.Gte(x => x.LastUpdatedDate, query.LastUpdatedDate.Value));
         }
 
         if (query.FirstName != null)
