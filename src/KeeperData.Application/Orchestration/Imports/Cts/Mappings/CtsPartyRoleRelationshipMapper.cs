@@ -11,7 +11,8 @@ public static class CtsPartyRoleRelationshipMapper
             .Where(x => x.Roles != null)
             .SelectMany(x => x.Roles!, (party, role) => new SitePartyRoleRelationshipDocument
             {
-                Id = role.IdentifierId,
+                Id = Guid.NewGuid().ToString(),
+
                 PartyId = party.PartyId,
                 PartyTypeId = party.PartyTypeId,
                 HoldingIdentifier = party.CountyParishHoldingNumber,

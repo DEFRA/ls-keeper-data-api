@@ -1,3 +1,4 @@
+using System.Reflection;
 using FluentValidation;
 using KeeperData.Application.Orchestration.ChangeScanning;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
@@ -6,13 +7,13 @@ using KeeperData.Application.Orchestration.Imports;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings.Steps;
 using KeeperData.Application.Providers;
+using KeeperData.Application.Queries.Parties.Adapters;
 using KeeperData.Application.Queries.Sites.Adapters;
 using KeeperData.Application.Services;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Providers;
 using KeeperData.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
 
 namespace KeeperData.Application.Setup;
 
@@ -29,6 +30,7 @@ public static class ServiceCollectionExtensions
         services.AddValidatorsFromAssemblyContaining<IRequestExecutor>();
 
         services.AddScoped<SitesQueryAdapter>();
+        services.AddScoped<PartiesQueryAdapter>();
         services.AddTransient<IDelayProvider, RealDelayProvider>();
 
         RegisterImportOrchestrators(services, typeof(SamHoldingImportOrchestrator).Assembly);

@@ -24,7 +24,7 @@ public class SamHolderMapperTests
     {
         _roleTypeLookupServiceMock
             .Setup(x => x.FindAsync(InferredRoleType.CphHolder.GetDescription(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), InferredRoleType.CphHolder.ToString()));
+            .ReturnsAsync(("5053be9f-685a-4779-a663-ce85df6e02e8", "CPH Holder"));
 
         _countryIdentifierLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
@@ -85,13 +85,7 @@ public class SamHolderMapperTests
         results.Count.Should().Be(1);
 
         var result = results[0];
-        result.Roles.Should().NotBeNull().And.HaveCount(1);
-
-        var role = result.Roles[0];
-        role.IdentifierId.Should().NotBeNullOrWhiteSpace();
-        role.SourceRoleName.Should().Be(InferredRoleType.CphHolder.GetDescription());
-        role.RoleTypeId.Should().BeNull();
-        role.RoleTypeName.Should().BeNull();
+        result.Roles.Should().NotBeNull().And.HaveCount(0);
     }
 
     [Fact]

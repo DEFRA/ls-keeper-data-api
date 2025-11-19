@@ -11,36 +11,47 @@ public class SitePartyDocument : INestedEntity
     [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
 
+    [BsonElement("partyId")]
     [JsonPropertyName("partyId")]
     public string PartyId { get; set; } = string.Empty;
 
+    [BsonElement("title")]
     [JsonPropertyName("title")]
     public string? Title { get; set; }
 
+    [BsonElement("firstName")]
     [JsonPropertyName("firstName")]
     public string? FirstName { get; set; }
 
+    [BsonElement("lastName")]
     [JsonPropertyName("lastName")]
     public string? LastName { get; set; }
 
+    [BsonElement("name")]
     [JsonPropertyName("name")]
     public string? Name { get; set; }
 
+    [BsonElement("partyType")]
     [JsonPropertyName("partyType")]
     public string? PartyType { get; set; }
 
+    [BsonElement("state")]
     [JsonPropertyName("state")]
     public string? State { get; set; }
 
+    [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
 
+    [BsonElement("communication")]
     [JsonPropertyName("communication")]
     public List<CommunicationDocument> Communication { get; set; } = [];
 
+    [BsonElement("correspondanceAddress")]
     [JsonPropertyName("correspondanceAddress")]
     public AddressDocument? CorrespondanceAddress { get; set; }
 
+    [BsonElement("partyRoles")]
     [JsonPropertyName("partyRoles")]
     public List<PartyRoleDocument> PartyRoles { get; set; } = [];
 

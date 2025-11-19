@@ -114,15 +114,18 @@ public static class SamPartyMapper
         {
             var (roleTypeId, roleTypeName) = await resolveRoleType(roleNameToLookup, cancellationToken);
 
-            result.Roles.Add(new Core.Documents.Silver.PartyRoleDocument
+            if (roleTypeId != null)
             {
-                IdentifierId = Guid.NewGuid().ToString(),
-                RoleTypeId = roleTypeId,
-                RoleTypeName = roleTypeName,
-                SourceRoleName = roleNameToLookup,
-                EffectiveFromDate = null,
-                EffectiveToDate = null
-            });
+                result.Roles.Add(new Core.Documents.Silver.PartyRoleDocument
+                {
+                    IdentifierId = Guid.NewGuid().ToString(),
+                    RoleTypeId = roleTypeId,
+                    RoleTypeName = roleTypeName,
+                    SourceRoleName = roleNameToLookup,
+                    EffectiveFromDate = null,
+                    EffectiveToDate = null
+                });
+            }
         }
 
         return result;

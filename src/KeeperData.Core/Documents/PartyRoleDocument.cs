@@ -1,5 +1,4 @@
 using KeeperData.Core.Domain.Shared;
-using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
@@ -12,21 +11,27 @@ public class PartyRoleDocument : INestedEntity
     [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
 
+    [BsonElement("roleId")]
     [JsonPropertyName("roleId")]
     public string RoleId { get; set; } = string.Empty;
 
+    [BsonElement("role")]
     [JsonPropertyName("role")]
     public string Role { get; set; } = string.Empty;
 
+    [BsonElement("startDate")]
     [JsonPropertyName("startDate")]
     public DateTime StartDate { get; set; }
 
+    [BsonElement("endDate")]
     [JsonPropertyName("endDate")]
     public DateTime? EndDate { get; set; }
 
+    [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime? LastUpdatedDate { get; set; }
 
+    [BsonElement("speciesManagedByRole")]
     [JsonPropertyName("speciesManagedByRole")]
     public List<ManagedSpeciesDocument> SpeciesManagedByRole { get; set; } = [];
 

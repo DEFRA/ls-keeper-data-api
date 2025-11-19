@@ -18,6 +18,7 @@ services:
       - DataBridgeScanConfiguration__QueryPageSize=5
       - DataBridgeScanConfiguration__DelayBetweenQueriesSeconds=0
       - DataBridgeScanConfiguration__LimitScanTotalBatchSize=10
+      - DataBridgeScanConfiguration__DailyScanIncludeChangesWithinTotalHours=24
     ports:
       - "5555"
     volumes:

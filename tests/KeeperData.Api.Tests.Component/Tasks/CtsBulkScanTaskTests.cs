@@ -1,0 +1,87 @@
+namespace KeeperData.Api.Tests.Component.Tasks;
+
+using KeeperData.Api.Worker.Tasks.Implementations;
+using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
+using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
+using KeeperData.Core.Locking;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Moq;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Xunit;
+
+public class CtsBulkScanTaskTests
+{
+    private readonly DataBridgeScanConfiguration _dataBridgeScanConfiguration = new()
+    {
+        QueryPageSize = 100,
+        DelayBetweenQueriesSeconds = 0,
+        LimitScanTotalBatchSize = 0,
+        DailyScanIncludeChangesWithinTotalHours = 24
+    };
+
+    private readonly CtsBulkScanOrchestrator _orchestrator = new([]);
+
+    [Fact]
+    public async Task RunAsync_Should_Execute_When_Lock_Acquired()
+    {
+        // Arrange
+        var loggerMock = new Mock<ILogger<CtsBulkScanTask>>();
+        var lockHandleMock = new Mock<IDistributedLockHandle>();
+        var distributedLockMock = new Mock<IDistributedLock>();
+        distributedLockMock
+            .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lockHandleMock.Object);
+
+        var appLifetimeMock = new Mock<IHostApplicationLifetime>();
+        var task = new CtsBulkScanTask(
+            _orchestrator,
+            _dataBridgeScanConfiguration,
+            distributedLockMock.Object,
+            appLifetimeMock.Object,
+            loggerMock.Object);
+
+        // Act
+        await task.RunAsync(CancellationToken.None);
+
+        // Assert
+        distributedLockMock.Verify(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Once);
+        lockHandleMock.Verify(l => l.DisposeAsync(), Times.Once); // Ensures lock is disposed after use
+    }
+
+    [Fact]
+    public async Task RunAsync_Should_Not_Execute_When_Lock_Not_Acquired()
+    {
+        // Arrange
+        var loggerMock = new Mock<ILogger<CtsBulkScanTask>>();
+        var distributedLockMock = new Mock<IDistributedLock>();
+        distributedLockMock
+            .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IDistributedLockHandle?)null);
+
+        var appLifetimeMock = new Mock<IHostApplicationLifetime>();
+        var task = new CtsBulkScanTask(
+            _orchestrator,
+            _dataBridgeScanConfiguration,
+            distributedLockMock.Object,
+            appLifetimeMock.Object,
+            loggerMock.Object);
+
+        // Act
+        await task.RunAsync(CancellationToken.None);
+
+        // Assert
+        distributedLockMock.Verify(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Once);
+
+        // No further action should be taken if lock is not acquired
+        loggerMock.Verify(l => l.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v != null && v.ToString() != null && v.ToString()!.Contains("Could not acquire lock")),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+        ), Times.Once);
+    }
+}

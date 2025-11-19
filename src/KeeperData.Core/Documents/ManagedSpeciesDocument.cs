@@ -11,18 +11,23 @@ public class ManagedSpeciesDocument : INestedEntity
     [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
 
+    [BsonElement("code")]
     [JsonPropertyName("code")]
     public string Code { get; set; } = string.Empty;
 
+    [BsonElement("name")]
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
 
+    [BsonElement("startDate")]
     [JsonPropertyName("startDate")]
     public DateTime StartDate { get; set; }
 
+    [BsonElement("endDate")]
     [JsonPropertyName("endDate")]
     public DateTime? EndDate { get; set; }
 
+    [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
 

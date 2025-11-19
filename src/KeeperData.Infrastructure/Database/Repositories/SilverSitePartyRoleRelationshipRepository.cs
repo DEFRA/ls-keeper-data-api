@@ -35,6 +35,6 @@ public class SilverSitePartyRoleRelationshipRepository(
             .Project(projection)
             .ToListAsync(cancellationToken);
 
-        return [.. result.Select(doc => doc.GetValue("PartyId").AsString)];
+        return [.. result.Select(doc => doc.GetValue("partyId").AsString)];
     }
 }

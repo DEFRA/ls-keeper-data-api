@@ -13,56 +13,74 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 {
     [BsonId]
     [JsonPropertyName("id")]
+    [BsonElement("id")]
     public required string Id { get; set; }
 
+    [BsonElement("createdDate")]
     [JsonPropertyName("createdDate")]
     public DateTime CreatedDate { get; private set; }
 
+    [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
 
+    [BsonElement("type")]
     [JsonPropertyName("type")]
     public string Type { get; set; } = default!;
 
+    [BsonElement("name")]
     [JsonPropertyName("name")]
     public string Name { get; set; } = default!;
 
+    [BsonElement("state")]
     [JsonPropertyName("state")]
     public string? State { get; set; } = default!;
 
+    [BsonElement("startDate")]
     [JsonPropertyName("startDate")]
     public DateTime StartDate { get; set; }
 
+    [BsonElement("endDate")]
     [JsonPropertyName("endDate")]
     public DateTime? EndDate { get; set; }
 
+    [BsonElement("source")]
     [JsonPropertyName("source")]
     public string? Source { get; set; }
 
+    [BsonElement("destroyIdentityDocumentsFlag")]
     [JsonPropertyName("destroyIdentityDocumentsFlag")]
     public bool? DestroyIdentityDocumentsFlag { get; set; }
 
+    [BsonElement("deleted")]
     [JsonPropertyName("deleted")]
     public bool Deleted { get; set; }
 
+    [BsonElement("location")]
     [JsonPropertyName("location")]
     public LocationDocument? Location { get; set; }
 
+    [BsonElement("identifiers")]
     [JsonPropertyName("identifiers")]
     public List<SiteIdentifierDocument> Identifiers { get; private set; } = [];
 
+    [BsonElement("parties")]
     [JsonPropertyName("parties")]
     public List<SitePartyDocument> Parties { get; set; } = [];
 
+    [BsonElement("species")]
     [JsonPropertyName("species")]
     public List<SpeciesSummaryDocument> Species { get; set; } = [];
 
+    [BsonElement("marks")]
     [JsonPropertyName("marks")]
     public List<GroupMarkDocument> Marks { get; set; } = [];
 
+    [BsonElement("siteActivities")]
     [JsonPropertyName("siteActivities")]
     public List<SiteActivityDocument> SiteActivities { get; set; } = [];
 
+    [BsonElement("activities")]
     [JsonPropertyName("activities")]
     public List<string> Activities { get; set; } = [];
 

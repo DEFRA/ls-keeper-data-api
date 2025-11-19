@@ -2,6 +2,7 @@ namespace KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
 
 public class SamBulkScanContext
 {
+    public Guid ScanCorrelationId { get; init; } = Guid.NewGuid();
     public DateTime CurrentDateTime { get; init; } = DateTime.UtcNow;
     public DateTime? UpdatedSinceDateTime { get; init; }
     public int PageSize { get; init; } = 100;

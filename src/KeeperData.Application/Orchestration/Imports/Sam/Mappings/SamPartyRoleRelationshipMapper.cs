@@ -21,8 +21,8 @@ public static class SamPartyRoleRelationshipMapper
                     ? cphs
                     : holdingIdentifier is not null ? [holdingIdentifier] : [];
 
-                return holdingIdentifiers.SelectMany(cph => party.Roles!.Select(role =>
-                    new Core.Documents.Silver.SitePartyRoleRelationshipDocument
+                return holdingIdentifiers.SelectMany(cph => party.Roles!.Where(x => x.RoleTypeId != null)
+                    .Select(role => new Core.Documents.Silver.SitePartyRoleRelationshipDocument
                     {
                         // Id - Leave to support upsert assigning Id
 
