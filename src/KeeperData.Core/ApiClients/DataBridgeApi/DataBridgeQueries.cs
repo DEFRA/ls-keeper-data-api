@@ -22,7 +22,7 @@ public static class DataBridgeQueries
         if (updatedSinceDateTime.HasValue)
         {
             var formattedDate = updatedSinceDateTime.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
-            query["$filter"] = $"UpdatedAtUtc ge {formattedDate}";
+            query["$filter"] = $"UpdatedAtUtc ge {formattedDate} or CreatedAtUtc ge {formattedDate}"; //if updated date is null use created date
         }
 
         return query;
