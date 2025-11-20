@@ -8,23 +8,15 @@ using System.Text.Json.Serialization;
 namespace KeeperData.Core.Documents;
 
 /// <summary>
-/// Composite key: HoldingIdentifier, IsHolder, PartyId, RoleTypeId
+/// Composite key: HoldingIdentifier, PartyId, RoleTypeId, SpeciesTypeId
 /// </summary>
 [CollectionName("sitePartyRoleRelationships")]
-public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
+public record SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
 {
     [BsonId]
     [JsonPropertyName("id")]
     [BsonElement("id")]
     public string? Id { get; set; }
-
-    [BsonElement("lastUpdatedDate")]
-    [JsonPropertyName("lastUpdatedDate")]
-    public DateTime LastUpdatedDate { get; set; }
-
-    [BsonElement("deleted")]
-    [JsonPropertyName("deleted")]
-    public bool Deleted { get; set; }
 
     [BsonElement("partyId")]
     [JsonPropertyName("partyId")]
@@ -33,10 +25,6 @@ public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
     [BsonElement("partyTypeId")]
     [JsonPropertyName("partyTypeId")]
     public string PartyTypeId { get; set; } = string.Empty;
-
-    [BsonElement("isHolder")]
-    [JsonPropertyName("isHolder")]
-    public bool IsHolder { get; set; }
 
     [BsonElement("holdingIdentifier")]
     [JsonPropertyName("holdingIdentifier")]
@@ -62,9 +50,13 @@ public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
     [JsonPropertyName("effectiveToData")]
     public DateTime? EffectiveToData { get; set; }
 
-    [BsonElement("speciesManagedByRole")]
-    [JsonPropertyName("speciesManagedByRole")]
-    public List<ManagedSpeciesDocument> SpeciesManagedByRole { get; set; } = [];
+    [BsonElement("speciesTypeId")]
+    [JsonPropertyName("speciesTypeId")]
+    public string? SpeciesTypeId { get; set; }
+
+    [BsonElement("speciesTypeCode")]
+    [JsonPropertyName("speciesTypeCode")]
+    public string? SpeciesTypeCode { get; set; }
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
@@ -91,8 +83,12 @@ public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
                 new CreateIndexOptions { Name = "idx_roleTypeId" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("IsHolder"),
-                new CreateIndexOptions { Name = "idx_isHolder" })
+                Builders<BsonDocument>.IndexKeys.Ascending("SpeciesTypeId"),
+                new CreateIndexOptions { Name = "idx_speciesTypeId" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("SpeciesTypeCode"),
+                new CreateIndexOptions { Name = "idx_speciesTypeCode" })
         ];
     }
 }

@@ -6,6 +6,8 @@ using KeeperData.Core.Domain.Parties.Formatters;
 using KeeperData.Core.Domain.Parties.Rules;
 using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Domain.Sites.Formatters;
+using KeeperData.Core.Repositories;
+using MongoDB.Driver;
 
 namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 
@@ -58,7 +60,6 @@ public static class SamPartyMapper
             LastUpdatedBatchId = p.BATCH_ID,
             LastUpdatedDate = currentDateTime,
             Deleted = p.IsDeleted ?? false,
-            IsHolder = false,
 
             PartyId = p.PARTY_ID.ToString(),
             PartyTypeId = partyTypeId,
@@ -135,6 +136,7 @@ public static class SamPartyMapper
         DateTime currentDateTime,
         List<SamPartyDocument> silverParties,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
+        IGenericRepository<PartyDocument> goldPartyRepository,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
         Func<string?, CancellationToken, Task<SpeciesDocument?>> getSpeciesTypeById,
         CancellationToken cancellationToken)
@@ -146,7 +148,9 @@ public static class SamPartyMapper
 
         foreach (var silverParty in silverParties ?? [])
         {
-            PartyDocument? existingParty = null; // TODO - Inject and lookup via Repository
+            var existingPartyFilter = Builders<PartyDocument>.Filter.Eq(x => x.CustomerNumber, silverParty.PartyId);
+
+            var existingParty = await goldPartyRepository.FindOneByFilterAsync(existingPartyFilter, cancellationToken);
 
             var party = existingParty is not null
                 ? await UpdatePartyAsync(
@@ -233,9 +237,29 @@ public static class SamPartyMapper
                     r.EffectiveToDate
                 );
 
+                var matchingMarks = goldSiteGroupMarks
+                    .Where(m =>
+                        m.PartyId == incoming.PartyId
+                        && m.RoleTypeId == r.RoleTypeId
+                        && !string.IsNullOrWhiteSpace(m.SpeciesTypeId))
+                    .ToList();
+
                 var speciesManaged = new List<ManagedSpecies>();
 
-                // TODO: Populate speciesManaged from goldSiteGroupMarks
+                foreach (var mark in matchingMarks)
+                {
+                    var speciesDoc = await getSpeciesTypeById(mark.SpeciesTypeId, cancellationToken);
+                    if (speciesDoc is null)
+                        continue;
+
+                    var managedSpecies = ManagedSpecies.Create(
+                        code: speciesDoc.Code,
+                        name: speciesDoc.Name,
+                        startDate: mark.GroupMarkStartDate,
+                        endDate: mark.GroupMarkEndDate);
+
+                    speciesManaged.Add(managedSpecies);
+                }
 
                 var partyRole = PartyRole.Create(role, speciesManaged);
                 partyRoles.Add(partyRole);
@@ -243,8 +267,6 @@ public static class SamPartyMapper
 
             party.SetRoles(partyRoles);
         }
-
-        // TODO - Add remaining fields
 
         return await Task.FromResult(party);
     }
@@ -316,9 +338,29 @@ public static class SamPartyMapper
                     r.EffectiveToDate
                 );
 
+                var matchingMarks = goldSiteGroupMarks
+                    .Where(m =>
+                        m.PartyId == incoming.PartyId
+                        && m.RoleTypeId == r.RoleTypeId
+                        && !string.IsNullOrWhiteSpace(m.SpeciesTypeId))
+                    .ToList();
+
                 var speciesManaged = new List<ManagedSpecies>();
 
-                // TODO: Populate speciesManaged from goldSiteGroupMarks
+                foreach (var mark in matchingMarks)
+                {
+                    var speciesDoc = await getSpeciesTypeById(mark.SpeciesTypeId, cancellationToken);
+                    if (speciesDoc is null)
+                        continue;
+
+                    var managedSpecies = ManagedSpecies.Create(
+                        code: speciesDoc.Code,
+                        name: speciesDoc.Name,
+                        startDate: mark.GroupMarkStartDate,
+                        endDate: mark.GroupMarkEndDate);
+
+                    speciesManaged.Add(managedSpecies);
+                }
 
                 var partyRole = PartyRole.Create(role, speciesManaged);
 
@@ -329,8 +371,6 @@ public static class SamPartyMapper
         {
             party.SetRoles([]);
         }
-
-        // TODO - Add remaining fields
 
         return party;
     }

@@ -7,8 +7,11 @@ using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
 
+/// <summary>
+/// Composite key: HoldingIdentifier, Herdmark, ProductionUsageId, PartyId, RoleTypeId
+/// </summary>
 [CollectionName("siteGroupMarkRelationships")]
-public class SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes, IDeletableEntity
+public record SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes
 {
     [BsonId]
     [JsonPropertyName("id")]
@@ -19,10 +22,6 @@ public class SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes, IDel
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
 
-    [BsonElement("deleted")]
-    [JsonPropertyName("deleted")]
-    public bool Deleted { get; set; }
-
     [BsonElement("partyId")]
     [JsonPropertyName("partyId")]
     public string PartyId { get; set; } = string.Empty;
@@ -30,10 +29,6 @@ public class SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes, IDel
     [BsonElement("partyTypeId")]
     [JsonPropertyName("partyTypeId")]
     public string PartyTypeId { get; set; } = string.Empty;
-
-    [BsonElement("isHolder")]
-    [JsonPropertyName("isHolder")]
-    public bool IsHolder { get; set; }
 
     [BsonElement("herdmark")]
     [JsonPropertyName("herdmark")]
@@ -113,7 +108,47 @@ public class SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes, IDel
 
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("HoldingIdentifierType"),
-                new CreateIndexOptions { Name = "idx_holdingIdentifierType" })
+                new CreateIndexOptions { Name = "idx_holdingIdentifierType" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("PartyId"),
+                new CreateIndexOptions { Name = "idx_partyId" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("Herdmark"),
+                new CreateIndexOptions { Name = "idx_herdmark" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("RoleTypeId"),
+                new CreateIndexOptions { Name = "idx_roleTypeId" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("RoleTypeName"),
+                new CreateIndexOptions { Name = "idx_roleTypeName" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("SpeciesTypeId"),
+                new CreateIndexOptions { Name = "idx_speciesTypeId" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("SpeciesTypeCode"),
+                new CreateIndexOptions { Name = "idx_speciesTypeCode" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("ProductionUsageId"),
+                new CreateIndexOptions { Name = "idx_productionUsageId" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("ProductionUsageCode"),
+                new CreateIndexOptions { Name = "idx_productionUsageCode" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("ProductionTypeId"),
+                new CreateIndexOptions { Name = "idx_productionTypeId" }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("ProductionTypeCode"),
+                new CreateIndexOptions { Name = "idx_productionTypeCode" })
         ];
     }
 }

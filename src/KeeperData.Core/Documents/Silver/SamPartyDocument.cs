@@ -30,10 +30,6 @@ public class SamPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IC
     [BsonElement("deleted")]
     public bool Deleted { get; set; }
 
-    [JsonPropertyName("isHolder")]
-    [BsonElement("isHolder")]
-    public bool IsHolder { get; set; }
-
     [JsonPropertyName("cphList")]
     [BsonElement("cphList")]
     public List<string> CphList { get; set; } = [];

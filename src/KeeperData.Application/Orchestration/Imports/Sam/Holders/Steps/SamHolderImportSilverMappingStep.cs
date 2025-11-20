@@ -29,11 +29,5 @@ public class SamHolderImportSilverMappingStep(
             context.SilverParties,
             HoldingIdentifierType.CphNumber.ToString(),
             holdingIdentifier: null);
-
-        // TODO - Add Gold in
-        // context.GoldParties = await SamPartyMapper.ToGold();
-
-        // TODO - Add Gold in
-        // context.GoldSitePartyRoles = SitePartyRoleMapper.ToGold(
     }
 }

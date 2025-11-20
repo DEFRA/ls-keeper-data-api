@@ -6,6 +6,5 @@ public interface ISilverSitePartyRoleRelationshipRepository
     Task<List<string>> FindPartyIdsByHoldingIdentifierAsync(
         string holdingIdentifier,
         string source,
-        bool isHolder,
         CancellationToken cancellationToken = default);
 }

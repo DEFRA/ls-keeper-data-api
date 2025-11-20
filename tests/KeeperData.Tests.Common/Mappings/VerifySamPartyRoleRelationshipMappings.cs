@@ -24,7 +24,6 @@ public static class VerifySamPartyRoleRelationshipMappings
 
         target.PartyId.Should().Be(source.PartyId);
         target.PartyTypeId.Should().Be(source.PartyTypeId);
-        target.IsHolder.Should().Be(source.IsHolder);
         target.HoldingIdentifier.Should().Be(expectedHoldingIdentifier);
         target.HoldingIdentifierType.Should().Be(expectedHoldingIdentifierType);
         target.Source.Should().Be(SourceSystemType.SAM.ToString());

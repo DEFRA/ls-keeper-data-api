@@ -13,7 +13,6 @@ public class SamHoldingImportSilverMappingStep(
     IRoleTypeLookupService roleTypeLookupService,
     ICountryIdentifierLookupService countryIdentifierLookupService,
     IProductionUsageLookupService productionUsageLookupService,
-    // IProductionTypeLookupService productionTypeLookupService,
     ISpeciesTypeLookupService speciesTypeLookupService,
     ILogger<SamHoldingImportSilverMappingStep> logger)
     : ImportStepBase<SamHoldingImportContext>(logger)
@@ -46,7 +45,6 @@ public class SamHoldingImportSilverMappingStep(
             context.CurrentDateTime,
             context.RawHerds,
             productionUsageLookupService.FindAsync,
-            // productionTypeLookupService.FindAsync,
             speciesTypeLookupService.FindAsync,
             cancellationToken);
 

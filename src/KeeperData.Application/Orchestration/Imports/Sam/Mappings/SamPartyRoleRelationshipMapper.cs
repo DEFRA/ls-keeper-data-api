@@ -16,9 +16,8 @@ public static class SamPartyRoleRelationshipMapper
             .Where(party => party.Roles != null)
             .SelectMany(party =>
             {
-                var cphs = party.IsHolder ? party.CphList : null;
-                var holdingIdentifiers = cphs?.Count > 0
-                    ? cphs
+                var holdingIdentifiers = party.CphList?.Count > 0
+                    ? party.CphList
                     : holdingIdentifier is not null ? [holdingIdentifier] : [];
 
                 return holdingIdentifiers.SelectMany(cph => party.Roles!.Where(x => x.RoleTypeId != null)
@@ -28,7 +27,6 @@ public static class SamPartyRoleRelationshipMapper
 
                         PartyId = party.PartyId,
                         PartyTypeId = party.PartyTypeId,
-                        IsHolder = party.IsHolder,
                         HoldingIdentifier = cph,
                         HoldingIdentifierType = holdingIdentifierType,
                         Source = SourceSystemType.SAM.ToString(),

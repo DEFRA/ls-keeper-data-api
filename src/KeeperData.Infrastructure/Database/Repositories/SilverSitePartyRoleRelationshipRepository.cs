@@ -18,13 +18,11 @@ public class SilverSitePartyRoleRelationshipRepository(
     public async Task<List<string>> FindPartyIdsByHoldingIdentifierAsync(
         string holdingIdentifier,
         string source,
-        bool isHolder,
         CancellationToken cancellationToken = default)
     {
         var filter = Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.And(
             Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier),
-            Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.Source, source),
-            Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.IsHolder, isHolder)
+            Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.Source, source)
         );
 
         var projection = Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Projection

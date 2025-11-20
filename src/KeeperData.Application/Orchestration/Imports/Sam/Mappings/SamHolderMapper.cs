@@ -61,7 +61,6 @@ public static class SamHolderMapper
             LastUpdatedBatchId = p.BATCH_ID,
             LastUpdatedDate = currentDateTime,
             Deleted = p.IsDeleted ?? false,
-            IsHolder = true,
 
             PartyId = p.PARTY_ID.ToString(),
             PartyTypeId = partyTypeId,

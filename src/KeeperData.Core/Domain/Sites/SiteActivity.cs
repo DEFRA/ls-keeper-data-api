@@ -5,17 +5,17 @@ namespace KeeperData.Core.Domain.Sites;
 public class SiteActivity : ValueObject
 {
     public string Id { get; private set; }
-    public string Activity { get; private set; }
+    public string? Activity { get; private set; }
     public string? Description { get; private set; }
-    public DateTime StartDate { get; private set; }
+    public DateTime? StartDate { get; private set; }
     public DateTime? EndDate { get; private set; }
     public DateTime LastUpdatedDate { get; private set; }
 
     public SiteActivity(
         string id,
-        string activity,
+        string? activity,
         string? description,
-        DateTime startDate,
+        DateTime? startDate,
         DateTime? endDate,
         DateTime lastUpdatedDate)
     {
@@ -28,9 +28,9 @@ public class SiteActivity : ValueObject
     }
 
     public static SiteActivity Create(
-        string activity,
+        string? activity,
         string? description,
-        DateTime startDate,
+        DateTime? startDate,
         DateTime? endDate)
     {
         return new SiteActivity(
@@ -44,9 +44,9 @@ public class SiteActivity : ValueObject
 
     public bool ApplyChanges(
         DateTime lastUpdatedDate,
-        string activity,
+        string? activity,
         string? description,
-        DateTime startDate,
+        DateTime? startDate,
         DateTime? endDate)
     {
         var changed = false;
@@ -69,9 +69,9 @@ public class SiteActivity : ValueObject
 
     public override IEnumerable<object> GetEqualityComponents()
     {
-        yield return Activity;
+        yield return Activity ?? string.Empty;
         yield return Description ?? string.Empty;
-        yield return StartDate;
+        yield return StartDate ?? default;
         yield return EndDate ?? default;
     }
 }
