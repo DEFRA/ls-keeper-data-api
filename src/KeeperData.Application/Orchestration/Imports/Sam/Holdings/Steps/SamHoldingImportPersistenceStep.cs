@@ -118,10 +118,6 @@ public class SamHoldingImportPersistenceStep(
     {
         incomingParties ??= [];
 
-        var incomingPartyIds = incomingParties
-            .Select(p => p.PartyId)
-            .ToHashSet();
-
         var existingParties = await GetExistingSilverPartiesAsync(holdingIdentifier, cancellationToken);
 
         if (incomingParties.Count > 0)
