@@ -17,6 +17,11 @@ namespace KeeperData.Core.Messaging.Contracts.Serializers;
 [JsonSerializable(typeof(CtsUpdateKeeperMessage))]
 [JsonSerializable(typeof(CtsUpdateAgentMessage))]
 [JsonSerializable(typeof(CtsDailyScanMessage))]
+[JsonSerializable(typeof(SamDailyScanMessage))]
+[JsonSerializable(typeof(SamUpdateHoldingMessage))]
+[JsonSerializable(typeof(SamUpdateHolderMessage))]
+[JsonSerializable(typeof(SamUpdateHerdMessage))]
+[JsonSerializable(typeof(SamUpdatePartyMessage))]
 public partial class MessageIdentifierSerializerContext : JsonSerializerContext
 {
 }
