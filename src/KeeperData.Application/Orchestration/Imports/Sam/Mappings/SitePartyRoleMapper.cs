@@ -6,7 +6,6 @@ namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 public static class SitePartyRoleMapper
 {
     public static List<Core.Documents.SitePartyRoleRelationshipDocument> ToGold(
-        DateTime currentDateTime,
         List<SamPartyDocument> silverParties,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         string holdingIdentifierType,
@@ -15,7 +14,7 @@ public static class SitePartyRoleMapper
         if (silverParties == null) return [];
 
         return [.. silverParties
-            .Where(party => party.Roles != null)
+            .Where(party => party.Deleted != true && party.Roles != null)
             .SelectMany(party =>
             {
                 var holdingIdentifiers = party.CphList?.Count > 0

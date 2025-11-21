@@ -188,16 +188,6 @@ public class SamHoldingImportPersistenceStepTests
     [Fact]
     public async Task GivenIncomingPartiesEmpty_WhenStepExecuted_ShouldMakeNoChanges()
     {
-        var existingParties = new List<SamPartyDocument>
-        {
-            _fixture.Build<SamPartyDocument>()
-                .With(p => p.PartyId, "C1000001")
-                .Create(),
-            _fixture.Build<SamPartyDocument>()
-                .With(p => p.PartyId, "C1000002")
-                .Create()
-        };
-
         var context = new SamHoldingImportContext
         {
             Cph = Guid.NewGuid().ToString(),
@@ -206,17 +196,6 @@ public class SamHoldingImportPersistenceStepTests
         };
 
         SetupDefaultRepositoryMocks();
-
-        _silverSitePartyRoleRelationshipRepositoryMock
-            .Setup(r => r.FindPartyIdsByHoldingIdentifierAsync(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(["C1000001", "C1000002"]);
-
-        _silverPartyRepositoryMock
-            .Setup(r => r.FindAsync(It.IsAny<FilterDefinition<SamPartyDocument>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingParties);
 
         var step = new SamHoldingImportPersistenceStep(
             Mock.Of<IGenericRepository<SamHoldingDocument>>(),
@@ -265,7 +244,6 @@ public class SamHoldingImportPersistenceStepTests
         await step.ExecuteAsync(context, CancellationToken.None);
 
         _silverPartyRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(It.Is<IEnumerable<(FilterDefinition<SamPartyDocument>, SamPartyDocument)>>(items => items.Count() == 1), It.IsAny<CancellationToken>()), Times.Once);
-        _silverPartyRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamPartyDocument>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -284,16 +262,6 @@ public class SamHoldingImportPersistenceStepTests
                 .Create()
         };
 
-        var existingParties = new List<SamPartyDocument>
-        {
-            _fixture.Build<SamPartyDocument>()
-                .With(p => p.PartyId, "C1000001")
-                .Create(),
-            _fixture.Build<SamPartyDocument>()
-                .With(p => p.PartyId, "C1000099")
-                .Create()
-        };
-
         var context = new SamHoldingImportContext
         {
             Cph = Guid.NewGuid().ToString(),
@@ -302,17 +270,6 @@ public class SamHoldingImportPersistenceStepTests
         };
 
         SetupDefaultRepositoryMocks();
-
-        _silverSitePartyRoleRelationshipRepositoryMock
-            .Setup(r => r.FindPartyIdsByHoldingIdentifierAsync(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(["C1000001", "C1000099"]);
-
-        _silverPartyRepositoryMock
-            .Setup(r => r.FindAsync(It.IsAny<FilterDefinition<SamPartyDocument>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingParties);
 
         var step = new SamHoldingImportPersistenceStep(
             Mock.Of<IGenericRepository<SamHoldingDocument>>(),
@@ -328,7 +285,6 @@ public class SamHoldingImportPersistenceStepTests
         await step.ExecuteAsync(context, CancellationToken.None);
 
         _silverPartyRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(It.Is<IEnumerable<(FilterDefinition<SamPartyDocument>, SamPartyDocument)>>(items => items.Count() == 3), It.IsAny<CancellationToken>()), Times.Once);
-        _silverPartyRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamPartyDocument>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -661,15 +617,11 @@ public class SamHoldingImportPersistenceStepTests
 
         // Silver Party
         _silverPartyRepositoryMock
-            .Setup(r => r.FindAsync(It.IsAny<FilterDefinition<SamPartyDocument>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+            .Setup(r => r.FindOneAsync(It.IsAny<Expression<Func<SamPartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SamPartyDocument?)null);
 
         _silverPartyRepositoryMock
             .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamPartyDocument>, SamPartyDocument)>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _silverPartyRepositoryMock
-            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamPartyDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Silver Role Relationships
@@ -684,13 +636,6 @@ public class SamHoldingImportPersistenceStepTests
         _silverSitePartyRoleRelationshipRepositoryMock
             .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>, Core.Documents.Silver.SitePartyRoleRelationshipDocument)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-
-        _silverSitePartyRoleRelationshipRepositoryMock
-            .Setup(r => r.FindPartyIdsByHoldingIdentifierAsync(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
 
         // Silver Herds
         _silverHerdRepositoryMock
@@ -707,7 +652,7 @@ public class SamHoldingImportPersistenceStepTests
 
         // Gold Site
         _goldSiteRepositoryMock
-            .Setup(r => r.FindOneAsync(It.IsAny<Expression<Func<SiteDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((SiteDocument?)null);
 
         _goldSiteRepositoryMock
@@ -716,15 +661,11 @@ public class SamHoldingImportPersistenceStepTests
 
         // Gold Party
         _goldPartyRepositoryMock
-            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<PartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+            .Setup(r => r.FindOneAsync(It.IsAny<Expression<Func<PartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((PartyDocument?)null);
 
         _goldPartyRepositoryMock
             .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<PartyDocument>, PartyDocument)>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _goldPartyRepositoryMock
-            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<PartyDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Gold Site Party Role Relationships

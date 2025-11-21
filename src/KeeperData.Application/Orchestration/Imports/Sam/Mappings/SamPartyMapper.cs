@@ -123,8 +123,8 @@ public static class SamPartyMapper
                     RoleTypeId = roleTypeId,
                     RoleTypeName = roleTypeName,
                     SourceRoleName = roleNameToLookup,
-                    EffectiveFromDate = null,
-                    EffectiveToDate = null
+                    EffectiveFromDate = p.PARTY_ROLE_FROM_DATE,
+                    EffectiveToDate = p.PARTY_ROLE_TO_DATE
                 });
             }
         }
@@ -212,7 +212,7 @@ public static class SamPartyMapper
             incoming.PartyFullName,
             incoming.PartyId,
             incoming.PartyTypeId,
-            string.Empty, // TODO - Check State
+            PartyStatusFormatters.FormatPartyStatus(incoming.Deleted),
             incoming.Deleted,
             address);
 
@@ -312,7 +312,7 @@ public static class SamPartyMapper
             incoming.PartyFullName,
             incoming.PartyId,
             incoming.PartyTypeId,
-            string.Empty, // TODO - Check State
+            PartyStatusFormatters.FormatPartyStatus(incoming.Deleted),
             incoming.Deleted);
 
         party.SetAddress(
@@ -389,67 +389,4 @@ public static class SamPartyMapper
 
         return countryDocument.ToDomain();
     }
-
-    /*
-    {
-  "count": 1,
-  "values": [
-    {
-IU      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-IU      "title": "Mr",
-IU      "firstName": "John",
-IU      "lastName": "Doe",
-IU      "name": "John Doe",
-IU      "partyType": "Person",
-IU      "communication": [
-        {
-IU          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-IU          "email": "john.doe@somecompany.co.uk",
-IU          "mobile": "07123456789",
-IU          "landline": "0114 1231234",
-          "lastUpdatedDate": "2025-10-30T15:07:00.047Z"
-        }
-      ],
-IU      "correspondanceAddress": {
-IU       "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-IU        "uprn": 671544009,
-IU        "addressLine1": "Hansel & Gretel Farm, Pigs Street",
-IU        "addressLine2": "Cloverfield",
-IU        "postTown": "Clover town",
-IU        "county": "Sussex",
-IU        "postCode": "S36 2BS",
-IU        "country": {
-IU          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-IU          "code": "GB-ENG",
-IU          "name": "England",
-IU          "longName": "England - United Kingdom",
-IU          "euTradeMemberFlag": true,
-IU          "devolvedAuthorityFlag": false,
-          "lastUpdatedDate": "2025-10-30T15:07:00.047Z"
-        },
-        "lastUpdatedDate": "2025-10-30T15:07:00.047Z"
-      },
-      "partyRoles": [
-        {
-IU          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-IU          "role": "Keeper",
-IU          "startDate": "2025-10-30",
-IU          "endDate": "2025-10-30",
-          "speciesManagedByRole": [
-            {
-              "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-              "code": "BV",
-              "name": "Bovine",
-              "lastUpdatedDate": "2025-10-30T15:07:00.047Z"
-            }
-          ],
-          "lastUpdatedDate": "2025-10-30T15:07:00.047Z"
-        }
-      ],
-      "state": "active",
-IU     "lastUpdatedDate": "2025-10-30T15:07:00.047Z"
-    }
-  ]
-}
-    */
 }

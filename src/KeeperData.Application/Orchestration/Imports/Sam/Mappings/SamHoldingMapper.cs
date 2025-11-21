@@ -92,7 +92,7 @@ public static class SamHoldingMapper
             PremiseTypeCode = h.FACILITY_TYPE_CODE,
 
             SpeciesTypeCode = h.AnimalSpeciesCodeUnwrapped,
-            ProductionUsageCodeList = h.AnimalProductionUsageCodeList.Select(ProductionUsageCodeFormatters.TrimProductionUsageCodeHolding).ToList(),
+            ProductionUsageCodeList = [.. h.AnimalProductionUsageCodeList.Select(ProductionUsageCodeFormatters.TrimProductionUsageCodeHolding)],
 
             Location = new Core.Documents.Silver.LocationDocument
             {
@@ -146,9 +146,9 @@ public static class SamHoldingMapper
         if (silverHoldings == null || silverHoldings.Count == 0)
             return null;
 
-        var representative = silverHoldings
-            .OrderByDescending(h => h.LastUpdatedDate)
-            .First();
+        var representative = silverHoldings.Any(x => x.Deleted != true)
+            ? silverHoldings.Where(x => x.Deleted != true).OrderByDescending(h => h.LastUpdatedDate).First()
+            : silverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
 
         var existingHoldingFilter = Builders<SiteDocument>.Filter.ElemMatch(
             x => x.Identifiers,
@@ -404,12 +404,12 @@ public static class SamHoldingMapper
             });
 
         var results = await Task.WhenAll(tasks);
-        return results.ToList();
+        return [.. results];
     }
 
     private static List<GroupMark> ToGroupMarks(List<SiteGroupMarkRelationshipDocument> relationships)
     {
-        return relationships
+        return [.. relationships
             .Where(m => !string.IsNullOrWhiteSpace(m.Herdmark))
             .Select(m =>
             {
@@ -428,7 +428,6 @@ public static class SamHoldingMapper
                     startDate: m.GroupMarkStartDate,
                     endDate: m.GroupMarkEndDate,
                     species: species);
-            })
-            .ToList();
+            })];
     }
 }

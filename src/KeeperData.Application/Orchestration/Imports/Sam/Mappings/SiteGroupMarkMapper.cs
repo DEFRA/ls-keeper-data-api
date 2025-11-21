@@ -17,7 +17,7 @@ public static class SiteGroupMarkMapper
 
         var result = new List<SiteGroupMarkRelationshipDocument>();
 
-        foreach (var herd in silverHerds?.Where(x => x.Deleted != true) ?? Enumerable.Empty<SamHerdDocument>())
+        foreach (var herd in silverHerds?.Where(x => x.Deleted != true) ?? [])
         {
             var baseDoc = new SiteGroupMarkRelationshipDocument
             {

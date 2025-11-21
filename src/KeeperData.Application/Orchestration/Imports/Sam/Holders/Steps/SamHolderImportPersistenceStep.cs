@@ -32,11 +32,12 @@ public class SamHolderImportPersistenceStep(
             context.SilverPartyRoles,
             cancellationToken);
 
-        // TODO - Add Gold in
-        // await UpsertGoldPartiesAndDeleteOrphansAsync(context.Cph, context.GoldParties, cancellationToken);
+        await UpsertGoldPartiesAsync(context.GoldParties, cancellationToken);
 
-        // TODO - Add Gold in
-        // await ReplaceGoldSitePartyRolesAsync(context.Cph, context.GoldSitePartyRoles, cancellationToken);
+        await UpsertGoldPartyRolesAndDeletePartySpecificOrphansAsync(
+            context.GoldParties.Select(x => x.CustomerNumber ?? string.Empty).Distinct(),
+            context.GoldSitePartyRoles,
+            cancellationToken);
     }
 
     private async Task UpsertSilverPartiesAsync(
@@ -123,9 +124,98 @@ public class SamHolderImportPersistenceStep(
         }
     }
 
-    // TODO - Add Gold in
-    // await UpsertGoldPartiesAndDeleteOrphansAsync(context.Cph, context.GoldParties, cancellationToken);
+    private async Task UpsertGoldPartiesAsync(
+        List<PartyDocument> incomingParties,
+        CancellationToken cancellationToken)
+    {
+        incomingParties ??= [];
 
-    // TODO - Add Gold in
-    // await ReplaceGoldSitePartyRolesAsync(context.Cph, context.GoldSitePartyRoles, cancellationToken);
+        var incomingCustomerNumbers = incomingParties
+            .Select(p => p.CustomerNumber)
+            .Where(cn => !string.IsNullOrWhiteSpace(cn))
+            .ToHashSet();
+
+        var upserts = new List<(FilterDefinition<PartyDocument> Filter, PartyDocument Entity)>();
+
+        foreach (var incoming in incomingParties)
+        {
+            if (string.IsNullOrWhiteSpace(incoming.CustomerNumber))
+                continue;
+
+            var existing = await _goldPartyRepository.FindOneAsync(
+                x => x.CustomerNumber == incoming.CustomerNumber,
+                cancellationToken);
+
+            incoming.Id = existing?.Id ?? Guid.NewGuid().ToString();
+
+            var filter = Builders<PartyDocument>.Filter.Eq(x => x.CustomerNumber, incoming.CustomerNumber);
+            upserts.Add((filter, incoming));
+        }
+
+        if (upserts.Count > 0)
+        {
+            await _goldPartyRepository.BulkUpsertWithCustomFilterAsync(upserts, cancellationToken);
+        }
+    }
+
+    private async Task UpsertGoldPartyRolesAndDeletePartySpecificOrphansAsync(
+        IEnumerable<string> incomingPartyIds,
+        List<Core.Documents.SitePartyRoleRelationshipDocument> incomingSitePartyRoles,
+        CancellationToken cancellationToken)
+    {
+        incomingSitePartyRoles ??= [];
+
+        foreach (var partyId in incomingPartyIds)
+        {
+            var incomingRoles = incomingSitePartyRoles
+                .Where(r => r.PartyId == partyId)
+                .ToList();
+
+            var existingRoles = await _goldSitePartyRoleRelationshipRepository.FindAsync(
+                x => x.PartyId == partyId,
+                cancellationToken) ?? [];
+
+            HashSet<string> incomingKeys = [];
+
+            if (incomingRoles.Count > 0)
+            {
+                incomingKeys = incomingRoles
+                    .Select(p => $"{p.HoldingIdentifier}::{p.PartyId}::{p.RoleTypeId}::{p.SpeciesTypeId}")
+                    .ToHashSet();
+
+                var upserts = incomingRoles.Select(p =>
+                {
+                    var existing = existingRoles.FirstOrDefault(e =>
+                        e.HoldingIdentifier == p.HoldingIdentifier &&
+                        e.PartyId == p.PartyId &&
+                        e.RoleTypeId == p.RoleTypeId &&
+                        e.SpeciesTypeId == p.SpeciesTypeId);
+
+                    p.Id = existing?.Id ?? Guid.NewGuid().ToString();
+
+                    var filter = Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.And(
+                        Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, p.HoldingIdentifier),
+                        Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.PartyId, p.PartyId),
+                        Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.RoleTypeId, p.RoleTypeId),
+                        Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.SpeciesTypeId, p.SpeciesTypeId)
+                    );
+
+                    return (Filter: filter, Entity: p);
+                });
+
+                await _goldSitePartyRoleRelationshipRepository.BulkUpsertWithCustomFilterAsync(upserts, cancellationToken);
+            }
+
+            // TODO - Will this remove roles assigned from SAM Parties?
+            var orphaned = existingRoles
+                .Where(e => !incomingKeys.Contains($"{e.HoldingIdentifier}::{e.PartyId}::{e.RoleTypeId}::{e.SpeciesTypeId}"))
+                .ToList();
+
+            if (orphaned.Count > 0)
+            {
+                var deleteFilter = Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.In(x => x.Id, orphaned.Select(d => d.Id));
+                await _goldSitePartyRoleRelationshipRepository.DeleteManyAsync(deleteFilter, cancellationToken);
+            }
+        }
+    }
 }

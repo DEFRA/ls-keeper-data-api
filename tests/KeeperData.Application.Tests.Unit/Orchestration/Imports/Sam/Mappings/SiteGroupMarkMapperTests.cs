@@ -154,7 +154,7 @@ GroupMarkEndDate
             .ReturnsAsync(("ba9cb8fb-ab7f-42f2-bc1f-fa4d7fda4824", "Beef"));
 
         _speciesTypeLookupServiceMock.Setup(x => x.FindAsync("CTT", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("5a86d64d-0f17-46a0-92d5-11fd5b2c5830", "Beef"));
+            .ReturnsAsync(("5a86d64d-0f17-46a0-92d5-11fd5b2c5830", "Cattle"));
 
         _roleTypeLookupServiceMock.Setup(x => x.FindAsync("LIVESTOCKKEEPER", It.IsAny<CancellationToken>()))
             .ReturnsAsync(("b2637b72-2196-4a19-bdf0-85c7ff66cf60", "Livestock Keeper"));
@@ -204,14 +204,6 @@ GroupMarkEndDate
         VerifyGoldData(context);
     }
 
-    private void VerifyGoldData(SamHoldingImportContext context)
-    {
-        context.GoldSiteGroupMarks.Should().HaveCount(3);
-
-        context.GoldSiteGroupMarks.OrderBy(x => x.PartyId).ThenBy(x => x.RoleTypeName).ToList()
-            .Should().BeEquivalentTo(_expectedResult);
-    }
-
     private void VerifySilverData(SamHoldingImportContext context)
     {
         context.SilverHerds.Should().HaveCount(1);
@@ -251,5 +243,11 @@ GroupMarkEndDate
         silverPartyRoles[2].HoldingIdentifier.Should().Be("12/345/6789");
     }
 
+    private void VerifyGoldData(SamHoldingImportContext context)
+    {
+        context.GoldSiteGroupMarks.Should().HaveCount(3);
 
+        context.GoldSiteGroupMarks.OrderBy(x => x.PartyId).ThenBy(x => x.RoleTypeName).ToList()
+            .Should().BeEquivalentTo(_expectedResult);
+    }
 }

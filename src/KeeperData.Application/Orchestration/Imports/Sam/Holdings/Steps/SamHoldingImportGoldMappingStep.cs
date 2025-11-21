@@ -41,7 +41,7 @@ public class SamHoldingImportGoldMappingStep(
             context.CurrentDateTime,
             context.SilverHoldings,
             context.GoldSiteGroupMarks,
-            context.GoldParties,
+            context.GoldParties, // TODO - Does this include the holder? If not, we should find them
             goldSiteRepository,
             countryIdentifierLookupService.GetByIdAsync,
             premiseTypeLookupService.GetByIdAsync,
@@ -50,7 +50,6 @@ public class SamHoldingImportGoldMappingStep(
             cancellationToken);
 
         context.GoldSitePartyRoles = SitePartyRoleMapper.ToGold(
-            context.CurrentDateTime,
             context.SilverParties,
             context.GoldSiteGroupMarks,
             HoldingIdentifierType.CphNumber.ToString(),

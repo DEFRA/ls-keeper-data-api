@@ -13,7 +13,7 @@ public static class SamPartyRoleRelationshipMapper
         if (silverParties == null) return [];
 
         return [.. silverParties
-            .Where(party => party.Roles != null)
+            .Where(party => party.Deleted != true && party.Roles != null)
             .SelectMany(party =>
             {
                 var holdingIdentifiers = party.CphList?.Count > 0

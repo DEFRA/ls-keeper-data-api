@@ -38,8 +38,8 @@ public static class SamHerdMapper
         CancellationToken cancellationToken)
     {
         var formattedProductionUsageCode = ProductionUsageCodeFormatters.TrimProductionUsageCodeHerd(h.AnimalPurposeCodeUnwrapped);
-        var (speciesTypeId, speciesTypeCode) = await resolveSpeciesType(h.AnimalSpeciesCodeUnwrapped, cancellationToken);
-        var (productionUsageId, productionUsageCode) = await resolveProductionUsage(formattedProductionUsageCode, cancellationToken);
+        var (speciesTypeId, _) = await resolveSpeciesType(h.AnimalSpeciesCodeUnwrapped, cancellationToken);
+        var (productionUsageId, _) = await resolveProductionUsage(formattedProductionUsageCode, cancellationToken);
 
         var result = new SamHerdDocument
         {

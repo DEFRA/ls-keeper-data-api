@@ -21,16 +21,15 @@ public class SamHolderImportGoldMappingStep(
         context.GoldParties = await SamPartyMapper.ToGold(
             context.CurrentDateTime,
             context.SilverParties,
-            goldSiteGroupMarks: [],
+            goldSiteGroupMarks: [], // TODO - Consider lookups for these
             goldPartyRepository,
             countryIdentifierLookupService.GetByIdAsync,
             speciesTypeLookupService.GetByIdAsync,
             cancellationToken);
 
         context.GoldSitePartyRoles = SitePartyRoleMapper.ToGold(
-            context.CurrentDateTime,
             context.SilverParties,
-            goldSiteGroupMarks: [],
+            goldSiteGroupMarks: [], // TODO - Consider lookups for these
             HoldingIdentifierType.CphNumber.ToString());
     }
 }
