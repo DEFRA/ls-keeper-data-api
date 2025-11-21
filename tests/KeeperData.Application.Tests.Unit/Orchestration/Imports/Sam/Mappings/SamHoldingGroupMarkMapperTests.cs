@@ -113,7 +113,6 @@ public class SamHoldingGroupMarkMapperTests
             DateTime.UtcNow,
             rawHerds,
             _resolveProductionUsage,
-            // _resolveProductionType,
             _resolveSpeciesType,
             CancellationToken.None);
 

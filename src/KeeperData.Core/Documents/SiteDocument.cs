@@ -1,4 +1,5 @@
 using KeeperData.Core.Attributes;
+using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson;
@@ -137,7 +138,75 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
             site.SetLocation(Location.ToDomain());
         }
 
-        // TODO: Add Parties, Species, Marks, Activities etc
+        if (Species is not null && Species.Count > 0)
+        {
+            var species = Species
+                .Select(s => new Species(
+                    id: s.IdentifierId,
+                    lastUpdatedDate: s.LastModifiedDate,
+                    code: s.Code,
+                    name: s.Name))
+                .ToList();
+
+            site.SetSpecies(species, LastUpdatedDate);
+        }
+
+        if (SiteActivities is not null && SiteActivities.Count > 0)
+        {
+            var activities = SiteActivities
+                .Select(a => new SiteActivity(
+                    id: a.IdentifierId,
+                    activity: a.Activity,
+                    description: a.Description,
+                    startDate: a.StartDate,
+                    endDate: a.EndDate,
+                    lastUpdatedDate: a.LastUpdatedDate))
+                .ToList();
+
+            site.SetActivities(activities, LastUpdatedDate);
+        }
+
+        if (Marks is not null && Marks.Count > 0)
+        {
+            var groupMarks = Marks
+                .Select(m => new GroupMark(
+                    id: m.IdentifierId,
+                    lastUpdatedDate: m.LastUpdatedDate,
+                    mark: m.Mark,
+                    startDate: m.StartDate,
+                    endDate: m.EndDate,
+                    species: m.Species is not null
+                        ? new Species(
+                            id: m.Species.IdentifierId,
+                            lastUpdatedDate: m.Species.LastModifiedDate,
+                            code: m.Species.Code,
+                            name: m.Species.Name)
+                        : null))
+                .ToList();
+
+            site.SetGroupMarks(groupMarks, LastUpdatedDate);
+        }
+
+        if (Parties is not null && Parties.Count > 0)
+        {
+            var siteParties = Parties
+                .Select(p => new SiteParty(
+                    id: p.IdentifierId,
+                    lastUpdatedDate: p.LastUpdatedDate,
+                    partyId: p.PartyId,
+                    title: p.Title,
+                    firstName: p.FirstName,
+                    lastName: p.LastName,
+                    name: p.Name,
+                    partyType: p.PartyType,
+                    state: p.State,
+                    correspondanceAddress: p.CorrespondanceAddress?.ToDomain(),
+                    communication: p.Communication?.Select(c => c.ToDomain()),
+                    partyRole: p.PartyRoles?.Select(r => r.ToDomain())))
+                .ToList();
+
+            site.SetSiteParties(siteParties, LastUpdatedDate);
+        }
 
         return site;
     }

@@ -10,7 +10,6 @@ public static class SamHerdMapper
         DateTime currentDateTime,
         List<SamHerd> rawHerds,
         Func<string?, CancellationToken, Task<(string? ProductionUsageId, string? ProductionUsageName)>> resolveProductionUsage,
-        // Func<string?, CancellationToken, Task<(string? ProductionTypeId, string? ProductionTypeName)>> resolveProductionType,
         Func<string?, CancellationToken, Task<(string? SpeciesTypeId, string? SpeciesTypeName)>> resolveSpeciesType,
         CancellationToken cancellationToken)
     {
@@ -22,7 +21,6 @@ public static class SamHerdMapper
                 currentDateTime,
                 h,
                 resolveProductionUsage,
-                // resolveProductionType,
                 resolveSpeciesType,
                 cancellationToken);
 
@@ -36,15 +34,12 @@ public static class SamHerdMapper
         DateTime currentDateTime,
         SamHerd h,
         Func<string?, CancellationToken, Task<(string? ProductionUsageId, string? ProductionUsageName)>> resolveProductionUsage,
-        // Func<string?, CancellationToken, Task<(string? ProductionTypeId, string? ProductionTypeName)>> resolveProductionType,
         Func<string?, CancellationToken, Task<(string? SpeciesTypeId, string? SpeciesTypeName)>> resolveSpeciesType,
         CancellationToken cancellationToken)
     {
-        var (speciesTypeId, speciesTypeCode) = await resolveSpeciesType(h.AnimalSpeciesCodeUnwrapped, cancellationToken);
-        var (productionUsageId, productionUsageCode) = await resolveProductionUsage(h.AnimalPurposeCodeUnwrapped, cancellationToken);
-
-        // TODO - Mapped from where
-        // var (productionTypeId, productionTypeCode) = await resolveProductionType(herd.TBC, cancellationToken);
+        var formattedProductionUsageCode = ProductionUsageCodeFormatters.TrimProductionUsageCodeHerd(h.AnimalPurposeCodeUnwrapped);
+        var (speciesTypeId, _) = await resolveSpeciesType(h.AnimalSpeciesCodeUnwrapped, cancellationToken);
+        var (productionUsageId, _) = await resolveProductionUsage(formattedProductionUsageCode, cancellationToken);
 
         var result = new SamHerdDocument
         {
@@ -62,11 +57,11 @@ public static class SamHerdMapper
             SpeciesTypeCode = h.AnimalSpeciesCodeUnwrapped,
 
             ProductionUsageId = productionUsageId,
-            ProductionUsageCode = h.AnimalPurposeCodeUnwrapped,
+            ProductionUsageCode = formattedProductionUsageCode,
+            AnimalPurposeCode = h.AnimalPurposeCodeUnwrapped,
 
-            // TODO - Mapped from where
-            // ProductionTypeId = productionTypeId,
-            // ProductionTypeCode = herd.TBC,
+            ProductionTypeId = null,
+            ProductionTypeCode = null,
 
             DiseaseType = h.DISEASE_TYPE,
             Interval = h.INTERVALS,

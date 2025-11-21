@@ -58,6 +58,10 @@ public class SamHerdDocument : IEntity, IContainsIndexes, IDeletableEntity
     [BsonElement("productionUsageCode")]
     public string? ProductionUsageCode { get; set; }
 
+    [JsonPropertyName("animalPurposeCode")]
+    [BsonElement("animalPurposeCode")]
+    public string? AnimalPurposeCode { get; set; } // Original including sub type e.g. CTT-BEEF-ADLR
+
     [JsonPropertyName("productionTypeId")]
     [BsonElement("productionTypeId")]
     public string? ProductionTypeId { get; set; } // LOV Lookup / Internal Id

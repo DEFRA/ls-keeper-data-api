@@ -21,8 +21,6 @@ public class SamHolderImportPersistenceStepTests
     private readonly Mock<IGenericRepository<PartyDocument>> _goldPartyRepositoryMock = new();
     private readonly Mock<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>> _goldSitePartyRoleRelationshipRepositoryMock = new();
 
-    private const bool IsHolderPartyType = true;
-
     public SamHolderImportPersistenceStepTests()
     {
         _fixture = new Fixture();
@@ -108,7 +106,6 @@ public class SamHolderImportPersistenceStepTests
             _fixture.Build<Core.Documents.Silver.SitePartyRoleRelationshipDocument>()
                 .With(p => p.Source, "SAM")
                 .With(p => p.HoldingIdentifier, "12/345/6789")
-                .With(p => p.IsHolder, IsHolderPartyType)
                 .With(p => p.PartyId, "C1000001")
                 .With(p => p.RoleTypeId, "R1000001")
                 .Create()
@@ -150,14 +147,12 @@ public class SamHolderImportPersistenceStepTests
             _fixture.Build<Core.Documents.Silver.SitePartyRoleRelationshipDocument>()
                 .With(p => p.Source, "SAM")
                 .With(p => p.HoldingIdentifier, "12/345/6789")
-                .With(p => p.IsHolder, IsHolderPartyType)
                 .With(p => p.PartyId, "C1000001")
                 .With(p => p.RoleTypeId, "R1000001")
                 .Create(),
             _fixture.Build<Core.Documents.Silver.SitePartyRoleRelationshipDocument>()
                 .With(p => p.Source, "SAM")
                 .With(p => p.HoldingIdentifier, "12/345/6789")
-                .With(p => p.IsHolder, IsHolderPartyType)
                 .With(p => p.PartyId, "C1000001")
                 .With(p => p.RoleTypeId, "R1000002")
                 .Create()
@@ -203,21 +198,18 @@ public class SamHolderImportPersistenceStepTests
             _fixture.Build<Core.Documents.Silver.SitePartyRoleRelationshipDocument>()
                 .With(p => p.Source, "SAM")
                 .With(p => p.HoldingIdentifier, "12/345/6789")
-                .With(p => p.IsHolder, IsHolderPartyType)
                 .With(p => p.PartyId, "C1000001")
                 .With(p => p.RoleTypeId, "R1000001")
                 .Create(),
             _fixture.Build<Core.Documents.Silver.SitePartyRoleRelationshipDocument>()
                 .With(p => p.Source, "SAM")
                 .With(p => p.HoldingIdentifier, "12/345/6789")
-                .With(p => p.IsHolder, IsHolderPartyType)
                 .With(p => p.PartyId, "C1000001")
                 .With(p => p.RoleTypeId, "R1000002")
                 .Create(),
             _fixture.Build<Core.Documents.Silver.SitePartyRoleRelationshipDocument>()
                 .With(p => p.Source, "SAM")
                 .With(p => p.HoldingIdentifier, "12/345/6789")
-                .With(p => p.IsHolder, IsHolderPartyType)
                 .With(p => p.PartyId, "C1000001")
                 .With(p => p.RoleTypeId, "R1000003")
                 .Create()
@@ -228,14 +220,12 @@ public class SamHolderImportPersistenceStepTests
             _fixture.Build<Core.Documents.Silver.SitePartyRoleRelationshipDocument>()
                 .With(p => p.Source, "SAM")
                 .With(p => p.HoldingIdentifier, "12/345/6789")
-                .With(p => p.IsHolder, IsHolderPartyType)
                 .With(p => p.PartyId, "C1000001")
                 .With(p => p.RoleTypeId, "R1000001")
                 .Create(),
             _fixture.Build<Core.Documents.Silver.SitePartyRoleRelationshipDocument>()
                 .With(p => p.Source, "SAM")
                 .With(p => p.HoldingIdentifier, "12/345/6789")
-                .With(p => p.IsHolder, IsHolderPartyType)
                 .With(p => p.PartyId, "C1000001")
                 .With(p => p.RoleTypeId, "R10000XX")
                 .Create()

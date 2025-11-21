@@ -8,7 +8,7 @@ public static class CtsPartyRoleRelationshipMapper
     public static List<SitePartyRoleRelationshipDocument> ToSilver(List<CtsPartyDocument> silverParties)
     {
         var result = silverParties?
-            .Where(x => x.Roles != null)
+            .Where(x => x.Deleted != true && x.Roles != null)
             .SelectMany(x => x.Roles!, (party, role) => new SitePartyRoleRelationshipDocument
             {
                 Id = Guid.NewGuid().ToString(),

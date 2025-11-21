@@ -11,13 +11,13 @@ namespace KeeperData.Application.Orchestration.Imports.Cts.Holdings.Steps;
 public class CtsHoldingImportPersistenceStep(
     IGenericRepository<CtsHoldingDocument> silverHoldingRepository,
     IGenericRepository<CtsPartyDocument> silverPartyRepository,
-    IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument> silverPartyRoleRelationshipRepository,
+    IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument> silverSitePartyRoleRelationshipRepository,
     ILogger<CtsHoldingImportPersistenceStep> logger)
     : ImportStepBase<CtsHoldingImportContext>(logger)
 {
     private readonly IGenericRepository<CtsHoldingDocument> _silverHoldingRepository = silverHoldingRepository;
     private readonly IGenericRepository<CtsPartyDocument> _silverPartyRepository = silverPartyRepository;
-    private readonly IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument> _silverPartyRoleRelationshipRepository = silverPartyRoleRelationshipRepository;
+    private readonly IGenericRepository<Core.Documents.Silver.SitePartyRoleRelationshipDocument> _silverSitePartyRoleRelationshipRepository = silverSitePartyRoleRelationshipRepository;
 
     protected override async Task ExecuteCoreAsync(CtsHoldingImportContext context, CancellationToken cancellationToken)
     {
@@ -29,7 +29,11 @@ public class CtsHoldingImportPersistenceStep(
 
         await UpsertSilverPartiesAndDeleteOrphansAsync(context.CphTrimmed, context.SilverParties, cancellationToken);
 
-        await ReplaceSilverPartyRolesAsync(context.CphTrimmed, context.SilverPartyRoles, cancellationToken);
+        await UpsertSilverPartyRolesAndDeletePartySpecificOrphansAsync(
+            context.CphTrimmed,
+            context.SilverParties.Select(x => x.PartyId),
+            context.SilverPartyRoles,
+            cancellationToken);
     }
 
     private async Task UpsertSilverHoldingAsync(
@@ -110,23 +114,74 @@ public class CtsHoldingImportPersistenceStep(
             cancellationToken) ?? [];
     }
 
-    private async Task ReplaceSilverPartyRolesAsync(
+    private async Task UpsertSilverPartyRolesAndDeletePartySpecificOrphansAsync(
         string holdingIdentifier,
-        List<Core.Documents.Silver.SitePartyRoleRelationshipDocument> incomingPartyRoles,
+        IEnumerable<string> incomingPartyIds,
+        List<Core.Documents.Silver.SitePartyRoleRelationshipDocument> incomingSitePartyRoles,
         CancellationToken cancellationToken)
     {
-        var sourceAsCts = SourceSystemType.CTS.ToString();
+        incomingSitePartyRoles ??= [];
 
-        var deleteFilter = Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.And(
-            Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier),
-            Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.Source, sourceAsCts)
-        );
+        var incomingPartyIdSet = incomingPartyIds?.ToHashSet() ?? [];
 
-        await _silverPartyRoleRelationshipRepository.DeleteManyAsync(deleteFilter, cancellationToken);
+        var incomingKeys = incomingSitePartyRoles
+            .Select(p => $"{p.Source}::{p.HoldingIdentifier}::{p.PartyId}::{p.RoleTypeId}")
+            .ToHashSet();
 
-        if (incomingPartyRoles?.Count > 0)
+        var existingSitePartyRoles = await GetExistingSilverSitePartyRoleRelationshipsAsync(
+            holdingIdentifier,
+            cancellationToken);
+
+        if (incomingSitePartyRoles.Count > 0)
         {
-            await _silverPartyRoleRelationshipRepository.AddManyAsync(incomingPartyRoles, cancellationToken);
+            var holdingUpserts = incomingSitePartyRoles.Select(p =>
+            {
+                var existing = existingSitePartyRoles.FirstOrDefault(e =>
+                    e.Source == p.Source &&
+                    e.HoldingIdentifier == p.HoldingIdentifier &&
+                    e.PartyId == p.PartyId &&
+                    e.RoleTypeId == p.RoleTypeId);
+
+                p.Id = existing?.Id ?? Guid.NewGuid().ToString();
+
+                return (
+                    Filter: Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.And(
+                        Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.Source, p.Source),
+                        Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, p.HoldingIdentifier),
+                        Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.PartyId, p.PartyId),
+                        Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.RoleTypeId, p.RoleTypeId)
+                    ),
+                    Entity: p
+                );
+            });
+
+            await _silverSitePartyRoleRelationshipRepository.BulkUpsertWithCustomFilterAsync(holdingUpserts, cancellationToken);
         }
+
+        var orphanedSitePartyRoles = existingSitePartyRoles?.Where(e =>
+            incomingPartyIdSet.Contains(e.PartyId) &&
+            !incomingKeys.Contains($"{e.Source}::{e.HoldingIdentifier}::{e.PartyId}::{e.RoleTypeId}"))
+        .ToList() ?? [];
+
+        if (orphanedSitePartyRoles.Count > 0)
+        {
+            var deleteFilter = Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.In(
+                x => x.Id,
+                orphanedSitePartyRoles.Select(d => d.Id));
+
+            await _silverSitePartyRoleRelationshipRepository.DeleteManyAsync(deleteFilter, cancellationToken);
+        }
+    }
+
+    private async Task<List<Core.Documents.Silver.SitePartyRoleRelationshipDocument>> GetExistingSilverSitePartyRoleRelationshipsAsync(
+        string holdingIdentifier,
+        CancellationToken cancellationToken)
+    {
+        var sourceAsSam = SourceSystemType.SAM.ToString();
+
+        return await _silverSitePartyRoleRelationshipRepository.FindAsync(
+            x => x.HoldingIdentifier == holdingIdentifier
+                && x.Source == sourceAsSam,
+            cancellationToken) ?? [];
     }
 }

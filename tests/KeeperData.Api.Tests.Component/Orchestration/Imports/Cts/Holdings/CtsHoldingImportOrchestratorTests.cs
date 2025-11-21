@@ -21,7 +21,7 @@ public class CtsHoldingImportOrchestratorTests
 {
     private readonly Mock<IGenericRepository<CtsHoldingDocument>> _silverHoldingRepositoryMock = new();
     private readonly Mock<IGenericRepository<CtsPartyDocument>> _silverPartyRepositoryMock = new();
-    private readonly Mock<IGenericRepository<SitePartyRoleRelationshipDocument>> _silverPartyRoleRelationshipRepositoryMock = new();
+    private readonly Mock<IGenericRepository<SitePartyRoleRelationshipDocument>> _silverSitePartyRoleRelationshipRepositoryMock = new();
     private readonly Mock<IRoleRepository> _roleRepositoryMock = new();
 
     private readonly Fixture _fixture;
@@ -51,7 +51,7 @@ public class CtsHoldingImportOrchestratorTests
         var factory = new AppWebApplicationFactory();
         factory.OverrideServiceAsScoped(_silverHoldingRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_silverPartyRepositoryMock.Object);
-        factory.OverrideServiceAsScoped(_silverPartyRoleRelationshipRepositoryMock.Object);
+        factory.OverrideServiceAsScoped(_silverSitePartyRoleRelationshipRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_roleRepositoryMock.Object);
 
         SetupDataBridgeApiRequest(factory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holdings));
@@ -164,7 +164,7 @@ public class CtsHoldingImportOrchestratorTests
             ? []
             : _fixture.CreateMany<CtsPartyDocument>(existingPartiesCount);
 
-        // CtsHoldingDocument
+        // Holding
         _silverHoldingRepositoryMock
             .Setup(r => r.FindOneAsync(It.IsAny<Expression<Func<CtsHoldingDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingHolding);
@@ -173,7 +173,7 @@ public class CtsHoldingImportOrchestratorTests
             .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<CtsHoldingDocument>, CtsHoldingDocument)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        // CtsPartyDocuments
+        // Party
         _silverPartyRepositoryMock
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<CtsPartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.FromResult(existingParties.ToList()));
@@ -186,13 +186,17 @@ public class CtsHoldingImportOrchestratorTests
             .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<CtsPartyDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        // PartyRoleRelationshipDocuments
-        _silverPartyRoleRelationshipRepositoryMock
-            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
+        // Silver Role Relationships
+        _silverSitePartyRoleRelationshipRepositoryMock
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Core.Documents.Silver.SitePartyRoleRelationshipDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        _silverSitePartyRoleRelationshipRepositoryMock
+            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _silverPartyRoleRelationshipRepositoryMock
-            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
+        _silverSitePartyRoleRelationshipRepositoryMock
+            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>, Core.Documents.Silver.SitePartyRoleRelationshipDocument)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
     }
 

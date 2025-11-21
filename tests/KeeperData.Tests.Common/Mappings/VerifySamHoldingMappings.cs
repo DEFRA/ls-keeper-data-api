@@ -60,10 +60,12 @@ public static class VerifySamHoldingMappings
             .Select(p => p)
             .OrderBy(p => p)
             .ToHashSet();
+
         var sourceProductionUsageCodes = source.AnimalProductionUsageCodeList
-            .Select(p => p)
+            .Select(ProductionUsageCodeFormatters.TrimProductionUsageCodeHolding)
             .OrderBy(p => p)
             .ToHashSet();
+
         targetProductionUsageCodes.Should().BeEquivalentTo(sourceProductionUsageCodes);
 
         // Location

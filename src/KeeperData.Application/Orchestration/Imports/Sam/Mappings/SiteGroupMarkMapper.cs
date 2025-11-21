@@ -8,30 +8,64 @@ public static class SiteGroupMarkMapper
     public static List<SiteGroupMarkRelationshipDocument> ToGold(
         DateTime currentDateTime,
         List<SamHerdDocument>? silverHerds,
+        List<Core.Documents.Silver.SitePartyRoleRelationshipDocument> silverSitePartyRoles,
         string holdingIdentifier,
         string holdingIdentifierType)
     {
-        if (silverHerds?.Count == 0)
+        if (silverHerds is null || silverHerds.Count == 0)
             return [];
 
-        // TODO - Add implementation
+        var result = new List<SiteGroupMarkRelationshipDocument>();
 
-        return [];
-    }
+        foreach (var herd in silverHerds?.Where(x => x.Deleted != true) ?? [])
+        {
+            var baseDoc = new SiteGroupMarkRelationshipDocument
+            {
+                // Id - Leave to support upsert assigning Id
 
-    public static SiteDocument? EnrichSiteWithGroupMarks(
-        SiteDocument? goldSite,
-        List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks)
-    {
-        if (goldSite == null)
-            return null;
+                LastUpdatedDate = currentDateTime,
+                Herdmark = herd.Herdmark,
+                CountyParishHoldingHerd = herd.CountyParishHoldingHerd,
+                HoldingIdentifier = holdingIdentifier,
+                HoldingIdentifierType = holdingIdentifierType,
+                SpeciesTypeId = herd.SpeciesTypeId,
+                SpeciesTypeCode = herd.SpeciesTypeCode,
+                ProductionUsageId = herd.ProductionUsageId,
+                ProductionUsageCode = herd.ProductionUsageCode,
+                ProductionTypeId = herd.ProductionTypeId,
+                ProductionTypeCode = herd.ProductionTypeCode,
+                DiseaseType = herd.DiseaseType,
+                Interval = herd.Interval,
+                IntervalUnitOfTime = herd.IntervalUnitOfTime,
+                GroupMarkStartDate = herd.GroupMarkStartDate,
+                GroupMarkEndDate = herd.GroupMarkEndDate
+            };
 
-        // TODO - Add implementation
+            var allPartyIds = herd.OwnerPartyIdList
+                .Concat(herd.KeeperPartyIdList).Distinct();
 
-        // TODO - Enrich with species
-        // TODO - Enrich with marks
-        // TODO - Enrich with activities
+            foreach (var partyId in allPartyIds)
+            {
+                var matchingRoles = silverSitePartyRoles
+                    .Where(r => r.PartyId == partyId
+                        && r.HoldingIdentifier == holdingIdentifier
+                        && r.HoldingIdentifierType == holdingIdentifierType);
 
-        return goldSite;
+                foreach (var role in matchingRoles)
+                {
+                    var doc = baseDoc with
+                    {
+                        PartyId = role.PartyId,
+                        PartyTypeId = role.PartyTypeId,
+                        RoleTypeId = role.RoleTypeId,
+                        RoleTypeName = role.RoleTypeName
+                    };
+
+                    result.Add(doc);
+                }
+            }
+        }
+
+        return result;
     }
 }

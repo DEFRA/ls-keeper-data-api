@@ -24,7 +24,6 @@ public static class VerifySamPartyMappings
         target.Id.Should().BeNull();
         target.LastUpdatedBatchId.Should().Be(source.BATCH_ID);
         target.Deleted.Should().BeFalse();
-        target.IsHolder.Should().BeFalse();
 
         target.PartyId.Should().Be(source.PARTY_ID);
 
@@ -88,8 +87,8 @@ public static class VerifySamPartyMappings
             role.RoleTypeId.Should().NotBeNullOrWhiteSpace();
             role.RoleTypeName.Should().Be(roleNameToLookup);
             role.SourceRoleName.Should().Be(roleNameToLookup);
-            role.EffectiveFromDate.Should().BeNull();
-            role.EffectiveToDate.Should().BeNull();
+            role.EffectiveFromDate.Should().Be(source.PARTY_ROLE_FROM_DATE);
+            role.EffectiveToDate.Should().Be(source.PARTY_ROLE_TO_DATE);
         }
     }
 }

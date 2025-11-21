@@ -14,6 +14,12 @@ public class ProductionUsageLookupService(IProductionUsageRepository productionU
 
     public async Task<(string? productionUsageId, string? productionUsageName)> FindAsync(string? lookupValue, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(lookupValue))
+            return (null, null);
+
+        if (lookupValue == "-")
+            return (null, null);
+
         return await productionUsageRepository.FindAsync(lookupValue, cancellationToken);
     }
 }

@@ -11,5 +11,8 @@ public enum InferredRoleType
     LivestockKeeper,
 
     [Description("CPHHOLDER")]
-    CphHolder
+    CphHolder,
+
+    [Description("LIVESTOCKOWNER")]
+    LivestockOwner
 }

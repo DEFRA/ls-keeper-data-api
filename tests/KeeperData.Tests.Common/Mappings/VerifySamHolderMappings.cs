@@ -25,7 +25,6 @@ public static class VerifySamHolderMappings
         target.Id.Should().BeNull();
         target.LastUpdatedBatchId.Should().Be(source.BATCH_ID);
         target.Deleted.Should().BeFalse();
-        target.IsHolder.Should().BeTrue();
 
         target.PartyId.Should().Be(source.PARTY_ID);
 

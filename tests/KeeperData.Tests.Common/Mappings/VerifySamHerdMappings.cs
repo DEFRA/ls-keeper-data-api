@@ -25,7 +25,8 @@ public static class VerifySamHerdMappings
         target.SpeciesTypeCode.Should().Be(source.AnimalSpeciesCodeUnwrapped);
 
         target.ProductionUsageId.Should().NotBeNullOrWhiteSpace();
-        target.ProductionUsageCode.Should().Be(source.AnimalPurposeCodeUnwrapped);
+        target.ProductionUsageCode.Should().Be(ProductionUsageCodeFormatters.TrimProductionUsageCodeHerd(source.AnimalPurposeCodeUnwrapped));
+        target.AnimalPurposeCode.Should().Be(source.AnimalPurposeCodeUnwrapped);
 
         target.ProductionTypeId.Should().BeNull();
         target.ProductionTypeCode.Should().BeNull();

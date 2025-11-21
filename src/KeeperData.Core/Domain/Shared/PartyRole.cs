@@ -58,7 +58,7 @@ public class PartyRole : ValueObject
 
     private bool ChangeSpecies(IEnumerable<ManagedSpecies> newSpecies)
     {
-        var newList = newSpecies.ToList();
+        var newList = newSpecies?.ToList() ?? [];
         if (_speciesManagedByRole.SequenceEqual(newList)) return false;
 
         _speciesManagedByRole.Clear();

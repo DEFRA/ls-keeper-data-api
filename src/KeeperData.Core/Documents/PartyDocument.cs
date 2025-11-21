@@ -1,5 +1,6 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Domain.Parties;
+using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
@@ -68,25 +69,33 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
     [JsonPropertyName("partyRoles")]
     public List<PartyRoleDocument> PartyRoles { get; set; } = [];
 
-    public static PartyDocument FromDomain(Party m) => new()
+    public static PartyDocument FromDomain(Party domain)
     {
-        Id = m.Id,
-        CreatedDate = m.CreatedDate,
-        LastUpdatedDate = m.LastUpdatedDate,
-        Title = m.Title,
-        FirstName = m.FirstName,
-        LastName = m.LastName,
-        Name = m.Name,
-        CustomerNumber = m.CustomerNumber,
-        PartyType = m.PartyType,
-        State = m.State,
-        Deleted = m.Deleted,
-        CorrespondanceAddress = m.Address is not null
-            ? AddressDocument.FromDomain(m.Address)
-            : null,
-        Communication = [.. m.Communications.Select(CommunicationDocument.FromDomain)],
-        PartyRoles = [.. m.Roles.Select(PartyRoleDocument.FromDomain)]
-    };
+        var addressDoc = domain.Address is not null
+            ? AddressDocument.FromDomain(domain.Address)
+            : null;
+
+        var communications = domain.Communications?.Select(CommunicationDocument.FromDomain).ToList() ?? [];
+        var roles = domain.Roles?.Select(PartyRoleDocument.FromDomain).ToList() ?? [];
+
+        return new PartyDocument
+        {
+            Id = domain.Id,
+            CreatedDate = domain.CreatedDate,
+            LastUpdatedDate = domain.LastUpdatedDate,
+            Title = domain.Title,
+            FirstName = domain.FirstName,
+            LastName = domain.LastName,
+            Name = domain.Name,
+            CustomerNumber = domain.CustomerNumber,
+            PartyType = domain.PartyType,
+            State = domain.State,
+            Deleted = domain.Deleted,
+            CorrespondanceAddress = addressDoc,
+            Communication = communications,
+            PartyRoles = roles
+        };
+    }
 
     public Party ToDomain()
     {
@@ -112,6 +121,51 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
         party.SetRoles(PartyRoles.Select(r => r.ToDomain()));
 
         return party;
+    }
+
+    public static PartyDocument FromDomain(SiteParty siteParty)
+    {
+        var addressDoc = siteParty.CorrespondanceAddress is not null
+            ? AddressDocument.FromDomain(siteParty.CorrespondanceAddress)
+            : null;
+
+        var communications = siteParty.Communication?.Select(CommunicationDocument.FromDomain).ToList() ?? [];
+        var roles = siteParty.PartyRoles?.Select(PartyRoleDocument.FromDomain).ToList() ?? [];
+
+        return new PartyDocument
+        {
+            Id = siteParty.Id, // TODO - need to consider matching the Id
+            CreatedDate = DateTime.UtcNow, // TODO - Add CreatedDate to child so can preserve
+            LastUpdatedDate = siteParty.LastUpdatedDate,
+            Title = siteParty.Title,
+            FirstName = siteParty.FirstName,
+            LastName = siteParty.LastName,
+            Name = siteParty.Name,
+            CustomerNumber = siteParty.PartyId,
+            PartyType = siteParty.PartyType,
+            State = siteParty.State,
+            Deleted = false,
+            CorrespondanceAddress = addressDoc,
+            Communication = communications,
+            PartyRoles = roles
+        };
+    }
+
+    public SiteParty ToSitePartyDomain(DateTime lastUpdatedDate)
+    {
+        return new SiteParty(
+            id: Id, // TODO - need to consider matching the Id
+            lastUpdatedDate: lastUpdatedDate,
+            partyId: CustomerNumber ?? string.Empty,
+            title: Title,
+            firstName: FirstName,
+            lastName: LastName,
+            name: Name,
+            partyType: PartyType,
+            state: State,
+            correspondanceAddress: CorrespondanceAddress?.ToDomain(),
+            communication: Communication.Select(c => c.ToDomain()),
+            partyRole: PartyRoles.Select(r => r.ToDomain()));
     }
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
