@@ -87,7 +87,12 @@ public static class ServiceCollectionExtensions
             typeof(CtsDailyScanMessage),
             typeof(CtsUpdateHoldingMessage),
             typeof(CtsUpdateKeeperMessage),
-            typeof(CtsUpdateAgentMessage)
+            typeof(CtsUpdateAgentMessage),
+            typeof(SamDailyScanMessage),
+            typeof(SamUpdateHoldingMessage),
+            typeof(SamUpdateHolderMessage),
+            typeof(SamUpdateHerdMessage),
+            typeof(SamUpdatePartyMessage)
         };
 
         foreach (var messageType in messageIdentifierTypes)
