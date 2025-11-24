@@ -17,13 +17,18 @@ public class SiteFilterBuilderTests
     }
 
     [Fact]
-    public void Build_ShouldReturnEmptyFilter_WhenQueryIsEmpty()
+    public void Build_ShouldReturnDefaultDeletedFilter_WhenQueryIsEmpty()
     {
         var query = new GetSitesQuery();
         var filter = SiteFilterBuilder.Build(query);
+        var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry);
 
-        filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry)
-            .Should().BeEquivalentTo(new BsonDocument());
+        var expectedBson = BsonDocument.Parse(@"
+            {
+                ""deleted"": false
+            }");
+
+        renderedFilter.Should().BeEquivalentTo(expectedBson);
     }
 
     [Fact]
@@ -35,6 +40,7 @@ public class SiteFilterBuilderTests
 
         var expectedBson = BsonDocument.Parse(@"
             {
+                ""deleted"": false,
                 ""identifiers"": { ""$elemMatch"": { ""identifier"": ""CPH123"" } }
             }");
 
@@ -71,7 +77,7 @@ public class SiteFilterBuilderTests
         var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry);
 
         renderedFilter["type"]["$in"].AsBsonArray.Select(v => v.AsString)
-            .Should().BeEquivalentTo(new[] { "type1", "type2" });
+            .Should().BeEquivalentTo(["type1", "type2"]);
     }
 
     [Fact]
@@ -83,6 +89,7 @@ public class SiteFilterBuilderTests
 
         var expectedBson = BsonDocument.Parse(@"
         {
+            ""deleted"": false,
             ""identifiers"" : { ""$elemMatch"" : { ""identifier"" : ""CPH123"" } },
             ""type"" : { ""$in"" : [""type1""] }
         }");

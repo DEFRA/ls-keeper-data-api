@@ -192,6 +192,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
             var siteParties = Parties
                 .Select(p => new SiteParty(
                     id: p.IdentifierId,
+                    createdDate: p.CreatedDate,
                     lastUpdatedDate: p.LastUpdatedDate,
                     partyId: p.PartyId,
                     title: p.Title,

@@ -31,5 +31,7 @@ public class SamHolderImportGoldMappingStep(
             context.SilverParties,
             goldSiteGroupMarks: [], // TODO - Consider lookups for these
             HoldingIdentifierType.CphNumber.ToString());
+
+        // TODO - Do we need to add to the GoldSite > Parties?
     }
 }

@@ -142,11 +142,11 @@ public class SamHolderImportPersistenceStep(
             if (string.IsNullOrWhiteSpace(incoming.CustomerNumber))
                 continue;
 
-            var existing = await _goldPartyRepository.FindOneAsync(
-                x => x.CustomerNumber == incoming.CustomerNumber,
-                cancellationToken);
-
-            incoming.Id = existing?.Id ?? Guid.NewGuid().ToString();
+            // Done in mapper now using domain objects
+            // var existing = await _goldPartyRepository.FindOneAsync(
+            //    x => x.CustomerNumber == incoming.CustomerNumber,
+            //    cancellationToken);
+            // incoming.Id = existing?.Id ?? Guid.NewGuid().ToString();
 
             var filter = Builders<PartyDocument>.Filter.Eq(x => x.CustomerNumber, incoming.CustomerNumber);
             upserts.Add((filter, incoming));

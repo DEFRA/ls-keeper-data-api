@@ -9,6 +9,7 @@ public static class SiteFilterBuilder
     {
         var filters = new List<FilterDefinition<SiteDocument>>();
         var builder = Builders<SiteDocument>.Filter;
+        filters.Add(builder.Eq(x => x.Deleted, false));
 
         if (query.LastUpdatedDate.HasValue)
         {

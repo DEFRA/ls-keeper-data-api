@@ -16,7 +16,7 @@ public static class SamHoldingGroupMarkMapper
             return silverHoldings;
 
         var herdsByCph = silverHerds
-            .Where(h => !string.IsNullOrWhiteSpace(h.CountyParishHoldingHerd))
+            .Where(h => h.Deleted != true && !string.IsNullOrWhiteSpace(h.CountyParishHoldingHerd))
             .GroupBy(h => h.CountyParishHoldingHerd)
             .ToDictionary(g => g.Key, g => g.ToList());
 

@@ -17,13 +17,18 @@ public class PartyFilterBuilderTests
     }
 
     [Fact]
-    public void Build_ShouldReturnEmptyFilter_WhenQueryIsEmpty()
+    public void Build_ShouldReturnDefaultDeletedFilter_WhenQueryIsEmpty()
     {
         var query = new GetPartiesQuery();
         var filter = PartyFilterBuilder.Build(query);
+        var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<PartyDocument>(), BsonSerializer.SerializerRegistry);
 
-        filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<PartyDocument>(), BsonSerializer.SerializerRegistry)
-            .Should().BeEquivalentTo(new BsonDocument());
+        var expectedBson = BsonDocument.Parse(@"
+            {
+                ""deleted"": false
+            }");
+
+        renderedFilter.Should().BeEquivalentTo(expectedBson);
     }
 
     [Fact]

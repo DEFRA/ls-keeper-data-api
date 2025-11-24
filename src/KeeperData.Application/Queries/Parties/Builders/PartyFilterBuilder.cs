@@ -9,6 +9,7 @@ public static class PartyFilterBuilder
     {
         var filters = new List<FilterDefinition<PartyDocument>>();
         var builder = Builders<PartyDocument>.Filter;
+        filters.Add(builder.Eq(x => x.Deleted, false));
 
         if (query.LastUpdatedDate.HasValue)
         {

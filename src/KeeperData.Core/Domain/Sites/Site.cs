@@ -344,7 +344,7 @@ public class Site : IAggregateRoot
             if (existing is not null)
             {
                 changed |= existing.ApplyChanges(
-                    lastUpdatedDate,
+                    incoming.LastUpdatedDate,
                     incoming.PartyId,
                     incoming.Title,
                     incoming.FirstName,
@@ -360,7 +360,8 @@ public class Site : IAggregateRoot
             {
                 _parties.Add(new SiteParty(
                     incoming.Id,
-                    lastUpdatedDate,
+                    incoming.CreatedDate,
+                    incoming.LastUpdatedDate,
                     incoming.PartyId,
                     incoming.Title,
                     incoming.FirstName,
