@@ -78,4 +78,26 @@ public static class MockCtsData
                         holdingIdentifier: holdingIdentifier)
                 ]
             });
+
+    public static DataBridgeResponse<CtsScanHoldingIdentifier> GetCtsHoldingsScanIdentifierDataBridgeResponse(int top, int count, int totalCount) =>
+        new()
+        {
+            CollectionName = "collection",
+            Top = top,
+            Skip = top,
+            Count = count,
+            TotalCount = totalCount,
+            Data = [.. s_fixture.CreateMany<CtsScanHoldingIdentifier>(count)]
+        };
+
+    public static DataBridgeResponse<CtsScanAgentOrKeeperIdentifier> GetCtsAgentOrKeeperScanIdentifierDataBridgeResponse(int top, int count, int totalCount) =>
+        new()
+        {
+            CollectionName = "collection",
+            Top = top,
+            Skip = top,
+            Count = count,
+            TotalCount = totalCount,
+            Data = [.. s_fixture.CreateMany<CtsScanAgentOrKeeperIdentifier>(count)]
+        };
 }

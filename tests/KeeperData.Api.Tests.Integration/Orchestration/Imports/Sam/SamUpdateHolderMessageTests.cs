@@ -2,7 +2,6 @@ using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
-using Xunit;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Sam;
 

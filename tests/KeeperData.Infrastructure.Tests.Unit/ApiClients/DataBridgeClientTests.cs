@@ -1,5 +1,6 @@
 using FluentAssertions;
 using KeeperData.Core.ApiClients.DataBridgeApi;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Exceptions;
 using KeeperData.Infrastructure.ApiClients;
 using KeeperData.Tests.Common.Factories.UseCases;
@@ -67,7 +68,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetSamHoldingsAsync(10, 0, cancellationToken: CancellationToken.None);
+        var result = await _client.GetSamHoldingsAsync<SamCphHolding>(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
@@ -107,7 +108,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetSamHoldersAsync(10, 0, cancellationToken: CancellationToken.None);
+        var result = await _client.GetSamHoldersAsync<SamCphHolder>(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
@@ -149,7 +150,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetSamHerdsAsync(10, 0, cancellationToken: CancellationToken.None);
+        var result = await _client.GetSamHerdsAsync<SamHerd>(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
@@ -212,7 +213,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetSamPartiesAsync(10, 0, cancellationToken: CancellationToken.None);
+        var result = await _client.GetSamPartiesAsync<SamParty>(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
@@ -252,7 +253,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetCtsHoldingsAsync(10, 0, cancellationToken: CancellationToken.None);
+        var result = await _client.GetCtsHoldingsAsync<CtsCphHolding>(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
@@ -292,7 +293,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetCtsAgentsAsync(10, 0, cancellationToken: CancellationToken.None);
+        var result = await _client.GetCtsAgentsAsync<CtsAgentOrKeeper>(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
@@ -332,7 +333,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetCtsKeepersAsync(10, 0, cancellationToken: CancellationToken.None);
+        var result = await _client.GetCtsKeepersAsync<CtsAgentOrKeeper>(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);

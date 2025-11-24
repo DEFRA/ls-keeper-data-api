@@ -1,8 +1,8 @@
-using FluentAssertions;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily.Steps;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
@@ -11,11 +11,6 @@ using KeeperData.Tests.Common.Factories.UseCases;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace KeeperData.Application.Tests.Unit.Orchestration.ChangeScanning.Sam;
 
@@ -56,14 +51,14 @@ public class SamPartyDailyScanStepTests
     [Fact]
     public async Task ExecuteCoreAsync_ShouldQueryWithCorrectDateTimeFilter()
     {
-        var responseMock = MockSamData.GetSamPartiesDataBridgeResponse(0, 0, 0);
+        var responseMock = MockSamData.GetSamPartiesScanIdentifierDataBridgeResponse(0, 0, 0);
         _dataBridgeClientMock
-            .Setup(c => c.GetSamPartiesAsync(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetSamPartiesAsync<SamScanPartyIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
 
-        _dataBridgeClientMock.Verify(c => c.GetSamPartiesAsync(
+        _dataBridgeClientMock.Verify(c => c.GetSamPartiesAsync<SamScanPartyIdentifier>(
             It.IsAny<int>(),
             It.IsAny<int>(),
             It.IsAny<string>(),
@@ -74,9 +69,9 @@ public class SamPartyDailyScanStepTests
     [Fact]
     public async Task ExecuteCoreAsync_ShouldPublishSamUpdatePartyMessage()
     {
-        var responseMock = MockSamData.GetSamPartiesDataBridgeResponse(1, 1, 1);
+        var responseMock = MockSamData.GetSamPartiesScanIdentifierDataBridgeResponse(1, 1, 1);
         _dataBridgeClientMock
-            .Setup(c => c.GetSamPartiesAsync(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetSamPartiesAsync<SamScanPartyIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);

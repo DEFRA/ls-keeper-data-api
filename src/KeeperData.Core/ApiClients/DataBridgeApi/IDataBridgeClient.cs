@@ -4,7 +4,7 @@ namespace KeeperData.Core.ApiClients.DataBridgeApi;
 
 public interface IDataBridgeClient
 {
-    Task<DataBridgeResponse<SamCphHolding>?> GetSamHoldingsAsync(
+    Task<DataBridgeResponse<T>?> GetSamHoldingsAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -12,7 +12,7 @@ public interface IDataBridgeClient
         CancellationToken cancellationToken = default);
     Task<List<SamCphHolding>> GetSamHoldingsAsync(string id, CancellationToken cancellationToken);
 
-    Task<DataBridgeResponse<SamCphHolder>?> GetSamHoldersAsync(
+    Task<DataBridgeResponse<T>?> GetSamHoldersAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -20,7 +20,7 @@ public interface IDataBridgeClient
         CancellationToken cancellationToken = default);
     Task<List<SamCphHolder>> GetSamHoldersByPartyIdAsync(string id, CancellationToken cancellationToken);
 
-    Task<DataBridgeResponse<SamHerd>?> GetSamHerdsAsync(
+    Task<DataBridgeResponse<T>?> GetSamHerdsAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -29,7 +29,7 @@ public interface IDataBridgeClient
     Task<List<SamHerd>> GetSamHerdsAsync(string id, CancellationToken cancellationToken);
 
     Task<SamParty?> GetSamPartyAsync(string id, CancellationToken cancellationToken);
-    Task<DataBridgeResponse<SamParty>?> GetSamPartiesAsync(
+    Task<DataBridgeResponse<T>?> GetSamPartiesAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -37,7 +37,7 @@ public interface IDataBridgeClient
         CancellationToken cancellationToken = default);
     Task<List<SamParty>> GetSamPartiesAsync(IEnumerable<string> ids, CancellationToken cancellationToken);
 
-    Task<DataBridgeResponse<CtsCphHolding>?> GetCtsHoldingsAsync(
+    Task<DataBridgeResponse<T>?> GetCtsHoldingsAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -45,7 +45,7 @@ public interface IDataBridgeClient
         CancellationToken cancellationToken = default);
     Task<List<CtsCphHolding>> GetCtsHoldingsAsync(string id, CancellationToken cancellationToken);
 
-    Task<DataBridgeResponse<CtsAgentOrKeeper>?> GetCtsAgentsAsync(
+    Task<DataBridgeResponse<T>?> GetCtsAgentsAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -53,7 +53,7 @@ public interface IDataBridgeClient
         CancellationToken cancellationToken = default);
     Task<List<CtsAgentOrKeeper>> GetCtsAgentsAsync(string id, CancellationToken cancellationToken);
 
-    Task<DataBridgeResponse<CtsAgentOrKeeper>?> GetCtsKeepersAsync(
+    Task<DataBridgeResponse<T>?> GetCtsKeepersAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
