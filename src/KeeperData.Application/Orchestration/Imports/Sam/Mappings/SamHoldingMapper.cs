@@ -80,7 +80,7 @@ public static class SamHoldingMapper
 
             HoldingStartDate = h.FEATURE_ADDRESS_FROM_DATE,
             HoldingEndDate = h.FEATURE_ADDRESS_TO_DATE,
-            HoldingStatus = HoldingStatusFormatters.FormatHoldingStatus(h.FEATURE_ADDRESS_TO_DATE),
+            HoldingStatus = HoldingStatusFormatters.FormatHoldingStatus(h.IsDeleted ?? false),
 
             PremiseActivityTypeId = premiseActivityTypeId,
             PremiseActivityTypeCode = h.FACILITY_BUSINSS_ACTVTY_CODE,
