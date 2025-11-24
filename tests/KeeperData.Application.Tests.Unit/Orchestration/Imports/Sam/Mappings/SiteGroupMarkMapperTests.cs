@@ -248,6 +248,6 @@ GroupMarkEndDate
         context.GoldSiteGroupMarks.Should().HaveCount(3);
 
         context.GoldSiteGroupMarks.OrderBy(x => x.PartyId).ThenBy(x => x.RoleTypeName).ToList()
-            .Should().BeEquivalentTo(_expectedResult);
+            .Should().BeEquivalentTo(_expectedResult, options => options.Excluding(x => x.LastUpdatedDate));
     }
 }

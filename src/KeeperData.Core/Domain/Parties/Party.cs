@@ -61,6 +61,8 @@ public class Party : IAggregateRoot
     }
 
     public static Party Create(
+        DateTime createdDate,
+        DateTime lastUpdatedDate,
         string? title,
         string? firstName,
         string? lastName,
@@ -73,8 +75,8 @@ public class Party : IAggregateRoot
     {
         var party = new Party(
             Guid.NewGuid().ToString(),
-            DateTime.UtcNow,
-            DateTime.UtcNow,
+            createdDate,
+            lastUpdatedDate,
             title,
             firstName,
             lastName,

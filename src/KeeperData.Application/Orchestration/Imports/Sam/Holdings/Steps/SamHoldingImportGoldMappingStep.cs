@@ -22,14 +22,12 @@ public class SamHoldingImportGoldMappingStep(
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
     {
         context.GoldSiteGroupMarks = SiteGroupMarkMapper.ToGold(
-            context.CurrentDateTime,
             context.SilverHerds,
             context.SilverPartyRoles,
             context.Cph,
             HoldingIdentifierType.CphNumber.ToString());
 
         context.GoldParties = await SamPartyMapper.ToGold(
-            context.CurrentDateTime,
             context.SilverParties,
             context.GoldSiteGroupMarks,
             goldPartyRepository,
@@ -38,7 +36,6 @@ public class SamHoldingImportGoldMappingStep(
             cancellationToken);
 
         context.GoldSite = await SamHoldingMapper.ToGold(
-            context.CurrentDateTime,
             context.SilverHoldings,
             context.GoldSiteGroupMarks,
             context.GoldParties, // TODO - Does this include the holder? If not, we should find them

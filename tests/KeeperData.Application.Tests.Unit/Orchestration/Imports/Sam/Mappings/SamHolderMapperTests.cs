@@ -38,7 +38,6 @@ public class SamHolderMapperTests
     public async Task GivenNullableRawHolders_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = await SamHolderMapper.ToSilver(
-            DateTime.UtcNow,
             null!,
             InferredRoleType.CphHolder,
             _resolveRoleType,
@@ -53,7 +52,6 @@ public class SamHolderMapperTests
     public async Task GivenEmptyRawHolders_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = await SamHolderMapper.ToSilver(
-            DateTime.UtcNow,
             [],
             InferredRoleType.CphHolder,
             _resolveRoleType,
@@ -74,7 +72,6 @@ public class SamHolderMapperTests
         var records = GenerateSamCphHolder(1);
 
         var results = await SamHolderMapper.ToSilver(
-            DateTime.UtcNow,
             records,
             InferredRoleType.CphHolder,
             _resolveRoleType,
@@ -98,7 +95,6 @@ public class SamHolderMapperTests
         var records = GenerateSamCphHolder(1);
 
         var results = await SamHolderMapper.ToSilver(
-            DateTime.UtcNow,
             records,
             InferredRoleType.CphHolder,
             _resolveRoleType,
@@ -127,7 +123,6 @@ public class SamHolderMapperTests
         var holdingIdentifier = CphGenerator.GenerateFormattedCph();
 
         var results = await SamHolderMapper.ToSilver(
-            DateTime.UtcNow,
             records,
             inferredRoleType,
             _resolveRoleType,

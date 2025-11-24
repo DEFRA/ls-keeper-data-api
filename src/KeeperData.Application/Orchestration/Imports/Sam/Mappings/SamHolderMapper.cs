@@ -11,7 +11,6 @@ namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 public static class SamHolderMapper
 {
     public static async Task<List<SamPartyDocument>> ToSilver(
-        DateTime currentDateTime,
         List<SamCphHolder> rawHolders,
         InferredRoleType inferredRoleType,
         Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
@@ -26,7 +25,6 @@ public static class SamHolderMapper
         foreach (var p in rawHolders?.Where(x => x.PARTY_ID != null) ?? [])
         {
             var party = await ToSilver(
-                currentDateTime,
                 p,
                 (roleNameToLookup, roleTypeId, roleTypeName),
                 resolveCountry,
@@ -39,13 +37,12 @@ public static class SamHolderMapper
     }
 
     public static async Task<SamPartyDocument> ToSilver(
-        DateTime currentDateTime,
         SamCphHolder p,
         (string? RoleNameToLookup, string? RoleTypeId, string? RoleTypeName) roleTypeInfo,
         Func<string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
         CancellationToken cancellationToken)
     {
-        var (countryId, countryName) = await resolveCountry(p.COUNTRY_CODE, cancellationToken);
+        var (countryId, _) = await resolveCountry(p.COUNTRY_CODE, cancellationToken);
         var partyTypeId = p.DeterminePartyType().ToString();
         var addressLine = AddressFormatters.FormatAddressRange(
                         p.SAON_START_NUMBER, p.SAON_START_NUMBER_SUFFIX,
@@ -59,7 +56,8 @@ public static class SamHolderMapper
             // Id - Leave to support upsert assigning Id
 
             LastUpdatedBatchId = p.BATCH_ID,
-            LastUpdatedDate = currentDateTime,
+            CreatedDate = p.CreatedAtUtc ?? DateTime.UtcNow,
+            LastUpdatedDate = p.UpdatedAtUtc ?? DateTime.UtcNow,
             Deleted = p.IsDeleted ?? false,
 
             PartyId = p.PARTY_ID.ToString(),

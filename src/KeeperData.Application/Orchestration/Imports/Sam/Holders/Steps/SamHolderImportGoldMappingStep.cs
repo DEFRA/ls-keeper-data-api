@@ -19,7 +19,6 @@ public class SamHolderImportGoldMappingStep(
     protected override async Task ExecuteCoreAsync(SamHolderImportContext context, CancellationToken cancellationToken)
     {
         context.GoldParties = await SamPartyMapper.ToGold(
-            context.CurrentDateTime,
             context.SilverParties,
             goldSiteGroupMarks: [], // TODO - Consider lookups for these
             goldPartyRepository,

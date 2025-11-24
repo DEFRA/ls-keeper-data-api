@@ -13,9 +13,7 @@ public class CtsHoldingMapperTests
     [Fact]
     public void GivenNullableRawHoldings_WhenCallingToSilver_ShouldReturnEmptyList()
     {
-        var results = CtsHoldingMapper.ToSilver(
-            DateTime.UtcNow,
-            (List<CtsCphHolding>?)null!);
+        var results = CtsHoldingMapper.ToSilver((List<CtsCphHolding>?)null!);
 
         results.Should().NotBeNull();
         results.Count.Should().Be(0);
@@ -24,9 +22,7 @@ public class CtsHoldingMapperTests
     [Fact]
     public void GivenEmptyRawHoldings_WhenCallingToSilver_ShouldReturnEmptyList()
     {
-        var results = CtsHoldingMapper.ToSilver(
-            DateTime.UtcNow,
-            []);
+        var results = CtsHoldingMapper.ToSilver([]);
 
         results.Should().NotBeNull();
         results.Count.Should().Be(0);
@@ -39,9 +35,7 @@ public class CtsHoldingMapperTests
     {
         var records = GenerateCtsCphHolding(quantity);
 
-        var results = CtsHoldingMapper.ToSilver(
-            DateTime.UtcNow,
-            records);
+        var results = CtsHoldingMapper.ToSilver(records);
 
         results.Should().NotBeNull();
         results.Count.Should().Be(quantity);

@@ -7,7 +7,6 @@ namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 public static class SamHerdMapper
 {
     public static async Task<List<SamHerdDocument>> ToSilver(
-        DateTime currentDateTime,
         List<SamHerd> rawHerds,
         Func<string?, CancellationToken, Task<(string? ProductionUsageId, string? ProductionUsageName)>> resolveProductionUsage,
         Func<string?, CancellationToken, Task<(string? SpeciesTypeId, string? SpeciesTypeName)>> resolveSpeciesType,
@@ -18,7 +17,6 @@ public static class SamHerdMapper
         foreach (var h in rawHerds?.Where(x => x.CPHH != null) ?? [])
         {
             var herd = await ToSilver(
-                currentDateTime,
                 h,
                 resolveProductionUsage,
                 resolveSpeciesType,
@@ -31,7 +29,6 @@ public static class SamHerdMapper
     }
 
     public static async Task<SamHerdDocument> ToSilver(
-        DateTime currentDateTime,
         SamHerd h,
         Func<string?, CancellationToken, Task<(string? ProductionUsageId, string? ProductionUsageName)>> resolveProductionUsage,
         Func<string?, CancellationToken, Task<(string? SpeciesTypeId, string? SpeciesTypeName)>> resolveSpeciesType,
@@ -46,7 +43,8 @@ public static class SamHerdMapper
             // Id - Leave to support upsert assigning Id
 
             LastUpdatedBatchId = h.BATCH_ID,
-            LastUpdatedDate = currentDateTime,
+            CreatedDate = h.CreatedAtUtc ?? DateTime.UtcNow,
+            LastUpdatedDate = h.UpdatedAtUtc ?? DateTime.UtcNow,
             Deleted = h.IsDeleted ?? false,
 
             Herdmark = h.HERDMARK,

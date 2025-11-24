@@ -7,18 +7,16 @@ namespace KeeperData.Application.Orchestration.Imports.Cts.Mappings;
 public static class CtsHoldingMapper
 {
     public static List<CtsHoldingDocument> ToSilver(
-        DateTime currentDateTime,
         List<CtsCphHolding> rawHoldings)
     {
         var result = rawHoldings?
             .Where(x => x.LID_FULL_IDENTIFIER != null)
-            .Select(h => ToSilver(currentDateTime, h));
+            .Select(ToSilver);
 
         return result?.ToList() ?? [];
     }
 
     public static CtsHoldingDocument ToSilver(
-        DateTime currentDateTime,
         CtsCphHolding h)
     {
         var result = new CtsHoldingDocument()
@@ -26,7 +24,8 @@ public static class CtsHoldingMapper
             // Id - Leave to support upsert assigning Id
 
             LastUpdatedBatchId = h.BATCH_ID,
-            LastUpdatedDate = currentDateTime,
+            CreatedDate = h.CreatedAtUtc ?? DateTime.UtcNow,
+            LastUpdatedDate = h.UpdatedAtUtc ?? DateTime.UtcNow,
             Deleted = h.IsDeleted ?? false,
 
             CountyParishHoldingNumber = h.LID_FULL_IDENTIFIER.LidIdentifierToCph(),
