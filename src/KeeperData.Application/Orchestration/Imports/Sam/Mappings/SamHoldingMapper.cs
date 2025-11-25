@@ -146,8 +146,8 @@ public static class SamHoldingMapper
         if (silverHoldings == null || silverHoldings.Count == 0)
             return null;
 
-        var representative = silverHoldings.Any(x => x.Deleted != true)
-            ? silverHoldings.Where(x => x.Deleted != true).OrderByDescending(h => h.LastUpdatedDate).First()
+        var representative = silverHoldings.Any(x => x.IsActive)
+            ? silverHoldings.Where(x => x.IsActive).OrderByDescending(h => h.LastUpdatedDate).First()
             : silverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
 
         var existingHoldingFilter = Builders<SiteDocument>.Filter.ElemMatch(

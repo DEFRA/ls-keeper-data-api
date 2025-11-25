@@ -4,6 +4,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 using System.Text.Json.Serialization;
+using KeeperData.Core.Domain.Enums;
 
 namespace KeeperData.Core.Documents.Silver;
 
@@ -65,6 +66,8 @@ public class SamHoldingDocument : BaseHoldingDocument, IEntity, IDeletableEntity
     [JsonPropertyName("productionUsageCodeList")]
     [BsonElement("productionUsageCodeList")]
     public List<string> ProductionUsageCodeList { get; set; } = [];
+
+    public bool IsActive => HoldingStatus == HoldingStatusType.Active.ToString();
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
