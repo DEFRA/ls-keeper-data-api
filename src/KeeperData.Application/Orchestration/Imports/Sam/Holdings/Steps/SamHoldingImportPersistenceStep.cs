@@ -369,6 +369,7 @@ public class SamHoldingImportPersistenceStep(
             !incomingKeys.Contains($"{e.HoldingIdentifier}::{e.PartyId}::{e.RoleTypeId}::{e.SpeciesTypeId}"))
         .ToList() ?? [];
 
+        // TODO - Will this remove roles assigned from SAM Holders?
         if (orphanedSitePartyRoles.Count > 0)
         {
             var deleteFilter = Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.In(

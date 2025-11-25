@@ -13,32 +13,6 @@ namespace KeeperData.Application.Tests.Unit.Orchestration.Imports.Sam.Mappings;
 
 public class SiteGroupMarkMapperTests
 {
-    /*
-"2"|"I"|"333333"|"12/345/6789/01"|"CTT"|"CTT-BEEF-ADLR"|""|""|""|""|"C144743"|"C144743"|"2008-07-16 00:00:00"|""
-"2"|"I"|"C100001"|"Mr"|"John"|""|""|"Doe"|""|""|""|""|""|""|""|""|""|""|""|""|""|""|""|""|""|""|""|""|""|""|"LIVESTOCKOWNER,LIVESTOCKKEEPER"|"2008-01-01 00:00:00"|""
-"2"|"I"|"C100002"|"Mrs"|"Jane"|""|""|"Doe"|""|""|""|""|""|""|""|""|""|""|""|""|""|""|""|""|""|""|""|""|""|""|"LIVESTOCKKEEPER"|"2008-01-01 00:00:00"|""
-
-PartyId							C100001							C100001                             C100002
-PartyTypeId						Person							Person                              Person                
-Herdmark						333333							333333							    333333	
-CountyParishHoldingHerd			12/345/6789/01					12/345/6789/01						12/345/6789/01					
-HoldingIdentifier				12/345/6789						12/345/6789                         12/345/6789
-HoldingIdentifierType			CphNumber						CphNumber	                        CphNumber											
-RoleTypeId						R100001							R100002		                        R100002						
-RoleTypeCode					LIVESTOCKOWNER					LIVESTOCKKEEPER	                    LIVESTOCKKEEPER					
-SpeciesTypeId					S100001							S100001		                        S100001							
-SpeciesTypeCode					CTT								CTT		                            CTT						
-ProductionUsageId				P100001							P100001	                            P100001									
-ProductionUsageCode				BEEF							BEEF                                BEEF										
-ProductionTypeId													                        						
-ProductionTypeCode																				
-DiseaseType																					
-Interval																					
-IntervalUnitOfTime																					
-GroupMarkStartDate				2008-07-16						2008-07-16			                2008-07-16								
-GroupMarkEndDate																 
-    */
-
     private readonly List<SamHerd> _sourceSamHerds =
     [
         new()
