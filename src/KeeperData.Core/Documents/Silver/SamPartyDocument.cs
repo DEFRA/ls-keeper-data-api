@@ -22,6 +22,10 @@ public class SamPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IC
     [BsonElement("lastUpdatedBatchId")]
     public int? LastUpdatedBatchId { get; set; }
 
+    [BsonElement("createdDate")]
+    [JsonPropertyName("createdDate")]
+    public DateTime CreatedDate { get; set; }
+
     [JsonPropertyName("lastUpdatedDate")]
     [BsonElement("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }

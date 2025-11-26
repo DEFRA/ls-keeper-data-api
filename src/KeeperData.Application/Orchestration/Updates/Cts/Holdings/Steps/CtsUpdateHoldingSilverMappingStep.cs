@@ -17,13 +17,11 @@ public class CtsUpdateHoldingSilverMappingStep(
         if (context.RawHolding != null)
         {
             context.SilverHolding = CtsHoldingMapper.ToSilver(
-                context.CurrentDateTime,
                 context.RawHolding);
         }
 
         context.SilverParties = [
             .. await CtsAgentOrKeeperMapper.ToSilver(
-                context.CurrentDateTime,
                 context.RawAgents,
                 HoldingIdentifierType.CphNumber,
                 InferredRoleType.Agent,
@@ -31,7 +29,6 @@ public class CtsUpdateHoldingSilverMappingStep(
                 cancellationToken),
 
             .. await CtsAgentOrKeeperMapper.ToSilver(
-                context.CurrentDateTime,
                 context.RawKeepers,
                 HoldingIdentifierType.CphNumber,
                 InferredRoleType.LivestockKeeper,

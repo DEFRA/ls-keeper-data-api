@@ -70,6 +70,8 @@ public class Site : IAggregateRoot
     }
 
     public static Site Create(
+        DateTime createdDate,
+        DateTime lastUpdatedDate,
         string type,
         string name,
         DateTime startDate,
@@ -82,8 +84,8 @@ public class Site : IAggregateRoot
     {
         var site = new Site(
             Guid.NewGuid().ToString(),
-            DateTime.UtcNow,
-            DateTime.UtcNow,
+            createdDate,
+            lastUpdatedDate,
             type,
             name,
             startDate,
@@ -207,7 +209,7 @@ public class Site : IAggregateRoot
             .Where(existing => incomingList.All(i => i.Code != existing.Code))
             .ToList();
 
-        if (orphaned.Any())
+        if (orphaned.Count != 0)
         {
             foreach (var orphan in orphaned)
             {
@@ -263,7 +265,7 @@ public class Site : IAggregateRoot
                 i.EndDate != existing.EndDate))
             .ToList();
 
-        if (orphaned.Any())
+        if (orphaned.Count != 0)
         {
             foreach (var orphan in orphaned)
             {
@@ -317,7 +319,7 @@ public class Site : IAggregateRoot
                 i.Species?.Id != existing.Species?.Id))
             .ToList();
 
-        if (orphaned.Any())
+        if (orphaned.Count != 0)
         {
             foreach (var orphan in orphaned)
             {
@@ -344,7 +346,7 @@ public class Site : IAggregateRoot
             if (existing is not null)
             {
                 changed |= existing.ApplyChanges(
-                    lastUpdatedDate,
+                    incoming.LastUpdatedDate,
                     incoming.PartyId,
                     incoming.Title,
                     incoming.FirstName,
@@ -360,7 +362,8 @@ public class Site : IAggregateRoot
             {
                 _parties.Add(new SiteParty(
                     incoming.Id,
-                    lastUpdatedDate,
+                    incoming.CreatedDate,
+                    incoming.LastUpdatedDate,
                     incoming.PartyId,
                     incoming.Title,
                     incoming.FirstName,
@@ -379,7 +382,7 @@ public class Site : IAggregateRoot
             .Where(existing => incomingList.All(i => i.PartyId != existing.PartyId))
             .ToList();
 
-        if (orphaned.Any())
+        if (orphaned.Count != 0)
         {
             foreach (var orphan in orphaned)
             {

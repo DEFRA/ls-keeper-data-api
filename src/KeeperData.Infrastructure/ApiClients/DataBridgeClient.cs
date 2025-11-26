@@ -33,7 +33,7 @@ public class DataBridgeClient(
 
     private string GetUri(string path) => _serviceNameExists ? $"{_serviceName}/{path}" : path;
 
-    public async Task<DataBridgeResponse<SamCphHolding>?> GetSamHoldingsAsync(
+    public async Task<DataBridgeResponse<T>?> GetSamHoldingsAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -45,7 +45,7 @@ public class DataBridgeClient(
         var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHoldings, new { }, query);
 
-        var result = await GetFromApiAsync<SamCphHolding>(
+        var result = await GetFromApiAsync<T>(
             uri,
             $"Sam paged holdings for top '{top}', skip '{skip}'",
             cancellationToken);
@@ -68,7 +68,7 @@ public class DataBridgeClient(
         return result.Data;
     }
 
-    public async Task<DataBridgeResponse<SamCphHolder>?> GetSamHoldersAsync(
+    public async Task<DataBridgeResponse<T>?> GetSamHoldersAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -80,7 +80,7 @@ public class DataBridgeClient(
         var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHolders, new { }, query);
 
-        var result = await GetFromApiAsync<SamCphHolder>(
+        var result = await GetFromApiAsync<T>(
             uri,
             $"Sam paged holders for top '{top}', skip '{skip}'",
             cancellationToken);
@@ -103,7 +103,7 @@ public class DataBridgeClient(
         return result.Data;
     }
 
-    public async Task<DataBridgeResponse<SamHerd>?> GetSamHerdsAsync(
+    public async Task<DataBridgeResponse<T>?> GetSamHerdsAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -115,7 +115,7 @@ public class DataBridgeClient(
         var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHerds, new { }, query);
 
-        var result = await GetFromApiAsync<SamHerd>(
+        var result = await GetFromApiAsync<T>(
             uri,
             $"Sam paged herds for top '{top}', skip '{skip}'",
             cancellationToken);
@@ -153,7 +153,7 @@ public class DataBridgeClient(
         return result.Data?.FirstOrDefault() ?? null;
     }
 
-    public async Task<DataBridgeResponse<SamParty>?> GetSamPartiesAsync(
+    public async Task<DataBridgeResponse<T>?> GetSamPartiesAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -165,7 +165,7 @@ public class DataBridgeClient(
         var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamParties, new { }, query);
 
-        var result = await GetFromApiAsync<SamParty>(
+        var result = await GetFromApiAsync<T>(
             uri,
             $"Sam paged parties for top '{top}', skip '{skip}'",
             cancellationToken);
@@ -188,7 +188,7 @@ public class DataBridgeClient(
         return result.Data;
     }
 
-    public async Task<DataBridgeResponse<CtsCphHolding>?> GetCtsHoldingsAsync(
+    public async Task<DataBridgeResponse<T>?> GetCtsHoldingsAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -200,7 +200,7 @@ public class DataBridgeClient(
         var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetCtsHoldings, new { }, query);
 
-        var result = await GetFromApiAsync<CtsCphHolding>(
+        var result = await GetFromApiAsync<T>(
             uri,
             $"CTS paged holdings for top '{top}', skip '{skip}'",
             cancellationToken);
@@ -223,7 +223,7 @@ public class DataBridgeClient(
         return result.Data;
     }
 
-    public async Task<DataBridgeResponse<CtsAgentOrKeeper>?> GetCtsAgentsAsync(
+    public async Task<DataBridgeResponse<T>?> GetCtsAgentsAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -235,7 +235,7 @@ public class DataBridgeClient(
         var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetCtsAgents, new { }, query);
 
-        var result = await GetFromApiAsync<CtsAgentOrKeeper>(
+        var result = await GetFromApiAsync<T>(
             uri,
             $"CTS paged agents for top '{top}', skip '{skip}'",
             cancellationToken);
@@ -258,7 +258,7 @@ public class DataBridgeClient(
         return result.Data;
     }
 
-    public async Task<DataBridgeResponse<CtsAgentOrKeeper>?> GetCtsKeepersAsync(
+    public async Task<DataBridgeResponse<T>?> GetCtsKeepersAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -270,7 +270,7 @@ public class DataBridgeClient(
         var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetCtsKeepers, new { }, query);
 
-        var result = await GetFromApiAsync<CtsAgentOrKeeper>(
+        var result = await GetFromApiAsync<T>(
             uri,
             $"CTS paged keepers for top '{top}', skip '{skip}'",
             cancellationToken);

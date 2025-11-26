@@ -1,5 +1,6 @@
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using System.Text.Json;
 
 namespace KeeperData.Infrastructure.ApiClients.Fakes;
 
@@ -7,7 +8,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
 {
     private readonly Random _random = new();
 
-    public Task<DataBridgeResponse<SamCphHolding>?> GetSamHoldingsAsync(
+    public Task<DataBridgeResponse<T>?> GetSamHoldingsAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -15,8 +16,9 @@ public class FakeDataBridgeClient : IDataBridgeClient
         CancellationToken cancellationToken = default)
     {
         var data = Enumerable.Range(0, top).Select(_ => GetSamCphHolding()).SelectMany(x => x).ToList();
-        var response = GetDataBridgeResponse(data, top, skip);
-        return Task.FromResult<DataBridgeResponse<SamCphHolding>?>(response);
+        var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
+        var response = GetDataBridgeResponse(objects!, top, skip);
+        return Task.FromResult<DataBridgeResponse<T>?>(response);
     }
 
     public Task<List<SamCphHolding>> GetSamHoldingsAsync(string id, CancellationToken cancellationToken)
@@ -24,7 +26,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult(GetSamCphHolding(id));
     }
 
-    public Task<DataBridgeResponse<SamCphHolder>?> GetSamHoldersAsync(
+    public Task<DataBridgeResponse<T>?> GetSamHoldersAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -32,8 +34,9 @@ public class FakeDataBridgeClient : IDataBridgeClient
         CancellationToken cancellationToken = default)
     {
         var data = Enumerable.Range(0, top).Select(_ => GetSamCphHoldersByPartyId()).SelectMany(x => x).ToList();
-        var response = GetDataBridgeResponse(data, top, skip);
-        return Task.FromResult<DataBridgeResponse<SamCphHolder>?>(response);
+        var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
+        var response = GetDataBridgeResponse(objects!, top, skip);
+        return Task.FromResult<DataBridgeResponse<T>?>(response);
     }
 
     public Task<List<SamCphHolder>> GetSamHoldersByPartyIdAsync(string id, CancellationToken cancellationToken)
@@ -41,7 +44,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult(GetSamCphHoldersByPartyId(id));
     }
 
-    public Task<DataBridgeResponse<SamHerd>?> GetSamHerdsAsync(
+    public Task<DataBridgeResponse<T>?> GetSamHerdsAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -49,8 +52,9 @@ public class FakeDataBridgeClient : IDataBridgeClient
         CancellationToken cancellationToken = default)
     {
         var data = Enumerable.Range(0, top).Select(_ => GetSamHerd()).SelectMany(x => x).ToList();
-        var response = GetDataBridgeResponse(data, top, skip);
-        return Task.FromResult<DataBridgeResponse<SamHerd>?>(response);
+        var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
+        var response = GetDataBridgeResponse(objects!, top, skip);
+        return Task.FromResult<DataBridgeResponse<T>?>(response);
     }
 
     public Task<List<SamHerd>> GetSamHerdsAsync(string id, CancellationToken cancellationToken)
@@ -63,7 +67,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult<SamParty?>(GetSamParty(id));
     }
 
-    public Task<DataBridgeResponse<SamParty>?> GetSamPartiesAsync(
+    public Task<DataBridgeResponse<T>?> GetSamPartiesAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -71,8 +75,9 @@ public class FakeDataBridgeClient : IDataBridgeClient
         CancellationToken cancellationToken = default)
     {
         var data = Enumerable.Range(0, top).Select(_ => GetSamParties()).SelectMany(x => x).ToList();
-        var response = GetDataBridgeResponse(data, top, skip);
-        return Task.FromResult<DataBridgeResponse<SamParty>?>(response);
+        var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
+        var response = GetDataBridgeResponse(objects!, top, skip);
+        return Task.FromResult<DataBridgeResponse<T>?>(response);
     }
 
     public Task<List<SamParty>> GetSamPartiesAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
@@ -80,7 +85,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult(ids.Select(GetSamParty).ToList());
     }
 
-    public Task<DataBridgeResponse<CtsCphHolding>?> GetCtsHoldingsAsync(
+    public Task<DataBridgeResponse<T>?> GetCtsHoldingsAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -88,8 +93,9 @@ public class FakeDataBridgeClient : IDataBridgeClient
         CancellationToken cancellationToken = default)
     {
         var data = Enumerable.Range(0, top).Select(_ => GetCtsCphHolding()).SelectMany(x => x).ToList();
-        var response = GetDataBridgeResponse(data, top, skip);
-        return Task.FromResult<DataBridgeResponse<CtsCphHolding>?>(response);
+        var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
+        var response = GetDataBridgeResponse(objects!, top, skip);
+        return Task.FromResult<DataBridgeResponse<T>?>(response);
     }
 
     public Task<List<CtsCphHolding>> GetCtsHoldingsAsync(string id, CancellationToken cancellationToken)
@@ -97,7 +103,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult(GetCtsCphHolding(id));
     }
 
-    public Task<DataBridgeResponse<CtsAgentOrKeeper>?> GetCtsAgentsAsync(
+    public Task<DataBridgeResponse<T>?> GetCtsAgentsAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -105,8 +111,9 @@ public class FakeDataBridgeClient : IDataBridgeClient
         CancellationToken cancellationToken = default)
     {
         var data = Enumerable.Range(0, top).Select(_ => GetCtsAgentOrKeeper()).SelectMany(x => x).ToList();
-        var response = GetDataBridgeResponse(data, top, skip);
-        return Task.FromResult<DataBridgeResponse<CtsAgentOrKeeper>?>(response);
+        var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
+        var response = GetDataBridgeResponse(objects!, top, skip);
+        return Task.FromResult<DataBridgeResponse<T>?>(response);
     }
 
     public Task<List<CtsAgentOrKeeper>> GetCtsAgentsAsync(string id, CancellationToken cancellationToken)
@@ -114,7 +121,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult(GetCtsAgentOrKeeper(id));
     }
 
-    public Task<DataBridgeResponse<CtsAgentOrKeeper>?> GetCtsKeepersAsync(
+    public Task<DataBridgeResponse<T>?> GetCtsKeepersAsync<T>(
         int top,
         int skip,
         string? selectFields = null,
@@ -122,8 +129,9 @@ public class FakeDataBridgeClient : IDataBridgeClient
         CancellationToken cancellationToken = default)
     {
         var data = Enumerable.Range(0, top).Select(_ => GetCtsAgentOrKeeper()).SelectMany(x => x).ToList();
-        var response = GetDataBridgeResponse(data, top, skip);
-        return Task.FromResult<DataBridgeResponse<CtsAgentOrKeeper>?>(response);
+        var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
+        var response = GetDataBridgeResponse(objects!, top, skip);
+        return Task.FromResult<DataBridgeResponse<T>?>(response);
     }
 
     public Task<List<CtsAgentOrKeeper>> GetCtsKeepersAsync(string id, CancellationToken cancellationToken)

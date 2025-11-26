@@ -7,13 +7,14 @@ using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Repositories;
 using MongoDB.Driver;
+using System.Linq;
+using System.Text;
 
 namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 
 public static class SamHoldingMapper
 {
     public static async Task<List<SamHoldingDocument>> ToSilver(
-        DateTime currentDateTime,
         List<SamCphHolding> rawHoldings,
         Func<string?, CancellationToken, Task<(string? PremiseActivityTypeId, string? PremiseActivityTypeName)>> resolvePremiseActivityType,
         Func<string?, CancellationToken, Task<(string? PremiseTypeId, string? PremiseTypeName)>> resolvePremiseType,
@@ -25,7 +26,6 @@ public static class SamHoldingMapper
         foreach (var h in rawHoldings?.Where(x => x.CPH != null) ?? [])
         {
             var holding = await ToSilver(
-                currentDateTime,
                 h,
                 resolvePremiseActivityType,
                 resolvePremiseType,
@@ -39,7 +39,6 @@ public static class SamHoldingMapper
     }
 
     public static async Task<SamHoldingDocument> ToSilver(
-        DateTime currentDateTime,
         SamCphHolding h,
         Func<string?, CancellationToken, Task<(string? PremiseActivityTypeId, string? PremiseActivityTypeName)>> resolvePremiseActivityType,
         Func<string?, CancellationToken, Task<(string? PremiseTypeId, string? PremiseTypeName)>> resolvePremiseType,
@@ -62,7 +61,8 @@ public static class SamHoldingMapper
             // Id - Leave to support upsert assigning Id
 
             LastUpdatedBatchId = h.BATCH_ID,
-            LastUpdatedDate = currentDateTime,
+            CreatedDate = h.CreatedAtUtc ?? DateTime.UtcNow,
+            LastUpdatedDate = h.UpdatedAtUtc ?? DateTime.UtcNow,
             Deleted = h.IsDeleted ?? false,
 
             CountyParishHoldingNumber = h.CPH,
@@ -132,7 +132,6 @@ public static class SamHoldingMapper
     }
 
     public static async Task<SiteDocument?> ToGold(
-        DateTime currentDateTime,
         List<SamHoldingDocument> silverHoldings,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         List<PartyDocument> goldParties,
@@ -171,7 +170,7 @@ public static class SamHoldingMapper
             .Where(doc => doc.typeId is not null)
             .Select(doc => new Species(
                 id: doc.typeId ?? string.Empty,
-                lastUpdatedDate: currentDateTime,
+                lastUpdatedDate: representative.LastUpdatedDate,
                 code: doc.searchValue,
                 name: doc.typeName ?? string.Empty))
             .ToList();
@@ -184,12 +183,11 @@ public static class SamHoldingMapper
                 description: doc.typeName,
                 startDate: representative.HoldingStartDate,
                 endDate: representative.HoldingEndDate,
-                lastUpdatedDate: currentDateTime))
+                lastUpdatedDate: representative.LastUpdatedDate))
             .ToList();
 
         var site = existingSite is not null
             ? await UpdateSiteAsync(
-                currentDateTime,
                 representative,
                 existingSite,
                 goldSiteGroupMarks,
@@ -200,7 +198,6 @@ public static class SamHoldingMapper
                 activities,
                 cancellationToken)
             : await CreateSiteAsync(
-                currentDateTime,
                 representative,
                 goldSiteGroupMarks,
                 goldParties,
@@ -214,7 +211,6 @@ public static class SamHoldingMapper
     }
 
     private static async Task<Site> CreateSiteAsync(
-        DateTime currentDateTime,
         SamHoldingDocument representative,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         List<PartyDocument> goldParties,
@@ -256,10 +252,12 @@ public static class SamHoldingMapper
 
         var siteParties = goldParties
             .Where(p => !p.Deleted && !string.IsNullOrWhiteSpace(p.CustomerNumber))
-            .Select(p => p.ToSitePartyDomain(currentDateTime))
+            .Select(p => p.ToSitePartyDomain(representative.LastUpdatedDate))
             .ToList();
 
         var site = Site.Create(
+            representative.CreatedDate,
+            representative.LastUpdatedDate,
             premiseType?.Code ?? string.Empty,
             representative.LocationName ?? string.Empty,
             representative.HoldingStartDate,
@@ -271,23 +269,22 @@ public static class SamHoldingMapper
             location);
 
         site.SetSiteIdentifier(
-            lastUpdatedDate: currentDateTime,
+            lastUpdatedDate: representative.LastUpdatedDate,
             identifier: representative.CountyParishHoldingNumber,
             type: HoldingIdentifierType.CphNumber.ToString());
 
-        site.SetSpecies(species, currentDateTime);
+        site.SetSpecies(species, representative.LastUpdatedDate);
 
-        site.SetActivities(activities, currentDateTime);
+        site.SetActivities(activities, representative.LastUpdatedDate);
 
-        site.SetGroupMarks(groupMarks, currentDateTime);
+        site.SetGroupMarks(groupMarks, representative.LastUpdatedDate);
 
-        site.SetSiteParties(siteParties, currentDateTime);
+        site.SetSiteParties(siteParties, representative.LastUpdatedDate);
 
         return site;
     }
 
     private static async Task<Site> UpdateSiteAsync(
-        DateTime currentDateTime,
         SamHoldingDocument representative,
         SiteDocument existing,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
@@ -316,11 +313,11 @@ public static class SamHoldingMapper
 
         var siteParties = goldParties
             .Where(p => !p.Deleted && !string.IsNullOrWhiteSpace(p.CustomerNumber))
-            .Select(p => p.ToSitePartyDomain(currentDateTime))
+            .Select(p => p.ToSitePartyDomain(representative.LastUpdatedDate))
             .ToList();
 
         site.Update(
-            currentDateTime,
+            representative.LastUpdatedDate,
             premiseType?.Code ?? string.Empty,
             representative.LocationName ?? string.Empty,
             representative.HoldingStartDate,
@@ -340,20 +337,20 @@ public static class SamHoldingMapper
             country);
 
         site.SetLocation(
-            currentDateTime,
+            representative.LastUpdatedDate,
             representative.Location?.OsMapReference,
             representative.Location?.Easting,
             representative.Location?.Northing,
             updatedAddress,
             null);
 
-        site.SetSpecies(species, currentDateTime);
+        site.SetSpecies(species, representative.LastUpdatedDate);
 
-        site.SetActivities(activities, currentDateTime);
+        site.SetActivities(activities, representative.LastUpdatedDate);
 
-        site.SetGroupMarks(groupMarks, currentDateTime);
+        site.SetGroupMarks(groupMarks, representative.LastUpdatedDate);
 
-        site.SetSiteParties(siteParties, currentDateTime);
+        site.SetSiteParties(siteParties, representative.LastUpdatedDate);
 
         return site;
     }

@@ -14,7 +14,6 @@ namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 public static class SamPartyMapper
 {
     public static async Task<List<SamPartyDocument>> ToSilver(
-        DateTime currentDateTime,
         List<SamParty> rawParties,
         Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
         Func<string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
@@ -25,7 +24,6 @@ public static class SamPartyMapper
         foreach (var p in rawParties?.Where(x => x.PARTY_ID != null) ?? [])
         {
             var party = await ToSilver(
-                currentDateTime,
                 p,
                 resolveRoleType,
                 resolveCountry,
@@ -38,7 +36,6 @@ public static class SamPartyMapper
     }
 
     public static async Task<SamPartyDocument> ToSilver(
-        DateTime currentDateTime,
         SamParty p,
         Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
         Func<string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
@@ -58,7 +55,8 @@ public static class SamPartyMapper
             // Id - Leave to support upsert assigning Id
 
             LastUpdatedBatchId = p.BATCH_ID,
-            LastUpdatedDate = currentDateTime,
+            CreatedDate = p.CreatedAtUtc ?? DateTime.UtcNow,
+            LastUpdatedDate = p.UpdatedAtUtc ?? DateTime.UtcNow,
             Deleted = p.IsDeleted ?? false,
 
             PartyId = p.PARTY_ID.ToString(),
@@ -133,7 +131,6 @@ public static class SamPartyMapper
     }
 
     public static async Task<List<PartyDocument>> ToGold(
-        DateTime currentDateTime,
         List<SamPartyDocument> silverParties,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         IGenericRepository<PartyDocument> goldPartyRepository,
@@ -154,7 +151,6 @@ public static class SamPartyMapper
 
             var party = existingParty is not null
                 ? await UpdatePartyAsync(
-                    currentDateTime,
                     silverParty,
                     existingParty,
                     goldSiteGroupMarks,
@@ -162,7 +158,6 @@ public static class SamPartyMapper
                     getSpeciesTypeById,
                     cancellationToken)
                 : await CreatePartyAsync(
-                    currentDateTime,
                     silverParty,
                     goldSiteGroupMarks,
                     getCountryById,
@@ -176,7 +171,6 @@ public static class SamPartyMapper
     }
 
     private static async Task<Party> CreatePartyAsync(
-        DateTime currentDateTime,
         SamPartyDocument incoming,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
@@ -206,6 +200,8 @@ public static class SamPartyMapper
             false);
 
         var party = Party.Create(
+            incoming.CreatedDate,
+            incoming.LastUpdatedDate,
             incoming.PartyTitleTypeIdentifier,
             incoming.PartyFirstName,
             incoming.PartyLastName,
@@ -217,7 +213,7 @@ public static class SamPartyMapper
             address);
 
         party.AddOrUpdatePrimaryCommunication(
-            currentDateTime,
+            party.LastUpdatedDate,
             communication);
 
         var roleList = incoming.Roles?
@@ -272,7 +268,6 @@ public static class SamPartyMapper
     }
 
     private static async Task<Party> UpdatePartyAsync(
-        DateTime currentDateTime,
         SamPartyDocument incoming,
         PartyDocument existing,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
@@ -305,7 +300,7 @@ public static class SamPartyMapper
             false);
 
         party.Update(
-            currentDateTime,
+            incoming.LastUpdatedDate,
             incoming.PartyTitleTypeIdentifier,
             incoming.PartyFirstName,
             incoming.PartyLastName,
@@ -316,11 +311,11 @@ public static class SamPartyMapper
             incoming.Deleted);
 
         party.SetAddress(
-            currentDateTime,
+            incoming.LastUpdatedDate,
             updatedAddress);
 
         party.AddOrUpdatePrimaryCommunication(
-            currentDateTime,
+            incoming.LastUpdatedDate,
             updatedCommunication);
 
         var roleList = incoming.Roles?
@@ -364,7 +359,7 @@ public static class SamPartyMapper
 
                 var partyRole = PartyRole.Create(role, speciesManaged);
 
-                party.AddOrUpdateRole(currentDateTime, partyRole);
+                party.AddOrUpdateRole(party.LastUpdatedDate, partyRole);
             }
         }
         else if (party.Roles.Count != 0)

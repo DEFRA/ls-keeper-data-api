@@ -3,8 +3,6 @@ using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Serializers;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace KeeperData.Application.MessageHandlers.Cts;
 

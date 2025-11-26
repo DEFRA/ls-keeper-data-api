@@ -1,6 +1,8 @@
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
+using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
@@ -40,7 +42,7 @@ public class SamHerdDailyScanStep(
 
         while (!context.Herds.ScanCompleted && !cancellationToken.IsCancellationRequested)
         {
-            var queryResponse = await _dataBridgeClient.GetSamHerdsAsync(
+            var queryResponse = await _dataBridgeClient.GetSamHerdsAsync<SamScanHerdIdentifier>(
                 context.Herds.CurrentTop,
                 context.Herds.CurrentSkip,
                 SelectFields,
@@ -54,7 +56,7 @@ public class SamHerdDailyScanStep(
             }
 
             var identifiers = queryResponse.Data
-                .Select(x => x.CPHH)
+                .Select(x => x.CPHH.CphhToCph())
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Distinct()
                 .ToList();

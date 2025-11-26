@@ -6,7 +6,6 @@ namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 public static class SiteGroupMarkMapper
 {
     public static List<SiteGroupMarkRelationshipDocument> ToGold(
-        DateTime currentDateTime,
         List<SamHerdDocument>? silverHerds,
         List<Core.Documents.Silver.SitePartyRoleRelationshipDocument> silverSitePartyRoles,
         string holdingIdentifier,
@@ -23,7 +22,7 @@ public static class SiteGroupMarkMapper
             {
                 // Id - Leave to support upsert assigning Id
 
-                LastUpdatedDate = currentDateTime,
+                LastUpdatedDate = herd.LastUpdatedDate,
                 Herdmark = herd.Herdmark,
                 CountyParishHoldingHerd = herd.CountyParishHoldingHerd,
                 HoldingIdentifier = holdingIdentifier,

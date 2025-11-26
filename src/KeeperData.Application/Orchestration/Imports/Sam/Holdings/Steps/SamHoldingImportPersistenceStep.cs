@@ -274,9 +274,9 @@ public class SamHoldingImportPersistenceStep(
             x => x.Identifiers,
             i => i.Identifier == holdingIdentifier && i.Type == holdingIdentifierType);
 
-        var existingHolding = await _goldSiteRepository.FindOneByFilterAsync(filter, cancellationToken);
-
-        incomingSite.Id = existingHolding?.Id ?? Guid.NewGuid().ToString();
+        // Done in mapper now using domain objects
+        // var existingHolding = await _goldSiteRepository.FindOneByFilterAsync(filter, cancellationToken);
+        // incomingSite.Id = existingHolding?.Id ?? Guid.NewGuid().ToString();
 
         var siteUpsert = (
             Filter: filter,
@@ -304,11 +304,11 @@ public class SamHoldingImportPersistenceStep(
             if (string.IsNullOrWhiteSpace(incoming.CustomerNumber))
                 continue;
 
-            var existing = await _goldPartyRepository.FindOneAsync(
-                x => x.CustomerNumber == incoming.CustomerNumber,
-                cancellationToken);
-
-            incoming.Id = existing?.Id ?? Guid.NewGuid().ToString();
+            // Done in mapper now using domain objects
+            // var existing = await _goldPartyRepository.FindOneAsync(
+            //    x => x.CustomerNumber == incoming.CustomerNumber,
+            //    cancellationToken);
+            // incoming.Id = existing?.Id ?? Guid.NewGuid().ToString();
 
             var filter = Builders<PartyDocument>.Filter.Eq(x => x.CustomerNumber, incoming.CustomerNumber);
             upserts.Add((filter, incoming));
@@ -369,6 +369,7 @@ public class SamHoldingImportPersistenceStep(
             !incomingKeys.Contains($"{e.HoldingIdentifier}::{e.PartyId}::{e.RoleTypeId}::{e.SpeciesTypeId}"))
         .ToList() ?? [];
 
+        // TODO - Will this remove roles assigned from SAM Holders?
         if (orphanedSitePartyRoles.Count > 0)
         {
             var deleteFilter = Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.In(

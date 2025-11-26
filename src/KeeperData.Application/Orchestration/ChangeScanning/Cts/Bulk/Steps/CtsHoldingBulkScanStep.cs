@@ -1,5 +1,6 @@
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.MessagePublishers;
@@ -32,7 +33,7 @@ public class CtsHoldingBulkScanStep(
 
         while (!context.Holdings.ScanCompleted && !cancellationToken.IsCancellationRequested)
         {
-            var queryResponse = await _dataBridgeClient.GetCtsHoldingsAsync(
+            var queryResponse = await _dataBridgeClient.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(
                 context.Holdings.CurrentTop,
                 context.Holdings.CurrentSkip,
                 SelectFields,

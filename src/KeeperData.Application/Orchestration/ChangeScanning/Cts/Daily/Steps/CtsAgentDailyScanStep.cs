@@ -1,5 +1,6 @@
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.MessagePublishers;
@@ -40,7 +41,7 @@ public class CtsAgentDailyScanStep(
 
         while (!context.Agents.ScanCompleted && !cancellationToken.IsCancellationRequested)
         {
-            var queryResponse = await _dataBridgeClient.GetCtsAgentsAsync(
+            var queryResponse = await _dataBridgeClient.GetCtsAgentsAsync<CtsScanAgentOrKeeperIdentifier>(
                 context.Agents.CurrentTop,
                 context.Agents.CurrentSkip,
                 SelectFields,

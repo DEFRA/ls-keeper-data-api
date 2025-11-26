@@ -1,5 +1,6 @@
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessagePublishers;
@@ -40,7 +41,7 @@ public class SamPartyDailyScanStep(
 
         while (!context.Parties.ScanCompleted && !cancellationToken.IsCancellationRequested)
         {
-            var queryResponse = await _dataBridgeClient.GetSamPartiesAsync(
+            var queryResponse = await _dataBridgeClient.GetSamPartiesAsync<SamScanPartyIdentifier>(
                 context.Parties.CurrentTop,
                 context.Parties.CurrentSkip,
                 SelectFields,

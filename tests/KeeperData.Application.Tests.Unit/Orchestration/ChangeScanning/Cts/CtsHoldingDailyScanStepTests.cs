@@ -1,8 +1,8 @@
-using FluentAssertions;
 using KeeperData.Application.Orchestration.ChangeScanning.Cts.Daily;
 using KeeperData.Application.Orchestration.ChangeScanning.Cts.Daily.Steps;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
@@ -10,9 +10,6 @@ using KeeperData.Core.Providers;
 using KeeperData.Tests.Common.Factories.UseCases;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace KeeperData.Application.Tests.Unit.Orchestration.ChangeScanning.Cts;
 
@@ -47,14 +44,14 @@ public class CtsHoldingDailyScanStepTests
     [Fact]
     public async Task ExecuteCoreAsync_ShouldQueryWithCorrectDateTimeFilter()
     {
-        var responseMock = MockCtsData.GetCtsHoldingsDataBridgeResponse(0, 0, 0);
+        var responseMock = MockCtsData.GetCtsHoldingsScanIdentifierDataBridgeResponse(0, 0, 0);
         _dataBridgeClientMock
-            .Setup(c => c.GetCtsHoldingsAsync(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
 
-        _dataBridgeClientMock.Verify(c => c.GetCtsHoldingsAsync(
+        _dataBridgeClientMock.Verify(c => c.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(
             It.IsAny<int>(),
             It.IsAny<int>(),
             It.IsAny<string>(),
@@ -65,9 +62,9 @@ public class CtsHoldingDailyScanStepTests
     [Fact]
     public async Task ExecuteCoreAsync_ShouldPublishCtsUpdateHoldingMessage()
     {
-        var responseMock = MockCtsData.GetCtsHoldingsDataBridgeResponse(1, 1, 1);
+        var responseMock = MockCtsData.GetCtsHoldingsScanIdentifierDataBridgeResponse(1, 1, 1);
         _dataBridgeClientMock
-            .Setup(c => c.GetCtsHoldingsAsync(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);

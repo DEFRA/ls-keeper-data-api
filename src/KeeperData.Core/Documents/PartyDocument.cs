@@ -135,7 +135,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
         return new PartyDocument
         {
             Id = siteParty.Id, // TODO - need to consider matching the Id
-            CreatedDate = DateTime.UtcNow, // TODO - Add CreatedDate to child so can preserve
+            CreatedDate = siteParty.CreatedDate,
             LastUpdatedDate = siteParty.LastUpdatedDate,
             Title = siteParty.Title,
             FirstName = siteParty.FirstName,
@@ -155,6 +155,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
     {
         return new SiteParty(
             id: Id, // TODO - need to consider matching the Id
+            createdDate: CreatedDate,
             lastUpdatedDate: lastUpdatedDate,
             partyId: CustomerNumber ?? string.Empty,
             title: Title,

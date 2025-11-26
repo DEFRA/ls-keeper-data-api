@@ -10,7 +10,6 @@ namespace KeeperData.Application.Orchestration.Imports.Cts.Mappings;
 public static class CtsAgentOrKeeperMapper
 {
     public static async Task<List<CtsPartyDocument>> ToSilver(
-        DateTime currentDateTime,
         List<CtsAgentOrKeeper> rawParties,
         HoldingIdentifierType holdingIdentifierType,
         InferredRoleType inferredRoleType,
@@ -25,7 +24,6 @@ public static class CtsAgentOrKeeperMapper
         foreach (var p in rawParties?.Where(x => x.LID_FULL_IDENTIFIER != null) ?? [])
         {
             var party = ToSilver(
-                currentDateTime,
                 p,
                 holdingIdentifierType,
                 (roleNameToLookup, roleTypeId, roleTypeName),
@@ -38,7 +36,6 @@ public static class CtsAgentOrKeeperMapper
     }
 
     public static CtsPartyDocument ToSilver(
-        DateTime currentDateTime,
         CtsAgentOrKeeper p,
         HoldingIdentifierType holdingIdentifierType,
         (string? RoleNameToLookup, string? RoleTypeId, string? RoleTypeName) roleTypeInfo,
@@ -51,7 +48,8 @@ public static class CtsAgentOrKeeperMapper
             // Id - Leave to support upsert assigning Id
 
             LastUpdatedBatchId = p.BATCH_ID,
-            LastUpdatedDate = currentDateTime,
+            CreatedDate = p.CreatedAtUtc ?? DateTime.UtcNow,
+            LastUpdatedDate = p.UpdatedAtUtc ?? DateTime.UtcNow,
             Deleted = p.IsDeleted ?? false,
 
             CountyParishHoldingNumber = p.LID_FULL_IDENTIFIER.LidIdentifierToCph(),

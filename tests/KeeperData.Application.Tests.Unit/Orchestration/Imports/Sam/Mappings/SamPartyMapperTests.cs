@@ -36,7 +36,6 @@ public class SamPartyMapperTests
     public async Task GivenNullableRawParties_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = await SamPartyMapper.ToSilver(
-            DateTime.UtcNow,
             (List<SamParty>?)null!,
             _resolveRoleType,
             _resolveCountry,
@@ -50,7 +49,6 @@ public class SamPartyMapperTests
     public async Task GivenEmptyRawParties_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = await SamPartyMapper.ToSilver(
-            DateTime.UtcNow,
             [],
             _resolveRoleType,
             _resolveCountry,
@@ -70,7 +68,6 @@ public class SamPartyMapperTests
         var records = GenerateSamParty(1);
 
         var results = await SamPartyMapper.ToSilver(
-            DateTime.UtcNow,
             records,
             _resolveRoleType,
             _resolveCountry,
@@ -98,7 +95,6 @@ public class SamPartyMapperTests
         var records = GenerateSamParty(1);
 
         var results = await SamPartyMapper.ToSilver(
-            DateTime.UtcNow,
             records,
             _resolveRoleType,
             _resolveCountry,
@@ -126,7 +122,6 @@ public class SamPartyMapperTests
         var holdingIdentifier = CphGenerator.GenerateFormattedCph();
 
         var results = await SamPartyMapper.ToSilver(
-            DateTime.UtcNow,
             records,
             _resolveRoleType,
             _resolveCountry,

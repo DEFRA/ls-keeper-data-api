@@ -3,7 +3,6 @@ using KeeperData.Application.Orchestration.Imports.Sam.Holdings;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings.Steps;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
-using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Repositories;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
