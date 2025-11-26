@@ -1,6 +1,8 @@
+using KeeperData.Application.Extensions;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Parties;
 using KeeperData.Core.Domain.Parties.Formatters;
 using KeeperData.Core.Domain.Parties.Rules;
@@ -168,6 +170,170 @@ public static class SamPartyMapper
         }
 
         return result;
+    }
+
+    // TODO - Add tests for AggregatePartyAndHolder
+    public static List<SamParty> AggregatePartyAndHolder(List<SamParty> rawParties, List<SamCphHolder> rawHolders)
+    {
+        var holderRole = InferredRoleType.CphHolder.GetDescription();
+        var partyMap = rawParties.ToDictionary(p => p.PARTY_ID, p => p);
+
+        foreach (var holder in rawHolders)
+        {
+            if (holder.PARTY_ID != null && partyMap.TryGetValue(holder.PARTY_ID, out var party))
+            {
+                party.ROLES ??= string.Empty;
+
+                var roles = party.RoleList;
+                if (!roles.Contains(holderRole!))
+                {
+                    roles.Add(holderRole!);
+                    party.ROLES = string.Join(",", roles);
+                }
+
+                MergeSamPartyFromHolder(party, holder);
+            }
+            else
+            {
+                var newSamParty = CreateSamPartyFromHolder(holder, holderRole!);
+                partyMap[newSamParty.PARTY_ID] = newSamParty;
+            }
+        }
+
+        return [.. partyMap.Values];
+    }
+
+    private static void MergeSamPartyFromHolder(SamParty party, SamCphHolder holder)
+    {
+        if (string.IsNullOrEmpty(party.PERSON_TITLE) && !string.IsNullOrEmpty(holder.PERSON_TITLE))
+            party.PERSON_TITLE = holder.PERSON_TITLE;
+
+        if (string.IsNullOrEmpty(party.PERSON_GIVEN_NAME) && !string.IsNullOrEmpty(holder.PERSON_GIVEN_NAME))
+            party.PERSON_GIVEN_NAME = holder.PERSON_GIVEN_NAME;
+
+        if (string.IsNullOrEmpty(party.PERSON_GIVEN_NAME2) && !string.IsNullOrEmpty(holder.PERSON_GIVEN_NAME2))
+            party.PERSON_GIVEN_NAME2 = holder.PERSON_GIVEN_NAME2;
+
+        if (string.IsNullOrEmpty(party.PERSON_INITIALS) && !string.IsNullOrEmpty(holder.PERSON_INITIALS))
+            party.PERSON_INITIALS = holder.PERSON_INITIALS;
+
+        if (string.IsNullOrEmpty(party.PERSON_FAMILY_NAME) && !string.IsNullOrEmpty(holder.PERSON_FAMILY_NAME))
+            party.PERSON_FAMILY_NAME = holder.PERSON_FAMILY_NAME;
+
+        if (string.IsNullOrEmpty(party.ORGANISATION_NAME) && !string.IsNullOrEmpty(holder.ORGANISATION_NAME))
+            party.ORGANISATION_NAME = holder.ORGANISATION_NAME;
+
+        if (string.IsNullOrEmpty(party.TELEPHONE_NUMBER) && !string.IsNullOrEmpty(holder.TELEPHONE_NUMBER))
+            party.TELEPHONE_NUMBER = holder.TELEPHONE_NUMBER;
+
+        if (string.IsNullOrEmpty(party.MOBILE_NUMBER) && !string.IsNullOrEmpty(holder.MOBILE_NUMBER))
+            party.MOBILE_NUMBER = holder.MOBILE_NUMBER;
+
+        if (string.IsNullOrEmpty(party.INTERNET_EMAIL_ADDRESS) && !string.IsNullOrEmpty(holder.INTERNET_EMAIL_ADDRESS))
+            party.INTERNET_EMAIL_ADDRESS = holder.INTERNET_EMAIL_ADDRESS;
+
+        if (party.SAON_START_NUMBER == null && holder.SAON_START_NUMBER != null)
+            party.SAON_START_NUMBER = holder.SAON_START_NUMBER;
+
+        if (party.SAON_START_NUMBER_SUFFIX == null && holder.SAON_START_NUMBER_SUFFIX != null)
+            party.SAON_START_NUMBER_SUFFIX = holder.SAON_START_NUMBER_SUFFIX;
+
+        if (party.SAON_END_NUMBER == null && holder.SAON_END_NUMBER != null)
+            party.SAON_END_NUMBER = holder.SAON_END_NUMBER;
+
+        if (party.SAON_END_NUMBER_SUFFIX == null && holder.SAON_END_NUMBER_SUFFIX != null)
+            party.SAON_END_NUMBER_SUFFIX = holder.SAON_END_NUMBER_SUFFIX;
+
+        if (string.IsNullOrEmpty(party.SAON_DESCRIPTION) && !string.IsNullOrEmpty(holder.SAON_DESCRIPTION))
+            party.SAON_DESCRIPTION = holder.SAON_DESCRIPTION;
+
+        if (party.PAON_START_NUMBER == null && holder.PAON_START_NUMBER != null)
+            party.PAON_START_NUMBER = holder.PAON_START_NUMBER;
+
+        if (party.PAON_START_NUMBER_SUFFIX == null && holder.PAON_START_NUMBER_SUFFIX != null)
+            party.PAON_START_NUMBER_SUFFIX = holder.PAON_START_NUMBER_SUFFIX;
+
+        if (party.PAON_END_NUMBER == null && holder.PAON_END_NUMBER != null)
+            party.PAON_END_NUMBER = holder.PAON_END_NUMBER;
+
+        if (party.PAON_END_NUMBER_SUFFIX == null && holder.PAON_END_NUMBER_SUFFIX != null)
+            party.PAON_END_NUMBER_SUFFIX = holder.PAON_END_NUMBER_SUFFIX;
+
+        if (string.IsNullOrEmpty(party.PAON_DESCRIPTION) && !string.IsNullOrEmpty(holder.PAON_DESCRIPTION))
+            party.PAON_DESCRIPTION = holder.PAON_DESCRIPTION;
+
+        if (string.IsNullOrEmpty(party.STREET) && !string.IsNullOrEmpty(holder.STREET))
+            party.STREET = holder.STREET;
+
+        if (string.IsNullOrEmpty(party.TOWN) && !string.IsNullOrEmpty(holder.TOWN))
+            party.TOWN = holder.TOWN;
+
+        if (string.IsNullOrEmpty(party.LOCALITY) && !string.IsNullOrEmpty(holder.LOCALITY))
+            party.LOCALITY = holder.LOCALITY;
+
+        if (string.IsNullOrEmpty(party.UK_INTERNAL_CODE) && !string.IsNullOrEmpty(holder.UK_INTERNAL_CODE))
+            party.UK_INTERNAL_CODE = holder.UK_INTERNAL_CODE;
+
+        if (string.IsNullOrEmpty(party.POSTCODE) && !string.IsNullOrEmpty(holder.POSTCODE))
+            party.POSTCODE = holder.POSTCODE;
+
+        if (string.IsNullOrEmpty(party.COUNTRY_CODE) && !string.IsNullOrEmpty(holder.COUNTRY_CODE))
+            party.COUNTRY_CODE = holder.COUNTRY_CODE;
+
+        if (string.IsNullOrEmpty(party.UDPRN) && !string.IsNullOrEmpty(holder.UDPRN))
+            party.UDPRN = holder.UDPRN;
+
+        if (party.PREFERRED_CONTACT_METHOD_IND == null && holder.PREFERRED_CONTACT_METHOD_IND != null)
+            party.PREFERRED_CONTACT_METHOD_IND = holder.PREFERRED_CONTACT_METHOD_IND;
+    }
+
+    private static SamParty CreateSamPartyFromHolder(SamCphHolder holder, string role)
+    {
+        return new SamParty
+        {
+            BATCH_ID = holder.BATCH_ID,
+            CHANGE_TYPE = holder.CHANGE_TYPE,
+            IsDeleted = holder.IsDeleted,
+            CreatedAtUtc = holder.CreatedAtUtc,
+            UpdatedAtUtc = holder.UpdatedAtUtc,
+
+            PARTY_ID = holder.PARTY_ID!,
+
+            PERSON_TITLE = holder.PERSON_TITLE,
+            PERSON_GIVEN_NAME = holder.PERSON_GIVEN_NAME,
+            PERSON_GIVEN_NAME2 = holder.PERSON_GIVEN_NAME2,
+            PERSON_INITIALS = holder.PERSON_INITIALS,
+            PERSON_FAMILY_NAME = holder.PERSON_FAMILY_NAME,
+            ORGANISATION_NAME = holder.ORGANISATION_NAME,
+
+            TELEPHONE_NUMBER = holder.TELEPHONE_NUMBER,
+            MOBILE_NUMBER = holder.MOBILE_NUMBER,
+            INTERNET_EMAIL_ADDRESS = holder.INTERNET_EMAIL_ADDRESS,
+
+            SAON_START_NUMBER = holder.SAON_START_NUMBER,
+            SAON_START_NUMBER_SUFFIX = holder.SAON_START_NUMBER_SUFFIX,
+            SAON_END_NUMBER = holder.SAON_END_NUMBER,
+            SAON_END_NUMBER_SUFFIX = holder.SAON_END_NUMBER_SUFFIX,
+            SAON_DESCRIPTION = holder.SAON_DESCRIPTION,
+
+            PAON_START_NUMBER = holder.PAON_START_NUMBER,
+            PAON_START_NUMBER_SUFFIX = holder.PAON_START_NUMBER_SUFFIX,
+            PAON_END_NUMBER = holder.PAON_END_NUMBER,
+            PAON_END_NUMBER_SUFFIX = holder.PAON_END_NUMBER_SUFFIX,
+            PAON_DESCRIPTION = holder.PAON_DESCRIPTION,
+
+            STREET = holder.STREET,
+            TOWN = holder.TOWN,
+            LOCALITY = holder.LOCALITY,
+            UK_INTERNAL_CODE = holder.UK_INTERNAL_CODE,
+            POSTCODE = holder.POSTCODE,
+            COUNTRY_CODE = holder.COUNTRY_CODE,
+            UDPRN = holder.UDPRN,
+
+            PREFERRED_CONTACT_METHOD_IND = holder.PREFERRED_CONTACT_METHOD_IND,
+
+            ROLES = role
+        };
     }
 
     private static async Task<Party> CreatePartyAsync(

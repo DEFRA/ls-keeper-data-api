@@ -116,6 +116,28 @@ public class DataBridgeClientTests
     }
 
     [Fact]
+    public async Task GetSamHoldersByCphAsync_ShouldReturnHolder_WhenApiReturnsSuccess()
+    {
+        var partyId = $"C{new Random().Next(1, 9):D6}";
+        var holdingIdentifier = CphGenerator.GenerateFormattedCph();
+        var expectedResponse = MockSamData.GetSamHolderStringContentResponse(partyId, [holdingIdentifier]);
+
+        var uri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamHolders,
+            new { },
+            DataBridgeQueries.SamHoldersByCph(holdingIdentifier));
+
+        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
+            .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
+
+        var result = await _client.GetSamHoldersByCphAsync(holdingIdentifier, CancellationToken.None);
+
+        result.Should().NotBeNull().And.HaveCount(1);
+        result[0].PARTY_ID.Should().Contain(partyId);
+        result[0].CphList.Should().Contain(holdingIdentifier);
+    }
+
+    [Fact]
     public async Task GetSamHoldersByPartyIdAsync_ShouldReturnHolder_WhenApiReturnsSuccess()
     {
         var partyId = $"C{new Random().Next(1, 9):D6}";

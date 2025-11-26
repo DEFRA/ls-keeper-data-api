@@ -25,6 +25,7 @@ public class SamHolderBulkScanStep(
 
     private const string SelectFields = "PARTY_ID";
 
+    // TODO - Disable/remove this step
     protected override async Task ExecuteCoreAsync(SamBulkScanContext context, CancellationToken cancellationToken)
     {
         context.Holders.CurrentTop = context.Holders.CurrentTop > 0

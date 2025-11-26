@@ -108,7 +108,7 @@ public class MockSamRawDataFactory
         return (holdingIdentifier, holdings, holders, herds, parties);
     }
 
-    public static T RoundTripViaJson<T>(T obj)
+    private static T RoundTripViaJson<T>(T obj)
     {
         var json = JsonSerializer.Serialize(obj);
         return JsonSerializer.Deserialize<T>(json, JsonDefaults.DefaultOptionsWithDataBridgeApiSupport)!;

@@ -88,6 +88,19 @@ public class DataBridgeClient(
         return result;
     }
 
+    public async Task<List<SamCphHolder>> GetSamHoldersByCphAsync(string id, CancellationToken cancellationToken)
+    {
+        var query = DataBridgeQueries.SamHoldersByCph(id);
+        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHolders, new { }, query);
+
+        var result = await GetFromApiAsync<SamCphHolder>(
+            uri,
+            $"Sam holders for CPH '{id}'",
+            cancellationToken);
+
+        return result.Data;
+    }
+
     public async Task<List<SamCphHolder>> GetSamHoldersByPartyIdAsync(string id, CancellationToken cancellationToken)
     {
         if (!_samHoldersEnabled) return [];

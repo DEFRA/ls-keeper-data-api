@@ -1,12 +1,10 @@
 using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
-using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Tests.Common.Generators;
 using MongoDB.Driver;
-using Xunit;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Updates.Cts;
 

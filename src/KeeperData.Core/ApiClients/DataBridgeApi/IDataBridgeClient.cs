@@ -18,6 +18,7 @@ public interface IDataBridgeClient
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
         CancellationToken cancellationToken = default);
+    Task<List<SamCphHolder>> GetSamHoldersByCphAsync(string id, CancellationToken cancellationToken);
     Task<List<SamCphHolder>> GetSamHoldersByPartyIdAsync(string id, CancellationToken cancellationToken);
 
     Task<DataBridgeResponse<T>?> GetSamHerdsAsync<T>(

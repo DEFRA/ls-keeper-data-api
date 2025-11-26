@@ -33,15 +33,20 @@ public class FakeDataBridgeClient : IDataBridgeClient
         DateTime? updatedSinceDateTime = null,
         CancellationToken cancellationToken = default)
     {
-        var data = Enumerable.Range(0, top).Select(_ => GetSamCphHoldersByPartyId()).SelectMany(x => x).ToList();
+        var data = Enumerable.Range(0, top).Select(_ => GetSamCphHoldersByCphOrPartyId()).SelectMany(x => x).ToList();
         var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
         var response = GetDataBridgeResponse(objects!, top, skip);
         return Task.FromResult<DataBridgeResponse<T>?>(response);
     }
 
+    public Task<List<SamCphHolder>> GetSamHoldersByCphAsync(string id, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(GetSamCphHoldersByCphOrPartyId(holdingIdentifier: id));
+    }
+
     public Task<List<SamCphHolder>> GetSamHoldersByPartyIdAsync(string id, CancellationToken cancellationToken)
     {
-        return Task.FromResult(GetSamCphHoldersByPartyId(id));
+        return Task.FromResult(GetSamCphHoldersByCphOrPartyId(partyId: id));
     }
 
     public Task<DataBridgeResponse<T>?> GetSamHerdsAsync<T>(
@@ -165,7 +170,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
             }];
     }
 
-    private List<SamCphHolder> GetSamCphHoldersByPartyId(string? partyId = null, string? holdingIdentifier = null)
+    private List<SamCphHolder> GetSamCphHoldersByCphOrPartyId(string? partyId = null, string? holdingIdentifier = null)
     {
         return [
             new SamCphHolder
