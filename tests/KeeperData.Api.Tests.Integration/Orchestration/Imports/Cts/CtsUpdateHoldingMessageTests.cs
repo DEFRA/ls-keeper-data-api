@@ -10,6 +10,7 @@ using MongoDB.Driver;
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Cts;
 
 [Trait("Dependence", "localstack")]
+[Collection("Integration Tests")]
 public class CtsUpdateHoldingMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
 {
     private const int ProcessingTimeCircuitBreakerSeconds = 10;

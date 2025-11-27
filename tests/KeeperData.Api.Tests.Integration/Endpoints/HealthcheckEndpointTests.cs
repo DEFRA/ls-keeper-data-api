@@ -3,6 +3,7 @@ using FluentAssertions;
 namespace KeeperData.Api.Tests.Integration.Endpoints;
 
 [Trait("Dependence", "localstack")]
+[Collection("Integration Tests")]
 public class HealthcheckEndpointTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
 {
     private readonly HttpClient _httpClient = fixture.HttpClient;

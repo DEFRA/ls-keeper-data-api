@@ -6,6 +6,7 @@ using KeeperData.Core.Messaging.Contracts.V1.Cts;
 namespace KeeperData.Api.Tests.Integration.Orchestration.ChangeScanning.Cts;
 
 [Trait("Dependence", "localstack")]
+[Collection("Integration Tests")]
 public class CtsBulkScanOrchestratorTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
 {
     private const int ProcessingTimeCircuitBreakerSeconds = 30;

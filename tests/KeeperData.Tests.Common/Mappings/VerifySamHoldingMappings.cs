@@ -40,7 +40,7 @@ public static class VerifySamHoldingMappings
         target.HoldingStartDate.Should().Be(source.FEATURE_ADDRESS_FROM_DATE);
         target.HoldingEndDate.Should().Be(source.FEATURE_ADDRESS_TO_DATE);
 
-        var expectedStatus = source.FEATURE_ADDRESS_TO_DATE.HasValue && source.FEATURE_ADDRESS_TO_DATE != default
+        var expectedStatus = (source.IsDeleted ?? false)
             ? HoldingStatusType.Inactive.ToString()
             : HoldingStatusType.Active.ToString();
         target.HoldingStatus.Should().Be(expectedStatus);

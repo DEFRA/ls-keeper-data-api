@@ -8,7 +8,7 @@ using System.Web;
 namespace KeeperData.Api.Tests.Integration.Endpoints;
 
 [Trait("Dependence", "localstack")]
-[Collection("Database collection")]
+[Collection("Integration Tests")]
 public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>, IAsyncLifetime
 {
     private readonly HttpClient _httpClient = fixture.HttpClient;
@@ -117,6 +117,7 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
 
     public async Task InitializeAsync()
     {
+        await _fixture.MongoVerifier.DeleteAll<SiteDocument>();
         await _fixture.MongoVerifier.Insert(GivenTheseSites);
     }
 

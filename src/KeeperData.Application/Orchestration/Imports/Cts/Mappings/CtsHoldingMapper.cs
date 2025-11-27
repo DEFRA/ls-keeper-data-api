@@ -36,7 +36,7 @@ public static class CtsHoldingMapper
 
             HoldingStartDate = h.LOC_EFFECTIVE_FROM,
             HoldingEndDate = h.LOC_EFFECTIVE_TO,
-            HoldingStatus = HoldingStatusFormatters.FormatHoldingStatus(h.LOC_EFFECTIVE_TO),
+            HoldingStatus = HoldingStatusFormatters.FormatHoldingStatus(h.IsDeleted ?? false),
 
             PremiseActivityTypeId = null,
             PremiseActivityTypeCode = null,

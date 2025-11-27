@@ -80,7 +80,7 @@ public static class SamHoldingMapper
 
             HoldingStartDate = h.FEATURE_ADDRESS_FROM_DATE,
             HoldingEndDate = h.FEATURE_ADDRESS_TO_DATE,
-            HoldingStatus = HoldingStatusFormatters.FormatHoldingStatus(h.FEATURE_ADDRESS_TO_DATE),
+            HoldingStatus = HoldingStatusFormatters.FormatHoldingStatus(h.IsDeleted ?? false),
 
             PremiseActivityTypeId = premiseActivityTypeId,
             PremiseActivityTypeCode = h.FACILITY_BUSINSS_ACTVTY_CODE,
@@ -145,8 +145,8 @@ public static class SamHoldingMapper
         if (silverHoldings == null || silverHoldings.Count == 0)
             return null;
 
-        var representative = silverHoldings.Any(x => x.Deleted != true)
-            ? silverHoldings.Where(x => x.Deleted != true).OrderByDescending(h => h.LastUpdatedDate).First()
+        var representative = silverHoldings.Any(x => x.IsActive)
+            ? silverHoldings.Where(x => x.IsActive).OrderByDescending(h => h.LastUpdatedDate).First()
             : silverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
 
         var existingHoldingFilter = Builders<SiteDocument>.Filter.ElemMatch(
