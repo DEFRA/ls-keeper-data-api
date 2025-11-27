@@ -25,7 +25,7 @@ public static class VerifyCtsHoldingMappings
         target.HoldingStartDate.Should().Be(source.LOC_EFFECTIVE_FROM);
         target.HoldingEndDate.Should().Be(source.LOC_EFFECTIVE_TO);
 
-        var expectedStatus = source.LOC_EFFECTIVE_TO.HasValue && source.LOC_EFFECTIVE_TO != default
+        var expectedStatus = (source.IsDeleted ?? false)
             ? HoldingStatusType.Inactive.ToString()
             : HoldingStatusType.Active.ToString();
         target.HoldingStatus.Should().Be(expectedStatus);
