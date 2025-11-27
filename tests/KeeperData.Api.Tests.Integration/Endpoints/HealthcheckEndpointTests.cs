@@ -1,16 +1,29 @@
+using Amazon.S3.Model;
+using Amazon.S3;
 using FluentAssertions;
+using KeeperData.Api.Tests.Integration.Helpers;
+using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Endpoints;
 
-[Trait("Dependence", "localstack")]
-public class HealthcheckEndpointTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
+[Collection("Integration"), Trait("Dependence", "testcontainers")]
+public class HealthcheckEndpointTests
 {
-    private readonly HttpClient _httpClient = fixture.HttpClient;
+    private readonly MongoDbFixture _mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture;
+
+    public HealthcheckEndpointTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture, ApiContainerFixture apiContainerFixture)
+    {
+        _mongoDbFixture = mongoDbFixture;
+        _localStackFixture = localStackFixture;
+        _apiContainerFixture = apiContainerFixture;
+    }
 
     [Fact]
     public async Task GivenValidHealthCheckRequest_ShouldSucceed()
     {
-        var response = await _httpClient.GetAsync("health");
+        var response = await _apiContainerFixture.HttpClient.GetAsync("health");
         var responseBody = await response.Content.ReadAsStringAsync();
 
         response.EnsureSuccessStatusCode();

@@ -19,6 +19,10 @@
     </None>
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
+    <None Include="tests\KeeperData.Api.Tests.Integration\Helpers\ApiContainerFixture.cs" />
+    <None Include="tests\KeeperData.Api.Tests.Integration\Helpers\ContainerLoggingUtilityFixture.cs" />
+    <None Include="tests\KeeperData.Api.Tests.Integration\Helpers\DockerNetworkHelper.cs" />
+    <None Include="tests\KeeperData.Api.Tests.Integration\Helpers\IntegrationCollection.cs" />
   </ItemGroup>
   <ItemGroup>
     <DockerComposeServiceReference Include="keeperdata_api">

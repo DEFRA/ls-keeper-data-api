@@ -6,10 +6,20 @@ using Xunit;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Cts;
 
-[Trait("Dependence", "localstack")]
-public class CtsUpdateAgentMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
+[Collection("Integration"), Trait("Dependence", "testcontainers")]
+public class CtsUpdateAgentMessageTests
 {
     private const int ProcessingTimeCircuitBreakerSeconds = 10;
+    private readonly MongoDbFixture _mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture;
+
+    public CtsUpdateAgentMessageTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture, ApiContainerFixture apiContainerFixture)
+    {
+        _mongoDbFixture = mongoDbFixture;
+        _localStackFixture = localStackFixture;
+        _apiContainerFixture = apiContainerFixture;
+    }
 
     [Fact]
     public async Task GivenCtsUpdateAgentMessagePublishedToQueue_WhenReceived_ShouldBeHandled()
@@ -26,8 +36,8 @@ public class CtsUpdateAgentMessageTests(IntegrationTestFixture fixture) : IClass
         var startTime = DateTime.UtcNow;
         while (DateTime.UtcNow - startTime < timeout)
         {
-            foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
-                ContainerLoggingUtility.ServiceNameApi,
+            foundLogEntry = await ContainerLoggingUtilityFixture.FindContainerLogEntryAsync(
+                _apiContainerFixture.ApiContainer,
                 $"Handled message with correlationId: \"{correlationId}\"");
 
             if (foundLogEntry) break;
@@ -39,9 +49,9 @@ public class CtsUpdateAgentMessageTests(IntegrationTestFixture fixture) : IClass
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
     {
-        var queueUrl = "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue";
+        var queueUrl = $"{_localStackFixture.SqsEndpoint}/000000000000/ls_keeper_data_intake_queue";
         var additionalUserProperties = new Dictionary<string, string> { ["CorrelationId"] = correlationId };
         var request = SQSMessageUtility.CreateMessage(queueUrl, message, typeof(TMessage).Name, additionalUserProperties);
-        await fixture.PublishToQueueAsync(request, CancellationToken.None);
+        await _localStackFixture.SqsClient.SendMessageAsync(request, CancellationToken.None);
     }
 }

@@ -10,6 +10,8 @@ using MongoDB.Bson.Serialization.Serializers;
 
 namespace KeeperData.Api.Tests.Integration;
 
+[Obsolete("Use LocalStackFixture instead of IntegrationTestFixture for integration tests.")]
+
 public class IntegrationTestFixture : IDisposable
 {
     public HttpClient HttpClient { get; }
