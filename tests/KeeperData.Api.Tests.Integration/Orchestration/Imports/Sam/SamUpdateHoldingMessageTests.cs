@@ -8,6 +8,7 @@ using Xunit;
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Sam;
 
 [Trait("Dependence", "localstack")]
+[Collection("Integration Tests")]
 public class SamUpdateHoldingMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
 {
     private const int ProcessingTimeCircuitBreakerSeconds = 10;

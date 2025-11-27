@@ -8,7 +8,7 @@ using KeeperData.Core.Documents;
 namespace KeeperData.Api.Tests.Integration.Endpoints;
 
 [Trait("Dependence", "localstack")]
-[Collection("Database collection")]
+[Collection("Integration Tests")]
 public class PartiesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>, IAsyncLifetime
 {
     private readonly HttpClient _httpClient = fixture.HttpClient;
@@ -103,6 +103,7 @@ public class PartiesEndpointTests(IntegrationTestFixture fixture) : IClassFixtur
 
     public async Task InitializeAsync()
     {
+        await _fixture.MongoVerifier.DeleteAll<PartyDocument>();
         await _fixture.MongoVerifier.Insert(GivenTheseParties);
     }
 

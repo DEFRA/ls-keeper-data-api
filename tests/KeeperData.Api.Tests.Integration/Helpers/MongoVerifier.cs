@@ -57,4 +57,19 @@ public class MongoVerifier
         var collection = _database.GetCollection<T>(collectionName);
         await collection.DeleteManyAsync(FilterDefinition<T>.Empty);
     }
+
+    public async Task ClearAllCollections()
+    {
+        var collectionNames = await _database.ListCollectionNamesAsync();
+        var collections = await collectionNames.ToListAsync();
+
+        foreach (var collectionName in collections)
+        {
+            // Skip system collections
+            if (collectionName.StartsWith("system."))
+                continue;
+
+            await _database.DropCollectionAsync(collectionName);
+        }
+    }
 }

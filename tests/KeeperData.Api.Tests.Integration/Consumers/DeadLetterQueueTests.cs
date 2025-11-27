@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 namespace KeeperData.Api.Tests.Integration.Consumers;
 
 [Trait("Dependence", "localstack")]
+[Collection("Integration Tests")]
 public class DeadLetterQueueTests : IAsyncLifetime
 {
     //We don't use IntegrationTestFixture here because we need direct access to SQS/SNS clients 

@@ -12,7 +12,7 @@ using MongoDB.Driver;
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Sam;
 
 [Trait("Dependence", "localstack")]
-[Collection("Database collection")]
+[Collection("Integration Tests")]
 public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>, IAsyncLifetime
 {
     private const int ProcessingTimeCircuitBreakerSeconds = 30;
