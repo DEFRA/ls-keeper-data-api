@@ -139,6 +139,17 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult(GetCtsAgentOrKeeper(id));
     }
 
+    public Task<CtsAgentOrKeeper?> GetCtsKeeperByPartyIdAsync(string partyId, CancellationToken cancellationToken)
+    {
+        var keepers = GetCtsAgentOrKeeper();
+        if (keepers.Count > 0)
+        {
+            keepers[0].PAR_ID = partyId;
+            return Task.FromResult<CtsAgentOrKeeper?>(keepers[0]);
+        }
+        return Task.FromResult<CtsAgentOrKeeper?>(null);
+    }
+
     private static DataBridgeResponse<T> GetDataBridgeResponse<T>(List<T> data, int top, int skip)
     {
         return new DataBridgeResponse<T>

@@ -1,39 +1,48 @@
 using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
 using KeeperData.Api.Tests.Integration.Helpers;
+using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
+using MongoDB.Driver;
+using Xunit;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Cts;
 
 [Trait("Dependence", "localstack")]
-[Collection("Integration Tests")]
 public class CtsUpdateKeeperMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
 {
     private const int ProcessingTimeCircuitBreakerSeconds = 10;
 
     [Fact]
-    public async Task GivenCtsUpdateKeeperMessagePublishedToQueue_WhenReceived_ShouldBeHandled()
+    public async Task GivenCtsUpdateKeeperMessagePublishedToQueue_WhenReceived_ShouldPersistSilverData()
     {
         var correlationId = Guid.NewGuid().ToString();
-        var message = new CtsUpdateKeeperMessage { Identifier = "PARTY123" };
+        var partyId = Guid.NewGuid().ToString();
+        var message = new CtsUpdateKeeperMessage { Identifier = partyId };
 
         await ExecuteQueueTest(correlationId, message);
 
         var timeout = TimeSpan.FromSeconds(ProcessingTimeCircuitBreakerSeconds);
-        var pollInterval = TimeSpan.FromSeconds(2);
-
-        var foundLogEntry = false;
+        var pollInterval = TimeSpan.FromSeconds(1);
         var startTime = DateTime.UtcNow;
+
+        List<CtsPartyDocument> storedDocuments = [];
+
         while (DateTime.UtcNow - startTime < timeout)
         {
-            foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
-                ContainerLoggingUtility.ServiceNameApi,
-                $"Handled message with correlationId: \"{correlationId}\"");
+            var filter = Builders<CtsPartyDocument>.Filter.Eq(x => x.PartyId, partyId);
+            storedDocuments = await fixture.MongoVerifier.FindDocumentsAsync("ctsParties", filter);
 
-            if (foundLogEntry) break;
+            if (storedDocuments.Count > 0) break;
             await Task.Delay(pollInterval);
         }
 
+        storedDocuments.Should().NotBeEmpty();
+        storedDocuments[0].PartyId.Should().Be(partyId);
+
+        var foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
+            ContainerLoggingUtility.ServiceNameApi,
+            $"Handled message with correlationId: \"{correlationId}\"");
         foundLogEntry.Should().BeTrue();
     }
 
