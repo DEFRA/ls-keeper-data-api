@@ -8,7 +8,7 @@ using MongoDB.Driver;
 
 namespace KeeperData.Application.Orchestration.Imports.Sam.Holdings.Steps;
 
-[StepOrder(4)]
+[StepOrder(5)]
 public class SamHoldingImportPersistenceStep(
     IGenericRepository<SamHoldingDocument> silverHoldingRepository,
     IGenericRepository<SamPartyDocument> silverPartyRepository,

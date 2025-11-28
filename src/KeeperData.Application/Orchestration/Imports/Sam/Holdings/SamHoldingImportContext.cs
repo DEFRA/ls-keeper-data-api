@@ -1,6 +1,7 @@
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Documents.Working;
 
 namespace KeeperData.Application.Orchestration.Imports.Sam.Holdings;
 
@@ -24,4 +25,6 @@ public class SamHoldingImportContext
     public List<PartyDocument> GoldParties { get; set; } = [];
     public List<Core.Documents.SitePartyRoleRelationshipDocument> GoldSitePartyRoles { get; set; } = [];
     public List<SiteGroupMarkRelationshipDocument> GoldSiteGroupMarks { get; set; } = [];
+
+    public List<SitePartyRoleRelationship> SiteHolderPartyOrphansToClean { get; set; } = [];
 }
