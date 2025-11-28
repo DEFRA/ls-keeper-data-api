@@ -13,7 +13,7 @@ public class SamHoldingImportGoldMappingStep(
     ICountryIdentifierLookupService countryIdentifierLookupService,
     IPremiseTypeLookupService premiseTypeLookupService,
     ISpeciesTypeLookupService speciesTypeLookupService,
-    IProductionUsageLookupService productionUsageLookupService,
+    IPremiseActivityTypeLookupService premiseActivityTypeLookupService,
     IGenericRepository<SiteDocument> goldSiteRepository,
     IGenericRepository<PartyDocument> goldPartyRepository,
     ILogger<SamHoldingImportGoldMappingStep> logger)
@@ -43,7 +43,7 @@ public class SamHoldingImportGoldMappingStep(
             countryIdentifierLookupService.GetByIdAsync,
             premiseTypeLookupService.GetByIdAsync,
             speciesTypeLookupService.FindAsync,
-            productionUsageLookupService.FindAsync,
+            premiseActivityTypeLookupService.FindAsync,
             cancellationToken);
 
         context.GoldSitePartyRoles = SitePartyRoleMapper.ToGold(

@@ -6,6 +6,7 @@ using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
+using KeeperData.Tests.Common.TestData;
 using KeeperData.Tests.Common.TestData.Sam;
 using KeeperData.Tests.Common.Utilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,7 +33,6 @@ public class SamBulkImportWithAccurateRawDataTests
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
     private readonly Mock<IPremiseActivityTypeLookupService> _premiseActivityTypeLookupServiceMock = new();
     private readonly Mock<IPremiseTypeLookupService> _premiseTypeLookupServiceMock = new();
-    private readonly Mock<IProductionTypeLookupService> _productionTypeLookupServiceMock = new();
     private readonly Mock<IProductionUsageLookupService> _productionUsageLookupServiceMock = new();
     private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
     private readonly Mock<ISpeciesTypeLookupService> _speciesTypeLookupServiceMock = new();
@@ -94,8 +94,9 @@ public class SamBulkImportWithAccurateRawDataTests
         incoming.Should().BeEquivalentTo(
             expected,
             options => options
-                .Excluding(x => x.Id)
-                .Excluding(x => x.LastUpdatedDate)
+                .Excluding(ctx => ctx.Id)
+                .Excluding(ctx => ctx.Path.EndsWith("IdentifierId"))
+                .Excluding(ctx => ctx.Path.EndsWith("LastUpdatedDate"))
         );
     }
 
@@ -106,8 +107,9 @@ public class SamBulkImportWithAccurateRawDataTests
         incoming.OrderBy(x => x.Id).Should().BeEquivalentTo(
             expected.OrderBy(x => x.Id),
             options => options
-                .Excluding(x => x.Id)
-                .Excluding(x => x.LastUpdatedDate)
+                .Excluding(ctx => ctx.Id)
+                .Excluding(ctx => ctx.Path.EndsWith("IdentifierId"))
+                .Excluding(ctx => ctx.Path.EndsWith("LastUpdatedDate"))
         );
     }
 
@@ -118,7 +120,8 @@ public class SamBulkImportWithAccurateRawDataTests
         incoming.OrderBy(x => x.PartyId).ThenBy(x => x.RoleTypeName).Should().BeEquivalentTo(
             expected.OrderBy(x => x.PartyId).ThenBy(x => x.RoleTypeName),
             options => options
-                .Excluding(x => x.Id)
+                .Excluding(ctx => ctx.Id)
+                .Excluding(ctx => ctx.Path.EndsWith("LastUpdatedDate"))
         );
     }
 
@@ -129,8 +132,8 @@ public class SamBulkImportWithAccurateRawDataTests
         incoming.OrderBy(x => x.PartyId).ThenBy(x => x.RoleTypeName).Should().BeEquivalentTo(
             expected.OrderBy(x => x.PartyId).ThenBy(x => x.RoleTypeName),
             options => options
-                .Excluding(x => x.Id)
-                .Excluding(x => x.LastUpdatedDate)
+                .Excluding(ctx => ctx.Id)
+                .Excluding(ctx => ctx.Path.EndsWith("LastUpdatedDate"))
         );
     }
 
@@ -148,7 +151,6 @@ public class SamBulkImportWithAccurateRawDataTests
         factory.OverrideServiceAsScoped(_countryIdentifierLookupServiceMock.Object);
         factory.OverrideServiceAsScoped(_premiseActivityTypeLookupServiceMock.Object);
         factory.OverrideServiceAsScoped(_premiseTypeLookupServiceMock.Object);
-        factory.OverrideServiceAsScoped(_productionTypeLookupServiceMock.Object);
         factory.OverrideServiceAsScoped(_productionUsageLookupServiceMock.Object);
         factory.OverrideServiceAsScoped(_roleTypeLookupServiceMock.Object);
         factory.OverrideServiceAsScoped(_speciesTypeLookupServiceMock.Object);
@@ -281,30 +283,50 @@ public class SamBulkImportWithAccurateRawDataTests
     {
         _countryIdentifierLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .ReturnsAsync((string? code, CancellationToken token) => (CountryData.Find(code!)));
+
+        _countryIdentifierLookupServiceMock
+            .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? id, CancellationToken token) => (CountryData.GetById(id!)));
 
         _premiseActivityTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .ReturnsAsync((string? code, CancellationToken token) => (PremiseActivityTypeData.Find(code!)));
+
+        _premiseActivityTypeLookupServiceMock
+            .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? id, CancellationToken token) => (PremiseActivityTypeData.GetById(id!)));
 
         _premiseTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .ReturnsAsync((string? code, CancellationToken token) => (PremiseTypeData.Find(code!)));
 
-        _productionTypeLookupServiceMock
-            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+        _premiseTypeLookupServiceMock
+            .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? id, CancellationToken token) => (PremiseTypeData.GetById(id!)));
 
         _productionUsageLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .ReturnsAsync((string? code, CancellationToken token) => (ProductionUsageData.Find(code!)));
+
+        _productionUsageLookupServiceMock
+            .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? id, CancellationToken token) => (ProductionUsageData.GetById(id!)));
 
         _roleTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .ReturnsAsync((string? code, CancellationToken token) => (RoleData.Find(code!)));
+
+        _roleTypeLookupServiceMock
+            .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? id, CancellationToken token) => (RoleData.GetById(id!)));
 
         _speciesTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .ReturnsAsync((string? code, CancellationToken token) => (SpeciesData.Find(code!)));
+
+        _speciesTypeLookupServiceMock
+            .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? id, CancellationToken token) => (SpeciesData.GetById(id!)));
     }
 }

@@ -118,6 +118,7 @@ public class SiteGroupMarkMapperTests
     private readonly SamHoldingImportGoldMappingStep _goldMappingStep;
 
     private readonly Mock<IProductionUsageLookupService> _productionUsageLookupServiceMock = new();
+    private readonly Mock<IPremiseActivityTypeLookupService> _premiseActivityTypeLookupServiceMock = new();
     private readonly Mock<ISpeciesTypeLookupService> _speciesTypeLookupServiceMock = new();
     private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
@@ -126,6 +127,9 @@ public class SiteGroupMarkMapperTests
     {
         _productionUsageLookupServiceMock.Setup(x => x.FindAsync("BEEF", It.IsAny<CancellationToken>()))
             .ReturnsAsync(("ba9cb8fb-ab7f-42f2-bc1f-fa4d7fda4824", "Beef"));
+
+        _premiseActivityTypeLookupServiceMock.Setup(x => x.FindAsync("RM", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("d2d9be5e-18b4-4424-b196-fd40f3b105d8", "Red Meat"));
 
         _speciesTypeLookupServiceMock.Setup(x => x.FindAsync("CTT", It.IsAny<CancellationToken>()))
             .ReturnsAsync(("5a86d64d-0f17-46a0-92d5-11fd5b2c5830", "Cattle"));
@@ -152,7 +156,7 @@ public class SiteGroupMarkMapperTests
             _countryIdentifierLookupServiceMock.Object,
             Mock.Of<IPremiseTypeLookupService>(),
             _speciesTypeLookupServiceMock.Object,
-            _productionUsageLookupServiceMock.Object,
+            _premiseActivityTypeLookupServiceMock.Object,
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
             Mock.Of<ILogger<SamHoldingImportGoldMappingStep>>());
@@ -178,7 +182,7 @@ public class SiteGroupMarkMapperTests
         VerifyGoldData(context);
     }
 
-    private void VerifySilverData(SamHoldingImportContext context)
+    private static void VerifySilverData(SamHoldingImportContext context)
     {
         context.SilverHerds.Should().HaveCount(1);
         context.SilverHerds[0].SpeciesTypeId.Should().Be("5a86d64d-0f17-46a0-92d5-11fd5b2c5830");

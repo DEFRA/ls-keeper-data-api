@@ -62,6 +62,10 @@ public record SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes
     [JsonPropertyName("speciesTypeCode")]
     public string? SpeciesTypeCode { get; set; }
 
+    [BsonElement("speciesTypeName")]
+    [JsonPropertyName("speciesTypeName")]
+    public string? SpeciesTypeName { get; set; }
+
     [BsonElement("productionUsageId")]
     [JsonPropertyName("productionUsageId")]
     public string? ProductionUsageId { get; set; }

@@ -19,7 +19,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("createdDate")]
     [JsonPropertyName("createdDate")]
-    public DateTime CreatedDate { get; private set; }
+    public DateTime CreatedDate { get; set; }
 
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
