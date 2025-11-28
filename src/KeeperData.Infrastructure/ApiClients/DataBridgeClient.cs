@@ -293,6 +293,21 @@ public class DataBridgeClient(
         return result.Data;
     }
 
+    public async Task<CtsAgentOrKeeper?> GetCtsKeeperByPartyIdAsync(string partyId, CancellationToken cancellationToken)
+    {
+        if (!_ctsKeepersEnabled) return null;
+
+        var query = DataBridgeQueries.CtsKeeperByPartyId(partyId);
+        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetCtsKeepers, new { }, query);
+
+        var result = await GetFromApiAsync<CtsAgentOrKeeper>(
+            uri,
+            $"CTS keeper for PAR_ID '{partyId}'",
+            cancellationToken);
+
+        return result.Data.FirstOrDefault();
+    }
+
     private async Task<DataBridgeResponse<T>> GetFromApiAsync<T>(string requestUri, string context, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Initiating API call: {context}, URI: {uri}", context, requestUri);
