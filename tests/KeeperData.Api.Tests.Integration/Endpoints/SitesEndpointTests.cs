@@ -66,7 +66,7 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
     [InlineData("WhenSearchingForRecordsThatDoNotExist", null, "Smythe", null, 0, "")]
     [InlineData("WhenSearchingByDate", null, null, "2011-01-01", 2, SiteBId + "," + SiteCId)]
     [InlineData("WhenSearchingByDateAndType", "Other", null, "2011-01-01", 1, SiteBId)]
-    // TODO case insensitive search [InlineData("WhenSearchingCaseInsensitive", "john", "smith", 1, JohnSmithId)]
+    [InlineData("WhenSearchingCaseInsensitive", "business", null, null, 2, SiteAId + "," + SiteCId)]
     public async Task GivenASearchRequest_ShouldHaveExpectedResults(string scenario, string? type, string? identifier, string? dateStr, int expectedCount, string expectedIdCsv)
     {
         Console.WriteLine(scenario);

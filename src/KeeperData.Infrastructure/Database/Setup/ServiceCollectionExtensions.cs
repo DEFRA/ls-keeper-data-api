@@ -88,6 +88,8 @@ public static class ServiceCollectionExtensions
         foreach (var type in indexableTypes)
         {
             var collectionName = type.GetCustomAttribute<CollectionNameAttribute>()?.Name ?? type.Name;
+            //TODO refine this
+            await database.CreateCollectionAsync(collectionName, new CreateCollectionOptions() { Collation = new Collation("en", strength: CollationStrength.Primary, caseLevel: false ) });
             var collection = database.GetCollection<BsonDocument>(collectionName);
 
             var getIndexesMethod = type.GetMethod("GetIndexModels", BindingFlags.Public | BindingFlags.Static);
