@@ -19,7 +19,7 @@ public class PartiesRepository(
 {
     public async Task<int> CountAsync(FilterDefinition<PartyDocument> filter, CancellationToken cancellationToken = default)
     {
-        return (int)await _collection.CountDocumentsAsync(filter, new CountOptions { Collation = new Collation(locale: "en", strength: CollationStrength.Primary, caseLevel: false) }, cancellationToken: cancellationToken);
+        return (int)await _collection.CountDocumentsAsync(filter, new CountOptions { Collation = IndexDefaults.CollationCaseInsensitive }, cancellationToken: cancellationToken);
     }
 
     public async Task<List<PartyDocument>> FindAsync(
@@ -31,7 +31,7 @@ public class PartiesRepository(
     {
         return
             await _collection
-            .Find(filter, options: new FindOptions { Collation = new Collation(locale: "en", strength: CollationStrength.Primary, caseLevel: false) })
+            .Find(filter, options: new FindOptions { Collation = IndexDefaults.CollationCaseInsensitive })
             .Sort(sort)
             .Skip(skip)
             .Limit(take)

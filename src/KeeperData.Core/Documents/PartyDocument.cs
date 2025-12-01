@@ -175,7 +175,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
         [
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("lastName").Ascending("firstName"),
-                new CreateIndexOptions { Name = "idx_firstlastName", Collation = new Collation(locale: "en", caseLevel: false, strength: CollationStrength.Primary ) }),
+                new CreateIndexOptions { Name = "idx_firstlastName", Collation = IndexDefaults.CollationCaseInsensitive }),
 
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("customerNumber"),
