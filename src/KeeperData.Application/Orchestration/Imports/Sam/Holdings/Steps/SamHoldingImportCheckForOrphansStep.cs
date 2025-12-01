@@ -1,45 +1,44 @@
-using KeeperData.Application.Extensions;
+using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.Attributes;
-using KeeperData.Core.Documents.Working;
-using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Documents;
 using KeeperData.Core.Repositories;
-using KeeperData.Core.Services;
 using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Application.Orchestration.Imports.Sam.Holdings.Steps;
 
 [StepOrder(4)]
-public class SamHoldingImportCheckForOrphansStep(IGoldSitePartyRoleRelationshipRepository goldSitePartyRoleRelationshipRepository,
-    IRoleTypeLookupService roleTypeLookupService,
+public class SamHoldingImportCheckForOrphansStep(
+    IGoldSitePartyRoleRelationshipRepository goldSitePartyRoleRelationshipRepository,
+    IGenericRepository<PartyDocument> goldPartyRepository,
     ILogger<SamHoldingImportCheckForOrphansStep> logger)
     : ImportStepBase<SamHoldingImportContext>(logger)
 {
+    // TODO - Add tests for SamHoldingImportCheckForOrphansStep
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
     {
-        var findHolderRole = await roleTypeLookupService.FindAsync(InferredRoleType.CphHolder.GetDescription(), cancellationToken);
-
-        var holderPartyIds = context.RawHolders.Select(x => x.PARTY_ID.Trim()).ToList();
-
-        var incomingRelationships = context.RawHolders
-            .SelectMany(holder => holder.CphList.Select(cph => new SitePartyRoleRelationship
-            {
-                PartyId = holder.PARTY_ID.Trim(),
-                HoldingIdentifier = cph.Trim()
-            }))
+        var incomingPartyIds = context.GoldParties
+            .Select(x => x.CustomerNumber)
             .Distinct()
             .ToList();
 
         var existingRelationships = await goldSitePartyRoleRelationshipRepository.GetExistingSitePartyRoleRelationships(
-            holderPartyIds,
-            findHolderRole.roleTypeId ?? string.Empty,
+            context.Cph,
             cancellationToken);
 
         var orphans = existingRelationships
-            .Where(er => !incomingRelationships.Any(ir =>
-                ir.PartyId == er.PartyId &&
-                ir.HoldingIdentifier == er.HoldingIdentifier))
+            .Where(er => !incomingPartyIds.Any(ir =>
+                ir == er.PartyId))
             .ToList();
 
-        context.SiteHolderPartyOrphansToClean = orphans;
+        context.PartiesWithNoRelationshipToSiteToClean = orphans;
+
+        var cleanedParties = await SamPartyMapper.RemoveSitePartyOrphans(
+            context.GoldSiteId,
+            context.PartiesWithNoRelationshipToSiteToClean,
+            goldPartyRepository,
+            cancellationToken);
+
+        context.GoldParties ??= [];
+        context.GoldParties.AddRange(cleanedParties);
     }
 }

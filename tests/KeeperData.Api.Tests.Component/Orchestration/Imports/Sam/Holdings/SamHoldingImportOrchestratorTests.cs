@@ -27,7 +27,7 @@ public class SamHoldingImportOrchestratorTests
 
     private readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
     private readonly Mock<IGenericRepository<PartyDocument>> _goldPartyRepositoryMock = new();
-    private readonly Mock<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>> _goldSitePartyRoleRelationshipRepositoryMock = new();
+    private readonly Mock<IGoldSitePartyRoleRelationshipRepository> _goldSitePartyRoleRelationshipRepositoryMock = new();
     private readonly Mock<IGenericRepository<SiteGroupMarkRelationshipDocument>> _goldSiteGroupMarkRelationshipRepositoryMock = new();
 
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
@@ -303,6 +303,10 @@ public class SamHoldingImportOrchestratorTests
         _goldSitePartyRoleRelationshipRepositoryMock
             .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<Core.Documents.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+
+        _goldSitePartyRoleRelationshipRepositoryMock
+            .Setup(r => r.GetExistingSitePartyRoleRelationships(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
 
         // Gold Site Group Mark Relationships
         _goldSiteGroupMarkRelationshipRepositoryMock

@@ -2,6 +2,7 @@ using KeeperData.Application.Extensions;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Documents.Working;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Parties;
 using KeeperData.Core.Domain.Parties.Formatters;
@@ -10,7 +11,6 @@ using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Repositories;
 using MongoDB.Driver;
-
 namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 
 public static class SamPartyMapper
@@ -133,6 +133,8 @@ public static class SamPartyMapper
     }
 
     public static async Task<List<PartyDocument>> ToGold(
+        string goldSiteId,
+        string goldSiteName,
         List<SamPartyDocument> silverParties,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         IGenericRepository<PartyDocument> goldPartyRepository,
@@ -153,6 +155,8 @@ public static class SamPartyMapper
 
             var party = existingParty is not null
                 ? await UpdatePartyAsync(
+                    goldSiteId,
+                    goldSiteName,
                     silverParty,
                     existingParty,
                     goldSiteGroupMarks,
@@ -160,11 +164,49 @@ public static class SamPartyMapper
                     getSpeciesTypeById,
                     cancellationToken)
                 : await CreatePartyAsync(
+                    goldSiteId,
+                    goldSiteName,
                     silverParty,
                     goldSiteGroupMarks,
                     getCountryById,
                     getSpeciesTypeById,
                     cancellationToken);
+
+            result.Add(PartyDocument.FromDomain(party));
+        }
+
+        return result;
+    }
+
+    // TODO - Add tests for RemoveSitePartyOrphans
+    public static async Task<List<PartyDocument>> RemoveSitePartyOrphans(
+        string goldSiteId,
+        List<SitePartyRoleRelationship> orphansToClean,
+        IGenericRepository<PartyDocument> goldPartyRepository,
+        CancellationToken cancellationToken)
+    {
+        var result = new List<PartyDocument>();
+
+        var groupedOrphans = orphansToClean
+            .GroupBy(o => o.PartyId);
+
+        foreach (var orphanGroup in groupedOrphans)
+        {
+            var existingPartyFilter = Builders<PartyDocument>.Filter.Eq(x => x.CustomerNumber, orphanGroup.Key);
+            var existingParty = await goldPartyRepository.FindOneByFilterAsync(existingPartyFilter, cancellationToken);
+
+            if (existingParty is null) continue;
+
+            var roleIds = orphanGroup
+                .Where(o => !string.IsNullOrEmpty(o.RoleTypeId))
+                .Select(o => o.RoleTypeId!);
+
+            var party = existingParty.ToDomain();
+
+            foreach (var roleId in roleIds)
+            {
+                party.DeleteRole(roleId, goldSiteId);
+            }
 
             result.Add(PartyDocument.FromDomain(party));
         }
@@ -337,6 +379,8 @@ public static class SamPartyMapper
     }
 
     private static async Task<Party> CreatePartyAsync(
+        string goldSiteId,
+        string goldSiteName,
         SamPartyDocument incoming,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
@@ -392,11 +436,14 @@ public static class SamPartyMapper
 
             foreach (var r in roleList)
             {
-                var role = Role.Create(
+                var partyRoleSite = PartyRoleSite.Create(
+                    goldSiteId,
+                    goldSiteName
+                );
+
+                var partyRoleRole = PartyRoleRole.Create(
                     r.RoleTypeId ?? string.Empty,
-                    r.RoleTypeName ?? string.Empty,
-                    r.EffectiveFromDate,
-                    r.EffectiveToDate
+                    r.RoleTypeName ?? string.Empty
                 );
 
                 var matchingMarks = goldSiteGroupMarks
@@ -423,7 +470,11 @@ public static class SamPartyMapper
                     speciesManaged.Add(managedSpecies);
                 }
 
-                var partyRole = PartyRole.Create(role, speciesManaged);
+                var partyRole = PartyRole.Create(
+                    partyRoleSite,
+                    partyRoleRole,
+                    speciesManaged);
+
                 partyRoles.Add(partyRole);
             }
 
@@ -434,6 +485,8 @@ public static class SamPartyMapper
     }
 
     private static async Task<Party> UpdatePartyAsync(
+        string goldSiteId,
+        string goldSiteName,
         SamPartyDocument incoming,
         PartyDocument existing,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
@@ -492,11 +545,14 @@ public static class SamPartyMapper
         {
             foreach (var r in roleList)
             {
-                var role = Role.Create(
+                var partyRoleSite = PartyRoleSite.Create(
+                    goldSiteId,
+                    goldSiteName
+                );
+
+                var partyRoleRole = PartyRoleRole.Create(
                     r.RoleTypeId ?? string.Empty,
-                    r.RoleTypeName ?? string.Empty,
-                    r.EffectiveFromDate,
-                    r.EffectiveToDate
+                    r.RoleTypeName ?? string.Empty
                 );
 
                 var matchingMarks = goldSiteGroupMarks
@@ -523,14 +579,13 @@ public static class SamPartyMapper
                     speciesManaged.Add(managedSpecies);
                 }
 
-                var partyRole = PartyRole.Create(role, speciesManaged);
+                var partyRole = PartyRole.Create(
+                    partyRoleSite,
+                    partyRoleRole,
+                    speciesManaged);
 
                 party.AddOrUpdateRole(party.LastUpdatedDate, partyRole);
             }
-        }
-        else if (party.Roles.Count != 0)
-        {
-            party.SetRoles([]);
         }
 
         return party;

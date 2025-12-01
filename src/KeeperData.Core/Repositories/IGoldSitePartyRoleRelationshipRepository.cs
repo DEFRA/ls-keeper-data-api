@@ -6,7 +6,6 @@ public interface IGoldSitePartyRoleRelationshipRepository
     : IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>
 {
     Task<List<SitePartyRoleRelationship>> GetExistingSitePartyRoleRelationships(
-        List<string> holderPartyIds,
-        string holderRoleId,
+        string holdingIdentifier,
         CancellationToken cancellationToken = default);
 }

@@ -9,7 +9,6 @@ namespace KeeperData.Core.Messaging.Contracts.Serializers;
     Converters = []
 )]
 [JsonSerializable(typeof(SamImportHoldingMessage))]
-[JsonSerializable(typeof(SamImportHolderMessage))]
 [JsonSerializable(typeof(CtsImportHoldingMessage))]
 [JsonSerializable(typeof(SamBulkScanMessage))]
 [JsonSerializable(typeof(CtsBulkScanMessage))]

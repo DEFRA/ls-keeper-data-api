@@ -80,7 +80,6 @@ public static class ServiceCollectionExtensions
         var messageIdentifierTypes = new[]
         {
             typeof(SamImportHoldingMessage),
-            typeof(SamImportHolderMessage),
             typeof(CtsImportHoldingMessage),
             typeof(SamBulkScanMessage),
             typeof(CtsBulkScanMessage),

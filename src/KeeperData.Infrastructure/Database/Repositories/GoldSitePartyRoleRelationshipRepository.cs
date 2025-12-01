@@ -16,20 +16,16 @@ public class GoldSitePartyRoleRelationshipRepository(IOptions<MongoConfig> mongo
         unitOfWork), IGoldSitePartyRoleRelationshipRepository
 {
     public async Task<List<SitePartyRoleRelationship>> GetExistingSitePartyRoleRelationships(
-        List<string> holderPartyIds,
-        string holderRoleId,
+        string holdingIdentifier,
         CancellationToken cancellationToken = default)
     {
-        if (holderPartyIds == null)
-            return [];
-
-        var filter = Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.In(x => x.PartyId, holderPartyIds) &
-            Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.RoleTypeId, holderRoleId);
+        var filter = Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
 
         var projection = Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Projection
             .Include(x => x.Id)
             .Include(x => x.PartyId)
-            .Include(x => x.HoldingIdentifier);
+            .Include(x => x.HoldingIdentifier)
+            .Include(x => x.RoleTypeId);
 
         var result = await _collection
             .Find(filter)

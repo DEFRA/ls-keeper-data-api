@@ -70,6 +70,7 @@ public class Site : IAggregateRoot
     }
 
     public static Site Create(
+        string id,
         DateTime createdDate,
         DateTime lastUpdatedDate,
         string type,
@@ -83,7 +84,7 @@ public class Site : IAggregateRoot
         Location? location = null)
     {
         var site = new Site(
-            Guid.NewGuid().ToString(),
+            id,
             createdDate,
             lastUpdatedDate,
             type,

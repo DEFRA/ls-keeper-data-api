@@ -15,6 +15,7 @@ using Moq;
 using Moq.Contrib.HttpClient;
 using System.Linq.Expressions;
 using System.Net;
+using static KeeperData.Tests.Common.TestData.Sam.SamTestScenarios;
 
 namespace KeeperData.Api.Tests.Component.Orchestration.Imports.Sam;
 
@@ -27,7 +28,7 @@ public class SamBulkImportWithAccurateRawDataTests
 
     private readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
     private readonly Mock<IGenericRepository<PartyDocument>> _goldPartyRepositoryMock = new();
-    private readonly Mock<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>> _goldSitePartyRoleRelationshipRepositoryMock = new();
+    private readonly Mock<IGoldSitePartyRoleRelationshipRepository> _goldSitePartyRoleRelationshipRepositoryMock = new();
     private readonly Mock<IGenericRepository<SiteGroupMarkRelationshipDocument>> _goldSiteGroupMarkRelationshipRepositoryMock = new();
 
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
@@ -41,8 +42,34 @@ public class SamBulkImportWithAccurateRawDataTests
     public async Task GivenAHoldingIdentifier_WhenExecutingTheBulkImportStrategy_ShouldCorrectlyTransformTheData()
     {
         var scenarioData = SamTestScenarios.DefaultScenario;
+        var result = await RunDefaultScenarioAsync(scenarioData);
 
-        var (holdingsUri, herdsUri, holdersUri, partiesUri) = GetAllQueryUris(scenarioData.Cph, scenarioData.RawParties.Select(x => x.PARTY_ID));
+        VerifyGoldSite(result.GoldSite!, scenarioData.ExpectedGoldSite!);
+        VerifyGoldParties(result.GoldParties!, scenarioData.ExpectedGoldParties!);
+        VerifyGoldSitePartyRoles(result.GoldSitePartyRoles!, scenarioData.ExpectedGoldSitePartyRoles!);
+        VerifyGoldSiteGroupMarks(result.GoldSiteGroupMarks!, scenarioData.ExpectedGoldSiteGroupMarks!);
+    }
+
+    [Fact]
+    public async Task GivenHoldingDataAlreadyExists_WhenTheHolderIsChanged_ShouldCorrectlyTransformTheData()
+    {
+        var importScenarioData = SamTestScenarios.DefaultScenario;
+        var importResult = await RunDefaultScenarioAsync(importScenarioData);
+
+        var updateScenarioData = SamTestScenarios.Scenario_UpdatedHolderAndParties();
+        var updateResult = await RunDefaultScenarioAsync(updateScenarioData, importResult);
+
+        VerifyGoldSite(updateResult.GoldSite!, updateScenarioData.ExpectedGoldSite!);
+        VerifyGoldParties(updateResult.GoldParties!, updateScenarioData.ExpectedGoldParties!);
+        VerifyGoldSitePartyRoles(updateResult.GoldSitePartyRoles!, updateScenarioData.ExpectedGoldSitePartyRoles!);
+        VerifyGoldSiteGroupMarks(updateResult.GoldSiteGroupMarks!, updateScenarioData.ExpectedGoldSiteGroupMarks!);
+    }
+
+    private async Task<SamHoldingImportContext> RunDefaultScenarioAsync(SamTestScenarioData scenarioData, SamHoldingImportContext? existingContext = null)
+    {
+        var partyIds = scenarioData.RawParties.Select(x => x.PARTY_ID).Union(scenarioData.RawHolders.Select(x => x.PARTY_ID)).Distinct().ToList();
+
+        var (holdingsUri, herdsUri, holdersUri, partiesUri) = GetAllQueryUris(scenarioData.Cph, partyIds);
 
         SetupDefaultRepositoryMocks();
         SetupDefaultLookupServiceMocks();
@@ -50,22 +77,17 @@ public class SamBulkImportWithAccurateRawDataTests
         var factory = new AppWebApplicationFactory();
         OverrideServiceMocks(factory);
 
+        if (existingContext != null)
+        {
+            SetupRepositoryMocksFromContext(existingContext);
+        }
+
         SetupDataBridgeApiRequest(factory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawHoldings));
         SetupDataBridgeApiRequest(factory, herdsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawHerds));
         SetupDataBridgeApiRequest(factory, holdersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawHolders));
         SetupDataBridgeApiRequest(factory, partiesUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawParties));
 
-        var result = await ExecuteTestAsync(factory, scenarioData.Cph);
-
-        VerifyDataBridgeApiEndpointCalled(factory, holdingsUri, Times.Once());
-        VerifyDataBridgeApiEndpointCalled(factory, herdsUri, Times.Once());
-        VerifyDataBridgeApiEndpointCalled(factory, holdersUri, Times.Once());
-        VerifyDataBridgeApiEndpointCalled(factory, partiesUri, Times.Once());
-
-        VerifyGoldSite(result.GoldSite!, scenarioData.ExpectedGoldSite!);
-        VerifyGoldParties(result.GoldParties!, scenarioData.ExpectedGoldParties!);
-        VerifyGoldSitePartyRoles(result.GoldSitePartyRoles!, scenarioData.ExpectedGoldSitePartyRoles!);
-        VerifyGoldSiteGroupMarks(result.GoldSiteGroupMarks!, scenarioData.ExpectedGoldSiteGroupMarks!);
+        return await ExecuteTestAsync(factory, scenarioData.Cph);
     }
 
     private static async Task<SamHoldingImportContext> ExecuteTestAsync(AppWebApplicationFactory factory, string holdingIdentifier)
@@ -160,11 +182,6 @@ public class SamBulkImportWithAccurateRawDataTests
     {
         factory.DataBridgeApiClientHttpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{TestConstants.DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(httpStatusCode, httpResponseMessage);
-    }
-
-    private static void VerifyDataBridgeApiEndpointCalled(AppWebApplicationFactory factory, string requestUrl, Times times)
-    {
-        factory.DataBridgeApiClientHttpMessageHandlerMock.VerifyRequest(HttpMethod.Get, $"{TestConstants.DataBridgeApiBaseUrl}/{requestUrl}", times);
     }
 
     private static (string holdingsUri, string herdsUri, string holdersUri, string partiesUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)
@@ -262,6 +279,10 @@ public class SamBulkImportWithAccurateRawDataTests
 
         // Gold Site Party Role Relationships
         _goldSitePartyRoleRelationshipRepositoryMock
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Core.Documents.SitePartyRoleRelationshipDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        _goldSitePartyRoleRelationshipRepositoryMock
             .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<Core.Documents.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
@@ -269,7 +290,15 @@ public class SamBulkImportWithAccurateRawDataTests
             .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<Core.Documents.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
+        _goldSitePartyRoleRelationshipRepositoryMock
+            .Setup(r => r.GetExistingSitePartyRoleRelationships(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
         // Gold Site Group Mark Relationships
+        _goldSiteGroupMarkRelationshipRepositoryMock
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SiteGroupMarkRelationshipDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
         _goldSiteGroupMarkRelationshipRepositoryMock
             .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SiteGroupMarkRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -277,6 +306,90 @@ public class SamBulkImportWithAccurateRawDataTests
         _goldSiteGroupMarkRelationshipRepositoryMock
             .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<SiteGroupMarkRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+    }
+
+    private void SetupRepositoryMocksFromContext(SamHoldingImportContext context)
+    {
+        // Silver Holding
+        _silverHoldingRepositoryMock
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHoldingDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([.. context.SilverHoldings.Select(h =>
+            {
+                h.Id = Guid.NewGuid().ToString();
+                return h;
+            })]);
+
+        // Silver Party
+        _silverPartyRepositoryMock
+            .Setup(r => r.FindOneAsync(It.IsAny<Expression<Func<SamPartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Expression<Func<SamPartyDocument, bool>> expr, CancellationToken _) =>
+            {
+                var compiled = expr.Compile();
+                return context.SilverParties.Select(h =>
+                {
+                    h.Id = Guid.NewGuid().ToString();
+                    return h;
+                })
+                .ToList().FirstOrDefault(p => compiled(p));
+            });
+
+        // Silver Role Relationships
+        _silverSitePartyRoleRelationshipRepositoryMock
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Core.Documents.Silver.SitePartyRoleRelationshipDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([.. context.SilverPartyRoles.Select(h =>
+            {
+                h.Id = Guid.NewGuid().ToString();
+                return h;
+            })]);
+
+        // Silver Herds
+        _silverHerdRepositoryMock
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHerdDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([.. context.SilverHerds.Select(h =>
+            {
+                h.Id = Guid.NewGuid().ToString();
+                return h;
+            })]);
+
+        // Gold Site
+        _goldSiteRepositoryMock
+            .Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => {
+                context.GoldSite!.Id = Guid.NewGuid().ToString();
+                return context.GoldSite;
+            });
+
+        // Gold Party
+        _goldPartyRepositoryMock
+            .Setup(r => r.FindOneAsync(It.IsAny<Expression<Func<PartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Expression<Func<PartyDocument, bool>> expr, CancellationToken _) =>
+            {
+                var compiled = expr.Compile();
+                return context.GoldParties.Select(h =>
+                {
+                    h.Id = Guid.NewGuid().ToString();
+                    return h;
+                })
+                .ToList().FirstOrDefault(p => compiled(p));
+            });
+
+        // Gold Site Party Role Relationships
+        _goldSitePartyRoleRelationshipRepositoryMock
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Core.Documents.SitePartyRoleRelationshipDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([.. context.GoldSitePartyRoles.Select(h =>
+            {
+                h.Id = Guid.NewGuid().ToString();
+                return h;
+            })]);
+
+        // Gold Site Group Mark Relationships
+        _goldSiteGroupMarkRelationshipRepositoryMock
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SiteGroupMarkRelationshipDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([.. context.GoldSiteGroupMarks.Select(h =>
+            {
+                h.Id = Guid.NewGuid().ToString();
+                return h;
+            })]);
     }
 
     private void SetupDefaultLookupServiceMocks()

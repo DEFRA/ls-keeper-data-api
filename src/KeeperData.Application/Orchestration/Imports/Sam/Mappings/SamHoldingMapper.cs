@@ -5,7 +5,6 @@ using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Domain.Sites.Formatters;
-using KeeperData.Core.Repositories;
 using MongoDB.Driver;
 
 namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
@@ -130,10 +129,11 @@ public static class SamHoldingMapper
     }
 
     public static async Task<SiteDocument?> ToGold(
+        string goldSiteId,
+        SiteDocument? existingSite,
         List<SamHoldingDocument> silverHoldings,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         List<PartyDocument> goldParties,
-        IGenericRepository<SiteDocument> goldSiteRepository,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
         Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
         Func<string?, CancellationToken, Task<(string? speciesTypeId, string? speciesTypeName)>> findSpecies,
@@ -146,13 +146,6 @@ public static class SamHoldingMapper
         var representative = silverHoldings.Any(x => x.IsActive)
             ? silverHoldings.Where(x => x.IsActive).OrderByDescending(h => h.LastUpdatedDate).First()
             : silverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
-
-        var existingHoldingFilter = Builders<SiteDocument>.Filter.ElemMatch(
-            x => x.Identifiers,
-            i => i.Identifier == representative.CountyParishHoldingNumber
-                && i.Type == HoldingIdentifierType.CphNumber.ToString());
-
-        var existingSite = await goldSiteRepository.FindOneByFilterAsync(existingHoldingFilter, cancellationToken);
 
         var distinctSpecies = await GetDistinctReferenceDataAsync<SpeciesDocument>(
             silverHoldings.Select(h => h.SpeciesTypeCode),
@@ -201,6 +194,7 @@ public static class SamHoldingMapper
                 activities,
                 cancellationToken)
             : await CreateSiteAsync(
+                goldSiteId,
                 representative,
                 goldSiteGroupMarks,
                 goldParties,
@@ -214,6 +208,7 @@ public static class SamHoldingMapper
     }
 
     private static async Task<Site> CreateSiteAsync(
+        string goldSiteId,
         SamHoldingDocument representative,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         List<PartyDocument> goldParties,
@@ -265,6 +260,7 @@ public static class SamHoldingMapper
             .ToList();
 
         var site = Site.Create(
+            goldSiteId,
             representative.CreatedDate,
             representative.LastUpdatedDate,
             premiseType?.Code ?? string.Empty,

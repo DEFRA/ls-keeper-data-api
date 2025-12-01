@@ -5,11 +5,15 @@ using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
 
-public class PartyRoleDocument : INestedEntity
+public class PartyRoleWithSiteDocument : INestedEntity
 {
     [BsonElement("id")]
     [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
+
+    [BsonElement("site")]
+    [JsonPropertyName("site")]
+    public PartyRoleSiteDocument? Site { get; set; }
 
     [BsonElement("role")]
     [JsonPropertyName("role")]
@@ -23,9 +27,10 @@ public class PartyRoleDocument : INestedEntity
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime? LastUpdatedDate { get; set; }
 
-    public static PartyRoleDocument FromDomain(PartyRole m) => new()
+    public static PartyRoleWithSiteDocument FromDomain(PartyRole m) => new()
     {
         IdentifierId = m.Id,
+        Site = m.Site != null ? PartyRoleSiteDocument.FromDomain(m.Site) : null,
         Role = PartyRoleRoleDocument.FromDomain(m.Role),
         SpeciesManagedByRole = [.. m.SpeciesManagedByRole.Select(ManagedSpeciesDocument.FromDomain)],
         LastUpdatedDate = m.LastUpdatedDate
@@ -37,7 +42,7 @@ public class PartyRoleDocument : INestedEntity
 
         return new PartyRole(
             IdentifierId,
-            null,
+            Site?.ToDomain(),
             Role.ToDomain(),
             species,
             LastUpdatedDate

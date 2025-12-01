@@ -1,12 +1,15 @@
 using FluentAssertions;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings.Steps;
+using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
+using KeeperData.Tests.Common.Factories;
 using Microsoft.Extensions.Logging;
+using MongoDB.Driver;
 using Moq;
 
 namespace KeeperData.Application.Tests.Unit.Orchestration.Imports.Sam.Mappings;
@@ -71,6 +74,7 @@ public class SiteGroupMarkMapperTests
             RoleTypeName = "Livestock Keeper",
             SpeciesTypeId = "5a86d64d-0f17-46a0-92d5-11fd5b2c5830",
             SpeciesTypeCode = "CTT",
+            SpeciesTypeName = "Cattle",
             ProductionUsageId = "ba9cb8fb-ab7f-42f2-bc1f-fa4d7fda4824",
             ProductionUsageCode = "BEEF",
             GroupMarkStartDate = new DateTime(2008, 7, 16, 0, 0, 0),
@@ -89,6 +93,7 @@ public class SiteGroupMarkMapperTests
             RoleTypeName = "Livestock Owner",
             SpeciesTypeId = "5a86d64d-0f17-46a0-92d5-11fd5b2c5830",
             SpeciesTypeCode = "CTT",
+            SpeciesTypeName = "Cattle",
             ProductionUsageId = "ba9cb8fb-ab7f-42f2-bc1f-fa4d7fda4824",
             ProductionUsageCode = "BEEF",
             GroupMarkStartDate = new DateTime(2008, 7, 16, 0, 0, 0),
@@ -107,6 +112,7 @@ public class SiteGroupMarkMapperTests
             RoleTypeName = "Livestock Keeper",
             SpeciesTypeId = "5a86d64d-0f17-46a0-92d5-11fd5b2c5830",
             SpeciesTypeCode = "CTT",
+            SpeciesTypeName = "Cattle",
             ProductionUsageId = "ba9cb8fb-ab7f-42f2-bc1f-fa4d7fda4824",
             ProductionUsageCode = "BEEF",
             GroupMarkStartDate = new DateTime(2008, 7, 16, 0, 0, 0),
@@ -122,6 +128,8 @@ public class SiteGroupMarkMapperTests
     private readonly Mock<ISpeciesTypeLookupService> _speciesTypeLookupServiceMock = new();
     private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
+
+    private readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
 
     public SiteGroupMarkMapperTests()
     {
@@ -143,6 +151,10 @@ public class SiteGroupMarkMapperTests
         _countryIdentifierLookupServiceMock.Setup(x => x.FindAsync("GB", It.IsAny<CancellationToken>()))
             .ReturnsAsync(("5e4b8d0d-96a8-4102-81e2-f067ee85d030", "United Kingdom"));
 
+        _goldSiteRepositoryMock
+            .Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SiteDocument?)null);
+
         _silverMappingStep = new SamHoldingImportSilverMappingStep(
             Mock.Of<IPremiseActivityTypeLookupService>(),
             Mock.Of<IPremiseTypeLookupService>(),
@@ -157,7 +169,7 @@ public class SiteGroupMarkMapperTests
             Mock.Of<IPremiseTypeLookupService>(),
             _speciesTypeLookupServiceMock.Object,
             _premiseActivityTypeLookupServiceMock.Object,
-            Mock.Of<IGenericRepository<SiteDocument>>(),
+            _goldSiteRepositoryMock.Object,
             Mock.Of<IGenericRepository<PartyDocument>>(),
             Mock.Of<ILogger<SamHoldingImportGoldMappingStep>>());
     }
@@ -168,7 +180,7 @@ public class SiteGroupMarkMapperTests
         var context = new SamHoldingImportContext
         {
             Cph = "12/345/6789",
-            RawHoldings = [],
+            RawHoldings = GenerateSamCphHolding("12/345/6789", 1),
             RawHerds = _sourceSamHerds,
             RawParties = _sourceSamParties
         };
@@ -227,5 +239,20 @@ public class SiteGroupMarkMapperTests
 
         context.GoldSiteGroupMarks.OrderBy(x => x.PartyId).ThenBy(x => x.RoleTypeName).ToList()
             .Should().BeEquivalentTo(_expectedResult, options => options.Excluding(x => x.LastUpdatedDate));
+    }
+
+    private static List<SamCphHolding> GenerateSamCphHolding(string holdingIdentifier, int quantity)
+    {
+        var records = new List<SamCphHolding>();
+        var factory = new MockSamRawDataFactory();
+        for (var i = 0; i < quantity; i++)
+        {
+            records.Add(factory.CreateMockHolding(
+                changeType: DataBridgeConstants.ChangeTypeInsert,
+                batchId: 1,
+                holdingIdentifier: holdingIdentifier,
+                endDate: DateTime.UtcNow.Date));
+        }
+        return records;
     }
 }

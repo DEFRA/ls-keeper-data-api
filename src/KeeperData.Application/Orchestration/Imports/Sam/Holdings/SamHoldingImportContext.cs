@@ -21,10 +21,14 @@ public class SamHoldingImportContext
     public List<Core.Documents.Silver.SitePartyRoleRelationshipDocument> SilverPartyRoles { get; set; } = [];
     public List<SamHerdDocument> SilverHerds { get; set; } = [];
 
+    public string GoldSiteId { get; set; } = string.Empty;
+    public string GoldSiteName { get; set; } = string.Empty;
+    public SiteDocument? ExistingGoldSite { get; set; }
+
     public SiteDocument? GoldSite { get; set; }
     public List<PartyDocument> GoldParties { get; set; } = [];
     public List<Core.Documents.SitePartyRoleRelationshipDocument> GoldSitePartyRoles { get; set; } = [];
     public List<SiteGroupMarkRelationshipDocument> GoldSiteGroupMarks { get; set; } = [];
 
-    public List<SitePartyRoleRelationship> SiteHolderPartyOrphansToClean { get; set; } = [];
+    public List<SitePartyRoleRelationship> PartiesWithNoRelationshipToSiteToClean { get; set; } = [];
 }
