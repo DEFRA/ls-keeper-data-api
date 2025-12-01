@@ -6,7 +6,8 @@ public static class DataBridgeQueries
         int top,
         int skip,
         string? selectFields = null,
-        DateTime? updatedSinceDateTime = null)
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null)
     {
         var query = new Dictionary<string, string>
         {
@@ -23,6 +24,11 @@ public static class DataBridgeQueries
         {
             var formattedDate = updatedSinceDateTime.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
             query["$filter"] = $"UpdatedAtUtc ge {formattedDate} or CreatedAtUtc ge {formattedDate}"; //if updated date is null use created date
+        }
+
+        if (!string.IsNullOrWhiteSpace(orderBy))
+        {
+            query["$orderby"] = orderBy;
         }
 
         return query;

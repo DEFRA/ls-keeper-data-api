@@ -53,7 +53,7 @@ public class SamHoldingDailyScanStepTests
     {
         var responseMock = MockSamData.GetSamHoldingsScanIdentifierDataBridgeResponse(0, 0, 0);
         _dataBridgeClientMock
-            .Setup(c => c.GetSamHoldingsAsync<SamScanHoldingIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetSamHoldingsAsync<SamScanHoldingIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
@@ -63,6 +63,7 @@ public class SamHoldingDailyScanStepTests
             It.IsAny<int>(),
             It.IsAny<string>(),
             It.Is<DateTime?>(d => d.HasValue && d.Value.Subtract(_context.UpdatedSinceDateTime!.Value).TotalSeconds < 1),
+            It.IsAny<string>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -71,7 +72,7 @@ public class SamHoldingDailyScanStepTests
     {
         var responseMock = MockSamData.GetSamHoldingsScanIdentifierDataBridgeResponse(1, 1, 1);
         _dataBridgeClientMock
-            .Setup(c => c.GetSamHoldingsAsync<SamScanHoldingIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetSamHoldingsAsync<SamScanHoldingIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);

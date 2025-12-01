@@ -89,8 +89,6 @@ public static class ServiceCollectionExtensions
             typeof(CtsUpdateAgentMessage),
             typeof(SamDailyScanMessage),
             typeof(SamUpdateHoldingMessage),
-            typeof(SamUpdateHolderMessage),
-            typeof(SamUpdateHerdMessage),
             typeof(SamUpdatePartyMessage)
         };
 

@@ -9,6 +9,7 @@ public interface IDataBridgeClient
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default);
     Task<List<SamCphHolding>> GetSamHoldingsAsync(string id, CancellationToken cancellationToken);
 
@@ -17,6 +18,7 @@ public interface IDataBridgeClient
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default);
     Task<List<SamCphHolder>> GetSamHoldersByCphAsync(string id, CancellationToken cancellationToken);
     Task<List<SamCphHolder>> GetSamHoldersByPartyIdAsync(string id, CancellationToken cancellationToken);
@@ -26,6 +28,7 @@ public interface IDataBridgeClient
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default);
     Task<List<SamHerd>> GetSamHerdsAsync(string id, CancellationToken cancellationToken);
 
@@ -35,6 +38,7 @@ public interface IDataBridgeClient
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default);
     Task<List<SamParty>> GetSamPartiesAsync(IEnumerable<string> ids, CancellationToken cancellationToken);
 

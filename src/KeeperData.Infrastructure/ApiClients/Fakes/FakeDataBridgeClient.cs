@@ -13,6 +13,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         var data = Enumerable.Range(0, top).Select(_ => GetSamCphHolding()).SelectMany(x => x).ToList();
@@ -31,6 +32,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         var data = Enumerable.Range(0, top).Select(_ => GetSamCphHoldersByCphOrPartyId()).SelectMany(x => x).ToList();
@@ -54,6 +56,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         var data = Enumerable.Range(0, top).Select(_ => GetSamHerd()).SelectMany(x => x).ToList();
@@ -77,6 +80,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         var data = Enumerable.Range(0, top).Select(_ => GetSamParties()).SelectMany(x => x).ToList();
@@ -170,7 +174,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
             }];
     }
 
-    private List<SamCphHolder> GetSamCphHoldersByCphOrPartyId(string? partyId = null, string? holdingIdentifier = null)
+    private static List<SamCphHolder> GetSamCphHoldersByCphOrPartyId(string? partyId = null, string? holdingIdentifier = null)
     {
         return [
             new SamCphHolder
@@ -215,7 +219,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
         };
     }
 
-    private List<SamParty> GetSamParties(string? id = null)
+    private static List<SamParty> GetSamParties(string? id = null)
     {
         return [
             new SamParty

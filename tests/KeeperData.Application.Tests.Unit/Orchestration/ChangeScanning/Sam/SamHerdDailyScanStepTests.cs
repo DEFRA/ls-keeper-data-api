@@ -53,7 +53,7 @@ public class SamHerdDailyScanStepTests
     {
         var responseMock = MockSamData.GetSamHerdsScanIdentifierDataBridgeResponse(0, 0, 0);
         _dataBridgeClientMock
-            .Setup(c => c.GetSamHerdsAsync<SamScanHerdIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetSamHerdsAsync<SamScanHerdIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
@@ -63,6 +63,7 @@ public class SamHerdDailyScanStepTests
             It.IsAny<int>(),
             It.IsAny<string>(),
             It.Is<DateTime?>(d => d.HasValue && d.Value.Subtract(_context.UpdatedSinceDateTime!.Value).TotalSeconds < 1),
+            It.IsAny<string>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -71,11 +72,11 @@ public class SamHerdDailyScanStepTests
     {
         var responseMock = MockSamData.GetSamHerdsScanIdentifierDataBridgeResponse(1, 1, 1);
         _dataBridgeClientMock
-            .Setup(c => c.GetSamHerdsAsync<SamScanHerdIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetSamHerdsAsync<SamScanHerdIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
 
-        _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<SamUpdateHerdMessage>(), It.IsAny<CancellationToken>()), Times.Once);
+        _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<SamUpdateHoldingMessage>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

@@ -28,6 +28,7 @@ public class SamHerdDailyScanStep(
     private readonly bool _samHerdsEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamHerdsEnabled");
 
     private const string SelectFields = "CPHH";
+    private const string OrderBy = "CPHH asc";
 
     protected override async Task ExecuteCoreAsync(SamDailyScanContext context, CancellationToken cancellationToken)
     {
@@ -47,6 +48,7 @@ public class SamHerdDailyScanStep(
                 context.Herds.CurrentSkip,
                 SelectFields,
                 context.UpdatedSinceDateTime,
+                OrderBy,
                 cancellationToken);
 
             if (queryResponse == null || queryResponse.Data.Count == 0)
@@ -63,7 +65,7 @@ public class SamHerdDailyScanStep(
 
             foreach (var id in identifiers)
             {
-                var message = new SamUpdateHerdMessage
+                var message = new SamUpdateHoldingMessage
                 {
                     Id = Guid.NewGuid(),
                     Identifier = id

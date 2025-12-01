@@ -53,16 +53,17 @@ public class SamHolderDailyScanStepTests
     {
         var responseMock = MockSamData.GetSamHolderScanIdentifierDataBridgeResponse(0, 0, 0);
         _dataBridgeClientMock
-            .Setup(c => c.GetSamHoldersAsync<SamScanPartyIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetSamHoldersAsync<SamScanHolderIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
 
-        _dataBridgeClientMock.Verify(c => c.GetSamHoldersAsync<SamScanPartyIdentifier>(
+        _dataBridgeClientMock.Verify(c => c.GetSamHoldersAsync<SamScanHolderIdentifier>(
             It.IsAny<int>(),
             It.IsAny<int>(),
             It.IsAny<string>(),
             It.Is<DateTime?>(d => d.HasValue && d.Value.Subtract(_context.UpdatedSinceDateTime!.Value).TotalSeconds < 1),
+            It.IsAny<string>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -71,11 +72,11 @@ public class SamHolderDailyScanStepTests
     {
         var responseMock = MockSamData.GetSamHolderScanIdentifierDataBridgeResponse(1, 1, 1);
         _dataBridgeClientMock
-            .Setup(c => c.GetSamHoldersAsync<SamScanPartyIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetSamHoldersAsync<SamScanHolderIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
 
-        _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<SamUpdateHolderMessage>(), It.IsAny<CancellationToken>()), Times.Once);
+        _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<SamUpdateHoldingMessage>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

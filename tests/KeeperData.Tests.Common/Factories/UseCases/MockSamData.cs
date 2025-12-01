@@ -66,7 +66,7 @@ public static class MockSamData
             Data = [.. s_fixture.CreateMany<SamCphHolder>(count)]
         };
 
-    public static DataBridgeResponse<SamScanPartyIdentifier> GetSamHolderScanIdentifierDataBridgeResponse(int top, int count, int totalCount) =>
+    public static DataBridgeResponse<SamScanHolderIdentifier> GetSamHolderScanIdentifierDataBridgeResponse(int top, int count, int totalCount) =>
         new()
         {
             CollectionName = "collection",
@@ -74,7 +74,7 @@ public static class MockSamData
             Skip = top,
             Count = count,
             TotalCount = totalCount,
-            Data = [.. s_fixture.CreateMany<SamScanPartyIdentifier>(count)]
+            Data = [.. s_fixture.CreateMany<SamScanHolderIdentifier>(count)]
         };
 
     public static StringContent GetSamHolderStringContentResponse(int top, int skip) =>

@@ -50,7 +50,7 @@ public class SamHoldingBulkScanStepTests
             totalCount: 5);
 
         _dataBridgeClientMock
-            .Setup(c => c.GetSamHoldingsAsync<SamScanHoldingIdentifier>(5, 0, It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetSamHoldingsAsync<SamScanHoldingIdentifier>(5, 0, It.IsAny<string>(), null, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
@@ -73,7 +73,7 @@ public class SamHoldingBulkScanStepTests
             totalCount: 0);
 
         _dataBridgeClientMock
-            .Setup(c => c.GetSamHoldingsAsync<SamScanHoldingIdentifier>(5, 0, It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetSamHoldingsAsync<SamScanHoldingIdentifier>(5, 0, It.IsAny<string>(), null, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
@@ -99,7 +99,7 @@ public class SamHoldingBulkScanStepTests
             totalCount: 8);
 
         _dataBridgeClientMock
-            .SetupSequence(c => c.GetSamHoldingsAsync<SamScanHoldingIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+            .SetupSequence(c => c.GetSamHoldingsAsync<SamScanHoldingIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), null, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(page1ResponseMock)
             .ReturnsAsync(page2ResponseMock);
 
@@ -137,7 +137,7 @@ public class SamHoldingBulkScanStepTests
         };
 
         _dataBridgeClientMock
-            .Setup(c => c.GetSamHoldingsAsync<SamScanHoldingIdentifier>(5, 0, It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetSamHoldingsAsync<SamScanHoldingIdentifier>(5, 0, It.IsAny<string>(), null, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
@@ -156,7 +156,7 @@ public class SamHoldingBulkScanStepTests
 
         await _scanStep.ExecuteAsync(_context, cts.Token);
 
-        _dataBridgeClientMock.Verify(c => c.GetSamHoldersAsync<SamScanPartyIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()), Times.Never);
+        _dataBridgeClientMock.Verify(c => c.GetSamHoldersAsync<SamScanPartyIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), null, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<SamImportHoldingMessage>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -175,7 +175,7 @@ public class SamHoldingBulkScanStepTests
             totalCount: 8);
 
         _dataBridgeClientMock
-            .SetupSequence(c => c.GetSamHoldingsAsync<SamScanHoldingIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+            .SetupSequence(c => c.GetSamHoldingsAsync<SamScanHoldingIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), null, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(page1ResponseMock)
             .ReturnsAsync(page2ResponseMock);
 

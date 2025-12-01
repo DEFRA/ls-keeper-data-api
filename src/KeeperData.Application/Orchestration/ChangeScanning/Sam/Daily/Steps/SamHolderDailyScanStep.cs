@@ -27,6 +27,7 @@ public class SamHolderDailyScanStep(
     private readonly bool _samHoldersEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamHoldersEnabled");
 
     private const string SelectFields = "PARTY_ID";
+    private const string OrderBy = "PARTY_ID asc";
 
     protected override async Task ExecuteCoreAsync(SamDailyScanContext context, CancellationToken cancellationToken)
     {
@@ -41,11 +42,12 @@ public class SamHolderDailyScanStep(
 
         while (!context.Holders.ScanCompleted && !cancellationToken.IsCancellationRequested)
         {
-            var queryResponse = await _dataBridgeClient.GetSamHoldersAsync<SamScanPartyIdentifier>(
+            var queryResponse = await _dataBridgeClient.GetSamHoldersAsync<SamScanHolderIdentifier>(
                 context.Holders.CurrentTop,
                 context.Holders.CurrentSkip,
                 SelectFields,
                 context.UpdatedSinceDateTime,
+                OrderBy,
                 cancellationToken);
 
             if (queryResponse == null || queryResponse.Data.Count == 0)
@@ -54,21 +56,28 @@ public class SamHolderDailyScanStep(
                 break;
             }
 
-            var identifiers = queryResponse.Data
-                .Select(x => x.PARTY_ID)
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Distinct()
-                .ToList();
+            var groupedByParty = queryResponse.Data
+                .Where(x => !string.IsNullOrWhiteSpace(x.CPHS))
+                .GroupBy(x => x.PARTY_ID);
 
-            foreach (var id in identifiers)
+            foreach (var partyGroup in groupedByParty)
             {
-                var message = new SamUpdateHolderMessage
-                {
-                    Id = Guid.NewGuid(),
-                    Identifier = id
-                };
+                var partyId = partyGroup.Key;
 
-                await _intakeMessagePublisher.PublishAsync(message, cancellationToken);
+                var cphs = partyGroup
+                    .SelectMany(x => x.CphList)
+                    .Distinct();
+
+                foreach (var cph in cphs)
+                {
+                    var message = new SamUpdateHoldingMessage
+                    {
+                        Id = Guid.NewGuid(),
+                        Identifier = cph,
+                    };
+
+                    await _intakeMessagePublisher.PublishAsync(message, cancellationToken);
+                }
             }
 
             context.Holders.TotalCount = queryResponse.TotalCount;

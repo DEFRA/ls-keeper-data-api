@@ -46,6 +46,7 @@ public class SamPartyDailyScanStep(
                 context.Parties.CurrentSkip,
                 SelectFields,
                 context.UpdatedSinceDateTime,
+                orderBy: null,
                 cancellationToken);
 
             if (queryResponse == null || queryResponse.Data.Count == 0)

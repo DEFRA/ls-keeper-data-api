@@ -38,11 +38,12 @@ public class DataBridgeClient(
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         if (!_samHoldingsEnabled) return null;
 
-        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime);
+        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHoldings, new { }, query);
 
         var result = await GetFromApiAsync<T>(
@@ -73,11 +74,12 @@ public class DataBridgeClient(
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         if (!_samHoldersEnabled) return null;
 
-        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime);
+        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHolders, new { }, query);
 
         var result = await GetFromApiAsync<T>(
@@ -121,11 +123,12 @@ public class DataBridgeClient(
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         if (!_samHerdsEnabled) return null;
 
-        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime);
+        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHerds, new { }, query);
 
         var result = await GetFromApiAsync<T>(
@@ -171,11 +174,12 @@ public class DataBridgeClient(
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         if (!_samPartiesEnabled) return null;
 
-        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime);
+        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamParties, new { }, query);
 
         var result = await GetFromApiAsync<T>(
