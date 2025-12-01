@@ -1,6 +1,5 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents.Silver;
-using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Repositories;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
