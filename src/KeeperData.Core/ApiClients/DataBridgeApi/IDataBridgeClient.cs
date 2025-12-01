@@ -52,6 +52,7 @@ public interface IDataBridgeClient
         DateTime? updatedSinceDateTime = null,
         CancellationToken cancellationToken = default);
     Task<List<CtsAgentOrKeeper>> GetCtsAgentsAsync(string id, CancellationToken cancellationToken);
+    Task<CtsAgentOrKeeper?> GetCtsAgentByPartyIdAsync(string partyId, CancellationToken cancellationToken);
 
     Task<DataBridgeResponse<T>?> GetCtsKeepersAsync<T>(
         int top,

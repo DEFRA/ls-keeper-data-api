@@ -44,6 +44,14 @@ public static class DataBridgeQueries
         };
     }
 
+    public static Dictionary<string, string> CtsAgentByPartyId(string id)
+    {
+        return new Dictionary<string, string>
+        {
+            ["$filter"] = $"PAR_ID eq '{id}'"
+        };
+    }
+
     public static Dictionary<string, string> CtsKeepersByLidFullIdentifier(string id)
     {
         return new Dictionary<string, string>

@@ -6,19 +6,20 @@ using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using MongoDB.Driver;
 using Xunit;
 
-namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Cts;
+namespace KeeperData.Api.Tests.Integration.Orchestration.Updates.Cts;
 
 [Trait("Dependence", "localstack")]
-public class CtsUpdateKeeperMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
+public class CtsUpdateAgentMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
 {
     private const int ProcessingTimeCircuitBreakerSeconds = 10;
 
     [Fact]
-    public async Task GivenCtsUpdateKeeperMessagePublishedToQueue_WhenReceived_ShouldPersistSilverData()
+    public async Task GivenCtsUpdateAgentMessagePublishedToQueue_WhenReceived_ShouldPersistSilverData()
     {
         var correlationId = Guid.NewGuid().ToString();
+
         var partyId = Guid.NewGuid().ToString();
-        var message = new CtsUpdateKeeperMessage { Identifier = partyId };
+        var message = new CtsUpdateAgentMessage { Identifier = partyId };
 
         await ExecuteQueueTest(correlationId, message);
 
