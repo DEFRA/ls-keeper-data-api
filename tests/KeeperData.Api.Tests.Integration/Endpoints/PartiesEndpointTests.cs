@@ -52,7 +52,9 @@ public class PartiesEndpointTests(IntegrationTestFixture fixture) : IClassFixtur
     [InlineData("WhenSearchingByFirstAndLastName", "Mark", "Smith", null, 1, MarkSmithId)]
     [InlineData("WhenSearchingForRecordsThatDoNotExist", null, "Smythe", null, 0, "")]
     [InlineData("WhenSearchingByDate", null, null, "2011-01-01", 2, MarkSmithId + "," + HueyNewsId)]
-    [InlineData("WhenSearchingCaseInsensitive", "john", "smith", null, 1, JohnSmithId)]
+    [InlineData("WhenSearchingCaseInsensitiveBothNames", "john", "smith", null, 1, JohnSmithId)]
+    [InlineData("WhenSearchingCaseInsensitiveFirstName", "john", null, null, 1, JohnSmithId)]
+    [InlineData("WhenSearchingByCaseInsensitiveLastName", null, "smith", null, 2, JohnSmithId + "," + MarkSmithId)]
     public async Task GivenASearchRequest_ShouldHaveExpectedResults(string scenario, string? firstName, string? lastName, string? dateStr, int expectedCount, string expectedIdCsv)
     {
         Console.WriteLine(scenario);

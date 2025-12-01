@@ -174,31 +174,23 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
         return
         [
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("Name"),
-                new CreateIndexOptions { Name = "idx_name" }),
+                Builders<BsonDocument>.IndexKeys.Ascending("lastName").Ascending("firstName"),
+                new CreateIndexOptions { Name = "idx_firstlastName", Collation = new Collation(locale: "en", caseLevel: false, strength: CollationStrength.Primary ) }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("FirstName"),
-                new CreateIndexOptions { Name = "idx_firstName" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("LastName"),
-                new CreateIndexOptions { Name = "idx_lastName" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("CustomerNumber"),
+                Builders<BsonDocument>.IndexKeys.Ascending("customerNumber"),
                 new CreateIndexOptions { Name = "idx_customerNumber" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("PartyType"),
+                Builders<BsonDocument>.IndexKeys.Ascending("partyType"),
                 new CreateIndexOptions { Name = "idx_partyType" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("CreatedDate"),
+                Builders<BsonDocument>.IndexKeys.Ascending("createdDate"),
                 new CreateIndexOptions { Name = "idx_createdDate" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("LastUpdatedDate"),
+                Builders<BsonDocument>.IndexKeys.Ascending("lastUpdatedDate"),
                 new CreateIndexOptions { Name = "idx_lastUpdatedDate" }),
         ];
     }
