@@ -76,7 +76,7 @@ public class PartiesEndpointTests(IntegrationTestFixture fixture) : IClassFixtur
     [Theory]
     [InlineData("WhenSearchingById1", JohnSmithId, HttpStatusCode.OK, "\"firstName\":\"John\"")]
     [InlineData("WhenSearchingById2", HueyNewsId, HttpStatusCode.OK, "\"firstName\":\"Huey\"")]
-    [InlineData("WhenSearchingForIdThatDoesNotExist", "00000000-0000-0000-0000-000000000000", HttpStatusCode.InternalServerError, "not found")] //TODO should this be 404
+    [InlineData("WhenSearchingForIdThatDoesNotExist", "00000000-0000-0000-0000-000000000000", HttpStatusCode.InternalServerError, "not found")] //TODO should this be 404 - see ULITP-3595
     public async Task GivenAnRecordRequestById_ShouldHaveExpectedResults(string scenario, string requestedId, HttpStatusCode expectedHttpCode, string responseShouldContain)
     {
         Console.WriteLine(scenario);
