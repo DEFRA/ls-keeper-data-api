@@ -1,3 +1,4 @@
+using KeeperData.Application.Orchestration.Updates.Cts.Keepers;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
@@ -6,15 +7,13 @@ using KeeperData.Core.Messaging.Serializers;
 
 namespace KeeperData.Application.MessageHandlers.Cts;
 
-public class CtsUpdateKeeperMessageHandler : IMessageHandler<CtsUpdateKeeperMessage>
+public class CtsUpdateKeeperMessageHandler(
+    IUnwrappedMessageSerializer<CtsUpdateKeeperMessage> serializer,
+    CtsUpdateKeeperOrchestrator orchestrator)
+    : IMessageHandler<CtsUpdateKeeperMessage>
 {
-    private readonly IUnwrappedMessageSerializer<CtsUpdateKeeperMessage> _serializer;
-
-    public CtsUpdateKeeperMessageHandler(IUnwrappedMessageSerializer<CtsUpdateKeeperMessage> serializer)
-    {
-        _serializer = serializer;
-    }
-
+    private readonly IUnwrappedMessageSerializer<CtsUpdateKeeperMessage> _serializer = serializer;
+    private readonly CtsUpdateKeeperOrchestrator _orchestrator = orchestrator;
     public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(message, nameof(message));
@@ -25,7 +24,14 @@ public class CtsUpdateKeeperMessageHandler : IMessageHandler<CtsUpdateKeeperMess
             $"messageId: {message.MessageId}," +
             $"correlationId: {message.CorrelationId}");
 
-        // TODO: Implement import orchestration in a future story
+        var context = new CtsUpdateKeeperContext
+        {
+            PartyId = messagePayload.Identifier,
+            CurrentDateTime = DateTime.UtcNow
+        };
+
+        await _orchestrator.ExecuteAsync(context, cancellationToken);
+
         return await Task.FromResult(messagePayload!);
     }
 }

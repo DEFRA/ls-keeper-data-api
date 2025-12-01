@@ -2,54 +2,48 @@ using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Documents.Silver;
-using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
-using KeeperData.Tests.Common.Generators;
 using MongoDB.Driver;
+using Xunit;
 
-namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Cts;
+namespace KeeperData.Api.Tests.Integration.Orchestration.Updates.Cts;
 
 [Trait("Dependence", "localstack")]
-[Collection("Integration Tests")]
-public class CtsUpdateHoldingMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
+public class CtsUpdateAgentMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
 {
     private const int ProcessingTimeCircuitBreakerSeconds = 10;
 
     [Fact]
-    public async Task GivenCtsUpdateHoldingMessagePublishedToQueue_WhenReceived_ShouldPersistSilverData()
+    public async Task GivenCtsUpdateAgentMessagePublishedToQueue_WhenReceived_ShouldPersistSilverData()
     {
-        // Arrange
         var correlationId = Guid.NewGuid().ToString();
-        var holdingIdentifier = CphGenerator.GenerateCtsFormattedLidIdentifier("AH");
-        var message = new CtsUpdateHoldingMessage { Identifier = holdingIdentifier };
 
-        // Act
+        var partyId = Guid.NewGuid().ToString();
+        var message = new CtsUpdateAgentMessage { Identifier = partyId };
+
         await ExecuteQueueTest(correlationId, message);
 
-        // Assert
         var timeout = TimeSpan.FromSeconds(ProcessingTimeCircuitBreakerSeconds);
         var pollInterval = TimeSpan.FromSeconds(1);
         var startTime = DateTime.UtcNow;
 
-        List<CtsHoldingDocument> storedDocuments = [];
+        List<CtsPartyDocument> storedDocuments = [];
 
-        // Wait for data to appear in Mongo
         while (DateTime.UtcNow - startTime < timeout)
         {
-            var filter = Builders<CtsHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier.LidIdentifierToCph());
-            storedDocuments = await fixture.MongoVerifier.FindDocumentsAsync("ctsHoldings", filter);
+            var filter = Builders<CtsPartyDocument>.Filter.Eq(x => x.PartyId, partyId);
+            storedDocuments = await fixture.MongoVerifier.FindDocumentsAsync("ctsParties", filter);
 
             if (storedDocuments.Count > 0) break;
             await Task.Delay(pollInterval);
         }
 
-        storedDocuments.Should().NotBeEmpty("The CTS Holding document should have been persisted to the database");
-        storedDocuments.Should().Contain(x => x.CountyParishHoldingNumber == holdingIdentifier.LidIdentifierToCph());
+        storedDocuments.Should().NotBeEmpty();
+        storedDocuments[0].PartyId.Should().Be(partyId);
 
         var foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
             ContainerLoggingUtility.ServiceNameApi,
             $"Handled message with correlationId: \"{correlationId}\"");
-
         foundLogEntry.Should().BeTrue();
     }
 
