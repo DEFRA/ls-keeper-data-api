@@ -10,15 +10,15 @@ services:
       - StorageConfiguration__ComparisonReportsStorage__BucketName=test-comparison-reports-bucket
       - QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl=http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue
       - QueueConsumerOptions__IntakeEventQueueOptions__DeadLetterQueueUrl=http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue-deadletter
-      - ApiClients__DataBridgeApi__BaseUrl=https://ephemeral-protected.api.test.cdp-int.defra.cloud/
-      - ApiClients__DataBridgeApi__BridgeApiSubscriptionKey=fnCmW0bc_PraXU0B4XkDi4lQ2i1jSemsaQRR076oZw_bD9iSKnqeyt8qF8GxGNb5
-      - ApiClients__DataBridgeApi__ServiceName=ls-keeper-data-bridge-backend
-      - ApiClients__DataBridgeApi__XApiKey=GwdSCNLb8wV6gyXB2Iw5aLSWtz7VAAI5
-      - ApiClients__DataBridgeApi__UseFakeClient=false
+      - ApiClients__DataBridgeApi__BaseUrl=http://keeperdata_bridge:5560/
+      - ApiClients__DataBridgeApi__BridgeApiSubscriptionKey=
+      - ApiClients__DataBridgeApi__ServiceName=
+      - ApiClients__DataBridgeApi__XApiKey=
+      - ApiClients__DataBridgeApi__UseFakeClient=true
       - ServiceBusSenderConfiguration__IntakeEventQueue__QueueUrl=http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue
-      - DataBridgeScanConfiguration__QueryPageSize=100
+      - DataBridgeScanConfiguration__QueryPageSize=5
       - DataBridgeScanConfiguration__DelayBetweenQueriesSeconds=0
-      - DataBridgeScanConfiguration__LimitScanTotalBatchSize=1000
+      - DataBridgeScanConfiguration__LimitScanTotalBatchSize=10
       - DataBridgeScanConfiguration__DailyScanIncludeChangesWithinTotalHours=24
     ports:
       - "5555"

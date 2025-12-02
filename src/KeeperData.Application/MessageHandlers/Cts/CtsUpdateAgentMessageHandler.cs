@@ -4,7 +4,6 @@ using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Serializers;
-using MongoDB.Driver;
 
 namespace KeeperData.Application.MessageHandlers.Cts;
 
@@ -32,18 +31,7 @@ public class CtsUpdateAgentMessageHandler(
             CurrentDateTime = DateTime.UtcNow
         };
 
-        try
-        {
-            await _orchestrator.ExecuteAsync(context, cancellationToken);
-        }
-        catch (MongoBulkWriteException ex)
-        {
-            throw new RetryableException(ex.Message, ex);
-        }
-        catch (Exception ex)
-        {
-            throw new NonRetryableException(ex.Message, ex);
-        }
+        await _orchestrator.ExecuteAsync(context, cancellationToken);
 
         return await Task.FromResult(messagePayload!);
     }
