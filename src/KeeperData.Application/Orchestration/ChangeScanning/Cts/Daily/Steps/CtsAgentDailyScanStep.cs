@@ -27,6 +27,7 @@ public class CtsAgentDailyScanStep(
     private readonly bool _ctsAgentsEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:CtsAgentsEnabled");
 
     private const string SelectFields = "PAR_ID";
+    private const string OrderBy = "LID_FULL_IDENTIFIER asc";
 
     protected override async Task ExecuteCoreAsync(CtsDailyScanContext context, CancellationToken cancellationToken)
     {
@@ -46,6 +47,7 @@ public class CtsAgentDailyScanStep(
                 context.Agents.CurrentSkip,
                 SelectFields,
                 context.UpdatedSinceDateTime,
+                OrderBy,
                 cancellationToken);
 
             if (queryResponse == null || queryResponse.Data.Count == 0)

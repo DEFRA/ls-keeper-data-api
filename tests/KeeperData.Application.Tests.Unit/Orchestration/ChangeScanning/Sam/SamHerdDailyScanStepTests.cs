@@ -81,7 +81,7 @@ public class SamHerdDailyScanStepTests
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
 
-        Assert.True(_context.Parties.ScanCompleted);
+        Assert.True(_context.Herds.ScanCompleted);
     }
 
     [Fact]
@@ -113,6 +113,6 @@ public class SamHerdDailyScanStepTests
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
 
-        _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<SamUpdateHerdMessage>(), It.IsAny<CancellationToken>()), Times.Once);
+        _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<SamUpdateHoldingMessage>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

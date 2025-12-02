@@ -24,6 +24,7 @@ public class CtsHoldingBulkScanStep(
     private readonly IDelayProvider _delayProvider = delayProvider;
 
     private const string SelectFields = "LID_FULL_IDENTIFIER";
+    private const string OrderBy = "LID_FULL_IDENTIFIER asc";
 
     protected override async Task ExecuteCoreAsync(CtsBulkScanContext context, CancellationToken cancellationToken)
     {
@@ -38,6 +39,7 @@ public class CtsHoldingBulkScanStep(
                 context.Holdings.CurrentSkip,
                 SelectFields,
                 context.UpdatedSinceDateTime,
+                OrderBy,
                 cancellationToken);
 
             if (queryResponse == null || queryResponse.Data.Count == 0)

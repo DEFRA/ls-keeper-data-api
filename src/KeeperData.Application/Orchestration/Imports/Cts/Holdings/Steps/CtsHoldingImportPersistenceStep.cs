@@ -31,7 +31,6 @@ public class CtsHoldingImportPersistenceStep(
 
         await UpsertSilverPartyRolesAndDeletePartySpecificOrphansAsync(
             context.CphTrimmed,
-            context.SilverParties.Select(x => x.PartyId),
             context.SilverPartyRoles,
             cancellationToken);
     }
@@ -116,13 +115,10 @@ public class CtsHoldingImportPersistenceStep(
 
     private async Task UpsertSilverPartyRolesAndDeletePartySpecificOrphansAsync(
         string holdingIdentifier,
-        IEnumerable<string> incomingPartyIds,
         List<Core.Documents.Silver.SitePartyRoleRelationshipDocument> incomingSitePartyRoles,
         CancellationToken cancellationToken)
     {
         incomingSitePartyRoles ??= [];
-
-        var incomingPartyIdSet = incomingPartyIds?.ToHashSet() ?? [];
 
         var incomingKeys = incomingSitePartyRoles
             .Select(p => $"{p.Source}::{p.HoldingIdentifier}::{p.PartyId}::{p.RoleTypeId}")
@@ -159,7 +155,6 @@ public class CtsHoldingImportPersistenceStep(
         }
 
         var orphanedSitePartyRoles = existingSitePartyRoles?.Where(e =>
-            incomingPartyIdSet.Contains(e.PartyId) &&
             !incomingKeys.Contains($"{e.Source}::{e.HoldingIdentifier}::{e.PartyId}::{e.RoleTypeId}"))
         .ToList() ?? [];
 

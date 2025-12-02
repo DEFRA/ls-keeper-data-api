@@ -229,6 +229,7 @@ public class DataBridgeClient(
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         if (!_ctsHoldingsEnabled) return null;
@@ -264,6 +265,7 @@ public class DataBridgeClient(
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         if (!_ctsAgentsEnabled) return null;
@@ -314,6 +316,7 @@ public class DataBridgeClient(
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         if (!_ctsKeepersEnabled) return null;

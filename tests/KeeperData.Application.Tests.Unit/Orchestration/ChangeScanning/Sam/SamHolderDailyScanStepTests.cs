@@ -81,7 +81,7 @@ public class SamHolderDailyScanStepTests
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
 
-        Assert.True(_context.Parties.ScanCompleted);
+        Assert.True(_context.Holders.ScanCompleted);
     }
 
     [Fact]
