@@ -93,6 +93,13 @@ public class PartiesEndpointTests(IntegrationTestFixture fixture) : IClassFixtur
         responseBody.Should().Contain(responseShouldContain);
     }
 
+    [Fact]
+    public async Task GetTablesIndexes()
+    {
+        var json = await _fixture.MongoVerifier.GetIndexesToJson();
+        Console.WriteLine(json);
+    }
+
     private static string BuildQueryString(string? firstName, string? lastName, DateTime? lastUpdatedDate)
     {
         var parameters = new[] {

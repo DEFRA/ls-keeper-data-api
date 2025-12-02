@@ -1,7 +1,9 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Reflection;
+using System.Text;
 
 namespace KeeperData.Api.Tests.Integration.Helpers;
 
@@ -70,5 +72,26 @@ public class MongoVerifier
 
             await _database.DropCollectionAsync(collectionName);
         }
+    }
+
+    internal async Task<string> GetIndexesToJson()
+    {
+        var collectionNames = await _database.ListCollectionNamesAsync();
+        var collections = (await collectionNames.ToListAsync()).OrderBy(s => s).ToList();
+
+        var output = new StringBuilder();
+        foreach (var collectionName in collections)
+        {
+            // Skip system collections
+            if (collectionName.StartsWith("system."))
+                continue;
+            output.AppendLine(collectionName + ":");
+            var indexes = (await _database.GetCollection<BsonDocument>(collectionName).Indexes.ListAsync()).ToList().Select(x => x.ToJson());
+            foreach (var i in indexes)
+            {
+                output.AppendLine(i);
+            }
+        }
+        return output.ToString();
     }
 }
