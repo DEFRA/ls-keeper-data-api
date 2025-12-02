@@ -32,13 +32,16 @@ public class SamHoldingImportCheckForOrphansStep(
 
         context.PartiesWithNoRelationshipToSiteToClean = orphans;
 
-        var cleanedParties = await SamPartyMapper.RemoveSitePartyOrphans(
+        if (orphans.Count > 0)
+        {
+            var cleanedParties = await SamPartyMapper.RemoveSitePartyOrphans(
             context.GoldSiteId,
             context.PartiesWithNoRelationshipToSiteToClean,
             goldPartyRepository,
             cancellationToken);
 
-        context.GoldParties ??= [];
-        context.GoldParties.AddRange(cleanedParties);
+            context.GoldParties ??= [];
+            context.GoldParties.AddRange(cleanedParties);
+        }
     }
 }

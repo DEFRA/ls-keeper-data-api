@@ -172,11 +172,11 @@ public class CtsHoldingImportPersistenceStep(
         string holdingIdentifier,
         CancellationToken cancellationToken)
     {
-        var sourceAsSam = SourceSystemType.SAM.ToString();
+        var sourceAsCts = SourceSystemType.CTS.ToString();
 
         return await _silverSitePartyRoleRelationshipRepository.FindAsync(
             x => x.HoldingIdentifier == holdingIdentifier
-                && x.Source == sourceAsSam,
+                && x.Source == sourceAsCts,
             cancellationToken) ?? [];
     }
 }

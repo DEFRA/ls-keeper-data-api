@@ -223,7 +223,7 @@ public class ProductionUsageRepositoryTests
         var result = await _sut.FindAsync("APPROVED");
 
         // Assert
-        result.productionUsageId.Should().Be("APPROVED");
+        result.productionUsageId.Should().Be("40faaff4-0004-4f8d-94c8-04c461724598");
         result.productionUsageDescription.Should().Be("Approved Pyramid");
     }
 
@@ -256,7 +256,7 @@ public class ProductionUsageRepositoryTests
         var result = await _sut.FindAsync("Calf Rearer");
 
         // Assert
-        result.productionUsageId.Should().Be("CALFREAR");
+        result.productionUsageId.Should().Be("add70003-34ad-4020-90ae-bd6d20f58f15");
         result.productionUsageDescription.Should().Be("Calf Rearer");
     }
 
@@ -289,7 +289,7 @@ public class ProductionUsageRepositoryTests
         var result = await _sut.FindAsync("beef");
 
         // Assert
-        result.productionUsageId.Should().Be("BEEF");
+        result.productionUsageId.Should().Be("ba9cb8fb-ab7f-42f2-bc1f-fa4d7fda4824");
         result.productionUsageDescription.Should().Be("Beef");
     }
 
@@ -375,7 +375,7 @@ public class ProductionUsageRepositoryTests
         var result = await _sut.FindAsync("BEEF");
 
         // Assert
-        result.productionUsageId.Should().Be("BEEF");
+        result.productionUsageId.Should().Be("id1");
         result.productionUsageDescription.Should().Be("Beef");
     }
 }
