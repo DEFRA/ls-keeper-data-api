@@ -3,6 +3,7 @@ using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace KeeperData.Infrastructure.Database.Repositories;
@@ -18,7 +19,7 @@ public class PartiesRepository(
 {
     public async Task<int> CountAsync(FilterDefinition<PartyDocument> filter, CancellationToken cancellationToken = default)
     {
-        return (int)await _collection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
+        return (int)await _collection.CountDocumentsAsync(filter, new CountOptions { Collation = IndexDefaults.CollationCaseInsensitive }, cancellationToken: cancellationToken);
     }
 
     public async Task<List<PartyDocument>> FindAsync(
@@ -28,7 +29,9 @@ public class PartiesRepository(
         int take,
         CancellationToken cancellationToken = default)
     {
-        return await _collection.Find(filter)
+        return
+            await _collection
+            .Find(filter, options: new FindOptions { Collation = IndexDefaults.CollationCaseInsensitive })
             .Sort(sort)
             .Skip(skip)
             .Limit(take)
