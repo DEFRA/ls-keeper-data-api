@@ -1,17 +1,18 @@
 ctsHoldings:
 { "v" : 2, "key" : { "_id" : 1 }, "name" : "_id_" }
-{ "v" : 2, "key" : { "countyParishHoldingNumber" : 1 }, "name" : "idx_cphNumber" }
-{ "v" : 2, "key" : { "alternativeHoldingIdentifier" : 1 }, "name" : "idx_altIdentifier" }
+{ "v" : 2, "key" : { "countyParishHoldingNumber" : 1 }, "name" : "idx_countyParishHoldingNumber" }
+{ "v" : 2, "key" : { "alternativeHoldingIdentifier" : 1 }, "name" : "idx_alternativeHoldingIdentifier" }
+{ "v" : 2, "key" : { "locationName" : 1 }, "name" : "idx_locationName" }
 ctsParties:
 { "v" : 2, "key" : { "_id" : 1 }, "name" : "_id_" }
 { "v" : 2, "key" : { "partyId" : 1 }, "name" : "idx_partyId" }
 parties:
 { "v" : 2, "key" : { "_id" : 1 }, "name" : "_id_" }
 { "v" : 2, "key" : { "lastName" : 1, "firstName" : 1 }, "name" : "idx_firstlastName", "collation" : { "locale" : "en", "caseLevel" : false, "caseFirst" : "off", "strength" : 1, "numericOrdering" : false, "alternate" : "non-ignorable", "maxVariable" : "punct", "normalization" : false, "backwards" : false, "version" : "57.1" } }
-{ "v" : 2, "key" : { "customerNumber" : 1 }, "name" : "idx_customerNumber" }
-{ "v" : 2, "key" : { "partyType" : 1 }, "name" : "idx_partyType" }
 { "v" : 2, "key" : { "createdDate" : 1 }, "name" : "idx_createdDate" }
 { "v" : 2, "key" : { "lastUpdatedDate" : 1 }, "name" : "idx_lastUpdatedDate" }
+{ "v" : 2, "key" : { "customerNumber" : 1 }, "name" : "idx_customerNumber" }
+{ "v" : 2, "key" : { "partyType" : 1 }, "name" : "idx_partyType" }
 refCountries:
 { "v" : 2, "key" : { "_id" : 1 }, "name" : "_id_" }
 refPremisesActivityTypes:
@@ -33,28 +34,28 @@ samHerds:
 { "v" : 2, "key" : { "productionUsageCode" : 1 }, "name" : "idx_productionUsageCode" }
 samHoldings:
 { "v" : 2, "key" : { "_id" : 1 }, "name" : "_id_" }
-{ "v" : 2, "key" : { "countyParishHoldingNumber" : 1 }, "name" : "idx_cphNumber" }
-{ "v" : 2, "key" : { "alternativeHoldingIdentifier" : 1 }, "name" : "idx_altIdentifier" }
-{ "v" : 2, "key" : { "locationName" : 1 }, "name" : "idx_locationName" }
-{ "v" : 2, "key" : { "speciesTypeCode" : 1 }, "name" : "idx_speciesTypeCode" }
 { "v" : 2, "key" : { "secondaryCph" : 1 }, "name" : "idx_secondaryCph" }
+{ "v" : 2, "key" : { "speciesTypeCode" : 1 }, "name" : "idx_speciesTypeCode" }
+{ "v" : 2, "key" : { "countyParishHoldingNumber" : 1 }, "name" : "idx_countyParishHoldingNumber" }
+{ "v" : 2, "key" : { "alternativeHoldingIdentifier" : 1 }, "name" : "idx_alternativeHoldingIdentifier" }
+{ "v" : 2, "key" : { "locationName" : 1 }, "name" : "idx_locationName" }
 samParties:
 { "v" : 2, "key" : { "_id" : 1 }, "name" : "_id_" }
 { "v" : 2, "key" : { "partyId" : 1 }, "name" : "idx_partyId" }
 silverSitePartyRoleRelationships:
 { "v" : 2, "key" : { "_id" : 1 }, "name" : "_id_" }
-{ "v" : 2, "key" : { "holdingIdentifier" : 1 }, "name" : "idx_holdingIdentifier" }
-{ "v" : 2, "key" : { "holdingIdentifierType" : 1 }, "name" : "idx_holdingIdentifierType" }
 { "v" : 2, "key" : { "partyId" : 1 }, "name" : "idx_partyId" }
 { "v" : 2, "key" : { "partyTypeId" : 1 }, "name" : "idx_partyTypeId" }
-{ "v" : 2, "key" : { "roleTypeId" : 1 }, "name" : "idx_roleTypeId" }
-{ "v" : 2, "key" : { "source" : 1 }, "name" : "idx_source" }
-siteGroupMarkRelationships:
-{ "v" : 2, "key" : { "_id" : 1 }, "name" : "_id_" }
 { "v" : 2, "key" : { "holdingIdentifier" : 1 }, "name" : "idx_holdingIdentifier" }
 { "v" : 2, "key" : { "holdingIdentifierType" : 1 }, "name" : "idx_holdingIdentifierType" }
+{ "v" : 2, "key" : { "source" : 1 }, "name" : "idx_source" }
+{ "v" : 2, "key" : { "roleTypeId" : 1 }, "name" : "idx_roleTypeId" }
+siteGroupMarkRelationships:
+{ "v" : 2, "key" : { "_id" : 1 }, "name" : "_id_" }
 { "v" : 2, "key" : { "partyId" : 1 }, "name" : "idx_partyId" }
 { "v" : 2, "key" : { "herdmark" : 1 }, "name" : "idx_herdmark" }
+{ "v" : 2, "key" : { "holdingIdentifier" : 1 }, "name" : "idx_holdingIdentifier" }
+{ "v" : 2, "key" : { "holdingIdentifierType" : 1 }, "name" : "idx_holdingIdentifierType" }
 { "v" : 2, "key" : { "roleTypeId" : 1 }, "name" : "idx_roleTypeId" }
 { "v" : 2, "key" : { "roleTypeName" : 1 }, "name" : "idx_roleTypeName" }
 { "v" : 2, "key" : { "speciesTypeId" : 1 }, "name" : "idx_speciesTypeId" }
@@ -65,18 +66,18 @@ siteGroupMarkRelationships:
 { "v" : 2, "key" : { "productionTypeCode" : 1 }, "name" : "idx_productionTypeCode" }
 sitePartyRoleRelationships:
 { "v" : 2, "key" : { "_id" : 1 }, "name" : "_id_" }
-{ "v" : 2, "key" : { "holdingIdentifier" : 1 }, "name" : "idx_holdingIdentifier" }
-{ "v" : 2, "key" : { "holdingIdentifierType" : 1 }, "name" : "idx_holdingIdentifierType" }
 { "v" : 2, "key" : { "partyId" : 1 }, "name" : "idx_partyId" }
 { "v" : 2, "key" : { "partyTypeId" : 1 }, "name" : "idx_partyTypeId" }
+{ "v" : 2, "key" : { "holdingIdentifier" : 1 }, "name" : "idx_holdingIdentifier" }
+{ "v" : 2, "key" : { "holdingIdentifierType" : 1 }, "name" : "idx_holdingIdentifierType" }
 { "v" : 2, "key" : { "roleTypeId" : 1 }, "name" : "idx_roleTypeId" }
 { "v" : 2, "key" : { "speciesTypeId" : 1 }, "name" : "idx_speciesTypeId" }
 { "v" : 2, "key" : { "speciesTypeCode" : 1 }, "name" : "idx_speciesTypeCode" }
 sites:
 { "v" : 2, "key" : { "_id" : 1 }, "name" : "_id_" }
+{ "v" : 2, "key" : { "createdDate" : 1 }, "name" : "idx_createdDate" }
+{ "v" : 2, "key" : { "lastUpdatedDate" : 1 }, "name" : "idx_lastUpdatedDate" }
 { "v" : 2, "key" : { "type" : 1 }, "name" : "idx_type" }
 { "v" : 2, "key" : { "name" : 1 }, "name" : "idx_name" }
 { "v" : 2, "key" : { "state" : 1 }, "name" : "idx_state" }
-{ "v" : 2, "key" : { "createdDate" : 1 }, "name" : "idx_createdDate" }
-{ "v" : 2, "key" : { "lastUpdatedDate" : 1 }, "name" : "idx_lastUpdatedDate" }
 { "v" : 2, "key" : { "identifiers.identifier" : 1 }, "name" : "idx_identifiers_identifier", "sparse" : true }

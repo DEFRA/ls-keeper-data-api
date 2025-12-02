@@ -41,6 +41,7 @@ public class SamHoldingDocument : BaseHoldingDocument, IEntity, IDeletableEntity
 
     [JsonPropertyName("secondaryCph")]
     [BsonElement("secondaryCph")]
+    [AutoIndexed]
     public string? SecondaryCph { get; set; }
 
     [JsonPropertyName("diseaseType")]
@@ -65,6 +66,7 @@ public class SamHoldingDocument : BaseHoldingDocument, IEntity, IDeletableEntity
 
     [JsonPropertyName("speciesTypeCode")]
     [BsonElement("speciesTypeCode")]
+    [AutoIndexed]
     public string? SpeciesTypeCode { get; set; }
 
     [JsonPropertyName("productionUsageCodeList")]
@@ -75,27 +77,6 @@ public class SamHoldingDocument : BaseHoldingDocument, IEntity, IDeletableEntity
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
-        return
-        [
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("countyParishHoldingNumber"),
-                new CreateIndexOptions { Name = "idx_cphNumber" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("alternativeHoldingIdentifier"),
-                new CreateIndexOptions { Name = "idx_altIdentifier" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("locationName"),
-                new CreateIndexOptions { Name = "idx_locationName" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("speciesTypeCode"),
-                new CreateIndexOptions { Name = "idx_speciesTypeCode" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("secondaryCph"),
-                new CreateIndexOptions { Name = "idx_secondaryCph" })
-        ];
+        return AutoIndexed.GetIndexModels<SamHoldingDocument>();
     }
 }

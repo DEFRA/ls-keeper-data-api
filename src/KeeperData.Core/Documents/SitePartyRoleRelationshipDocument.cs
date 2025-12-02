@@ -20,22 +20,27 @@ public record SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
 
     [BsonElement("partyId")]
     [JsonPropertyName("partyId")]
+    [AutoIndexed]
     public string PartyId { get; set; } = string.Empty;
 
     [BsonElement("partyTypeId")]
     [JsonPropertyName("partyTypeId")]
+    [AutoIndexed]
     public string PartyTypeId { get; set; } = string.Empty;
 
     [BsonElement("holdingIdentifier")]
     [JsonPropertyName("holdingIdentifier")]
+    [AutoIndexed]
     public string HoldingIdentifier { get; set; } = string.Empty;
 
     [BsonElement("holdingIdentifierType")]
     [JsonPropertyName("holdingIdentifierType")]
+    [AutoIndexed]
     public string HoldingIdentifierType { get; set; } = string.Empty;
 
     [BsonElement("roleTypeId")]
     [JsonPropertyName("roleTypeId")]
+    [AutoIndexed]
     public string? RoleTypeId { get; set; }
 
     [BsonElement("roleTypeName")]
@@ -52,43 +57,16 @@ public record SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
 
     [BsonElement("speciesTypeId")]
     [JsonPropertyName("speciesTypeId")]
+    [AutoIndexed]
     public string? SpeciesTypeId { get; set; }
 
     [BsonElement("speciesTypeCode")]
     [JsonPropertyName("speciesTypeCode")]
+    [AutoIndexed]
     public string? SpeciesTypeCode { get; set; }
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
-        return
-        [
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("holdingIdentifier"),
-                new CreateIndexOptions { Name = "idx_holdingIdentifier" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("holdingIdentifierType"),
-                new CreateIndexOptions { Name = "idx_holdingIdentifierType" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("partyId"),
-                new CreateIndexOptions { Name = "idx_partyId" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("partyTypeId"),
-                new CreateIndexOptions { Name = "idx_partyTypeId" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("roleTypeId"),
-                new CreateIndexOptions { Name = "idx_roleTypeId" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("speciesTypeId"),
-                new CreateIndexOptions { Name = "idx_speciesTypeId" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("speciesTypeCode"),
-                new CreateIndexOptions { Name = "idx_speciesTypeCode" })
-        ];
+        return AutoIndexed.GetIndexModels<SitePartyRoleRelationshipDocument>();
     }
 }

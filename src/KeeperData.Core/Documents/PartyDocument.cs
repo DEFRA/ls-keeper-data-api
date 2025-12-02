@@ -5,6 +5,7 @@ using KeeperData.Core.Repositories;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
+using MongoDB.Driver.Linq;
 using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
@@ -19,10 +20,12 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("createdDate")]
     [JsonPropertyName("createdDate")]
+    [AutoIndexed]
     public DateTime CreatedDate { get; private set; }
 
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
+    [AutoIndexed]
     public DateTime LastUpdatedDate { get; set; }
 
     [BsonElement("title")]
@@ -43,10 +46,12 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("customerNumber")]
     [JsonPropertyName("customerNumber")]
+    [AutoIndexed]
     public string? CustomerNumber { get; set; }
 
     [BsonElement("partyType")]
     [JsonPropertyName("partyType")]
+    [AutoIndexed]
     public string? PartyType { get; set; }
 
     [BsonElement("state")]
@@ -171,27 +176,12 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
-        return
+        return Enumerable.Concat(
         [
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("lastName").Ascending("firstName"),
                 new CreateIndexOptions { Name = "idx_firstlastName", Collation = IndexDefaults.CollationCaseInsensitive }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("customerNumber"),
-                new CreateIndexOptions { Name = "idx_customerNumber" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("partyType"),
-                new CreateIndexOptions { Name = "idx_partyType" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("createdDate"),
-                new CreateIndexOptions { Name = "idx_createdDate" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("lastUpdatedDate"),
-                new CreateIndexOptions { Name = "idx_lastUpdatedDate" }),
-        ];
+        ],
+        AutoIndexed.GetIndexModels<PartyDocument>());
     }
 }
