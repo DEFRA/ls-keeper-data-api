@@ -219,7 +219,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
-        return AutoIndexed.GetIndexModels<SiteDocument>().Concat(
+        return AutoIndexedAttribute.GetIndexModels<SiteDocument>().Concat(
         [
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("identifiers.identifier"),

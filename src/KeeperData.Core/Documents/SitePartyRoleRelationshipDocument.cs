@@ -67,6 +67,6 @@ public record SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
-        return AutoIndexed.GetIndexModels<SitePartyRoleRelationshipDocument>();
+        return AutoIndexedAttribute.GetIndexModels<SitePartyRoleRelationshipDocument>();
     }
 }

@@ -115,6 +115,6 @@ public class SamHerdDocument : IEntity, IContainsIndexes, IDeletableEntity
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
-        return AutoIndexed.GetIndexModels<SamHerdDocument>();
+        return AutoIndexedAttribute.GetIndexModels<SamHerdDocument>();
     }
 }

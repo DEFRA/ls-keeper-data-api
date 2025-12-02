@@ -182,6 +182,6 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
                 Builders<BsonDocument>.IndexKeys.Ascending("lastName").Ascending("firstName"),
                 new CreateIndexOptions { Name = "idx_firstlastName", Collation = IndexDefaults.CollationCaseInsensitive }),
         ],
-        AutoIndexed.GetIndexModels<PartyDocument>());
+        AutoIndexedAttribute.GetIndexModels<PartyDocument>());
     }
 }

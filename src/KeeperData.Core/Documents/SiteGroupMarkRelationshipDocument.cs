@@ -116,6 +116,6 @@ public record SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
-        return AutoIndexed.GetIndexModels<SiteGroupMarkRelationshipDocument>();
+        return AutoIndexedAttribute.GetIndexModels<SiteGroupMarkRelationshipDocument>();
     }
 }

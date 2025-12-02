@@ -33,6 +33,6 @@ public class CtsHoldingDocument : BaseHoldingDocument, IEntity, IDeletableEntity
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
-        return AutoIndexed.GetIndexModels<CtsHoldingDocument>();
+        return AutoIndexedAttribute.GetIndexModels<CtsHoldingDocument>();
     }
 }

@@ -40,6 +40,6 @@ public class SamPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IC
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
-        return AutoIndexed.GetIndexModels<SamPartyDocument>();
+        return AutoIndexedAttribute.GetIndexModels<SamPartyDocument>();
     }
 }

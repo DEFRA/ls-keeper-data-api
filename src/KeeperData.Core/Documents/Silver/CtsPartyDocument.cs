@@ -41,6 +41,6 @@ public class CtsPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IC
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
-        return AutoIndexed.GetIndexModels<CtsPartyDocument>();
+        return AutoIndexedAttribute.GetIndexModels<CtsPartyDocument>();
     }
 }

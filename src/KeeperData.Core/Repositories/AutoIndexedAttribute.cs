@@ -8,7 +8,7 @@ namespace KeeperData.Core.Repositories;
 /// <summary>
 /// Apply this attribute to a property on a document to generate an index (default ascending) referencing the field by its BsonElement name, with index name "idx_{BsonElementName}"
 /// </summary>
-public class AutoIndexed : Attribute
+public class AutoIndexedAttribute : Attribute
 {
     /// <summary>
     /// Generate the AutoIndexes for a document, for Properties marked with the [AutoIndex] attribute
@@ -18,7 +18,7 @@ public class AutoIndexed : Attribute
     {
         return typeof(T)
         .GetMembers()
-        .Where(member => Attribute.IsDefined(member, typeof(AutoIndexed)))
+        .Where(member => Attribute.IsDefined(member, typeof(AutoIndexedAttribute)))
         .Select(member =>
         {
             var bsonElemAttr = member.GetCustomAttribute<BsonElementAttribute>();
