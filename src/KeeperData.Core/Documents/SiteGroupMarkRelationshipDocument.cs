@@ -103,51 +103,51 @@ public record SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes
         return
         [
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("HoldingIdentifier"),
+                Builders<BsonDocument>.IndexKeys.Ascending("holdingIdentifier"),
                 new CreateIndexOptions { Name = "idx_holdingIdentifier" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("HoldingIdentifierType"),
+                Builders<BsonDocument>.IndexKeys.Ascending("holdingIdentifierType"),
                 new CreateIndexOptions { Name = "idx_holdingIdentifierType" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("PartyId"),
+                Builders<BsonDocument>.IndexKeys.Ascending("partyId"),
                 new CreateIndexOptions { Name = "idx_partyId" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("Herdmark"),
+                Builders<BsonDocument>.IndexKeys.Ascending("herdmark"),
                 new CreateIndexOptions { Name = "idx_herdmark" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("RoleTypeId"),
+                Builders<BsonDocument>.IndexKeys.Ascending("roleTypeId"),
                 new CreateIndexOptions { Name = "idx_roleTypeId" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("RoleTypeName"),
+                Builders<BsonDocument>.IndexKeys.Ascending("roleTypeName"),
                 new CreateIndexOptions { Name = "idx_roleTypeName" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("SpeciesTypeId"),
+                Builders<BsonDocument>.IndexKeys.Ascending("speciesTypeId"),
                 new CreateIndexOptions { Name = "idx_speciesTypeId" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("SpeciesTypeCode"),
+                Builders<BsonDocument>.IndexKeys.Ascending("speciesTypeCode"),
                 new CreateIndexOptions { Name = "idx_speciesTypeCode" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("ProductionUsageId"),
+                Builders<BsonDocument>.IndexKeys.Ascending("productionUsageId"),
                 new CreateIndexOptions { Name = "idx_productionUsageId" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("ProductionUsageCode"),
+                Builders<BsonDocument>.IndexKeys.Ascending("productionUsageCode"),
                 new CreateIndexOptions { Name = "idx_productionUsageCode" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("ProductionTypeId"),
+                Builders<BsonDocument>.IndexKeys.Ascending("productionTypeId"),
                 new CreateIndexOptions { Name = "idx_productionTypeId" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("ProductionTypeCode"),
+                Builders<BsonDocument>.IndexKeys.Ascending("productionTypeCode"),
                 new CreateIndexOptions { Name = "idx_productionTypeCode" })
         ];
     }

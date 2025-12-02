@@ -67,27 +67,27 @@ public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
         return
         [
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("HoldingIdentifier"),
+                Builders<BsonDocument>.IndexKeys.Ascending("holdingIdentifier"),
                 new CreateIndexOptions { Name = "idx_holdingIdentifier" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("HoldingIdentifierType"),
+                Builders<BsonDocument>.IndexKeys.Ascending("holdingIdentifierType"),
                 new CreateIndexOptions { Name = "idx_holdingIdentifierType" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("PartyId"),
+                Builders<BsonDocument>.IndexKeys.Ascending("partyId"),
                 new CreateIndexOptions { Name = "idx_partyId" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("PartyTypeId"),
+                Builders<BsonDocument>.IndexKeys.Ascending("partyTypeId"),
                 new CreateIndexOptions { Name = "idx_partyTypeId" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("RoleTypeId"),
+                Builders<BsonDocument>.IndexKeys.Ascending("roleTypeId"),
                 new CreateIndexOptions { Name = "idx_roleTypeId" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("Source"),
+                Builders<BsonDocument>.IndexKeys.Ascending("source"),
                 new CreateIndexOptions { Name = "idx_source" })
         ];
     }

@@ -111,15 +111,15 @@ public class SamHerdDocument : IEntity, IContainsIndexes, IDeletableEntity
         return
         [
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("Herdmark"),
+                Builders<BsonDocument>.IndexKeys.Ascending("herdmark"),
                 new CreateIndexOptions { Name = "idx_herdmark" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("CountyParishHoldingNumber"),
+                Builders<BsonDocument>.IndexKeys.Ascending("countyParishHoldingNumber"),
                 new CreateIndexOptions { Name = "idx_countyParishHoldingNumber" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("ProductionUsageCode"),
+                Builders<BsonDocument>.IndexKeys.Ascending("productionUsageCode"),
                 new CreateIndexOptions { Name = "idx_productionUsageCode" })
         ];
     }

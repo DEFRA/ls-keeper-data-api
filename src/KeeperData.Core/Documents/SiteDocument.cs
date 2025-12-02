@@ -229,11 +229,11 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
                 new CreateIndexOptions { Name = "idx_state" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("CreatedDate"),
+                Builders<BsonDocument>.IndexKeys.Ascending("createdDate"),
                 new CreateIndexOptions { Name = "idx_createdDate" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("LastUpdatedDate"),
+                Builders<BsonDocument>.IndexKeys.Ascending("lastUpdatedDate"),
                 new CreateIndexOptions { Name = "idx_lastUpdatedDate" }),
 
             new CreateIndexModel<BsonDocument>(

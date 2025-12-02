@@ -36,11 +36,11 @@ public class CtsHoldingDocument : BaseHoldingDocument, IEntity, IDeletableEntity
         return
         [
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("CountyParishHoldingNumber"),
+                Builders<BsonDocument>.IndexKeys.Ascending("countyParishHoldingNumber"),
                 new CreateIndexOptions { Name = "idx_cphNumber" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("AlternativeHoldingIdentifier"),
+                Builders<BsonDocument>.IndexKeys.Ascending("alternativeHoldingIdentifier"),
                 new CreateIndexOptions { Name = "idx_altIdentifier" })
         ];
     }

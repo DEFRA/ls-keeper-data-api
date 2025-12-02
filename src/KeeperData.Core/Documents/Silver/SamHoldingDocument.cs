@@ -78,23 +78,23 @@ public class SamHoldingDocument : BaseHoldingDocument, IEntity, IDeletableEntity
         return
         [
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("CountyParishHoldingNumber"),
+                Builders<BsonDocument>.IndexKeys.Ascending("countyParishHoldingNumber"),
                 new CreateIndexOptions { Name = "idx_cphNumber" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("AlternativeHoldingIdentifier"),
+                Builders<BsonDocument>.IndexKeys.Ascending("alternativeHoldingIdentifier"),
                 new CreateIndexOptions { Name = "idx_altIdentifier" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("LocationName"),
+                Builders<BsonDocument>.IndexKeys.Ascending("locationName"),
                 new CreateIndexOptions { Name = "idx_locationName" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("SpeciesTypeCode"),
+                Builders<BsonDocument>.IndexKeys.Ascending("speciesTypeCode"),
                 new CreateIndexOptions { Name = "idx_speciesTypeCode" }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("SecondaryCph"),
+                Builders<BsonDocument>.IndexKeys.Ascending("secondaryCph"),
                 new CreateIndexOptions { Name = "idx_secondaryCph" })
         ];
     }

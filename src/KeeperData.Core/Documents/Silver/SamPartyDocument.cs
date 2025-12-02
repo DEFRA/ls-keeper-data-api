@@ -43,7 +43,7 @@ public class SamPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IC
         return
         [
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("PartyId"),
+                Builders<BsonDocument>.IndexKeys.Ascending("partyId"),
                 new CreateIndexOptions { Name = "idx_partyId" })
         ];
     }
