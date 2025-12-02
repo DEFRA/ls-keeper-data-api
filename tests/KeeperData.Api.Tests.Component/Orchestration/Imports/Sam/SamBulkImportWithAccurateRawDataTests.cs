@@ -136,7 +136,7 @@ public class SamBulkImportWithAccurateRawDataTests
     }
 
     private static void VerifyGoldSitePartyRoles(
-        List<Core.Documents.SitePartyRoleRelationshipDocument> incoming, 
+        List<Core.Documents.SitePartyRoleRelationshipDocument> incoming,
         List<Core.Documents.SitePartyRoleRelationshipDocument> expected)
     {
         incoming.OrderBy(x => x.PartyId).ThenBy(x => x.RoleTypeName).Should().BeEquivalentTo(
@@ -354,7 +354,8 @@ public class SamBulkImportWithAccurateRawDataTests
         // Gold Site
         _goldSiteRepositoryMock
             .Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() => {
+            .ReturnsAsync(() =>
+            {
                 context.GoldSite!.Id = Guid.NewGuid().ToString();
                 return context.GoldSite;
             });

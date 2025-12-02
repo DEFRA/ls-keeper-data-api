@@ -262,7 +262,7 @@ public static class ExpectedGoldSiteGroupMarks
             IntervalUnitOfTime = "Months",
             GroupMarkStartDate = new DateTime(2005, 1, 1, 0, 0, 0),
             GroupMarkEndDate = null
-        },        
+        },
         new()
         {
             Id = Guid.NewGuid().ToString(),

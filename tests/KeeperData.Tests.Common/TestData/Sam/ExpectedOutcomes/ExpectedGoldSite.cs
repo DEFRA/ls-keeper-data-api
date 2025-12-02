@@ -368,8 +368,8 @@ public static class ExpectedGoldSite
             ]
         };
 
-    public static SiteDocument ExpectedSite_UpdatedHolderAndParties => 
-        new() 
+    public static SiteDocument ExpectedSite_UpdatedHolderAndParties =>
+        new()
         {
             Id = Guid.NewGuid().ToString(),
             CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0),

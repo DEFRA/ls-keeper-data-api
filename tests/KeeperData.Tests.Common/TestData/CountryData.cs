@@ -47,7 +47,7 @@ public static class CountryData
         return new CountrySummaryDocument
         {
             IdentifierId = type.IdentifierId,
-            Code  = type.Code, 
+            Code = type.Code,
             Name = type.Name,
             LongName = type.LongName,
             DevolvedAuthorityFlag = type.DevolvedAuthority,
