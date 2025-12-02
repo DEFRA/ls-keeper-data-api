@@ -4,7 +4,6 @@ using KeeperData.Application.Orchestration.Updates.Cts.Holdings;
 using KeeperData.Application.Orchestration.Updates.Cts.Holdings.Steps;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Repositories;
-using KeeperData.Tests.Common.Generators;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using Moq;

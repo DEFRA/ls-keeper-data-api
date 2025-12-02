@@ -27,6 +27,7 @@ public class SamHoldingDailyScanStep(
     private readonly bool _samHoldingsEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamHoldingsEnabled");
 
     private const string SelectFields = "CPH";
+    private const string OrderBy = "CPH asc";
 
     protected override async Task ExecuteCoreAsync(SamDailyScanContext context, CancellationToken cancellationToken)
     {
@@ -46,6 +47,7 @@ public class SamHoldingDailyScanStep(
                 context.Holdings.CurrentSkip,
                 SelectFields,
                 context.UpdatedSinceDateTime,
+                OrderBy,
                 cancellationToken);
 
             if (queryResponse == null || queryResponse.Data.Count == 0)

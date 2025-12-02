@@ -1,3 +1,4 @@
+using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
@@ -15,17 +16,22 @@ public class SamHoldingImportAggregationStep(
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
     {
         var getHoldingsTask = _dataBridgeClient.GetSamHoldingsAsync(context.Cph, cancellationToken);
+        var getHoldersTask = _dataBridgeClient.GetSamHoldersByCphAsync(context.Cph, cancellationToken);
         var getHerdsTask = _dataBridgeClient.GetSamHerdsAsync(context.Cph, cancellationToken);
 
         await Task.WhenAll(
             getHoldingsTask,
+            getHoldersTask,
             getHerdsTask);
 
         context.RawHoldings = getHoldingsTask.Result;
 
         context.RawHerds = getHerdsTask.Result;
 
-        context.RawParties = await GetSamPartiesAsync(context, cancellationToken);
+        context.RawHolders = getHoldersTask.Result;
+
+        var parties = await GetSamPartiesAsync(context, cancellationToken);
+        context.RawParties = SamPartyMapper.AggregatePartyAndHolder(parties, context.RawHolders);
     }
 
     private async Task<List<SamParty>> GetSamPartiesAsync(SamHoldingImportContext context, CancellationToken cancellationToken)

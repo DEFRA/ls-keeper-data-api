@@ -5,10 +5,7 @@ using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Domain.Sites.Formatters;
-using KeeperData.Core.Repositories;
 using MongoDB.Driver;
-using System.Linq;
-using System.Text;
 
 namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 
@@ -132,14 +129,15 @@ public static class SamHoldingMapper
     }
 
     public static async Task<SiteDocument?> ToGold(
+        string goldSiteId,
+        SiteDocument? existingSite,
         List<SamHoldingDocument> silverHoldings,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         List<PartyDocument> goldParties,
-        IGenericRepository<SiteDocument> goldSiteRepository,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
         Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
         Func<string?, CancellationToken, Task<(string? speciesTypeId, string? speciesTypeName)>> findSpecies,
-        Func<string?, CancellationToken, Task<(string? productionUsageId, string? productionUsageName)>> findProductionUsage,
+        Func<string?, CancellationToken, Task<(string? premiseActivityTypeId, string? premiseActivityTypeName)>> findPremiseActivityType,
         CancellationToken cancellationToken)
     {
         if (silverHoldings == null || silverHoldings.Count == 0)
@@ -149,21 +147,19 @@ public static class SamHoldingMapper
             ? silverHoldings.Where(x => x.IsActive).OrderByDescending(h => h.LastUpdatedDate).First()
             : silverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
 
-        var existingHoldingFilter = Builders<SiteDocument>.Filter.ElemMatch(
-            x => x.Identifiers,
-            i => i.Identifier == representative.CountyParishHoldingNumber
-                && i.Type == HoldingIdentifierType.CphNumber.ToString());
-
-        var existingSite = await goldSiteRepository.FindOneByFilterAsync(existingHoldingFilter, cancellationToken);
-
         var distinctSpecies = await GetDistinctReferenceDataAsync<SpeciesDocument>(
             silverHoldings.Select(h => h.SpeciesTypeCode),
             findSpecies,
             cancellationToken);
 
-        var distinctProductionUsages = await GetDistinctReferenceDataAsync<ProductionUsageDocument>(
-            silverHoldings.SelectMany(h => h.ProductionUsageCodeList),
-            findProductionUsage,
+        //var distinctProductionUsages = await GetDistinctReferenceDataAsync<ProductionUsageDocument>(
+        //    silverHoldings.SelectMany(h => h.ProductionUsageCodeList),
+        //    findProductionUsage,
+        //    cancellationToken);
+
+        var distinctPremiseActivities = await GetDistinctReferenceDataAsync<PremisesActivityTypeDocument>(
+            silverHoldings.Select(h => h.PremiseActivityTypeCode),
+            findPremiseActivityType,
             cancellationToken);
 
         var species = distinctSpecies
@@ -175,7 +171,7 @@ public static class SamHoldingMapper
                 name: doc.typeName ?? string.Empty))
             .ToList();
 
-        var activities = distinctProductionUsages
+        var activities = distinctPremiseActivities
             .Where(doc => doc.typeId is not null)
             .Select(doc => new SiteActivity(
                 id: doc.typeId ?? string.Empty,
@@ -198,6 +194,7 @@ public static class SamHoldingMapper
                 activities,
                 cancellationToken)
             : await CreateSiteAsync(
+                goldSiteId,
                 representative,
                 goldSiteGroupMarks,
                 goldParties,
@@ -211,6 +208,7 @@ public static class SamHoldingMapper
     }
 
     private static async Task<Site> CreateSiteAsync(
+        string goldSiteId,
         SamHoldingDocument representative,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         List<PartyDocument> goldParties,
@@ -241,12 +239,18 @@ public static class SamHoldingMapper
             representative.Location?.Address?.AddressPostCode ?? string.Empty,
             country);
 
+        var communication = Communication.Create(
+            representative.Communication?.Email,
+            representative.Communication?.Mobile,
+            representative.Communication?.Landline,
+            false);
+
         var location = Location.Create(
             representative.Location?.OsMapReference,
             representative.Location?.Easting,
             representative.Location?.Northing,
             address,
-            communication: null);
+            communication: [communication]);
 
         var groupMarks = ToGroupMarks(goldSiteGroupMarks);
 
@@ -256,6 +260,7 @@ public static class SamHoldingMapper
             .ToList();
 
         var site = Site.Create(
+            goldSiteId,
             representative.CreatedDate,
             representative.LastUpdatedDate,
             premiseType?.Code ?? string.Empty,
@@ -336,13 +341,19 @@ public static class SamHoldingMapper
             representative.Location?.Address?.AddressPostCode ?? string.Empty,
             country);
 
+        var updatedCommunication = Communication.Create(
+            representative.Communication?.Email,
+            representative.Communication?.Mobile,
+            representative.Communication?.Landline,
+            false);
+
         site.SetLocation(
             representative.LastUpdatedDate,
             representative.Location?.OsMapReference,
             representative.Location?.Easting,
             representative.Location?.Northing,
             updatedAddress,
-            null);
+            [updatedCommunication]);
 
         site.SetSpecies(species, representative.LastUpdatedDate);
 
@@ -415,7 +426,7 @@ public static class SamHoldingMapper
                         id: m.SpeciesTypeId,
                         lastUpdatedDate: m.LastUpdatedDate,
                         code: m.SpeciesTypeCode ?? string.Empty,
-                        name: m.SpeciesTypeCode ?? string.Empty)
+                        name: m.SpeciesTypeName ?? string.Empty)
                     : null;
 
                 return new GroupMark(

@@ -136,6 +136,8 @@ public class SamPartyMapperTests
         }
     }
 
+    // TODO - Add tests for AggregatePartyAndHolder
+
     private static List<SamParty> GenerateSamParty(int quantity)
     {
         var factory = new MockSamRawDataFactory();

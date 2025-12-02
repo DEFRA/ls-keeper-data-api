@@ -49,7 +49,7 @@ public class CtsHoldingBulkScanStepTests
             totalCount: 5);
 
         _dataBridgeClientMock
-            .Setup(c => c.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(5, 0, It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(5, 0, It.IsAny<string>(), null, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
@@ -72,7 +72,7 @@ public class CtsHoldingBulkScanStepTests
             totalCount: 0);
 
         _dataBridgeClientMock
-            .Setup(c => c.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(5, 0, It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(5, 0, It.IsAny<string>(), null, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
@@ -98,7 +98,7 @@ public class CtsHoldingBulkScanStepTests
             totalCount: 8);
 
         _dataBridgeClientMock
-            .SetupSequence(c => c.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+            .SetupSequence(c => c.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), null, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(page1ResponseMock)
             .ReturnsAsync(page2ResponseMock);
 
@@ -136,7 +136,7 @@ public class CtsHoldingBulkScanStepTests
         };
 
         _dataBridgeClientMock
-            .Setup(c => c.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(5, 0, It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(5, 0, It.IsAny<string>(), null, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
@@ -155,7 +155,7 @@ public class CtsHoldingBulkScanStepTests
 
         await _scanStep.ExecuteAsync(_context, cts.Token);
 
-        _dataBridgeClientMock.Verify(c => c.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()), Times.Never);
+        _dataBridgeClientMock.Verify(c => c.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), null, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<CtsImportHoldingMessage>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -174,7 +174,7 @@ public class CtsHoldingBulkScanStepTests
             totalCount: 8);
 
         _dataBridgeClientMock
-            .SetupSequence(c => c.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+            .SetupSequence(c => c.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), null, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(page1ResponseMock)
             .ReturnsAsync(page2ResponseMock);
 

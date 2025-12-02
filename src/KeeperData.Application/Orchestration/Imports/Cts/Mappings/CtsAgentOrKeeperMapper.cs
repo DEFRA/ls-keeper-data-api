@@ -26,8 +26,7 @@ public static class CtsAgentOrKeeperMapper
             var party = ToSilver(
                 p,
                 holdingIdentifierType,
-                (roleNameToLookup, roleTypeId, roleTypeName),
-                cancellationToken);
+                (roleNameToLookup, roleTypeId, roleTypeName));
 
             result.Add(party);
         }
@@ -38,8 +37,7 @@ public static class CtsAgentOrKeeperMapper
     public static CtsPartyDocument ToSilver(
         CtsAgentOrKeeper p,
         HoldingIdentifierType holdingIdentifierType,
-        (string? RoleNameToLookup, string? RoleTypeId, string? RoleTypeName) roleTypeInfo,
-        CancellationToken cancellationToken)
+        (string? RoleNameToLookup, string? RoleTypeId, string? RoleTypeName) roleTypeInfo)
     {
         var partyTypeId = p.DeterminePartyType().ToString();
 

@@ -1,10 +1,10 @@
 using KeeperData.Core.Attributes;
+using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 using System.Text.Json.Serialization;
-using KeeperData.Core.Domain.Enums;
 
 namespace KeeperData.Core.Documents.Silver;
 

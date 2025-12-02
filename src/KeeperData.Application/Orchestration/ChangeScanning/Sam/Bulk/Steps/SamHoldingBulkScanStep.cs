@@ -24,6 +24,7 @@ public class SamHoldingBulkScanStep(
     private readonly IDelayProvider _delayProvider = delayProvider;
 
     private const string SelectFields = "CPH";
+    private const string OrderBy = "CPH asc";
 
     protected override async Task ExecuteCoreAsync(SamBulkScanContext context, CancellationToken cancellationToken)
     {
@@ -38,6 +39,7 @@ public class SamHoldingBulkScanStep(
                 context.Holdings.CurrentSkip,
                 SelectFields,
                 context.UpdatedSinceDateTime,
+                OrderBy,
                 cancellationToken);
 
             if (queryResponse == null || queryResponse.Data.Count == 0)

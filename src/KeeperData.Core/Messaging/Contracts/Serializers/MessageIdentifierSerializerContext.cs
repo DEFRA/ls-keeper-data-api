@@ -9,7 +9,6 @@ namespace KeeperData.Core.Messaging.Contracts.Serializers;
     Converters = []
 )]
 [JsonSerializable(typeof(SamImportHoldingMessage))]
-[JsonSerializable(typeof(SamImportHolderMessage))]
 [JsonSerializable(typeof(CtsImportHoldingMessage))]
 [JsonSerializable(typeof(SamBulkScanMessage))]
 [JsonSerializable(typeof(CtsBulkScanMessage))]
@@ -19,9 +18,6 @@ namespace KeeperData.Core.Messaging.Contracts.Serializers;
 [JsonSerializable(typeof(CtsDailyScanMessage))]
 [JsonSerializable(typeof(SamDailyScanMessage))]
 [JsonSerializable(typeof(SamUpdateHoldingMessage))]
-[JsonSerializable(typeof(SamUpdateHolderMessage))]
-[JsonSerializable(typeof(SamUpdateHerdMessage))]
-[JsonSerializable(typeof(SamUpdatePartyMessage))]
 public partial class MessageIdentifierSerializerContext : JsonSerializerContext
 {
 }

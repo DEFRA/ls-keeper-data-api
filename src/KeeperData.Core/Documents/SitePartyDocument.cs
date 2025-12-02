@@ -41,7 +41,7 @@ public class SitePartyDocument : INestedEntity
 
     [BsonElement("createdDate")]
     [JsonPropertyName("createdDate")]
-    public DateTime CreatedDate { get; private set; }
+    public DateTime CreatedDate { get; set; }
 
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]

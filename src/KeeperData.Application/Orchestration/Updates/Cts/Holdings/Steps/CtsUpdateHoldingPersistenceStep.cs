@@ -53,13 +53,14 @@ public class CtsUpdateHoldingPersistenceStep(
         List<CtsPartyDocument> incomingParties,
         CancellationToken cancellationToken)
     {
-        var incomingKeys = incomingParties.Select(p => $"{p.PartyId}::{p.CountyParishHoldingNumber}").ToHashSet();
+        incomingParties ??= [];
 
-        var existingParties = await _silverPartyRepository.FindAsync(
-            x => x.CountyParishHoldingNumber == holdingIdentifier,
-            cancellationToken) ?? [];
+        var incomingKeys = incomingParties
+            .Select(p => $"{p.PartyId}::{p.CountyParishHoldingNumber}")
+            .ToHashSet();
 
-        // 1. Upsert Incoming
+        var existingParties = await GetExistingSilverPartiesAsync(holdingIdentifier, cancellationToken);
+
         if (incomingParties.Count > 0)
         {
             var partyUpserts = incomingParties.Select(p =>
@@ -82,7 +83,6 @@ public class CtsUpdateHoldingPersistenceStep(
             await _silverPartyRepository.BulkUpsertWithCustomFilterAsync(partyUpserts, cancellationToken);
         }
 
-        // 2. Delete Orphans
         var orphanedParties = existingParties
             .Where(e => !incomingKeys.Contains($"{e.PartyId}::{e.CountyParishHoldingNumber}"))
             .ToList();
@@ -93,6 +93,7 @@ public class CtsUpdateHoldingPersistenceStep(
                 x => x.Id,
                 orphanedParties.Select(d => d.Id)
             );
+
             await _silverPartyRepository.DeleteManyAsync(deleteFilter, cancellationToken);
         }
     }
@@ -115,5 +116,14 @@ public class CtsUpdateHoldingPersistenceStep(
         {
             await _silverPartyRoleRelationshipRepository.AddManyAsync(incomingPartyRoles, cancellationToken);
         }
+    }
+
+    private async Task<List<CtsPartyDocument>> GetExistingSilverPartiesAsync(
+        string holdingIdentifier,
+        CancellationToken cancellationToken)
+    {
+        return await _silverPartyRepository.FindAsync(
+            x => x.CountyParishHoldingNumber == holdingIdentifier,
+            cancellationToken) ?? [];
     }
 }

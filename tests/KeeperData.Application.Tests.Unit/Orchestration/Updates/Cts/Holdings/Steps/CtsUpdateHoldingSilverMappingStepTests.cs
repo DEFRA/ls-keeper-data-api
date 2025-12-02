@@ -1,8 +1,6 @@
 using FluentAssertions;
 using KeeperData.Application.Orchestration.Updates.Cts.Holdings;
 using KeeperData.Application.Orchestration.Updates.Cts.Holdings.Steps;
-using KeeperData.Core.ApiClients.DataBridgeApi;
-using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Services;
 using KeeperData.Tests.Common.Factories;
 using KeeperData.Tests.Common.Generators;
