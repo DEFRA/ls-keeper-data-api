@@ -309,7 +309,7 @@ public class GenericRepositoryTests
     public void AllDocumentsShouldHaveMatchingJsonAndBsonAttributes()
     {
         var assembly = Assembly.GetAssembly(typeof(PartyDocument));
-        var documentTypes = assembly.GetTypes().Where(t => t.IsAssignableTo(typeof(IEntity)));
+        var documentTypes = assembly.GetTypes().Where(t => t.IsAssignableTo(typeof(IEntity)) || t.IsAssignableTo(typeof(INestedEntity)));
         foreach (var type in documentTypes)
         {
             var properties = type.GetMembers()
@@ -326,6 +326,30 @@ public class GenericRepositoryTests
             {
                 property.jsonAttribute.Should().NotBeNull($"Class {type.Name} member {property.member.Name} must have a JsonPropertyNameAttribute if it has a BsonElementAttribute");
                 property.jsonAttribute.Name.Should().Be(property.bsonAttribute?.ElementName, $"Class {type.Name} member {property.member.Name} should have matching JsonPropertyNameAttribute '{property.jsonAttribute.Name}' and BsonElementAttribute '{property.bsonAttribute?.ElementName}'");
+            }
+        }
+    }
+
+    [Fact]
+    public void AllAutoIndexedDocumentsShouldHaveBsonAttribute()
+    {
+        var assembly = Assembly.GetAssembly(typeof(PartyDocument));
+        var documentTypes = assembly.GetTypes().Where(t => t.IsAssignableTo(typeof(IEntity)) || t.IsAssignableTo(typeof(INestedEntity)));
+        foreach (var type in documentTypes)
+        {
+            var properties = type.GetMembers()
+            .Where(p => p.IsDefined(typeof(AutoIndexedAttribute)))
+            .Select(member =>
+            new
+            {
+                member,
+                indexAttribute = member.GetCustomAttribute<AutoIndexedAttribute>(),
+                bsonAttribute = member.GetCustomAttribute<BsonElementAttribute>()
+            })
+            .ToList();
+            foreach (var property in properties)
+            {
+                property.bsonAttribute.Should().NotBeNull($"Class {type.Name} member {property.member.Name} must have a BsonPropertyNameAttribute if it has a AutoIndexedAttribute");
             }
         }
     }

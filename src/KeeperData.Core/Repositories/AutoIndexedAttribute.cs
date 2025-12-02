@@ -18,16 +18,13 @@ public class AutoIndexedAttribute : Attribute
     {
         return typeof(T)
         .GetMembers()
-        .Where(member => Attribute.IsDefined(member, typeof(AutoIndexedAttribute)))
+        .Where(member => IsDefined(member, typeof(AutoIndexedAttribute)))
         .Select(member =>
         {
             var bsonElemAttr = member.GetCustomAttribute<BsonElementAttribute>();
-            if (bsonElemAttr == null)
-                throw new ApplicationException($"BsonElementAttribute must be defined for property {member.Name} on {member.DeclaringType?.Name}");
-
             return new CreateIndexModel<BsonDocument>(
-                    Builders<BsonDocument>.IndexKeys.Ascending(bsonElemAttr.ElementName),
-                    new CreateIndexOptions { Name = $"idx_{bsonElemAttr.ElementName}" });
+                    Builders<BsonDocument>.IndexKeys.Ascending(bsonElemAttr?.ElementName),
+                    new CreateIndexOptions { Name = $"idx_{bsonElemAttr?.ElementName}" });
         });
     }
 }
