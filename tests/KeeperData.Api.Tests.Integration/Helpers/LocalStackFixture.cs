@@ -36,7 +36,7 @@ public class LocalStackFixture : IAsyncLifetime
             .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
             .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
             .WithEnvironment("EDGE_PORT", "4566")
-            .WithPortBinding(4566, true)
+            .WithPortBinding(4566, 4566)
             .WithNetwork("integration-tests")         // Shared network name
             .WithNetworkAliases("localstack")
             .Build();     

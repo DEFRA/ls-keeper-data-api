@@ -24,7 +24,7 @@ public class MongoDbFixture : IAsyncLifetime
 
         Container = new MongoDbBuilder()
                      .WithImage("mongo:7.0")
-                     .WithPortBinding(27017, true) // dynamic host port
+                     .WithPortBinding(27017, 27017) // dynamic host port
                      .WithEnvironment("MONGO_INITDB_ROOT_USERNAME", "testuser")
                      .WithEnvironment("MONGO_INITDB_ROOT_PASSWORD", "testpass")
                      .WithNetwork("integration-tests")

@@ -26,7 +26,7 @@ public class ApiContainerFixture : IAsyncLifetime
     {
         ApiContainer = new ContainerBuilder()
             .WithImage("keeperdata_api:latest")
-            .WithPortBinding(5555, true)
+            .WithPortBinding(5555, 5555)
             .WithEnvironment("MONGO_CONNECTION_STRING", _mongoConnectionString)
             .WithEnvironment("LOCALSTACK_ENDPOINT", _localStackEndpoint)
             .WithEnvironment("AWS__Region", "eu-west-2")
