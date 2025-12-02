@@ -182,7 +182,7 @@ public class CountryRepositoryTests
         var result = await _sut.FindAsync("GB", CancellationToken.None);
 
         // Assert
-        result.countryId.Should().Be("GB");
+        result.countryId.Should().Be(gbId);
         result.countryName.Should().Be("United Kingdom");
     }
 
@@ -209,7 +209,7 @@ public class CountryRepositoryTests
         var result = await _sut.FindAsync("United Kingdom", CancellationToken.None);
 
         // Assert
-        result.countryId.Should().Be("GB");
+        result.countryId.Should().Be(gbId);
         result.countryName.Should().Be("United Kingdom");
     }
 
@@ -237,8 +237,8 @@ public class CountryRepositoryTests
         var resultByName = await _sut.FindAsync("united kingdom", CancellationToken.None);
 
         // Assert
-        resultByCode.countryId.Should().Be("GB");
-        resultByName.countryId.Should().Be("GB");
+        resultByCode.countryId.Should().Be(gbId);
+        resultByName.countryId.Should().Be(gbId);
     }
 
     [Theory]
@@ -307,7 +307,7 @@ public class CountryRepositoryTests
         var result = await _sut.FindAsync("GB", CancellationToken.None);
 
         // Assert
-        result.countryId.Should().Be("GB");
+        result.countryId.Should().Be(gbId);
         result.countryName.Should().Be("Great Britain");
     }
 }

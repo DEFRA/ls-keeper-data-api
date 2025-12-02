@@ -35,7 +35,7 @@ public class GoldSitePartyRoleRelationshipRepository(IOptions<MongoConfig> mongo
         var results = result
             .Select(doc => new SitePartyRoleRelationship
             {
-                Id = doc.GetValue("id").AsString,
+                Id = doc.GetValue("_id").AsString,
                 PartyId = doc.GetValue("partyId").AsString,
                 HoldingIdentifier = doc.GetValue("holdingIdentifier").AsString,
                 RoleTypeId = doc.GetValue("roleTypeId").AsString

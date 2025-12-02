@@ -182,7 +182,7 @@ public class RoleRepositoryTests
         var result = await _sut.FindAsync("LIVESTOCKKEEPER", CancellationToken.None);
 
         // Assert
-        result.roleId.Should().Be("LIVESTOCKKEEPER");
+        result.roleId.Should().Be(keeperId);
         result.roleName.Should().Be("Livestock Keeper");
     }
 
@@ -209,7 +209,7 @@ public class RoleRepositoryTests
         var result = await _sut.FindAsync("Livestock Keeper", CancellationToken.None);
 
         // Assert
-        result.roleId.Should().Be("LIVESTOCKKEEPER");
+        result.roleId.Should().Be(keeperId);
         result.roleName.Should().Be("Livestock Keeper");
     }
 
@@ -237,8 +237,8 @@ public class RoleRepositoryTests
         var resultByName = await _sut.FindAsync("livestock keeper", CancellationToken.None);
 
         // Assert
-        resultByCode.roleId.Should().Be("LIVESTOCKKEEPER");
-        resultByName.roleId.Should().Be("LIVESTOCKKEEPER");
+        resultByCode.roleId.Should().Be(keeperId);
+        resultByName.roleId.Should().Be(keeperId);
     }
 
     [Theory]
@@ -307,7 +307,7 @@ public class RoleRepositoryTests
         var result = await _sut.FindAsync("KEEPER", CancellationToken.None);
 
         // Assert
-        result.roleId.Should().Be("KEEPER");
+        result.roleId.Should().Be(keeperId);
         result.roleName.Should().Be("Keeper");
     }
 }

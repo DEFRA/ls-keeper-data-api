@@ -37,7 +37,7 @@ public class SpeciesRepository(
         speciesItem ??= species.FirstOrDefault(s => s.Name?.Equals(lookupValue, StringComparison.OrdinalIgnoreCase) == true);
 
         return speciesItem != null
-            ? (speciesItem.Code, speciesItem.Name)
+            ? (speciesItem.IdentifierId, speciesItem.Name)
             : (null, null);
     }
 }

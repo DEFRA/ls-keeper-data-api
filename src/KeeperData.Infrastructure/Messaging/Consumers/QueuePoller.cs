@@ -148,9 +148,10 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
 
     private async Task HandleMessageAsync(Message message, string queueUrl, CancellationToken cancellationToken)
     {
+        var unwrappedMessage = message.Unwrap(_messageSerializer);
+
         try
         {
-            var unwrappedMessage = message.Unwrap(_messageSerializer);
             CorrelationIdContext.Value = string.IsNullOrWhiteSpace(unwrappedMessage.CorrelationId)
                 ? Guid.NewGuid().ToString()
                 : unwrappedMessage.CorrelationId;
@@ -183,6 +184,8 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
 
             _logger.LogError("RetryableException in queue: {queue}, correlationId: {correlationId}, messageId: {messageId}, Exception: {ex}",
                 _queueConsumerOptions.QueueUrl, CorrelationIdContext.Value, message.MessageId, ex);
+
+            _logger.LogError("Bad Message: {payload}", unwrappedMessage.Payload);
 
             _observer?.OnMessageFailed(message.MessageId, DateTime.UtcNow, ex, message);
         }
