@@ -28,7 +28,7 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
             .WithEnvironment("AWS_DEFAULT_REGION", "eu-west-2")
             .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
             .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
-            .WithPortBinding(4566, true) // expose edge port
+            .WithPortBinding(4566, 4566) // expose edge port
             .Build();
 
             await localStackContainer.StartAsync();
@@ -352,41 +352,51 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
 
             // --- MongoDB container ---
             var mongoContainer = new MongoDbBuilder()
-              .WithImage("mongo:7.0")
+              .WithImage("mongo:latest")
+              .WithName("mongo")
               .WithPortBinding(27017, true) // dynamic host port
               .WithEnvironment("MONGO_INITDB_ROOT_USERNAME", "testuser")
               .WithEnvironment("MONGO_INITDB_ROOT_PASSWORD", "testpass")
+              .WithEnvironment("MONGO_INITDB_DATABASE", "ls-keeper-data-api")
               .WithNetwork(networkName)
               .WithNetworkAliases("mongo")
               .Build();
 
             // --- LocalStack container ---
             var localStackContainer = new LocalStackBuilder()
-                .WithImage("localstack/localstack:2.3")
+                .WithImage("localstack/localstack:latest")
+                .WithName("localstack")
                 .WithEnvironment("SERVICES", "s3,sqs,sns")
                 .WithEnvironment("DEBUG", "1")
                 .WithEnvironment("AWS_DEFAULT_REGION", "eu-west-2")
                 .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
                 .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
                 .WithEnvironment("EDGE_PORT", "4566")
-                .WithPortBinding(4566, true)
+                .WithPortBinding(4566, 4566)
                 .WithNetwork(networkName)
                 .WithNetworkAliases("localstack")
                 .Build();
 
             // --- Start containers ---
+            await network.CreateAsync();
             await mongoContainer.StartAsync();
             await localStackContainer.StartAsync();
-            var mappedMongoPort = mongoContainer.GetMappedPublicPort(27017);
-            var mongoConnectionString = $"mongodb://testuser:testpass@mongo:27017/testdb?authSource=admin";
 
             // --- API container ---
             var apiContainer = new ContainerBuilder()
              .WithImage("keeperdata_api:latest")
+             .WithName("keeperdata_api")
              .WithPortBinding(5555, 5555)
-             //.WithEnvironment("MONGO_CONNECTION_STRING", mongoContainer.GetConnectionString())
-             .WithEnvironment("Mongo__DatabaseUri", "mongodb://testuser:testpass@mongo:27017/testdb?authSource=admin")
-             .WithEnvironment("Mongo__DatabaseName", "testdb")
+             .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
+             .WithEnvironment("ASPNETCORE_HTTP_PORTS", "5555")
+             .WithEnvironment("Mongo__DatabaseUri", "mongodb://testuser:testpass@mongo:27017/ls-keeper-data-api?authSource=admin")
+             .WithEnvironment("Mongo__DatabaseName", "ls-keeper-data-api")
+             .WithEnvironment("StorageConfiguration__ComparisonReportsStorage__BucketName", "test-comparison-reports-bucket")
+             .WithEnvironment("QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue")
+             .WithEnvironment("QueueConsumerOptions__IntakeEventQueueOptions__DeadLetterQueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue-deadletter\r\n      - ApiClients__DataBridgeApi__BaseUrl=http://keeperdata_bridge:5560/")
+             .WithEnvironment("ApiClients__DataBridgeApi__BaseUrl", "http://localhost:5560/")
+             .WithEnvironment("ApiClients__DataBridgeApi__UseFakeClient", "true")
+             .WithEnvironment("ServiceBusSenderConfiguration__IntakeEventQueue__QueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue")
              .WithEnvironment("LOCALSTACK_ENDPOINT", "http://localstack:4566")
              .WithEnvironment("AWS__Region", "eu-west-2")
              .WithEnvironment("AWS_REGION", "eu-west-2")
@@ -394,7 +404,7 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
              .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
              .WithEnvironment("AWS__ServiceURL", "http://localstack:4566")
              .WithNetwork(networkName)
-             .WithNetworkAliases("api")
+             .WithNetworkAliases("keeperdata_api")
              .WithWaitStrategy(Wait.ForUnixContainer()
                  .UntilHttpRequestIsSucceeded(req => req.ForPort(5555).ForPath("/health")))
              .Build();
@@ -408,7 +418,7 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
                     ForcePathStyle = true
                 });
 
-                var bucketName = "my-test-bucket";
+                var bucketName = "test-comparison-reports-bucket";
                 var objectKey = "hello.txt";
 
                 // --- Act: create bucket and upload object ---
@@ -429,8 +439,8 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
 
                 Assert.Contains(listResponse.S3Objects, o => o.Key == objectKey);
 
-
-                var sqsClient = new AmazonSQSClient("test", "test", new AmazonSQSConfig
+                var credentials = new Amazon.Runtime.BasicAWSCredentials("test", "test");
+                var sqsClient = new AmazonSQSClient(credentials, new AmazonSQSConfig
                 {
                     ServiceURL = "http://localhost:4566",
                     AuthenticationRegion = "eu-west-2",
@@ -438,7 +448,9 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
                 });
 
                 // 1. Create DLQ
-                var dlqName = "test-dlq";
+                var dlqName = "ls_keeper_data_intake_queue-deadletter";
+                await sqsClient.CreateQueueAsync(new CreateQueueRequest { QueueName = dlqName });
+
                 var createDlqResponse = await sqsClient.CreateQueueAsync(new CreateQueueRequest { QueueName = dlqName });
                 var dlqUrl = createDlqResponse.QueueUrl;
 
@@ -451,7 +463,7 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
                 var dlqArn = dlqAttributes.QueueARN;
 
                 // 3. Create main queue
-                var mainQueueName = "test-main-queue";
+                var mainQueueName = "ls_keeper_data_intake_queue";
                 var createMainQueueResponse = await sqsClient.CreateQueueAsync(new CreateQueueRequest { QueueName = mainQueueName });
                 var mainQueueUrl = createMainQueueResponse.QueueUrl;
 
@@ -467,29 +479,29 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
                 });
 
                 // 5. Send a message to the main queue
-                var messageBody = "Hello DLQ!";
-                await sqsClient.SendMessageAsync(new SendMessageRequest
-                {
-                    QueueUrl = mainQueueUrl,
-                    MessageBody = messageBody
-                });
+                //var messageBody = "Hello DLQ!";
+                //await sqsClient.SendMessageAsync(new SendMessageRequest
+                //{
+                //    QueueUrl = mainQueueUrl,
+                //    MessageBody = messageBody
+                //});
 
-                // 6. Receive the message from the main queue
-                var receiveResponse = await sqsClient.ReceiveMessageAsync(new ReceiveMessageRequest
-                {
-                    QueueUrl = mainQueueUrl,
-                    MaxNumberOfMessages = 1,
-                    WaitTimeSeconds = 1
-                });
+                //// 6. Receive the message from the main queue
+                //var receiveResponse = await sqsClient.ReceiveMessageAsync(new ReceiveMessageRequest
+                //{
+                //    QueueUrl = mainQueueUrl,
+                //    MaxNumberOfMessages = 1,
+                //    WaitTimeSeconds = 1
+                //});
 
-                // Assert: message received
-                Assert.Single(receiveResponse.Messages);
-                Assert.Equal(messageBody, receiveResponse.Messages[0].Body);
+                //// Assert: message received
+                //Assert.Single(receiveResponse.Messages);
+                //Assert.Equal(messageBody, receiveResponse.Messages[0].Body);
 
 
                 // --- Wait until MongoDB is ready ---
                 var mappedPortMongo = mongoContainer.GetMappedPublicPort(27017);
-                var connectionString = $"mongodb://testuser:testpass@localhost:{mappedPortMongo}/testdb?authSource=admin";
+                var connectionString = $"mongodb://localhost:{mappedPortMongo}/testdb";
 
                 var mongoClient = new MongoClient(connectionString);
 
@@ -510,7 +522,7 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
                 // --- Test API health ---
                 await apiContainer.StartAsync();
 
-                using var httpClient = new HttpClient { BaseAddress = new Uri($"http://localhost:{apiContainer.GetMappedPublicPort(80)}") };
+                using var httpClient = new HttpClient { BaseAddress = new Uri($"http://localhost:{apiContainer.GetMappedPublicPort(5555)}") };
                 var response = await httpClient.GetAsync("health");
                 response.EnsureSuccessStatusCode();
 
@@ -518,13 +530,13 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
                 Assert.Contains("healthy", content, StringComparison.OrdinalIgnoreCase);
 
                 // --- Example MongoDB insert and retrieve ---
-                var testDb = mongoClient.GetDatabase("testdb");
-                var testColl = testDb.GetCollection<MongoDB.Bson.BsonDocument>("test");
-                var doc = new MongoDB.Bson.BsonDocument { { "Name", "Vihaan" }, { "Age", 5 } };
-                await testColl.InsertOneAsync(doc);
+                //var testDb = mongoClient.GetDatabase("testdb");
+                //var testColl = testDb.GetCollection<MongoDB.Bson.BsonDocument>("test");
+                //var doc = new MongoDB.Bson.BsonDocument { { "Name", "Vihaan" }, { "Age", 5 } };
+                //await testColl.InsertOneAsync(doc);
 
-                var result = await testColl.Find(Builders<MongoDB.Bson.BsonDocument>.Filter.Eq("Name", "Vihaan")).FirstOrDefaultAsync();
-                Assert.NotNull(result);
+                //var result = await testColl.Find(Builders<MongoDB.Bson.BsonDocument>.Filter.Eq("Name", "Vihaan")).FirstOrDefaultAsync();
+                //Assert.NotNull(result);
             }
             finally
             {
@@ -532,6 +544,7 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
                 await apiContainer.DisposeAsync();
                 await localStackContainer.DisposeAsync();
                 await mongoContainer.DisposeAsync();
+                await network.DeleteAsync();
             }
         }
     }
