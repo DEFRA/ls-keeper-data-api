@@ -309,7 +309,8 @@ public class GenericRepositoryTests
     public void AllDocumentsShouldHaveMatchingJsonAndBsonAttributes()
     {
         var assembly = Assembly.GetAssembly(typeof(PartyDocument));
-        var documentTypes = assembly.GetTypes().Where(t => t.IsAssignableTo(typeof(IEntity)) || t.IsAssignableTo(typeof(INestedEntity)));
+        var documentTypes = assembly?.GetTypes().Where(t => t.IsAssignableTo(typeof(IEntity)) || t.IsAssignableTo(typeof(INestedEntity)));
+        documentTypes.Should().NotBeNull();
         foreach (var type in documentTypes)
         {
             var properties = type.GetMembers()
@@ -334,7 +335,8 @@ public class GenericRepositoryTests
     public void AllAutoIndexedDocumentsShouldHaveBsonAttribute()
     {
         var assembly = Assembly.GetAssembly(typeof(PartyDocument));
-        var documentTypes = assembly.GetTypes().Where(t => t.IsAssignableTo(typeof(IEntity)) || t.IsAssignableTo(typeof(INestedEntity)));
+        var documentTypes = assembly?.GetTypes().Where(t => t.IsAssignableTo(typeof(IEntity)) || t.IsAssignableTo(typeof(INestedEntity)));
+        documentTypes.Should().NotBeNull();
         foreach (var type in documentTypes)
         {
             var properties = type.GetMembers()
