@@ -18,18 +18,22 @@ public class MongoDbFixture : IAsyncLifetime
 
     private static bool s_mongoGlobalsRegistered;
 
+    public string NetworkName { get; } = "integration-tests";
+
     public async Task InitializeAsync()
     {
         DockerNetworkHelper.EnsureNetworkExists("integration-tests"); // <-- Add this line first
 
         Container = new MongoDbBuilder()
-                     .WithImage("mongo:7.0")
-                     .WithPortBinding(27017, 27017) // dynamic host port
-                     .WithEnvironment("MONGO_INITDB_ROOT_USERNAME", "testuser")
-                     .WithEnvironment("MONGO_INITDB_ROOT_PASSWORD", "testpass")
-                     .WithNetwork("integration-tests")
-                     .WithNetworkAliases("mongo")
-                     .Build();
+              .WithImage("mongo:latest")
+              .WithName("mongo")
+              .WithPortBinding(27017, true) // dynamic host port
+              .WithEnvironment("MONGO_INITDB_ROOT_USERNAME", "testuser")
+              .WithEnvironment("MONGO_INITDB_ROOT_PASSWORD", "testpass")
+              .WithEnvironment("MONGO_INITDB_DATABASE", "ls-keeper-data-api")
+              .WithNetwork(NetworkName)
+              .WithNetworkAliases("mongo")
+              .Build();
 
         await Container.StartAsync();
 
@@ -38,13 +42,8 @@ public class MongoDbFixture : IAsyncLifetime
         ConnectionString = $"mongodb://testuser:testpass@localhost:{mappedPort}/{TestDatabaseName}?authSource=admin";
 
         MongoClient = new MongoClient(ConnectionString);
-        var database = MongoClient.GetDatabase(TestDatabaseName);        
-
-        //var client = new MongoClient(connectionString);
-        //var hostPort = Container.GetMappedPublicPort(27017);
-        //ConnectionString = $"mongodb://localhost:{hostPort}/{TestDatabaseName}";
-        //MongoClient = new MongoClient(ConnectionString);
-
+        var database = MongoClient.GetDatabase(TestDatabaseName);
+      
         // Verify connection
         await VerifyConnectionAsync();
 
@@ -82,6 +81,7 @@ public class MongoDbFixture : IAsyncLifetime
                 await MongoClient.GetDatabase(TestDatabaseName)
                     .RunCommandAsync<MongoDB.Bson.BsonDocument>(
                         new MongoDB.Bson.BsonDocument("ping", 1));
+
                 return;
             }
             catch when (i < maxRetries - 1)

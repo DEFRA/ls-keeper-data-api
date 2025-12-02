@@ -13,18 +13,18 @@ using MongoDB.Driver;
 using Testcontainers.MongoDb;
 using DotNet.Testcontainers.Builders;
 using KeeperData.Api.Tests.Integration.Helpers;
+using Docker.DotNet;
 
 namespace KeeperData.Api.Tests.Integration.Endpoints
 {
     public class TestContainersTest
     {
-
         [Fact]
         public async Task LocalStack_CanCreateBucketAndUploadObject()
         {
             var localStackContainer = new LocalStackBuilder()
-            .WithImage("localstack/localstack:2.3")
-            .WithEnvironment("SERVICES", "s3")
+            .WithImage("localstack/localstack:latest")
+            .WithEnvironment("SERVICES", "s3,sqs")
             .WithEnvironment("AWS_DEFAULT_REGION", "eu-west-2")
             .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
             .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
@@ -52,8 +52,7 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
                 {
                     BucketName = bucketName,
                     Key = objectKey,
-                    ContentBody = "Hello LocalStack!",
-                    ChecksumAlgorithm = null
+                    ContentBody = "Hello LocalStack!"
                 });
 
                 // --- Assert: verify object exists ---
@@ -76,12 +75,12 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
         {
             // --- Arrange: start LocalStack container with SQS ---
             var localStackContainer = new LocalStackBuilder()
-                .WithImage("localstack/localstack:2.3")
+                .WithImage("localstack/localstack:latest")
                 .WithEnvironment("SERVICES", "sqs")
                 .WithEnvironment("AWS_DEFAULT_REGION", "eu-west-2")
                 .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
                 .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
-                .WithPortBinding(4566, true)
+                .WithPortBinding(4566, 4566)
                 .Build();
 
             await localStackContainer.StartAsync();
@@ -136,12 +135,12 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
         {
             // --- Arrange: start LocalStack container with SQS ---
             var localStackContainer = new LocalStackBuilder()
-                .WithImage("localstack/localstack:2.3")
+                .WithImage("localstack/localstack:latest")
                 .WithEnvironment("SERVICES", "sqs")
                 .WithEnvironment("AWS_DEFAULT_REGION", "eu-west-2")
                 .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
                 .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
-                .WithPortBinding(4566, true)
+                .WithPortBinding(4566, 4566)
                 .Build();
 
             await localStackContainer.StartAsync();
@@ -216,12 +215,12 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
         public async Task LocalStack_CanCreateQueueWithDlqAndRedrivePolicyAndSendAndReceiveMessage()
         {
             var localStackContainer = new LocalStackBuilder()
-                .WithImage("localstack/localstack:2.3")
+                .WithImage("localstack/localstack:latest")
                 .WithEnvironment("SERVICES", "sqs")
                 .WithEnvironment("AWS_DEFAULT_REGION", "eu-west-2")
                 .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
                 .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
-                .WithPortBinding(4566, true)
+                .WithPortBinding(4566, 4566)
                 .Build();
 
             await localStackContainer.StartAsync();
@@ -298,8 +297,8 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
         {
             // --- Arrange: start MongoDB container without username/password ---
             var mongoContainer = new MongoDbBuilder()
-                .WithImage("mongo:7.0")
-                .WithPortBinding(27017, true) // dynamic host port
+                .WithImage("mongo:latest")
+                .WithPortBinding(27017, 27017) // dynamic host port
                 .WithEnvironment("MONGO_INITDB_ROOT_USERNAME", "testuser") // disables auth
                 .WithEnvironment("MONGO_INITDB_ROOT_PASSWORD", "testpass")
                 .Build();
@@ -345,7 +344,8 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
         {
             var networkName = "integration-tests";
 
-            // --- Shared network ---
+            DockerNetworkHelper.EnsureNetworkExists(networkName);
+
             var network = new NetworkBuilder()
                 .WithName(networkName)
                 .Build();

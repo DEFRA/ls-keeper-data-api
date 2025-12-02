@@ -24,85 +24,49 @@ public class LocalStackFixture : IAsyncLifetime
 
     public string SqsEndpoint { get; private set; } = null!;
 
+    public string NetworkName { get; } = "integration-tests";
+
     public async Task InitializeAsync()
     {
-        DockerNetworkHelper.EnsureNetworkExists("integration-tests"); // <-- Add this line first
+        DockerNetworkHelper.EnsureNetworkExists(NetworkName); // <-- Add this line first
 
         LocalStackContainer = new LocalStackBuilder()
-            .WithImage("localstack/localstack:2.3")
-            .WithEnvironment("SERVICES", "s3,sqs,sns")
-            .WithEnvironment("DEBUG", "1")
-            .WithEnvironment("AWS_DEFAULT_REGION", "eu-west-2")
-            .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
-            .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
-            .WithEnvironment("EDGE_PORT", "4566")
-            .WithPortBinding(4566, 4566)
-            .WithNetwork("integration-tests")         // Shared network name
-            .WithNetworkAliases("localstack")
-            .Build();     
+                .WithImage("localstack/localstack:latest")
+                .WithName("localstack")
+                .WithEnvironment("SERVICES", "s3,sqs,sns")
+                .WithEnvironment("DEBUG", "1")
+                .WithEnvironment("AWS_DEFAULT_REGION", "eu-west-2")
+                .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
+                .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
+                .WithEnvironment("EDGE_PORT", "4566")
+                .WithPortBinding(4566, 4566)
+                .WithNetwork(NetworkName)
+                .WithNetworkAliases("localstack")
+                .Build();
+
 
         await LocalStackContainer.StartAsync();
 
-        //var url = Container.GetConnectionString();
-        var edgeUrl = "http://localhost:4566"; // Always use this for AWS SD
-
-        // Create S3 client with proper LocalStack configuration
-        var config = new AmazonS3Config
-        {
-            ServiceURL = edgeUrl,
-            ForcePathStyle = true,
-            UseHttp = true,
-            MaxErrorRetry = 3,
-            Timeout = TimeSpan.FromMinutes(5),
-            //RegionEndpoint = Amazon.RegionEndpoint.EUWest2,
-            RequestChecksumCalculation = Amazon.Runtime.RequestChecksumCalculation.WHEN_REQUIRED,
-            ResponseChecksumValidation = Amazon.Runtime.ResponseChecksumValidation.WHEN_REQUIRED,
-        };
-
-        // Use consistent credentials
-        S3Client = new AmazonS3Client("test", "test", config);
-
-        // Create 'test-comparison-reports-bucket' Bucket
-        var maxRetries = 5;
-        var retryDelay = 3000;
-
-        for (var i = 0; i < maxRetries; i++)
-        {
-            try
-            {
-                await S3Client.PutBucketAsync(new PutBucketRequest
-                {
-                    BucketName = TestBucket,
-                    UseClientRegion = true
-                });
-
-                // Verify bucket creation
-                var buckets = await S3Client.ListBucketsAsync();
-                if (buckets.Buckets.Any(b => b.BucketName == TestBucket))
-                {
-                    break;
-                }
-            }
-            catch when (i < maxRetries - 1)
-            {
-                await Task.Delay(retryDelay);
-                retryDelay = Math.Min(retryDelay * 2, 10000); // Cap at 10 seconds
-            }
-        }
-
-        SqsClient = new AmazonSQSClient("test", "test", new AmazonSQSConfig
+        var credentials = new Amazon.Runtime.BasicAWSCredentials("test", "test");
+        SqsClient = new AmazonSQSClient(credentials, new AmazonSQSConfig
         {
             ServiceURL = "http://localhost:4566",
             AuthenticationRegion = "eu-west-2",
             UseHttp = true
         });
 
-        var mappedPort = LocalStackContainer.GetMappedPublicPort(4566);
-        SqsEndpoint = $"http://localhost:{mappedPort}";
-
+        // SNS client
+        SnsClient = new AmazonSimpleNotificationServiceClient("test", "test", new AmazonSimpleNotificationServiceConfig
+        {
+            ServiceURL = "http://localhost:4566",
+            AuthenticationRegion = "eu-west-2",
+            UseHttp = true
+        });
 
         // 1. Create DLQ
         var dlqName = "ls_keeper_data_intake_queue-deadletter";
+        await SqsClient.CreateQueueAsync(new CreateQueueRequest { QueueName = dlqName });
+
         var createDlqResponse = await SqsClient.CreateQueueAsync(new CreateQueueRequest { QueueName = dlqName });
         var dlqUrl = createDlqResponse.QueueUrl;
 
@@ -130,15 +94,48 @@ public class LocalStackFixture : IAsyncLifetime
                     }
         });
 
-        // SNS client configuration
-        var snsConfig = new AmazonSimpleNotificationServiceConfig
-        {
-            ServiceURL = edgeUrl,
-            UseHttp = true,
-            AuthenticationRegion = "eu-west-2"
-        };
-        SnsClient = new AmazonSimpleNotificationServiceClient("test", "test", snsConfig);
+        var topicName = "ls-keeper-data-bridge-events";
+        var createTopicResponse = await SnsClient.CreateTopicAsync(topicName);
+        var topicArn = createTopicResponse.TopicArn;
 
+        var mainQueueArn = dlqAttributes.QueueARN;
+
+        // 7. SQS policy for SNS
+        var policy = $@"{{
+                    ""Version"": ""2012-10-17"",
+                    ""Statement"": [
+                        {{
+                            ""Effect"": ""Allow"",
+                            ""Principal"": ""*"",
+                            ""Action"": ""sqs:SendMessage"",
+                            ""Resource"": ""{mainQueueArn}"",
+                            ""Condition"": {{
+                                ""ArnEquals"": {{
+                                    ""aws:SourceArn"": ""{topicArn}""
+                                }}
+                            }}
+                        }}
+                    ]
+                }}";
+
+        await SqsClient.SetQueueAttributesAsync(new SetQueueAttributesRequest
+        {
+            QueueUrl = mainQueueUrl,
+            Attributes = new Dictionary<string, string>
+                    {
+                        { "Policy", policy }
+                    }
+        });
+
+        // 8. Subscribe SQS to SNS
+        var subscribeResponse = await SnsClient.SubscribeAsync(new Amazon.SimpleNotificationService.Model.SubscribeRequest
+        {
+            TopicArn = topicArn,
+            Protocol = "sqs",
+            Endpoint = mainQueueArn
+        });
+
+        SqsEndpoint= SqsClient.Config.ServiceURL!;
 
         // Setup shared test data
         //await SetupTestDataAsync();
