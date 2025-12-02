@@ -124,5 +124,8 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
         await fixture.MongoVerifier.DeleteAll<SamHoldingDocument>();
         await fixture.MongoVerifier.DeleteAll<Core.Documents.Silver.SitePartyRoleRelationshipDocument>();
         await fixture.MongoVerifier.DeleteAll<CtsHoldingDocument>();
+        await fixture.MongoVerifier.DeleteAll<CtsPartyDocument>();
+        await fixture.MongoVerifier.DeleteAll<SiteGroupMarkRelationshipDocument>();
+        await fixture.MongoVerifier.DeleteAll<Core.Documents.SitePartyRoleRelationshipDocument>();
     }
 }

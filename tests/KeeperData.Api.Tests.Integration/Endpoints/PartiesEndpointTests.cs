@@ -52,7 +52,9 @@ public class PartiesEndpointTests(IntegrationTestFixture fixture) : IClassFixtur
     [InlineData("WhenSearchingByFirstAndLastName", "Mark", "Smith", null, 1, MarkSmithId)]
     [InlineData("WhenSearchingForRecordsThatDoNotExist", null, "Smythe", null, 0, "")]
     [InlineData("WhenSearchingByDate", null, null, "2011-01-01", 2, MarkSmithId + "," + HueyNewsId)]
-    // TODO case insensitive search [InlineData("WhenSearchingCaseInsensitive", "john", "smith", 1, JohnSmithId)]
+    [InlineData("WhenSearchingCaseInsensitiveBothNames", "john", "smith", null, 1, JohnSmithId)]
+    [InlineData("WhenSearchingCaseInsensitiveFirstName", "john", null, null, 1, JohnSmithId)]
+    [InlineData("WhenSearchingByCaseInsensitiveLastName", null, "smith", null, 2, JohnSmithId + "," + MarkSmithId)]
     public async Task GivenASearchRequest_ShouldHaveExpectedResults(string scenario, string? firstName, string? lastName, string? dateStr, int expectedCount, string expectedIdCsv)
     {
         Console.WriteLine(scenario);
@@ -74,7 +76,7 @@ public class PartiesEndpointTests(IntegrationTestFixture fixture) : IClassFixtur
     [Theory]
     [InlineData("WhenSearchingById1", JohnSmithId, HttpStatusCode.OK, "\"firstName\":\"John\"")]
     [InlineData("WhenSearchingById2", HueyNewsId, HttpStatusCode.OK, "\"firstName\":\"Huey\"")]
-    [InlineData("WhenSearchingForIdThatDoesNotExist", "00000000-0000-0000-0000-000000000000", HttpStatusCode.InternalServerError, "not found")] //TODO should this be 404
+    [InlineData("WhenSearchingForIdThatDoesNotExist", "00000000-0000-0000-0000-000000000000", HttpStatusCode.InternalServerError, "not found")] //TODO should this be 404 - see ULITP-3595
     public async Task GivenAnRecordRequestById_ShouldHaveExpectedResults(string scenario, string requestedId, HttpStatusCode expectedHttpCode, string responseShouldContain)
     {
         Console.WriteLine(scenario);
