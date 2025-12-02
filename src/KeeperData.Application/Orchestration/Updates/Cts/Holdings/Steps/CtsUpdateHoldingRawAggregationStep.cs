@@ -19,7 +19,6 @@ public class CtsUpdateHoldingRawAggregationStep(
 
         await Task.WhenAll(getHoldingsTask, getAgentsTask, getKeepersTask);
 
-        // Take the single holding from the result list
         context.RawHolding = getHoldingsTask.Result.FirstOrDefault();
         context.RawAgents = getAgentsTask.Result;
         context.RawKeepers = getKeepersTask.Result;

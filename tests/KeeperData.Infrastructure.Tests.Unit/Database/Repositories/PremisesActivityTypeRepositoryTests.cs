@@ -228,7 +228,7 @@ public class PremisesActivityTypeRepositoryTests
         var result = await _sut.FindAsync("MARP");
 
         // Assert
-        result.premiseActivityTypeId.Should().Be("MARP");
+        result.premiseActivityTypeId.Should().Be("66d885c0-ce67-4cb5-8fd2-dd1f70a3c0ab");
         result.premiseActivityTypeName.Should().Be("Market on Paved Ground");
     }
 
@@ -262,7 +262,7 @@ public class PremisesActivityTypeRepositoryTests
         var result = await _sut.FindAsync("Collection Centre");
 
         // Assert
-        result.premiseActivityTypeId.Should().Be("CC");
+        result.premiseActivityTypeId.Should().Be("5e22d572-c98e-4892-98f7-c02c6eb37224");
         result.premiseActivityTypeName.Should().Be("Collection Centre");
     }
 
@@ -296,7 +296,7 @@ public class PremisesActivityTypeRepositoryTests
         var result = await _sut.FindAsync("marp");
 
         // Assert
-        result.premiseActivityTypeId.Should().Be("MARP");
+        result.premiseActivityTypeId.Should().Be("66d885c0-ce67-4cb5-8fd2-dd1f70a3c0ab");
         result.premiseActivityTypeName.Should().Be("Market on Paved Ground");
     }
 
@@ -385,7 +385,7 @@ public class PremisesActivityTypeRepositoryTests
         var result = await _sut.FindAsync("CC");
 
         // Assert
-        result.premiseActivityTypeId.Should().Be("CC");
+        result.premiseActivityTypeId.Should().Be("id1");
         result.premiseActivityTypeName.Should().Be("Collection Centre");
     }
 }

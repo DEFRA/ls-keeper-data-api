@@ -56,6 +56,10 @@ public class SamHerdDocument : IEntity, IContainsIndexes, IDeletableEntity
     [BsonElement("speciesTypeCode")]
     public string? SpeciesTypeCode { get; set; }
 
+    [BsonElement("speciesTypeName")]
+    [JsonPropertyName("speciesTypeName")]
+    public string? SpeciesTypeName { get; set; }
+
     [JsonPropertyName("productionUsageId")]
     [BsonElement("productionUsageId")]
     public string? ProductionUsageId { get; set; } // LOV Lookup / Internal Id

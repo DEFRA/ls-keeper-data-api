@@ -20,7 +20,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     [BsonElement("createdDate")]
     [JsonPropertyName("createdDate")]
     [AutoIndexed]
-    public DateTime CreatedDate { get; private set; }
+    public DateTime CreatedDate { get; set; }
 
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
@@ -68,7 +68,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("identifiers")]
     [JsonPropertyName("identifiers")]
-    public List<SiteIdentifierDocument> Identifiers { get; private set; } = [];
+    public List<SiteIdentifierDocument> Identifiers { get; set; } = [];
 
     [BsonElement("parties")]
     [JsonPropertyName("parties")]

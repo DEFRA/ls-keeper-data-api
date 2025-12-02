@@ -1,6 +1,5 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents.Silver;
-using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Repositories;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -24,7 +23,6 @@ public class CtsUpdateKeeperPersistenceStep(
             await UpsertSilverPartyAsync(context.SilverParty, cancellationToken);
         }
 
-        // Check for existing roles before attempting to upsert
         if (context.SilverPartyRoles.Count > 0)
         {
             await UpsertSilverPartyRolesAsync(context.SilverPartyRoles, cancellationToken);

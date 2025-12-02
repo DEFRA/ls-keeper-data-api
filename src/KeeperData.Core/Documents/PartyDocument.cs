@@ -21,7 +21,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
     [BsonElement("createdDate")]
     [JsonPropertyName("createdDate")]
     [AutoIndexed]
-    public DateTime CreatedDate { get; private set; }
+    public DateTime CreatedDate { get; set; }
 
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
@@ -72,7 +72,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("partyRoles")]
     [JsonPropertyName("partyRoles")]
-    public List<PartyRoleDocument> PartyRoles { get; set; } = [];
+    public List<PartyRoleWithSiteDocument> PartyRoles { get; set; } = [];
 
     public static PartyDocument FromDomain(Party domain)
     {
@@ -81,7 +81,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
             : null;
 
         var communications = domain.Communications?.Select(CommunicationDocument.FromDomain).ToList() ?? [];
-        var roles = domain.Roles?.Select(PartyRoleDocument.FromDomain).ToList() ?? [];
+        var roles = domain.Roles?.Select(PartyRoleWithSiteDocument.FromDomain).ToList() ?? [];
 
         return new PartyDocument
         {
@@ -135,11 +135,11 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
             : null;
 
         var communications = siteParty.Communication?.Select(CommunicationDocument.FromDomain).ToList() ?? [];
-        var roles = siteParty.PartyRoles?.Select(PartyRoleDocument.FromDomain).ToList() ?? [];
+        var roles = siteParty.PartyRoles?.Select(PartyRoleWithSiteDocument.FromDomain).ToList() ?? [];
 
         return new PartyDocument
         {
-            Id = siteParty.Id, // TODO - need to consider matching the Id
+            Id = siteParty.Id,
             CreatedDate = siteParty.CreatedDate,
             LastUpdatedDate = siteParty.LastUpdatedDate,
             Title = siteParty.Title,
@@ -159,7 +159,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
     public SiteParty ToSitePartyDomain(DateTime lastUpdatedDate)
     {
         return new SiteParty(
-            id: Id, // TODO - need to consider matching the Id
+            id: Id,
             createdDate: CreatedDate,
             lastUpdatedDate: lastUpdatedDate,
             partyId: CustomerNumber ?? string.Empty,

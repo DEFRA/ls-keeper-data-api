@@ -38,11 +38,12 @@ public class DataBridgeClient(
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         if (!_samHoldingsEnabled) return null;
 
-        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime);
+        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHoldings, new { }, query);
 
         var result = await GetFromApiAsync<T>(
@@ -73,11 +74,12 @@ public class DataBridgeClient(
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         if (!_samHoldersEnabled) return null;
 
-        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime);
+        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHolders, new { }, query);
 
         var result = await GetFromApiAsync<T>(
@@ -86,6 +88,19 @@ public class DataBridgeClient(
             cancellationToken);
 
         return result;
+    }
+
+    public async Task<List<SamCphHolder>> GetSamHoldersByCphAsync(string id, CancellationToken cancellationToken)
+    {
+        var query = DataBridgeQueries.SamHoldersByCph(id);
+        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHolders, new { }, query);
+
+        var result = await GetFromApiAsync<SamCphHolder>(
+            uri,
+            $"Sam holders for CPH '{id}'",
+            cancellationToken);
+
+        return result.Data;
     }
 
     public async Task<List<SamCphHolder>> GetSamHoldersByPartyIdAsync(string id, CancellationToken cancellationToken)
@@ -108,11 +123,12 @@ public class DataBridgeClient(
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         if (!_samHerdsEnabled) return null;
 
-        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime);
+        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHerds, new { }, query);
 
         var result = await GetFromApiAsync<T>(
@@ -138,6 +154,25 @@ public class DataBridgeClient(
         return result.Data;
     }
 
+    public async Task<DataBridgeResponse<T>?> GetSamHerdsByPartyIdAsync<T>(
+        string partyId,
+        string selectFields,
+        string orderBy,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_samHerdsEnabled) return null;
+
+        var query = DataBridgeQueries.SamHerdsByPartyId(partyId, selectFields, orderBy);
+        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHerds, new { }, query);
+
+        var result = await GetFromApiAsync<T>(
+            uri,
+            $"Sam paged herds for partyId '{partyId}'",
+            cancellationToken);
+
+        return result;
+    }
+
     public async Task<SamParty?> GetSamPartyAsync(string id, CancellationToken cancellationToken)
     {
         if (!_samPartiesEnabled) return null;
@@ -158,11 +193,12 @@ public class DataBridgeClient(
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         if (!_samPartiesEnabled) return null;
 
-        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime);
+        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
         var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamParties, new { }, query);
 
         var result = await GetFromApiAsync<T>(
@@ -193,6 +229,7 @@ public class DataBridgeClient(
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         if (!_ctsHoldingsEnabled) return null;
@@ -228,6 +265,7 @@ public class DataBridgeClient(
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         if (!_ctsAgentsEnabled) return null;
@@ -278,6 +316,7 @@ public class DataBridgeClient(
         int skip,
         string? selectFields = null,
         DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         if (!_ctsKeepersEnabled) return null;

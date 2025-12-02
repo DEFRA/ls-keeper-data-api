@@ -70,6 +70,10 @@ public record SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes
     [AutoIndexed]
     public string? SpeciesTypeCode { get; set; }
 
+    [BsonElement("speciesTypeName")]
+    [JsonPropertyName("speciesTypeName")]
+    public string? SpeciesTypeName { get; set; }
+
     [BsonElement("productionUsageId")]
     [JsonPropertyName("productionUsageId")]
     [AutoIndexed]
