@@ -1,3 +1,4 @@
+using Humanizer;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using System.Text.Json;
@@ -68,6 +69,18 @@ public class FakeDataBridgeClient : IDataBridgeClient
     public Task<List<SamHerd>> GetSamHerdsAsync(string id, CancellationToken cancellationToken)
     {
         return Task.FromResult(GetSamHerd(id));
+    }
+
+    public Task<DataBridgeResponse<T>?> GetSamHerdsByPartyIdAsync<T>(
+        string partyId,
+        string selectFields,
+        string orderBy,
+        CancellationToken cancellationToken = default)
+    {
+        var data = Enumerable.Range(0, 2).Select(_ => GetSamHerd()).SelectMany(x => x).ToList();
+        var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
+        var response = GetDataBridgeResponse(objects!, 0, 0);
+        return Task.FromResult<DataBridgeResponse<T>?>(response);
     }
 
     public Task<SamParty?> GetSamPartyAsync(string id, CancellationToken cancellationToken)

@@ -14,7 +14,7 @@ public static class MockSamData
         {
             CollectionName = "collection",
             Top = top,
-            Skip = top,
+            Skip = 0,
             Count = count,
             TotalCount = totalCount,
             Data = [.. s_fixture.CreateMany<SamCphHolding>(count)]
@@ -25,7 +25,7 @@ public static class MockSamData
         {
             CollectionName = "collection",
             Top = top,
-            Skip = top,
+            Skip = 0,
             Count = count,
             TotalCount = totalCount,
             Data = [.. s_fixture.CreateMany<SamScanHoldingIdentifier>(count)]
@@ -60,7 +60,7 @@ public static class MockSamData
         {
             CollectionName = "collection",
             Top = top,
-            Skip = top,
+            Skip = 0,
             Count = count,
             TotalCount = totalCount,
             Data = [.. s_fixture.CreateMany<SamCphHolder>(count)]
@@ -71,7 +71,7 @@ public static class MockSamData
         {
             CollectionName = "collection",
             Top = top,
-            Skip = top,
+            Skip = 0,
             Count = count,
             TotalCount = totalCount,
             Data = [.. s_fixture.CreateMany<SamScanHolderIdentifier>(count)]
@@ -107,7 +107,7 @@ public static class MockSamData
         {
             CollectionName = "collection",
             Top = top,
-            Skip = top,
+            Skip = 0,
             Count = count,
             TotalCount = totalCount,
             Data = [.. s_fixture.CreateMany<SamHerd>(count)]
@@ -118,7 +118,7 @@ public static class MockSamData
         {
             CollectionName = "collection",
             Top = top,
-            Skip = top,
+            Skip = 0,
             Count = count,
             TotalCount = totalCount,
             Data = [.. s_fixture.CreateMany<SamScanHerdIdentifier>(count)]
@@ -168,7 +168,7 @@ public static class MockSamData
         {
             CollectionName = "collection",
             Top = top,
-            Skip = top,
+            Skip = 0,
             Count = count,
             TotalCount = totalCount,
             Data = [.. s_fixture.CreateMany<SamParty>(count)]
@@ -179,7 +179,7 @@ public static class MockSamData
         {
             CollectionName = "collection",
             Top = top,
-            Skip = top,
+            Skip = 0,
             Count = count,
             TotalCount = totalCount,
             Data = [.. s_fixture.CreateMany<SamScanPartyIdentifier>(count)]

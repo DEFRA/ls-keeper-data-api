@@ -154,6 +154,25 @@ public class DataBridgeClient(
         return result.Data;
     }
 
+    public async Task<DataBridgeResponse<T>?> GetSamHerdsByPartyIdAsync<T>(
+        string partyId,
+        string selectFields,
+        string orderBy,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_samHerdsEnabled) return null;
+
+        var query = DataBridgeQueries.SamHerdsByPartyId(partyId, selectFields, orderBy);
+        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHerds, new { }, query);
+
+        var result = await GetFromApiAsync<T>(
+            uri,
+            $"Sam paged herds for partyId '{partyId}'",
+            cancellationToken);
+
+        return result;
+    }
+
     public async Task<SamParty?> GetSamPartyAsync(string id, CancellationToken cancellationToken)
     {
         if (!_samPartiesEnabled) return null;

@@ -31,6 +31,11 @@ public interface IDataBridgeClient
         string? orderBy = null,
         CancellationToken cancellationToken = default);
     Task<List<SamHerd>> GetSamHerdsAsync(string id, CancellationToken cancellationToken);
+    Task<DataBridgeResponse<T>?> GetSamHerdsByPartyIdAsync<T>(
+        string partyId,
+        string selectFields,
+        string orderBy,
+        CancellationToken cancellationToken = default);
 
     Task<SamParty?> GetSamPartyAsync(string id, CancellationToken cancellationToken);
     Task<DataBridgeResponse<T>?> GetSamPartiesAsync<T>(

@@ -106,6 +106,23 @@ public static class DataBridgeQueries
         };
     }
 
+    public static Dictionary<string, string> SamHerdsByPartyId(string id, string selectFields, string orderBy)
+    {
+        var query = new Dictionary<string, string>
+        {
+            ["$select"] = selectFields
+        };
+
+        if (!string.IsNullOrWhiteSpace(orderBy))
+        {
+            query["$orderby"] = orderBy;
+        }
+
+        query["$filter"] = $"contains(KEEPER_PARTY_IDS, '{id}') or contains(OWNER_PARTY_IDS, '{id}')";
+
+        return query;
+    }
+
     public static Dictionary<string, string> SamPartyByPartyId(string id)
     {
         return new Dictionary<string, string>

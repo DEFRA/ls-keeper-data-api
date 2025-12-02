@@ -26,7 +26,7 @@ public class SamHolderDailyScanStep(
     private readonly IDelayProvider _delayProvider = delayProvider;
     private readonly bool _samHoldersEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamHoldersEnabled");
 
-    private const string SelectFields = "PARTY_ID";
+    private const string SelectFields = "PARTY_ID,CPHS";
     private const string OrderBy = "PARTY_ID asc";
 
     protected override async Task ExecuteCoreAsync(SamDailyScanContext context, CancellationToken cancellationToken)

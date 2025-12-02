@@ -203,6 +203,26 @@ public class DataBridgeClientTests
     }
 
     [Fact]
+    public async Task GetSamHerdsByPartyIdAsync_ShouldReturnHerds_WhenApiReturnsSuccess()
+    {
+        var partyId = "C100001";
+        var expectedResponse = MockSamData.GetSamHerdsStringContentResponse(2, 0);
+
+        var uri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamHerds,
+            new { },
+            DataBridgeQueries.SamHerdsByPartyId(partyId, "CPHH", "CPHH asc"));
+
+        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
+            .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
+
+        var result = await _client.GetSamHerdsByPartyIdAsync<SamScanHerdIdentifier>(partyId, "CPHH", "CPHH asc", CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.Data.Should().NotBeNull().And.HaveCount(2);
+    }
+
+    [Fact]
     public async Task GetSamPartyAsync_ShouldReturnParty_WhenApiReturnsSuccess()
     {
         var partyId = Guid.NewGuid().ToString();

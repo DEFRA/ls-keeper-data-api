@@ -49,6 +49,42 @@ public class SamHoldingDailyScanStepTests
     }
 
     [Fact]
+    public async Task ExecuteCoreAsync_ShouldExitWhenSamHoldingsDisabled()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { { "DataBridgeCollectionFlags:SamHoldingsEnabled", "false" } })
+            .Build();
+
+        var scanStep = new SamHoldingDailyScanStep(
+            _dataBridgeClientMock.Object,
+            _messagePublisherMock.Object,
+            _config,
+            _delayProviderMock.Object,
+            configuration,
+            _loggerMock.Object);
+
+        await scanStep.ExecuteAsync(_context, CancellationToken.None);
+
+        _dataBridgeClientMock.Verify(c => c.GetSamPartiesAsync<SamScanHoldingIdentifier>(
+            It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTime?>(),
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_ShouldMarkScanCompleted_WhenNoHoldingsReturned()
+    {
+        _dataBridgeClientMock
+            .Setup(c => c.GetSamHoldingsAsync<SamScanHoldingIdentifier>(
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTime?>(),
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DataBridgeResponse<SamScanHoldingIdentifier> { CollectionName = "collection", Data = [] });
+
+        await _scanStep.ExecuteAsync(_context, CancellationToken.None);
+
+        Assert.True(_context.Parties.ScanCompleted);
+    }
+
+    [Fact]
     public async Task ExecuteCoreAsync_ShouldQueryWithCorrectDateTimeFilter()
     {
         var responseMock = MockSamData.GetSamHoldingsScanIdentifierDataBridgeResponse(0, 0, 0);
