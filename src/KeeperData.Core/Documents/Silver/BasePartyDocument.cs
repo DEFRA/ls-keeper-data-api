@@ -1,3 +1,4 @@
+using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
 
@@ -7,6 +8,7 @@ public class BasePartyDocument
 {
     [JsonPropertyName("partyId")]
     [BsonElement("partyId")]
+    [AutoIndexed]
     public string PartyId { get; set; } = string.Empty;
 
     [JsonPropertyName("partyTypeId")]

@@ -1,7 +1,9 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Reflection;
+using System.Text;
 
 namespace KeeperData.Api.Tests.Integration.Helpers;
 
