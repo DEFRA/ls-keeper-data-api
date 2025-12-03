@@ -21,7 +21,7 @@ info:
     name: Livestock Data Services Agreement
     url: https://www.defra.gov.uk/services-agreement/
   
-  version: 1.1.0
+  version: 1.2.0
 
   # Change History
   # 0.1.0 - Initial Draft
@@ -31,6 +31,7 @@ info:
   # 0.5.0 - Amendments based on further review comments from LI Ltd.
   # 1.0.0 - KRDS API specification has now been baselined on the 06/10/2025.
   # 1.1.0 - Amended the Site types enumeration list after the final list confirmed by business stakeholders.
+  # 1.2.0 - Amended the specification to reflect the amended structure of the base reference models such as Site Indentifier Type, Activity Type etc.
  
 externalDocs:
   description: Defra website
@@ -87,13 +88,17 @@ components:
           type: string
           format: uuid
           readOnly: true
+          description : "This is an immutable field which represents the golden key of the reference object."
         code: 
           type: string
           example: GB-ENG
+          readOnly: true
+          description: "This the business code/key of the Country object. This is a mutable field, where this field data could possibly change."
         name:
           type: string
           readOnly: true
           example: England
+          description: "This the business name of the Country object. This is a mutable field, where this field data could possibly change."
         longName:
           type: string
           readOnly: true
@@ -122,6 +127,7 @@ components:
           type: string
           format: uuid
           readOnly: true
+          description : "This is an immutable field which represents the golden key of the reference object."
         code: 
           type: string
           example: CTT
@@ -233,6 +239,7 @@ components:
           type: string
           format: uuid
           readOnly: true
+          description : "This is an immutable field which represents the golden key of the master data object."
         uprn:
           type: integer
           nullable: true
@@ -277,7 +284,8 @@ components:
         id: 
           type: string
           format: uuid
-          readOnly: true       
+          readOnly: true
+          description : "This is an immutable field which represents the golden key of the master data object."
         osMapReference:
           type: string
           example: "SK25979936"
@@ -321,6 +329,7 @@ components:
           type: string
           format: uuid
           readOnly: true
+          description : "This is an immutable field which represents the golden key of the master data object."
         email:
           type: string
           example: john.doe@somecompany.co.uk        
@@ -348,9 +357,10 @@ components:
           type: string
           format: uuid
           readOnly: true
+          description : "This is an immutable field which represents the golden key of the reference object."
         name:
           type: string
-          example: "Keeper"
+          example: "Livestock Keeper"
           nullable: false
         lastUpdatedDate:
           type: string
@@ -454,10 +464,7 @@ components:
           example: "57/103/2335"
           nullable: false
         type:
-          type: string
-          format: string
-          example: "holdingNumber"
-          nullable: false
+          $ref: '#/components/schemas/SiteIdentifierType'
         lastUpdatedDate:
           type: string
           format: date-time
@@ -565,6 +572,33 @@ components:
         - count
         - values
 
+
+    SiteActivityType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          readOnly: true
+          description : "This is an immutable field which represents the golden key of the reference object."
+        code:
+          type: string
+          nullable: false
+          example: WP
+        name:
+          type: string
+          readOnly: true
+          example: Wildlife Park
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the SiteActivity record was updated"
+      required:
+      - code
+      - name
+      
+      
     SiteActivity:
       type: object
       properties:
@@ -573,14 +607,8 @@ components:
           format: uuid
           example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
           readOnly: true
-        activity:
-          type: string
-          nullable: false
-          example: slaughterMarket
-        description:
-          type: string
-          readOnly: true
-          example: Slaughter market
+        type:
+          $ref: '#/components/schemas/SiteActivityType'
         startDate:
           type: string
           format: date
@@ -595,8 +623,8 @@ components:
           format: date-time
           description: "The timestamp of the last time the SiteActivity record was updated"
       required:
-      - activity
-      - startDate
+      - code
+      - name
     
     SiteActivityList:
       type: object
@@ -610,6 +638,19 @@ components:
           description: The list of site activity details
           items:
              $ref: '#/components/schemas/SiteActivity'
+             
+    SiteActivityTypeList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 1
+          description: Total number of site activities returned (or available)
+        values:
+          type: array
+          description: The list of site activity details
+          items:
+             $ref: '#/components/schemas/SiteActivityType'
       
     SitePartyList:
       type: object
@@ -660,14 +701,14 @@ components:
         id:
           type: string
           format: uuid
-        type:
+          readOnly: true
+          description : "This is an immutable field which represents the golden key of the reference object."
+        code:
           type: string
-          maxLength: 50
-          description: "The coded values for a siteType"
+          description: "The business key/code values for a siteType"
           example: "AH"
         description:
           type: string
-          maxLength: 100
           description: The type of site an animal may reside at.
           example: "Agricultural Holding"
         lastUpdatedDate:
@@ -685,6 +726,30 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SiteType'
+            
+    SiteIdentifierType:
+      type: object
+      required:
+        - type
+        - description
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description : "This is an immutable field which represents the golden key of the reference object."
+        code:
+          type: string
+          description: "The business key/code values for a Site Identiier Type"
+          example: "CPHN"
+        description:
+          type: string
+          description: The type which identifies the site identifier.
+          example: "CPH Number"
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the SiteIdentifier Type record was updated"
 
 
 #Start of the API opearations area
@@ -833,38 +898,38 @@ paths:
           schema:
             type: string
             example: Hansel & Gretel Farm            
-        - name: sitetypeDescription 
+        - name: sitetype
           in: query
           required: false
-          description: This parameter accepts the Site Type Description. The possible list of Site Type Descriptons is mentioned below.
+          description: This parameter accepts the Site Type . The possible list of Site Types and its corresponding description is mentioned below. Please only send the site type code for ex AC, AH as query parameter.
           schema:
             type: array
             items:
               type: string
               enum: 
-                - Assembly Centre
-                - Agricultural Holding
-                - Airport
-                - Calf Collection Centre
-                - Collection Centre
-                - Haulier
-                - Hunt Kennel
-                - Knacker's Yard
-                - Lairage
-                - Laboratory/Research Establishment
-                - Market
-                - Quarantine
-                - Showground
-                - S/H Both, MP & Cs
-                - Seaport
-                - Slaughter House (Red Meat)
-                - Staging Post
-                - Slaughter House (White Meat)
-                - Veterinary Practice/Hospital/School
-                - Veterinary Investigation Centre
-                - Wildlife Park
-                - Zoo
-                - Common Land
+                 -  AC - Assembly Centre
+                 -  AH - Agricultural Holding
+                 -  AP - Airport
+                 -  CA - Calf Collection Centre
+                 -  CC - Collection Centre
+                 -  HA - Haulier
+                 -  HK - Hunt Kennel
+                 -  KY - Knacker's Yard
+                 -  LA - Lairage
+                 -  LR - Laboratory/Research Establishment
+                 -  MA - Market
+                 -  QU - Quarantine
+                 -  SG - Showground
+                 -  SM - S/H Both, MP & Cs
+                 -  SP - Seaport
+                 -  SR - Slaughter House (Red Meat)
+                 -  ST - Staging Post
+                 -  SW - Slaughter House (White Meat)
+                 -  VE - Veterinary Practice/Hospital/School
+                 -  VI - Veterinary Investigation Centre
+                 -  WP - Wildlife Park
+                 -  ZO - Zoo
+                 -  CL - Common Land
         - name: siteId
           in: query
           description: This parameter accepts the id of the site.
@@ -1762,7 +1827,7 @@ paths:
                 application/json:
                   schema:
                      items:
-                      $ref: '#/components/schemas/SiteActivityList'
+                      $ref: '#/components/schemas/SiteActivityTypeList'
             '400':
               description: Invalid request 
             '500':
@@ -1788,7 +1853,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SiteActivity'
+                $ref: '#/components/schemas/SiteActivityType'
         '400':
           description: Invalid request
           
