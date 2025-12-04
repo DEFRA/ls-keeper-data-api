@@ -10,8 +10,6 @@ using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 using Moq;
 using System.Reflection;
-using System.Runtime.ConstrainedExecution;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace KeeperData.Infrastructure.Tests.Unit.Database.Repositories;

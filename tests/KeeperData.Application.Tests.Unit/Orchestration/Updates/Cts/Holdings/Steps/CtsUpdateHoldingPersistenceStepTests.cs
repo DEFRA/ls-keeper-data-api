@@ -16,7 +16,6 @@ public class CtsUpdateHoldingPersistenceStepTests
     private readonly Fixture _fixture;
     private readonly Mock<IGenericRepository<CtsHoldingDocument>> _silverHoldingRepositoryMock = new();
     private readonly Mock<IGenericRepository<CtsPartyDocument>> _silverPartyRepositoryMock = new();
-    private readonly Mock<IGenericRepository<SitePartyRoleRelationshipDocument>> _silverPartyRoleRelationshipRepositoryMock = new();
     private readonly Mock<ILogger<CtsUpdateHoldingPersistenceStep>> _loggerMock = new();
 
     private readonly CtsUpdateHoldingPersistenceStep _sut;
@@ -29,7 +28,6 @@ public class CtsUpdateHoldingPersistenceStepTests
         _sut = new CtsUpdateHoldingPersistenceStep(
             _silverHoldingRepositoryMock.Object,
             _silverPartyRepositoryMock.Object,
-            _silverPartyRoleRelationshipRepositoryMock.Object,
             _loggerMock.Object);
     }
 
@@ -109,29 +107,5 @@ public class CtsUpdateHoldingPersistenceStepTests
 
         // Assert
         _silverPartyRepositoryMock.Verify(x => x.DeleteManyAsync(It.IsAny<FilterDefinition<CtsPartyDocument>>(), It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task ExecuteCoreAsync_ShouldReplacePartyRoleRelationships()
-    {
-        // Arrange
-        var context = new CtsUpdateHoldingContext
-        {
-            Cph = "AH-123",
-            SilverPartyRoles = _fixture.CreateMany<SitePartyRoleRelationshipDocument>(2).ToList()
-        };
-
-        // Act
-        await _sut.ExecuteAsync(context, CancellationToken.None);
-
-        // Assert
-        _silverPartyRoleRelationshipRepositoryMock.Verify(x => x.DeleteManyAsync(
-            It.IsAny<FilterDefinition<SitePartyRoleRelationshipDocument>>(),
-            It.IsAny<CancellationToken>()), Times.Once);
-
-        // 2. Add new
-        _silverPartyRoleRelationshipRepositoryMock.Verify(x => x.AddManyAsync(
-            context.SilverPartyRoles,
-            It.IsAny<CancellationToken>()), Times.Once);
     }
 }

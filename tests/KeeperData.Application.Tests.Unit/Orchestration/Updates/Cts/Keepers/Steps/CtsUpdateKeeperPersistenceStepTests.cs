@@ -14,7 +14,6 @@ public class CtsUpdateKeeperPersistenceStepTests
 {
     private readonly Fixture _fixture;
     private readonly Mock<IGenericRepository<CtsPartyDocument>> _silverPartyRepositoryMock = new();
-    private readonly Mock<IGenericRepository<SitePartyRoleRelationshipDocument>> _silverPartyRoleRelationshipRepositoryMock = new();
     private readonly CtsUpdateKeeperPersistenceStep _sut;
 
     public CtsUpdateKeeperPersistenceStepTests()
@@ -24,7 +23,6 @@ public class CtsUpdateKeeperPersistenceStepTests
 
         _sut = new CtsUpdateKeeperPersistenceStep(
             _silverPartyRepositoryMock.Object,
-            _silverPartyRoleRelationshipRepositoryMock.Object,
             Mock.Of<ILogger<CtsUpdateKeeperPersistenceStep>>());
     }
 
