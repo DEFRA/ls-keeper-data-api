@@ -24,7 +24,5 @@ public class CtsUpdateAgentSilverMappingStep(
             context.RawAgent,
             HoldingIdentifierType.CphNumber,
             (roleName, roleTypeId, roleTypeName));
-
-        context.SilverPartyRoles = CtsPartyRoleRelationshipMapper.ToSilver([context.SilverParty]);
     }
 }

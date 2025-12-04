@@ -17,5 +17,4 @@ public class CtsHoldingImportContext
 
     public List<CtsHoldingDocument> SilverHoldings { get; set; } = [];
     public List<CtsPartyDocument> SilverParties { get; set; } = [];
-    public List<Core.Documents.Silver.SitePartyRoleRelationshipDocument> SilverPartyRoles { get; set; } = [];
 }

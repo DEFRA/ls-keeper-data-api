@@ -11,5 +11,4 @@ public class CtsUpdateAgentContext
     public CtsAgentOrKeeper? RawAgent { get; set; }
 
     public CtsPartyDocument? SilverParty { get; set; }
-    public List<Core.Documents.Silver.SitePartyRoleRelationshipDocument> SilverPartyRoles { get; set; } = [];
 }

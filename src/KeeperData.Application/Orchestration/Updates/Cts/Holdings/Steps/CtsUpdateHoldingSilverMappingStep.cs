@@ -35,7 +35,5 @@ public class CtsUpdateHoldingSilverMappingStep(
                 roleTypeLookupService.FindAsync,
                 cancellationToken)
         ];
-
-        context.SilverPartyRoles = CtsPartyRoleRelationshipMapper.ToSilver(context.SilverParties);
     }
 }

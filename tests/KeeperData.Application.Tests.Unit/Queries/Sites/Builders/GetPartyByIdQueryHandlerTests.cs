@@ -1,5 +1,4 @@
 using FluentAssertions;
-using KeeperData.Application.Queries.Parties;
 using KeeperData.Application.Queries.Sites;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Exceptions;

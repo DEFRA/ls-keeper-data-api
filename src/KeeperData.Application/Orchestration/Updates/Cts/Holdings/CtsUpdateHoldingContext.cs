@@ -21,5 +21,4 @@ public class CtsUpdateHoldingContext
     public CtsHoldingDocument? SilverHolding { get; set; }
 
     public List<CtsPartyDocument> SilverParties { get; set; } = [];
-    public List<Core.Documents.Silver.SitePartyRoleRelationshipDocument> SilverPartyRoles { get; set; } = [];
 }

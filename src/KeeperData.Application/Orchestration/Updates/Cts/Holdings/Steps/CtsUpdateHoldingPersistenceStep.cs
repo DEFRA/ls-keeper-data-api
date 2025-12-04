@@ -1,6 +1,5 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents.Silver;
-using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Repositories;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -11,13 +10,11 @@ namespace KeeperData.Application.Orchestration.Updates.Cts.Holdings.Steps;
 public class CtsUpdateHoldingPersistenceStep(
     IGenericRepository<CtsHoldingDocument> silverHoldingRepository,
     IGenericRepository<CtsPartyDocument> silverPartyRepository,
-    IGenericRepository<SitePartyRoleRelationshipDocument> silverPartyRoleRelationshipRepository,
     ILogger<CtsUpdateHoldingPersistenceStep> logger)
     : UpdateStepBase<CtsUpdateHoldingContext>(logger)
 {
     private readonly IGenericRepository<CtsHoldingDocument> _silverHoldingRepository = silverHoldingRepository;
     private readonly IGenericRepository<CtsPartyDocument> _silverPartyRepository = silverPartyRepository;
-    private readonly IGenericRepository<SitePartyRoleRelationshipDocument> _silverPartyRoleRelationshipRepository = silverPartyRoleRelationshipRepository;
 
     protected override async Task ExecuteCoreAsync(CtsUpdateHoldingContext context, CancellationToken cancellationToken)
     {
@@ -27,7 +24,6 @@ public class CtsUpdateHoldingPersistenceStep(
         }
 
         await UpsertSilverPartiesAndDeleteOrphansAsync(context.CphTrimmed, context.SilverParties, cancellationToken);
-        await ReplaceSilverPartyRolesAsync(context.CphTrimmed, context.SilverPartyRoles, cancellationToken);
     }
 
     private async Task UpsertSilverHoldingAsync(CtsHoldingDocument incomingHolding, CancellationToken cancellationToken)
@@ -95,26 +91,6 @@ public class CtsUpdateHoldingPersistenceStep(
             );
 
             await _silverPartyRepository.DeleteManyAsync(deleteFilter, cancellationToken);
-        }
-    }
-
-    private async Task ReplaceSilverPartyRolesAsync(
-        string holdingIdentifier,
-        List<SitePartyRoleRelationshipDocument> incomingPartyRoles,
-        CancellationToken cancellationToken)
-    {
-        var sourceAsCts = SourceSystemType.CTS.ToString();
-
-        var deleteFilter = Builders<SitePartyRoleRelationshipDocument>.Filter.And(
-            Builders<SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier),
-            Builders<SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.Source, sourceAsCts)
-        );
-
-        await _silverPartyRoleRelationshipRepository.DeleteManyAsync(deleteFilter, cancellationToken);
-
-        if (incomingPartyRoles.Count > 0)
-        {
-            await _silverPartyRoleRelationshipRepository.AddManyAsync(incomingPartyRoles, cancellationToken);
         }
     }
 

@@ -41,6 +41,5 @@ public class CtsUpdateAgentSilverMappingStepTests
 
         context.SilverParty.Should().NotBeNull();
         context.SilverParty!.PartyId.Should().Be(agent.PAR_ID);
-        context.SilverPartyRoles.Should().ContainSingle();
     }
 }

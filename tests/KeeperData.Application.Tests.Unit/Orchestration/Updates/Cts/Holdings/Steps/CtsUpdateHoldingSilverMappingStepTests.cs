@@ -48,7 +48,6 @@ public class CtsUpdateHoldingSilverMappingStepTests
         context.SilverHolding!.CountyParishHoldingNumber.Should().Be(context.CphTrimmed);
 
         context.SilverParties.Should().HaveCount(2); // 1 Agent + 1 Keeper
-        context.SilverPartyRoles.Should().HaveCount(2);
     }
 
     [Fact]
@@ -70,6 +69,5 @@ public class CtsUpdateHoldingSilverMappingStepTests
         // Assert
         context.SilverHolding.Should().BeNull();
         context.SilverParties.Should().BeEmpty();
-        context.SilverPartyRoles.Should().BeEmpty();
     }
 }

@@ -41,6 +41,5 @@ public class CtsUpdateKeeperSilverMappingStepTests
 
         context.SilverParty.Should().NotBeNull();
         context.SilverParty!.PartyId.Should().Be(keeper.PAR_ID);
-        context.SilverPartyRoles.Should().ContainSingle();
     }
 }
