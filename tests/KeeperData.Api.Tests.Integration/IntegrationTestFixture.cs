@@ -75,6 +75,11 @@ public class IntegrationTestFixture : IDisposable
         return await _amazonSQSClient.SendMessageAsync(sendMessageRequest, cancellationToken);
     }
 
+    internal async Task<SendMessageResponse> PublishToFifoQueueAsync(SendMessageRequest sendMessageRequest, CancellationToken cancellationToken)
+    {
+        return await _amazonSQSClient.SendMessageAsync(sendMessageRequest, cancellationToken);
+    }
+
     private static void RegisterMongoGlobals()
     {
         if (s_mongoGlobalsRegistered) return;

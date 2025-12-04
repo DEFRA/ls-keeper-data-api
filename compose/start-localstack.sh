@@ -127,4 +127,100 @@ subscription_arn=$(awslocal sns subscribe \
   --query 'SubscriptionArn')
 echo "SNS Topic subscription complete for main queue: $subscription_arn"
 
+# =================================================================
+# FIFO Queue Setup
+# =================================================================
+echo "Bootstrapping FIFO SQS setup..."
+
+# Create the Dead-Letter Queue (DLQ) for FIFO first.
+fifo_dlq_url=$(awslocal sqs create-queue \
+  --queue-name ls_keeper_data_intake_fifo_queue.fifo \
+  --attributes '{"FifoQueue":"true","ContentBasedDeduplication":"false"}' \
+  --endpoint-url=http://localhost:4566 \
+  --output text \
+  --query 'QueueUrl')
+echo "SQS FIFO Dead-Letter Queue created: $fifo_dlq_url"
+
+# Get the ARN of the FIFO DLQ
+fifo_dlq_arn=$(awslocal sqs get-queue-attributes \
+  --queue-url "$fifo_dlq_url" \
+  --attribute-names QueueArn \
+  --endpoint-url=http://localhost:4566 \
+  --output text \
+  --query 'Attributes.QueueArn')
+echo "FIFO DLQ ARN: $fifo_dlq_arn"
+
+# Create the main FIFO SQS queue.
+fifo_queue_url=$(awslocal sqs create-queue \
+  --queue-name ls_keeper_data_intake_standard_fifo_queue.fifo \
+  --attributes '{"FifoQueue":"true","ContentBasedDeduplication":"false"}' \
+  --endpoint-url=http://localhost:4566 \
+  --output text \
+  --query 'QueueUrl')
+echo "SQS FIFO Main Queue created: $fifo_queue_url"
+
+# Apply the Redrive Policy to the FIFO main queue.
+echo "Configuring FIFO Redrive Policy..."
+awslocal sqs set-queue-attributes \
+  --queue-url "$fifo_queue_url" \
+  --attributes "{\"RedrivePolicy\":\"{\\\"deadLetterTargetArn\\\":\\\"$fifo_dlq_arn\\\",\\\"maxReceiveCount\\\":\\\"3\\\"}\"}" \
+  --endpoint-url=$ENDPOINT_URL
+
+# Get the FIFO SQS Queue ARN
+fifo_queue_arn=$(awslocal sqs get-queue-attributes \
+  --queue-url "$fifo_queue_url" \
+  --attribute-name QueueArn \
+  --endpoint-url=http://localhost:4566 \
+  --output text \
+  --query 'Attributes.QueueArn')
+echo "SQS FIFO Main Queue ARN: $fifo_queue_arn"
+
+# Create SNS FIFO Topic for FIFO queue.
+fifo_topic_arn=$(awslocal sns create-topic \
+  --name ls-keeper-data-bridge-events-fifo.fifo \
+  --attributes '{"FifoTopic":"true","ContentBasedDeduplication":"false"}' \
+  --endpoint-url=http://localhost:4566 \
+  --output text \
+  --query 'TopicArn')
+echo "SNS FIFO Topic created: $fifo_topic_arn"
+
+# Construct the policy JSON for FIFO queue
+fifo_policy_escaped=$(cat <<EOF | tr -d '\n' | sed 's/"/\\"/g'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "sqs:SendMessage",
+      "Resource": "$fifo_queue_arn",
+      "Condition": {
+        "ArnEquals": {
+          "aws:SourceArn": "$fifo_topic_arn"
+        }
+      }
+    }
+  ]
+}
+EOF
+)
+
+# Set the SQS policy on the FIFO queue.
+awslocal sqs set-queue-attributes \
+  --queue-url "$fifo_queue_url" \
+  --attributes "{\"Policy\": \"$fifo_policy_escaped\"}" \
+  --endpoint-url=$ENDPOINT_URL
+
+echo "SQS FIFO policy configured successfully"
+
+# Subscribe the FIFO SQS queue to the SNS FIFO Topic.
+fifo_subscription_arn=$(awslocal sns subscribe \
+  --topic-arn "$fifo_topic_arn" \
+  --protocol sqs \
+  --notification-endpoint "$fifo_queue_arn" \
+  --endpoint-url=$ENDPOINT_URL \
+  --output text \
+  --query 'SubscriptionArn')
+echo "SNS FIFO Topic subscription complete for FIFO queue: $fifo_subscription_arn"
+
 echo "Bootstrapping Complete"

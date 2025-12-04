@@ -32,6 +32,13 @@ public static class ServiceCollectionExtensions
         var intakeEventQueueOptions = intakeEventQueueConfig.Get<IntakeEventQueueOptions>() ?? new() { QueueUrl = "Missing", Disabled = true };
         services.AddSingleton(intakeEventQueueOptions);
 
+        // FIFO Queue Configuration
+        var intakeEventFifoQueueConfig = configuration.GetRequiredSection($"{nameof(QueueConsumerOptions)}:{nameof(IntakeEventFifoQueueOptions)}");
+        services.Configure<IntakeEventFifoQueueOptions>(intakeEventFifoQueueConfig);
+
+        var intakeEventFifoQueueOptions = intakeEventFifoQueueConfig.Get<IntakeEventFifoQueueOptions>() ?? new() { QueueUrl = "Missing", Disabled = true };
+        services.AddSingleton(intakeEventFifoQueueOptions);
+
         if (configuration["LOCALSTACK_ENDPOINT"] != null)
         {
             services.AddSingleton<IAmazonSQS>(sp =>
@@ -63,6 +70,12 @@ public static class ServiceCollectionExtensions
         {
             services.AddHealthChecks()
                 .AddCheck<QueueHealthCheck<IntakeEventQueueOptions>>("intake-event-consumer", tags: ["aws", "sqs"]);
+        }
+
+        if (!intakeEventFifoQueueOptions.Disabled)
+        {
+            services.AddHealthChecks()
+                .AddCheck<QueueHealthCheck<IntakeEventFifoQueueOptions>>("intake-event-fifo-consumer", tags: ["aws", "sqs", "fifo"]);
         }
     }
 
