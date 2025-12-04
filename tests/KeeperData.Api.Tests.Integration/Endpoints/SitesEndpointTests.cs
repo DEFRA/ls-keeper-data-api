@@ -87,7 +87,7 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
     [Theory]
     [InlineData("WhenSearchingById1", SiteAId, HttpStatusCode.OK, SiteAId)]
     [InlineData("WhenSearchingById2", SiteBId, HttpStatusCode.OK, "\"type\":\"Other\"")]
-    [InlineData("WhenSearchingForIdThatDoesNotExist", "00000000-0000-0000-0000-000000000000", HttpStatusCode.InternalServerError, "not found")] //TODO should this be 404 - see ULITP-3595
+    [InlineData("WhenSearchingForIdThatDoesNotExist", "00000000-0000-0000-0000-000000000000", HttpStatusCode.NotFound, "not found")]
     public async Task GivenAnRecordRequestById_ShouldHaveExpectedResults(string scenario, string requestedId, HttpStatusCode expectedHttpCode, string responseShouldContain)
     {
         Console.WriteLine(scenario);
