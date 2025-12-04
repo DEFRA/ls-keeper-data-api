@@ -125,7 +125,7 @@ public class CtsHoldingImportOrchestratorTests
         context.SilverParties.Should().NotBeNull().And.HaveCount(context.RawAgents.Count + context.RawKeepers.Count);
         context.SilverParties[0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
         context.SilverParties[1].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
-        
+
         context.SilverPartyRoles.Should().NotBeNull().And.HaveCount(context.RawAgents.Count + context.RawKeepers.Count);
         context.SilverPartyRoles[0].HoldingIdentifier.Should().Be(holdingIdentifier);
         context.SilverPartyRoles[1].HoldingIdentifier.Should().Be(holdingIdentifier);

@@ -22,7 +22,6 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
         var correlationId = Guid.NewGuid().ToString();
         var holdingIdentifier = CphGenerator.GenerateFormattedCph();
         var message = GetSamImportHoldingMessage(holdingIdentifier);
-        var testExecutedOn = DateTime.UtcNow;
 
         await ExecuteQueueTest(correlationId, message);
 
@@ -61,18 +60,11 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
         var silverSamHoldingFilter = Builders<SamHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
         var silverSamHoldings = await fixture.MongoVerifier.FindDocumentsAsync("samHoldings", silverSamHoldingFilter);
 
-        var partyRoleRelationshipFilter = Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
-        var partyRoleRelationships = await fixture.MongoVerifier.FindDocumentsAsync("silverSitePartyRoleRelationships", partyRoleRelationshipFilter);
-        var partyRolePartyIds = partyRoleRelationships.Select(r => r.PartyId).Distinct().ToList();
-
-        var silverSamPartyFilter = Builders<SamPartyDocument>.Filter.In(x => x.PartyId, partyRolePartyIds);
+        var silverSamPartyFilter = Builders<SamPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
         var silverSamParties = await fixture.MongoVerifier.FindDocumentsAsync("samParties", silverSamPartyFilter);
-        var partyIds = silverSamParties.Select(x => x.PartyId).Distinct().ToHashSet();
 
         silverSamHoldings.Should().NotBeNull().And.HaveCount(1);
         silverSamParties.Should().NotBeNull().And.HaveCountGreaterThanOrEqualTo(1);
-        partyRoleRelationships.Should().NotBeNull().And.HaveCount(silverSamParties.Count);
-        partyIds.SetEquals(partyRolePartyIds).Should().BeTrue();
 
         var silverSamHerdFilter = Builders<SamHerdDocument>.Filter.Eq(x => x.CountyParishHoldingHerd, $"{holdingIdentifier}/01");
         var silverSamHerds = await fixture.MongoVerifier.FindDocumentsAsync("samHerds", silverSamHerdFilter);

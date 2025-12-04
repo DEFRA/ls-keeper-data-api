@@ -28,6 +28,7 @@ public class SamHoldingImportSilverMappingStep(
 
         context.SilverParties = [
             .. await SamPartyMapper.ToSilver(
+                context.Cph,
                 context.RawParties,
                 roleTypeLookupService.FindAsync,
                 countryIdentifierLookupService.FindAsync,

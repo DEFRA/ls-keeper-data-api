@@ -110,4 +110,12 @@ public class SamParty : BronzeBase
     public DateTime? PARTY_ROLE_TO_DATE { get; set; }
 
     public List<string> RoleList => SplitCommaSeparatedIds(ROLES ?? string.Empty);
+
+    /// <summary>
+    /// CLOB (comma separated list of CPH)
+    /// </summary>
+    [JsonPropertyName("CPHS")]
+    public string? CPHS { get; set; }
+
+    public List<string> CphList => SplitCommaSeparatedIds(CPHS ?? string.Empty);
 }

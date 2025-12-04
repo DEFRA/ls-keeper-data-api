@@ -34,6 +34,14 @@ public class SamPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IC
     [BsonElement("deleted")]
     public bool Deleted { get; set; }
 
+    [JsonPropertyName("countyParishHoldingNumber")]
+    [BsonElement("countyParishHoldingNumber")]
+    public string CountyParishHoldingNumber { get; set; } = string.Empty;
+
+    [JsonPropertyName("holdingIdentifierType")]
+    [BsonElement("holdingIdentifierType")]
+    public string HoldingIdentifierType { get; set; } = string.Empty;
+
     [JsonPropertyName("cphList")]
     [BsonElement("cphList")]
     public List<string> CphList { get; set; } = [];

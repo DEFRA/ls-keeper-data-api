@@ -36,6 +36,7 @@ public class SamPartyMapperTests
     public async Task GivenNullableRawParties_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = await SamPartyMapper.ToSilver(
+            Guid.NewGuid().ToString(),
             (List<SamParty>?)null!,
             _resolveRoleType,
             _resolveCountry,
@@ -49,6 +50,7 @@ public class SamPartyMapperTests
     public async Task GivenEmptyRawParties_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = await SamPartyMapper.ToSilver(
+            Guid.NewGuid().ToString(),
             [],
             _resolveRoleType,
             _resolveCountry,
@@ -65,9 +67,12 @@ public class SamPartyMapperTests
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((null, null));
 
+        var holdingIdentifier = CphGenerator.GenerateFormattedCph();
+
         var records = GenerateSamParty(1);
 
         var results = await SamPartyMapper.ToSilver(
+            holdingIdentifier,
             records,
             _resolveRoleType,
             _resolveCountry,
@@ -92,9 +97,12 @@ public class SamPartyMapperTests
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((null, null));
 
+        var holdingIdentifier = CphGenerator.GenerateFormattedCph();
+
         var records = GenerateSamParty(1);
 
         var results = await SamPartyMapper.ToSilver(
+            holdingIdentifier,
             records,
             _resolveRoleType,
             _resolveCountry,
@@ -122,6 +130,7 @@ public class SamPartyMapperTests
         var holdingIdentifier = CphGenerator.GenerateFormattedCph();
 
         var results = await SamPartyMapper.ToSilver(
+            holdingIdentifier,
             records,
             _resolveRoleType,
             _resolveCountry,

@@ -319,7 +319,7 @@ public static class ExpectedGoldSite
                 }
             ],
 
-            SiteActivities =
+            Activities =
             [
                 new()
                 {
@@ -339,12 +339,6 @@ public static class ExpectedGoldSite
                     EndDate = null,
                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                 }
-            ],
-
-            Activities =
-            [
-                PremiseActivityTypeData.Find("RM").name!,
-                PremiseActivityTypeData.Find("WM").name!
             ]
         };
 
@@ -516,7 +510,6 @@ public static class ExpectedGoldSite
 
             Species = [.. DefaultExpectedSite.Species.Where(x => x.Code == "CTT")],
             Marks = [.. DefaultExpectedSite.Marks.Where(x => x.Species!.Code == "CTT")],
-            SiteActivities = [.. DefaultExpectedSite.SiteActivities.Where(x => x.Activity == "RM")],
-            Activities = [.. DefaultExpectedSite.Activities.Where(x => x == "Red Meat")],
+            Activities = [.. DefaultExpectedSite.Activities.Where(x => x.Activity == "RM")]
         };
 }
