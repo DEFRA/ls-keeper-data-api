@@ -20,7 +20,7 @@ info:
     name: Livestock Data Services Agreement
     url: https://www.defra.gov.uk/services-agreement/
   
-  version: 1.0.0
+  version: 1.1.0
 
 # Change History
   # 0.1.0 - Initial Draft
@@ -29,6 +29,7 @@ info:
   # 0.4.0 - Amendments to the object model based on the changes done to the Location service model.
   # 0.5.0 - Amendments based on further review comments from LI Ltd.
   # 1.0.0 - KRDS Party API specification has now been baselined on the 06/10/2025.
+  # 1.1.0 - Amendments to the specs to update the Role definition.
   
 externalDocs:
   description: Defra APHA website
@@ -85,13 +86,17 @@ components:
           type: string
           format: uuid
           readOnly: true
+          description : "This is an immutable field which represents the golden key of the reference object."
         code: 
           type: string
           example: GB-ENG
+          readOnly: true
+          description: "This the business code/key of the Country object. This is a mutable field, where this field data could possibly change."
         name:
           type: string
           readOnly: true
           example: England
+          description: "This the business name of the Country object. This is a mutable field, where this field data could possibly change."
         longName:
           type: string
           readOnly: true
@@ -264,9 +269,10 @@ components:
           type: string
           format: uuid
           readOnly: true
+          description : "This is an immutable field which represents the golden key of the reference object."
         name:
           type: string
-          example: "Keeper"
+          example: "Livestock Keeper"
           nullable: false
         lastUpdatedDate:
           type: string
