@@ -4,9 +4,13 @@ namespace KeeperData.Core.Domain.Shared;
 
 public class PartyRoleRole : ValueObject
 {
+    private const string CphHolderRoleId = "5053be9f-685a-4779-a663-ce85df6e02e8";
+
     public string Id { get; private set; }
     public string? Name { get; private set; }
     public DateTime? LastUpdatedDate { get; private set; }
+
+    public bool IsCphHolderRole => Id != null && Id == CphHolderRoleId;
 
     public PartyRoleRole(
         string id,

@@ -455,19 +455,22 @@ public static class SamPartyMapper
 
                 var speciesManaged = new List<ManagedSpecies>();
 
-                foreach (var mark in matchingMarks)
+                if (!partyRoleRole.IsCphHolderRole)
                 {
-                    var speciesDoc = await getSpeciesTypeById(mark.SpeciesTypeId, cancellationToken);
-                    if (speciesDoc is null)
-                        continue;
+                    foreach (var mark in matchingMarks)
+                    {
+                        var speciesDoc = await getSpeciesTypeById(mark.SpeciesTypeId, cancellationToken);
+                        if (speciesDoc is null)
+                            continue;
 
-                    var managedSpecies = ManagedSpecies.Create(
-                        code: speciesDoc.Code,
-                        name: speciesDoc.Name,
-                        startDate: mark.GroupMarkStartDate,
-                        endDate: mark.GroupMarkEndDate);
+                        var managedSpecies = ManagedSpecies.Create(
+                            code: speciesDoc.Code,
+                            name: speciesDoc.Name,
+                            startDate: mark.GroupMarkStartDate,
+                            endDate: mark.GroupMarkEndDate);
 
-                    speciesManaged.Add(managedSpecies);
+                        speciesManaged.Add(managedSpecies);
+                    }
                 }
 
                 var partyRole = PartyRole.Create(
@@ -564,19 +567,22 @@ public static class SamPartyMapper
 
                 var speciesManaged = new List<ManagedSpecies>();
 
-                foreach (var mark in matchingMarks)
+                if (!partyRoleRole.IsCphHolderRole)
                 {
-                    var speciesDoc = await getSpeciesTypeById(mark.SpeciesTypeId, cancellationToken);
-                    if (speciesDoc is null)
-                        continue;
+                    foreach (var mark in matchingMarks)
+                    {
+                        var speciesDoc = await getSpeciesTypeById(mark.SpeciesTypeId, cancellationToken);
+                        if (speciesDoc is null)
+                            continue;
 
-                    var managedSpecies = ManagedSpecies.Create(
-                        code: speciesDoc.Code,
-                        name: speciesDoc.Name,
-                        startDate: mark.GroupMarkStartDate,
-                        endDate: mark.GroupMarkEndDate);
+                        var managedSpecies = ManagedSpecies.Create(
+                            code: speciesDoc.Code,
+                            name: speciesDoc.Name,
+                            startDate: mark.GroupMarkStartDate,
+                            endDate: mark.GroupMarkEndDate);
 
-                    speciesManaged.Add(managedSpecies);
+                        speciesManaged.Add(managedSpecies);
+                    }
                 }
 
                 var partyRole = PartyRole.Create(

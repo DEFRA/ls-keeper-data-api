@@ -4,10 +4,10 @@ public class FacilityGenerator
 {
     private static readonly Random s_random = new();
 
-    private static readonly string[] s_businessActivities = ["TB-AFU", "TB-AAA", "TB-BBB", "TB-CCC", "TB-DDD"];
-    private static readonly string[] s_facilityTypes = ["TB", "AA", "BB", "CC", "DD"];
-    private static readonly string[] s_speciesCodes = ["CTT", "AAA", "BBB", "CCC", "DDD"];
-    private static readonly string[] s_usageCodes = ["CTT-BEEF", "AAA-AAAA", "BBB-BBBB", "CCC-CCCC", "DDD-DDDD"];
+    private static readonly string[] s_businessActivities = ["AA", "AB", "AC", "AD", "AE"];
+    private static readonly string[] s_facilityTypes = ["BA", "BB", "BC", "BD", "BE"];
+    private static readonly string[] s_speciesCodes = ["CA", "CB", "CC", "CD", "CE"];
+    private static readonly string[] s_usageCodes = ["DA", "DB", "DC", "DD", "DE"];
 
     public static (
         string? businessActivityCode,
