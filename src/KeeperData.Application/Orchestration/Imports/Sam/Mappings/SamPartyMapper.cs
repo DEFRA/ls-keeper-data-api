@@ -228,7 +228,6 @@ public static class SamPartyMapper
         return result;
     }
 
-    // TODO - Add tests for AggregatePartyAndHolder
     public static List<SamParty> AggregatePartyAndHolder(List<SamParty> rawParties, List<SamCphHolder> rawHolders)
     {
         var holderRole = InferredRoleType.CphHolder.GetDescription();

@@ -36,11 +36,7 @@ public class SamPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IC
 
     [JsonPropertyName("countyParishHoldingNumber")]
     [BsonElement("countyParishHoldingNumber")]
-    public string CountyParishHoldingNumber { get; set; } = string.Empty;
-
-    [JsonPropertyName("holdingIdentifierType")]
-    [BsonElement("holdingIdentifierType")]
-    public string HoldingIdentifierType { get; set; } = string.Empty;
+    public string? CountyParishHoldingNumber { get; set; }
 
     [JsonPropertyName("cphList")]
     [BsonElement("cphList")]
