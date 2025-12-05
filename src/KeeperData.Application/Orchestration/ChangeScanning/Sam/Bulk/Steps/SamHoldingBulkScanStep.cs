@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk.Steps;
 
-[StepOrder(2)]
+[StepOrder(1)]
 public class SamHoldingBulkScanStep(
     IDataBridgeClient dataBridgeClient,
     IMessagePublisher<IntakeEventsQueueClient> intakeMessagePublisher,

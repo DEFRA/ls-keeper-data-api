@@ -47,14 +47,6 @@ public record SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
     [JsonPropertyName("roleTypeName")]
     public string? RoleTypeName { get; set; }
 
-    [BsonElement("effectiveFromData")]
-    [JsonPropertyName("effectiveFromData")]
-    public DateTime? EffectiveFromData { get; set; }
-
-    [BsonElement("effectiveToData")]
-    [JsonPropertyName("effectiveToData")]
-    public DateTime? EffectiveToData { get; set; }
-
     [BsonElement("speciesTypeId")]
     [JsonPropertyName("speciesTypeId")]
     [AutoIndexed]

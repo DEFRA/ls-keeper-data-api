@@ -23,13 +23,11 @@ public class SamBulkImportWithAccurateRawDataTests
 {
     private readonly Mock<IGenericRepository<SamHoldingDocument>> _silverHoldingRepositoryMock = new();
     private readonly Mock<IGenericRepository<SamPartyDocument>> _silverPartyRepositoryMock = new();
-    private readonly Mock<ISilverSitePartyRoleRelationshipRepository> _silverSitePartyRoleRelationshipRepositoryMock = new();
     private readonly Mock<IGenericRepository<SamHerdDocument>> _silverHerdRepositoryMock = new();
 
     private readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
     private readonly Mock<IGenericRepository<PartyDocument>> _goldPartyRepositoryMock = new();
     private readonly Mock<IGoldSitePartyRoleRelationshipRepository> _goldSitePartyRoleRelationshipRepositoryMock = new();
-    private readonly Mock<IGenericRepository<SiteGroupMarkRelationshipDocument>> _goldSiteGroupMarkRelationshipRepositoryMock = new();
 
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
     private readonly Mock<IPremiseActivityTypeLookupService> _premiseActivityTypeLookupServiceMock = new();
@@ -163,12 +161,10 @@ public class SamBulkImportWithAccurateRawDataTests
     {
         factory.OverrideServiceAsScoped(_silverHoldingRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_silverPartyRepositoryMock.Object);
-        factory.OverrideServiceAsScoped(_silverSitePartyRoleRelationshipRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_silverHerdRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_goldSiteRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_goldPartyRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_goldSitePartyRoleRelationshipRepositoryMock.Object);
-        factory.OverrideServiceAsScoped(_goldSiteGroupMarkRelationshipRepositoryMock.Object);
 
         factory.OverrideServiceAsScoped(_countryIdentifierLookupServiceMock.Object);
         factory.OverrideServiceAsScoped(_premiseActivityTypeLookupServiceMock.Object);
@@ -233,19 +229,6 @@ public class SamBulkImportWithAccurateRawDataTests
             .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamPartyDocument>, SamPartyDocument)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        // Silver Role Relationships
-        _silverSitePartyRoleRelationshipRepositoryMock
-            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Core.Documents.Silver.SitePartyRoleRelationshipDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
-
-        _silverSitePartyRoleRelationshipRepositoryMock
-            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _silverSitePartyRoleRelationshipRepositoryMock
-            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>, Core.Documents.Silver.SitePartyRoleRelationshipDocument)>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
         // Silver Herds
         _silverHerdRepositoryMock
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHerdDocument, bool>>>(), It.IsAny<CancellationToken>()))
@@ -293,19 +276,6 @@ public class SamBulkImportWithAccurateRawDataTests
         _goldSitePartyRoleRelationshipRepositoryMock
             .Setup(r => r.GetExistingSitePartyRoleRelationships(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
-
-        // Gold Site Group Mark Relationships
-        _goldSiteGroupMarkRelationshipRepositoryMock
-            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SiteGroupMarkRelationshipDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
-
-        _goldSiteGroupMarkRelationshipRepositoryMock
-            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SiteGroupMarkRelationshipDocument>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _goldSiteGroupMarkRelationshipRepositoryMock
-            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<SiteGroupMarkRelationshipDocument>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
     }
 
     private void SetupRepositoryMocksFromContext(SamHoldingImportContext context)
@@ -332,15 +302,6 @@ public class SamBulkImportWithAccurateRawDataTests
                 })
                 .ToList().FirstOrDefault(p => compiled(p));
             });
-
-        // Silver Role Relationships
-        _silverSitePartyRoleRelationshipRepositoryMock
-            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Core.Documents.Silver.SitePartyRoleRelationshipDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([.. context.SilverPartyRoles.Select(h =>
-            {
-                h.Id = Guid.NewGuid().ToString();
-                return h;
-            })]);
 
         // Silver Herds
         _silverHerdRepositoryMock
@@ -378,15 +339,6 @@ public class SamBulkImportWithAccurateRawDataTests
         _goldSitePartyRoleRelationshipRepositoryMock
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Core.Documents.SitePartyRoleRelationshipDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([.. context.GoldSitePartyRoles.Select(h =>
-            {
-                h.Id = Guid.NewGuid().ToString();
-                return h;
-            })]);
-
-        // Gold Site Group Mark Relationships
-        _goldSiteGroupMarkRelationshipRepositoryMock
-            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SiteGroupMarkRelationshipDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([.. context.GoldSiteGroupMarks.Select(h =>
             {
                 h.Id = Guid.NewGuid().ToString();
                 return h;

@@ -17,6 +17,8 @@ public static class VerifySamHoldingMappings
                             source.PAON_END_NUMBER, source.PAON_END_NUMBER_SUFFIX,
                             source.SAON_DESCRIPTION, source.PAON_DESCRIPTION);
 
+        var formattedFacilityBusinessActivityCode = PremiseActivityTypeFormatters.TrimFacilityActivityCode(source.FACILITY_BUSINSS_ACTVTY_CODE);
+
         source.Should().NotBeNull();
         target.Should().NotBeNull();
 
@@ -46,7 +48,7 @@ public static class VerifySamHoldingMappings
         target.HoldingStatus.Should().Be(expectedStatus);
 
         target.PremiseActivityTypeId.Should().NotBeNullOrWhiteSpace();
-        target.PremiseActivityTypeCode.Should().Be(source.FACILITY_BUSINSS_ACTVTY_CODE);
+        target.PremiseActivityTypeCode.Should().Be(formattedFacilityBusinessActivityCode);
         target.PremiseSubActivityTypeCode.Should().Be(source.FCLTY_SUB_BSNSS_ACTVTY_CODE);
 
         target.MovementRestrictionReasonCode.Should().Be(source.MOVEMENT_RSTRCTN_RSN_CODE);

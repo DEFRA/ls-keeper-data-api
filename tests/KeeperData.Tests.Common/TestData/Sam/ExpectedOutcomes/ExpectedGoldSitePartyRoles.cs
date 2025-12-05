@@ -17,8 +17,6 @@ public static class ExpectedGoldSitePartyRoles
             HoldingIdentifierType = HoldingIdentifierType.CphNumber.ToString(),
             RoleTypeId = RoleData.Find("LIVESTOCKOWNER").id!,
             RoleTypeName = RoleData.Find("LIVESTOCKOWNER").name!,
-            EffectiveFromData = new DateTime(2001, 1, 1, 0, 0, 0),
-            EffectiveToData = null,
             SpeciesTypeId = SpeciesData.Find("CTT").id!,
             SpeciesTypeCode = "CTT"
         },
@@ -31,8 +29,6 @@ public static class ExpectedGoldSitePartyRoles
             HoldingIdentifierType = HoldingIdentifierType.CphNumber.ToString(),
             RoleTypeId = RoleData.Find("LIVESTOCKKEEPER").id!,
             RoleTypeName = RoleData.Find("LIVESTOCKKEEPER").name!,
-            EffectiveFromData = new DateTime(2001, 1, 1, 0, 0, 0),
-            EffectiveToData = null,
             SpeciesTypeId = SpeciesData.Find("CTT").id!,
             SpeciesTypeCode = "CTT"
         },
@@ -45,8 +41,6 @@ public static class ExpectedGoldSitePartyRoles
             HoldingIdentifierType = HoldingIdentifierType.CphNumber.ToString(),
             RoleTypeId = RoleData.Find("CPHHOLDER").id!,
             RoleTypeName = RoleData.Find("CPHHOLDER").name!,
-            EffectiveFromData = new DateTime(2001, 1, 1, 0, 0, 0),
-            EffectiveToData = null,
             SpeciesTypeId = SpeciesData.Find("CTT").id!,
             SpeciesTypeCode = "CTT"
         },
@@ -59,8 +53,6 @@ public static class ExpectedGoldSitePartyRoles
             HoldingIdentifierType = HoldingIdentifierType.CphNumber.ToString(),
             RoleTypeId = RoleData.Find("LIVESTOCKOWNER").id!,
             RoleTypeName = RoleData.Find("LIVESTOCKOWNER").name!,
-            EffectiveFromData = new DateTime(2001, 1, 1, 0, 0, 0),
-            EffectiveToData = null,
             SpeciesTypeId = SpeciesData.Find("SHP").id!,
             SpeciesTypeCode = "SHP"
         },
@@ -73,8 +65,6 @@ public static class ExpectedGoldSitePartyRoles
             HoldingIdentifierType = HoldingIdentifierType.CphNumber.ToString(),
             RoleTypeId = RoleData.Find("LIVESTOCKKEEPER").id!,
             RoleTypeName = RoleData.Find("LIVESTOCKKEEPER").name!,
-            EffectiveFromData = new DateTime(2001, 1, 1, 0, 0, 0),
-            EffectiveToData = null,
             SpeciesTypeId = SpeciesData.Find("SHP").id!,
             SpeciesTypeCode = "SHP"
         },
@@ -87,8 +77,6 @@ public static class ExpectedGoldSitePartyRoles
             HoldingIdentifierType = HoldingIdentifierType.CphNumber.ToString(),
             RoleTypeId = RoleData.Find("CPHHOLDER").id!,
             RoleTypeName = RoleData.Find("CPHHOLDER").name!,
-            EffectiveFromData = new DateTime(2001, 1, 1, 0, 0, 0),
-            EffectiveToData = null,
             SpeciesTypeId = SpeciesData.Find("SHP").id!,
             SpeciesTypeCode = "SHP"
         },
@@ -101,8 +89,6 @@ public static class ExpectedGoldSitePartyRoles
             HoldingIdentifierType = HoldingIdentifierType.CphNumber.ToString(),
             RoleTypeId = RoleData.Find("LIVESTOCKKEEPER").id!,
             RoleTypeName = RoleData.Find("LIVESTOCKKEEPER").name!,
-            EffectiveFromData = new DateTime(2001, 1, 1, 0, 0, 0),
-            EffectiveToData = null,
             SpeciesTypeId = SpeciesData.Find("CTT").id!,
             SpeciesTypeCode = "CTT"
         },
@@ -115,8 +101,6 @@ public static class ExpectedGoldSitePartyRoles
             HoldingIdentifierType = HoldingIdentifierType.CphNumber.ToString(),
             RoleTypeId = RoleData.Find("LIVESTOCKKEEPER").id!,
             RoleTypeName = RoleData.Find("LIVESTOCKKEEPER").name!,
-            EffectiveFromData = new DateTime(2001, 1, 1, 0, 0, 0),
-            EffectiveToData = null,
             SpeciesTypeId = SpeciesData.Find("SHP").id!,
             SpeciesTypeCode = "SHP"
         }
@@ -133,8 +117,6 @@ public static class ExpectedGoldSitePartyRoles
             HoldingIdentifierType = HoldingIdentifierType.CphNumber.ToString(),
             RoleTypeId = RoleData.Find("LIVESTOCKKEEPER").id!,
             RoleTypeName = RoleData.Find("LIVESTOCKKEEPER").name!,
-            EffectiveFromData = new DateTime(2001, 1, 1, 0, 0, 0),
-            EffectiveToData = null,
             SpeciesTypeId = SpeciesData.Find("CTT").id!,
             SpeciesTypeCode = "CTT"
         },
@@ -147,8 +129,6 @@ public static class ExpectedGoldSitePartyRoles
             HoldingIdentifierType = HoldingIdentifierType.CphNumber.ToString(),
             RoleTypeId = RoleData.Find("CPHHOLDER").id!,
             RoleTypeName = RoleData.Find("CPHHOLDER").name!,
-            EffectiveFromData = new DateTime(2001, 1, 1, 0, 0, 0),
-            EffectiveToData = null,
             SpeciesTypeId = SpeciesData.Find("CTT").id!,
             SpeciesTypeCode = "CTT"
         },
@@ -161,8 +141,6 @@ public static class ExpectedGoldSitePartyRoles
             HoldingIdentifierType = HoldingIdentifierType.CphNumber.ToString(),
             RoleTypeId = RoleData.Find("LIVESTOCKOWNER").id!,
             RoleTypeName = RoleData.Find("LIVESTOCKOWNER").name!,
-            EffectiveFromData = new DateTime(2001, 1, 1, 0, 0, 0),
-            EffectiveToData = null,
             SpeciesTypeId = SpeciesData.Find("CTT").id!,
             SpeciesTypeCode = "CTT"
         }

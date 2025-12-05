@@ -89,8 +89,6 @@ public class SitePartyRoleMapperTests
             HoldingIdentifierType = HoldingIdentifierType.CphNumber.ToString(),
             RoleTypeId = "b2637b72-2196-4a19-bdf0-85c7ff66cf60",
             RoleTypeName = "Livestock Keeper",
-            EffectiveFromData = new DateTime(2010, 1, 1, 0, 0, 0),
-            EffectiveToData = null,
             SpeciesTypeId = "5a86d64d-0f17-46a0-92d5-11fd5b2c5830",
             SpeciesTypeCode = "CTT"
         },
@@ -102,8 +100,6 @@ public class SitePartyRoleMapperTests
             HoldingIdentifierType = HoldingIdentifierType.CphNumber.ToString(),
             RoleTypeId = "2de15dc1-19b9-4372-9e81-a9a2f87fd197",
             RoleTypeName = "Livestock Owner",
-            EffectiveFromData = new DateTime(2010, 1, 1, 0, 0, 0),
-            EffectiveToData = null,
             SpeciesTypeId = "5a86d64d-0f17-46a0-92d5-11fd5b2c5830",
             SpeciesTypeCode = "CTT"
         },
@@ -115,8 +111,6 @@ public class SitePartyRoleMapperTests
             HoldingIdentifierType = HoldingIdentifierType.CphNumber.ToString(),
             RoleTypeId = "b2637b72-2196-4a19-bdf0-85c7ff66cf60",
             RoleTypeName = "Livestock Keeper",
-            EffectiveFromData = new DateTime(2011, 1, 1, 0, 0, 0),
-            EffectiveToData = null,
             SpeciesTypeId = "5a86d64d-0f17-46a0-92d5-11fd5b2c5830",
             SpeciesTypeCode = "CTT"
         }

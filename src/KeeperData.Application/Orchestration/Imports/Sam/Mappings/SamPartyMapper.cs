@@ -16,6 +16,7 @@ namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 public static class SamPartyMapper
 {
     public static async Task<List<SamPartyDocument>> ToSilver(
+        string holdingIdentifier,
         List<SamParty> rawParties,
         Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
         Func<string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
@@ -26,6 +27,7 @@ public static class SamPartyMapper
         foreach (var p in rawParties?.Where(x => x.PARTY_ID != null) ?? [])
         {
             var party = await ToSilver(
+                holdingIdentifier,
                 p,
                 resolveRoleType,
                 resolveCountry,
@@ -38,6 +40,7 @@ public static class SamPartyMapper
     }
 
     public static async Task<SamPartyDocument> ToSilver(
+        string holdingIdentifier,
         SamParty p,
         Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
         Func<string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
@@ -78,6 +81,8 @@ public static class SamPartyMapper
                     p.PERSON_GIVEN_NAME2),
             PartyInitials = p.PERSON_INITIALS,
             PartyLastName = p.PERSON_FAMILY_NAME,
+
+            CphList = p.CphList ?? [],
 
             Address = new Core.Documents.Silver.AddressDocument
             {
@@ -127,6 +132,15 @@ public static class SamPartyMapper
                     EffectiveToDate = p.PARTY_ROLE_TO_DATE
                 });
             }
+        }
+
+        if ((p.CphList ?? []).Count == 0)
+        {
+            result.CountyParishHoldingNumber = holdingIdentifier;
+        }
+        else
+        {
+            result.CphList = p.CphList ?? [];
         }
 
         return result;
@@ -214,7 +228,6 @@ public static class SamPartyMapper
         return result;
     }
 
-    // TODO - Add tests for AggregatePartyAndHolder
     public static List<SamParty> AggregatePartyAndHolder(List<SamParty> rawParties, List<SamCphHolder> rawHolders)
     {
         var holderRole = InferredRoleType.CphHolder.GetDescription();
@@ -327,6 +340,8 @@ public static class SamPartyMapper
 
         if (party.PREFERRED_CONTACT_METHOD_IND == null && holder.PREFERRED_CONTACT_METHOD_IND != null)
             party.PREFERRED_CONTACT_METHOD_IND = holder.PREFERRED_CONTACT_METHOD_IND;
+
+        party.CPHS = holder.CPHS;
     }
 
     private static SamParty CreateSamPartyFromHolder(SamCphHolder holder, string role)
@@ -374,7 +389,9 @@ public static class SamPartyMapper
 
             PREFERRED_CONTACT_METHOD_IND = holder.PREFERRED_CONTACT_METHOD_IND,
 
-            ROLES = role
+            ROLES = role,
+
+            CPHS = holder.CPHS
         };
     }
 
@@ -455,19 +472,22 @@ public static class SamPartyMapper
 
                 var speciesManaged = new List<ManagedSpecies>();
 
-                foreach (var mark in matchingMarks)
+                if (!partyRoleRole.IsCphHolderRole)
                 {
-                    var speciesDoc = await getSpeciesTypeById(mark.SpeciesTypeId, cancellationToken);
-                    if (speciesDoc is null)
-                        continue;
+                    foreach (var mark in matchingMarks)
+                    {
+                        var speciesDoc = await getSpeciesTypeById(mark.SpeciesTypeId, cancellationToken);
+                        if (speciesDoc is null)
+                            continue;
 
-                    var managedSpecies = ManagedSpecies.Create(
-                        code: speciesDoc.Code,
-                        name: speciesDoc.Name,
-                        startDate: mark.GroupMarkStartDate,
-                        endDate: mark.GroupMarkEndDate);
+                        var managedSpecies = ManagedSpecies.Create(
+                            code: speciesDoc.Code,
+                            name: speciesDoc.Name,
+                            startDate: mark.GroupMarkStartDate,
+                            endDate: mark.GroupMarkEndDate);
 
-                    speciesManaged.Add(managedSpecies);
+                        speciesManaged.Add(managedSpecies);
+                    }
                 }
 
                 var partyRole = PartyRole.Create(
@@ -564,19 +584,22 @@ public static class SamPartyMapper
 
                 var speciesManaged = new List<ManagedSpecies>();
 
-                foreach (var mark in matchingMarks)
+                if (!partyRoleRole.IsCphHolderRole)
                 {
-                    var speciesDoc = await getSpeciesTypeById(mark.SpeciesTypeId, cancellationToken);
-                    if (speciesDoc is null)
-                        continue;
+                    foreach (var mark in matchingMarks)
+                    {
+                        var speciesDoc = await getSpeciesTypeById(mark.SpeciesTypeId, cancellationToken);
+                        if (speciesDoc is null)
+                            continue;
 
-                    var managedSpecies = ManagedSpecies.Create(
-                        code: speciesDoc.Code,
-                        name: speciesDoc.Name,
-                        startDate: mark.GroupMarkStartDate,
-                        endDate: mark.GroupMarkEndDate);
+                        var managedSpecies = ManagedSpecies.Create(
+                            code: speciesDoc.Code,
+                            name: speciesDoc.Name,
+                            startDate: mark.GroupMarkStartDate,
+                            endDate: mark.GroupMarkEndDate);
 
-                    speciesManaged.Add(managedSpecies);
+                        speciesManaged.Add(managedSpecies);
+                    }
                 }
 
                 var partyRole = PartyRole.Create(

@@ -82,13 +82,9 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     [JsonPropertyName("marks")]
     public List<GroupMarkDocument> Marks { get; set; } = [];
 
-    [BsonElement("siteActivities")]
-    [JsonPropertyName("siteActivities")]
-    public List<SiteActivityDocument> SiteActivities { get; set; } = [];
-
     [BsonElement("activities")]
     [JsonPropertyName("activities")]
-    public List<string> Activities { get; set; } = [];
+    public List<SiteActivityDocument> Activities { get; set; } = [];
 
     public static SiteDocument FromDomain(Site m) => new()
     {
@@ -108,8 +104,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         Parties = [.. m.Parties.Select(SitePartyDocument.FromDomain)],
         Species = [.. m.Species.Select(SpeciesSummaryDocument.FromDomain)],
         Marks = [.. m.Marks.Select(GroupMarkDocument.FromDomain)],
-        SiteActivities = [.. m.Activities.Select(SiteActivityDocument.FromDomain)],
-        Activities = [.. m.Activities.Select(a => a.Description ?? string.Empty)]
+        Activities = [.. m.Activities.Select(SiteActivityDocument.FromDomain)]
     };
 
     public Site ToDomain()
@@ -156,9 +151,9 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
             site.SetSpecies(species, LastUpdatedDate);
         }
 
-        if (SiteActivities is not null && SiteActivities.Count > 0)
+        if (Activities is not null && Activities.Count > 0)
         {
-            var activities = SiteActivities
+            var activities = Activities
                 .Select(a => new SiteActivity(
                     id: a.IdentifierId,
                     activity: a.Activity,
