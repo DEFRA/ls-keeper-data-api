@@ -16,6 +16,8 @@ services:
       - ApiClients__DataBridgeApi__XApiKey=
       - ApiClients__DataBridgeApi__UseFakeClient=true
       - ServiceBusSenderConfiguration__IntakeEventQueue__QueueUrl=http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue
+      - BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicName=ls_keeper_data_import_complete
+      - BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicArn=arn:aws:sns:eu-west-2:000000000000:ls_keeper_data_import_complete
       - DataBridgeScanConfiguration__QueryPageSize=5
       - DataBridgeScanConfiguration__DelayBetweenQueriesSeconds=0
       - DataBridgeScanConfiguration__LimitScanTotalBatchSize=10

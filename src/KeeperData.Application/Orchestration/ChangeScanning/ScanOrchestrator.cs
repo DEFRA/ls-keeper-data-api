@@ -1,6 +1,7 @@
 namespace KeeperData.Application.Orchestration.ChangeScanning;
 
 public abstract class ScanOrchestrator<TContext>(IEnumerable<IScanStep<TContext>> steps)
+    where TContext : class
 {
     private readonly IEnumerable<IScanStep<TContext>> _steps = steps;
 
