@@ -60,7 +60,7 @@ public static class ServiceCollectionExtensions
         services.AddMessageHandlers();
 
         services.AddServiceBusSenderDependencies(configuration);
-        
+
         services.AddBatchCompletionNotificationDependencies(configuration);
 
         if (!intakeEventQueueOptions.Disabled)
