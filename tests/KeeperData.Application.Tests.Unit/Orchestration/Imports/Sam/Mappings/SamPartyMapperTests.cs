@@ -151,7 +151,7 @@ public class SamPartyMapperTests
         var quantity = 2;
         var records = GenerateSamParty(1);
         records.AddRange(GenerateSamCphHolderAsParty(1));
-        
+
         var holdingIdentifier = CphGenerator.GenerateFormattedCph();
 
         var results = await SamPartyMapper.ToSilver(
@@ -174,7 +174,7 @@ public class SamPartyMapperTests
     public void GivenNoPartiesOrHolders_WhenAggregatingPartyAndHolder_ShouldReturnEmptyList()
     {
         var result = SamPartyMapper.AggregatePartyAndHolder([], []);
-       
+
         result.Should().BeEmpty();
     }
 
@@ -212,9 +212,9 @@ public class SamPartyMapperTests
     [Fact]
     public void GivenMatchingPartyAndHolder_WhenAggregatingPartyAndHolder_ShouldReturnMergedList_AndMergeFields()
     {
-        var parties = new List<SamParty> 
-        { 
-            new() 
+        var parties = new List<SamParty>
+        {
+            new()
             {
                 PARTY_ID = "P1",
                 PERSON_TITLE = "Mr",
