@@ -55,7 +55,7 @@ public class BatchCompletionMessageHandlerTests
 
         // Assert
         result.Should().Be(batchCompletionMessage);
-        
+
         _mockTopicPublisher.Verify(
             x => x.PublishAsync(batchCompletionMessage, It.IsAny<CancellationToken>()),
             Times.Once);
@@ -119,7 +119,7 @@ public class BatchCompletionMessageHandlerTests
 
         // Assert
         result.Should().Be(batchCompletionMessage);
-        
+
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Error,

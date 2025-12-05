@@ -23,13 +23,13 @@ public class BatchCompletionTopicPublisher(
 
     public async Task PublishAsync<TMessage>(TMessage? message, CancellationToken cancellationToken = default)
     {
-        if (message == null) 
+        if (message == null)
         {
             _logger.LogWarning("Attempted to publish null message to batch completion topic");
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(TopicArn)) 
+        if (string.IsNullOrWhiteSpace(TopicArn))
         {
             _logger.LogWarning("Batch completion topic ARN is not configured, skipping SNS publish");
             return;
@@ -39,7 +39,7 @@ public class BatchCompletionTopicPublisher(
         {
             var publishRequest = _messageFactory.CreateSnsMessage(TopicArn, message);
             await _amazonSimpleNotificationService.PublishAsync(publishRequest, cancellationToken);
-            
+
             _logger.LogInformation("Successfully published batch completion message to SNS topic {TopicArn}", TopicArn);
         }
         catch (Exception ex)
