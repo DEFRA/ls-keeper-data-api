@@ -79,9 +79,24 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
             x => x.Identifiers,
             i => i.Identifier == holdingIdentifier && i.Type == holdingIdentifierType);
         var sites = await fixture.MongoVerifier.FindDocumentsAsync("sites", siteFilter);
-        sites.Should().NotBeNull().And.HaveCount(1);
 
-        // TODO - Add additional records
+        var partyRoleRelationshipFilter = Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
+        var partyRoleRelationships = await fixture.MongoVerifier.FindDocumentsAsync("sitePartyRoleRelationships", partyRoleRelationshipFilter);
+        var partyRolePartyIds = partyRoleRelationships.Select(r => r.PartyId).Distinct().ToList();
+
+        var partyFilter = Builders<PartyDocument>.Filter.In(x => x.CustomerNumber, partyRolePartyIds);
+        var parties = await fixture.MongoVerifier.FindDocumentsAsync("parties", partyFilter);
+        var partyIds = parties.Select(x => x.CustomerNumber).Distinct().ToHashSet();
+
+        sites.Should().NotBeNull().And.HaveCount(1);
+        parties.Should().NotBeNull().And.HaveCountGreaterThanOrEqualTo(1);
+        partyRoleRelationships.Should().NotBeNull().And.HaveCount(parties.Count);
+        partyIds.SetEquals(partyRolePartyIds).Should().BeTrue();
+
+        for (int i = 0; i < parties[0].PartyRoles.Count; i++)
+        {
+            parties[0].PartyRoles[i].Site!.IdentifierId.Should().Be(sites[0].Id);
+        }
     }
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
