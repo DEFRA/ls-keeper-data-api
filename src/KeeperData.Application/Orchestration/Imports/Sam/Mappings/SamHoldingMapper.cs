@@ -49,7 +49,9 @@ public static class SamHoldingMapper
                             h.PAON_END_NUMBER, h.PAON_END_NUMBER_SUFFIX,
                             h.SAON_DESCRIPTION, h.PAON_DESCRIPTION);
 
-        var (premiseActivityTypeId, premiseActivityTypeName) = await resolvePremiseActivityType(h.FACILITY_BUSINSS_ACTVTY_CODE, cancellationToken);
+        var formattedFacilityBusinessActivityCode = PremiseActivityTypeFormatters.TrimFacilityActivityCode(h.FACILITY_BUSINSS_ACTVTY_CODE);
+
+        var (premiseActivityTypeId, premiseActivityTypeName) = await resolvePremiseActivityType(formattedFacilityBusinessActivityCode, cancellationToken);
         var (premiseTypeId, premiseTypeName) = await resolvePremiseType(h.FACILITY_TYPE_CODE, cancellationToken);
         var (countryId, countryName) = await resolveCountry(h.COUNTRY_CODE, cancellationToken);
 
@@ -80,7 +82,7 @@ public static class SamHoldingMapper
             HoldingStatus = HoldingStatusFormatters.FormatHoldingStatus(h.IsDeleted ?? false),
 
             PremiseActivityTypeId = premiseActivityTypeId,
-            PremiseActivityTypeCode = h.FACILITY_BUSINSS_ACTVTY_CODE,
+            PremiseActivityTypeCode = formattedFacilityBusinessActivityCode,
             PremiseSubActivityTypeCode = h.FCLTY_SUB_BSNSS_ACTVTY_CODE,
 
             MovementRestrictionReasonCode = h.MOVEMENT_RSTRCTN_RSN_CODE,

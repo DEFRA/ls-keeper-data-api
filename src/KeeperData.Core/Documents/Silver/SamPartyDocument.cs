@@ -34,17 +34,16 @@ public class SamPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IC
     [BsonElement("deleted")]
     public bool Deleted { get; set; }
 
+    [JsonPropertyName("countyParishHoldingNumber")]
+    [BsonElement("countyParishHoldingNumber")]
+    public string? CountyParishHoldingNumber { get; set; }
+
     [JsonPropertyName("cphList")]
     [BsonElement("cphList")]
     public List<string> CphList { get; set; } = [];
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
-        return
-        [
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("PartyId"),
-                new CreateIndexOptions { Name = "idx_partyId" })
-        ];
+        return AutoIndexedAttribute.GetIndexModels<SamPartyDocument>();
     }
 }

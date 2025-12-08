@@ -3,7 +3,6 @@ using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using Microsoft.Extensions.Options;
-using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace KeeperData.Infrastructure.Database.Repositories;

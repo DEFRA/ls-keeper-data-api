@@ -186,27 +186,7 @@ public static class ExpectedGoldSite
                                 LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
                             },
                             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
-                            SpeciesManagedByRole =
-                            [
-                                new()
-                                {
-                                    IdentifierId = Guid.NewGuid().ToString(),
-                                    Code = "CTT",
-                                    Name = SpeciesData.Find("CTT").name!,
-                                    StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
-                                    EndDate = null,
-                                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
-                                },
-                                new()
-                                {
-                                    IdentifierId = Guid.NewGuid().ToString(),
-                                    Code = "SHP",
-                                    Name = SpeciesData.Find("SHP").name!,
-                                    StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
-                                    EndDate = null,
-                                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
-                                }
-                            ]
+                            SpeciesManagedByRole = []
                         }
                     ]
                 },
@@ -339,7 +319,7 @@ public static class ExpectedGoldSite
                 }
             ],
 
-            SiteActivities =
+            Activities =
             [
                 new()
                 {
@@ -359,12 +339,6 @@ public static class ExpectedGoldSite
                     EndDate = null,
                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                 }
-            ],
-
-            Activities =
-            [
-                PremiseActivityTypeData.Find("RM").name!,
-                PremiseActivityTypeData.Find("WM").name!
             ]
         };
 
@@ -505,18 +479,7 @@ public static class ExpectedGoldSite
                                 LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
                             },
                             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
-                            SpeciesManagedByRole =
-                            [
-                                new()
-                                {
-                                    IdentifierId = Guid.NewGuid().ToString(),
-                                    Code = "CTT",
-                                    Name = SpeciesData.Find("CTT").name!,
-                                    StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
-                                    EndDate = null,
-                                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
-                                }
-                            ]
+                            SpeciesManagedByRole = []
                         },
                         new PartyRoleDocument
                         {
@@ -547,7 +510,6 @@ public static class ExpectedGoldSite
 
             Species = [.. DefaultExpectedSite.Species.Where(x => x.Code == "CTT")],
             Marks = [.. DefaultExpectedSite.Marks.Where(x => x.Species!.Code == "CTT")],
-            SiteActivities = [.. DefaultExpectedSite.SiteActivities.Where(x => x.Activity == "RM")],
-            Activities = [.. DefaultExpectedSite.Activities.Where(x => x == "Red Meat")],
+            Activities = [.. DefaultExpectedSite.Activities.Where(x => x.Activity == "RM")]
         };
 }

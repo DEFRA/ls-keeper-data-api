@@ -67,7 +67,7 @@ public class SamHoldingImportGoldMappingStep(
                 cancellationToken);
 
             context.GoldSitePartyRoles = SitePartyRoleMapper.ToGold(
-                context.SilverParties,
+                context.GoldParties,
                 context.GoldSiteGroupMarks,
                 HoldingIdentifierType.CphNumber.ToString(),
                 context.Cph);

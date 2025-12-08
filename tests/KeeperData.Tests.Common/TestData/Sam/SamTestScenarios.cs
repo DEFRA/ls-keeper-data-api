@@ -110,7 +110,7 @@ public static class SamTestScenarios
 
         SECONDARY_CPH = "12/345/9999",
 
-        FACILITY_BUSINSS_ACTVTY_CODE = "RM",
+        FACILITY_BUSINSS_ACTVTY_CODE = "SLG-RM",
         FACILITY_TYPE_CODE = "AH",
 
         ANIMAL_SPECIES_CODE = "CTT",
@@ -168,7 +168,7 @@ public static class SamTestScenarios
 
         SECONDARY_CPH = "12/345/9999",
 
-        FACILITY_BUSINSS_ACTVTY_CODE = "WM",
+        FACILITY_BUSINSS_ACTVTY_CODE = "SLG-WM",
         FACILITY_TYPE_CODE = "AH",
 
         ANIMAL_SPECIES_CODE = "SHP",

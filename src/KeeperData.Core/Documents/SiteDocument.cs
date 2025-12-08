@@ -19,22 +19,27 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("createdDate")]
     [JsonPropertyName("createdDate")]
+    [AutoIndexed]
     public DateTime CreatedDate { get; set; }
 
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
+    [AutoIndexed]
     public DateTime LastUpdatedDate { get; set; }
 
     [BsonElement("type")]
     [JsonPropertyName("type")]
+    [AutoIndexed]
     public string Type { get; set; } = default!;
 
     [BsonElement("name")]
     [JsonPropertyName("name")]
+    [AutoIndexed]
     public string Name { get; set; } = default!;
 
     [BsonElement("state")]
     [JsonPropertyName("state")]
+    [AutoIndexed]
     public string? State { get; set; } = default!;
 
     [BsonElement("startDate")]
@@ -77,13 +82,9 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     [JsonPropertyName("marks")]
     public List<GroupMarkDocument> Marks { get; set; } = [];
 
-    [BsonElement("siteActivities")]
-    [JsonPropertyName("siteActivities")]
-    public List<SiteActivityDocument> SiteActivities { get; set; } = [];
-
     [BsonElement("activities")]
     [JsonPropertyName("activities")]
-    public List<string> Activities { get; set; } = [];
+    public List<SiteActivityDocument> Activities { get; set; } = [];
 
     public static SiteDocument FromDomain(Site m) => new()
     {
@@ -103,8 +104,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         Parties = [.. m.Parties.Select(SitePartyDocument.FromDomain)],
         Species = [.. m.Species.Select(SpeciesSummaryDocument.FromDomain)],
         Marks = [.. m.Marks.Select(GroupMarkDocument.FromDomain)],
-        SiteActivities = [.. m.Activities.Select(SiteActivityDocument.FromDomain)],
-        Activities = [.. m.Activities.Select(a => a.Description ?? string.Empty)]
+        Activities = [.. m.Activities.Select(SiteActivityDocument.FromDomain)]
     };
 
     public Site ToDomain()
@@ -151,9 +151,9 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
             site.SetSpecies(species, LastUpdatedDate);
         }
 
-        if (SiteActivities is not null && SiteActivities.Count > 0)
+        if (Activities is not null && Activities.Count > 0)
         {
-            var activities = SiteActivities
+            var activities = Activities
                 .Select(a => new SiteActivity(
                     id: a.IdentifierId,
                     activity: a.Activity,
@@ -214,31 +214,11 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
-        return
+        return AutoIndexedAttribute.GetIndexModels<SiteDocument>().Concat(
         [
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("type"),
-                new CreateIndexOptions { Name = "idx_type" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("name"),
-                new CreateIndexOptions { Name = "idx_name" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("state"),
-                new CreateIndexOptions { Name = "idx_state" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("CreatedDate"),
-                new CreateIndexOptions { Name = "idx_createdDate" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("LastUpdatedDate"),
-                new CreateIndexOptions { Name = "idx_lastUpdatedDate" }),
-
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("identifiers.identifier"),
                 new CreateIndexOptions { Name = "idx_identifiers_identifier", Sparse = true })
-        ];
+        ]);
     }
 }

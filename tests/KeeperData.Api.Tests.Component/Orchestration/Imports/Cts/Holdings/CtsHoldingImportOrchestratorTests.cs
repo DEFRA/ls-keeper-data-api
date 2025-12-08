@@ -21,7 +21,6 @@ public class CtsHoldingImportOrchestratorTests
 {
     private readonly Mock<IGenericRepository<CtsHoldingDocument>> _silverHoldingRepositoryMock = new();
     private readonly Mock<IGenericRepository<CtsPartyDocument>> _silverPartyRepositoryMock = new();
-    private readonly Mock<IGenericRepository<SitePartyRoleRelationshipDocument>> _silverSitePartyRoleRelationshipRepositoryMock = new();
     private readonly Mock<IRoleRepository> _roleRepositoryMock = new();
 
     private readonly Fixture _fixture;
@@ -51,7 +50,6 @@ public class CtsHoldingImportOrchestratorTests
         var factory = new AppWebApplicationFactory();
         factory.OverrideServiceAsScoped(_silverHoldingRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_silverPartyRepositoryMock.Object);
-        factory.OverrideServiceAsScoped(_silverSitePartyRoleRelationshipRepositoryMock.Object);
         factory.OverrideServiceAsScoped(_roleRepositoryMock.Object);
 
         SetupDataBridgeApiRequest(factory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holdings));
@@ -184,19 +182,6 @@ public class CtsHoldingImportOrchestratorTests
 
         _silverPartyRepositoryMock
             .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<CtsPartyDocument>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Silver Role Relationships
-        _silverSitePartyRoleRelationshipRepositoryMock
-            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Core.Documents.Silver.SitePartyRoleRelationshipDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
-
-        _silverSitePartyRoleRelationshipRepositoryMock
-            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _silverSitePartyRoleRelationshipRepositoryMock
-            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<Core.Documents.Silver.SitePartyRoleRelationshipDocument>, Core.Documents.Silver.SitePartyRoleRelationshipDocument)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
     }
 
