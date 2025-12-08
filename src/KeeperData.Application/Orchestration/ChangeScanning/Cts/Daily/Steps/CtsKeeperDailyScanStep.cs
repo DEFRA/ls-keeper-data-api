@@ -24,6 +24,7 @@ public class CtsKeeperDailyScanStep(
     private readonly IDelayProvider _delayProvider = delayProvider;
 
     private const string SelectFields = "PAR_ID";
+    private const string OrderBy = "LID_FULL_IDENTIFIER asc";
 
     protected override async Task ExecuteCoreAsync(CtsDailyScanContext context, CancellationToken cancellationToken)
     {
@@ -38,6 +39,7 @@ public class CtsKeeperDailyScanStep(
                 context.Keepers.CurrentSkip,
                 SelectFields,
                 context.UpdatedSinceDateTime,
+                OrderBy,
                 cancellationToken);
 
             if (queryResponse == null || queryResponse.Data.Count == 0)

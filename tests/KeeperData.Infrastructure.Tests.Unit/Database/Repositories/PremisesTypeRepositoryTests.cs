@@ -220,7 +220,7 @@ public class PremisesTypeRepositoryTests
         var result = await _sut.FindAsync("AC");
 
         // Assert
-        result.premiseTypeId.Should().Be("AC");
+        result.premiseTypeId.Should().Be("1dbd0ea4-5f10-45a4-a0f6-e328a3074b6a");
         result.premiseTypeName.Should().Be("Assembly Centre");
     }
 
@@ -254,7 +254,7 @@ public class PremisesTypeRepositoryTests
         var result = await _sut.FindAsync("Market");
 
         // Assert
-        result.premiseTypeId.Should().Be("MA");
+        result.premiseTypeId.Should().Be("491cbd98-5bb7-46c3-abc7-30a232f65043");
         result.premiseTypeName.Should().Be("Market");
     }
 
@@ -288,7 +288,7 @@ public class PremisesTypeRepositoryTests
         var result = await _sut.FindAsync("ac");
 
         // Assert
-        result.premiseTypeId.Should().Be("AC");
+        result.premiseTypeId.Should().Be("1dbd0ea4-5f10-45a4-a0f6-e328a3074b6a");
         result.premiseTypeName.Should().Be("Assembly Centre");
     }
 
@@ -381,7 +381,7 @@ public class PremisesTypeRepositoryTests
         var result = await _sut.FindAsync("MA");
 
         // Assert
-        result.premiseTypeId.Should().Be("MA");
+        result.premiseTypeId.Should().Be("id1");
         result.premiseTypeName.Should().Be("Market");
     }
 }

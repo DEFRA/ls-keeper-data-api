@@ -29,6 +29,7 @@ public static class SiteGroupMarkMapper
                 HoldingIdentifierType = holdingIdentifierType,
                 SpeciesTypeId = herd.SpeciesTypeId,
                 SpeciesTypeCode = herd.SpeciesTypeCode,
+                SpeciesTypeName = herd.SpeciesTypeName,
                 ProductionUsageId = herd.ProductionUsageId,
                 ProductionUsageCode = herd.ProductionUsageCode,
                 ProductionTypeId = herd.ProductionTypeId,

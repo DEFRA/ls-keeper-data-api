@@ -42,7 +42,7 @@ public class PremisesActivityTypeRepository(
         }
 
         return premisesActivityType != null
-            ? (premisesActivityType.Code, premisesActivityType.Name)
+            ? (premisesActivityType.IdentifierId, premisesActivityType.Name)
             : (null, null);
     }
 }

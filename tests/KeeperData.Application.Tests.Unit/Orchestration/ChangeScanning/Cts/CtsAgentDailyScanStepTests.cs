@@ -33,7 +33,7 @@ public class CtsAgentDailyScanStepTests
         var responseMock = MockCtsData.GetCtsAgentOrKeeperScanIdentifierDataBridgeResponse(1, 1, 1);
 
         _dataBridgeClientMock
-            .Setup(c => c.GetCtsAgentsAsync<CtsScanAgentOrKeeperIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetCtsAgentsAsync<CtsScanAgentOrKeeperIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         var scanStep = new CtsAgentDailyScanStep(
@@ -81,7 +81,7 @@ public class CtsAgentDailyScanStepTests
         var context = new CtsDailyScanContext { CurrentDateTime = DateTime.UtcNow, UpdatedSinceDateTime = DateTime.UtcNow.AddHours(-24), Agents = new() };
         var responseMock = MockCtsData.GetCtsAgentOrKeeperScanIdentifierDataBridgeResponse(0, 0, 0);
         _dataBridgeClientMock
-            .Setup(c => c.GetCtsAgentsAsync<CtsScanAgentOrKeeperIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetCtsAgentsAsync<CtsScanAgentOrKeeperIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         var scanStep = new CtsAgentDailyScanStep(
@@ -99,6 +99,7 @@ public class CtsAgentDailyScanStepTests
             It.IsAny<int>(),
             It.IsAny<string>(),
             It.Is<DateTime?>(d => d.HasValue && d.Value.Subtract(context.UpdatedSinceDateTime!.Value).TotalSeconds < 1),
+            It.IsAny<string>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 }

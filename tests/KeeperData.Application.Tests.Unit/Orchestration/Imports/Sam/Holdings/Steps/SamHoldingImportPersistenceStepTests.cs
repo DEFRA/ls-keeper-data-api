@@ -22,7 +22,7 @@ public class SamHoldingImportPersistenceStepTests
 
     private readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
     private readonly Mock<IGenericRepository<PartyDocument>> _goldPartyRepositoryMock = new();
-    private readonly Mock<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>> _goldSitePartyRoleRelationshipRepositoryMock = new();
+    private readonly Mock<IGoldSitePartyRoleRelationshipRepository> _goldSitePartyRoleRelationshipRepositoryMock = new();
     private readonly Mock<IGenericRepository<SiteGroupMarkRelationshipDocument>> _goldSiteGroupMarkRelationshipRepositoryMock = new();
 
     public SamHoldingImportPersistenceStepTests()
@@ -72,7 +72,7 @@ public class SamHoldingImportPersistenceStepTests
             Mock.Of<IGenericRepository<SamHerdDocument>>(),
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
-            Mock.Of<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>>(),
+            Mock.Of<IGoldSitePartyRoleRelationshipRepository>(),
             Mock.Of<IGenericRepository<SiteGroupMarkRelationshipDocument>>(),
             Mock.Of<ILogger<SamHoldingImportPersistenceStep>>());
 
@@ -102,7 +102,7 @@ public class SamHoldingImportPersistenceStepTests
             Mock.Of<IGenericRepository<SamHerdDocument>>(),
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
-            Mock.Of<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>>(),
+            Mock.Of<IGoldSitePartyRoleRelationshipRepository>(),
             Mock.Of<IGenericRepository<SiteGroupMarkRelationshipDocument>>(),
             Mock.Of<ILogger<SamHoldingImportPersistenceStep>>());
 
@@ -174,7 +174,7 @@ public class SamHoldingImportPersistenceStepTests
             Mock.Of<IGenericRepository<SamHerdDocument>>(),
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
-            Mock.Of<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>>(),
+            Mock.Of<IGoldSitePartyRoleRelationshipRepository>(),
             Mock.Of<IGenericRepository<SiteGroupMarkRelationshipDocument>>(),
             Mock.Of<ILogger<SamHoldingImportPersistenceStep>>());
 
@@ -203,7 +203,7 @@ public class SamHoldingImportPersistenceStepTests
             Mock.Of<IGenericRepository<SamHerdDocument>>(),
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
-            Mock.Of<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>>(),
+            Mock.Of<IGoldSitePartyRoleRelationshipRepository>(),
             Mock.Of<IGenericRepository<SiteGroupMarkRelationshipDocument>>(),
             Mock.Of<ILogger<SamHoldingImportPersistenceStep>>());
 
@@ -236,7 +236,7 @@ public class SamHoldingImportPersistenceStepTests
             Mock.Of<IGenericRepository<SamHerdDocument>>(),
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
-            Mock.Of<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>>(),
+            Mock.Of<IGoldSitePartyRoleRelationshipRepository>(),
             Mock.Of<IGenericRepository<SiteGroupMarkRelationshipDocument>>(),
             Mock.Of<ILogger<SamHoldingImportPersistenceStep>>());
 
@@ -277,7 +277,7 @@ public class SamHoldingImportPersistenceStepTests
             Mock.Of<IGenericRepository<SamHerdDocument>>(),
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
-            Mock.Of<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>>(),
+            Mock.Of<IGoldSitePartyRoleRelationshipRepository>(),
             Mock.Of<IGenericRepository<SiteGroupMarkRelationshipDocument>>(),
             Mock.Of<ILogger<SamHoldingImportPersistenceStep>>());
 
@@ -325,7 +325,7 @@ public class SamHoldingImportPersistenceStepTests
             Mock.Of<IGenericRepository<SamHerdDocument>>(),
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
-            Mock.Of<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>>(),
+            Mock.Of<IGoldSitePartyRoleRelationshipRepository>(),
             Mock.Of<IGenericRepository<SiteGroupMarkRelationshipDocument>>(),
             Mock.Of<ILogger<SamHoldingImportPersistenceStep>>());
 
@@ -355,7 +355,7 @@ public class SamHoldingImportPersistenceStepTests
             Mock.Of<IGenericRepository<SamHerdDocument>>(),
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
-            Mock.Of<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>>(),
+            Mock.Of<IGoldSitePartyRoleRelationshipRepository>(),
             Mock.Of<IGenericRepository<SiteGroupMarkRelationshipDocument>>(),
             Mock.Of<ILogger<SamHoldingImportPersistenceStep>>());
 
@@ -434,7 +434,7 @@ public class SamHoldingImportPersistenceStepTests
             Mock.Of<IGenericRepository<SamHerdDocument>>(),
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
-            Mock.Of<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>>(),
+            Mock.Of<IGoldSitePartyRoleRelationshipRepository>(),
             Mock.Of<IGenericRepository<SiteGroupMarkRelationshipDocument>>(),
             Mock.Of<ILogger<SamHoldingImportPersistenceStep>>());
 
@@ -483,7 +483,7 @@ public class SamHoldingImportPersistenceStepTests
             _silverHerdRepositoryMock.Object,
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
-            Mock.Of<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>>(),
+            Mock.Of<IGoldSitePartyRoleRelationshipRepository>(),
             Mock.Of<IGenericRepository<SiteGroupMarkRelationshipDocument>>(),
             Mock.Of<ILogger<SamHoldingImportPersistenceStep>>());
 
@@ -514,7 +514,7 @@ public class SamHoldingImportPersistenceStepTests
             _silverHerdRepositoryMock.Object,
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
-            Mock.Of<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>>(),
+            Mock.Of<IGoldSitePartyRoleRelationshipRepository>(),
             Mock.Of<IGenericRepository<SiteGroupMarkRelationshipDocument>>(),
             Mock.Of<ILogger<SamHoldingImportPersistenceStep>>());
 
@@ -587,7 +587,7 @@ public class SamHoldingImportPersistenceStepTests
             _silverHerdRepositoryMock.Object,
             Mock.Of<IGenericRepository<SiteDocument>>(),
             Mock.Of<IGenericRepository<PartyDocument>>(),
-            Mock.Of<IGenericRepository<Core.Documents.SitePartyRoleRelationshipDocument>>(),
+            Mock.Of<IGoldSitePartyRoleRelationshipRepository>(),
             Mock.Of<IGenericRepository<SiteGroupMarkRelationshipDocument>>(),
             Mock.Of<ILogger<SamHoldingImportPersistenceStep>>());
 

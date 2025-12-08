@@ -4,6 +4,7 @@ using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Serializers;
+using MongoDB.Driver;
 
 namespace KeeperData.Application.MessageHandlers.Sam;
 
@@ -27,11 +28,21 @@ public class SamImportHoldingMessageHandler(SamHoldingImportOrchestrator orchest
         var context = new SamHoldingImportContext
         {
             Cph = messagePayload.Identifier,
-            BatchId = messagePayload.BatchId,
             CurrentDateTime = DateTime.UtcNow
         };
 
-        await _orchestrator.ExecuteAsync(context, cancellationToken);
+        try
+        {
+            await _orchestrator.ExecuteAsync(context, cancellationToken);
+        }
+        catch (MongoBulkWriteException ex)
+        {
+            throw new RetryableException(ex.Message, ex);
+        }
+        catch (Exception ex)
+        {
+            throw new NonRetryableException(ex.Message, ex);
+        }
 
         return await Task.FromResult(messagePayload!);
     }

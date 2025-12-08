@@ -38,6 +38,8 @@ public class PremisesTypeRepository(
             x.Code.Equals(lookupValue, StringComparison.OrdinalIgnoreCase) ||
             x.Name.Equals(lookupValue, StringComparison.OrdinalIgnoreCase));
 
-        return match != null ? (match.Code, match.Name) : (null, null);
+        return match != null
+            ? (match.IdentifierId, match.Name)
+            : (null, null);
     }
 }

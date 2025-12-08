@@ -116,6 +116,28 @@ public class DataBridgeClientTests
     }
 
     [Fact]
+    public async Task GetSamHoldersByCphAsync_ShouldReturnHolder_WhenApiReturnsSuccess()
+    {
+        var partyId = $"C{new Random().Next(1, 9):D6}";
+        var holdingIdentifier = CphGenerator.GenerateFormattedCph();
+        var expectedResponse = MockSamData.GetSamHolderStringContentResponse(partyId, [holdingIdentifier]);
+
+        var uri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamHolders,
+            new { },
+            DataBridgeQueries.SamHoldersByCph(holdingIdentifier));
+
+        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
+            .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
+
+        var result = await _client.GetSamHoldersByCphAsync(holdingIdentifier, CancellationToken.None);
+
+        result.Should().NotBeNull().And.HaveCount(1);
+        result[0].PARTY_ID.Should().Contain(partyId);
+        result[0].CphList.Should().Contain(holdingIdentifier);
+    }
+
+    [Fact]
     public async Task GetSamHoldersByPartyIdAsync_ShouldReturnHolder_WhenApiReturnsSuccess()
     {
         var partyId = $"C{new Random().Next(1, 9):D6}";
@@ -178,6 +200,26 @@ public class DataBridgeClientTests
         result[0].CPHH.Should().Be(id);
         result[0].OwnerPartyIdList.Should().Contain(partyId);
         result[0].KeeperPartyIdList.Should().Contain(partyId);
+    }
+
+    [Fact]
+    public async Task GetSamHerdsByPartyIdAsync_ShouldReturnHerds_WhenApiReturnsSuccess()
+    {
+        var partyId = "C100001";
+        var expectedResponse = MockSamData.GetSamHerdsStringContentResponse(2, 0);
+
+        var uri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamHerds,
+            new { },
+            DataBridgeQueries.SamHerdsByPartyId(partyId, "CPHH", "CPHH asc"));
+
+        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
+            .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
+
+        var result = await _client.GetSamHerdsByPartyIdAsync<SamScanHerdIdentifier>(partyId, "CPHH", "CPHH asc", CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.Data.Should().NotBeNull().And.HaveCount(2);
     }
 
     [Fact]

@@ -182,7 +182,7 @@ public class SpeciesRepositoryTests
         var result = await _sut.FindAsync("BOV", CancellationToken.None);
 
         // Assert
-        result.speciesId.Should().Be("BOV");
+        result.speciesId.Should().Be(bovineId);
         result.speciesName.Should().Be("Bovine");
     }
 
@@ -209,7 +209,7 @@ public class SpeciesRepositoryTests
         var result = await _sut.FindAsync("Bovine", CancellationToken.None);
 
         // Assert
-        result.speciesId.Should().Be("BOV");
+        result.speciesId.Should().Be(bovineId);
         result.speciesName.Should().Be("Bovine");
     }
 
@@ -237,8 +237,8 @@ public class SpeciesRepositoryTests
         var resultByName = await _sut.FindAsync("bovine", CancellationToken.None);
 
         // Assert
-        resultByCode.speciesId.Should().Be("BOV");
-        resultByName.speciesId.Should().Be("BOV");
+        resultByCode.speciesId.Should().Be(bovineId);
+        resultByName.speciesId.Should().Be(bovineId);
     }
 
     [Theory]
@@ -307,7 +307,7 @@ public class SpeciesRepositoryTests
         var result = await _sut.FindAsync("BOV", CancellationToken.None);
 
         // Assert
-        result.speciesId.Should().Be("BOV");
+        result.speciesId.Should().Be(bovineId);
         result.speciesName.Should().Be("Cattle");
     }
 }
