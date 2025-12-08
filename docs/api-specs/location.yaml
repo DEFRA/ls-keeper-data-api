@@ -21,7 +21,7 @@ info:
     name: Livestock Data Services Agreement
     url: https://www.defra.gov.uk/services-agreement/
   
-  version: 1.2.0
+  version: 1.3.0
 
   # Change History
   # 0.1.0 - Initial Draft
@@ -32,6 +32,7 @@ info:
   # 1.0.0 - KRDS API specification has now been baselined on the 06/10/2025.
   # 1.1.0 - Amended the Site types enumeration list after the final list confirmed by business stakeholders.
   # 1.2.0 - Amended the specification to reflect the amended structure of the base reference models such as Site Indentifier Type, Activity Type etc.
+  # 1.3.0 - Updated the specs to include a new parameter in api/sites endpoint which accepts an array of site identifiers.
  
 externalDocs:
   description: Defra website
@@ -358,6 +359,11 @@ components:
           format: uuid
           readOnly: true
           description : "This is an immutable field which represents the golden key of the reference object."
+        code:
+          type: string
+          readOnly : true
+          description: "This is the unique code assigned to the Role entity"
+          example: "LIVESTOCKKEEPER"
         name:
           type: string
           example: "Livestock Keeper"
@@ -887,10 +893,23 @@ paths:
         - name: siteIdentifier
           in:   query
           required: false
-          description: This parameter accepts site identifiers such as CPH Number, FSA No, Port No etc which are associated with different site type such as CPH No for Agricultural Holdings.
+          description: This parameter accepts a single site identifier such as CPH Number or FSA No or Port No etc which is associated with different site type such as CPH No for Agricultural Holdings.
           schema:
             type: string
             example: 57/103/2335
+            
+        - name: siteIdentifiers
+          in:   query
+          description: This parameter accepts an array of strings which represents site identifiers such as CPH Number, FSA No, Port No etc which are associated with different site type such as CPH No for Agricultural Holdings.
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+               type: string
+               #example: 01/001/0093
+               
         - name: name
           in:   query
           required: false
