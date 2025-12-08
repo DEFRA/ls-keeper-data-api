@@ -1,4 +1,5 @@
 using KeeperData.Core.Documents;
+using System.Data;
 
 namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 
@@ -7,27 +8,26 @@ public static class SitePartyRoleMapper
     public static List<Core.Documents.SitePartyRoleRelationshipDocument> ToGold(
         List<PartyDocument> goldParties,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
-        string holdingIdentifierType,
-        string holdingIdentifier)
+        string goldSiteId,
+        string holdingIdentifier,
+        string holdingIdentifierType)
     {
         if (goldParties == null) return [];
 
         return [.. goldParties
             .Where(party => party.Deleted != true && party.PartyRoles != null)
             .SelectMany(party =>
-            {
-                var holdingIdentifiers = new List<string>() { holdingIdentifier };
-
-                return holdingIdentifiers.SelectMany(cph =>
-                    party.PartyRoles!.Where(x => x.Role.IdentifierId != null)
+                party.PartyRoles!
+                    .Where(role => role.Role.IdentifierId != null &&
+                                   role.Site != null &&
+                                   role.Site.IdentifierId == goldSiteId)
                     .SelectMany(role =>
                     {
                         var matchingSpecies = goldSiteGroupMarks
                             .Where(g =>
+                                g.HoldingIdentifier == holdingIdentifier &&
                                 g.PartyId == party.CustomerNumber &&
-                                g.RoleTypeId == role.Role.IdentifierId &&
-                                g.HoldingIdentifier == cph &&
-                                g.HoldingIdentifierType == holdingIdentifierType)
+                                g.RoleTypeId == role.Role.IdentifierId)
                             .Select(g => new
                             {
                                 g.SpeciesTypeId,
@@ -42,16 +42,15 @@ public static class SitePartyRoleMapper
 
                             PartyId = party.CustomerNumber ?? string.Empty,
                             PartyTypeId = party.PartyType ?? string.Empty,
-                            HoldingIdentifier = cph,
+                            HoldingIdentifier = holdingIdentifier,
                             HoldingIdentifierType = holdingIdentifierType,
 
                             RoleTypeId = role.Role.IdentifierId!,
                             RoleTypeName = role.Role.Name,
 
-                            SpeciesTypeId = species.SpeciesTypeId ?? "",
-                            SpeciesTypeCode = species.SpeciesTypeCode ?? ""
+                            SpeciesTypeId = species.SpeciesTypeId ?? string.Empty,
+                            SpeciesTypeCode = species.SpeciesTypeCode ?? string.Empty
                         });
-                    }));
-            })];
+                    }))];
     }
 }

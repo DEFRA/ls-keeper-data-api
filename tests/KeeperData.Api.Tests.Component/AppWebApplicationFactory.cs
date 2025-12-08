@@ -105,6 +105,8 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("ApiClients__DataBridgeApi__BridgeApiSubscriptionKey", "XYZ");
         Environment.SetEnvironmentVariable("ServiceBusSenderConfiguration__IntakeEventQueue__QueueUrl", "http://localhost:4566/000000000000/test-queue");
         Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__CtsAgentsEnabled", "true");
+        Environment.SetEnvironmentVariable("BulkScanEndpointsEnabled", "false");
+        Environment.SetEnvironmentVariable("DailyScanEndpointsEnabled", "false");
     }
 
     private static void ConfigureAwsOptions(IServiceCollection services)

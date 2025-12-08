@@ -93,7 +93,7 @@ public class CtsDailyScanTask(
     {
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken);
 
-        var renewalTask = RenewLockPeriodicallyAsync(lockHandle, linkedCts.Token, scanCorrelationId);
+        var renewalTask = RenewLockPeriodicallyAsync(lockHandle, scanCorrelationId, linkedCts.Token);
 
         try
         {
@@ -148,7 +148,7 @@ public class CtsDailyScanTask(
         }
     }
 
-    private async Task RenewLockPeriodicallyAsync(IDistributedLockHandle lockHandle, CancellationToken cancellationToken, Guid scanCorrelationId)
+    private async Task RenewLockPeriodicallyAsync(IDistributedLockHandle lockHandle, Guid scanCorrelationId, CancellationToken cancellationToken)
     {
         logger.LogDebug("Starting lock renewal task for {LockName} with interval {RenewalInterval} scanCorrelationId: {scanCorrelationId}", LockName, s_renewalInterval, scanCorrelationId);
 
