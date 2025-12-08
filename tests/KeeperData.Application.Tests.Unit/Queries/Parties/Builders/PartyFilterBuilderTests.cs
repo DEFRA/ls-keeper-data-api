@@ -51,16 +51,26 @@ public class PartyFilterBuilderTests
         renderedFilter["lastName"].AsString.Should().BeEquivalentTo("Smith");
     }
 
-    /*
-    TODO EMAIL not in dataset
-        [Fact]
-        public void Build_ShouldCreateFilterForEmail()
-        {
-            var query = new GetPartiesQuery { Email = "t.s@gmail.com" };
-            var filter = PartyFilterBuilder.Build(query);
-            var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<PartyDocument>(), BsonSerializer.SerializerRegistry);
+    [Fact]
+    public void Build_ShouldCreateFilterForEmail()
+    {
+        // Arrange
+        var email = "test@example.com";
+        var query = new GetPartiesQuery { Email = email };
 
-            renderedFilter["email"].Should().BeEquivalentTo("t.s@gmail.com");
-        }
-        */
+        // Act
+        var filter = PartyFilterBuilder.Build(query);
+        var renderedFilter = filter.Render(
+            BsonSerializer.SerializerRegistry.GetSerializer<PartyDocument>(),
+            BsonSerializer.SerializerRegistry);
+
+        // Assert
+        var expectedBson = BsonDocument.Parse($@"
+            {{
+                ""communication"": {{ ""$elemMatch"": {{ ""email"": ""{email}"" }} }},
+                ""deleted"": false
+            }}");
+
+        renderedFilter.Should().BeEquivalentTo(expectedBson);
+    }
 }
