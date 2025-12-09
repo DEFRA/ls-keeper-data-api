@@ -8,6 +8,7 @@ namespace KeeperData.Core.Repositories;
 /// <summary>
 /// Apply this attribute to a property on a document to generate an index (default ascending) referencing the field by its BsonElement name, with index name "idxv2_{BsonElementName}"
 /// </summary>
+[AttributeUsage(AttributeTargets.All)]
 public class AutoIndexedAttribute : Attribute
 {
     /// <summary>

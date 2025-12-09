@@ -188,6 +188,10 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
             .SetupGet(x => x.Indexes)
             .Returns(indexManagerMock.Object);
 
+        indexManagerMock
+            .Setup(x => x.ListAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateEmptyCursor());
+
         mongoDatabaseMock
             .Setup(x => x.GetCollection<BsonDocument>(It.IsAny<string>(), It.IsAny<MongoCollectionSettings>()))
             .Returns(mongoCollectionMock.Object);
@@ -198,6 +202,22 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
             .Returns(mongoDatabaseMock.Object);
 
         services.Replace(new ServiceDescriptor(typeof(IMongoClient), MongoClientMock.Object));
+    }
+
+    private static IAsyncCursor<BsonDocument> CreateEmptyCursor()
+    {
+        var mockCursor = new Mock<IAsyncCursor<BsonDocument>>();
+
+        mockCursor.Setup(x => x.MoveNext(It.IsAny<CancellationToken>()))
+                  .Returns(false);
+
+        mockCursor.Setup(x => x.MoveNextAsync(It.IsAny<CancellationToken>()))
+                  .ReturnsAsync(false);
+
+        mockCursor.SetupGet(x => x.Current)
+                  .Returns([]);
+
+        return mockCursor.Object;
     }
 
     private static void RemoveService<T>(IServiceCollection services)
