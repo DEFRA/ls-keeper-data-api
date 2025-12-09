@@ -14,6 +14,8 @@ using Testcontainers.MongoDb;
 using DotNet.Testcontainers.Builders;
 using KeeperData.Api.Tests.Integration.Helpers;
 using Docker.DotNet;
+using DotNet.Testcontainers.Networks;
+using DotNet.Testcontainers.Containers;
 
 namespace KeeperData.Api.Tests.Integration.Endpoints
 {
@@ -345,13 +347,18 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
             var networkName = "integration-tests";
 
             DockerNetworkHelper.EnsureNetworkExists(networkName);
-
-            var network = new NetworkBuilder()
+            INetwork network = null;
+            IContainer? apiContainer = null;
+            MongoDbContainer mongoContainer = null;
+            LocalStackContainer localStackContainer = null;
+            try
+            {
+                network = new NetworkBuilder()
                 .WithName(networkName)
                 .Build();
 
             // --- MongoDB container ---
-            var mongoContainer = new MongoDbBuilder()
+            mongoContainer = new MongoDbBuilder()
               .WithImage("mongo:latest")
               .WithName("mongo")
               .WithPortBinding(27017, true) // dynamic host port
@@ -363,7 +370,7 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
               .Build();
 
             // --- LocalStack container ---
-            var localStackContainer = new LocalStackBuilder()
+            localStackContainer = new LocalStackBuilder()
                 .WithImage("localstack/localstack:latest")
                 .WithName("localstack")
                 .WithEnvironment("SERVICES", "s3,sqs,sns")
@@ -378,12 +385,12 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
                 .Build();
 
             // --- Start containers ---
-            await network.CreateAsync();
+           // await network.CreateAsync();
             await mongoContainer.StartAsync();
             await localStackContainer.StartAsync();
 
             // --- API container ---
-            var apiContainer = new ContainerBuilder()
+            apiContainer = new ContainerBuilder()
              .WithImage("keeperdata_api:latest")
              .WithName("keeperdata_api")
              .WithPortBinding(5555, 5555)
@@ -409,8 +416,6 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
                  .UntilHttpRequestIsSucceeded(req => req.ForPort(5555).ForPath("/health")))
              .Build();
 
-            try
-            {
                 // --- Arrange: S3 client pointing to LocalStack ---
                 var s3Client = new AmazonS3Client("test", "test", new AmazonS3Config
                 {
