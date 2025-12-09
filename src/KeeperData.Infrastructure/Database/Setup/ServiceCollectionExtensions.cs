@@ -92,6 +92,8 @@ public static class ServiceCollectionExtensions
             var collectionName = type.GetCustomAttribute<CollectionNameAttribute>()?.Name ?? type.Name;
             var collection = database.GetCollection<BsonDocument>(collectionName);
 
+            await DropV1IndexesIfPresentAsync(collection);
+
             var getIndexesMethod = type.GetMethod("GetIndexModels", BindingFlags.Public | BindingFlags.Static);
             if (getIndexesMethod?.Invoke(null, null) is IEnumerable<CreateIndexModel<BsonDocument>> indexModels)
             {
@@ -128,6 +130,22 @@ public static class ServiceCollectionExtensions
             if (!BsonClassMap.IsClassMapRegistered(type))
             {
                 BsonClassMap.LookupClassMap(type);
+            }
+        }
+    }
+
+    private static async Task DropV1IndexesIfPresentAsync<TDocument>(IMongoCollection<TDocument> collection)
+    {
+        using var cursor = await collection.Indexes.ListAsync();
+        var indexes = await cursor.ToListAsync();
+
+        foreach (var index in indexes)
+        {
+            var indexName = index["name"].AsString;
+            if (indexName.StartsWith("idx_"))
+            {
+                await collection.Indexes.DropOneAsync(indexName);
+                Console.WriteLine($"Dropped index: {indexName}");
             }
         }
     }

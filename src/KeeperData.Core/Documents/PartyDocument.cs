@@ -180,7 +180,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
         [
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("lastName").Ascending("firstName"),
-                new CreateIndexOptions { Name = "idx_firstlastName", Collation = IndexDefaults.CollationCaseInsensitive }),
+                new CreateIndexOptions { Name = "idxv2_firstlastName", Collation = IndexDefaults.CollationCaseInsensitive }),
         ],
         AutoIndexedAttribute.GetIndexModels<PartyDocument>());
     }

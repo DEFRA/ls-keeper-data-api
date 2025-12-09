@@ -6,7 +6,7 @@ using System.Reflection;
 namespace KeeperData.Core.Repositories;
 
 /// <summary>
-/// Apply this attribute to a property on a document to generate an index (default ascending) referencing the field by its BsonElement name, with index name "idx_{BsonElementName}"
+/// Apply this attribute to a property on a document to generate an index (default ascending) referencing the field by its BsonElement name, with index name "idxv2_{BsonElementName}"
 /// </summary>
 public class AutoIndexedAttribute : Attribute
 {
@@ -24,7 +24,7 @@ public class AutoIndexedAttribute : Attribute
             var bsonElemAttr = member.GetCustomAttribute<BsonElementAttribute>();
             return new CreateIndexModel<BsonDocument>(
                     Builders<BsonDocument>.IndexKeys.Ascending(bsonElemAttr?.ElementName),
-                    new CreateIndexOptions { Name = $"idx_{bsonElemAttr?.ElementName}" });
+                    new CreateIndexOptions { Name = $"idxv2_{bsonElemAttr?.ElementName}" });
         });
     }
 }
