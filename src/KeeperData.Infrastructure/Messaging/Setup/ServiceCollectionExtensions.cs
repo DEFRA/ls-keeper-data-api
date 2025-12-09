@@ -66,7 +66,8 @@ public static class ServiceCollectionExtensions
         if (!intakeEventQueueOptions.Disabled)
         {
             services.AddHealthChecks()
-                .AddCheck<QueueHealthCheck<IntakeEventQueueOptions>>("intake-event-consumer", tags: ["aws", "sqs"]);
+                .AddCheck<QueueHealthCheck<IntakeEventQueueOptions>>("intake-event-consumer", tags: ["aws", "sqs"])
+                .AddCheck<AwsSnsHealthCheck>("batch-completion-publisher", tags: ["aws", "sns"]);
         }
     }
 

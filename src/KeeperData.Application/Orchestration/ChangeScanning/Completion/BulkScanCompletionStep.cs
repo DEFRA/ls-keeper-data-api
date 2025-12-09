@@ -1,4 +1,5 @@
 using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
+using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
 using KeeperData.Application.Services.BatchCompletion;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Services;
@@ -9,9 +10,9 @@ namespace KeeperData.Application.Orchestration.ChangeScanning.Completion;
 [StepOrder(2)]
 public class BulkScanCompletionStep(
     IBatchCompletionNotificationService batchCompletionService,
-    ILogger<BulkScanCompletionStep> logger) : ScanStepBase<CtsBulkScanContext>(logger)
+    ILogger<BulkScanCompletionStep> logger) : ScanStepBase<SamBulkScanContext>(logger)
 {
-    protected override async Task ExecuteCoreAsync(CtsBulkScanContext context, CancellationToken cancellationToken)
+    protected override async Task ExecuteCoreAsync(SamBulkScanContext context, CancellationToken cancellationToken)
     {
         await batchCompletionService.NotifyBatchCompletionAsync(context, cancellationToken);
     }

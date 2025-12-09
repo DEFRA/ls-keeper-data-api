@@ -1,14 +1,14 @@
-using KeeperData.Application.Services.BatchCompletion;
+using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Services;
 using Microsoft.Extensions.Logging;
 
-namespace KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily.Steps;
+namespace KeeperData.Application.Orchestration.ChangeScanning.Completion;
 
 [StepOrder(5)]
-public class SamPartyDailyScanCompletionStep(
+public class DailyScanCompletionStep(
     IBatchCompletionNotificationService batchCompletionService,
-    ILogger<SamPartyDailyScanCompletionStep> logger) : ScanStepBase<SamDailyScanContext>(logger)
+    ILogger<DailyScanCompletionStep> logger) : ScanStepBase<SamDailyScanContext>(logger)
 {
     protected override async Task ExecuteCoreAsync(SamDailyScanContext context, CancellationToken cancellationToken)
     {
