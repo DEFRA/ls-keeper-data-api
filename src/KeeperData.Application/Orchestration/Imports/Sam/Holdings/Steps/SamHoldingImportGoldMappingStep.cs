@@ -69,8 +69,9 @@ public class SamHoldingImportGoldMappingStep(
             context.GoldSitePartyRoles = SitePartyRoleMapper.ToGold(
                 context.GoldParties,
                 context.GoldSiteGroupMarks,
-                HoldingIdentifierType.CphNumber.ToString(),
-                context.Cph);
+                context.GoldSiteId,
+                context.Cph,
+                HoldingIdentifierType.CphNumber.ToString());
         }
     }
 }

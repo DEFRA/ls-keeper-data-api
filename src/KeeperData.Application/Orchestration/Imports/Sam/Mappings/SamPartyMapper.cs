@@ -565,10 +565,7 @@ public static class SamPartyMapper
         {
             foreach (var r in roleList)
             {
-                var partyRoleSite = PartyRoleSite.Create(
-                    goldSiteId,
-                    goldSiteName
-                );
+                var partyRoleSite = PartyRoleSite.Create(goldSiteId, goldSiteName);
 
                 var partyRoleRole = PartyRoleRole.Create(
                     r.RoleTypeId ?? string.Empty,

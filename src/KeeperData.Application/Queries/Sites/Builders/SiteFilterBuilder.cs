@@ -31,11 +31,12 @@ public static class SiteFilterBuilder
             filters.Add(builder.Eq(x => x.Id, query.SiteId.Value.ToString()));
         }
 
-        // TODO - Update to use site parties
-        //if (query.KeeperPartyId.HasValue)
-        //{
-        //    filters.Add(builder.AnyEq(x => x.KeeperPartyIds, query.KeeperPartyId.Value.ToString()));
-        //}
+        if (query.KeeperPartyId.HasValue)
+        {
+            var partyIdString = query.KeeperPartyId.Value.ToString();
+
+            filters.Add(builder.ElemMatch(x => x.Parties, p => p.PartyId == partyIdString));
+        }
 
         return filters.Count > 0 ? builder.And(filters) : builder.Empty;
     }

@@ -57,17 +57,56 @@ public class SiteFilterBuilderTests
         renderedFilter["_id"].AsString.Should().Be(siteId.ToString());
     }
 
-    // TODO - Linked to Filter TODO
-    //[Fact]
-    //public void Build_ShouldCreateFilterForKeeperPartyId()
-    //{
-    //    var keeperPartyId = Guid.NewGuid();
-    //    var query = new GetSitesQuery { KeeperPartyId = keeperPartyId };
-    //    var filter = SiteFilterBuilder.Build(query);
-    //    var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry);
+    [Fact]
+    public void Build_ShouldCreateFilterForKeeperPartyId()
+    {
+        // Arrange
+        var keeperPartyId = Guid.NewGuid();
+        var query = new GetSitesQuery { KeeperPartyId = keeperPartyId };
 
-    //    renderedFilter["keeperPartyIds"].AsString.Should().Be(keeperPartyId.ToString());
-    //}
+        // Act
+        var filter = SiteFilterBuilder.Build(query);
+        var renderedFilter = filter.Render(
+            BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(),
+            BsonSerializer.SerializerRegistry);
+
+        // Assert
+        var expectedBson = BsonDocument.Parse($@"
+            {{
+                ""parties"": {{ ""$elemMatch"": {{ ""partyId"": ""{keeperPartyId}"" }} }},
+                ""deleted"": false
+            }}");
+
+        renderedFilter.Should().BeEquivalentTo(expectedBson);
+    }
+
+    [Fact]
+    public void Build_ShouldCombineKeeperPartyIdWithOtherFilters()
+    {
+        // Arrange
+        var keeperPartyId = Guid.NewGuid();
+        var query = new GetSitesQuery
+        {
+            SiteIdentifier = "CPH123",
+            KeeperPartyId = keeperPartyId
+        };
+
+        // Act
+        var filter = SiteFilterBuilder.Build(query);
+        var renderedFilter = filter.Render(
+            BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(),
+            BsonSerializer.SerializerRegistry);
+
+        // Assert
+        var expectedBson = BsonDocument.Parse($@"
+        {{
+            ""identifiers"" : {{ ""$elemMatch"" : {{ ""identifier"" : ""CPH123"" }} }},
+            ""parties"": {{ ""$elemMatch"": {{ ""partyId"": ""{keeperPartyId}"" }} }},
+            ""deleted"": false
+        }}");
+
+        renderedFilter.Should().BeEquivalentTo(expectedBson);
+    }
 
     [Fact]
     public void Build_ShouldCreateFilterForType()
