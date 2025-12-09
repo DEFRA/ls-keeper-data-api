@@ -39,12 +39,7 @@ public class BatchCompletionMessageHandlerTests
 
         var batchCompletionMessage = new BatchCompletionMessage
         {
-            BatchType = BatchType.SamBulkScan,
-            ScanCorrelationId = correlationId,
-            TotalRecordsProcessed = 100,
-            MessagesPublished = 10,
-            BatchStartTime = DateTime.UtcNow.AddMinutes(-5),
-            BatchCompletionTime = DateTime.UtcNow
+            ScanCorrelationId = correlationId
         };
 
         _mockSerializer.Setup(x => x.Deserialize(unwrappedMessage))
@@ -104,7 +99,6 @@ public class BatchCompletionMessageHandlerTests
 
         var batchCompletionMessage = new BatchCompletionMessage
         {
-            BatchType = BatchType.CtsBulkScan,
             ScanCorrelationId = Guid.NewGuid().ToString()
         };
 

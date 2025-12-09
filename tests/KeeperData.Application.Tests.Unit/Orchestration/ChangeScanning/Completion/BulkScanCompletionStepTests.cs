@@ -1,23 +1,24 @@
 using FluentAssertions;
 using KeeperData.Application.Orchestration.ChangeScanning;
+using KeeperData.Application.Orchestration.ChangeScanning.Completion;
 using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
-using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk.Steps;
 using KeeperData.Application.Services.BatchCompletion;
 using KeeperData.Core.Attributes;
+using KeeperData.Core.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace KeeperData.Application.Tests.Unit.Orchestration.ChangeScanning.Cts.Bulk.Steps;
+namespace KeeperData.Application.Tests.Unit.Orchestration.ChangeScanning.Completion;
 
-public class CtsBulkScanCompletionStepTests
+public class BulkScanCompletionStepTests
 {
     private readonly Mock<IBatchCompletionNotificationService> _mockBatchCompletionService = new();
-    private readonly Mock<ILogger<CtsBulkScanCompletionStep>> _mockLogger = new();
-    private readonly CtsBulkScanCompletionStep _sut;
+    private readonly Mock<ILogger<BulkScanCompletionStep>> _mockLogger = new();
+    private readonly BulkScanCompletionStep _sut;
 
-    public CtsBulkScanCompletionStepTests()
+    public BulkScanCompletionStepTests()
     {
-        _sut = new CtsBulkScanCompletionStep(_mockBatchCompletionService.Object, _mockLogger.Object);
+        _sut = new BulkScanCompletionStep(_mockBatchCompletionService.Object, _mockLogger.Object);
     }
 
     [Fact]
@@ -41,15 +42,15 @@ public class CtsBulkScanCompletionStepTests
     }
 
     [Fact]
-    public void StepOrder_ShouldBe999()
+    public void StepOrder_ShouldBe2()
     {
         // Arrange & Act
-        var stepOrderAttribute = typeof(CtsBulkScanCompletionStep)
+        var stepOrderAttribute = typeof(BulkScanCompletionStep)
             .GetCustomAttributes(typeof(StepOrderAttribute), false)
             .FirstOrDefault() as StepOrderAttribute;
 
         // Assert
         stepOrderAttribute.Should().NotBeNull();
-        stepOrderAttribute!.Order.Should().Be(999);
+        stepOrderAttribute!.Order.Should().Be(2);
     }
 }

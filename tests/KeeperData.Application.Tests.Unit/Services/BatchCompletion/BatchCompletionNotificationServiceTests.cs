@@ -44,18 +44,7 @@ public class BatchCompletionNotificationServiceTests
         // Assert
         _mockQueuePublisher.Verify(
             x => x.PublishAsync(It.Is<BatchCompletionMessage>(msg =>
-                msg.BatchType == Core.Messaging.Contracts.V1.BatchType.SamBulkScan &&
-                msg.ScanCorrelationId == correlationId.ToString() &&
-                msg.BatchStartTime == currentDateTime &&
-                msg.TotalRecordsProcessed == 300 &&
-                msg.MessagesPublished == 30 &&
-                msg.Metadata != null &&
-                msg.Metadata.ContainsKey("HolderRecordsProcessed") &&
-                msg.Metadata["HolderRecordsProcessed"].Equals(100) &&
-                msg.Metadata.ContainsKey("HoldingRecordsProcessed") &&
-                msg.Metadata["HoldingRecordsProcessed"].Equals(200) &&
-                msg.Metadata.ContainsKey("PageSize") &&
-                msg.Metadata["PageSize"].Equals(50)
+                msg.ScanCorrelationId == correlationId.ToString()
             ), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -126,16 +115,7 @@ public class BatchCompletionNotificationServiceTests
         // Assert
         _mockQueuePublisher.Verify(
             x => x.PublishAsync(It.Is<BatchCompletionMessage>(msg =>
-                msg.BatchType == Core.Messaging.Contracts.V1.BatchType.CtsBulkScan &&
-                msg.ScanCorrelationId == correlationId.ToString() &&
-                msg.BatchStartTime == currentDateTime &&
-                msg.TotalRecordsProcessed == 150 &&
-                msg.MessagesPublished == 15 &&
-                msg.Metadata != null &&
-                msg.Metadata.ContainsKey("HoldingRecordsProcessed") &&
-                msg.Metadata["HoldingRecordsProcessed"].Equals(150) &&
-                msg.Metadata.ContainsKey("PageSize") &&
-                msg.Metadata["PageSize"].Equals(75)
+                msg.ScanCorrelationId == correlationId.ToString()
             ), It.IsAny<CancellationToken>()), Times.Once);
     }
 }
