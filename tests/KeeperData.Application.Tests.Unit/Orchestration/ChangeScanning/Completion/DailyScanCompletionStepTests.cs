@@ -1,24 +1,24 @@
 using FluentAssertions;
 using KeeperData.Application.Orchestration.ChangeScanning;
+using KeeperData.Application.Orchestration.ChangeScanning.Completion;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily.Steps;
-using KeeperData.Application.Services.BatchCompletion;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace KeeperData.Application.Tests.Unit.Orchestration.ChangeScanning.Sam;
+namespace KeeperData.Application.Tests.Unit.Orchestration.ChangeScanning.Completion;
 
-public class SamPartyDailyScanCompletionStepTests
+public class DailyScanCompletionStepTests
 {
     private readonly Mock<IBatchCompletionNotificationService> _mockBatchCompletionService = new();
-    private readonly Mock<ILogger<SamPartyDailyScanCompletionStep>> _mockLogger = new();
-    private readonly SamPartyDailyScanCompletionStep _sut;
+    private readonly Mock<ILogger<DailyScanCompletionStep>> _mockLogger = new();
+    private readonly DailyScanCompletionStep _sut;
 
-    public SamPartyDailyScanCompletionStepTests()
+    public DailyScanCompletionStepTests()
     {
-        _sut = new SamPartyDailyScanCompletionStep(_mockBatchCompletionService.Object, _mockLogger.Object);
+        _sut = new DailyScanCompletionStep(_mockBatchCompletionService.Object, _mockLogger.Object);
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public class SamPartyDailyScanCompletionStepTests
     public void StepOrder_ShouldBe5()
     {
         // Arrange & Act
-        var stepOrderAttribute = typeof(SamPartyDailyScanCompletionStep)
+        var stepOrderAttribute = typeof(DailyScanCompletionStep)
             .GetCustomAttributes(typeof(StepOrderAttribute), false)
             .FirstOrDefault() as StepOrderAttribute;
 

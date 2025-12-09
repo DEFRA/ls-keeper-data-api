@@ -2,6 +2,7 @@ using FluentAssertions;
 using KeeperData.Application.Orchestration.ChangeScanning;
 using KeeperData.Application.Orchestration.ChangeScanning.Completion;
 using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
+using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
 using KeeperData.Application.Services.BatchCompletion;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Services;
@@ -25,7 +26,7 @@ public class BulkScanCompletionStepTests
     public async Task ExecuteAsync_WhenCalled_CallsBatchCompletionService()
     {
         // Arrange
-        var context = new CtsBulkScanContext
+        var context = new SamBulkScanContext()
         {
             ScanCorrelationId = Guid.NewGuid(),
             CurrentDateTime = DateTime.UtcNow,
