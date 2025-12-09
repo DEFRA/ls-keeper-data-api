@@ -37,7 +37,7 @@ public class SamImportHoldingMessageHandler(SamHoldingImportOrchestrator orchest
         }
         catch (MongoBulkWriteException ex)
         {
-            throw new RetryableException(ex.Message, ex);
+            throw new NonRetryableException($"Exception Message: {ex.Message}, Message Identifier: {messagePayload.Identifier}", ex);
         }
         catch (Exception ex)
         {
