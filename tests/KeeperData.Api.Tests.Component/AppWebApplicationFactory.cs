@@ -13,6 +13,7 @@ using KeeperData.Infrastructure.Storage.Factories.Implementations;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -31,12 +32,26 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
     public readonly Mock<HttpMessageHandler> DataBridgeApiClientHttpMessageHandlerMock = new();
 
     private readonly List<Action<IServiceCollection>> _overrideServices = [];
+    private readonly IDictionary<string, string?> _configurationOverrides;
 
     private const string ComparisonReportsStorageBucket = "test-comparison-reports-bucket";
+
+    public AppWebApplicationFactory(IDictionary<string, string?>? configurationOverrides = null)
+    {
+        _configurationOverrides = configurationOverrides ?? new Dictionary<string, string?>();
+    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         SetTestEnvironmentVariables();
+
+        builder.ConfigureAppConfiguration(config =>
+        {
+            if (_configurationOverrides.Count > 0)
+            {
+                config.AddInMemoryCollection(_configurationOverrides);
+            }
+        });
 
         builder.ConfigureTestServices(services =>
         {
