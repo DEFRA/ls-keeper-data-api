@@ -33,6 +33,7 @@ public class CtsPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IC
 
     [JsonPropertyName("countyParishHoldingNumber")]
     [BsonElement("countyParishHoldingNumber")]
+    [AutoIndexed]
     public string CountyParishHoldingNumber { get; set; } = string.Empty;
 
     [JsonPropertyName("holdingIdentifierType")]
