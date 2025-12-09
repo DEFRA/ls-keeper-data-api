@@ -218,7 +218,11 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         [
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("identifiers.identifier"),
-                new CreateIndexOptions { Name = "idx_identifiers_identifier", Sparse = true })
+                new CreateIndexOptions { Name = "idxv2_identifiers_identifier", Sparse = true }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("identifiers.type"),
+                new CreateIndexOptions { Name = "idxv2_identifiers_type", Sparse = true })
         ]);
     }
 }
