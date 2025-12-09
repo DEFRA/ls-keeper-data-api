@@ -44,7 +44,7 @@ public class ApiContainerFixture : IAsyncLifetime
           .WithNetwork(NetworkName)
           .WithNetworkAliases("keeperdata_api")
           .WithWaitStrategy(Wait.ForUnixContainer()
-              .UntilHttpRequestIsSucceeded(req => req.ForPort(5555).ForPath("/health")))
+              .UntilHttpRequestIsSucceeded(req => req.ForPort(5555).ForPath("/health"), o => o.WithTimeout(TimeSpan.FromSeconds(25))))
           .Build();
 
         await ApiContainer.StartAsync();

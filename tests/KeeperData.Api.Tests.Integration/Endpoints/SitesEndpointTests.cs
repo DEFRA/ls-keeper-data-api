@@ -10,7 +10,7 @@ namespace KeeperData.Api.Tests.Integration.Endpoints;
 [Trait("Dependence", "localstack")]
 [Collection("Database collection")]
 public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>, IAsyncLifetime
-{
+{ //TODO move IntegrationTestFixture to use containers/ also force shared set up of class objects / use icollectionfixture https://xunit.net/docs/shared-context
     private readonly HttpClient _httpClient = fixture.HttpClient;
     private readonly IntegrationTestFixture _fixture = fixture;
 

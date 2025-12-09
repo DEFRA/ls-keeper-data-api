@@ -44,8 +44,34 @@ public class LocalStackFixture : IAsyncLifetime
                 .WithNetworkAliases("localstack")
                 .Build();
 
-
         await LocalStackContainer.StartAsync();
+
+        //TODO tidy me and remove assert
+        S3Client = new AmazonS3Client("test", "test", new AmazonS3Config
+        {
+            ServiceURL = "http://localhost:4566",
+            ForcePathStyle = true
+        });
+        var objectKey = "hello.txt";
+        // --- Act: create bucket and upload object ---
+        await S3Client.PutBucketAsync(new PutBucketRequest { BucketName = TestBucket });
+
+        await S3Client.PutObjectAsync(new PutObjectRequest
+        {
+            BucketName = TestBucket,
+            Key = objectKey,
+            ContentBody = "Hello LocalStack!"
+        });
+
+        // --- Assert: verify object exists ---
+        var listResponse = await S3Client.ListObjectsV2Async(new ListObjectsV2Request
+        {
+            BucketName = TestBucket
+        });
+
+        Assert.Contains(listResponse.S3Objects, o => o.Key == objectKey);
+
+
 
         var credentials = new Amazon.Runtime.BasicAWSCredentials("test", "test");
         SqsClient = new AmazonSQSClient(credentials, new AmazonSQSConfig
@@ -135,7 +161,7 @@ public class LocalStackFixture : IAsyncLifetime
             Endpoint = mainQueueArn
         });
 
-        SqsEndpoint= SqsClient.Config.ServiceURL!;
+        SqsEndpoint = SqsClient.Config.ServiceURL!;
 
         // Setup shared test data
         //await SetupTestDataAsync();

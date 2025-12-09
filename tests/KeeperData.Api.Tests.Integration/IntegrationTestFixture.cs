@@ -41,7 +41,7 @@ public class IntegrationTestFixture : IDisposable
         HttpClient = new HttpClient(_httpClientHandler)
         {
             BaseAddress = new Uri("http://localhost:5555"),
-            Timeout = TimeSpan.FromSeconds(30)
+            Timeout = TimeSpan.FromSeconds(13)
         };
         HttpClient.DefaultRequestHeaders.Add("Accept", "application/json");
 
