@@ -47,7 +47,7 @@ public static class ServiceCollectionExtensions
         RegisterUpdateOrchestrators(services, typeof(CtsUpdateHoldingOrchestrator).Assembly);
         RegisterUpdateSteps(services, typeof(CtsUpdateHoldingRawAggregationStep).Assembly);
         RegisterLookupServices(services);
-        RegisterBatchCompletionNotifications(services);
+        RegisterNotificationService(services);
     }
 
     public static void RegisterImportOrchestrators(IServiceCollection services, Assembly assembly)
@@ -152,9 +152,8 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ISiteIdentifierTypeLookupService, SiteIdentifierTypeLookupService>();
     }
 
-    public static void RegisterBatchCompletionNotifications(IServiceCollection services)
+    public static void RegisterNotificationService(IServiceCollection services)
     {
         services.AddScoped<IBatchCompletionNotificationService, BatchCompletionNotificationService>();
-        services.AddScoped<IMessageHandler<BatchCompletionMessage>, BatchCompletionMessageHandler>();
     }
 }

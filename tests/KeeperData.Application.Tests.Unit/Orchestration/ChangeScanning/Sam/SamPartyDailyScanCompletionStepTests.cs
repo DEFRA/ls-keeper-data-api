@@ -1,30 +1,31 @@
 using FluentAssertions;
 using KeeperData.Application.Orchestration.ChangeScanning;
-using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
-using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk.Steps;
+using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily;
+using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily.Steps;
 using KeeperData.Application.Services.BatchCompletion;
 using KeeperData.Core.Attributes;
+using KeeperData.Core.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace KeeperData.Application.Tests.Unit.Orchestration.ChangeScanning.Sam.Bulk.Steps;
+namespace KeeperData.Application.Tests.Unit.Orchestration.ChangeScanning.Sam;
 
-public class SamBulkScanCompletionStepTests
+public class SamPartyDailyScanCompletionStepTests
 {
     private readonly Mock<IBatchCompletionNotificationService> _mockBatchCompletionService = new();
-    private readonly Mock<ILogger<SamBulkScanCompletionStep>> _mockLogger = new();
-    private readonly SamBulkScanCompletionStep _sut;
+    private readonly Mock<ILogger<SamPartyDailyScanCompletionStep>> _mockLogger = new();
+    private readonly SamPartyDailyScanCompletionStep _sut;
 
-    public SamBulkScanCompletionStepTests()
+    public SamPartyDailyScanCompletionStepTests()
     {
-        _sut = new SamBulkScanCompletionStep(_mockBatchCompletionService.Object, _mockLogger.Object);
+        _sut = new SamPartyDailyScanCompletionStep(_mockBatchCompletionService.Object, _mockLogger.Object);
     }
 
     [Fact]
     public async Task ExecuteAsync_WhenCalled_CallsBatchCompletionService()
     {
         // Arrange
-        var context = new SamBulkScanContext
+        var context = new SamDailyScanContext
         {
             ScanCorrelationId = Guid.NewGuid(),
             CurrentDateTime = DateTime.UtcNow,
@@ -45,7 +46,7 @@ public class SamBulkScanCompletionStepTests
     public async Task ExecuteAsync_WhenCancelled_PassesCancellationToken()
     {
         // Arrange
-        var context = new SamBulkScanContext();
+        var context = new SamDailyScanContext();
         var cancellationToken = new CancellationToken(canceled: true);
 
         // Act
@@ -61,10 +62,10 @@ public class SamBulkScanCompletionStepTests
     public async Task ExecuteAsync_WhenBatchCompletionServiceThrows_ExceptionPropagates()
     {
         // Arrange
-        var context = new SamBulkScanContext();
+        var context = new SamDailyScanContext();
         var expectedException = new InvalidOperationException("Test exception");
 
-        _mockBatchCompletionService.Setup(x => x.NotifyBatchCompletionAsync(It.IsAny<SamBulkScanContext>(), It.IsAny<CancellationToken>()))
+        _mockBatchCompletionService.Setup(x => x.NotifyBatchCompletionAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(expectedException);
 
         // Act & Assert
@@ -73,15 +74,15 @@ public class SamBulkScanCompletionStepTests
     }
 
     [Fact]
-    public void StepOrder_ShouldBe999()
+    public void StepOrder_ShouldBe5()
     {
         // Arrange & Act
-        var stepOrderAttribute = typeof(SamBulkScanCompletionStep)
+        var stepOrderAttribute = typeof(SamPartyDailyScanCompletionStep)
             .GetCustomAttributes(typeof(StepOrderAttribute), false)
             .FirstOrDefault() as StepOrderAttribute;
 
         // Assert
         stepOrderAttribute.Should().NotBeNull();
-        stepOrderAttribute!.Order.Should().Be(999);
+        stepOrderAttribute!.Order.Should().Be(5);
     }
 }

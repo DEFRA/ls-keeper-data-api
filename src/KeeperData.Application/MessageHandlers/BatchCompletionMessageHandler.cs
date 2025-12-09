@@ -16,51 +16,35 @@ public class BatchCompletionMessageHandler(
     ILogger<BatchCompletionMessageHandler> logger)
     : IMessageHandler<BatchCompletionMessage>
 {
-    private readonly IUnwrappedMessageSerializer<BatchCompletionMessage> _serializer = serializer;
-    private readonly IMessagePublisher<BatchCompletionTopicClient> _topicPublisher = topicPublisher;
-    private readonly ILogger<BatchCompletionMessageHandler> _logger = logger;
-
     public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(message, nameof(message));
 
-        _logger.LogInformation("Batch completion notification received. MessageId: {MessageId}, CorrelationId: {CorrelationId}",
+        logger.LogInformation("Batch completion notification received. MessageId: {MessageId}, CorrelationId: {CorrelationId}",
             message.MessageId, CorrelationIdContext.Value);
 
-        var batchCompletionMessage = _serializer.Deserialize(message)
+        var batchCompletionMessage = serializer.Deserialize(message)
             ?? throw new NonRetryableException($"Deserialisation failed or the message payload was null for " +
-            $"messageType: {typeof(BatchCompletionMessage).Name}," +
+            $"messageType: {nameof(BatchCompletionMessage)}," +
             $"messageId: {message.MessageId}," +
             $"correlationId: {message.CorrelationId}");
 
-        _logger.LogInformation(
-            "Processing batch completion for {BatchType}. " +
-            "ScanCorrelationId: {ScanCorrelationId}, " +
-            "TotalRecords: {TotalRecords}, " +
-            "MessagesPublished: {MessagesPublished}, " +
-            "Duration: {Duration}ms",
-            batchCompletionMessage.BatchType,
-            batchCompletionMessage.ScanCorrelationId,
-            batchCompletionMessage.TotalRecordsProcessed,
-            batchCompletionMessage.MessagesPublished,
-            (batchCompletionMessage.BatchCompletionTime - batchCompletionMessage.BatchStartTime).TotalMilliseconds);
+        logger.LogInformation(
+            "Processing batch completion for ScanCorrelationId: {ScanCorrelationId}, ", batchCompletionMessage.ScanCorrelationId);
 
         // Publish to SNS topic for identity-service
         try
         {
-            await _topicPublisher.PublishAsync(batchCompletionMessage, cancellationToken);
-            _logger.LogInformation("Successfully forwarded batch completion to SNS topic for identity-service notifications. BatchType: {BatchType}",
-                batchCompletionMessage.BatchType);
+            await topicPublisher.PublishAsync(batchCompletionMessage, cancellationToken);
+            logger.LogInformation("Successfully forwarded batch completion to SNS topic for identity-service notifications");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to publish batch completion to SNS topic, but continuing with processing. BatchType: {BatchType}",
-                batchCompletionMessage.BatchType);
+            logger.LogError(ex, "Failed to publish batch completion to SNS topic, but continuing with processing");
             // Continue processing - SNS failures shouldn't break the handler
         }
 
-        _logger.LogInformation("Batch completion notification processed successfully. BatchType: {BatchType}",
-            batchCompletionMessage.BatchType);
+        logger.LogInformation("Batch completion notification processed successfully");
 
         return await Task.FromResult(batchCompletionMessage);
     }

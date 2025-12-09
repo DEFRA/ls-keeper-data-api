@@ -1,4 +1,4 @@
-namespace KeeperData.Application.Services.BatchCompletion;
+namespace KeeperData.Core.Services;
 
 public interface IBatchCompletionNotificationService
 {
