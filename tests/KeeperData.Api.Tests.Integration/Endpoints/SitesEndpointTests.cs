@@ -2,17 +2,18 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Web;
 using FluentAssertions;
+using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.Documents;
 
 namespace KeeperData.Api.Tests.Integration.Endpoints;
 
-[Trait("Dependence", "localstack")]
-[Collection("Database collection")]
-public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>, IAsyncLifetime
-{ //TODO move IntegrationTestFixture to use containers/ also force shared set up of class objects / use icollectionfixture https://xunit.net/docs/shared-context
-    private readonly HttpClient _httpClient = fixture.HttpClient;
-    private readonly IntegrationTestFixture _fixture = fixture;
+[Collection("Integration"), Trait("Dependence", "testcontainers")]
+public class SitesEndpointTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture, ApiContainerFixture apiContainerFixture) : IAsyncLifetime
+{
+    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture = localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
 
     private const string SiteAId = "cdd668a1-40f1-47dd-9b88-54d9bdec8e4d";
     private const string SiteBId = "7e39414b-6d83-48d4-add2-7c8f2213d35a";
@@ -71,7 +72,7 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
     {
         Console.WriteLine(scenario);
         var date = !string.IsNullOrEmpty(dateStr) ? (DateTime?)DateTime.Parse(dateStr) : null;
-        var response = await _httpClient.GetAsync("api/site?" + BuildQueryString(type, identifier, date));
+        var response = await _apiContainerFixture.HttpClient.GetAsync("api/site?" + BuildQueryString(type, identifier, date));
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var responseBody = await response.Content.ReadAsStringAsync();
@@ -92,7 +93,7 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
     public async Task GivenAnRecordRequestById_ShouldHaveExpectedResults(string scenario, string requestedId, HttpStatusCode expectedHttpCode, string responseShouldContain)
     {
         Console.WriteLine(scenario);
-        var response = await _httpClient.GetAsync($"api/site/{requestedId}");
+        var response = await _apiContainerFixture.HttpClient.GetAsync($"api/site/{requestedId}");
         var responseBody = await response.Content.ReadAsStringAsync();
         response.StatusCode.Should().Be(expectedHttpCode);
 
@@ -117,11 +118,11 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
 
     public async Task InitializeAsync()
     {
-        await _fixture.MongoVerifier.Insert(GivenTheseSites);
+        await _mongoDbFixture.MongoVerifier.Insert(GivenTheseSites);
     }
 
     public async Task DisposeAsync()
     {
-        await _fixture.MongoVerifier.Delete(GivenTheseSites);
+        await _mongoDbFixture.MongoVerifier.Delete(GivenTheseSites);
     }
 }

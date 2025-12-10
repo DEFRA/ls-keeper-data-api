@@ -2,17 +2,18 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Web;
 using FluentAssertions;
+using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.Documents;
 
 namespace KeeperData.Api.Tests.Integration.Endpoints;
 
-[Trait("Dependence", "localstack")]
-[Collection("Database collection")]
-public class PartiesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>, IAsyncLifetime
+[Collection("Integration"), Trait("Dependence", "testcontainers")]
+public class PartiesEndpointTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture, ApiContainerFixture apiContainerFixture) : IAsyncLifetime
 {
-    private readonly HttpClient _httpClient = fixture.HttpClient;
-    private readonly IntegrationTestFixture _fixture = fixture;
+    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture = localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
 
     private const string JohnSmithId = "2b156a83-3b8d-4393-96ca-94d2df7eea27";
     private const string MarkSmithId = "ceef6fbc-cc67-4272-9c40-00ae257e62e0";
@@ -57,7 +58,7 @@ public class PartiesEndpointTests(IntegrationTestFixture fixture) : IClassFixtur
     {
         Console.WriteLine(scenario);
         var date = !string.IsNullOrEmpty(dateStr) ? (DateTime?)DateTime.Parse(dateStr) : null;
-        var response = await _httpClient.GetAsync("api/party?" + BuildQueryString(firstName, lastName, date));
+        var response = await _apiContainerFixture.HttpClient.GetAsync("api/party?" + BuildQueryString(firstName, lastName, date));
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var responseBody = await response.Content.ReadAsStringAsync();
@@ -78,7 +79,7 @@ public class PartiesEndpointTests(IntegrationTestFixture fixture) : IClassFixtur
     public async Task GivenAnRecordRequestById_ShouldHaveExpectedResults(string scenario, string requestedId, HttpStatusCode expectedHttpCode, string responseShouldContain)
     {
         Console.WriteLine(scenario);
-        var response = await _httpClient.GetAsync($"api/party/{requestedId}");
+        var response = await _apiContainerFixture.HttpClient.GetAsync($"api/party/{requestedId}");
         var responseBody = await response.Content.ReadAsStringAsync();
         response.StatusCode.Should().Be(expectedHttpCode);
 
@@ -103,11 +104,11 @@ public class PartiesEndpointTests(IntegrationTestFixture fixture) : IClassFixtur
 
     public async Task InitializeAsync()
     {
-        await _fixture.MongoVerifier.Insert(GivenTheseParties);
+        await _mongoDbFixture.MongoVerifier.Insert(GivenTheseParties);
     }
 
     public async Task DisposeAsync()
     {
-        await _fixture.MongoVerifier.Delete(GivenTheseParties);
+        await _mongoDbFixture.MongoVerifier.Delete(GivenTheseParties);
     }
 }
