@@ -1,9 +1,7 @@
-using KeeperData.Application.Orchestration.ChangeScanning;
-using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
-using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
 using KeeperData.Core.Messaging.Contracts.V1;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
+using KeeperData.Core.Orchestration;
 using KeeperData.Core.Services;
 using Microsoft.Extensions.Logging;
 
@@ -14,38 +12,23 @@ public class BatchCompletionNotificationService(
     ILogger<BatchCompletionNotificationService> logger) : IBatchCompletionNotificationService
 {
     public async Task NotifyBatchCompletionAsync<TContext>(TContext context, CancellationToken cancellationToken = default)
-        where TContext : class
+        where TContext : IScanContext
     {
         try
         {
-            var completionMessage = CreateCompletionMessage(context);
-            if (completionMessage != null)
+            var completionMessage = new BatchCompletionMessage
             {
-                await messagePublisher.PublishAsync(completionMessage, cancellationToken);
-                logger.LogInformation("Published batch completion message for batch type correlation ID {CorrelationId}",
-                    completionMessage.ScanCorrelationId);
-            }
+                ScanCorrelationId = context.ScanCorrelationId.ToString()
+            };
+
+            await messagePublisher.PublishAsync(completionMessage, cancellationToken);
+            logger.LogInformation("Published batch completion message for batch type {ContextType} correlation ID {CorrelationId}",
+                typeof(TContext).Name, completionMessage.ScanCorrelationId);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to publish batch completion notification for context type {ContextType}", typeof(TContext).Name);
             // Don't rethrow - we don't want completion notifications to fail the actual scan
         }
-    }
-
-    private static BatchCompletionMessage? CreateCompletionMessage<TContext>(TContext context) where TContext : class
-    {
-        return context switch
-        {
-            SamBulkScanContext samContext => new BatchCompletionMessage
-            {
-                ScanCorrelationId = samContext.ScanCorrelationId.ToString(),
-            },
-            CtsBulkScanContext ctsContext => new BatchCompletionMessage
-            {
-                ScanCorrelationId = ctsContext.ScanCorrelationId.ToString()
-            },
-            _ => null // Don't support other context types yet
-        };
     }
 }

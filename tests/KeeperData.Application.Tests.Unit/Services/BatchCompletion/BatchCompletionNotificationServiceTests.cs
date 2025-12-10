@@ -1,6 +1,5 @@
 using FluentAssertions;
 using KeeperData.Application.Orchestration.ChangeScanning;
-using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
 using KeeperData.Application.Services.BatchCompletion;
 using KeeperData.Core.Messaging.Contracts.V1;
@@ -49,21 +48,6 @@ public class BatchCompletionNotificationServiceTests
     }
 
     [Fact]
-    public async Task NotifyBatchCompletionAsync_WhenCalledWithUnsupportedContext_DoesNotPublishMessage()
-    {
-        // Arrange
-        var unsupportedContext = new { SomeProperty = "value" };
-
-        // Act
-        await _sut.NotifyBatchCompletionAsync(unsupportedContext);
-
-        // Assert
-        _mockQueuePublisher.Verify(
-            x => x.PublishAsync(It.IsAny<BatchCompletionMessage>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
-
-    [Fact]
     public async Task NotifyBatchCompletionAsync_WhenPublishingFails_LogsErrorAndDoesNotThrow()
     {
         // Arrange
@@ -92,30 +76,5 @@ public class BatchCompletionNotificationServiceTests
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
-    }
-
-    [Fact]
-    public async Task NotifyBatchCompletionAsync_WhenCalledWithCtsBulkScanContext_PublishesCompletionMessage()
-    {
-        // Arrange
-        var correlationId = Guid.NewGuid();
-        var currentDateTime = new DateTime(2023, 1, 1, 12, 0, 0, DateTimeKind.Utc);
-        var context = new CtsBulkScanContext
-        {
-            ScanCorrelationId = correlationId,
-            CurrentDateTime = currentDateTime,
-            UpdatedSinceDateTime = new DateTime(2023, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-            PageSize = 75,
-            Holdings = new EntityScanContext { TotalCount = 150, CurrentCount = 15 }
-        };
-
-        // Act
-        await _sut.NotifyBatchCompletionAsync(context);
-
-        // Assert
-        _mockQueuePublisher.Verify(
-            x => x.PublishAsync(It.Is<BatchCompletionMessage>(msg =>
-                msg.ScanCorrelationId == correlationId.ToString()
-            ), It.IsAny<CancellationToken>()), Times.Once);
     }
 }
