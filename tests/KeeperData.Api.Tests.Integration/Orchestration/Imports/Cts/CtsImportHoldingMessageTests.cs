@@ -21,7 +21,7 @@ public class CtsImportHoldingMessageTests
     public CtsImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture)
     {
         _mongoDbFixture = mongoDbFixture;
-        _localStackFixture = localStackFixture;        
+        _localStackFixture = localStackFixture;
     }
 
     [Fact]

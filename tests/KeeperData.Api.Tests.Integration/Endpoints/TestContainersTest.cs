@@ -357,64 +357,64 @@ namespace KeeperData.Api.Tests.Integration.Endpoints
                 .WithName(networkName)
                 .Build();
 
-            // --- MongoDB container ---
-            mongoContainer = new MongoDbBuilder()
-              .WithImage("mongo:latest")
-              .WithName("mongo")
-              .WithPortBinding(27017, true) // dynamic host port
-              .WithEnvironment("MONGO_INITDB_ROOT_USERNAME", "testuser")
-              .WithEnvironment("MONGO_INITDB_ROOT_PASSWORD", "testpass")
-              .WithEnvironment("MONGO_INITDB_DATABASE", "ls-keeper-data-api")
-              .WithNetwork(networkName)
-              .WithNetworkAliases("mongo")
-              .Build();
+                // --- MongoDB container ---
+                mongoContainer = new MongoDbBuilder()
+                  .WithImage("mongo:latest")
+                  .WithName("mongo")
+                  .WithPortBinding(27017, true) // dynamic host port
+                  .WithEnvironment("MONGO_INITDB_ROOT_USERNAME", "testuser")
+                  .WithEnvironment("MONGO_INITDB_ROOT_PASSWORD", "testpass")
+                  .WithEnvironment("MONGO_INITDB_DATABASE", "ls-keeper-data-api")
+                  .WithNetwork(networkName)
+                  .WithNetworkAliases("mongo")
+                  .Build();
 
-            // --- LocalStack container ---
-            localStackContainer = new LocalStackBuilder()
-                .WithImage("localstack/localstack:latest")
-                .WithName("localstack")
-                .WithEnvironment("SERVICES", "s3,sqs,sns")
-                .WithEnvironment("DEBUG", "1")
-                .WithEnvironment("AWS_DEFAULT_REGION", "eu-west-2")
-                .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
-                .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
-                .WithEnvironment("EDGE_PORT", "4566")
-                .WithPortBinding(4566, 4566)
-                .WithNetwork(networkName)
-                .WithNetworkAliases("localstack")
-                .Build();
+                // --- LocalStack container ---
+                localStackContainer = new LocalStackBuilder()
+                    .WithImage("localstack/localstack:latest")
+                    .WithName("localstack")
+                    .WithEnvironment("SERVICES", "s3,sqs,sns")
+                    .WithEnvironment("DEBUG", "1")
+                    .WithEnvironment("AWS_DEFAULT_REGION", "eu-west-2")
+                    .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
+                    .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
+                    .WithEnvironment("EDGE_PORT", "4566")
+                    .WithPortBinding(4566, 4566)
+                    .WithNetwork(networkName)
+                    .WithNetworkAliases("localstack")
+                    .Build();
 
-            // --- Start containers ---
-           // await network.CreateAsync();
-            await mongoContainer.StartAsync();
-            await localStackContainer.StartAsync();
+                // --- Start containers ---
+                // await network.CreateAsync();
+                await mongoContainer.StartAsync();
+                await localStackContainer.StartAsync();
 
-            // --- API container ---
-            apiContainer = new ContainerBuilder()
-             .WithImage("keeperdata_api:latest")
-             .WithName("keeperdata_api")
-             .WithPortBinding(5555, 5555)
-             .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
-             .WithEnvironment("ASPNETCORE_HTTP_PORTS", "5555")
-             .WithEnvironment("Mongo__DatabaseUri", "mongodb://testuser:testpass@mongo:27017/ls-keeper-data-api?authSource=admin")
-             .WithEnvironment("Mongo__DatabaseName", "ls-keeper-data-api")
-             .WithEnvironment("StorageConfiguration__ComparisonReportsStorage__BucketName", "test-comparison-reports-bucket")
-             .WithEnvironment("QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue")
-             .WithEnvironment("QueueConsumerOptions__IntakeEventQueueOptions__DeadLetterQueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue-deadletter\r\n      - ApiClients__DataBridgeApi__BaseUrl=http://keeperdata_bridge:5560/")
-             .WithEnvironment("ApiClients__DataBridgeApi__BaseUrl", "http://localhost:5560/")
-             .WithEnvironment("ApiClients__DataBridgeApi__UseFakeClient", "true")
-             .WithEnvironment("ServiceBusSenderConfiguration__IntakeEventQueue__QueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue")
-             .WithEnvironment("LOCALSTACK_ENDPOINT", "http://localstack:4566")
-             .WithEnvironment("AWS__Region", "eu-west-2")
-             .WithEnvironment("AWS_REGION", "eu-west-2")
-             .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
-             .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
-             .WithEnvironment("AWS__ServiceURL", "http://localstack:4566")
-             .WithNetwork(networkName)
-             .WithNetworkAliases("keeperdata_api")
-             .WithWaitStrategy(Wait.ForUnixContainer()
-                 .UntilHttpRequestIsSucceeded(req => req.ForPort(5555).ForPath("/health")))
-             .Build();
+                // --- API container ---
+                apiContainer = new ContainerBuilder()
+                 .WithImage("keeperdata_api:latest")
+                 .WithName("keeperdata_api")
+                 .WithPortBinding(5555, 5555)
+                 .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
+                 .WithEnvironment("ASPNETCORE_HTTP_PORTS", "5555")
+                 .WithEnvironment("Mongo__DatabaseUri", "mongodb://testuser:testpass@mongo:27017/ls-keeper-data-api?authSource=admin")
+                 .WithEnvironment("Mongo__DatabaseName", "ls-keeper-data-api")
+                 .WithEnvironment("StorageConfiguration__ComparisonReportsStorage__BucketName", "test-comparison-reports-bucket")
+                 .WithEnvironment("QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue")
+                 .WithEnvironment("QueueConsumerOptions__IntakeEventQueueOptions__DeadLetterQueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue-deadletter\r\n      - ApiClients__DataBridgeApi__BaseUrl=http://keeperdata_bridge:5560/")
+                 .WithEnvironment("ApiClients__DataBridgeApi__BaseUrl", "http://localhost:5560/")
+                 .WithEnvironment("ApiClients__DataBridgeApi__UseFakeClient", "true")
+                 .WithEnvironment("ServiceBusSenderConfiguration__IntakeEventQueue__QueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue")
+                 .WithEnvironment("LOCALSTACK_ENDPOINT", "http://localstack:4566")
+                 .WithEnvironment("AWS__Region", "eu-west-2")
+                 .WithEnvironment("AWS_REGION", "eu-west-2")
+                 .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
+                 .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
+                 .WithEnvironment("AWS__ServiceURL", "http://localstack:4566")
+                 .WithNetwork(networkName)
+                 .WithNetworkAliases("keeperdata_api")
+                 .WithWaitStrategy(Wait.ForUnixContainer()
+                     .UntilHttpRequestIsSucceeded(req => req.ForPort(5555).ForPath("/health")))
+                 .Build();
 
                 // --- Arrange: S3 client pointing to LocalStack ---
                 var s3Client = new AmazonS3Client("test", "test", new AmazonS3Config

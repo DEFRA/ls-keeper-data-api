@@ -1,7 +1,7 @@
 namespace KeeperData.Api.Tests.Integration.Helpers;
 
 [CollectionDefinition("Integration")]
-public class IntegrationCollection : 
+public class IntegrationCollection :
     ICollectionFixture<MongoDbFixture>,
     ICollectionFixture<LocalStackFixture>,
     ICollectionFixture<ApiContainerFixture>

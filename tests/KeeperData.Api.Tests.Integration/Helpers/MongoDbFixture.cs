@@ -43,7 +43,7 @@ public class MongoDbFixture : IAsyncLifetime
 
         MongoClient = new MongoClient(ConnectionString);
         var database = MongoClient.GetDatabase(TestDatabaseName);
-      
+
         // Verify connection
         await VerifyConnectionAsync();
 
