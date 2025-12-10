@@ -65,7 +65,7 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
             ConfigureS3ClientFactory(services);
 
             ConfigureSimpleQueueService(services);
-            
+
             ConfigureSimpleNotificationService(services);
 
             ConfigureDatabase(services);
@@ -175,7 +175,7 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         services.AddSingleton<TestQueuePollerObserver<MessageType>>();
         services.AddScoped<IQueuePollerObserver<MessageType>>(sp => sp.GetRequiredService<TestQueuePollerObserver<MessageType>>());
     }
-    
+
     private void ConfigureSimpleNotificationService(IServiceCollection services)
     {
         services.RemoveAll<IAmazonSimpleNotificationService>();
@@ -185,7 +185,7 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         AmazonSNSMock
             .Setup(x => x.GetTopicAttributesAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GetTopicAttributesResponse { HttpStatusCode = HttpStatusCode.OK });
-        
+
         AmazonSNSMock
             .Setup(x => x.ListTopicsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ListTopicsResponse() { HttpStatusCode = HttpStatusCode.OK });
