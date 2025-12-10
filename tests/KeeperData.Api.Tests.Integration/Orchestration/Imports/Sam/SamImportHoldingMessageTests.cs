@@ -5,16 +5,17 @@ using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
-using KeeperData.Infrastructure.Database.Repositories;
 using KeeperData.Tests.Common.Generators;
 using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Sam;
 
-[Trait("Dependence", "localstack")]
-[Collection("Database collection")]
-public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>, IAsyncLifetime
+[Collection("Integration"), Trait("Dependence", "testcontainers")] // TODO affects data
+public class SamImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture, ApiContainerFixture apiContainerFixture) : IAsyncLifetime
 {
+    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture = localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
     private const int ProcessingTimeCircuitBreakerSeconds = 30;
 
     [Fact]
@@ -60,14 +61,14 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
     private async Task VerifySilverDataTypesAsync(string holdingIdentifier)
     {
         var silverSamHoldingFilter = Builders<SamHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
-        var silverSamHoldings = await fixture.MongoVerifier.FindDocumentsAsync("samHoldings", silverSamHoldingFilter);
+        var silverSamHoldings = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("samHoldings", silverSamHoldingFilter);
 
         var partyRoleRelationshipFilter = Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
-        var partyRoleRelationships = await fixture.MongoVerifier.FindDocumentsAsync("silverSitePartyRoleRelationships", partyRoleRelationshipFilter);
+        var partyRoleRelationships = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("silverSitePartyRoleRelationships", partyRoleRelationshipFilter);
         var partyRolePartyIds = partyRoleRelationships.Select(r => r.PartyId).Distinct().ToList();
 
         var silverSamPartyFilter = Builders<SamPartyDocument>.Filter.In(x => x.PartyId, partyRolePartyIds);
-        var silverSamParties = await fixture.MongoVerifier.FindDocumentsAsync("samParties", silverSamPartyFilter);
+        var silverSamParties = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("samParties", silverSamPartyFilter);
         var partyIds = silverSamParties.Select(x => x.PartyId).Distinct().ToHashSet();
 
         silverSamHoldings.Should().NotBeNull().And.HaveCount(1);
@@ -76,7 +77,7 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
         partyIds.SetEquals(partyRolePartyIds).Should().BeTrue();
 
         var silverSamHerdFilter = Builders<SamHerdDocument>.Filter.Eq(x => x.CountyParishHoldingHerd, $"{holdingIdentifier}/01");
-        var silverSamHerds = await fixture.MongoVerifier.FindDocumentsAsync("samHerds", silverSamHerdFilter);
+        var silverSamHerds = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("samHerds", silverSamHerdFilter);
         silverSamHerds.Should().NotBeNull().And.HaveCount(1);
     }
 
@@ -87,23 +88,20 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
         var siteFilter = Builders<SiteDocument>.Filter.ElemMatch(
             x => x.Identifiers,
             i => i.Identifier == holdingIdentifier && i.Type == holdingIdentifierType);
-        var sites = await fixture.MongoVerifier.FindDocumentsAsync("sites", siteFilter);
+        var sites = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("sites", siteFilter);
         sites.Should().NotBeNull().And.HaveCount(1);
-
-        // TODO - Add additional records
     }
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
     {
-        var queueUrl = "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue";
         var additionalUserProperties = new Dictionary<string, string>
         {
             ["CorrelationId"] = correlationId
         };
-        var request = SQSMessageUtility.CreateMessage(queueUrl, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.LsKeeperDataIntakeQueue, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var sam = new CancellationTokenSource();
-        await fixture.PublishToQueueAsync(request, sam.Token);
+        await _localStackFixture.SqsClient.SendMessageAsync(request, sam.Token);
     }
 
     private static SamImportHoldingMessage GetSamImportHoldingMessage(string holdingIdentifier) => new()
@@ -117,13 +115,13 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
     }
 
     public async Task DisposeAsync()
-    {
-        await fixture.MongoVerifier.DeleteAll<PartyDocument>();
-        await fixture.MongoVerifier.DeleteAll<SiteDocument>();
-        await fixture.MongoVerifier.DeleteAll<SamPartyDocument>();
-        await fixture.MongoVerifier.DeleteAll<SamHerdDocument>();
-        await fixture.MongoVerifier.DeleteAll<SamHoldingDocument>();
-        await fixture.MongoVerifier.DeleteAll<Core.Documents.Silver.SitePartyRoleRelationshipDocument>();
-        await fixture.MongoVerifier.DeleteAll<CtsHoldingDocument>();
+    { // TODO checkme
+        await _mongoDbFixture.MongoVerifier.DeleteAll<PartyDocument>();
+        await _mongoDbFixture.MongoVerifier.DeleteAll<SiteDocument>();
+        await _mongoDbFixture.MongoVerifier.DeleteAll<SamPartyDocument>();
+        await _mongoDbFixture.MongoVerifier.DeleteAll<SamHerdDocument>();
+        await _mongoDbFixture.MongoVerifier.DeleteAll<SamHoldingDocument>();
+        await _mongoDbFixture.MongoVerifier.DeleteAll<Core.Documents.Silver.SitePartyRoleRelationshipDocument>();
+        await _mongoDbFixture.MongoVerifier.DeleteAll<CtsHoldingDocument>();
     }
 }

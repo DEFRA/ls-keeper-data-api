@@ -1,4 +1,3 @@
-using AutoFixture;
 using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
 using KeeperData.Api.Tests.Integration.Helpers;
@@ -11,18 +10,13 @@ using MongoDB.Driver;
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Cts;
 
 [Collection("Integration"), Trait("Dependence", "testcontainers")]
-public class CtsImportHoldingMessageTests
+public class CtsImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture, ApiContainerFixture apiContainerFixture)
 {
-    private const int ProcessingTimeCircuitBreakerSeconds = 30;
-    private readonly MongoDbFixture _mongoDbFixture;
-    private readonly LocalStackFixture _localStackFixture;
-    private readonly ApiContainerFixture _apiContainerFixture;
+    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture = localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
 
-    public CtsImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture)
-    {
-        _mongoDbFixture = mongoDbFixture;
-        _localStackFixture = localStackFixture;
-    }
+    private const int ProcessingTimeCircuitBreakerSeconds = 30;
 
     [Fact]
     public async Task SqsQueue_ShouldBeCreatedSuccessfully()
@@ -52,15 +46,15 @@ public class CtsImportHoldingMessageTests
         await VerifyGoldDataTypesAsync(holdingIdentifier);
     }
 
-    private async Task VerifyCtsImportHoldingMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
+    private static async Task VerifyCtsImportHoldingMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
     {
         var startTime = DateTime.UtcNow;
         var foundLogEntry = false;
 
         while (DateTime.UtcNow - startTime < timeout)
         {
-            foundLogEntry = await ContainerLoggingUtilityFixture.FindContainerLogEntryAsync(
-                _apiContainerFixture.ApiContainer,
+            foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
+                ContainerLoggingUtility.ServiceNameApi,
                 $"Handled message with correlationId: \"{correlationId}\"");
 
             if (foundLogEntry)
@@ -102,12 +96,11 @@ public class CtsImportHoldingMessageTests
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
     {
-        var queueUrl = $"{_localStackFixture.SqsEndpoint}/000000000000/ls_keeper_data_intake_queue";
         var additionalUserProperties = new Dictionary<string, string>
         {
             ["CorrelationId"] = correlationId
         };
-        var request = SQSMessageUtility.CreateMessage(queueUrl, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.LsKeeperDataIntakeQueue, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var cts = new CancellationTokenSource();
         await _localStackFixture.SqsClient.SendMessageAsync(request, cts.Token);

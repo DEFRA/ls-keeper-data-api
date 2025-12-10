@@ -9,6 +9,8 @@ using Amazon.SQS;
 using Amazon.SQS.Model;
 using System.Text;
 using Amazon.SimpleNotificationService;
+using MongoDB.Bson;
+using Amazon.SimpleNotificationService.Model;
 
 public class LocalStackFixture : IAsyncLifetime
 {
@@ -23,6 +25,7 @@ public class LocalStackFixture : IAsyncLifetime
     public IAmazonSimpleNotificationService SnsClient { get; private set; } = null!;
 
     public string SqsEndpoint { get; private set; } = null!;
+    public string LsKeeperDataIntakeQueue { get; private set; } = null!; // TODO aka main queue
 
     public string NetworkName { get; } = "integration-tests";
 
@@ -107,16 +110,16 @@ public class LocalStackFixture : IAsyncLifetime
         // 3. Create main queue
         var mainQueueName = "ls_keeper_data_intake_queue";
         var createMainQueueResponse = await SqsClient.CreateQueueAsync(new CreateQueueRequest { QueueName = mainQueueName });
-        var mainQueueUrl = createMainQueueResponse.QueueUrl;
+        LsKeeperDataIntakeQueue = createMainQueueResponse.QueueUrl;
 
         // 4. Set redrive policy
         var redrivePolicy = $"{{\"deadLetterTargetArn\":\"{dlqArn}\",\"maxReceiveCount\":\"3\"}}";
         await SqsClient.SetQueueAttributesAsync(new SetQueueAttributesRequest
         {
-            QueueUrl = mainQueueUrl,
+            QueueUrl = LsKeeperDataIntakeQueue,
             Attributes = new Dictionary<string, string>
                     {
-                        { "RedrivePolicy", redrivePolicy }
+                        { "RedrivePolicy", redrivePolicy } 
                     }
         });
 
@@ -146,7 +149,7 @@ public class LocalStackFixture : IAsyncLifetime
 
         await SqsClient.SetQueueAttributesAsync(new SetQueueAttributesRequest
         {
-            QueueUrl = mainQueueUrl,
+            QueueUrl = LsKeeperDataIntakeQueue,
             Attributes = new Dictionary<string, string>
                     {
                         { "Policy", policy }
@@ -165,6 +168,23 @@ public class LocalStackFixture : IAsyncLifetime
 
         // Setup shared test data
         //await SetupTestDataAsync();
+    }
+
+    public async Task<PublishResponse> PublishToTopicAsync(PublishRequest publishRequest, CancellationToken cancellationToken)
+    {
+        // SNS & SQS
+        var credentials = new Amazon.Runtime.BasicAWSCredentials("test", "test");
+        var amazonSimpleNotificationServiceConfig = new AmazonSimpleNotificationServiceConfig
+        {
+            ServiceURL = SqsEndpoint,
+            AuthenticationRegion = "eu-west-2",
+            UseHttp = true
+        };
+
+        var _amazonSimpleNotificationServiceClient = new AmazonSimpleNotificationServiceClient(credentials, amazonSimpleNotificationServiceConfig);
+
+        //TODO not this
+        return await _amazonSimpleNotificationServiceClient.PublishAsync(publishRequest, cancellationToken);
     }
 
     public async Task DisposeAsync()

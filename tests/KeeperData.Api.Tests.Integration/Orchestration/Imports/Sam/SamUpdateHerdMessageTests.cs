@@ -3,13 +3,15 @@ using KeeperData.Api.Tests.Integration.Consumers.Helpers;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Tests.Common.Generators;
-using Xunit;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Sam;
 
-[Trait("Dependence", "localstack")]
-public class SamUpdateHerdMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
+[Collection("Integration"), Trait("Dependence", "testcontainers")]
+public class SamUpdateHerdMessageTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture, ApiContainerFixture apiContainerFixture)
 {
+    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture = localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
     private const int ProcessingTimeCircuitBreakerSeconds = 10;
 
     [Fact]
@@ -40,9 +42,8 @@ public class SamUpdateHerdMessageTests(IntegrationTestFixture fixture) : IClassF
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
     {
-        var queueUrl = "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue";
         var additionalUserProperties = new Dictionary<string, string> { ["CorrelationId"] = correlationId };
-        var request = SQSMessageUtility.CreateMessage(queueUrl, message, typeof(TMessage).Name, additionalUserProperties);
-        await fixture.PublishToQueueAsync(request, CancellationToken.None);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.LsKeeperDataIntakeQueue, message, typeof(TMessage).Name, additionalUserProperties);
+        await _localStackFixture.SqsClient.SendMessageAsync(request, CancellationToken.None);
     }
 }

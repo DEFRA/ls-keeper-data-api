@@ -7,9 +7,12 @@ using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Sam;
 
-[Trait("Dependence", "localstack")]
-public class SamImportHoldersMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
+[Collection("Integration"), Trait("Dependence", "testcontainers")]
+public class SamImportHoldersMessageTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture, ApiContainerFixture apiContainerFixture)
 {
+    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture = localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
     private const int ProcessingTimeCircuitBreakerSeconds = 30;
 
     [Fact]
@@ -55,11 +58,11 @@ public class SamImportHoldersMessageTests(IntegrationTestFixture fixture) : ICla
     private async Task VerifySilverDataTypesAsync(string partyId)
     {
         var partyRoleRelationshipFilter = Builders<SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.PartyId, partyId);
-        var partyRoleRelationships = await fixture.MongoVerifier.FindDocumentsAsync("silverSitePartyRoleRelationships", partyRoleRelationshipFilter);
+        var partyRoleRelationships = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("silverSitePartyRoleRelationships", partyRoleRelationshipFilter);
         var partyRolePartyIds = partyRoleRelationships.Select(r => r.PartyId).Distinct().ToList();
 
         var silverSamPartyFilter = Builders<SamPartyDocument>.Filter.In(x => x.PartyId, partyRolePartyIds);
-        var silverSamParties = await fixture.MongoVerifier.FindDocumentsAsync("samParties", silverSamPartyFilter);
+        var silverSamParties = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("samParties", silverSamPartyFilter);
         var partyIds = silverSamParties.Select(x => x.PartyId).Distinct().ToHashSet();
 
         silverSamParties.Should().NotBeNull().And.HaveCountGreaterThanOrEqualTo(1);
@@ -76,15 +79,14 @@ public class SamImportHoldersMessageTests(IntegrationTestFixture fixture) : ICla
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
     {
-        var queueUrl = "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue";
         var additionalUserProperties = new Dictionary<string, string>
         {
             ["CorrelationId"] = correlationId
         };
-        var request = SQSMessageUtility.CreateMessage(queueUrl, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.LsKeeperDataIntakeQueue, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var sam = new CancellationTokenSource();
-        await fixture.PublishToQueueAsync(request, sam.Token);
+        await _localStackFixture.SqsClient.SendMessageAsync(request, sam.Token);
     }
 
     private static SamImportHolderMessage GetSamImportHolderMessage(string partyId) => new()

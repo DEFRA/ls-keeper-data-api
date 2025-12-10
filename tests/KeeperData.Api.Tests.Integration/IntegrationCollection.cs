@@ -1,4 +1,6 @@
-namespace KeeperData.Api.Tests.Integration.Helpers;
+using KeeperData.Api.Tests.Integration.Helpers;
+
+namespace KeeperData.Api.Tests.Integration;
 
 [CollectionDefinition("Integration")]
 public class IntegrationCollection :
