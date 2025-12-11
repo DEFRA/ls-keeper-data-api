@@ -186,7 +186,7 @@ public static class SamHoldingMapper
             .ToList();
 
         var siteIdentifierTypeLookup = await getSiteIdentifierTypeByCode(
-            HoldingIdentifierType.CphNumber.ToString(),
+            HoldingIdentifierType.CPHN.ToString(),
             cancellationToken);
 
         var siteIdentifierType = siteIdentifierTypeLookup == null ? null : new SiteIdentifierType(

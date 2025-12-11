@@ -1,12 +1,11 @@
 using FluentAssertions;
 using KeeperData.Application.MessageHandlers;
-using KeeperData.Core.Messaging;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
 using KeeperData.Core.Messaging.Serializers;
-using KeeperData.Core.Exceptions;
 using Microsoft.Extensions.Logging;
 using Moq;
 

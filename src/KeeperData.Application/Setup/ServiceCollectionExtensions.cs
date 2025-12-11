@@ -1,5 +1,4 @@
 using FluentValidation;
-using KeeperData.Application.MessageHandlers;
 using KeeperData.Application.Orchestration.ChangeScanning;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk.Steps;
@@ -15,8 +14,6 @@ using KeeperData.Application.Queries.Sites.Adapters;
 using KeeperData.Application.Services;
 using KeeperData.Application.Services.BatchCompletion;
 using KeeperData.Core.Attributes;
-using KeeperData.Core.Messaging.Contracts.V1;
-using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Providers;
 using KeeperData.Core.Services;
 using Microsoft.Extensions.DependencyInjection;

@@ -2,6 +2,8 @@ using Amazon.Extensions.NETCore.Setup;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Amazon.SimpleNotificationService;
+using Amazon.SimpleNotificationService.Model;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using KeeperData.Api.Tests.Component.Consumers.Helpers;
@@ -21,8 +23,6 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using Moq;
 using System.Net;
-using Amazon.SimpleNotificationService;
-using Amazon.SimpleNotificationService.Model;
 
 namespace KeeperData.Api.Tests.Component;
 

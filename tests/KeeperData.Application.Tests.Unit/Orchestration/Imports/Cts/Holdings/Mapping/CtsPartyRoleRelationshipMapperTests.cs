@@ -61,7 +61,7 @@ public class CtsPartyRoleRelationshipMapperTests
 
         var silverParties = await CtsAgentOrKeeperMapper.ToSilver(
             records,
-            HoldingIdentifierType.CphNumber,
+            HoldingIdentifierType.CPHN,
             inferredRoleType,
             _resolveRoleType,
             CancellationToken.None);
@@ -80,7 +80,7 @@ public class CtsPartyRoleRelationshipMapperTests
                     party,
                     mapped,
                     holdingIdentifier.LidIdentifierToCph(),
-                    HoldingIdentifierType.CphNumber.ToString());
+                    HoldingIdentifierType.CPHN.ToString());
             }
         }
     }

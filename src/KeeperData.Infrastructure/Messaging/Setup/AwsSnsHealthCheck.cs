@@ -1,7 +1,6 @@
 using Amazon.SimpleNotificationService;
 using Amazon.SimpleNotificationService.Model;
 using KeeperData.Infrastructure.Messaging.Configuration;
-using KeeperData.Infrastructure.Messaging.Publishers.Configuration;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace KeeperData.Infrastructure.Messaging.Setup;

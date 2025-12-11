@@ -35,7 +35,7 @@ public class CtsAgentOrKeeperMapperTests
     {
         var results = await CtsAgentOrKeeperMapper.ToSilver(
             null!,
-            HoldingIdentifierType.CphNumber,
+            HoldingIdentifierType.CPHN,
             InferredRoleType.Agent,
             _resolveRoleType,
             CancellationToken.None);
@@ -49,7 +49,7 @@ public class CtsAgentOrKeeperMapperTests
     {
         var results = await CtsAgentOrKeeperMapper.ToSilver(
             [],
-            HoldingIdentifierType.CphNumber,
+            HoldingIdentifierType.CPHN,
             InferredRoleType.Agent,
             _resolveRoleType,
             CancellationToken.None);
@@ -69,7 +69,7 @@ public class CtsAgentOrKeeperMapperTests
 
         var results = await CtsAgentOrKeeperMapper.ToSilver(
             records,
-            HoldingIdentifierType.CphNumber,
+            HoldingIdentifierType.CPHN,
             InferredRoleType.Agent,
             _resolveRoleType,
             CancellationToken.None);
@@ -100,7 +100,7 @@ public class CtsAgentOrKeeperMapperTests
 
         var results = await CtsAgentOrKeeperMapper.ToSilver(
             records,
-            HoldingIdentifierType.CphNumber,
+            HoldingIdentifierType.CPHN,
             inferredRoleType,
             _resolveRoleType,
             CancellationToken.None);

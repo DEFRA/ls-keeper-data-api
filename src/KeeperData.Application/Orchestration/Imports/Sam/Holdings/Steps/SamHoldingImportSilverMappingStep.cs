@@ -37,7 +37,7 @@ public class SamHoldingImportSilverMappingStep(
 
         context.SilverPartyRoles = SamPartyRoleRelationshipMapper.ToSilver(
             context.SilverParties,
-            HoldingIdentifierType.CphNumber.ToString(),
+            HoldingIdentifierType.CPHN.ToString(),
             context.Cph);
 
         context.SilverHerds = await SamHerdMapper.ToSilver(

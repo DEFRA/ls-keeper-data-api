@@ -1,9 +1,7 @@
 using FluentAssertions;
 using KeeperData.Application.Orchestration.ChangeScanning;
 using KeeperData.Application.Orchestration.ChangeScanning.Completion;
-using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
-using KeeperData.Application.Services.BatchCompletion;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Services;
 using Microsoft.Extensions.Logging;

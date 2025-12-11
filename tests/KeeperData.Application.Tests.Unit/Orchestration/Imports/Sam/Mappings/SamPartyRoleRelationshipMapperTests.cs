@@ -63,7 +63,7 @@ public class SamPartyRoleRelationshipMapperTests
         var records = GenerateSamParty(quantity);
 
         var holdingIdentifier = CphGenerator.GenerateFormattedCph();
-        var holdingIdentifierType = HoldingIdentifierType.CphNumber.ToString();
+        var holdingIdentifierType = HoldingIdentifierType.CPHN.ToString();
 
         var silverParties = await SamPartyMapper.ToSilver(
             holdingIdentifier,

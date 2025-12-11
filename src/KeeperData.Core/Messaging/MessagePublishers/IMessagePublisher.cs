@@ -1,5 +1,3 @@
-using KeeperData.Core.Messaging.MessagePublishers.Clients;
-
 namespace KeeperData.Core.Messaging.MessagePublishers;
 
 public interface IMessagePublisher<in T> where T : class, new()

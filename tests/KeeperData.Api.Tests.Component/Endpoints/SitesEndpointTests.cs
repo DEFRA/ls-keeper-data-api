@@ -1,6 +1,8 @@
 using FluentAssertions;
+using KeeperData.Application.Extensions;
 using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.Documents;
+using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Repositories;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -96,7 +98,12 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
         {
             IdentifierId = $"test-id-{identifier}",
             Identifier = identifier,
-            Type = "CPH",
+            Type = new SiteIdentifierSummaryDocument()
+            {
+                IdentifierId = Guid.NewGuid().ToString(),
+                Code = HoldingIdentifierType.CPHN.ToString(),
+                Description = HoldingIdentifierType.CPHN.GetDescription()!
+            },
             LastUpdatedDate = DateTime.UtcNow
         });
 

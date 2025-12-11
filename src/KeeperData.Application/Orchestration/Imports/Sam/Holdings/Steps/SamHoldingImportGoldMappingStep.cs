@@ -31,8 +31,7 @@ public class SamHoldingImportGoldMappingStep(
 
             var existingHoldingFilter = Builders<SiteDocument>.Filter.ElemMatch(
                 x => x.Identifiers,
-                i => i.Identifier == representative.CountyParishHoldingNumber
-                    && i.Type == HoldingIdentifierType.CphNumber.ToString());
+                i => i.Identifier == representative.CountyParishHoldingNumber);
 
             var existingSite = await goldSiteRepository.FindOneByFilterAsync(existingHoldingFilter, cancellationToken);
             context.ExistingGoldSite = existingSite;
@@ -43,7 +42,7 @@ public class SamHoldingImportGoldMappingStep(
                 context.SilverHerds,
                 context.SilverPartyRoles,
                 context.Cph,
-                HoldingIdentifierType.CphNumber.ToString());
+                HoldingIdentifierType.CPHN.ToString());
 
             context.GoldParties = await SamPartyMapper.ToGold(
                 context.GoldSiteId,
@@ -73,7 +72,7 @@ public class SamHoldingImportGoldMappingStep(
                 context.GoldSiteGroupMarks,
                 context.GoldSiteId,
                 context.Cph,
-                HoldingIdentifierType.CphNumber.ToString());
+                HoldingIdentifierType.CPHN.ToString());
         }
     }
 }
