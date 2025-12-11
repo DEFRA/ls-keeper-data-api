@@ -138,6 +138,7 @@ public static class SamHoldingMapper
         List<PartyDocument> goldParties,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
         Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
+        Func<string?, CancellationToken, Task<SiteIdentifierTypeDocument?>> getSiteIdentifierTypeByCode,
         Func<string?, CancellationToken, Task<(string? speciesTypeId, string? speciesTypeName)>> findSpecies,
         Func<string?, CancellationToken, Task<(string? premiseActivityTypeId, string? premiseActivityTypeName)>> findPremiseActivityType,
         CancellationToken cancellationToken)
@@ -184,6 +185,16 @@ public static class SamHoldingMapper
                 lastUpdatedDate: representative.LastUpdatedDate))
             .ToList();
 
+        var siteIdentifierTypeLookup = await getSiteIdentifierTypeByCode(
+            HoldingIdentifierType.CphNumber.ToString(),
+            cancellationToken);
+
+        var siteIdentifierType = siteIdentifierTypeLookup == null ? null : new SiteIdentifierType(
+            siteIdentifierTypeLookup.IdentifierId,
+            siteIdentifierTypeLookup.Code,
+            siteIdentifierTypeLookup.Name,
+            siteIdentifierTypeLookup.LastModifiedDate);
+
         var site = existingSite is not null
             ? await UpdateSiteAsync(
                 representative,
@@ -194,6 +205,7 @@ public static class SamHoldingMapper
                 getPremiseTypeById,
                 species,
                 activities,
+                siteIdentifierType,
                 cancellationToken)
             : await CreateSiteAsync(
                 goldSiteId,
@@ -204,6 +216,7 @@ public static class SamHoldingMapper
                 getPremiseTypeById,
                 species,
                 activities,
+                siteIdentifierType,
                 cancellationToken);
 
         return SiteDocument.FromDomain(site);
@@ -218,6 +231,7 @@ public static class SamHoldingMapper
         Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
         List<Species> species,
         List<SiteActivity> activities,
+        SiteIdentifierType? siteIdentifierType,
         CancellationToken cancellationToken)
     {
         int? uprn = int.TryParse(representative.Location?.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
@@ -275,10 +289,13 @@ public static class SamHoldingMapper
             representative.Deleted,
             location);
 
-        site.SetSiteIdentifier(
-            lastUpdatedDate: representative.LastUpdatedDate,
-            identifier: representative.CountyParishHoldingNumber,
-            type: HoldingIdentifierType.CphNumber.ToString());
+        if (siteIdentifierType != null)
+        {
+            site.SetSiteIdentifier(
+                lastUpdatedDate: representative.LastUpdatedDate,
+                identifier: representative.CountyParishHoldingNumber,
+                type: siteIdentifierType);
+        }
 
         site.SetSpecies(species, representative.LastUpdatedDate);
 
@@ -300,6 +317,7 @@ public static class SamHoldingMapper
         Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
         List<Species> species,
         List<SiteActivity> activities,
+        SiteIdentifierType? siteIdentifierType,
         CancellationToken cancellationToken)
     {
         var site = existing.ToDomain();
@@ -356,6 +374,14 @@ public static class SamHoldingMapper
             representative.Location?.Northing,
             updatedAddress,
             [updatedCommunication]);
+
+        if (siteIdentifierType != null)
+        {
+            site.SetSiteIdentifier(
+                lastUpdatedDate: representative.LastUpdatedDate,
+                identifier: representative.CountyParishHoldingNumber,
+                type: siteIdentifierType);
+        }
 
         site.SetSpecies(species, representative.LastUpdatedDate);
 
