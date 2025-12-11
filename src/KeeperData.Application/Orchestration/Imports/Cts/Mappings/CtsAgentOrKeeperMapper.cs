@@ -11,7 +11,6 @@ public static class CtsAgentOrKeeperMapper
 {
     public static async Task<List<CtsPartyDocument>> ToSilver(
         List<CtsAgentOrKeeper> rawParties,
-        HoldingIdentifierType holdingIdentifierType,
         InferredRoleType inferredRoleType,
         Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
         CancellationToken cancellationToken)
@@ -25,7 +24,6 @@ public static class CtsAgentOrKeeperMapper
         {
             var party = ToSilver(
                 p,
-                holdingIdentifierType,
                 (roleNameToLookup, roleTypeId, roleTypeName));
 
             result.Add(party);
@@ -36,7 +34,6 @@ public static class CtsAgentOrKeeperMapper
 
     public static CtsPartyDocument ToSilver(
         CtsAgentOrKeeper p,
-        HoldingIdentifierType holdingIdentifierType,
         (string? RoleNameToLookup, string? RoleTypeId, string? RoleTypeName) roleTypeInfo)
     {
         var partyTypeId = p.DeterminePartyType().ToString();
@@ -51,7 +48,6 @@ public static class CtsAgentOrKeeperMapper
             Deleted = p.IsDeleted ?? false,
 
             CountyParishHoldingNumber = p.LID_FULL_IDENTIFIER.LidIdentifierToCph(),
-            HoldingIdentifierType = holdingIdentifierType.ToString(),
 
             PartyId = p.PAR_ID,
             PartyTypeId = partyTypeId,

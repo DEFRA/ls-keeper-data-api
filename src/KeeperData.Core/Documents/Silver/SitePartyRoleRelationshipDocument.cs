@@ -33,11 +33,6 @@ public class SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
     [AutoIndexed]
     public string HoldingIdentifier { get; set; } = string.Empty;
 
-    [JsonPropertyName("holdingIdentifierType")]
-    [BsonElement("holdingIdentifierType")]
-    [AutoIndexed]
-    public string HoldingIdentifierType { get; set; } = string.Empty;
-
     [JsonPropertyName("source")]
     [BsonElement("source")]
     [AutoIndexed]

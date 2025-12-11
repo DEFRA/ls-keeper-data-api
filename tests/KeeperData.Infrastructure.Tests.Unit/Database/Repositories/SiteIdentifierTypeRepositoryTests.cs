@@ -223,7 +223,7 @@ public class SiteIdentifierTypeRepositoryTests
         var result = await _sut.FindAsync("CPHN");
 
         // Assert
-        result.siteIdentifierTypeId.Should().Be("CPHN");
+        result.siteIdentifierTypeId.Should().Be("6b4ca299-895d-4cdb-95dd-670de71ff328");
         result.siteIdentifierTypeName.Should().Be("CPH Number");
     }
 
@@ -256,7 +256,7 @@ public class SiteIdentifierTypeRepositoryTests
         var result = await _sut.FindAsync("Port Number");
 
         // Assert
-        result.siteIdentifierTypeId.Should().Be("PRTN");
+        result.siteIdentifierTypeId.Should().Be("4e135625-2d31-46ce-b9fe-93bc70ad6395");
         result.siteIdentifierTypeName.Should().Be("Port Number");
     }
 
@@ -289,7 +289,7 @@ public class SiteIdentifierTypeRepositoryTests
         var result = await _sut.FindAsync("fsan");
 
         // Assert
-        result.siteIdentifierTypeId.Should().Be("FSAN");
+        result.siteIdentifierTypeId.Should().Be("cb2fb3ee-6368-4125-a413-fc905fec51f0");
         result.siteIdentifierTypeName.Should().Be("FSA Number");
     }
 
@@ -375,7 +375,7 @@ public class SiteIdentifierTypeRepositoryTests
         var result = await _sut.FindAsync("CPHN");
 
         // Assert
-        result.siteIdentifierTypeId.Should().Be("CPHN");
+        result.siteIdentifierTypeId.Should().Be("id1");
         result.siteIdentifierTypeName.Should().Be("CPH Number");
     }
 }

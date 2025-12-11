@@ -20,14 +20,12 @@ public class CtsHoldingImportSilverMappingStep(
         context.SilverParties = [
             .. await CtsAgentOrKeeperMapper.ToSilver(
                 context.RawAgents,
-                HoldingIdentifierType.CPHN,
                 InferredRoleType.Agent,
                 roleTypeLookupService.FindAsync,
                 cancellationToken),
 
             .. await CtsAgentOrKeeperMapper.ToSilver(
                 context.RawKeepers,
-                HoldingIdentifierType.CPHN,
                 InferredRoleType.LivestockKeeper,
                 roleTypeLookupService.FindAsync,
                 cancellationToken)

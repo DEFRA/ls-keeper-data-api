@@ -2,7 +2,6 @@ using FluentAssertions;
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
-using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Services;
 using KeeperData.Tests.Common.Factories;
 using KeeperData.Tests.Common.Generators;
@@ -37,7 +36,6 @@ public class SamPartyRoleRelationshipMapperTests
     public void GivenNullableParties_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = SamPartyRoleRelationshipMapper.ToSilver(null!,
-            Guid.NewGuid().ToString(),
             Guid.NewGuid().ToString());
 
         results.Should().NotBeNull();
@@ -48,7 +46,6 @@ public class SamPartyRoleRelationshipMapperTests
     public void GivenEmptyParties_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = SamPartyRoleRelationshipMapper.ToSilver([],
-            Guid.NewGuid().ToString(),
             Guid.NewGuid().ToString());
 
         results.Should().NotBeNull();
@@ -63,7 +60,6 @@ public class SamPartyRoleRelationshipMapperTests
         var records = GenerateSamParty(quantity);
 
         var holdingIdentifier = CphGenerator.GenerateFormattedCph();
-        var holdingIdentifierType = HoldingIdentifierType.CPHN.ToString();
 
         var silverParties = await SamPartyMapper.ToSilver(
             holdingIdentifier,
@@ -73,7 +69,6 @@ public class SamPartyRoleRelationshipMapperTests
             CancellationToken.None);
 
         var results = SamPartyRoleRelationshipMapper.ToSilver(silverParties,
-            holdingIdentifierType,
             holdingIdentifier);
 
         foreach (var party in silverParties)
@@ -87,8 +82,7 @@ public class SamPartyRoleRelationshipMapperTests
                 VerifySamPartyRoleRelationshipMappings.VerifyMapping_From_SamPartyDocument_To_PartyRoleRelationshipDocument(
                     party,
                     mapped,
-                    holdingIdentifier,
-                    holdingIdentifierType);
+                    holdingIdentifier);
             }
         }
     }

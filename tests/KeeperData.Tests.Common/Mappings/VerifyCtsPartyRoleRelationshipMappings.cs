@@ -9,8 +9,7 @@ public static class VerifyCtsPartyRoleRelationshipMappings
     public static void VerifyMapping_From_CtsPartyDocument_To_PartyRoleRelationshipDocument(
         CtsPartyDocument source,
         Core.Documents.Silver.SitePartyRoleRelationshipDocument target,
-        string expectedHoldingIdentifier,
-        string expectedHoldingIdentifierType)
+        string expectedHoldingIdentifier)
     {
         source.Should().NotBeNull();
         target.Should().NotBeNull();
@@ -25,7 +24,6 @@ public static class VerifyCtsPartyRoleRelationshipMappings
         target.PartyId.Should().Be(source.PartyId);
         target.PartyTypeId.Should().Be(source.PartyTypeId);
         target.HoldingIdentifier.Should().Be(expectedHoldingIdentifier);
-        target.HoldingIdentifierType.Should().Be(expectedHoldingIdentifierType);
         target.Source.Should().Be(SourceSystemType.CTS.ToString());
 
         target.RoleTypeId.Should().Be(matchingRole.RoleTypeId);
