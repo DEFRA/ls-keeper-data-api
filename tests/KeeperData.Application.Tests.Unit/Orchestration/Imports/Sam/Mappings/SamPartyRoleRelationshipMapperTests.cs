@@ -17,7 +17,7 @@ public class SamPartyRoleRelationshipMapperTests
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
 
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveRoleType;
-    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveCountry;
+    private readonly Func<string?, string?, CancellationToken, Task<(string?, string?)>> _resolveCountry;
 
     public SamPartyRoleRelationshipMapperTests()
     {
@@ -26,8 +26,8 @@ public class SamPartyRoleRelationshipMapperTests
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
         _countryIdentifierLookupServiceMock
-            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
         _resolveRoleType = _roleTypeLookupServiceMock.Object.FindAsync;
         _resolveCountry = _countryIdentifierLookupServiceMock.Object.FindAsync;

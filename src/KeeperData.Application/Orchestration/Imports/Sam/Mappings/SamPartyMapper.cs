@@ -19,7 +19,7 @@ public static class SamPartyMapper
         string holdingIdentifier,
         List<SamParty> rawParties,
         Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
-        Func<string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
+        Func<string?, string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
         CancellationToken cancellationToken)
     {
         var result = new List<SamPartyDocument>();
@@ -43,10 +43,10 @@ public static class SamPartyMapper
         string holdingIdentifier,
         SamParty p,
         Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
-        Func<string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
+        Func<string?, string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
         CancellationToken cancellationToken)
     {
-        var (countryId, countryName) = await resolveCountry(p.COUNTRY_CODE, cancellationToken);
+        var (countryId, countryName) = await resolveCountry(p.COUNTRY_CODE, p.UK_INTERNAL_CODE, cancellationToken);
         var partyTypeId = p.DeterminePartyType().ToString();
         var addressLine = AddressFormatters.FormatAddressRange(
                         p.SAON_START_NUMBER, p.SAON_START_NUMBER_SUFFIX,

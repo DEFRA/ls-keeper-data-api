@@ -123,6 +123,7 @@ public class SitePartyRoleMapperTests
     private readonly Mock<IPremiseActivityTypeLookupService> _premiseActivityTypeLookupServiceMock = new();
     private readonly Mock<ISpeciesTypeLookupService> _speciesTypeLookupServiceMock = new();
     private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
+    private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
 
     private readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
 

@@ -316,8 +316,8 @@ public class SamHoldingImportOrchestratorTests
     private void SetupLookupServiceMocks()
     {
         _countryIdentifierLookupServiceMock
-            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
         _premiseActivityTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
