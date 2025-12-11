@@ -1,6 +1,7 @@
 using FluentAssertions;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings.Steps;
+using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents;
@@ -148,7 +149,7 @@ public class SiteGroupMarkMapperTests
         _roleTypeLookupServiceMock.Setup(x => x.FindAsync("LIVESTOCKOWNER", It.IsAny<CancellationToken>()))
             .ReturnsAsync(("2de15dc1-19b9-4372-9e81-a9a2f87fd197", "Livestock Owner"));
 
-        _countryIdentifierLookupServiceMock.Setup(x => x.FindAsync("GB", It.IsAny<CancellationToken>()))
+        _countryIdentifierLookupServiceMock.Setup(x => x.FindAsync("GB", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(("5e4b8d0d-96a8-4102-81e2-f067ee85d030", "United Kingdom"));
 
         _goldSiteRepositoryMock

@@ -105,4 +105,77 @@ public class CountryIdentifierLookupServiceTests
         result.countryName.Should().BeNull();
         _mockCountryRepository.Verify(x => x.FindAsync(lookupValue, It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Theory]
+    [InlineData("GB", "ENGLAND", "GB-ENG")]
+    [InlineData("GB", "WALES", "GB-WLS")]
+    [InlineData("GB", "SCOTLAND", "GB-SCT")]
+    [InlineData("GB", "NORTHERN IRELAND", "GB-NIR")]
+    public async Task FindAsync_WithUkInternalCode_MapsToSubDivision(string countryCode, string ukInternalCode, string expectedSearchKey)
+    {
+        // Arrange
+        var expectedResult = (expectedSearchKey, "Sub Division Name");
+
+        _mockCountryRepository
+            .Setup(x => x.FindAsync(expectedSearchKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResult);
+
+        // Act
+        var result = await _sut.FindAsync(countryCode, ukInternalCode, CancellationToken.None);
+
+        // Assert
+        _mockCountryRepository.Verify(x => x.FindAsync(expectedSearchKey, It.IsAny<CancellationToken>()), Times.Once);
+        result.countryId.Should().Be(expectedSearchKey);
+    }
+
+    [Fact]
+    public async Task FindAsync_WithGbAndUnknownInternalCode_FallsBackToGb()
+    {
+        // Arrange
+        var countryCode = "GB";
+        var ukInternalCode = "UNKNOWN";
+        var expectedResult = ("GB", "United Kingdom");
+
+        _mockCountryRepository
+            .Setup(x => x.FindAsync("GB", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResult);
+
+        // Act
+        var result = await _sut.FindAsync(countryCode, ukInternalCode, CancellationToken.None);
+
+        // Assert
+        _mockCountryRepository.Verify(x => x.FindAsync("GB", It.IsAny<CancellationToken>()), Times.Once);
+        result.countryId.Should().Be("GB");
+    }
+
+    [Fact]
+    public async Task FindAsync_WithNonGbCountry_IgnoresInternalCode()
+    {
+        // Arrange
+        var countryCode = "FR";
+        var ukInternalCode = "ENGLAND"; // Should be ignored
+        var expectedResult = ("FR", "France");
+
+        _mockCountryRepository
+            .Setup(x => x.FindAsync("FR", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResult);
+
+        // Act
+        var result = await _sut.FindAsync(countryCode, ukInternalCode, CancellationToken.None);
+
+        // Assert
+        _mockCountryRepository.Verify(x => x.FindAsync("FR", It.IsAny<CancellationToken>()), Times.Once);
+        result.countryId.Should().Be("FR");
+    }
+
+    [Fact]
+    public async Task FindAsync_WithNullCountryCode_ReturnsNull()
+    {
+        // Act
+        var result = await _sut.FindAsync(null, "ENGLAND", CancellationToken.None);
+
+        // Assert
+        result.countryId.Should().BeNull();
+        _mockCountryRepository.Verify(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
 }
