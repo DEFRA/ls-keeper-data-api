@@ -21,7 +21,7 @@ info:
     name: Livestock Data Services Agreement
     url: https://www.defra.gov.uk/services-agreement/
   
-  version: 1.3.0
+  version: 1.4.0
 
   # Change History
   # 0.1.0 - Initial Draft
@@ -33,6 +33,7 @@ info:
   # 1.1.0 - Amended the Site types enumeration list after the final list confirmed by business stakeholders.
   # 1.2.0 - Amended the specification to reflect the amended structure of the base reference models such as Site Indentifier Type, Activity Type etc.
   # 1.3.0 - Updated the specs to include a new parameter in api/sites endpoint which accepts an array of site identifiers.
+  # 1.4.0 - Updated the specs to include a new parameter in api/sites endpoint which accepts an array of Site Ids(UUIS) to enable publication of multiple Site details.
  
 externalDocs:
   description: Defra website
@@ -954,6 +955,20 @@ paths:
           description: This parameter accepts the id of the site.
           schema:
             type: string
+            format: uuid
+            
+        - name: siteIds
+          in:   query
+          description: This parameter accepts an array of strings which represents site id which is a immutable UUID, assigned to a CPH Holding.
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+               type: string
+               format: uuid
+                              
         - name: partyId
           in: query
           description: This parameter accepts Party Id (UUID) asscociated with the said site.
@@ -961,14 +976,7 @@ paths:
           schema:
             type: string
             format: uuid
-        #- name: text
-        #  in: query
-        #  required: false
-        #  schema:
-        #    type: string
-        #  description: This parameter is used to search across multiple data fields of the said data object. 
-        #  This needs to be discussed between LI Ltd. & DDTS to ascertain the feasibility of this parameter.
-        #  example: Some Farm Place
+        
         - name: page
           in: query
           required: false
