@@ -9,8 +9,7 @@ public static class SitePartyRoleMapper
         List<PartyDocument> goldParties,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         string goldSiteId,
-        string holdingIdentifier,
-        string holdingIdentifierType)
+        string holdingIdentifier)
     {
         if (goldParties == null) return [];
 
@@ -43,7 +42,6 @@ public static class SitePartyRoleMapper
                             PartyId = party.CustomerNumber ?? string.Empty,
                             PartyTypeId = party.PartyType ?? string.Empty,
                             HoldingIdentifier = holdingIdentifier,
-                            HoldingIdentifierType = holdingIdentifierType,
 
                             RoleTypeId = role.Role.IdentifierId!,
                             RoleTypeName = role.Role.Name,

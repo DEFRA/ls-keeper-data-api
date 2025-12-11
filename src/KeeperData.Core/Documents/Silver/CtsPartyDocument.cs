@@ -36,10 +36,6 @@ public class CtsPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IC
     [AutoIndexed]
     public string CountyParishHoldingNumber { get; set; } = string.Empty;
 
-    [JsonPropertyName("holdingIdentifierType")]
-    [BsonElement("holdingIdentifierType")]
-    public string HoldingIdentifierType { get; set; } = string.Empty;
-
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
         return AutoIndexedAttribute.GetIndexModels<CtsPartyDocument>();

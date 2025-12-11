@@ -1,8 +1,15 @@
+using System.ComponentModel;
+
 namespace KeeperData.Core.Domain.Enums;
 
 public enum HoldingIdentifierType
 {
-    CphNumber = 1,
-    FsaNumber,
-    PortNumber
+    [Description("CPH Number")]
+    CPHN = 1,
+
+    [Description("FSA Number")]
+    FSAN,
+
+    [Description("Port Number")]
+    PRTN
 }

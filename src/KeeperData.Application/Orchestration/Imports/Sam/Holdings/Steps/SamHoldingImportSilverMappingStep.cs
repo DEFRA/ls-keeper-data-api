@@ -1,6 +1,5 @@
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.Attributes;
-using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Services;
 using Microsoft.Extensions.Logging;
 
@@ -37,7 +36,6 @@ public class SamHoldingImportSilverMappingStep(
 
         context.SilverPartyRoles = SamPartyRoleRelationshipMapper.ToSilver(
             context.SilverParties,
-            HoldingIdentifierType.CphNumber.ToString(),
             context.Cph);
 
         context.SilverHerds = await SamHerdMapper.ToSilver(

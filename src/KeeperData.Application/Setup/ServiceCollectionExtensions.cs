@@ -12,6 +12,7 @@ using KeeperData.Application.Providers;
 using KeeperData.Application.Queries.Parties.Adapters;
 using KeeperData.Application.Queries.Sites.Adapters;
 using KeeperData.Application.Services;
+using KeeperData.Application.Services.BatchCompletion;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Providers;
 using KeeperData.Core.Services;
@@ -43,6 +44,7 @@ public static class ServiceCollectionExtensions
         RegisterUpdateOrchestrators(services, typeof(CtsUpdateHoldingOrchestrator).Assembly);
         RegisterUpdateSteps(services, typeof(CtsUpdateHoldingRawAggregationStep).Assembly);
         RegisterLookupServices(services);
+        RegisterNotificationService(services);
     }
 
     public static void RegisterImportOrchestrators(IServiceCollection services, Assembly assembly)
@@ -145,5 +147,10 @@ public static class ServiceCollectionExtensions
         services.AddTransient<IRoleTypeLookupService, RoleTypeLookupService>();
         services.AddTransient<ISpeciesTypeLookupService, SpeciesTypeLookupService>();
         services.AddTransient<ISiteIdentifierTypeLookupService, SiteIdentifierTypeLookupService>();
+    }
+
+    public static void RegisterNotificationService(IServiceCollection services)
+    {
+        services.AddScoped<IBatchCompletionNotificationService, BatchCompletionNotificationService>();
     }
 }

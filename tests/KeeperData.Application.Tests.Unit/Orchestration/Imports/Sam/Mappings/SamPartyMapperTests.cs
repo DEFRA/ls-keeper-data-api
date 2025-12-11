@@ -16,7 +16,7 @@ public class SamPartyMapperTests
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
 
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveRoleType;
-    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveCountry;
+    private readonly Func<string?, string?, CancellationToken, Task<(string?, string?)>> _resolveCountry;
 
     public SamPartyMapperTests()
     {
@@ -25,8 +25,8 @@ public class SamPartyMapperTests
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
         _countryIdentifierLookupServiceMock
-            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
         _resolveRoleType = _roleTypeLookupServiceMock.Object.FindAsync;
         _resolveCountry = _countryIdentifierLookupServiceMock.Object.FindAsync;
@@ -94,7 +94,7 @@ public class SamPartyMapperTests
     public async Task GivenFindCountryDoesNotMatch_WhenCallingToSilver_ShouldReturnEmptyCountryDetails()
     {
         _countryIdentifierLookupServiceMock
-            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((null, null));
 
         var holdingIdentifier = CphGenerator.GenerateFormattedCph();
@@ -169,7 +169,6 @@ public class SamPartyMapperTests
             VerifySamPartyMappings.VerifyMapping_From_SamParty_To_SamPartyDocument(records[i], results[i], sourceIsHolder: i == 1);
         }
     }
-
     [Fact]
     public void GivenNoPartiesOrHolders_WhenAggregatingPartyAndHolder_ShouldReturnEmptyList()
     {
@@ -295,10 +294,18 @@ public class SamPartyMapperTests
         }
         return records;
     }
-
     private static List<SamParty> GenerateSamCphHolderAsParty(int quantity)
     {
-        var records = GenerateSamCphHolder(quantity);
+        var factory = new MockSamRawDataFactory();
+        var records = new List<SamCphHolder>();
+        for (var i = 0; i < quantity; i++)
+        {
+            records.Add(factory.CreateMockHolder(
+                changeType: DataBridgeConstants.ChangeTypeInsert,
+                batchId: 1,
+                holdingIdentifiers: [CphGenerator.GenerateFormattedCph()]));
+        }
+
         return SamPartyMapper.AggregatePartyAndHolder([], records);
     }
 }

@@ -42,7 +42,7 @@ public class SiteIdentifierTypeRepository(
         }
 
         return siteIdentifierType != null
-            ? (siteIdentifierType.Code, siteIdentifierType.Name)
+            ? (siteIdentifierType.IdentifierId, siteIdentifierType.Name)
             : (null, null);
     }
 }

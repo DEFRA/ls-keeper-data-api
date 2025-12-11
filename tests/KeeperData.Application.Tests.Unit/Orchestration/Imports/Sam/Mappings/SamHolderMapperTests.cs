@@ -18,7 +18,7 @@ public class SamHolderMapperTests
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
 
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveRoleType;
-    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveCountry;
+    private readonly Func<string?, string?, CancellationToken, Task<(string?, string?)>> _resolveCountry;
 
     public SamHolderMapperTests()
     {
@@ -27,8 +27,8 @@ public class SamHolderMapperTests
             .ReturnsAsync(("5053be9f-685a-4779-a663-ce85df6e02e8", "CPH Holder"));
 
         _countryIdentifierLookupServiceMock
-            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
         _resolveRoleType = _roleTypeLookupServiceMock.Object.FindAsync;
         _resolveCountry = _countryIdentifierLookupServiceMock.Object.FindAsync;
@@ -89,7 +89,7 @@ public class SamHolderMapperTests
     public async Task GivenFindCountryDoesNotMatch_WhenCallingToSilver_ShouldReturnEmptyCountryDetails()
     {
         _countryIdentifierLookupServiceMock
-            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((null, null));
 
         var records = GenerateSamCphHolder(1);

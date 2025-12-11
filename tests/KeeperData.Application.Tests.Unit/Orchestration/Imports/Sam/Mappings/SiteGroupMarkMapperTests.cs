@@ -1,4 +1,5 @@
 using FluentAssertions;
+using KeeperData.Application.Extensions;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings.Steps;
 using KeeperData.Core.ApiClients.DataBridgeApi;
@@ -69,7 +70,6 @@ public class SiteGroupMarkMapperTests
             Herdmark = "333333",
             CountyParishHoldingHerd = "12/345/6789/01",
             HoldingIdentifier = "12/345/6789",
-            HoldingIdentifierType = HoldingIdentifierType.CphNumber.ToString(),
             RoleTypeId = "b2637b72-2196-4a19-bdf0-85c7ff66cf60",
             RoleTypeName = "Livestock Keeper",
             SpeciesTypeId = "5a86d64d-0f17-46a0-92d5-11fd5b2c5830",
@@ -88,7 +88,6 @@ public class SiteGroupMarkMapperTests
             Herdmark = "333333",
             CountyParishHoldingHerd = "12/345/6789/01",
             HoldingIdentifier = "12/345/6789",
-            HoldingIdentifierType = HoldingIdentifierType.CphNumber.ToString(),
             RoleTypeId = "2de15dc1-19b9-4372-9e81-a9a2f87fd197",
             RoleTypeName = "Livestock Owner",
             SpeciesTypeId = "5a86d64d-0f17-46a0-92d5-11fd5b2c5830",
@@ -107,7 +106,6 @@ public class SiteGroupMarkMapperTests
             Herdmark = "333333",
             CountyParishHoldingHerd = "12/345/6789/01",
             HoldingIdentifier = "12/345/6789",
-            HoldingIdentifierType = HoldingIdentifierType.CphNumber.ToString(),
             RoleTypeId = "b2637b72-2196-4a19-bdf0-85c7ff66cf60",
             RoleTypeName = "Livestock Keeper",
             SpeciesTypeId = "5a86d64d-0f17-46a0-92d5-11fd5b2c5830",
@@ -128,6 +126,7 @@ public class SiteGroupMarkMapperTests
     private readonly Mock<ISpeciesTypeLookupService> _speciesTypeLookupServiceMock = new();
     private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
+    private readonly Mock<ISiteIdentifierTypeLookupService> _siteIdentifierTypeLookupServiceMock = new();
 
     private readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
 
@@ -148,8 +147,17 @@ public class SiteGroupMarkMapperTests
         _roleTypeLookupServiceMock.Setup(x => x.FindAsync("LIVESTOCKOWNER", It.IsAny<CancellationToken>()))
             .ReturnsAsync(("2de15dc1-19b9-4372-9e81-a9a2f87fd197", "Livestock Owner"));
 
-        _countryIdentifierLookupServiceMock.Setup(x => x.FindAsync("GB", It.IsAny<CancellationToken>()))
+        _countryIdentifierLookupServiceMock.Setup(x => x.FindAsync("GB", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(("5e4b8d0d-96a8-4102-81e2-f067ee85d030", "United Kingdom"));
+
+        _siteIdentifierTypeLookupServiceMock.Setup(x => x.GetByCodeAsync(HoldingIdentifierType.CPHN.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SiteIdentifierTypeDocument
+            {
+                IdentifierId = "6b4ca299-895d-4cdb-95dd-670de71ff328",
+                Code = HoldingIdentifierType.CPHN.ToString(),
+                Name = HoldingIdentifierType.CPHN.GetDescription()!,
+                IsActive = true
+            });
 
         _goldSiteRepositoryMock
             .Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
@@ -169,6 +177,7 @@ public class SiteGroupMarkMapperTests
             Mock.Of<IPremiseTypeLookupService>(),
             _speciesTypeLookupServiceMock.Object,
             _premiseActivityTypeLookupServiceMock.Object,
+            _siteIdentifierTypeLookupServiceMock.Object,
             _goldSiteRepositoryMock.Object,
             Mock.Of<IGenericRepository<PartyDocument>>(),
             Mock.Of<ILogger<SamHoldingImportGoldMappingStep>>());
