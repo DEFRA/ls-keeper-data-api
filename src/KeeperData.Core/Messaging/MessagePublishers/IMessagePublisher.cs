@@ -1,6 +1,8 @@
+using KeeperData.Core.Messaging.MessagePublishers.Clients;
+
 namespace KeeperData.Core.Messaging.MessagePublishers;
 
-public interface IMessagePublisher<in T> where T : IQueueClient, new()
+public interface IMessagePublisher<in T> where T : class, new()
 {
     string? TopicArn { get; }
 
