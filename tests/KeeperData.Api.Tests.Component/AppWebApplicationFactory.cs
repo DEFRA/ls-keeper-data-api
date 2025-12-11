@@ -191,9 +191,6 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
             .ReturnsAsync(new ListTopicsResponse() { HttpStatusCode = HttpStatusCode.OK });
 
         services.AddSingleton(AmazonSNSMock.Object);
-
-        services.AddSingleton<TestQueuePollerObserver<MessageType>>();
-        services.AddScoped<IQueuePollerObserver<MessageType>>(sp => sp.GetRequiredService<TestQueuePollerObserver<MessageType>>());
     }
 
     private void ConfigureDatabase(IServiceCollection services)
