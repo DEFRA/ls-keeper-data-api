@@ -348,8 +348,8 @@ public class SamBulkImportWithAccurateRawDataTests
     private void SetupDefaultLookupServiceMocks()
     {
         _countryIdentifierLookupServiceMock
-            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? code, CancellationToken token) => (CountryData.Find(code!)));
+            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? code, string? internalCode, CancellationToken token) => (CountryData.Find(code!)));
 
         _countryIdentifierLookupServiceMock
             .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))

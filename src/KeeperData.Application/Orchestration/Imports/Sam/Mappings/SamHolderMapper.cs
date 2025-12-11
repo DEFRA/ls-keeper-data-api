@@ -14,7 +14,7 @@ public static class SamHolderMapper
         List<SamCphHolder> rawHolders,
         InferredRoleType inferredRoleType,
         Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
-        Func<string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
+        Func<string?, string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
         CancellationToken cancellationToken)
     {
         var result = new List<SamPartyDocument>();
@@ -39,10 +39,10 @@ public static class SamHolderMapper
     public static async Task<SamPartyDocument> ToSilver(
         SamCphHolder p,
         (string? RoleNameToLookup, string? RoleTypeId, string? RoleTypeName) roleTypeInfo,
-        Func<string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
+        Func<string?, string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
         CancellationToken cancellationToken)
     {
-        var (countryId, _) = await resolveCountry(p.COUNTRY_CODE, cancellationToken);
+        var (countryId, _) = await resolveCountry(p.COUNTRY_CODE, p.UK_INTERNAL_CODE, cancellationToken);
         var partyTypeId = p.DeterminePartyType().ToString();
         var addressLine = AddressFormatters.FormatAddressRange(
                         p.SAON_START_NUMBER, p.SAON_START_NUMBER_SUFFIX,
