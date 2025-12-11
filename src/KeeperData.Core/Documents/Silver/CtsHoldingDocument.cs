@@ -19,6 +19,10 @@ public class CtsHoldingDocument : BaseHoldingDocument, IEntity, IDeletableEntity
     [BsonElement("lastUpdatedBatchId")]
     public int? LastUpdatedBatchId { get; set; }
 
+    [BsonElement("createdDate")]
+    [JsonPropertyName("createdDate")]
+    public DateTime CreatedDate { get; set; }
+
     [JsonPropertyName("lastUpdatedDate")]
     [BsonElement("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
@@ -29,15 +33,6 @@ public class CtsHoldingDocument : BaseHoldingDocument, IEntity, IDeletableEntity
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
-        return
-        [
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("CountyParishHoldingNumber"),
-                new CreateIndexOptions { Name = "idx_cphNumber" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("AlternativeHoldingIdentifier"),
-                new CreateIndexOptions { Name = "idx_altIdentifier" })
-        ];
+        return AutoIndexedAttribute.GetIndexModels<CtsHoldingDocument>();
     }
 }

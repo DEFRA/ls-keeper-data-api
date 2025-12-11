@@ -1,4 +1,7 @@
+using Amazon.Runtime.Internal;
+using KeeperData.Api.Controllers.ResponseDtos.Scans;
 using KeeperData.Api.Middleware;
+using KeeperData.Api.Worker.Tasks;
 using KeeperData.Infrastructure.Telemetry;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -16,6 +19,8 @@ public static class WebApplicationExtensions
         var logger = app.Services.GetRequiredService<ILogger<Program>>();
         var configuration = app.Services.GetRequiredService<IConfiguration>();
         var healthcheckMaskingEnabled = configuration.GetValue<bool>("HealthcheckMaskingEnabled");
+        var bulkScanEndpointsEnabled = configuration.GetValue<bool>("BulkScanEndpointsEnabled");
+        var dailyScanEndpointsEnabled = configuration.GetValue<bool>("DailyScanEndpointsEnabled");
 
         applicationLifetime.ApplicationStarted.Register(() =>
             logger.LogInformation("{applicationName} started", env.ApplicationName));
@@ -49,6 +54,64 @@ public static class WebApplicationExtensions
 
         app.MapGet("/", () => "Alive!");
 
+        if (bulkScanEndpointsEnabled)
+        {
+            RegisterScanEndpoint<ICtsBulkScanTask>(app, "/api/import/startCtsBulkScan", "CTS bulk scan");
+            RegisterScanEndpoint<ISamBulkScanTask>(app, "/api/import/startSamBulkScan", "SAM bulk scan");
+        }
+
+        if (dailyScanEndpointsEnabled)
+        {
+            RegisterScanEndpoint<ICtsDailyScanTask>(app, "/api/import/startCtsDailyScan", "CTS daily scan");
+            RegisterScanEndpoint<ISamDailyScanTask>(app, "/api/import/startSamDailyScan", "SAM daily scan");
+        }
+
         app.MapControllers();
+    }
+
+    private static void RegisterScanEndpoint<TTask>(
+        WebApplication app,
+        string route,
+        string scanName)
+        where TTask : IScanTask
+    {
+        app.MapPost(route, async (
+            TTask scanTask,
+            ILogger<IScanTask> logger,
+            CancellationToken cancellationToken) =>
+        {
+            logger.LogInformation("Received request to start {scanName} at {requestTime}", scanName, DateTime.UtcNow);
+
+            try
+            {
+                var scanCorrelationId = await scanTask.StartAsync(cancellationToken);
+
+                if (scanCorrelationId == null)
+                {
+                    logger.LogWarning("Failed to start {scanName} - could not acquire lock", scanName);
+                    return Results.Conflict(new ErrorResponse
+                    {
+                        Message = $"{scanName} is already running. Please wait for the current import to complete."
+                    });
+                }
+
+                logger.LogInformation("{scanName} started successfully with scanCorrelationId: {scanCorrelationId}", scanName, scanCorrelationId.Value);
+
+                return Results.Accepted(route, new StartScanResponse
+                {
+                    ScanCorrelationId = scanCorrelationId.Value,
+                    Message = $"{scanName} started successfully and is running in the background.",
+                    StartedAt = DateTime.UtcNow
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                logger.LogWarning("{scanName} start request was cancelled", scanName);
+                return Results.Json(
+                    new ErrorResponse { Message = "Request was cancelled." },
+                    statusCode: 499
+                );
+            }
+        });
     }
 }

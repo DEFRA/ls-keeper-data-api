@@ -80,7 +80,6 @@ public static class ServiceCollectionExtensions
         var messageIdentifierTypes = new[]
         {
             typeof(SamImportHoldingMessage),
-            typeof(SamImportHolderMessage),
             typeof(CtsImportHoldingMessage),
             typeof(SamBulkScanMessage),
             typeof(CtsBulkScanMessage),
@@ -89,10 +88,7 @@ public static class ServiceCollectionExtensions
             typeof(CtsUpdateKeeperMessage),
             typeof(CtsUpdateAgentMessage),
             typeof(SamDailyScanMessage),
-            typeof(SamUpdateHoldingMessage),
-            typeof(SamUpdateHolderMessage),
-            typeof(SamUpdateHerdMessage),
-            typeof(SamUpdatePartyMessage)
+            typeof(SamUpdateHoldingMessage)
         };
 
         foreach (var messageType in messageIdentifierTypes)

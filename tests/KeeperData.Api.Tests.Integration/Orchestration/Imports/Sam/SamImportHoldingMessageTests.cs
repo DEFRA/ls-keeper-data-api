@@ -24,7 +24,6 @@ public class SamImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalSt
         var correlationId = Guid.NewGuid().ToString();
         var holdingIdentifier = CphGenerator.GenerateFormattedCph();
         var message = GetSamImportHoldingMessage(holdingIdentifier);
-        var testExecutedOn = DateTime.UtcNow;
 
         await ExecuteQueueTest(correlationId, message);
 
@@ -63,18 +62,11 @@ public class SamImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalSt
         var silverSamHoldingFilter = Builders<SamHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
         var silverSamHoldings = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("samHoldings", silverSamHoldingFilter);
 
-        var partyRoleRelationshipFilter = Builders<Core.Documents.Silver.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
-        var partyRoleRelationships = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("silverSitePartyRoleRelationships", partyRoleRelationshipFilter);
-        var partyRolePartyIds = partyRoleRelationships.Select(r => r.PartyId).Distinct().ToList();
-
-        var silverSamPartyFilter = Builders<SamPartyDocument>.Filter.In(x => x.PartyId, partyRolePartyIds);
+        var silverSamPartyFilter = Builders<SamPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
         var silverSamParties = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("samParties", silverSamPartyFilter);
-        var partyIds = silverSamParties.Select(x => x.PartyId).Distinct().ToHashSet();
 
         silverSamHoldings.Should().NotBeNull().And.HaveCount(1);
         silverSamParties.Should().NotBeNull().And.HaveCountGreaterThanOrEqualTo(1);
-        partyRoleRelationships.Should().NotBeNull().And.HaveCount(silverSamParties.Count);
-        partyIds.SetEquals(partyRolePartyIds).Should().BeTrue();
 
         var silverSamHerdFilter = Builders<SamHerdDocument>.Filter.Eq(x => x.CountyParishHoldingHerd, $"{holdingIdentifier}/01");
         var silverSamHerds = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("samHerds", silverSamHerdFilter);
@@ -89,7 +81,24 @@ public class SamImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalSt
             x => x.Identifiers,
             i => i.Identifier == holdingIdentifier && i.Type == holdingIdentifierType);
         var sites = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("sites", siteFilter);
+
+        var partyRoleRelationshipFilter = Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
+        var partyRoleRelationships = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("sitePartyRoleRelationships", partyRoleRelationshipFilter);
+        var partyRolePartyIds = partyRoleRelationships.Select(r => r.PartyId).Distinct().ToList();
+
+        var partyFilter = Builders<PartyDocument>.Filter.In(x => x.CustomerNumber, partyRolePartyIds);
+        var parties = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("parties", partyFilter);
+        var partyIds = parties.Select(x => x.CustomerNumber).Distinct().ToHashSet();
+
         sites.Should().NotBeNull().And.HaveCount(1);
+        parties.Should().NotBeNull().And.HaveCountGreaterThanOrEqualTo(1);
+        partyRoleRelationships.Should().NotBeNull().And.HaveCount(parties.Count);
+        partyIds.SetEquals(partyRolePartyIds).Should().BeTrue();
+
+        for (int i = 0; i < parties[0].PartyRoles.Count; i++)
+        {
+            parties[0].PartyRoles[i].Site!.IdentifierId.Should().Be(sites[0].Id);
+        }
     }
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
@@ -115,7 +124,7 @@ public class SamImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalSt
     }
 
     public async Task DisposeAsync()
-    { // TODO checkme
+    {
         await _mongoDbFixture.MongoVerifier.DeleteAll<PartyDocument>();
         await _mongoDbFixture.MongoVerifier.DeleteAll<SiteDocument>();
         await _mongoDbFixture.MongoVerifier.DeleteAll<SamPartyDocument>();
@@ -123,5 +132,8 @@ public class SamImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalSt
         await _mongoDbFixture.MongoVerifier.DeleteAll<SamHoldingDocument>();
         await _mongoDbFixture.MongoVerifier.DeleteAll<Core.Documents.Silver.SitePartyRoleRelationshipDocument>();
         await _mongoDbFixture.MongoVerifier.DeleteAll<CtsHoldingDocument>();
+        await _mongoDbFixture.MongoVerifier.DeleteAll<CtsPartyDocument>();
+        await _mongoDbFixture.MongoVerifier.DeleteAll<SiteGroupMarkRelationshipDocument>();
+        await _mongoDbFixture.MongoVerifier.DeleteAll<Core.Documents.SitePartyRoleRelationshipDocument>();
     }
 }

@@ -1,5 +1,6 @@
 using FluentAssertions;
 using KeeperData.Core.ApiClients.DataBridgeApi;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Exceptions;
 using KeeperData.Infrastructure.ApiClients;
 using KeeperData.Tests.Common.Factories.UseCases;
@@ -67,7 +68,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetSamHoldingsAsync(10, 0, cancellationToken: CancellationToken.None);
+        var result = await _client.GetSamHoldingsAsync<SamCphHolding>(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
@@ -107,11 +108,33 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetSamHoldersAsync(10, 0, cancellationToken: CancellationToken.None);
+        var result = await _client.GetSamHoldersAsync<SamCphHolder>(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
         result.Data[0].PARTY_ID.Should().NotBe(result.Data[1].PARTY_ID);
+    }
+
+    [Fact]
+    public async Task GetSamHoldersByCphAsync_ShouldReturnHolder_WhenApiReturnsSuccess()
+    {
+        var partyId = $"C{new Random().Next(1, 9):D6}";
+        var holdingIdentifier = CphGenerator.GenerateFormattedCph();
+        var expectedResponse = MockSamData.GetSamHolderStringContentResponse(partyId, [holdingIdentifier]);
+
+        var uri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamHolders,
+            new { },
+            DataBridgeQueries.SamHoldersByCph(holdingIdentifier));
+
+        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
+            .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
+
+        var result = await _client.GetSamHoldersByCphAsync(holdingIdentifier, CancellationToken.None);
+
+        result.Should().NotBeNull().And.HaveCount(1);
+        result[0].PARTY_ID.Should().Contain(partyId);
+        result[0].CphList.Should().Contain(holdingIdentifier);
     }
 
     [Fact]
@@ -149,7 +172,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetSamHerdsAsync(10, 0, cancellationToken: CancellationToken.None);
+        var result = await _client.GetSamHerdsAsync<SamHerd>(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
@@ -177,6 +200,26 @@ public class DataBridgeClientTests
         result[0].CPHH.Should().Be(id);
         result[0].OwnerPartyIdList.Should().Contain(partyId);
         result[0].KeeperPartyIdList.Should().Contain(partyId);
+    }
+
+    [Fact]
+    public async Task GetSamHerdsByPartyIdAsync_ShouldReturnHerds_WhenApiReturnsSuccess()
+    {
+        var partyId = "C100001";
+        var expectedResponse = MockSamData.GetSamHerdsStringContentResponse(2, 0);
+
+        var uri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamHerds,
+            new { },
+            DataBridgeQueries.SamHerdsByPartyId(partyId, "CPHH", "CPHH asc"));
+
+        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
+            .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
+
+        var result = await _client.GetSamHerdsByPartyIdAsync<SamScanHerdIdentifier>(partyId, "CPHH", "CPHH asc", CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.Data.Should().NotBeNull().And.HaveCount(2);
     }
 
     [Fact]
@@ -212,7 +255,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetSamPartiesAsync(10, 0, cancellationToken: CancellationToken.None);
+        var result = await _client.GetSamPartiesAsync<SamParty>(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
@@ -252,7 +295,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetCtsHoldingsAsync(10, 0, cancellationToken: CancellationToken.None);
+        var result = await _client.GetCtsHoldingsAsync<CtsCphHolding>(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
@@ -292,7 +335,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetCtsAgentsAsync(10, 0, cancellationToken: CancellationToken.None);
+        var result = await _client.GetCtsAgentsAsync<CtsAgentOrKeeper>(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);
@@ -332,7 +375,7 @@ public class DataBridgeClientTests
         _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
             .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
 
-        var result = await _client.GetCtsKeepersAsync(10, 0, cancellationToken: CancellationToken.None);
+        var result = await _client.GetCtsKeepersAsync<CtsAgentOrKeeper>(10, 0, cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull().And.HaveCount(10);

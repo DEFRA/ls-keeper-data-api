@@ -5,6 +5,7 @@ using KeeperData.Core.Repositories;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
+using MongoDB.Driver.Linq;
 using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
@@ -19,10 +20,12 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("createdDate")]
     [JsonPropertyName("createdDate")]
-    public DateTime CreatedDate { get; private set; }
+    [AutoIndexed]
+    public DateTime CreatedDate { get; set; }
 
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
+    [AutoIndexed]
     public DateTime LastUpdatedDate { get; set; }
 
     [BsonElement("title")]
@@ -43,10 +46,12 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("customerNumber")]
     [JsonPropertyName("customerNumber")]
+    [AutoIndexed]
     public string? CustomerNumber { get; set; }
 
     [BsonElement("partyType")]
     [JsonPropertyName("partyType")]
+    [AutoIndexed]
     public string? PartyType { get; set; }
 
     [BsonElement("state")]
@@ -67,7 +72,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("partyRoles")]
     [JsonPropertyName("partyRoles")]
-    public List<PartyRoleDocument> PartyRoles { get; set; } = [];
+    public List<PartyRoleWithSiteDocument> PartyRoles { get; set; } = [];
 
     public static PartyDocument FromDomain(Party domain)
     {
@@ -76,7 +81,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
             : null;
 
         var communications = domain.Communications?.Select(CommunicationDocument.FromDomain).ToList() ?? [];
-        var roles = domain.Roles?.Select(PartyRoleDocument.FromDomain).ToList() ?? [];
+        var roles = domain.Roles?.Select(PartyRoleWithSiteDocument.FromDomain).ToList() ?? [];
 
         return new PartyDocument
         {
@@ -130,12 +135,12 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
             : null;
 
         var communications = siteParty.Communication?.Select(CommunicationDocument.FromDomain).ToList() ?? [];
-        var roles = siteParty.PartyRoles?.Select(PartyRoleDocument.FromDomain).ToList() ?? [];
+        var roles = siteParty.PartyRoles?.Select(PartyRoleWithSiteDocument.FromDomain).ToList() ?? [];
 
         return new PartyDocument
         {
-            Id = siteParty.Id, // TODO - need to consider matching the Id
-            CreatedDate = DateTime.UtcNow, // TODO - Add CreatedDate to child so can preserve
+            Id = siteParty.Id,
+            CreatedDate = siteParty.CreatedDate,
             LastUpdatedDate = siteParty.LastUpdatedDate,
             Title = siteParty.Title,
             FirstName = siteParty.FirstName,
@@ -154,7 +159,8 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
     public SiteParty ToSitePartyDomain(DateTime lastUpdatedDate)
     {
         return new SiteParty(
-            id: Id, // TODO - need to consider matching the Id
+            id: Id,
+            createdDate: CreatedDate,
             lastUpdatedDate: lastUpdatedDate,
             partyId: CustomerNumber ?? string.Empty,
             title: Title,
@@ -170,35 +176,12 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
-        return
+        return Enumerable.Concat(
         [
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("Name"),
-                new CreateIndexOptions { Name = "idx_name" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("FirstName"),
-                new CreateIndexOptions { Name = "idx_firstName" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("LastName"),
-                new CreateIndexOptions { Name = "idx_lastName" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("CustomerNumber"),
-                new CreateIndexOptions { Name = "idx_customerNumber" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("PartyType"),
-                new CreateIndexOptions { Name = "idx_partyType" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("CreatedDate"),
-                new CreateIndexOptions { Name = "idx_createdDate" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("LastUpdatedDate"),
-                new CreateIndexOptions { Name = "idx_lastUpdatedDate" }),
-        ];
+                Builders<BsonDocument>.IndexKeys.Ascending("lastName").Ascending("firstName"),
+                new CreateIndexOptions { Name = "idxv2_firstlastName", Collation = IndexDefaults.CollationCaseInsensitive }),
+        ],
+        AutoIndexedAttribute.GetIndexModels<PartyDocument>());
     }
 }

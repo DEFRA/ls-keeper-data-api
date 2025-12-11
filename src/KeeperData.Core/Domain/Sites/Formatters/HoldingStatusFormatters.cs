@@ -4,9 +4,9 @@ namespace KeeperData.Core.Domain.Sites.Formatters;
 
 public static class HoldingStatusFormatters
 {
-    public static string FormatHoldingStatus(DateTime? endDate)
+    public static string FormatHoldingStatus(bool deleted)
     {
-        return endDate.HasValue && endDate != default(DateTime)
+        return deleted
             ? HoldingStatusType.Inactive.ToString()
             : HoldingStatusType.Active.ToString();
     }

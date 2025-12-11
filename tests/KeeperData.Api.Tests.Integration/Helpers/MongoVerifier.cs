@@ -1,8 +1,7 @@
-using System.Reflection;
 using KeeperData.Core.Attributes;
-using KeeperData.Core.Documents;
 using KeeperData.Core.Repositories;
 using MongoDB.Driver;
+using System.Reflection;
 
 namespace KeeperData.Api.Tests.Integration.Helpers;
 
@@ -58,5 +57,20 @@ public class MongoVerifier
         var collectionName = typeof(T).GetCustomAttribute<CollectionNameAttribute>()?.Name ?? typeof(T).Name;
         var collection = _database.GetCollection<T>(collectionName);
         await collection.DeleteManyAsync(FilterDefinition<T>.Empty);
+    }
+
+    public async Task ClearAllCollections()
+    {
+        var collectionNames = await _database.ListCollectionNamesAsync();
+        var collections = await collectionNames.ToListAsync();
+
+        foreach (var collectionName in collections)
+        {
+            // Skip system collections
+            if (collectionName.StartsWith("system."))
+                continue;
+
+            await _database.DropCollectionAsync(collectionName);
+        }
     }
 }

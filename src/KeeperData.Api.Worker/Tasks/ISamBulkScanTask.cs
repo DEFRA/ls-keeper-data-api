@@ -1,6 +1,5 @@
 namespace KeeperData.Api.Worker.Tasks;
 
-public interface ISamBulkScanTask : ITask
+public interface ISamBulkScanTask : IScanTask
 {
-    Task<Guid?> StartAsync(CancellationToken cancellationToken = default);
 }

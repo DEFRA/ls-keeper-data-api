@@ -1,6 +1,8 @@
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
+using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
@@ -26,6 +28,7 @@ public class SamHerdDailyScanStep(
     private readonly bool _samHerdsEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamHerdsEnabled");
 
     private const string SelectFields = "CPHH";
+    private const string OrderBy = "CPHH asc";
 
     protected override async Task ExecuteCoreAsync(SamDailyScanContext context, CancellationToken cancellationToken)
     {
@@ -40,11 +43,12 @@ public class SamHerdDailyScanStep(
 
         while (!context.Herds.ScanCompleted && !cancellationToken.IsCancellationRequested)
         {
-            var queryResponse = await _dataBridgeClient.GetSamHerdsAsync(
+            var queryResponse = await _dataBridgeClient.GetSamHerdsAsync<SamScanHerdIdentifier>(
                 context.Herds.CurrentTop,
                 context.Herds.CurrentSkip,
                 SelectFields,
                 context.UpdatedSinceDateTime,
+                OrderBy,
                 cancellationToken);
 
             if (queryResponse == null || queryResponse.Data.Count == 0)
@@ -54,14 +58,14 @@ public class SamHerdDailyScanStep(
             }
 
             var identifiers = queryResponse.Data
-                .Select(x => x.CPHH)
+                .Select(x => x.CPHH.CphhToCph())
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Distinct()
                 .ToList();
 
             foreach (var id in identifiers)
             {
-                var message = new SamUpdateHerdMessage
+                var message = new SamUpdateHoldingMessage
                 {
                     Id = Guid.NewGuid(),
                     Identifier = id

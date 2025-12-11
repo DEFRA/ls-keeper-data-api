@@ -1,8 +1,8 @@
-using FluentAssertions;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily.Steps;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
@@ -11,11 +11,6 @@ using KeeperData.Tests.Common.Factories.UseCases;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace KeeperData.Application.Tests.Unit.Orchestration.ChangeScanning.Sam;
 
@@ -54,33 +49,70 @@ public class SamHerdDailyScanStepTests
     }
 
     [Fact]
+    public async Task ExecuteCoreAsync_ShouldExitWhenSamHerdsDisabled()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { { "DataBridgeCollectionFlags:SamHerdsEnabled", "false" } })
+            .Build();
+
+        var scanStep = new SamHerdDailyScanStep(
+            _dataBridgeClientMock.Object,
+            _messagePublisherMock.Object,
+            _config,
+            _delayProviderMock.Object,
+            configuration,
+            _loggerMock.Object);
+
+        await scanStep.ExecuteAsync(_context, CancellationToken.None);
+
+        _dataBridgeClientMock.Verify(c => c.GetSamPartiesAsync<SamScanHerdIdentifier>(
+            It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTime?>(),
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_ShouldMarkScanCompleted_WhenNoHerdsReturned()
+    {
+        _dataBridgeClientMock
+            .Setup(c => c.GetSamHerdsAsync<SamScanHerdIdentifier>(
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTime?>(),
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DataBridgeResponse<SamScanHerdIdentifier> { CollectionName = "collection", Data = [] });
+
+        await _scanStep.ExecuteAsync(_context, CancellationToken.None);
+
+        Assert.True(_context.Herds.ScanCompleted);
+    }
+
+    [Fact]
     public async Task ExecuteCoreAsync_ShouldQueryWithCorrectDateTimeFilter()
     {
-        var responseMock = MockSamData.GetSamHerdsDataBridgeResponse(0, 0, 0);
+        var responseMock = MockSamData.GetSamHerdsScanIdentifierDataBridgeResponse(0, 0, 0);
         _dataBridgeClientMock
-            .Setup(c => c.GetSamHerdsAsync(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetSamHerdsAsync<SamScanHerdIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
 
-        _dataBridgeClientMock.Verify(c => c.GetSamHerdsAsync(
+        _dataBridgeClientMock.Verify(c => c.GetSamHerdsAsync<SamScanHerdIdentifier>(
             It.IsAny<int>(),
             It.IsAny<int>(),
             It.IsAny<string>(),
             It.Is<DateTime?>(d => d.HasValue && d.Value.Subtract(_context.UpdatedSinceDateTime!.Value).TotalSeconds < 1),
+            It.IsAny<string>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task ExecuteCoreAsync_ShouldPublishSamUpdateHerdMessage()
     {
-        var responseMock = MockSamData.GetSamHerdsDataBridgeResponse(1, 1, 1);
+        var responseMock = MockSamData.GetSamHerdsScanIdentifierDataBridgeResponse(1, 1, 1);
         _dataBridgeClientMock
-            .Setup(c => c.GetSamHerdsAsync(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetSamHerdsAsync<SamScanHerdIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
 
-        _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<SamUpdateHerdMessage>(), It.IsAny<CancellationToken>()), Times.Once);
+        _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<SamUpdateHoldingMessage>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

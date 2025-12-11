@@ -3,7 +3,6 @@ using KeeperData.Api.Tests.Integration.Consumers.Helpers;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Tests.Common.Generators;
-using Xunit;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Sam;
 

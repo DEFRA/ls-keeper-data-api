@@ -37,7 +37,7 @@ public class CountryRepository(
         country ??= countries.FirstOrDefault(c => c.Name?.Equals(lookupValue, StringComparison.OrdinalIgnoreCase) == true);
 
         return country != null
-            ? (country.Code, country.Name)
+            ? (country.IdentifierId, country.Name)
             : (null, null);
     }
 }

@@ -37,7 +37,6 @@ public class SamHerdMapperTests
     public async Task GivenNullableRawHerds_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = await SamHerdMapper.ToSilver(
-            DateTime.UtcNow,
             (List<SamHerd>?)null!,
             _resolveProductionUsage,
             _resolveSpeciesType,
@@ -51,7 +50,6 @@ public class SamHerdMapperTests
     public async Task GivenEmptyRawHerds_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = await SamHerdMapper.ToSilver(
-            DateTime.UtcNow,
             [],
             _resolveProductionUsage,
             _resolveSpeciesType,
@@ -71,7 +69,6 @@ public class SamHerdMapperTests
         var records = GenerateSamHerds(quantityHerds: 1, quantityParties: 2);
 
         var results = await SamHerdMapper.ToSilver(
-            DateTime.UtcNow,
             records,
             _resolveProductionUsage,
             _resolveSpeciesType,
@@ -97,7 +94,6 @@ public class SamHerdMapperTests
         var records = GenerateSamHerds(quantityHerds: 1, quantityParties: 2);
 
         var results = await SamHerdMapper.ToSilver(
-            DateTime.UtcNow,
             records,
             _resolveProductionUsage,
             _resolveSpeciesType,
@@ -124,7 +120,6 @@ public class SamHerdMapperTests
         var records = GenerateSamHerds(quantityHerds, quantityParties);
 
         var results = await SamHerdMapper.ToSilver(
-            DateTime.UtcNow,
             records,
             _resolveProductionUsage,
             _resolveSpeciesType,

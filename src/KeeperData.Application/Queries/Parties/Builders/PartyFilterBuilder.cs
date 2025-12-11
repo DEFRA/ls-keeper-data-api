@@ -9,6 +9,7 @@ public static class PartyFilterBuilder
     {
         var filters = new List<FilterDefinition<PartyDocument>>();
         var builder = Builders<PartyDocument>.Filter;
+        filters.Add(builder.Eq(x => x.Deleted, false));
 
         if (query.LastUpdatedDate.HasValue)
         {
@@ -25,12 +26,10 @@ public static class PartyFilterBuilder
             filters.Add(builder.Eq(x => x.LastName, query.LastName));
         }
 
-        /*
-        TODO EMAIL! not in dataset
-        if (query.Email != null)
+        if (!string.IsNullOrWhiteSpace(query.Email))
         {
-            filters.Add(builder.Eq(x => x., query.Email));
-        }*/
+            filters.Add(builder.ElemMatch(x => x.Communication, c => c.Email == query.Email));
+        }
 
         return filters.Count > 0 ? builder.And(filters) : builder.Empty;
     }

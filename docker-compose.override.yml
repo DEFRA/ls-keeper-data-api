@@ -11,6 +11,7 @@ services:
       - QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl=http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue
       - QueueConsumerOptions__IntakeEventQueueOptions__DeadLetterQueueUrl=http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue-deadletter
       - ApiClients__DataBridgeApi__BaseUrl=http://keeperdata_bridge:5560/
+      - ApiClients__DataBridgeApi__BridgeApiSubscriptionKey=
       - ApiClients__DataBridgeApi__ServiceName=
       - ApiClients__DataBridgeApi__XApiKey=
       - ApiClients__DataBridgeApi__UseFakeClient=true
@@ -19,6 +20,8 @@ services:
       - DataBridgeScanConfiguration__DelayBetweenQueriesSeconds=0
       - DataBridgeScanConfiguration__LimitScanTotalBatchSize=10
       - DataBridgeScanConfiguration__DailyScanIncludeChangesWithinTotalHours=24
+      - BulkScanEndpointsEnabled=true
+      - DailyScanEndpointsEnabled=true
     ports:
       - "5555"
     volumes:
@@ -26,3 +29,5 @@ services:
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+      # Mount seed files directly for Rider Fast Mode
+      - ./src/KeeperData.Infrastructure/Data/Seed:/app/Data/Seed:ro

@@ -5,7 +5,8 @@ namespace KeeperData.Core.Domain.Shared;
 public class PartyRole : ValueObject
 {
     public string Id { get; private set; }
-    public Role Role { get; private set; }
+    public PartyRoleSite? Site { get; private set; }
+    public PartyRoleRole Role { get; private set; }
     public DateTime? LastUpdatedDate { get; private set; }
     public IReadOnlyCollection<ManagedSpecies> SpeciesManagedByRole => _speciesManagedByRole.AsReadOnly();
 
@@ -13,31 +14,39 @@ public class PartyRole : ValueObject
 
     public PartyRole(
         string id,
-        Role role,
+        PartyRoleSite? site,
+        PartyRoleRole role,
         IEnumerable<ManagedSpecies> speciesManagedByRole,
         DateTime? lastUpdatedDate)
     {
         Id = id;
+        Site = site;
         Role = role;
         _speciesManagedByRole = [.. speciesManagedByRole];
         LastUpdatedDate = lastUpdatedDate;
     }
 
     public static PartyRole Create(
-        Role role,
+        PartyRoleSite? site,
+        PartyRoleRole role,
         IEnumerable<ManagedSpecies> speciesManagedByRole)
     {
         return new PartyRole(
             Guid.NewGuid().ToString(),
+            site,
             role,
             speciesManagedByRole,
             DateTime.UtcNow);
     }
 
-    public bool ApplyChanges(Role role, IEnumerable<ManagedSpecies> speciesManagedByRole, DateTime lastUpdatedDate)
+    public bool ApplyChanges(
+        PartyRoleSite? site,
+        PartyRoleRole role,
+        IEnumerable<ManagedSpecies> speciesManagedByRole, DateTime lastUpdatedDate)
     {
         var changed = false;
 
+        changed |= Change(Site, site, v => Site = v);
         changed |= Change(Role, role, v => Role = v);
         changed |= ChangeSpecies(speciesManagedByRole);
 

@@ -1,5 +1,6 @@
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessagePublishers;
@@ -9,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk.Steps;
 
-[StepOrder(2)]
+[StepOrder(1)]
 public class SamHoldingBulkScanStep(
     IDataBridgeClient dataBridgeClient,
     IMessagePublisher<IntakeEventsQueueClient> intakeMessagePublisher,
@@ -23,6 +24,7 @@ public class SamHoldingBulkScanStep(
     private readonly IDelayProvider _delayProvider = delayProvider;
 
     private const string SelectFields = "CPH";
+    private const string OrderBy = "CPH asc";
 
     protected override async Task ExecuteCoreAsync(SamBulkScanContext context, CancellationToken cancellationToken)
     {
@@ -32,11 +34,12 @@ public class SamHoldingBulkScanStep(
 
         while (!context.Holdings.ScanCompleted && !cancellationToken.IsCancellationRequested)
         {
-            var queryResponse = await _dataBridgeClient.GetSamHoldingsAsync(
+            var queryResponse = await _dataBridgeClient.GetSamHoldingsAsync<SamScanHoldingIdentifier>(
                 context.Holdings.CurrentTop,
                 context.Holdings.CurrentSkip,
                 SelectFields,
                 context.UpdatedSinceDateTime,
+                OrderBy,
                 cancellationToken);
 
             if (queryResponse == null || queryResponse.Data.Count == 0)

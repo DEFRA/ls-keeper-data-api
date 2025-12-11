@@ -1,10 +1,10 @@
+using FluentAssertions;
+using KeeperData.Application.Queries.Pagination;
+using KeeperData.Core.Documents;
 using System.Net;
 using System.Net.Http.Json;
 using System.Web;
-using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Helpers;
-using KeeperData.Application.Queries.Pagination;
-using KeeperData.Core.Documents;
 
 namespace KeeperData.Api.Tests.Integration.Endpoints;
 
@@ -53,7 +53,9 @@ public class PartiesEndpointTests(MongoDbFixture mongoDbFixture, LocalStackFixtu
     [InlineData("WhenSearchingByFirstAndLastName", "Mark", "Smith", null, 1, MarkSmithId)]
     [InlineData("WhenSearchingForRecordsThatDoNotExist", null, "Smythe", null, 0, "")]
     [InlineData("WhenSearchingByDate", null, null, "2011-01-01", 2, MarkSmithId + "," + HueyNewsId)]
-    // TODO case insensitive search [InlineData("WhenSearchingCaseInsensitive", "john", "smith", 1, JohnSmithId)]
+    [InlineData("WhenSearchingCaseInsensitiveBothNames", "john", "smith", null, 1, JohnSmithId)]
+    [InlineData("WhenSearchingCaseInsensitiveFirstName", "john", null, null, 1, JohnSmithId)]
+    [InlineData("WhenSearchingByCaseInsensitiveLastName", null, "smith", null, 2, JohnSmithId + "," + MarkSmithId)]
     public async Task GivenASearchRequest_ShouldHaveExpectedResults(string scenario, string? firstName, string? lastName, string? dateStr, int expectedCount, string expectedIdCsv)
     {
         Console.WriteLine(scenario);
@@ -75,7 +77,7 @@ public class PartiesEndpointTests(MongoDbFixture mongoDbFixture, LocalStackFixtu
     [Theory]
     [InlineData("WhenSearchingById1", JohnSmithId, HttpStatusCode.OK, "\"firstName\":\"John\"")]
     [InlineData("WhenSearchingById2", HueyNewsId, HttpStatusCode.OK, "\"firstName\":\"Huey\"")]
-    [InlineData("WhenSearchingForIdThatDoesNotExist", "00000000-0000-0000-0000-000000000000", HttpStatusCode.InternalServerError, "not found")] //TODO should this be 404
+    [InlineData("WhenSearchingForIdThatDoesNotExist", "00000000-0000-0000-0000-000000000000", HttpStatusCode.NotFound, "not found")]
     public async Task GivenAnRecordRequestById_ShouldHaveExpectedResults(string scenario, string requestedId, HttpStatusCode expectedHttpCode, string responseShouldContain)
     {
         Console.WriteLine(scenario);
@@ -104,6 +106,7 @@ public class PartiesEndpointTests(MongoDbFixture mongoDbFixture, LocalStackFixtu
 
     public async Task InitializeAsync()
     {
+        await _mongoDbFixture.MongoVerifier.DeleteAll<PartyDocument>();
         await _mongoDbFixture.MongoVerifier.Insert(GivenTheseParties);
     }
 

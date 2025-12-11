@@ -13,6 +13,7 @@ using KeeperData.Infrastructure.Storage.Factories.Implementations;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -31,12 +32,26 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
     public readonly Mock<HttpMessageHandler> DataBridgeApiClientHttpMessageHandlerMock = new();
 
     private readonly List<Action<IServiceCollection>> _overrideServices = [];
+    private readonly IDictionary<string, string?> _configurationOverrides;
 
     private const string ComparisonReportsStorageBucket = "test-comparison-reports-bucket";
+
+    public AppWebApplicationFactory(IDictionary<string, string?>? configurationOverrides = null)
+    {
+        _configurationOverrides = configurationOverrides ?? new Dictionary<string, string?>();
+    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         SetTestEnvironmentVariables();
+
+        builder.ConfigureAppConfiguration(config =>
+        {
+            if (_configurationOverrides.Count > 0)
+            {
+                config.AddInMemoryCollection(_configurationOverrides);
+            }
+        });
 
         builder.ConfigureTestServices(services =>
         {
@@ -102,8 +117,11 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl", "http://localhost:4566/000000000000/test-queue");
         Environment.SetEnvironmentVariable("ApiClients__DataBridgeApi__HealthcheckEnabled", "true");
         Environment.SetEnvironmentVariable("ApiClients__DataBridgeApi__BaseUrl", TestConstants.DataBridgeApiBaseUrl);
+        Environment.SetEnvironmentVariable("ApiClients__DataBridgeApi__BridgeApiSubscriptionKey", "XYZ");
         Environment.SetEnvironmentVariable("ServiceBusSenderConfiguration__IntakeEventQueue__QueueUrl", "http://localhost:4566/000000000000/test-queue");
         Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__CtsAgentsEnabled", "true");
+        Environment.SetEnvironmentVariable("BulkScanEndpointsEnabled", "false");
+        Environment.SetEnvironmentVariable("DailyScanEndpointsEnabled", "false");
     }
 
     private static void ConfigureAwsOptions(IServiceCollection services)
@@ -170,6 +188,10 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
             .SetupGet(x => x.Indexes)
             .Returns(indexManagerMock.Object);
 
+        indexManagerMock
+            .Setup(x => x.ListAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateEmptyCursor());
+
         mongoDatabaseMock
             .Setup(x => x.GetCollection<BsonDocument>(It.IsAny<string>(), It.IsAny<MongoCollectionSettings>()))
             .Returns(mongoCollectionMock.Object);
@@ -180,6 +202,22 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
             .Returns(mongoDatabaseMock.Object);
 
         services.Replace(new ServiceDescriptor(typeof(IMongoClient), MongoClientMock.Object));
+    }
+
+    private static IAsyncCursor<BsonDocument> CreateEmptyCursor()
+    {
+        var mockCursor = new Mock<IAsyncCursor<BsonDocument>>();
+
+        mockCursor.Setup(x => x.MoveNext(It.IsAny<CancellationToken>()))
+                  .Returns(false);
+
+        mockCursor.Setup(x => x.MoveNextAsync(It.IsAny<CancellationToken>()))
+                  .ReturnsAsync(false);
+
+        mockCursor.SetupGet(x => x.Current)
+                  .Returns([]);
+
+        return mockCursor.Object;
     }
 
     private static void RemoveService<T>(IServiceCollection services)

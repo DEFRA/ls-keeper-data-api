@@ -22,6 +22,10 @@ public class SamHerdDocument : IEntity, IContainsIndexes, IDeletableEntity
     [BsonElement("lastUpdatedBatchId")]
     public int? LastUpdatedBatchId { get; set; }
 
+    [BsonElement("createdDate")]
+    [JsonPropertyName("createdDate")]
+    public DateTime CreatedDate { get; set; }
+
     [JsonPropertyName("lastUpdatedDate")]
     [BsonElement("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
@@ -32,6 +36,7 @@ public class SamHerdDocument : IEntity, IContainsIndexes, IDeletableEntity
 
     [JsonPropertyName("herdmark")]
     [BsonElement("herdmark")]
+    [AutoIndexed]
     public string Herdmark { get; set; } = string.Empty;
 
     [JsonPropertyName("countyParishHoldingHerd")]
@@ -40,6 +45,7 @@ public class SamHerdDocument : IEntity, IContainsIndexes, IDeletableEntity
 
     [JsonPropertyName("countyParishHoldingNumber")]
     [BsonElement("countyParishHoldingNumber")]
+    [AutoIndexed]
     public string CountyParishHoldingNumber { get; set; } = string.Empty;
 
     [JsonPropertyName("speciesTypeId")]
@@ -50,12 +56,17 @@ public class SamHerdDocument : IEntity, IContainsIndexes, IDeletableEntity
     [BsonElement("speciesTypeCode")]
     public string? SpeciesTypeCode { get; set; }
 
+    [BsonElement("speciesTypeName")]
+    [JsonPropertyName("speciesTypeName")]
+    public string? SpeciesTypeName { get; set; }
+
     [JsonPropertyName("productionUsageId")]
     [BsonElement("productionUsageId")]
     public string? ProductionUsageId { get; set; } // LOV Lookup / Internal Id
 
     [JsonPropertyName("productionUsageCode")]
     [BsonElement("productionUsageCode")]
+    [AutoIndexed]
     public string? ProductionUsageCode { get; set; }
 
     [JsonPropertyName("animalPurposeCode")]
@@ -104,19 +115,6 @@ public class SamHerdDocument : IEntity, IContainsIndexes, IDeletableEntity
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
-        return
-        [
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("Herdmark"),
-                new CreateIndexOptions { Name = "idx_herdmark" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("CountyParishHoldingNumber"),
-                new CreateIndexOptions { Name = "idx_countyParishHoldingNumber" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("ProductionUsageCode"),
-                new CreateIndexOptions { Name = "idx_productionUsageCode" })
-        ];
+        return AutoIndexedAttribute.GetIndexModels<SamHerdDocument>();
     }
 }

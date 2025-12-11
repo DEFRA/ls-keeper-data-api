@@ -75,6 +75,10 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient(clientName, client =>
         {
             client.BaseAddress = new Uri(config.BaseUrl!.TrimEnd('/'));
+            if (config.BridgeApiSubscriptionKey != null)
+            {
+                client.DefaultRequestHeaders.Add("Authorization", $"ApiKey {config.BridgeApiSubscriptionKey}");
+            }
             if (config.XApiKey != null)
             {
                 client.DefaultRequestHeaders.Add("x-api-key", config.XApiKey);

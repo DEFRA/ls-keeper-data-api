@@ -1,8 +1,8 @@
-using FluentAssertions;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily.Steps;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
@@ -11,11 +11,6 @@ using KeeperData.Tests.Common.Factories.UseCases;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace KeeperData.Application.Tests.Unit.Orchestration.ChangeScanning.Sam;
 
@@ -54,33 +49,70 @@ public class SamHolderDailyScanStepTests
     }
 
     [Fact]
+    public async Task ExecuteCoreAsync_ShouldExitWhenSamHoldersDisabled()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { { "DataBridgeCollectionFlags:SamHoldersEnabled", "false" } })
+            .Build();
+
+        var scanStep = new SamHolderDailyScanStep(
+            _dataBridgeClientMock.Object,
+            _messagePublisherMock.Object,
+            _config,
+            _delayProviderMock.Object,
+            configuration,
+            _loggerMock.Object);
+
+        await scanStep.ExecuteAsync(_context, CancellationToken.None);
+
+        _dataBridgeClientMock.Verify(c => c.GetSamPartiesAsync<SamScanHolderIdentifier>(
+            It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTime?>(),
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_ShouldMarkScanCompleted_WhenNoHoldersReturned()
+    {
+        _dataBridgeClientMock
+            .Setup(c => c.GetSamHoldersAsync<SamScanHolderIdentifier>(
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTime?>(),
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DataBridgeResponse<SamScanHolderIdentifier> { CollectionName = "collection", Data = [] });
+
+        await _scanStep.ExecuteAsync(_context, CancellationToken.None);
+
+        Assert.True(_context.Holders.ScanCompleted);
+    }
+
+    [Fact]
     public async Task ExecuteCoreAsync_ShouldQueryWithCorrectDateTimeFilter()
     {
-        var responseMock = MockSamData.GetSamHolderDataBridgeResponse(0, 0, 0);
+        var responseMock = MockSamData.GetSamHolderScanIdentifierDataBridgeResponse(0, 0, 0);
         _dataBridgeClientMock
-            .Setup(c => c.GetSamHoldersAsync(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetSamHoldersAsync<SamScanHolderIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
 
-        _dataBridgeClientMock.Verify(c => c.GetSamHoldersAsync(
+        _dataBridgeClientMock.Verify(c => c.GetSamHoldersAsync<SamScanHolderIdentifier>(
             It.IsAny<int>(),
             It.IsAny<int>(),
             It.IsAny<string>(),
             It.Is<DateTime?>(d => d.HasValue && d.Value.Subtract(_context.UpdatedSinceDateTime!.Value).TotalSeconds < 1),
+            It.IsAny<string>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task ExecuteCoreAsync_ShouldPublishSamUpdateHolderMessage()
     {
-        var responseMock = MockSamData.GetSamHolderDataBridgeResponse(1, 1, 1);
+        var responseMock = MockSamData.GetSamHolderScanIdentifierDataBridgeResponse(1, 1, 1);
         _dataBridgeClientMock
-            .Setup(c => c.GetSamHoldersAsync(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetSamHoldersAsync<SamScanHolderIdentifier>(5, 0, It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(responseMock);
 
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
 
-        _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<SamUpdateHolderMessage>(), It.IsAny<CancellationToken>()), Times.Once);
+        _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<SamUpdateHoldingMessage>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

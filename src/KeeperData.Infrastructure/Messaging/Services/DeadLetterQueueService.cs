@@ -51,7 +51,6 @@ namespace KeeperData.Infrastructure.Messaging.Services
                 attributes["DLQ_FailureMessage"] = new MessageAttributeValue { StringValue = ex.Message.Substring(0, Math.Min(256, ex.Message.Length)), DataType = "String" };
                 attributes["DLQ_FailureTimestamp"] = new MessageAttributeValue { StringValue = DateTime.UtcNow.ToString("O"), DataType = "String" };
                 attributes["DLQ_OriginalMessageId"] = new MessageAttributeValue { StringValue = message.MessageId, DataType = "String" };
-                attributes["DLQ_ReceiveCount"] = new MessageAttributeValue { StringValue = message.Attributes.GetValueOrDefault("ApproximateReceiveCount", "0"), DataType = "Number" };
                 attributes["DLQ_ReceiveCount"] = new MessageAttributeValue
                 {
                     StringValue = (message.Attributes ?? []).GetValueOrDefault("ApproximateReceiveCount", "0"),

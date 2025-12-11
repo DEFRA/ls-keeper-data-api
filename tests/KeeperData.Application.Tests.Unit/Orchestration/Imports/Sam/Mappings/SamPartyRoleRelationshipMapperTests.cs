@@ -66,7 +66,7 @@ public class SamPartyRoleRelationshipMapperTests
         var holdingIdentifierType = HoldingIdentifierType.CphNumber.ToString();
 
         var silverParties = await SamPartyMapper.ToSilver(
-            DateTime.UtcNow,
+            holdingIdentifier,
             records,
             _resolveRoleType,
             _resolveCountry,

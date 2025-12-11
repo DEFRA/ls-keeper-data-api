@@ -24,6 +24,7 @@ public record SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes
 
     [BsonElement("partyId")]
     [JsonPropertyName("partyId")]
+    [AutoIndexed]
     public string PartyId { get; set; } = string.Empty;
 
     [BsonElement("partyTypeId")]
@@ -32,6 +33,7 @@ public record SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes
 
     [BsonElement("herdmark")]
     [JsonPropertyName("herdmark")]
+    [AutoIndexed]
     public string Herdmark { get; set; } = string.Empty;
 
     [BsonElement("countyParishHoldingHerd")]
@@ -40,42 +42,56 @@ public record SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes
 
     [BsonElement("holdingIdentifier")]
     [JsonPropertyName("holdingIdentifier")]
+    [AutoIndexed]
     public string HoldingIdentifier { get; set; } = string.Empty;
 
     [BsonElement("holdingIdentifierType")]
     [JsonPropertyName("holdingIdentifierType")]
+    [AutoIndexed]
     public string HoldingIdentifierType { get; set; } = string.Empty;
 
     [BsonElement("roleTypeId")]
     [JsonPropertyName("roleTypeId")]
+    [AutoIndexed]
     public string? RoleTypeId { get; set; }
 
     [BsonElement("roleTypeName")]
     [JsonPropertyName("roleTypeName")]
+    [AutoIndexed]
     public string? RoleTypeName { get; set; }
 
     [BsonElement("speciesTypeId")]
     [JsonPropertyName("speciesTypeId")]
+    [AutoIndexed]
     public string? SpeciesTypeId { get; set; }
 
     [BsonElement("speciesTypeCode")]
     [JsonPropertyName("speciesTypeCode")]
+    [AutoIndexed]
     public string? SpeciesTypeCode { get; set; }
+
+    [BsonElement("speciesTypeName")]
+    [JsonPropertyName("speciesTypeName")]
+    public string? SpeciesTypeName { get; set; }
 
     [BsonElement("productionUsageId")]
     [JsonPropertyName("productionUsageId")]
+    [AutoIndexed]
     public string? ProductionUsageId { get; set; }
 
     [BsonElement("productionUsageCode")]
     [JsonPropertyName("productionUsageCode")]
+    [AutoIndexed]
     public string? ProductionUsageCode { get; set; }
 
     [BsonElement("productionTypeId")]
     [JsonPropertyName("productionTypeId")]
+    [AutoIndexed]
     public string? ProductionTypeId { get; set; }
 
     [BsonElement("productionTypeCode")]
     [JsonPropertyName("productionTypeCode")]
+    [AutoIndexed]
     public string? ProductionTypeCode { get; set; }
 
     [BsonElement("diseaseType")]
@@ -100,55 +116,6 @@ public record SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
-        return
-        [
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("HoldingIdentifier"),
-                new CreateIndexOptions { Name = "idx_holdingIdentifier" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("HoldingIdentifierType"),
-                new CreateIndexOptions { Name = "idx_holdingIdentifierType" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("PartyId"),
-                new CreateIndexOptions { Name = "idx_partyId" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("Herdmark"),
-                new CreateIndexOptions { Name = "idx_herdmark" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("RoleTypeId"),
-                new CreateIndexOptions { Name = "idx_roleTypeId" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("RoleTypeName"),
-                new CreateIndexOptions { Name = "idx_roleTypeName" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("SpeciesTypeId"),
-                new CreateIndexOptions { Name = "idx_speciesTypeId" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("SpeciesTypeCode"),
-                new CreateIndexOptions { Name = "idx_speciesTypeCode" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("ProductionUsageId"),
-                new CreateIndexOptions { Name = "idx_productionUsageId" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("ProductionUsageCode"),
-                new CreateIndexOptions { Name = "idx_productionUsageCode" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("ProductionTypeId"),
-                new CreateIndexOptions { Name = "idx_productionTypeId" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("ProductionTypeCode"),
-                new CreateIndexOptions { Name = "idx_productionTypeCode" })
-        ];
+        return AutoIndexedAttribute.GetIndexModels<SiteGroupMarkRelationshipDocument>();
     }
 }

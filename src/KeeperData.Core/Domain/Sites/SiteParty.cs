@@ -13,6 +13,7 @@ public class SiteParty : ValueObject
     public string? Name { get; private set; }
     public string? PartyType { get; private set; }
     public string? State { get; private set; }
+    public DateTime CreatedDate { get; private set; }
     public DateTime LastUpdatedDate { get; private set; }
     public Address? CorrespondanceAddress { get; private set; }
     public List<Communication> Communication { get; private set; } = [];
@@ -20,6 +21,7 @@ public class SiteParty : ValueObject
 
     public SiteParty(
         string id,
+        DateTime createdDate,
         DateTime lastUpdatedDate,
         string partyId,
         string? title,
@@ -33,6 +35,7 @@ public class SiteParty : ValueObject
         IEnumerable<PartyRole>? partyRole)
     {
         Id = id;
+        CreatedDate = createdDate;
         LastUpdatedDate = lastUpdatedDate;
         PartyId = partyId;
         Title = title;
@@ -60,6 +63,7 @@ public class SiteParty : ValueObject
     {
         return new SiteParty(
             Guid.NewGuid().ToString(),
+            DateTime.UtcNow,
             DateTime.UtcNow,
             partyId,
             title,

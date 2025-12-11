@@ -77,20 +77,10 @@ public class CtsImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalSt
         var silverCtsPartyFilter = Builders<CtsPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, verifyHoldingIdentifier);
         var silverCtsParties = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("ctsParties", silverCtsPartyFilter);
         silverCtsParties.Should().NotBeNull().And.HaveCount(2);
-
-        var partyRoleRelationshipFilter = Builders<SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, verifyHoldingIdentifier);
-        var partyRoleRelationships = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("silverSitePartyRoleRelationships", partyRoleRelationshipFilter);
-        partyRoleRelationships.Should().NotBeNull().And.HaveCount(2);
-
-        var partyIds = silverCtsParties.Select(x => x.PartyId).Distinct().ToHashSet();
-        var partyRolePartyIds = partyRoleRelationships.Select(x => x.PartyId).Distinct().ToHashSet();
-        partyIds.SetEquals(partyRolePartyIds).Should().BeTrue();
     }
 
     private Task VerifyGoldDataTypesAsync(string holdingIdentifier)
     {
-        // TODO - Add Gold
-
         return Task.CompletedTask;
     }
 

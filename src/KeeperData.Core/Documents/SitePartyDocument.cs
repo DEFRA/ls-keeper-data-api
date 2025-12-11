@@ -39,6 +39,10 @@ public class SitePartyDocument : INestedEntity
     [JsonPropertyName("state")]
     public string? State { get; set; }
 
+    [BsonElement("createdDate")]
+    [JsonPropertyName("createdDate")]
+    public DateTime CreatedDate { get; set; }
+
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
@@ -68,11 +72,13 @@ public class SitePartyDocument : INestedEntity
         CorrespondanceAddress = m.CorrespondanceAddress is not null ? AddressDocument.FromDomain(m.CorrespondanceAddress) : null,
         PartyRoles = [.. m.PartyRoles.Select(PartyRoleDocument.FromDomain)],
         State = m.State,
+        CreatedDate = m.CreatedDate,
         LastUpdatedDate = m.LastUpdatedDate
     };
 
     public SiteParty ToDomain() => new(
         IdentifierId,
+        CreatedDate,
         LastUpdatedDate,
         PartyId,
         Title,
