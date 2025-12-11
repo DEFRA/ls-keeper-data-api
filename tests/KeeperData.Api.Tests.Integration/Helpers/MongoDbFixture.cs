@@ -6,13 +6,13 @@ using Testcontainers.MongoDb;
 
 public class MongoDbFixture : IAsyncLifetime
 {
-    public MongoDbContainer Container { get; private set; }
+    public MongoDbContainer? Container { get; private set; }
 
     public IMongoClient MongoClient { get; private set; } = null!;
 
     public MongoVerifier MongoVerifier { get; private set; } = null!;
 
-    public string ConnectionString { get; private set; }
+    public string? ConnectionString { get; private set; }
 
     public const string TestDatabaseName = "ls-keeper-data-api";
 
@@ -65,7 +65,7 @@ public class MongoDbFixture : IAsyncLifetime
         }
         finally
         {
-            await Container.DisposeAsync();
+            await Container!.DisposeAsync();
         }
     }
 

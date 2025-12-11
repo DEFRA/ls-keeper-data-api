@@ -34,6 +34,7 @@ public class ApiContainerFixture : IAsyncLifetime
           .WithEnvironment("QueueConsumerOptions__IntakeEventQueueOptions__DeadLetterQueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue-deadletter\r\n      - ApiClients__DataBridgeApi__BaseUrl=http://keeperdata_bridge:5560/")
           .WithEnvironment("ApiClients__DataBridgeApi__BaseUrl", "http://localhost:5560/")
           .WithEnvironment("ApiClients__DataBridgeApi__UseFakeClient", "true")
+          .WithEnvironment("DataBridgeScanConfiguration__LimitScanTotalBatchSize", "10")
           .WithEnvironment("ServiceBusSenderConfiguration__IntakeEventQueue__QueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue")
           .WithEnvironment("LOCALSTACK_ENDPOINT", "http://localstack:4566")
           .WithEnvironment("AWS__Region", "eu-west-2")
@@ -59,4 +60,3 @@ public class ApiContainerFixture : IAsyncLifetime
         await ApiContainer.DisposeAsync();
     }
 }
-

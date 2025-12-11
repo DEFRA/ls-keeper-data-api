@@ -14,7 +14,7 @@ using Amazon.SimpleNotificationService.Model;
 
 public class LocalStackFixture : IAsyncLifetime
 {
-    public LocalStackContainer LocalStackContainer { get; private set; }
+    public LocalStackContainer? LocalStackContainer { get; private set; }
 
     public const string TestBucket = "test-comparison-reports-bucket";
 
@@ -23,11 +23,11 @@ public class LocalStackFixture : IAsyncLifetime
     public IAmazonS3 S3Client { get; private set; } = null!;
 
     public IAmazonSimpleNotificationService SnsClient { get; private set; } = null!;
+    public string NetworkName { get; } = "integration-tests";
 
     public string SqsEndpoint { get; private set; } = null!;
-    public string LsKeeperDataIntakeQueue { get; private set; } = null!; // TODO aka main queue
-
-    public string NetworkName { get; } = "integration-tests";
+    public string LsKeeperDataIntakeQueue { get; private set; } = null!;
+    public string? TopicArn { get; private set; }
 
     public async Task InitializeAsync()
     {
@@ -111,6 +111,11 @@ public class LocalStackFixture : IAsyncLifetime
         var mainQueueName = "ls_keeper_data_intake_queue";
         var createMainQueueResponse = await SqsClient.CreateQueueAsync(new CreateQueueRequest { QueueName = mainQueueName });
         LsKeeperDataIntakeQueue = createMainQueueResponse.QueueUrl;
+        var mainQueueAttributes = await SqsClient.GetQueueAttributesAsync(new GetQueueAttributesRequest
+        {
+            QueueUrl = LsKeeperDataIntakeQueue,
+            AttributeNames = new List<string> { "QueueArn" }
+        });
 
         // 4. Set redrive policy
         var redrivePolicy = $"{{\"deadLetterTargetArn\":\"{dlqArn}\",\"maxReceiveCount\":\"3\"}}";
@@ -119,15 +124,15 @@ public class LocalStackFixture : IAsyncLifetime
             QueueUrl = LsKeeperDataIntakeQueue,
             Attributes = new Dictionary<string, string>
                     {
-                        { "RedrivePolicy", redrivePolicy } 
+                        { "RedrivePolicy", redrivePolicy }
                     }
         });
 
         var topicName = "ls-keeper-data-bridge-events";
         var createTopicResponse = await SnsClient.CreateTopicAsync(topicName);
-        var topicArn = createTopicResponse.TopicArn;
+        TopicArn = createTopicResponse.TopicArn;
 
-        var mainQueueArn = dlqAttributes.QueueARN;
+        var mainQueueArn = mainQueueAttributes.QueueARN;
 
         // 7. SQS policy for SNS
         var policy = $@"{{
@@ -140,7 +145,7 @@ public class LocalStackFixture : IAsyncLifetime
                             ""Resource"": ""{mainQueueArn}"",
                             ""Condition"": {{
                                 ""ArnEquals"": {{
-                                    ""aws:SourceArn"": ""{topicArn}""
+                                    ""aws:SourceArn"": ""{TopicArn}""
                                 }}
                             }}
                         }}
@@ -159,7 +164,7 @@ public class LocalStackFixture : IAsyncLifetime
         // 8. Subscribe SQS to SNS
         var subscribeResponse = await SnsClient.SubscribeAsync(new Amazon.SimpleNotificationService.Model.SubscribeRequest
         {
-            TopicArn = topicArn,
+            TopicArn = TopicArn,
             Protocol = "sqs",
             Endpoint = mainQueueArn
         });
@@ -197,7 +202,7 @@ public class LocalStackFixture : IAsyncLifetime
         }
         finally
         {
-            await LocalStackContainer.DisposeAsync();
+            await LocalStackContainer!.DisposeAsync();
         }
     }
 

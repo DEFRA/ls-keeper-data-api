@@ -34,7 +34,7 @@ public class IntakeEventQueuePublisher(IAmazonSQS amazonSQS,
         try
         {
             var sendRequest = _messageFactory.CreateSqsMessage(QueueUrl, message, additionalUserProperties: attributes);
-            await _amazonSQS.SendMessageAsync(sendRequest, cancellationToken);
+            var response = await _amazonSQS.SendMessageAsync(sendRequest, cancellationToken);
         }
         catch (Exception ex)
         {

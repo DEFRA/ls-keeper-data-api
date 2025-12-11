@@ -9,12 +9,12 @@ using System.Text.Json.Serialization;
 namespace KeeperData.Api.Tests.Integration.Consumers;
 
 [Collection("Integration"), Trait("Dependence", "testcontainers")]
-public class DeadLetterQueueTests : /*IClassFixture<LocalStackFixture>,*/ IAsyncLifetime
+public class DeadLetterQueueTests : IAsyncLifetime
 {
     private readonly LocalStackFixture _localStackFixture;
-    //We don't use IntegrationTestFixture here because we need direct access to SQS/SNS clients 
+    //We use IntegrationTestFixture here but add our own queues and we need direct access to SQS/SNS clients 
     //for DLQ testing
-    private string LocalStackUrl = null;
+    private string? LocalStackUrl = null;
     private const string MainQueueName = "keeper_main_queue";
     private const string DlqName = "keeper_main_queue-deadletter";
     private const string TopicName = "keeper-topic";
@@ -148,8 +148,8 @@ public class DeadLetterQueueTests : /*IClassFixture<LocalStackFixture>,*/ IAsync
             WaitTimeSeconds = 1
         });
 
-  //      mainQueueCheck.Messages.Should().BeEmpty(
-  //          "message should have been moved to DLQ after 3 failed receive attempts");
+        //      mainQueueCheck.Messages.Should().BeEmpty(
+        //          "message should have been moved to DLQ after 3 failed receive attempts");
 
         // assert message is in DLQ
         var dlqCheck = await _sqsClient.ReceiveMessageAsync(new ReceiveMessageRequest
