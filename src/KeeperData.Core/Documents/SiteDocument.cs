@@ -129,7 +129,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
             site.SetSiteIdentifier(
                 si.LastUpdatedDate,
                 si.Identifier,
-                si.Type,
+                si.Type.ToDomain(),
                 si.IdentifierId);
         }
 

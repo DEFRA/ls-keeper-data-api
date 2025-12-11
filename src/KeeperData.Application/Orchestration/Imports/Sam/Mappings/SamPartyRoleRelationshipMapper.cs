@@ -7,7 +7,6 @@ public static class SamPartyRoleRelationshipMapper
 {
     public static List<Core.Documents.Silver.SitePartyRoleRelationshipDocument> ToSilver(
         List<SamPartyDocument> silverParties,
-        string holdingIdentifierType,
         string holdingIdentifier)
     {
         if (silverParties == null) return [];
@@ -26,7 +25,6 @@ public static class SamPartyRoleRelationshipMapper
                         PartyId = party.PartyId,
                         PartyTypeId = party.PartyTypeId,
                         HoldingIdentifier = cph,
-                        HoldingIdentifierType = holdingIdentifierType,
                         Source = SourceSystemType.SAM.ToString(),
 
                         RoleTypeId = role.RoleTypeId,
@@ -43,7 +41,6 @@ public static class SamPartyRoleRelationshipMapper
 
     public static List<Core.Documents.Silver.SitePartyRoleRelationshipDocument> ToSilverUsingCphList(
         List<SamPartyDocument> silverParties,
-        string holdingIdentifierType,
         string? holdingIdentifier = null)
     {
         if (silverParties == null) return [];
@@ -64,7 +61,6 @@ public static class SamPartyRoleRelationshipMapper
                         PartyId = party.PartyId,
                         PartyTypeId = party.PartyTypeId,
                         HoldingIdentifier = cph,
-                        HoldingIdentifierType = holdingIdentifierType,
                         Source = SourceSystemType.SAM.ToString(),
 
                         RoleTypeId = role.RoleTypeId,

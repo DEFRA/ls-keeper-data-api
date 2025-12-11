@@ -1,7 +1,6 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
-using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Repositories;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -192,15 +191,12 @@ public class SamHoldingImportPersistenceStep(
         SiteDocument incomingSite,
         CancellationToken cancellationToken)
     {
-        var holdingIdentifierType = incomingSite.Identifiers.FirstOrDefault()?.Type
-            ?? HoldingIdentifierType.CphNumber.ToString();
-
         var holdingIdentifier = incomingSite.Identifiers.FirstOrDefault()?.Identifier
             ?? string.Empty;
 
         var filter = Builders<SiteDocument>.Filter.ElemMatch(
             x => x.Identifiers,
-            i => i.Identifier == holdingIdentifier && i.Type == holdingIdentifierType);
+            i => i.Identifier == holdingIdentifier);
 
         // Done in mapper now using domain objects
         // var existingHolding = await _goldSiteRepository.FindOneByFilterAsync(filter, cancellationToken);

@@ -1,9 +1,11 @@
 using AutoFixture;
 using FluentAssertions;
+using KeeperData.Application.Extensions;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
@@ -35,6 +37,7 @@ public class SamHoldingImportOrchestratorTests
     private readonly Mock<IProductionUsageLookupService> _productionUsageLookupServiceMock = new();
     private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
     private readonly Mock<ISpeciesTypeLookupService> _speciesTypeLookupServiceMock = new();
+    private readonly Mock<ISiteIdentifierTypeLookupService> _siteIdentifierTypeLookupServiceMock = new();
 
     private readonly Fixture _fixture;
 
@@ -77,6 +80,7 @@ public class SamHoldingImportOrchestratorTests
         factory.OverrideServiceAsScoped(_productionUsageLookupServiceMock.Object);
         factory.OverrideServiceAsScoped(_roleTypeLookupServiceMock.Object);
         factory.OverrideServiceAsScoped(_speciesTypeLookupServiceMock.Object);
+        factory.OverrideServiceAsScoped(_siteIdentifierTypeLookupServiceMock.Object);
 
         SetupDataBridgeApiRequest(factory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holdings));
         SetupDataBridgeApiRequest(factory, herdsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(herds));
@@ -342,5 +346,14 @@ public class SamHoldingImportOrchestratorTests
         _speciesTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+
+        _siteIdentifierTypeLookupServiceMock.Setup(x => x.GetByCodeAsync(HoldingIdentifierType.CPHN.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SiteIdentifierTypeDocument
+            {
+                IdentifierId = "6b4ca299-895d-4cdb-95dd-670de71ff328",
+                Code = HoldingIdentifierType.CPHN.ToString(),
+                Name = HoldingIdentifierType.CPHN.GetDescription()!,
+                IsActive = true
+            });
     }
 }

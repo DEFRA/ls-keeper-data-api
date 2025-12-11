@@ -1,3 +1,4 @@
+using KeeperData.Core.Messaging.Contracts.V1;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using System.Text.Json.Serialization;
@@ -18,6 +19,7 @@ namespace KeeperData.Core.Messaging.Contracts.Serializers;
 [JsonSerializable(typeof(CtsDailyScanMessage))]
 [JsonSerializable(typeof(SamDailyScanMessage))]
 [JsonSerializable(typeof(SamUpdateHoldingMessage))]
+[JsonSerializable(typeof(BatchCompletionMessage))]
 public partial class MessageIdentifierSerializerContext : JsonSerializerContext
 {
 }

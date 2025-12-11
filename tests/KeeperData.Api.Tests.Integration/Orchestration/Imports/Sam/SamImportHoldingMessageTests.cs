@@ -3,7 +3,6 @@ using KeeperData.Api.Tests.Integration.Consumers.Helpers;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
-using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Tests.Common.Generators;
 using MongoDB.Driver;
@@ -73,11 +72,9 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
 
     private async Task VerifyGoldDataTypesAsync(string holdingIdentifier)
     {
-        var holdingIdentifierType = HoldingIdentifierType.CphNumber.ToString();
-
         var siteFilter = Builders<SiteDocument>.Filter.ElemMatch(
             x => x.Identifiers,
-            i => i.Identifier == holdingIdentifier && i.Type == holdingIdentifierType);
+            i => i.Identifier == holdingIdentifier);
         var sites = await fixture.MongoVerifier.FindDocumentsAsync("sites", siteFilter);
 
         var partyRoleRelationshipFilter = Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
@@ -93,7 +90,7 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
         partyRoleRelationships.Should().NotBeNull().And.HaveCount(parties.Count);
         partyIds.SetEquals(partyRolePartyIds).Should().BeTrue();
 
-        for (int i = 0; i < parties[0].PartyRoles.Count; i++)
+        for (var i = 0; i < parties[0].PartyRoles.Count; i++)
         {
             parties[0].PartyRoles[i].Site!.IdentifierId.Should().Be(sites[0].Id);
         }

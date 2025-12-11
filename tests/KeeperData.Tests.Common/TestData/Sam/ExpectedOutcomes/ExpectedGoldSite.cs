@@ -1,3 +1,4 @@
+using KeeperData.Application.Extensions;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Domain.Enums;
 
@@ -64,7 +65,13 @@ public static class ExpectedGoldSite
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
                     Identifier = s_cphNumber,
-                    Type = HoldingIdentifierType.CphNumber.ToString(),
+                    Type = new SiteIdentifierSummaryDocument
+                    {
+                        IdentifierId = Guid.NewGuid().ToString(),
+                        Code = HoldingIdentifierType.CPHN.ToString(),
+                        Description = HoldingIdentifierType.CPHN.GetDescription()!,
+                        LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                    },
                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                 }
             ],

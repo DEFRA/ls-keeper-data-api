@@ -1,7 +1,6 @@
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents;
-using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
 using Microsoft.Extensions.Logging;
@@ -15,6 +14,7 @@ public class SamHoldingImportGoldMappingStep(
     IPremiseTypeLookupService premiseTypeLookupService,
     ISpeciesTypeLookupService speciesTypeLookupService,
     IPremiseActivityTypeLookupService premiseActivityTypeLookupService,
+    ISiteIdentifierTypeLookupService siteIdentifierTypeLookupService,
     IGenericRepository<SiteDocument> goldSiteRepository,
     IGenericRepository<PartyDocument> goldPartyRepository,
     ILogger<SamHoldingImportGoldMappingStep> logger)
@@ -30,8 +30,7 @@ public class SamHoldingImportGoldMappingStep(
 
             var existingHoldingFilter = Builders<SiteDocument>.Filter.ElemMatch(
                 x => x.Identifiers,
-                i => i.Identifier == representative.CountyParishHoldingNumber
-                    && i.Type == HoldingIdentifierType.CphNumber.ToString());
+                i => i.Identifier == representative.CountyParishHoldingNumber);
 
             var existingSite = await goldSiteRepository.FindOneByFilterAsync(existingHoldingFilter, cancellationToken);
             context.ExistingGoldSite = existingSite;
@@ -41,8 +40,7 @@ public class SamHoldingImportGoldMappingStep(
             context.GoldSiteGroupMarks = SiteGroupMarkMapper.ToGold(
                 context.SilverHerds,
                 context.SilverPartyRoles,
-                context.Cph,
-                HoldingIdentifierType.CphNumber.ToString());
+                context.Cph);
 
             context.GoldParties = await SamPartyMapper.ToGold(
                 context.GoldSiteId,
@@ -62,6 +60,7 @@ public class SamHoldingImportGoldMappingStep(
                 context.GoldParties,
                 countryIdentifierLookupService.GetByIdAsync,
                 premiseTypeLookupService.GetByIdAsync,
+                siteIdentifierTypeLookupService.GetByCodeAsync,
                 speciesTypeLookupService.FindAsync,
                 premiseActivityTypeLookupService.FindAsync,
                 cancellationToken);
@@ -70,8 +69,7 @@ public class SamHoldingImportGoldMappingStep(
                 context.GoldParties,
                 context.GoldSiteGroupMarks,
                 context.GoldSiteId,
-                context.Cph,
-                HoldingIdentifierType.CphNumber.ToString());
+                context.Cph);
         }
     }
 }

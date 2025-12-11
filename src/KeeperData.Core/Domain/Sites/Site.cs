@@ -164,9 +164,13 @@ public class Site : IAggregateRoot
         }
     }
 
-    public void SetSiteIdentifier(DateTime lastUpdatedDate, string identifier, string type, string? id = null)
+    public void SetSiteIdentifier(
+        DateTime lastUpdatedDate,
+        string identifier,
+        SiteIdentifierType type,
+        string? id = null)
     {
-        var existing = _identifiers.FirstOrDefault(i => i.Type == type);
+        var existing = _identifiers.FirstOrDefault(i => i.Type.Id == type.Id);
 
         if (existing is not null)
         {

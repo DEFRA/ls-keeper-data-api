@@ -1,8 +1,10 @@
 using FluentAssertions;
+using KeeperData.Application.Extensions;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
@@ -35,6 +37,7 @@ public class SamBulkImportWithAccurateRawDataTests
     private readonly Mock<IProductionUsageLookupService> _productionUsageLookupServiceMock = new();
     private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
     private readonly Mock<ISpeciesTypeLookupService> _speciesTypeLookupServiceMock = new();
+    private readonly Mock<ISiteIdentifierTypeLookupService> _siteIdentifierTypeLookupServiceMock = new();
 
     [Fact]
     public async Task GivenAHoldingIdentifier_WhenExecutingTheBulkImportStrategy_ShouldCorrectlyTransformTheData()
@@ -172,6 +175,7 @@ public class SamBulkImportWithAccurateRawDataTests
         factory.OverrideServiceAsScoped(_productionUsageLookupServiceMock.Object);
         factory.OverrideServiceAsScoped(_roleTypeLookupServiceMock.Object);
         factory.OverrideServiceAsScoped(_speciesTypeLookupServiceMock.Object);
+        factory.OverrideServiceAsScoped(_siteIdentifierTypeLookupServiceMock.Object);
     }
 
     private static void SetupDataBridgeApiRequest(AppWebApplicationFactory factory, string uri, HttpStatusCode httpStatusCode, StringContent httpResponseMessage)
@@ -394,5 +398,14 @@ public class SamBulkImportWithAccurateRawDataTests
         _speciesTypeLookupServiceMock
             .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? id, CancellationToken token) => (SpeciesData.GetById(id!)));
+
+        _siteIdentifierTypeLookupServiceMock.Setup(x => x.GetByCodeAsync(HoldingIdentifierType.CPHN.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SiteIdentifierTypeDocument
+            {
+                IdentifierId = "6b4ca299-895d-4cdb-95dd-670de71ff328",
+                Code = HoldingIdentifierType.CPHN.ToString(),
+                Name = HoldingIdentifierType.CPHN.GetDescription()!,
+                IsActive = true
+            });
     }
 }
