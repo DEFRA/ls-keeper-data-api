@@ -1,8 +1,10 @@
+using Amazon.SimpleNotificationService;
 using Amazon.SQS;
 using KeeperData.Application.MessageHandlers.Sam;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.Serializers;
+using KeeperData.Core.Messaging.Contracts.V1;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessageHandlers;
@@ -59,10 +61,13 @@ public static class ServiceCollectionExtensions
 
         services.AddServiceBusSenderDependencies(configuration);
 
+        services.AddBatchCompletionNotificationDependencies(configuration);
+
         if (!intakeEventQueueOptions.Disabled)
         {
             services.AddHealthChecks()
-                .AddCheck<QueueHealthCheck<IntakeEventQueueOptions>>("intake-event-consumer", tags: ["aws", "sqs"]);
+                .AddCheck<QueueHealthCheck<IntakeEventQueueOptions>>("intake-event-consumer", tags: ["aws", "sqs"])
+                .AddCheck<AwsSnsHealthCheck>("batch-completion-publisher", tags: ["aws", "sns"]);
         }
     }
 
@@ -88,7 +93,8 @@ public static class ServiceCollectionExtensions
             typeof(CtsUpdateKeeperMessage),
             typeof(CtsUpdateAgentMessage),
             typeof(SamDailyScanMessage),
-            typeof(SamUpdateHoldingMessage)
+            typeof(SamUpdateHoldingMessage),
+            typeof(BatchCompletionMessage)
         };
 
         foreach (var messageType in messageIdentifierTypes)
@@ -149,5 +155,32 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IMessagePublisher<IntakeEventsQueueClient>, IntakeEventQueuePublisher>();
 
         return services;
+    }
+
+    private static void AddBatchCompletionNotificationDependencies(this IServiceCollection services, IConfiguration configuration)
+    {
+        var batchCompletionConfig = configuration.GetSection(nameof(BatchCompletionNotificationConfiguration)).Get<BatchCompletionNotificationConfiguration>() ?? new();
+        services.AddSingleton<IBatchCompletionNotificationConfiguration>(batchCompletionConfig);
+
+        if (configuration["LOCALSTACK_ENDPOINT"] != null)
+        {
+            services.AddSingleton<IAmazonSimpleNotificationService>(sp =>
+            {
+                var config = new AmazonSimpleNotificationServiceConfig
+                {
+                    ServiceURL = configuration["AWS:ServiceURL"],
+                    AuthenticationRegion = configuration["AWS:Region"],
+                    UseHttp = true
+                };
+                var credentials = new Amazon.Runtime.BasicAWSCredentials("test", "test");
+                return new AmazonSimpleNotificationServiceClient(credentials, config);
+            });
+        }
+        else
+        {
+            services.AddAWSService<IAmazonSimpleNotificationService>();
+        }
+
+        services.AddSingleton<IMessagePublisher<BatchCompletionTopicClient>, BatchCompletionTopicPublisher>();
     }
 }

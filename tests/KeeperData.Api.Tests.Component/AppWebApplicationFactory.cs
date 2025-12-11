@@ -21,6 +21,8 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using Moq;
 using System.Net;
+using Amazon.SimpleNotificationService;
+using Amazon.SimpleNotificationService.Model;
 
 namespace KeeperData.Api.Tests.Component;
 
@@ -28,6 +30,7 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
 {
     public Mock<IAmazonS3>? AmazonS3Mock;
     public Mock<IAmazonSQS>? AmazonSQSMock;
+    public Mock<IAmazonSimpleNotificationService>? AmazonSNSMock;
     public Mock<IMongoClient>? MongoClientMock;
     public readonly Mock<HttpMessageHandler> DataBridgeApiClientHttpMessageHandlerMock = new();
 
@@ -62,6 +65,8 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
             ConfigureS3ClientFactory(services);
 
             ConfigureSimpleQueueService(services);
+
+            ConfigureSimpleNotificationService(services);
 
             ConfigureDatabase(services);
 
@@ -122,6 +127,8 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__CtsAgentsEnabled", "true");
         Environment.SetEnvironmentVariable("BulkScanEndpointsEnabled", "false");
         Environment.SetEnvironmentVariable("DailyScanEndpointsEnabled", "false");
+        Environment.SetEnvironmentVariable("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicName", "test-topic");
+        Environment.SetEnvironmentVariable("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicArn", "http://localhost:4566/000000000000/test-topic");
     }
 
     private static void ConfigureAwsOptions(IServiceCollection services)
@@ -164,6 +171,26 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
             .ReturnsAsync(new GetQueueAttributesResponse { HttpStatusCode = HttpStatusCode.OK });
 
         services.AddSingleton(AmazonSQSMock.Object);
+
+        services.AddSingleton<TestQueuePollerObserver<MessageType>>();
+        services.AddScoped<IQueuePollerObserver<MessageType>>(sp => sp.GetRequiredService<TestQueuePollerObserver<MessageType>>());
+    }
+
+    private void ConfigureSimpleNotificationService(IServiceCollection services)
+    {
+        services.RemoveAll<IAmazonSimpleNotificationService>();
+
+        AmazonSNSMock = new Mock<IAmazonSimpleNotificationService>();
+
+        AmazonSNSMock
+            .Setup(x => x.GetTopicAttributesAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetTopicAttributesResponse { HttpStatusCode = HttpStatusCode.OK });
+
+        AmazonSNSMock
+            .Setup(x => x.ListTopicsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ListTopicsResponse() { HttpStatusCode = HttpStatusCode.OK });
+
+        services.AddSingleton(AmazonSNSMock.Object);
 
         services.AddSingleton<TestQueuePollerObserver<MessageType>>();
         services.AddScoped<IQueuePollerObserver<MessageType>>(sp => sp.GetRequiredService<TestQueuePollerObserver<MessageType>>());
