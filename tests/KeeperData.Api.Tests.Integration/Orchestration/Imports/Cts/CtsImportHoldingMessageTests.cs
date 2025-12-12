@@ -9,11 +9,22 @@ using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Cts;
 
-[Trait("Dependence", "localstack")]
-[Collection("Integration Tests")]
-public class CtsImportHoldingMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
+[Collection("Integration"), Trait("Dependence", "testcontainers")]
+public class CtsImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture, ApiContainerFixture apiContainerFixture)
 {
+    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture = localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
+
     private const int ProcessingTimeCircuitBreakerSeconds = 30;
+
+    [Fact]
+    public async Task SqsQueue_ShouldBeCreatedSuccessfully()
+    {
+        var queueName = "ls_keeper_data_intake_queue";
+        var response = await _localStackFixture.SqsClient.GetQueueUrlAsync(queueName);
+        response.QueueUrl.Should().NotBeNullOrEmpty();
+    }
 
     [Fact]
     public async Task GivenCtsImportHoldingMessage_WhenReceivedOnTheQueue_ShouldComplete()
@@ -60,11 +71,11 @@ public class CtsImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
         var verifyHoldingIdentifier = holdingIdentifier.LidIdentifierToCph();
 
         var silverCtsHoldingFilter = Builders<CtsHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, verifyHoldingIdentifier);
-        var silverCtsHoldings = await fixture.MongoVerifier.FindDocumentsAsync("ctsHoldings", silverCtsHoldingFilter);
+        var silverCtsHoldings = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("ctsHoldings", silverCtsHoldingFilter);
         silverCtsHoldings.Should().NotBeNull().And.HaveCount(1);
 
         var silverCtsPartyFilter = Builders<CtsPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, verifyHoldingIdentifier);
-        var silverCtsParties = await fixture.MongoVerifier.FindDocumentsAsync("ctsParties", silverCtsPartyFilter);
+        var silverCtsParties = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("ctsParties", silverCtsPartyFilter);
         silverCtsParties.Should().NotBeNull().And.HaveCount(2);
     }
 
@@ -75,15 +86,14 @@ public class CtsImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
     {
-        var queueUrl = "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue";
         var additionalUserProperties = new Dictionary<string, string>
         {
             ["CorrelationId"] = correlationId
         };
-        var request = SQSMessageUtility.CreateMessage(queueUrl, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.LsKeeperDataIntakeQueue, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var cts = new CancellationTokenSource();
-        await fixture.PublishToQueueAsync(request, cts.Token);
+        await _localStackFixture.SqsClient.SendMessageAsync(request, cts.Token);
     }
 
     private static CtsImportHoldingMessage GetCtsImportHoldingMessage(string holdingIdentifier) => new()

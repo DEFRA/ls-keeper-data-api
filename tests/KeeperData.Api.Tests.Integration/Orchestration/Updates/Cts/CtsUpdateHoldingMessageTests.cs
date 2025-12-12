@@ -9,10 +9,12 @@ using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Updates.Cts;
 
-[Trait("Dependence", "localstack")]
-[Collection("Integration Tests")]
-public class CtsUpdateHoldingMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
+[Collection("Integration"), Trait("Dependence", "testcontainers")]
+public class CtsUpdateHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture, ApiContainerFixture apiContainerFixture)
 {
+    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture = localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
     private const int ProcessingTimeCircuitBreakerSeconds = 10;
 
     [Fact]
@@ -37,7 +39,7 @@ public class CtsUpdateHoldingMessageTests(IntegrationTestFixture fixture) : ICla
         while (DateTime.UtcNow - startTime < timeout)
         {
             var filter = Builders<CtsHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier.LidIdentifierToCph());
-            storedDocuments = await fixture.MongoVerifier.FindDocumentsAsync("ctsHoldings", filter);
+            storedDocuments = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("ctsHoldings", filter);
 
             if (storedDocuments.Count > 0) break;
             await Task.Delay(pollInterval);
@@ -55,9 +57,8 @@ public class CtsUpdateHoldingMessageTests(IntegrationTestFixture fixture) : ICla
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
     {
-        var queueUrl = "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue";
         var additionalUserProperties = new Dictionary<string, string> { ["CorrelationId"] = correlationId };
-        var request = SQSMessageUtility.CreateMessage(queueUrl, message, typeof(TMessage).Name, additionalUserProperties);
-        await fixture.PublishToQueueAsync(request, CancellationToken.None);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.LsKeeperDataIntakeQueue, message, typeof(TMessage).Name, additionalUserProperties);
+        await _localStackFixture.SqsClient.SendMessageAsync(request, CancellationToken.None);
     }
 }

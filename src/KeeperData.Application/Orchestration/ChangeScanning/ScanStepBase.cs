@@ -6,7 +6,7 @@ namespace KeeperData.Application.Orchestration.ChangeScanning;
 
 public abstract class ScanStepBase<TContext>(ILogger logger) : IScanStep<TContext>
 {
-    private readonly ILogger _logger = logger;
+    protected readonly ILogger _logger = logger;
 
     public async Task ExecuteAsync(TContext context, CancellationToken cancellationToken)
     {

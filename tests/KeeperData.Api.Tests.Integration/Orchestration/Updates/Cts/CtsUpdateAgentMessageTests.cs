@@ -7,10 +7,20 @@ using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Updates.Cts;
 
-[Trait("Dependence", "localstack")]
-public class CtsUpdateAgentMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
+[Collection("Integration"), Trait("Dependence", "testcontainers")]
+public class CtsUpdateAgentMessageTests
 {
     private const int ProcessingTimeCircuitBreakerSeconds = 10;
+    private readonly MongoDbFixture _mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture;
+
+    public CtsUpdateAgentMessageTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture, ApiContainerFixture apiContainerFixture)
+    {
+        _mongoDbFixture = mongoDbFixture;
+        _localStackFixture = localStackFixture;
+        _apiContainerFixture = apiContainerFixture;
+    }
 
     [Fact]
     public async Task GivenCtsUpdateAgentMessagePublishedToQueue_WhenReceived_ShouldPersistSilverData()
@@ -20,6 +30,7 @@ public class CtsUpdateAgentMessageTests(IntegrationTestFixture fixture) : IClass
         var partyId = Guid.NewGuid().ToString();
         var message = new CtsUpdateAgentMessage { Identifier = partyId };
 
+        var beforetest = DateTime.UtcNow;
         await ExecuteQueueTest(correlationId, message);
 
         var timeout = TimeSpan.FromSeconds(ProcessingTimeCircuitBreakerSeconds);
@@ -31,7 +42,7 @@ public class CtsUpdateAgentMessageTests(IntegrationTestFixture fixture) : IClass
         while (DateTime.UtcNow - startTime < timeout)
         {
             var filter = Builders<CtsPartyDocument>.Filter.Eq(x => x.PartyId, partyId);
-            storedDocuments = await fixture.MongoVerifier.FindDocumentsAsync("ctsParties", filter);
+            storedDocuments = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("ctsParties", filter);
 
             if (storedDocuments.Count > 0) break;
             await Task.Delay(pollInterval);
@@ -48,9 +59,8 @@ public class CtsUpdateAgentMessageTests(IntegrationTestFixture fixture) : IClass
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
     {
-        var queueUrl = "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue";
         var additionalUserProperties = new Dictionary<string, string> { ["CorrelationId"] = correlationId };
-        var request = SQSMessageUtility.CreateMessage(queueUrl, message, typeof(TMessage).Name, additionalUserProperties);
-        await fixture.PublishToQueueAsync(request, CancellationToken.None);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.LsKeeperDataIntakeQueue, message, typeof(TMessage).Name, additionalUserProperties);
+        await _localStackFixture.SqsClient.SendMessageAsync(request, CancellationToken.None);
     }
 }

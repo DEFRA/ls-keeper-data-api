@@ -191,14 +191,15 @@ public class FakeDataBridgeClient : IDataBridgeClient
     }
 
     private static DataBridgeResponse<T> GetDataBridgeResponse<T>(List<T> data, int top, int skip)
-    {
+    { //TODO better implementation
         return new DataBridgeResponse<T>
         {
             CollectionName = "collection",
-            Count = data.Count,
-            Data = data,
+            Count = skip > 0 ? data.Count : skip,
+            Data = skip > 0 ? new List<T>() : data,
             Top = top,
-            Skip = skip
+            Skip = skip,
+            TotalCount = data.Count
         };
     }
 
