@@ -60,7 +60,7 @@ public class SamHoldingImportGoldMappingStep(
                 premiseTypeLookupService.GetByIdAsync,
                 siteIdentifierTypeLookupService.GetByCodeAsync,
                 speciesTypeLookupService.FindAsync,
-                premiseActivityTypeLookupService.FindAsync,
+                premiseActivityTypeLookupService.GetByCodeAsync,
                 cancellationToken);
 
             context.GoldSitePartyRoles = SitePartyRoleMapper.ToGold(

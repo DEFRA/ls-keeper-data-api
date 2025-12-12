@@ -1,15 +1,15 @@
 using KeeperData.Core.Domain.BuildingBlocks;
 
-namespace KeeperData.Core.Domain.Shared;
+namespace KeeperData.Core.Domain.Sites;
 
-public class Species : ValueObject
+public class SiteActivityType : ValueObject
 {
     public string Id { get; private set; }
     public string Code { get; private set; }
     public string Name { get; private set; }
     public DateTime? LastUpdatedDate { get; private set; }
 
-    public Species(
+    public SiteActivityType(
         string id,
         DateTime? lastUpdatedDate,
         string code,
@@ -21,13 +21,13 @@ public class Species : ValueObject
         LastUpdatedDate = lastUpdatedDate;
     }
 
-    public static Species Create(
+    public static SiteActivityType Create(
         string id,
         DateTime? lastUpdatedDate,
         string code,
         string name)
     {
-        return new Species(
+        return new SiteActivityType(
             id,
             lastUpdatedDate,
             code,
