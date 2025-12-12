@@ -32,6 +32,8 @@ public class ApiContainerFixture : IAsyncLifetime
           .WithEnvironment("StorageConfiguration__ComparisonReportsStorage__BucketName", "test-comparison-reports-bucket")
           .WithEnvironment("QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue")
           .WithEnvironment("QueueConsumerOptions__IntakeEventQueueOptions__DeadLetterQueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue-deadletter\r\n      - ApiClients__DataBridgeApi__BaseUrl=http://keeperdata_bridge:5560/")
+          .WithEnvironment("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicName", "test-topic")
+          .WithEnvironment("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicArn", "arn:aws:sns:eu-west-2:000000000000:test-topic")
           .WithEnvironment("ApiClients__DataBridgeApi__BaseUrl", "http://localhost:5560/")
           .WithEnvironment("ApiClients__DataBridgeApi__UseFakeClient", "true")
           .WithEnvironment("DataBridgeScanConfiguration__LimitScanTotalBatchSize", "10")

@@ -28,6 +28,7 @@ public class LocalStackFixture : IAsyncLifetime
     public string SqsEndpoint { get; private set; } = null!;
     public string LsKeeperDataIntakeQueue { get; private set; } = null!;
     public string? TopicArn { get; private set; }
+    public string? ImportCompleteTopicArn { get; private set; }
 
     public async Task InitializeAsync()
     {
@@ -133,6 +134,12 @@ public class LocalStackFixture : IAsyncLifetime
         TopicArn = createTopicResponse.TopicArn;
 
         var mainQueueArn = mainQueueAttributes.QueueARN;
+        //
+        var importCompleteTopicName = "test-topic";
+        var importCompleteCreateTopicResponse = await SnsClient.CreateTopicAsync(importCompleteTopicName);
+        ImportCompleteTopicArn = importCompleteCreateTopicResponse.TopicArn;
+
+
 
         // 7. SQS policy for SNS
         var policy = $@"{{
