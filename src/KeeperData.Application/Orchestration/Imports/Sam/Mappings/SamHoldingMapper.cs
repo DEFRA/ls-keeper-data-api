@@ -140,7 +140,7 @@ public static class SamHoldingMapper
         Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
         Func<string?, CancellationToken, Task<SiteIdentifierTypeDocument?>> getSiteIdentifierTypeByCode,
         Func<string?, CancellationToken, Task<(string? speciesTypeId, string? speciesTypeName)>> findSpecies,
-        Func<string?, CancellationToken, Task<(string? premiseActivityTypeId, string? premiseActivityTypeName)>> findPremiseActivityType,
+        Func<string?, CancellationToken, Task<PremisesActivityTypeDocument?>> getPremiseActivityTypeByCode,
         CancellationToken cancellationToken)
     {
         if (silverHoldings == null || silverHoldings.Count == 0)
@@ -160,14 +160,14 @@ public static class SamHoldingMapper
         //    findProductionUsage,
         //    cancellationToken);
 
-        var distinctPremiseActivities = await GetDistinctReferenceDataAsync<PremisesActivityTypeDocument>(
+        var distinctPremiseActivities = await GetDistinctReferenceDataAsync(
             silverHoldings.Select(h => h.PremiseActivityTypeCode),
-            findPremiseActivityType,
+            getPremiseActivityTypeByCode,
             cancellationToken);
 
         var species = distinctSpecies
             .Where(doc => doc.typeId is not null)
-            .Select(doc => new Species(
+            .Select(doc => Species.Create(
                 id: doc.typeId ?? string.Empty,
                 lastUpdatedDate: representative.LastUpdatedDate,
                 code: doc.searchValue,
@@ -175,11 +175,10 @@ public static class SamHoldingMapper
             .ToList();
 
         var activities = distinctPremiseActivities
-            .Where(doc => doc.typeId is not null)
-            .Select(doc => new SiteActivity(
-                id: doc.typeId ?? string.Empty,
-                activity: doc.searchValue,
-                description: doc.typeName,
+            .Where(doc => doc is not null)
+            .Select(doc => SiteActivity.Create(
+                id: doc.IdentifierId,
+                type: doc.ToDomain(),
                 startDate: representative.HoldingStartDate,
                 endDate: representative.HoldingEndDate,
                 lastUpdatedDate: representative.LastUpdatedDate))
@@ -443,6 +442,30 @@ public static class SamHoldingMapper
         return [.. results];
     }
 
+    private static async Task<List<T>> GetDistinctReferenceDataAsync<T>(
+        IEnumerable<string?> rawCodes,
+        Func<string?, CancellationToken, Task<T?>> getTypeByCodeAsync,
+        CancellationToken cancellationToken)
+    {
+        if (rawCodes == null)
+            return [];
+
+        var distinctCodes = rawCodes
+            .Where(code => !string.IsNullOrWhiteSpace(code))
+            .Distinct()
+            .ToList();
+
+        var tasks = distinctCodes
+            .Select(async code =>
+            {
+                var type = await getTypeByCodeAsync(code, cancellationToken);
+                return type;
+            });
+
+        var results = await Task.WhenAll(tasks);
+        return [.. results.OfType<T>()];
+    }
+
     private static List<GroupMark> ToGroupMarks(List<SiteGroupMarkRelationshipDocument> relationships)
     {
         return [.. relationships
@@ -450,7 +473,7 @@ public static class SamHoldingMapper
             .Select(m =>
             {
                 var species = m.SpeciesTypeId is not null
-                    ? new Species(
+                    ? Species.Create(
                         id: m.SpeciesTypeId,
                         lastUpdatedDate: m.LastUpdatedDate,
                         code: m.SpeciesTypeCode ?? string.Empty,
