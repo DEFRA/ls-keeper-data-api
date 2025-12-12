@@ -33,7 +33,7 @@ info:
   # 1.1.0 - Amended the Site types enumeration list after the final list confirmed by business stakeholders.
   # 1.2.0 - Amended the specification to reflect the amended structure of the base reference models such as Site Indentifier Type, Activity Type etc.
   # 1.3.0 - Updated the specs to include a new parameter in api/sites endpoint which accepts an array of site identifiers.
-  # 1.4.0 - Updated the specs to include a new parameter in api/sites endpoint which accepts an array of Site Ids(UUIS) to enable publication of multiple Site details.
+  # 1.4.0 - Updated the specs to include a new parameter in api/sites endpoint which accepts an array of Site Ids(UUIS) to enable publication of multiple Site details. Also, set a threshold limit of 50 values in arrays in input parameters.
  
 externalDocs:
   description: Defra website
@@ -901,7 +901,7 @@ paths:
             
         - name: siteIdentifiers
           in:   query
-          description: This parameter accepts an array of strings which represents site identifiers such as CPH Number, FSA No, Port No etc which are associated with different site type such as CPH No for Agricultural Holdings.
+          description: This parameter accepts an array of strings which represents site identifiers such as CPH Number, FSA No, Port No etc which are associated with different site type such as CPH No for Agricultural Holdings. A maximum of 50 values are allowed at a time.
           required: false
           style: form
           explode: false
@@ -909,7 +909,8 @@ paths:
             type: array
             items:
                type: string
-               #example: 01/001/0093
+            minItems: 1 # Optional: ensure at least 1 item if parameter is present.
+            maxItems: 50 # Required: This restricts the array to 50 items.
                
         - name: name
           in:   query
@@ -959,7 +960,7 @@ paths:
             
         - name: siteIds
           in:   query
-          description: This parameter accepts an array of strings which represents site id which is a immutable UUID, assigned to a CPH Holding.
+          description: This parameter accepts an array of strings which represents site id which is a immutable UUID, assigned to a CPH Holding. A maximum of 50 values are allowed at a time.
           required: false
           style: form
           explode: false
@@ -968,6 +969,8 @@ paths:
             items:
                type: string
                format: uuid
+            minItems: 1 # Optional: ensure at least 1 item if parameter is present.
+            maxItems: 50 # Required: This restricts the array to 50 items.
                               
         - name: partyId
           in: query
