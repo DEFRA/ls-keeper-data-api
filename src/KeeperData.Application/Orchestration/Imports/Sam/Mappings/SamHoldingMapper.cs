@@ -463,7 +463,7 @@ public static class SamHoldingMapper
             });
 
         var results = await Task.WhenAll(tasks);
-        return [.. results.Where(x => x != null)];
+        return [.. results.OfType<T>()];
     }
 
     private static List<GroupMark> ToGroupMarks(List<SiteGroupMarkRelationshipDocument> relationships)
