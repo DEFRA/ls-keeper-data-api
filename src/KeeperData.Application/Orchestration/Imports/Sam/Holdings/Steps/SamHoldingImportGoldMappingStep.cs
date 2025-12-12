@@ -35,7 +35,6 @@ public class SamHoldingImportGoldMappingStep(
             var existingSite = await goldSiteRepository.FindOneByFilterAsync(existingHoldingFilter, cancellationToken);
             context.ExistingGoldSite = existingSite;
             context.GoldSiteId = existingSite != null ? existingSite.Id : Guid.NewGuid().ToString();
-            context.GoldSiteName = representative.LocationName ?? string.Empty;
 
             context.GoldSiteGroupMarks = SiteGroupMarkMapper.ToGold(
                 context.SilverHerds,
@@ -44,7 +43,6 @@ public class SamHoldingImportGoldMappingStep(
 
             context.GoldParties = await SamPartyMapper.ToGold(
                 context.GoldSiteId,
-                context.GoldSiteName,
                 context.SilverParties,
                 context.GoldSiteGroupMarks,
                 goldPartyRepository,
@@ -70,6 +68,10 @@ public class SamHoldingImportGoldMappingStep(
                 context.GoldSiteGroupMarks,
                 context.GoldSiteId,
                 context.Cph);
+
+            SamPartyMapper.EnrichPartyRoleWithSiteInformation(
+                context.GoldParties,
+                context.GoldSite);
         }
     }
 }

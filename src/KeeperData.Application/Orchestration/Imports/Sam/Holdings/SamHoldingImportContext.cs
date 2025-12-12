@@ -22,7 +22,6 @@ public class SamHoldingImportContext
     public List<SamHerdDocument> SilverHerds { get; set; } = [];
 
     public string GoldSiteId { get; set; } = string.Empty;
-    public string GoldSiteName { get; set; } = string.Empty;
     public SiteDocument? ExistingGoldSite { get; set; }
 
     public SiteDocument? GoldSite { get; set; }
