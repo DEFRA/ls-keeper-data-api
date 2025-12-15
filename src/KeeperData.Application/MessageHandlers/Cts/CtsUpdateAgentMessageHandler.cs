@@ -1,21 +1,20 @@
+using KeeperData.Application.Orchestration.Updates.Cts.Agents;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Serializers;
-using System.Threading;
-using System.Threading.Tasks;
+using MongoDB.Driver;
 
 namespace KeeperData.Application.MessageHandlers.Cts;
 
-public class CtsUpdateAgentMessageHandler : IMessageHandler<CtsUpdateAgentMessage>
+public class CtsUpdateAgentMessageHandler(
+    IUnwrappedMessageSerializer<CtsUpdateAgentMessage> serializer,
+    CtsUpdateAgentOrchestrator orchestrator)
+    : IMessageHandler<CtsUpdateAgentMessage>
 {
-    private readonly IUnwrappedMessageSerializer<CtsUpdateAgentMessage> _serializer;
-
-    public CtsUpdateAgentMessageHandler(IUnwrappedMessageSerializer<CtsUpdateAgentMessage> serializer)
-    {
-        _serializer = serializer;
-    }
+    private readonly IUnwrappedMessageSerializer<CtsUpdateAgentMessage> _serializer = serializer;
+    private readonly CtsUpdateAgentOrchestrator _orchestrator = orchestrator;
 
     public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)
     {
@@ -27,7 +26,25 @@ public class CtsUpdateAgentMessageHandler : IMessageHandler<CtsUpdateAgentMessag
             $"messageId: {message.MessageId}," +
             $"correlationId: {message.CorrelationId}");
 
-        // TODO: Implement import orchestration in a future story
+        var context = new CtsUpdateAgentContext
+        {
+            PartyId = messagePayload.Identifier,
+            CurrentDateTime = DateTime.UtcNow
+        };
+
+        try
+        {
+            await _orchestrator.ExecuteAsync(context, cancellationToken);
+        }
+        catch (MongoBulkWriteException ex)
+        {
+            throw new NonRetryableException($"Exception Message: {ex.Message}, Message Identifier: {messagePayload.Identifier}", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new NonRetryableException(ex.Message, ex);
+        }
+
         return await Task.FromResult(messagePayload!);
     }
 }

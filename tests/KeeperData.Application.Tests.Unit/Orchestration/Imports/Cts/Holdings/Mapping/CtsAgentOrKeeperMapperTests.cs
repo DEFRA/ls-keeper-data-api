@@ -34,9 +34,7 @@ public class CtsAgentOrKeeperMapperTests
     public async Task GivenNullableRawAgentOrKeepers_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = await CtsAgentOrKeeperMapper.ToSilver(
-            DateTime.UtcNow,
             null!,
-            HoldingIdentifierType.CphNumber,
             InferredRoleType.Agent,
             _resolveRoleType,
             CancellationToken.None);
@@ -49,9 +47,7 @@ public class CtsAgentOrKeeperMapperTests
     public async Task GivenEmptyRawAgentOrKeepers_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = await CtsAgentOrKeeperMapper.ToSilver(
-            DateTime.UtcNow,
             [],
-            HoldingIdentifierType.CphNumber,
             InferredRoleType.Agent,
             _resolveRoleType,
             CancellationToken.None);
@@ -70,9 +66,7 @@ public class CtsAgentOrKeeperMapperTests
         var records = GenerateCtsAgentOrKeeper(1);
 
         var results = await CtsAgentOrKeeperMapper.ToSilver(
-            DateTime.UtcNow,
             records,
-            HoldingIdentifierType.CphNumber,
             InferredRoleType.Agent,
             _resolveRoleType,
             CancellationToken.None);
@@ -102,9 +96,7 @@ public class CtsAgentOrKeeperMapperTests
         var records = GenerateCtsAgentOrKeeper(quantity);
 
         var results = await CtsAgentOrKeeperMapper.ToSilver(
-            DateTime.UtcNow,
             records,
-            HoldingIdentifierType.CphNumber,
             inferredRoleType,
             _resolveRoleType,
             CancellationToken.None);

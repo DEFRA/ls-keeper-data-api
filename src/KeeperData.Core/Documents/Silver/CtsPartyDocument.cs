@@ -19,6 +19,10 @@ public class CtsPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IC
     [BsonElement("lastUpdatedBatchId")]
     public int? LastUpdatedBatchId { get; set; }
 
+    [BsonElement("createdDate")]
+    [JsonPropertyName("createdDate")]
+    public DateTime CreatedDate { get; set; }
+
     [JsonPropertyName("lastUpdatedDate")]
     [BsonElement("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
@@ -29,19 +33,11 @@ public class CtsPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IC
 
     [JsonPropertyName("countyParishHoldingNumber")]
     [BsonElement("countyParishHoldingNumber")]
+    [AutoIndexed]
     public string CountyParishHoldingNumber { get; set; } = string.Empty;
-
-    [JsonPropertyName("holdingIdentifierType")]
-    [BsonElement("holdingIdentifierType")]
-    public string HoldingIdentifierType { get; set; } = string.Empty;
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
-        return
-        [
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("PartyId"),
-                new CreateIndexOptions { Name = "idx_partyId" })
-        ];
+        return AutoIndexedAttribute.GetIndexModels<CtsPartyDocument>();
     }
 }

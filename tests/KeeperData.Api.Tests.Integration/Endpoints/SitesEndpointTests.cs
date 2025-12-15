@@ -1,14 +1,14 @@
-using System.Net;
-using System.Net.Http.Json;
-using System.Web;
 using FluentAssertions;
 using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.Documents;
+using System.Net;
+using System.Net.Http.Json;
+using System.Web;
 
 namespace KeeperData.Api.Tests.Integration.Endpoints;
 
 [Trait("Dependence", "localstack")]
-[Collection("Database collection")]
+[Collection("Integration Tests")]
 public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>, IAsyncLifetime
 {
     private readonly HttpClient _httpClient = fixture.HttpClient;
@@ -29,21 +29,21 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
             new SiteDocument
             {
                 Id = SiteAId,
-                Type = "Business",
+                Type = new PremisesTypeSummaryDocument { IdentifierId = "t1", Code = "Business", Description = "Business Premise" },
                 State = "Active",
                 LastUpdatedDate = new DateTime(2010,01,01)
             },
             new SiteDocument
             {
                 Id = SiteBId,
-                Type = "Other",
+                Type = new PremisesTypeSummaryDocument { IdentifierId = "t2", Code = "Other", Description = "Other Premise" },
                 State = "Active",
                 LastUpdatedDate = new DateTime(2011,01,01)
             },
             new SiteDocument
             {
                 Id = SiteCId,
-                Type = "Business",
+                Type = new PremisesTypeSummaryDocument { IdentifierId = "t1", Code = "Business", Description = "Business Premise" },
                 State = "Active",
                 LastUpdatedDate = new DateTime(2012,01,01)
             },
@@ -63,10 +63,9 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
     [InlineData("WhenSearchingByType", "Business", null, null, 2, SiteAId + "," + SiteCId)]
     [InlineData("WhenSearchingByIdentifier", null, SiteBIdentifier1, null, 1, SiteBId)]
     [InlineData("WhenSearchingByIdentifier", null, SiteBIdentifier2, null, 1, SiteBId)]
-    [InlineData("WhenSearchingForRecordsThatDoNotExist", null, "Smythe", null, 0, "")]
+    [InlineData("WhenSearchingForRecordsThatDoNotExist", null, "00000000-0000-0000-0000-000000000000", null, 0, "")]
     [InlineData("WhenSearchingByDate", null, null, "2011-01-01", 2, SiteBId + "," + SiteCId)]
     [InlineData("WhenSearchingByDateAndType", "Other", null, "2011-01-01", 1, SiteBId)]
-    // TODO case insensitive search [InlineData("WhenSearchingCaseInsensitive", "john", "smith", 1, JohnSmithId)]
     public async Task GivenASearchRequest_ShouldHaveExpectedResults(string scenario, string? type, string? identifier, string? dateStr, int expectedCount, string expectedIdCsv)
     {
         Console.WriteLine(scenario);
@@ -87,8 +86,8 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
 
     [Theory]
     [InlineData("WhenSearchingById1", SiteAId, HttpStatusCode.OK, SiteAId)]
-    [InlineData("WhenSearchingById2", SiteBId, HttpStatusCode.OK, "\"type\":\"Other\"")]
-    [InlineData("WhenSearchingForIdThatDoesNotExist", "00000000-0000-0000-0000-000000000000", HttpStatusCode.InternalServerError, "not found")] //TODO should this be 404
+    [InlineData("WhenSearchingById2", SiteBId, HttpStatusCode.OK, "\"code\":\"Other\"")]
+    [InlineData("WhenSearchingForIdThatDoesNotExist", "00000000-0000-0000-0000-000000000000", HttpStatusCode.NotFound, "not found")]
     public async Task GivenAnRecordRequestById_ShouldHaveExpectedResults(string scenario, string requestedId, HttpStatusCode expectedHttpCode, string responseShouldContain)
     {
         Console.WriteLine(scenario);
@@ -117,6 +116,7 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
 
     public async Task InitializeAsync()
     {
+        await _fixture.MongoVerifier.DeleteAll<SiteDocument>();
         await _fixture.MongoVerifier.Insert(GivenTheseSites);
     }
 

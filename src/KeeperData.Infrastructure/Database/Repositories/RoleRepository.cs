@@ -37,7 +37,7 @@ public class RoleRepository(
         role ??= roles.FirstOrDefault(r => r.Name?.Equals(lookupValue, StringComparison.OrdinalIgnoreCase) == true);
 
         return role != null
-            ? (role.Code, role.Name)
+            ? (role.IdentifierId, role.Name)
             : (null, null);
     }
 }

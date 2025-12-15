@@ -42,7 +42,7 @@ public class ProductionUsageRepository(
         }
 
         return productionUsage != null
-            ? (productionUsage.Code, productionUsage.Description)
+            ? (productionUsage.IdentifierId, productionUsage.Description)
             : (null, null);
     }
 }

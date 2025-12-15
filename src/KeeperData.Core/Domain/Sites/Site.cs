@@ -10,7 +10,7 @@ public class Site : IAggregateRoot
     public string Id { get; private set; }
     public DateTime CreatedDate { get; private set; }
     public DateTime LastUpdatedDate { get; private set; }
-    public string Type { get; private set; }
+    public PremisesType? Type { get; private set; }
     public string Name { get; private set; }
     public DateTime StartDate { get; private set; }
     public DateTime? EndDate { get; private set; }
@@ -45,7 +45,6 @@ public class Site : IAggregateRoot
         string id,
         DateTime createdDate,
         DateTime lastUpdatedDate,
-        string type,
         string name,
         DateTime startDate,
         DateTime? endDate,
@@ -53,12 +52,12 @@ public class Site : IAggregateRoot
         string? source,
         bool? destroyIdentityDocumentsFlag,
         bool deleted,
+        PremisesType? type,
         Location? location)
     {
         Id = id;
         CreatedDate = createdDate;
         LastUpdatedDate = lastUpdatedDate;
-        Type = type;
         Name = name;
         StartDate = startDate;
         EndDate = endDate;
@@ -66,11 +65,14 @@ public class Site : IAggregateRoot
         Source = source;
         DestroyIdentityDocumentsFlag = destroyIdentityDocumentsFlag;
         Deleted = deleted;
+        Type = type;
         _location = location;
     }
 
     public static Site Create(
-        string type,
+        string id,
+        DateTime createdDate,
+        DateTime lastUpdatedDate,
         string name,
         DateTime startDate,
         DateTime? endDate,
@@ -78,13 +80,13 @@ public class Site : IAggregateRoot
         string? source,
         bool? destroyIdentityDocumentsFlag,
         bool deleted,
+        PremisesType? type = null,
         Location? location = null)
     {
         var site = new Site(
-            Guid.NewGuid().ToString(),
-            DateTime.UtcNow,
-            DateTime.UtcNow,
-            type,
+            id,
+            createdDate,
+            lastUpdatedDate,
             name,
             startDate,
             endDate,
@@ -92,6 +94,7 @@ public class Site : IAggregateRoot
             source,
             destroyIdentityDocumentsFlag,
             deleted,
+            type,
             location);
 
         site._domainEvents.Add(new SiteCreatedDomainEvent(site.Id));
@@ -100,7 +103,6 @@ public class Site : IAggregateRoot
 
     public void Update(
         DateTime lastUpdatedDate,
-        string type,
         string name,
         DateTime startDate,
         DateTime? endDate,
@@ -111,7 +113,6 @@ public class Site : IAggregateRoot
     {
         var changed = false;
 
-        changed |= Change(Type, type, v => Type = v, lastUpdatedDate);
         changed |= Change(Name, name, v => Name = v, lastUpdatedDate);
         changed |= Change(StartDate, startDate, v => StartDate = v, lastUpdatedDate);
         changed |= Change(EndDate, endDate, v => EndDate = v, lastUpdatedDate);
@@ -133,6 +134,17 @@ public class Site : IAggregateRoot
         Deleted = true;
         State = "Inactive";
         LastUpdatedDate = DateTime.UtcNow;
+    }
+
+    public void SetPremisesType(PremisesType? type, DateTime lastUpdatedDate)
+    {
+        if (Type == null && type == null) return;
+
+        if (Type is null || !Type.Equals(type))
+        {
+            Type = type;
+            UpdateLastUpdatedDate(lastUpdatedDate);
+        }
     }
 
     public void SetLocation(Location location)
@@ -161,9 +173,13 @@ public class Site : IAggregateRoot
         }
     }
 
-    public void SetSiteIdentifier(DateTime lastUpdatedDate, string identifier, string type, string? id = null)
+    public void SetSiteIdentifier(
+        DateTime lastUpdatedDate,
+        string identifier,
+        SiteIdentifierType type,
+        string? id = null)
     {
-        var existing = _identifiers.FirstOrDefault(i => i.Type == type);
+        var existing = _identifiers.FirstOrDefault(i => i.Type.Id == type.Id);
 
         if (existing is not null)
         {
@@ -198,7 +214,7 @@ public class Site : IAggregateRoot
             }
             else
             {
-                _species.Add(new Species(incoming.Id, lastUpdatedDate, incoming.Code, incoming.Name));
+                _species.Add(Shared.Species.Create(incoming.Id, lastUpdatedDate, incoming.Code, incoming.Name));
                 changed = true;
             }
         }
@@ -207,7 +223,7 @@ public class Site : IAggregateRoot
             .Where(existing => incomingList.All(i => i.Code != existing.Code))
             .ToList();
 
-        if (orphaned.Any())
+        if (orphaned.Count != 0)
         {
             foreach (var orphan in orphaned)
             {
@@ -229,26 +245,21 @@ public class Site : IAggregateRoot
 
         foreach (var incoming in incomingList)
         {
-            var existing = _activities.FirstOrDefault(a =>
-                a.Activity == incoming.Activity &&
-                a.StartDate == incoming.StartDate &&
-                a.EndDate == incoming.EndDate);
+            var existing = _activities.FirstOrDefault(a => a.Id == incoming.Id);
 
             if (existing is not null)
             {
                 changed |= existing.ApplyChanges(
                     lastUpdatedDate,
-                    incoming.Activity,
-                    incoming.Description,
+                    incoming.Type,
                     incoming.StartDate,
                     incoming.EndDate);
             }
             else
             {
-                _activities.Add(new SiteActivity(
+                _activities.Add(SiteActivity.Create(
                     incoming.Id,
-                    incoming.Activity,
-                    incoming.Description,
+                    incoming.Type,
                     incoming.StartDate,
                     incoming.EndDate,
                     lastUpdatedDate));
@@ -256,14 +267,10 @@ public class Site : IAggregateRoot
             }
         }
 
-        var orphaned = _activities
-            .Where(existing => incomingList.All(i =>
-                i.Activity != existing.Activity ||
-                i.StartDate != existing.StartDate ||
-                i.EndDate != existing.EndDate))
-            .ToList();
+        var incomingIds = incomingList.Select(i => i.Id).ToHashSet();
+        var orphaned = _activities.Where(a => !incomingIds.Contains(a.Id)).ToList();
 
-        if (orphaned.Any())
+        if (orphaned.Count > 0)
         {
             foreach (var orphan in orphaned)
             {
@@ -317,7 +324,7 @@ public class Site : IAggregateRoot
                 i.Species?.Id != existing.Species?.Id))
             .ToList();
 
-        if (orphaned.Any())
+        if (orphaned.Count != 0)
         {
             foreach (var orphan in orphaned)
             {
@@ -344,7 +351,7 @@ public class Site : IAggregateRoot
             if (existing is not null)
             {
                 changed |= existing.ApplyChanges(
-                    lastUpdatedDate,
+                    incoming.LastUpdatedDate,
                     incoming.PartyId,
                     incoming.Title,
                     incoming.FirstName,
@@ -360,7 +367,8 @@ public class Site : IAggregateRoot
             {
                 _parties.Add(new SiteParty(
                     incoming.Id,
-                    lastUpdatedDate,
+                    incoming.CreatedDate,
+                    incoming.LastUpdatedDate,
                     incoming.PartyId,
                     incoming.Title,
                     incoming.FirstName,
@@ -379,7 +387,7 @@ public class Site : IAggregateRoot
             .Where(existing => incomingList.All(i => i.PartyId != existing.PartyId))
             .ToList();
 
-        if (orphaned.Any())
+        if (orphaned.Count != 0)
         {
             foreach (var orphan in orphaned)
             {

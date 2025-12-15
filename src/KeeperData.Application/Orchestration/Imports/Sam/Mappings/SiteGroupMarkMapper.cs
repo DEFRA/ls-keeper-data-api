@@ -6,11 +6,9 @@ namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 public static class SiteGroupMarkMapper
 {
     public static List<SiteGroupMarkRelationshipDocument> ToGold(
-        DateTime currentDateTime,
         List<SamHerdDocument>? silverHerds,
         List<Core.Documents.Silver.SitePartyRoleRelationshipDocument> silverSitePartyRoles,
-        string holdingIdentifier,
-        string holdingIdentifierType)
+        string holdingIdentifier)
     {
         if (silverHerds is null || silverHerds.Count == 0)
             return [];
@@ -23,13 +21,13 @@ public static class SiteGroupMarkMapper
             {
                 // Id - Leave to support upsert assigning Id
 
-                LastUpdatedDate = currentDateTime,
+                LastUpdatedDate = herd.LastUpdatedDate,
                 Herdmark = herd.Herdmark,
                 CountyParishHoldingHerd = herd.CountyParishHoldingHerd,
                 HoldingIdentifier = holdingIdentifier,
-                HoldingIdentifierType = holdingIdentifierType,
                 SpeciesTypeId = herd.SpeciesTypeId,
                 SpeciesTypeCode = herd.SpeciesTypeCode,
+                SpeciesTypeName = herd.SpeciesTypeName,
                 ProductionUsageId = herd.ProductionUsageId,
                 ProductionUsageCode = herd.ProductionUsageCode,
                 ProductionTypeId = herd.ProductionTypeId,
@@ -48,8 +46,7 @@ public static class SiteGroupMarkMapper
             {
                 var matchingRoles = silverSitePartyRoles
                     .Where(r => r.PartyId == partyId
-                        && r.HoldingIdentifier == holdingIdentifier
-                        && r.HoldingIdentifierType == holdingIdentifierType);
+                        && r.HoldingIdentifier == holdingIdentifier);
 
                 foreach (var role in matchingRoles)
                 {

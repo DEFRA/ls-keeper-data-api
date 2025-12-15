@@ -1,5 +1,6 @@
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.MessagePublishers;
@@ -23,6 +24,7 @@ public class CtsKeeperDailyScanStep(
     private readonly IDelayProvider _delayProvider = delayProvider;
 
     private const string SelectFields = "PAR_ID";
+    private const string OrderBy = "LID_FULL_IDENTIFIER asc";
 
     protected override async Task ExecuteCoreAsync(CtsDailyScanContext context, CancellationToken cancellationToken)
     {
@@ -32,11 +34,12 @@ public class CtsKeeperDailyScanStep(
 
         while (!context.Keepers.ScanCompleted && !cancellationToken.IsCancellationRequested)
         {
-            var queryResponse = await _dataBridgeClient.GetCtsKeepersAsync(
+            var queryResponse = await _dataBridgeClient.GetCtsKeepersAsync<CtsScanAgentOrKeeperIdentifier>(
                 context.Keepers.CurrentTop,
                 context.Keepers.CurrentSkip,
                 SelectFields,
                 context.UpdatedSinceDateTime,
+                OrderBy,
                 cancellationToken);
 
             if (queryResponse == null || queryResponse.Data.Count == 0)

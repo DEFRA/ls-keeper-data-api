@@ -1,36 +1,32 @@
 using KeeperData.Core.Documents;
-using KeeperData.Core.Documents.Silver;
+using System.Data;
 
 namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 
 public static class SitePartyRoleMapper
 {
     public static List<Core.Documents.SitePartyRoleRelationshipDocument> ToGold(
-        List<SamPartyDocument> silverParties,
+        List<PartyDocument> goldParties,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
-        string holdingIdentifierType,
-        string? holdingIdentifier = null)
+        string goldSiteId,
+        string holdingIdentifier)
     {
-        if (silverParties == null) return [];
+        if (goldParties == null) return [];
 
-        return [.. silverParties
-            .Where(party => party.Deleted != true && party.Roles != null)
+        return [.. goldParties
+            .Where(party => party.Deleted != true && party.PartyRoles != null)
             .SelectMany(party =>
-            {
-                var holdingIdentifiers = party.CphList?.Count > 0
-                    ? party.CphList
-                    : holdingIdentifier is not null ? [holdingIdentifier] : [];
-
-                return holdingIdentifiers.SelectMany(cph =>
-                    party.Roles!.Where(x => x.RoleTypeId != null)
+                party.PartyRoles!
+                    .Where(role => role.Role.IdentifierId != null &&
+                                   role.Site != null &&
+                                   role.Site.IdentifierId == goldSiteId)
                     .SelectMany(role =>
                     {
                         var matchingSpecies = goldSiteGroupMarks
                             .Where(g =>
-                                g.PartyId == party.PartyId &&
-                                g.RoleTypeId == role.RoleTypeId &&
-                                g.HoldingIdentifier == cph &&
-                                g.HoldingIdentifierType == holdingIdentifierType)
+                                g.HoldingIdentifier == holdingIdentifier &&
+                                g.PartyId == party.CustomerNumber &&
+                                g.RoleTypeId == role.Role.IdentifierId)
                             .Select(g => new
                             {
                                 g.SpeciesTypeId,
@@ -43,21 +39,16 @@ public static class SitePartyRoleMapper
                         {
                             // Id left unset for upsert
 
-                            PartyId = party.PartyId,
-                            PartyTypeId = party.PartyTypeId,
-                            HoldingIdentifier = cph,
-                            HoldingIdentifierType = holdingIdentifierType,
+                            PartyId = party.CustomerNumber ?? string.Empty,
+                            PartyTypeId = party.PartyType ?? string.Empty,
+                            HoldingIdentifier = holdingIdentifier,
 
-                            RoleTypeId = role.RoleTypeId!,
-                            RoleTypeName = role.RoleTypeName,
+                            RoleTypeId = role.Role.IdentifierId!,
+                            RoleTypeName = role.Role.Name,
 
-                            EffectiveFromData = role.EffectiveFromDate,
-                            EffectiveToData = role.EffectiveToDate,
-
-                            SpeciesTypeId = species.SpeciesTypeId ?? "",
-                            SpeciesTypeCode = species.SpeciesTypeCode ?? ""
+                            SpeciesTypeId = species.SpeciesTypeId ?? string.Empty,
+                            SpeciesTypeCode = species.SpeciesTypeCode ?? string.Empty
                         });
-                    }));
-            })];
+                    }))];
     }
 }

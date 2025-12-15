@@ -103,9 +103,19 @@ public class SamParty : BronzeBase
 
     [JsonPropertyName("PARTY_ROLE_FROM_DATE")]
     [JsonConverter(typeof(SafeDateTimeConverter))]
-    public DateTime PARTY_ROLE_FROM_DATE { get; set; } = default;
+    public DateTime? PARTY_ROLE_FROM_DATE { get; set; }
 
     [JsonPropertyName("PARTY_ROLE_TO_DATE")]
     [JsonConverter(typeof(SafeNullableDateTimeConverter))]
     public DateTime? PARTY_ROLE_TO_DATE { get; set; }
+
+    public List<string> RoleList => SplitCommaSeparatedIds(ROLES ?? string.Empty);
+
+    /// <summary>
+    /// CLOB (comma separated list of CPH)
+    /// </summary>
+    [JsonPropertyName("CPHS")]
+    public string? CPHS { get; set; }
+
+    public List<string> CphList => SplitCommaSeparatedIds(CPHS ?? string.Empty);
 }

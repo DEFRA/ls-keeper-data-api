@@ -5,7 +5,6 @@ using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Domain.Sites.Formatters;
-using KeeperData.Core.Repositories;
 using MongoDB.Driver;
 
 namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
@@ -13,11 +12,10 @@ namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 public static class SamHoldingMapper
 {
     public static async Task<List<SamHoldingDocument>> ToSilver(
-        DateTime currentDateTime,
         List<SamCphHolding> rawHoldings,
         Func<string?, CancellationToken, Task<(string? PremiseActivityTypeId, string? PremiseActivityTypeName)>> resolvePremiseActivityType,
         Func<string?, CancellationToken, Task<(string? PremiseTypeId, string? PremiseTypeName)>> resolvePremiseType,
-        Func<string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
+        Func<string?, string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
         CancellationToken cancellationToken)
     {
         var result = new List<SamHoldingDocument>();
@@ -25,7 +23,6 @@ public static class SamHoldingMapper
         foreach (var h in rawHoldings?.Where(x => x.CPH != null) ?? [])
         {
             var holding = await ToSilver(
-                currentDateTime,
                 h,
                 resolvePremiseActivityType,
                 resolvePremiseType,
@@ -39,11 +36,10 @@ public static class SamHoldingMapper
     }
 
     public static async Task<SamHoldingDocument> ToSilver(
-        DateTime currentDateTime,
         SamCphHolding h,
         Func<string?, CancellationToken, Task<(string? PremiseActivityTypeId, string? PremiseActivityTypeName)>> resolvePremiseActivityType,
         Func<string?, CancellationToken, Task<(string? PremiseTypeId, string? PremiseTypeName)>> resolvePremiseType,
-        Func<string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
+        Func<string?, string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
         CancellationToken cancellationToken)
     {
         var addressLine = AddressFormatters.FormatAddressRange(
@@ -53,16 +49,19 @@ public static class SamHoldingMapper
                             h.PAON_END_NUMBER, h.PAON_END_NUMBER_SUFFIX,
                             h.SAON_DESCRIPTION, h.PAON_DESCRIPTION);
 
-        var (premiseActivityTypeId, premiseActivityTypeName) = await resolvePremiseActivityType(h.FACILITY_BUSINSS_ACTVTY_CODE, cancellationToken);
+        var formattedFacilityBusinessActivityCode = PremiseActivityTypeFormatters.TrimFacilityActivityCode(h.FACILITY_BUSINSS_ACTVTY_CODE);
+
+        var (premiseActivityTypeId, premiseActivityTypeName) = await resolvePremiseActivityType(formattedFacilityBusinessActivityCode, cancellationToken);
         var (premiseTypeId, premiseTypeName) = await resolvePremiseType(h.FACILITY_TYPE_CODE, cancellationToken);
-        var (countryId, countryName) = await resolveCountry(h.COUNTRY_CODE, cancellationToken);
+        var (countryId, countryName) = await resolveCountry(h.COUNTRY_CODE, h.UK_INTERNAL_CODE, cancellationToken);
 
         var result = new SamHoldingDocument
         {
             // Id - Leave to support upsert assigning Id
 
             LastUpdatedBatchId = h.BATCH_ID,
-            LastUpdatedDate = currentDateTime,
+            CreatedDate = h.CreatedAtUtc ?? DateTime.UtcNow,
+            LastUpdatedDate = h.UpdatedAtUtc ?? DateTime.UtcNow,
             Deleted = h.IsDeleted ?? false,
 
             CountyParishHoldingNumber = h.CPH,
@@ -80,10 +79,10 @@ public static class SamHoldingMapper
 
             HoldingStartDate = h.FEATURE_ADDRESS_FROM_DATE,
             HoldingEndDate = h.FEATURE_ADDRESS_TO_DATE,
-            HoldingStatus = HoldingStatusFormatters.FormatHoldingStatus(h.FEATURE_ADDRESS_TO_DATE),
+            HoldingStatus = HoldingStatusFormatters.FormatHoldingStatus(h.IsDeleted ?? false),
 
             PremiseActivityTypeId = premiseActivityTypeId,
-            PremiseActivityTypeCode = h.FACILITY_BUSINSS_ACTVTY_CODE,
+            PremiseActivityTypeCode = formattedFacilityBusinessActivityCode,
             PremiseSubActivityTypeCode = h.FCLTY_SUB_BSNSS_ACTVTY_CODE,
 
             MovementRestrictionReasonCode = h.MOVEMENT_RSTRCTN_RSN_CODE,
@@ -132,64 +131,71 @@ public static class SamHoldingMapper
     }
 
     public static async Task<SiteDocument?> ToGold(
-        DateTime currentDateTime,
+        string goldSiteId,
+        SiteDocument? existingSite,
         List<SamHoldingDocument> silverHoldings,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         List<PartyDocument> goldParties,
-        IGenericRepository<SiteDocument> goldSiteRepository,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
         Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
+        Func<string?, CancellationToken, Task<SiteIdentifierTypeDocument?>> getSiteIdentifierTypeByCode,
         Func<string?, CancellationToken, Task<(string? speciesTypeId, string? speciesTypeName)>> findSpecies,
-        Func<string?, CancellationToken, Task<(string? productionUsageId, string? productionUsageName)>> findProductionUsage,
+        Func<string?, CancellationToken, Task<PremisesActivityTypeDocument?>> getPremiseActivityTypeByCode,
         CancellationToken cancellationToken)
     {
         if (silverHoldings == null || silverHoldings.Count == 0)
             return null;
 
-        var representative = silverHoldings.Any(x => x.Deleted != true)
-            ? silverHoldings.Where(x => x.Deleted != true).OrderByDescending(h => h.LastUpdatedDate).First()
+        var representative = silverHoldings.Any(x => x.IsActive)
+            ? silverHoldings.Where(x => x.IsActive).OrderByDescending(h => h.LastUpdatedDate).First()
             : silverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
-
-        var existingHoldingFilter = Builders<SiteDocument>.Filter.ElemMatch(
-            x => x.Identifiers,
-            i => i.Identifier == representative.CountyParishHoldingNumber
-                && i.Type == HoldingIdentifierType.CphNumber.ToString());
-
-        var existingSite = await goldSiteRepository.FindOneByFilterAsync(existingHoldingFilter, cancellationToken);
 
         var distinctSpecies = await GetDistinctReferenceDataAsync<SpeciesDocument>(
             silverHoldings.Select(h => h.SpeciesTypeCode),
             findSpecies,
             cancellationToken);
 
-        var distinctProductionUsages = await GetDistinctReferenceDataAsync<ProductionUsageDocument>(
-            silverHoldings.SelectMany(h => h.ProductionUsageCodeList),
-            findProductionUsage,
+        //var distinctProductionUsages = await GetDistinctReferenceDataAsync<ProductionUsageDocument>(
+        //    silverHoldings.SelectMany(h => h.ProductionUsageCodeList),
+        //    findProductionUsage,
+        //    cancellationToken);
+
+        var distinctPremiseActivities = await GetDistinctReferenceDataAsync(
+            silverHoldings.Select(h => h.PremiseActivityTypeCode),
+            getPremiseActivityTypeByCode,
             cancellationToken);
 
         var species = distinctSpecies
             .Where(doc => doc.typeId is not null)
-            .Select(doc => new Species(
+            .Select(doc => Species.Create(
                 id: doc.typeId ?? string.Empty,
-                lastUpdatedDate: currentDateTime,
+                lastUpdatedDate: representative.LastUpdatedDate,
                 code: doc.searchValue,
                 name: doc.typeName ?? string.Empty))
             .ToList();
 
-        var activities = distinctProductionUsages
-            .Where(doc => doc.typeId is not null)
-            .Select(doc => new SiteActivity(
-                id: doc.typeId ?? string.Empty,
-                activity: doc.searchValue,
-                description: doc.typeName,
+        var activities = distinctPremiseActivities
+            .Where(doc => doc is not null)
+            .Select(doc => SiteActivity.Create(
+                id: doc.IdentifierId,
+                type: doc.ToDomain(),
                 startDate: representative.HoldingStartDate,
                 endDate: representative.HoldingEndDate,
-                lastUpdatedDate: currentDateTime))
+                lastUpdatedDate: representative.LastUpdatedDate))
             .ToList();
+
+        var siteIdentifierTypeLookup = await getSiteIdentifierTypeByCode(
+            HoldingIdentifierType.CPHN.ToString(),
+            cancellationToken);
+
+        var siteIdentifierType = siteIdentifierTypeLookup == null ? null : new SiteIdentifierType(
+            siteIdentifierTypeLookup.IdentifierId,
+            siteIdentifierTypeLookup.Code,
+            siteIdentifierTypeLookup.Name,
+            siteIdentifierTypeLookup.LastModifiedDate);
 
         var site = existingSite is not null
             ? await UpdateSiteAsync(
-                currentDateTime,
                 representative,
                 existingSite,
                 goldSiteGroupMarks,
@@ -198,9 +204,10 @@ public static class SamHoldingMapper
                 getPremiseTypeById,
                 species,
                 activities,
+                siteIdentifierType,
                 cancellationToken)
             : await CreateSiteAsync(
-                currentDateTime,
+                goldSiteId,
                 representative,
                 goldSiteGroupMarks,
                 goldParties,
@@ -208,13 +215,14 @@ public static class SamHoldingMapper
                 getPremiseTypeById,
                 species,
                 activities,
+                siteIdentifierType,
                 cancellationToken);
 
         return SiteDocument.FromDomain(site);
     }
 
     private static async Task<Site> CreateSiteAsync(
-        DateTime currentDateTime,
+        string goldSiteId,
         SamHoldingDocument representative,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         List<PartyDocument> goldParties,
@@ -222,14 +230,21 @@ public static class SamHoldingMapper
         Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
         List<Species> species,
         List<SiteActivity> activities,
+        SiteIdentifierType? siteIdentifierType,
         CancellationToken cancellationToken)
     {
         int? uprn = int.TryParse(representative.Location?.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
 
-        var premiseType = await GetPremiseTypeAsync(
+        var premiseTypeLookup = await GetPremiseTypeAsync(
             representative.PremiseTypeIdentifier,
             getPremiseTypeById,
             cancellationToken);
+
+        var premiseType = premiseTypeLookup == null ? null : PremisesType.Create(
+            premiseTypeLookup.IdentifierId,
+            premiseTypeLookup.Code,
+            premiseTypeLookup.Name,
+            premiseTypeLookup.LastModifiedDate);
 
         var country = await GetCountryAsync(
             representative.Location?.Address?.CountryIdentifier,
@@ -245,22 +260,30 @@ public static class SamHoldingMapper
             representative.Location?.Address?.AddressPostCode ?? string.Empty,
             country);
 
+        var communication = Communication.Create(
+            representative.Communication?.Email,
+            representative.Communication?.Mobile,
+            representative.Communication?.Landline,
+            false);
+
         var location = Location.Create(
             representative.Location?.OsMapReference,
             representative.Location?.Easting,
             representative.Location?.Northing,
             address,
-            communication: null);
+            communication: [communication]);
 
         var groupMarks = ToGroupMarks(goldSiteGroupMarks);
 
         var siteParties = goldParties
             .Where(p => !p.Deleted && !string.IsNullOrWhiteSpace(p.CustomerNumber))
-            .Select(p => p.ToSitePartyDomain(currentDateTime))
+            .Select(p => p.ToSitePartyDomain(representative.LastUpdatedDate))
             .ToList();
 
         var site = Site.Create(
-            premiseType?.Code ?? string.Empty,
+            goldSiteId,
+            representative.CreatedDate,
+            representative.LastUpdatedDate,
             representative.LocationName ?? string.Empty,
             representative.HoldingStartDate,
             representative.HoldingEndDate,
@@ -268,26 +291,29 @@ public static class SamHoldingMapper
             SourceSystemType.SAM.ToString(),
             null,
             representative.Deleted,
+            premiseType,
             location);
 
-        site.SetSiteIdentifier(
-            lastUpdatedDate: currentDateTime,
-            identifier: representative.CountyParishHoldingNumber,
-            type: HoldingIdentifierType.CphNumber.ToString());
+        if (siteIdentifierType != null)
+        {
+            site.SetSiteIdentifier(
+                lastUpdatedDate: representative.LastUpdatedDate,
+                identifier: representative.CountyParishHoldingNumber,
+                type: siteIdentifierType);
+        }
 
-        site.SetSpecies(species, currentDateTime);
+        site.SetSpecies(species, representative.LastUpdatedDate);
 
-        site.SetActivities(activities, currentDateTime);
+        site.SetActivities(activities, representative.LastUpdatedDate);
 
-        site.SetGroupMarks(groupMarks, currentDateTime);
+        site.SetGroupMarks(groupMarks, representative.LastUpdatedDate);
 
-        site.SetSiteParties(siteParties, currentDateTime);
+        site.SetSiteParties(siteParties, representative.LastUpdatedDate);
 
         return site;
     }
 
     private static async Task<Site> UpdateSiteAsync(
-        DateTime currentDateTime,
         SamHoldingDocument representative,
         SiteDocument existing,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
@@ -296,16 +322,12 @@ public static class SamHoldingMapper
         Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
         List<Species> species,
         List<SiteActivity> activities,
+        SiteIdentifierType? siteIdentifierType,
         CancellationToken cancellationToken)
     {
         var site = existing.ToDomain();
 
         int? uprn = int.TryParse(representative.Location?.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
-
-        var premiseType = await GetPremiseTypeAsync(
-            representative.PremiseTypeIdentifier,
-            getPremiseTypeById,
-            cancellationToken);
 
         var country = await GetCountryAsync(
             representative.Location?.Address?.CountryIdentifier,
@@ -316,12 +338,11 @@ public static class SamHoldingMapper
 
         var siteParties = goldParties
             .Where(p => !p.Deleted && !string.IsNullOrWhiteSpace(p.CustomerNumber))
-            .Select(p => p.ToSitePartyDomain(currentDateTime))
+            .Select(p => p.ToSitePartyDomain(representative.LastUpdatedDate))
             .ToList();
 
         site.Update(
-            currentDateTime,
-            premiseType?.Code ?? string.Empty,
+            representative.LastUpdatedDate,
             representative.LocationName ?? string.Empty,
             representative.HoldingStartDate,
             representative.HoldingEndDate,
@@ -339,21 +360,51 @@ public static class SamHoldingMapper
             representative.Location?.Address?.AddressPostCode ?? string.Empty,
             country);
 
+        var updatedCommunication = Communication.Create(
+            representative.Communication?.Email,
+            representative.Communication?.Mobile,
+            representative.Communication?.Landline,
+            false);
+
+        if (representative.PremiseTypeIdentifier != site.Type?.Id)
+        {
+            var premiseTypeLookup = await GetPremiseTypeAsync(
+                representative.PremiseTypeIdentifier,
+                getPremiseTypeById,
+                cancellationToken);
+
+            var premiseType = premiseTypeLookup == null ? null : PremisesType.Create(
+                premiseTypeLookup.IdentifierId,
+                premiseTypeLookup.Code,
+                premiseTypeLookup.Name,
+                premiseTypeLookup.LastModifiedDate);
+
+            site.SetPremisesType(premiseType, representative.LastUpdatedDate);
+        }
+
         site.SetLocation(
-            currentDateTime,
+            representative.LastUpdatedDate,
             representative.Location?.OsMapReference,
             representative.Location?.Easting,
             representative.Location?.Northing,
             updatedAddress,
-            null);
+            [updatedCommunication]);
 
-        site.SetSpecies(species, currentDateTime);
+        if (siteIdentifierType != null)
+        {
+            site.SetSiteIdentifier(
+                lastUpdatedDate: representative.LastUpdatedDate,
+                identifier: representative.CountyParishHoldingNumber,
+                type: siteIdentifierType);
+        }
 
-        site.SetActivities(activities, currentDateTime);
+        site.SetSpecies(species, representative.LastUpdatedDate);
 
-        site.SetGroupMarks(groupMarks, currentDateTime);
+        site.SetActivities(activities, representative.LastUpdatedDate);
 
-        site.SetSiteParties(siteParties, currentDateTime);
+        site.SetGroupMarks(groupMarks, representative.LastUpdatedDate);
+
+        site.SetSiteParties(siteParties, representative.LastUpdatedDate);
 
         return site;
     }
@@ -407,6 +458,30 @@ public static class SamHoldingMapper
         return [.. results];
     }
 
+    private static async Task<List<T>> GetDistinctReferenceDataAsync<T>(
+        IEnumerable<string?> rawCodes,
+        Func<string?, CancellationToken, Task<T?>> getTypeByCodeAsync,
+        CancellationToken cancellationToken)
+    {
+        if (rawCodes == null)
+            return [];
+
+        var distinctCodes = rawCodes
+            .Where(code => !string.IsNullOrWhiteSpace(code))
+            .Distinct()
+            .ToList();
+
+        var tasks = distinctCodes
+            .Select(async code =>
+            {
+                var type = await getTypeByCodeAsync(code, cancellationToken);
+                return type;
+            });
+
+        var results = await Task.WhenAll(tasks);
+        return [.. results.OfType<T>()];
+    }
+
     private static List<GroupMark> ToGroupMarks(List<SiteGroupMarkRelationshipDocument> relationships)
     {
         return [.. relationships
@@ -414,11 +489,11 @@ public static class SamHoldingMapper
             .Select(m =>
             {
                 var species = m.SpeciesTypeId is not null
-                    ? new Species(
+                    ? Species.Create(
                         id: m.SpeciesTypeId,
                         lastUpdatedDate: m.LastUpdatedDate,
                         code: m.SpeciesTypeCode ?? string.Empty,
-                        name: m.SpeciesTypeCode ?? string.Empty)
+                        name: m.SpeciesTypeName ?? string.Empty)
                     : null;
 
                 return new GroupMark(

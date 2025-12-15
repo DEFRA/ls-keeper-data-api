@@ -127,4 +127,12 @@ subscription_arn=$(awslocal sns subscribe \
   --query 'SubscriptionArn')
 echo "SNS Topic subscription complete for main queue: $subscription_arn"
 
+# Create SNS Topic.
+topic_arn=$(awslocal sns create-topic \
+  --name ls_keeper_data_import_complete \
+  --endpoint-url=http://localhost:4566 \
+  --output text \
+  --query 'TopicArn')
+echo "SNS Topic created: $topic_arn"
+
 echo "Bootstrapping Complete"

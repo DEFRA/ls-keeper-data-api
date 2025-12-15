@@ -60,9 +60,7 @@ public class CtsPartyRoleRelationshipMapperTests
         var records = GenerateCtsAgentOrKeeper(quantity, holdingIdentifier);
 
         var silverParties = await CtsAgentOrKeeperMapper.ToSilver(
-            DateTime.UtcNow,
             records,
-            HoldingIdentifierType.CphNumber,
             inferredRoleType,
             _resolveRoleType,
             CancellationToken.None);
@@ -80,8 +78,7 @@ public class CtsPartyRoleRelationshipMapperTests
                 VerifyCtsPartyRoleRelationshipMappings.VerifyMapping_From_CtsPartyDocument_To_PartyRoleRelationshipDocument(
                     party,
                     mapped,
-                    holdingIdentifier.LidIdentifierToCph(),
-                    HoldingIdentifierType.CphNumber.ToString());
+                    holdingIdentifier.LidIdentifierToCph());
             }
         }
     }

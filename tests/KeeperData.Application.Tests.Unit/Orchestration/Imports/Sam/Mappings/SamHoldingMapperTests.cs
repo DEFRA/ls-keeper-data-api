@@ -18,7 +18,7 @@ public class SamHoldingMapperTests
 
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolvePremiseActivityType;
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolvePremiseType;
-    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveCountry;
+    private readonly Func<string?, string?, CancellationToken, Task<(string?, string?)>> _resolveCountry;
 
     public SamHoldingMapperTests()
     {
@@ -31,8 +31,8 @@ public class SamHoldingMapperTests
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
         _countryIdentifierLookupServiceMock
-            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
         _resolvePremiseActivityType = _premiseActivityTypeLookupServiceMock.Object.FindAsync;
         _resolvePremiseType = _premiseTypeLookupServiceMock.Object.FindAsync;
@@ -43,7 +43,6 @@ public class SamHoldingMapperTests
     public async Task GivenNullableRawHoldings_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = await SamHoldingMapper.ToSilver(
-            DateTime.UtcNow,
             (List<SamCphHolding>?)null!,
             _resolvePremiseActivityType,
             _resolvePremiseType,
@@ -58,7 +57,6 @@ public class SamHoldingMapperTests
     public async Task GivenEmptyRawHoldings_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = await SamHoldingMapper.ToSilver(
-            DateTime.UtcNow,
             [],
             _resolvePremiseActivityType,
             _resolvePremiseType,
@@ -77,7 +75,6 @@ public class SamHoldingMapperTests
         var records = GenerateSamCphHolding(quantity);
 
         var results = await SamHoldingMapper.ToSilver(
-            DateTime.UtcNow,
             records,
             _resolvePremiseActivityType,
             _resolvePremiseType,

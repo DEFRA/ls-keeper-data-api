@@ -1,4 +1,3 @@
-using System.Reflection;
 using FluentValidation;
 using KeeperData.Application.Orchestration.ChangeScanning;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
@@ -6,14 +5,19 @@ using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk.Steps;
 using KeeperData.Application.Orchestration.Imports;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings.Steps;
+using KeeperData.Application.Orchestration.Updates;
+using KeeperData.Application.Orchestration.Updates.Cts.Holdings;
+using KeeperData.Application.Orchestration.Updates.Cts.Holdings.Steps;
 using KeeperData.Application.Providers;
 using KeeperData.Application.Queries.Parties.Adapters;
 using KeeperData.Application.Queries.Sites.Adapters;
 using KeeperData.Application.Services;
+using KeeperData.Application.Services.BatchCompletion;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Providers;
 using KeeperData.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 
 namespace KeeperData.Application.Setup;
 
@@ -37,7 +41,10 @@ public static class ServiceCollectionExtensions
         RegisterImportSteps(services, typeof(SamHoldingImportAggregationStep).Assembly);
         RegisterScanOrchestrators(services, typeof(SamBulkScanOrchestrator).Assembly);
         RegisterScanSteps(services, typeof(SamHoldingBulkScanStep).Assembly);
+        RegisterUpdateOrchestrators(services, typeof(CtsUpdateHoldingOrchestrator).Assembly);
+        RegisterUpdateSteps(services, typeof(CtsUpdateHoldingRawAggregationStep).Assembly);
         RegisterLookupServices(services);
+        RegisterNotificationService(services);
     }
 
     public static void RegisterImportOrchestrators(IServiceCollection services, Assembly assembly)
@@ -100,6 +107,36 @@ public static class ServiceCollectionExtensions
         }
     }
 
+    public static void RegisterUpdateOrchestrators(IServiceCollection services, Assembly assembly)
+    {
+        var orchestratorTypes = assembly.GetTypes()
+            .Where(t => !t.IsAbstract && !t.IsInterface)
+            .Where(t => t.BaseType?.IsGenericType == true &&
+                        t.BaseType.GetGenericTypeDefinition() == typeof(UpdateOrchestrator<>));
+
+        foreach (var orchestrator in orchestratorTypes)
+        {
+            services.AddScoped(orchestrator);
+        }
+    }
+
+    public static void RegisterUpdateSteps(IServiceCollection services, Assembly assembly)
+    {
+        var stepTypes = assembly.GetTypes()
+            .Where(t => !t.IsAbstract && !t.IsInterface)
+            .SelectMany(t => t.GetInterfaces()
+                .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IUpdateStep<>))
+                .Select(i => new { Implementation = t, Service = i }));
+
+        var orderedSteps = stepTypes
+            .OrderBy(t => t.Implementation.GetCustomAttribute<StepOrderAttribute>()?.Order ?? int.MaxValue);
+
+        foreach (var step in orderedSteps)
+        {
+            services.AddScoped(step.Service, step.Implementation);
+        }
+    }
+
     public static void RegisterLookupServices(IServiceCollection services)
     {
         services.AddTransient<ICountryIdentifierLookupService, CountryIdentifierLookupService>();
@@ -110,5 +147,10 @@ public static class ServiceCollectionExtensions
         services.AddTransient<IRoleTypeLookupService, RoleTypeLookupService>();
         services.AddTransient<ISpeciesTypeLookupService, SpeciesTypeLookupService>();
         services.AddTransient<ISiteIdentifierTypeLookupService, SiteIdentifierTypeLookupService>();
+    }
+
+    public static void RegisterNotificationService(IServiceCollection services)
+    {
+        services.AddScoped<IBatchCompletionNotificationService, BatchCompletionNotificationService>();
     }
 }

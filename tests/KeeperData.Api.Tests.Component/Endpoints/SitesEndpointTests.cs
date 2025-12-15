@@ -1,6 +1,8 @@
 using FluentAssertions;
+using KeeperData.Application.Extensions;
 using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.Documents;
+using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Repositories;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -82,13 +84,18 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
         }
     }
 
-    private static SiteDocument CreateSite(string name, string type, string identifier)
+    private static SiteDocument CreateSite(string name, string typeCode, string identifier)
     {
         var site = new SiteDocument
         {
             Id = Guid.NewGuid().ToString(),
             Name = name,
-            Type = type,
+            Type = new PremisesTypeSummaryDocument
+            {
+                IdentifierId = Guid.NewGuid().ToString(),
+                Code = typeCode,
+                Description = $"{typeCode} Description"
+            },
             State = "Active"
         };
 
@@ -96,7 +103,12 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
         {
             IdentifierId = $"test-id-{identifier}",
             Identifier = identifier,
-            Type = "CPH",
+            Type = new SiteIdentifierSummaryDocument()
+            {
+                IdentifierId = Guid.NewGuid().ToString(),
+                Code = HoldingIdentifierType.CPHN.ToString(),
+                Description = HoldingIdentifierType.CPHN.GetDescription()!
+            },
             LastUpdatedDate = DateTime.UtcNow
         });
 

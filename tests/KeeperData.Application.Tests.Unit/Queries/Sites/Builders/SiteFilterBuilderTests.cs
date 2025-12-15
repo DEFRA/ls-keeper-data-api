@@ -17,13 +17,18 @@ public class SiteFilterBuilderTests
     }
 
     [Fact]
-    public void Build_ShouldReturnEmptyFilter_WhenQueryIsEmpty()
+    public void Build_ShouldReturnDefaultDeletedFilter_WhenQueryIsEmpty()
     {
         var query = new GetSitesQuery();
         var filter = SiteFilterBuilder.Build(query);
+        var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry);
 
-        filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry)
-            .Should().BeEquivalentTo(new BsonDocument());
+        var expectedBson = BsonDocument.Parse(@"
+            {
+                ""deleted"": false
+            }");
+
+        renderedFilter.Should().BeEquivalentTo(expectedBson);
     }
 
     [Fact]
@@ -35,6 +40,7 @@ public class SiteFilterBuilderTests
 
         var expectedBson = BsonDocument.Parse(@"
             {
+                ""deleted"": false,
                 ""identifiers"": { ""$elemMatch"": { ""identifier"": ""CPH123"" } }
             }");
 
@@ -51,17 +57,56 @@ public class SiteFilterBuilderTests
         renderedFilter["_id"].AsString.Should().Be(siteId.ToString());
     }
 
-    // TODO - Linked to Filter TODO
-    //[Fact]
-    //public void Build_ShouldCreateFilterForKeeperPartyId()
-    //{
-    //    var keeperPartyId = Guid.NewGuid();
-    //    var query = new GetSitesQuery { KeeperPartyId = keeperPartyId };
-    //    var filter = SiteFilterBuilder.Build(query);
-    //    var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry);
+    [Fact]
+    public void Build_ShouldCreateFilterForKeeperPartyId()
+    {
+        // Arrange
+        var keeperPartyId = Guid.NewGuid();
+        var query = new GetSitesQuery { KeeperPartyId = keeperPartyId };
 
-    //    renderedFilter["keeperPartyIds"].AsString.Should().Be(keeperPartyId.ToString());
-    //}
+        // Act
+        var filter = SiteFilterBuilder.Build(query);
+        var renderedFilter = filter.Render(
+            BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(),
+            BsonSerializer.SerializerRegistry);
+
+        // Assert
+        var expectedBson = BsonDocument.Parse($@"
+            {{
+                ""parties"": {{ ""$elemMatch"": {{ ""partyId"": ""{keeperPartyId}"" }} }},
+                ""deleted"": false
+            }}");
+
+        renderedFilter.Should().BeEquivalentTo(expectedBson);
+    }
+
+    [Fact]
+    public void Build_ShouldCombineKeeperPartyIdWithOtherFilters()
+    {
+        // Arrange
+        var keeperPartyId = Guid.NewGuid();
+        var query = new GetSitesQuery
+        {
+            SiteIdentifier = "CPH123",
+            KeeperPartyId = keeperPartyId
+        };
+
+        // Act
+        var filter = SiteFilterBuilder.Build(query);
+        var renderedFilter = filter.Render(
+            BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(),
+            BsonSerializer.SerializerRegistry);
+
+        // Assert
+        var expectedBson = BsonDocument.Parse($@"
+        {{
+            ""identifiers"" : {{ ""$elemMatch"" : {{ ""identifier"" : ""CPH123"" }} }},
+            ""parties"": {{ ""$elemMatch"": {{ ""partyId"": ""{keeperPartyId}"" }} }},
+            ""deleted"": false
+        }}");
+
+        renderedFilter.Should().BeEquivalentTo(expectedBson);
+    }
 
     [Fact]
     public void Build_ShouldCreateFilterForType()
@@ -70,8 +115,8 @@ public class SiteFilterBuilderTests
         var filter = SiteFilterBuilder.Build(query);
         var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry);
 
-        renderedFilter["type"]["$in"].AsBsonArray.Select(v => v.AsString)
-            .Should().BeEquivalentTo(new[] { "type1", "type2" });
+        renderedFilter["type.code"]["$in"].AsBsonArray.Select(v => v.AsString)
+            .Should().BeEquivalentTo(["type1", "type2"]);
     }
 
     [Fact]
@@ -83,8 +128,10 @@ public class SiteFilterBuilderTests
 
         var expectedBson = BsonDocument.Parse(@"
         {
+            ""deleted"": false,
             ""identifiers"" : { ""$elemMatch"" : { ""identifier"" : ""CPH123"" } },
-            ""type"" : { ""$in"" : [""type1""] }
+            ""type"" : { ""$ne"" : null }
+            ""type.code"" : { ""$in"" : [""type1""] }
         }");
 
         renderedFilter.Should().BeEquivalentTo(expectedBson);

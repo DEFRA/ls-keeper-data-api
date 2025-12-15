@@ -3,11 +3,11 @@ using KeeperData.Api.Tests.Integration.Consumers.Helpers;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Tests.Common.Generators;
-using Xunit;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Sam;
 
 [Trait("Dependence", "localstack")]
+[Collection("Integration Tests")]
 public class SamUpdateHoldingMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
 {
     private const int ProcessingTimeCircuitBreakerSeconds = 10;

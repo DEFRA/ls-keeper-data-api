@@ -1,6 +1,8 @@
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
+using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
@@ -26,6 +28,10 @@ public class SamPartyDailyScanStep(
     private readonly bool _samPartiesEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamPartiesEnabled");
 
     private const string SelectFields = "PARTY_ID";
+    private const string OrderBy = "PARTY_ID asc";
+
+    private const string HerdSelectFields = "CPHH";
+    private const string HerdOrderBy = "CPHH asc";
 
     protected override async Task ExecuteCoreAsync(SamDailyScanContext context, CancellationToken cancellationToken)
     {
@@ -40,11 +46,12 @@ public class SamPartyDailyScanStep(
 
         while (!context.Parties.ScanCompleted && !cancellationToken.IsCancellationRequested)
         {
-            var queryResponse = await _dataBridgeClient.GetSamPartiesAsync(
+            var queryResponse = await _dataBridgeClient.GetSamPartiesAsync<SamScanPartyIdentifier>(
                 context.Parties.CurrentTop,
                 context.Parties.CurrentSkip,
                 SelectFields,
                 context.UpdatedSinceDateTime,
+                OrderBy,
                 cancellationToken);
 
             if (queryResponse == null || queryResponse.Data.Count == 0)
@@ -61,13 +68,33 @@ public class SamPartyDailyScanStep(
 
             foreach (var id in identifiers)
             {
-                var message = new SamUpdatePartyMessage
-                {
-                    Id = Guid.NewGuid(),
-                    Identifier = id
-                };
+                var relatedHerdsResponse = await _dataBridgeClient.GetSamHerdsByPartyIdAsync<SamScanHerdIdentifier>(
+                    id,
+                    HerdSelectFields,
+                    HerdOrderBy,
+                    cancellationToken);
 
-                await _intakeMessagePublisher.PublishAsync(message, cancellationToken);
+                if (relatedHerdsResponse == null || relatedHerdsResponse.Data.Count == 0)
+                {
+                    continue;
+                }
+
+                var herdIdentifiers = relatedHerdsResponse.Data
+                    .Select(x => x.CPHH.CphhToCph())
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Distinct()
+                    .ToList();
+
+                foreach (var hid in herdIdentifiers)
+                {
+                    var message = new SamUpdateHoldingMessage
+                    {
+                        Id = Guid.NewGuid(),
+                        Identifier = hid
+                    };
+
+                    await _intakeMessagePublisher.PublishAsync(message, cancellationToken);
+                }
             }
 
             context.Parties.TotalCount = queryResponse.TotalCount;

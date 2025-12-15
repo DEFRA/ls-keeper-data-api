@@ -1,3 +1,4 @@
+using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
 
@@ -7,10 +8,12 @@ public class BaseHoldingDocument
 {
     [JsonPropertyName("countyParishHoldingNumber")]
     [BsonElement("countyParishHoldingNumber")]
+    [AutoIndexed]
     public string CountyParishHoldingNumber { get; set; } = string.Empty;
 
     [JsonPropertyName("alternativeHoldingIdentifier")]
     [BsonElement("alternativeHoldingIdentifier")]
+    [AutoIndexed]
     public string? AlternativeHoldingIdentifier { get; set; }
 
     [JsonPropertyName("cphTypeIdentifier")]
@@ -19,6 +22,7 @@ public class BaseHoldingDocument
 
     [JsonPropertyName("locationName")]
     [BsonElement("locationName")]
+    [AutoIndexed]
     public string? LocationName { get; set; }
 
     [JsonPropertyName("holdingStartDate")]

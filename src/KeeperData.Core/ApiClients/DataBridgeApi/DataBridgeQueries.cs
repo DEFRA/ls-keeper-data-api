@@ -6,7 +6,8 @@ public static class DataBridgeQueries
         int top,
         int skip,
         string? selectFields = null,
-        DateTime? updatedSinceDateTime = null)
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null)
     {
         var query = new Dictionary<string, string>
         {
@@ -23,6 +24,11 @@ public static class DataBridgeQueries
         {
             var formattedDate = updatedSinceDateTime.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
             query["$filter"] = $"UpdatedAtUtc ge {formattedDate} or CreatedAtUtc ge {formattedDate}"; //if updated date is null use created date
+        }
+
+        if (!string.IsNullOrWhiteSpace(orderBy))
+        {
+            query["$orderby"] = orderBy;
         }
 
         return query;
@@ -44,11 +50,27 @@ public static class DataBridgeQueries
         };
     }
 
+    public static Dictionary<string, string> CtsAgentByPartyId(string id)
+    {
+        return new Dictionary<string, string>
+        {
+            ["$filter"] = $"PAR_ID eq '{id}'"
+        };
+    }
+
     public static Dictionary<string, string> CtsKeepersByLidFullIdentifier(string id)
     {
         return new Dictionary<string, string>
         {
             ["$filter"] = $"LID_FULL_IDENTIFIER eq '{id}'"
+        };
+    }
+
+    public static Dictionary<string, string> CtsKeeperByPartyId(string id)
+    {
+        return new Dictionary<string, string>
+        {
+            ["$filter"] = $"PAR_ID eq '{id}'"
         };
     }
 
@@ -82,6 +104,23 @@ public static class DataBridgeQueries
         {
             ["$filter"] = $"startswith(CPHH,'{id}')"
         };
+    }
+
+    public static Dictionary<string, string> SamHerdsByPartyId(string id, string selectFields, string orderBy)
+    {
+        var query = new Dictionary<string, string>
+        {
+            ["$select"] = selectFields
+        };
+
+        if (!string.IsNullOrWhiteSpace(orderBy))
+        {
+            query["$orderby"] = orderBy;
+        }
+
+        query["$filter"] = $"contains(KEEPER_PARTY_IDS, '{id}') or contains(OWNER_PARTY_IDS, '{id}')";
+
+        return query;
     }
 
     public static Dictionary<string, string> SamPartyByPartyId(string id)

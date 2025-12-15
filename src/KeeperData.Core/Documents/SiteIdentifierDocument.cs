@@ -17,7 +17,7 @@ public class SiteIdentifierDocument : INestedEntity
 
     [BsonElement("type")]
     [JsonPropertyName("type")]
-    public string Type { get; set; } = default!;
+    public SiteIdentifierSummaryDocument Type { get; set; } = default!;
 
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
@@ -28,12 +28,12 @@ public class SiteIdentifierDocument : INestedEntity
         IdentifierId = si.Id,
         LastUpdatedDate = si.LastUpdatedDate,
         Identifier = si.Identifier,
-        Type = si.Type,
+        Type = SiteIdentifierSummaryDocument.FromDomain(si.Type),
     };
 
     public SiteIdentifier ToDomain() => new(
         IdentifierId,
         LastUpdatedDate,
         Identifier,
-        Type);
+        Type.ToDomain());
 }

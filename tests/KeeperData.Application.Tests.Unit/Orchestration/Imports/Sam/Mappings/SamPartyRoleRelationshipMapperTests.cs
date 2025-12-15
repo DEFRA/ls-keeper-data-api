@@ -2,7 +2,6 @@ using FluentAssertions;
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
-using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Services;
 using KeeperData.Tests.Common.Factories;
 using KeeperData.Tests.Common.Generators;
@@ -17,7 +16,7 @@ public class SamPartyRoleRelationshipMapperTests
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
 
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveRoleType;
-    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveCountry;
+    private readonly Func<string?, string?, CancellationToken, Task<(string?, string?)>> _resolveCountry;
 
     public SamPartyRoleRelationshipMapperTests()
     {
@@ -26,8 +25,8 @@ public class SamPartyRoleRelationshipMapperTests
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
         _countryIdentifierLookupServiceMock
-            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
         _resolveRoleType = _roleTypeLookupServiceMock.Object.FindAsync;
         _resolveCountry = _countryIdentifierLookupServiceMock.Object.FindAsync;
@@ -37,7 +36,6 @@ public class SamPartyRoleRelationshipMapperTests
     public void GivenNullableParties_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = SamPartyRoleRelationshipMapper.ToSilver(null!,
-            Guid.NewGuid().ToString(),
             Guid.NewGuid().ToString());
 
         results.Should().NotBeNull();
@@ -48,7 +46,6 @@ public class SamPartyRoleRelationshipMapperTests
     public void GivenEmptyParties_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = SamPartyRoleRelationshipMapper.ToSilver([],
-            Guid.NewGuid().ToString(),
             Guid.NewGuid().ToString());
 
         results.Should().NotBeNull();
@@ -63,17 +60,15 @@ public class SamPartyRoleRelationshipMapperTests
         var records = GenerateSamParty(quantity);
 
         var holdingIdentifier = CphGenerator.GenerateFormattedCph();
-        var holdingIdentifierType = HoldingIdentifierType.CphNumber.ToString();
 
         var silverParties = await SamPartyMapper.ToSilver(
-            DateTime.UtcNow,
+            holdingIdentifier,
             records,
             _resolveRoleType,
             _resolveCountry,
             CancellationToken.None);
 
         var results = SamPartyRoleRelationshipMapper.ToSilver(silverParties,
-            holdingIdentifierType,
             holdingIdentifier);
 
         foreach (var party in silverParties)
@@ -87,8 +82,7 @@ public class SamPartyRoleRelationshipMapperTests
                 VerifySamPartyRoleRelationshipMappings.VerifyMapping_From_SamPartyDocument_To_PartyRoleRelationshipDocument(
                     party,
                     mapped,
-                    holdingIdentifier,
-                    holdingIdentifierType);
+                    holdingIdentifier);
             }
         }
     }

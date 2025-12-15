@@ -16,7 +16,6 @@ public static class CtsPartyRoleRelationshipMapper
                 PartyId = party.PartyId,
                 PartyTypeId = party.PartyTypeId,
                 HoldingIdentifier = party.CountyParishHoldingNumber,
-                HoldingIdentifierType = party.HoldingIdentifierType,
                 Source = SourceSystemType.CTS.ToString(),
 
                 RoleTypeId = role.RoleTypeId,

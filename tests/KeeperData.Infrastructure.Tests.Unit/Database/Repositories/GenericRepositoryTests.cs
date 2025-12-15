@@ -1,13 +1,16 @@
 using FluentAssertions;
 using KeeperData.Core.Attributes;
+using KeeperData.Core.Documents;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Infrastructure.Database.Repositories;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 using Moq;
 using System.Reflection;
+using System.Text.Json.Serialization;
 
 namespace KeeperData.Infrastructure.Tests.Unit.Database.Repositories;
 
@@ -298,6 +301,57 @@ public class GenericRepositoryTests
         await _sut.DeleteManyAsync(id, CancellationToken.None);
 
         _mongoCollectionMock.Verify();
+    }
+
+    [Fact]
+    public void AllDocumentsShouldHaveMatchingJsonAndBsonAttributes()
+    {
+        var assembly = Assembly.GetAssembly(typeof(PartyDocument));
+        var documentTypes = assembly?.GetTypes().Where(t => t.IsAssignableTo(typeof(IEntity)) || t.IsAssignableTo(typeof(INestedEntity)));
+        documentTypes.Should().NotBeNull();
+        foreach (var type in documentTypes)
+        {
+            var properties = type.GetMembers()
+            .Where(p => p.IsDefined(typeof(BsonElementAttribute)))
+            .Select(member =>
+            new
+            {
+                member,
+                bsonAttribute = member.GetCustomAttribute<BsonElementAttribute>(),
+                jsonAttribute = member.GetCustomAttribute<JsonPropertyNameAttribute>()
+            })
+            .ToList();
+            foreach (var property in properties)
+            {
+                property.jsonAttribute.Should().NotBeNull($"Class {type.Name} member {property.member.Name} must have a JsonPropertyNameAttribute if it has a BsonElementAttribute");
+                property.jsonAttribute.Name.Should().Be(property.bsonAttribute?.ElementName, $"Class {type.Name} member {property.member.Name} should have matching JsonPropertyNameAttribute '{property.jsonAttribute.Name}' and BsonElementAttribute '{property.bsonAttribute?.ElementName}'");
+            }
+        }
+    }
+
+    [Fact]
+    public void AllAutoIndexedDocumentsShouldHaveBsonAttribute()
+    {
+        var assembly = Assembly.GetAssembly(typeof(PartyDocument));
+        var documentTypes = assembly?.GetTypes().Where(t => t.IsAssignableTo(typeof(IEntity)) || t.IsAssignableTo(typeof(INestedEntity)));
+        documentTypes.Should().NotBeNull();
+        foreach (var type in documentTypes)
+        {
+            var properties = type.GetMembers()
+            .Where(p => p.IsDefined(typeof(AutoIndexedAttribute)))
+            .Select(member =>
+            new
+            {
+                member,
+                indexAttribute = member.GetCustomAttribute<AutoIndexedAttribute>(),
+                bsonAttribute = member.GetCustomAttribute<BsonElementAttribute>()
+            })
+            .ToList();
+            foreach (var property in properties)
+            {
+                property.bsonAttribute.Should().NotBeNull($"Class {type.Name} member {property.member.Name} must have a BsonPropertyNameAttribute if it has a AutoIndexedAttribute");
+            }
+        }
     }
 }
 

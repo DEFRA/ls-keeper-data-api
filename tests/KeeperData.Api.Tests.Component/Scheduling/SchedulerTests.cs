@@ -29,8 +29,6 @@ public class SchedulerTests
             .ConfigureServices((hostContext, services) =>
             {
                 services.AddScoped(_ => taskProcessBulkFilesMock.Object);
-                services.AddScoped<CtsBulkScanJob>();
-
                 services.AddQuartz(q =>
                 {
                     q.UseInMemoryStore();
