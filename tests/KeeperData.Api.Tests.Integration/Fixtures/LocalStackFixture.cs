@@ -123,7 +123,7 @@ public class LocalStackFixture : IAsyncLifetime
         await S3Client.PutBucketAsync(new PutBucketRequest { BucketName = S3_Bucket_TestComparisonReportsBucket });
 
         // SQS
-        // Create intake DLQ queue
+        // Create intake DLQ
         var intakeDlqCreated = await SqsClient.CreateQueueAsync(new CreateQueueRequest { QueueName = SQS_IntakeDeadletterQueue });
         var intakeDlqAttr = await SqsClient.GetQueueAttributesAsync(new GetQueueAttributesRequest
         {
@@ -206,7 +206,7 @@ public class LocalStackFixture : IAsyncLifetime
         });
 
         // SQS
-        // SQS: Intake DLQ queue
+        // SQS: Intake DLQ
         await SqsClient.GetQueueAttributesAsync(SQS_IntakeDeadletterQueue, ["All"], CancellationToken.None);
 
         // SQS: Intake queue
