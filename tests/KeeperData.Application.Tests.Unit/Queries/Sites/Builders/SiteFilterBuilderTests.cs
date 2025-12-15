@@ -130,6 +130,7 @@ public class SiteFilterBuilderTests
         {
             ""deleted"": false,
             ""identifiers"" : { ""$elemMatch"" : { ""identifier"" : ""CPH123"" } },
+            ""type"" : { ""$ne"" : null }
             ""type.code"" : { ""$in"" : [""type1""] }
         }");
 
