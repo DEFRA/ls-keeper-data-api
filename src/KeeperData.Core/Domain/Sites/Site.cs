@@ -205,7 +205,7 @@ public class Site : IAggregateRoot
             }
             else
             {
-                _species.Add(new Species(incoming.Id, lastUpdatedDate, incoming.Code, incoming.Name));
+                _species.Add(Shared.Species.Create(incoming.Id, lastUpdatedDate, incoming.Code, incoming.Name));
                 changed = true;
             }
         }
@@ -236,26 +236,21 @@ public class Site : IAggregateRoot
 
         foreach (var incoming in incomingList)
         {
-            var existing = _activities.FirstOrDefault(a =>
-                a.Activity == incoming.Activity &&
-                a.StartDate == incoming.StartDate &&
-                a.EndDate == incoming.EndDate);
+            var existing = _activities.FirstOrDefault(a => a.Id == incoming.Id);
 
             if (existing is not null)
             {
                 changed |= existing.ApplyChanges(
                     lastUpdatedDate,
-                    incoming.Activity,
-                    incoming.Description,
+                    incoming.Type,
                     incoming.StartDate,
                     incoming.EndDate);
             }
             else
             {
-                _activities.Add(new SiteActivity(
+                _activities.Add(SiteActivity.Create(
                     incoming.Id,
-                    incoming.Activity,
-                    incoming.Description,
+                    incoming.Type,
                     incoming.StartDate,
                     incoming.EndDate,
                     lastUpdatedDate));
@@ -263,14 +258,10 @@ public class Site : IAggregateRoot
             }
         }
 
-        var orphaned = _activities
-            .Where(existing => incomingList.All(i =>
-                i.Activity != existing.Activity ||
-                i.StartDate != existing.StartDate ||
-                i.EndDate != existing.EndDate))
-            .ToList();
+        var incomingIds = incomingList.Select(i => i.Id).ToHashSet();
+        var orphaned = _activities.Where(a => !incomingIds.Contains(a.Id)).ToList();
 
-        if (orphaned.Count != 0)
+        if (orphaned.Count > 0)
         {
             foreach (var orphan in orphaned)
             {

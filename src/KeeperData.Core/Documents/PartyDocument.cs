@@ -174,6 +174,27 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
             partyRole: PartyRoles.Select(r => r.ToDomain()));
     }
 
+    public void UpdatePartyRoleSitesFromDomain(Party domain)
+    {
+        if (domain?.Roles == null || PartyRoles == null)
+            return;
+
+        var domainRolesById = domain.Roles.ToDictionary(r => r.Id);
+
+        foreach (var partyRole in PartyRoles)
+        {
+            if (partyRole == null) continue;
+
+            if (domainRolesById.TryGetValue(partyRole.IdentifierId, out var domainRole))
+            {
+                if (domainRole.Site != null)
+                {
+                    partyRole.Site = PartyRoleSiteDocument.FromDomain(domainRole.Site);
+                }
+            }
+        }
+    }
+
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
         return Enumerable.Concat(

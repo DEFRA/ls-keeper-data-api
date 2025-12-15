@@ -148,7 +148,6 @@ public static class SamPartyMapper
 
     public static async Task<List<PartyDocument>> ToGold(
         string goldSiteId,
-        string goldSiteName,
         List<SamPartyDocument> silverParties,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         IGenericRepository<PartyDocument> goldPartyRepository,
@@ -170,7 +169,6 @@ public static class SamPartyMapper
             var party = existingParty is not null
                 ? await UpdatePartyAsync(
                     goldSiteId,
-                    goldSiteName,
                     silverParty,
                     existingParty,
                     goldSiteGroupMarks,
@@ -179,7 +177,6 @@ public static class SamPartyMapper
                     cancellationToken)
                 : await CreatePartyAsync(
                     goldSiteId,
-                    goldSiteName,
                     silverParty,
                     goldSiteGroupMarks,
                     getCountryById,
@@ -397,7 +394,6 @@ public static class SamPartyMapper
 
     private static async Task<Party> CreatePartyAsync(
         string goldSiteId,
-        string goldSiteName,
         SamPartyDocument incoming,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
@@ -453,10 +449,7 @@ public static class SamPartyMapper
 
             foreach (var r in roleList)
             {
-                var partyRoleSite = PartyRoleSite.Create(
-                    goldSiteId,
-                    goldSiteName
-                );
+                var partyRoleSite = PartyRoleSite.Create(goldSiteId);
 
                 var partyRoleRole = PartyRoleRole.Create(
                     r.RoleTypeId ?? string.Empty,
@@ -506,7 +499,6 @@ public static class SamPartyMapper
 
     private static async Task<Party> UpdatePartyAsync(
         string goldSiteId,
-        string goldSiteName,
         SamPartyDocument incoming,
         PartyDocument existing,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
@@ -565,7 +557,7 @@ public static class SamPartyMapper
         {
             foreach (var r in roleList)
             {
-                var partyRoleSite = PartyRoleSite.Create(goldSiteId, goldSiteName);
+                var partyRoleSite = PartyRoleSite.Create(goldSiteId);
 
                 var partyRoleRole = PartyRoleRole.Create(
                     r.RoleTypeId ?? string.Empty,
@@ -609,6 +601,42 @@ public static class SamPartyMapper
         }
 
         return party;
+    }
+
+    public static void EnrichPartyRoleWithSiteInformation(
+        List<PartyDocument> goldParties,
+        SiteDocument? goldSite)
+    {
+        if (goldSite == null)
+            return;
+
+        if (goldParties?.Count == 0)
+            return;
+
+        foreach (var goldParty in goldParties ?? [])
+        {
+            if (goldParty == null)
+                continue;
+
+            var party = goldParty.ToDomain();
+            if (party.Roles == null) continue;
+
+            foreach (var partyRole in party.Roles.Where(x => x.Site?.Id == goldSite.Id))
+            {
+                partyRole.Site?.ApplyChanges(
+                    goldSite.Name,
+                    goldSite.State,
+                    goldSite.LastUpdatedDate);
+
+                if (goldSite.Identifiers != null && goldSite.Identifiers.Count > 0)
+                {
+                    var identifiers = goldSite.Identifiers.Select(i => i.ToDomain()).ToList();
+                    partyRole.Site?.SetIdentifiers(identifiers);
+                }
+            }
+
+            goldParty.UpdatePartyRoleSitesFromDomain(party);
+        }
     }
 
     private static async Task<Country?> GetCountryAsync(

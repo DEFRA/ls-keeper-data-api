@@ -1,10 +1,13 @@
+using KeeperData.Application.Extensions;
 using KeeperData.Core.Documents;
+using KeeperData.Core.Domain.Enums;
 
 namespace KeeperData.Tests.Common.TestData.Sam.ExpectedOutcomes;
 
 public static class ExpectedGoldParties
 {
     private static readonly string s_siteId = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+    private static readonly string s_cphNumber = "12/345/6789";
 
     public static List<PartyDocument> DefaultExpectedParties =>
         [
@@ -57,6 +60,23 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
+                            State = HoldingStatusType.Active.ToString(),
+                            Identifiers =
+                            [
+                                new()
+                                {
+                                    IdentifierId = Guid.NewGuid().ToString(),
+                                    Identifier = s_cphNumber,
+                                    Type = new SiteIdentifierSummaryDocument
+                                    {
+                                        IdentifierId = Guid.NewGuid().ToString(),
+                                        Code = HoldingIdentifierType.CPHN.ToString(),
+                                        Description = HoldingIdentifierType.CPHN.GetDescription()!,
+                                        LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                    },
+                                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                }
+                            ],
                             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                         },
                         Role = new PartyRoleRoleDocument
@@ -95,6 +115,23 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
+                            State = HoldingStatusType.Active.ToString(),
+                            Identifiers =
+                            [
+                                new()
+                                {
+                                    IdentifierId = Guid.NewGuid().ToString(),
+                                    Identifier = s_cphNumber,
+                                    Type = new SiteIdentifierSummaryDocument
+                                    {
+                                        IdentifierId = Guid.NewGuid().ToString(),
+                                        Code = HoldingIdentifierType.CPHN.ToString(),
+                                        Description = HoldingIdentifierType.CPHN.GetDescription()!,
+                                        LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                    },
+                                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                }
+                            ],
                             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                         },
                         Role = new PartyRoleRoleDocument
@@ -133,6 +170,23 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
+                            State = HoldingStatusType.Active.ToString(),
+                            Identifiers =
+                            [
+                                new()
+                                {
+                                    IdentifierId = Guid.NewGuid().ToString(),
+                                    Identifier = s_cphNumber,
+                                    Type = new SiteIdentifierSummaryDocument
+                                    {
+                                        IdentifierId = Guid.NewGuid().ToString(),
+                                        Code = HoldingIdentifierType.CPHN.ToString(),
+                                        Description = HoldingIdentifierType.CPHN.GetDescription()!,
+                                        LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                    },
+                                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                }
+                            ],
                             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                         },
                         Role = new PartyRoleRoleDocument
@@ -195,6 +249,23 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
+                            State = HoldingStatusType.Active.ToString(),
+                            Identifiers =
+                            [
+                                new()
+                                {
+                                    IdentifierId = Guid.NewGuid().ToString(),
+                                    Identifier = s_cphNumber,
+                                    Type = new SiteIdentifierSummaryDocument
+                                    {
+                                        IdentifierId = Guid.NewGuid().ToString(),
+                                        Code = HoldingIdentifierType.CPHN.ToString(),
+                                        Description = HoldingIdentifierType.CPHN.GetDescription()!,
+                                        LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                    },
+                                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                }
+                            ],
                             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                         },
                         Role = new PartyRoleRoleDocument
@@ -281,6 +352,23 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
+                            State = HoldingStatusType.Active.ToString(),
+                            Identifiers =
+                            [
+                                new()
+                                {
+                                    IdentifierId = Guid.NewGuid().ToString(),
+                                    Identifier = s_cphNumber,
+                                    Type = new SiteIdentifierSummaryDocument
+                                    {
+                                        IdentifierId = Guid.NewGuid().ToString(),
+                                        Code = HoldingIdentifierType.CPHN.ToString(),
+                                        Description = HoldingIdentifierType.CPHN.GetDescription()!,
+                                        LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                    },
+                                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                }
+                            ],
                             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                         },
                         Role = new PartyRoleRoleDocument
@@ -354,6 +442,23 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
+                            State = HoldingStatusType.Active.ToString(),
+                            Identifiers =
+                            [
+                                new()
+                                {
+                                    IdentifierId = Guid.NewGuid().ToString(),
+                                    Identifier = s_cphNumber,
+                                    Type = new SiteIdentifierSummaryDocument
+                                    {
+                                        IdentifierId = Guid.NewGuid().ToString(),
+                                        Code = HoldingIdentifierType.CPHN.ToString(),
+                                        Description = HoldingIdentifierType.CPHN.GetDescription()!,
+                                        LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                    },
+                                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                }
+                            ],
                             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                         },
                         Role = new PartyRoleRoleDocument
@@ -372,6 +477,23 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
+                            State = HoldingStatusType.Active.ToString(),
+                            Identifiers =
+                            [
+                                new()
+                                {
+                                    IdentifierId = Guid.NewGuid().ToString(),
+                                    Identifier = s_cphNumber,
+                                    Type = new SiteIdentifierSummaryDocument
+                                    {
+                                        IdentifierId = Guid.NewGuid().ToString(),
+                                        Code = HoldingIdentifierType.CPHN.ToString(),
+                                        Description = HoldingIdentifierType.CPHN.GetDescription()!,
+                                        LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                    },
+                                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                }
+                            ],
                             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                         },
                         Role = new PartyRoleRoleDocument

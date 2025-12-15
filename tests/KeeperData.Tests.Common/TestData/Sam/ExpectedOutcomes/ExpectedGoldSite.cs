@@ -336,8 +336,12 @@ public static class ExpectedGoldSite
                 new()
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
-                    Activity = "RM",
-                    Description = PremiseActivityTypeData.Find("RM").name!,
+                    Type = new PremisesActivityTypeSummaryDocument {
+                        IdentifierId = Guid.NewGuid().ToString(),
+                        Code = "RM",
+                        Name = PremiseActivityTypeData.Find("RM").name!,
+                        LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                    },
                     StartDate = new DateTime(2001, 1, 1, 0, 0, 0),
                     EndDate = null,
                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
@@ -345,8 +349,12 @@ public static class ExpectedGoldSite
                 new()
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
-                    Activity = "WM",
-                    Description = PremiseActivityTypeData.Find("WM").name!,
+                    Type = new PremisesActivityTypeSummaryDocument {
+                        IdentifierId = Guid.NewGuid().ToString(),
+                        Code = "WM",
+                        Name = PremiseActivityTypeData.Find("WM").name!,
+                        LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                    },
                     StartDate = new DateTime(2001, 1, 1, 0, 0, 0),
                     EndDate = null,
                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
@@ -527,6 +535,6 @@ public static class ExpectedGoldSite
 
             Species = [.. DefaultExpectedSite.Species.Where(x => x.Code == "CTT")],
             Marks = [.. DefaultExpectedSite.Marks.Where(x => x.Species!.Code == "CTT")],
-            Activities = [.. DefaultExpectedSite.Activities.Where(x => x.Activity == "RM")]
+            Activities = [.. DefaultExpectedSite.Activities.Where(x => x.Type.Code == "RM")]
         };
 }

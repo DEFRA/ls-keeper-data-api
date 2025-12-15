@@ -1,5 +1,4 @@
 using KeeperData.Core.Attributes;
-using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson;
@@ -140,7 +139,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         if (Species is not null && Species.Count > 0)
         {
             var species = Species
-                .Select(s => new Species(
+                .Select(s => Domain.Shared.Species.Create(
                     id: s.IdentifierId,
                     lastUpdatedDate: s.LastModifiedDate,
                     code: s.Code,
@@ -153,10 +152,9 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         if (Activities is not null && Activities.Count > 0)
         {
             var activities = Activities
-                .Select(a => new SiteActivity(
+                .Select(a => SiteActivity.Create(
                     id: a.IdentifierId,
-                    activity: a.Activity,
-                    description: a.Description,
+                    type: a.Type.ToDomain(),
                     startDate: a.StartDate,
                     endDate: a.EndDate,
                     lastUpdatedDate: a.LastUpdatedDate))
@@ -175,7 +173,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
                     startDate: m.StartDate,
                     endDate: m.EndDate,
                     species: m.Species is not null
-                        ? new Species(
+                        ? Domain.Shared.Species.Create(
                             id: m.Species.IdentifierId,
                             lastUpdatedDate: m.Species.LastModifiedDate,
                             code: m.Species.Code,

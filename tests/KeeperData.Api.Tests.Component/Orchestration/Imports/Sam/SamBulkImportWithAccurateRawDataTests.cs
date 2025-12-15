@@ -367,6 +367,24 @@ public class SamBulkImportWithAccurateRawDataTests
             .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? id, CancellationToken token) => (PremiseActivityTypeData.GetById(id!)));
 
+        _premiseActivityTypeLookupServiceMock.Setup(x => x.GetByCodeAsync("WM", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PremisesActivityTypeDocument
+            {
+                IdentifierId = "e0dd8921-3593-4e58-b797-a7c8673d8e40",
+                Code = "WM",
+                Name = "White Meat",
+                IsActive = true
+            });
+
+        _premiseActivityTypeLookupServiceMock.Setup(x => x.GetByCodeAsync("RM", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PremisesActivityTypeDocument
+            {
+                IdentifierId = "d2d9be5e-18b4-4424-b196-fd40f3b105d8",
+                Code = "RM",
+                Name = "Red Meat",
+                IsActive = true
+            });
+
         _premiseTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? code, CancellationToken token) => (PremiseTypeData.Find(code!)));
