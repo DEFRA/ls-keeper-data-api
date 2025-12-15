@@ -10,7 +10,7 @@ public class Site : IAggregateRoot
     public string Id { get; private set; }
     public DateTime CreatedDate { get; private set; }
     public DateTime LastUpdatedDate { get; private set; }
-    public string Type { get; private set; }
+    public PremisesType? Type { get; private set; }
     public string Name { get; private set; }
     public DateTime StartDate { get; private set; }
     public DateTime? EndDate { get; private set; }
@@ -45,7 +45,6 @@ public class Site : IAggregateRoot
         string id,
         DateTime createdDate,
         DateTime lastUpdatedDate,
-        string type,
         string name,
         DateTime startDate,
         DateTime? endDate,
@@ -53,12 +52,12 @@ public class Site : IAggregateRoot
         string? source,
         bool? destroyIdentityDocumentsFlag,
         bool deleted,
+        PremisesType? type,
         Location? location)
     {
         Id = id;
         CreatedDate = createdDate;
         LastUpdatedDate = lastUpdatedDate;
-        Type = type;
         Name = name;
         StartDate = startDate;
         EndDate = endDate;
@@ -66,6 +65,7 @@ public class Site : IAggregateRoot
         Source = source;
         DestroyIdentityDocumentsFlag = destroyIdentityDocumentsFlag;
         Deleted = deleted;
+        Type = type;
         _location = location;
     }
 
@@ -73,7 +73,6 @@ public class Site : IAggregateRoot
         string id,
         DateTime createdDate,
         DateTime lastUpdatedDate,
-        string type,
         string name,
         DateTime startDate,
         DateTime? endDate,
@@ -81,13 +80,13 @@ public class Site : IAggregateRoot
         string? source,
         bool? destroyIdentityDocumentsFlag,
         bool deleted,
+        PremisesType? type = null,
         Location? location = null)
     {
         var site = new Site(
             id,
             createdDate,
             lastUpdatedDate,
-            type,
             name,
             startDate,
             endDate,
@@ -95,6 +94,7 @@ public class Site : IAggregateRoot
             source,
             destroyIdentityDocumentsFlag,
             deleted,
+            type,
             location);
 
         site._domainEvents.Add(new SiteCreatedDomainEvent(site.Id));
@@ -103,7 +103,6 @@ public class Site : IAggregateRoot
 
     public void Update(
         DateTime lastUpdatedDate,
-        string type,
         string name,
         DateTime startDate,
         DateTime? endDate,
@@ -114,7 +113,6 @@ public class Site : IAggregateRoot
     {
         var changed = false;
 
-        changed |= Change(Type, type, v => Type = v, lastUpdatedDate);
         changed |= Change(Name, name, v => Name = v, lastUpdatedDate);
         changed |= Change(StartDate, startDate, v => StartDate = v, lastUpdatedDate);
         changed |= Change(EndDate, endDate, v => EndDate = v, lastUpdatedDate);
@@ -136,6 +134,17 @@ public class Site : IAggregateRoot
         Deleted = true;
         State = "Inactive";
         LastUpdatedDate = DateTime.UtcNow;
+    }
+
+    public void SetPremisesType(PremisesType? type, DateTime lastUpdatedDate)
+    {
+        if (Type == null && type == null) return;
+
+        if (Type is null || !Type.Equals(type))
+        {
+            Type = type;
+            UpdateLastUpdatedDate(lastUpdatedDate);
+        }
     }
 
     public void SetLocation(Location location)

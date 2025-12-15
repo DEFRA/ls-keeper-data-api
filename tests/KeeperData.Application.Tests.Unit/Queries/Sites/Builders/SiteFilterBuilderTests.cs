@@ -115,7 +115,7 @@ public class SiteFilterBuilderTests
         var filter = SiteFilterBuilder.Build(query);
         var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry);
 
-        renderedFilter["type"]["$in"].AsBsonArray.Select(v => v.AsString)
+        renderedFilter["type.code"]["$in"].AsBsonArray.Select(v => v.AsString)
             .Should().BeEquivalentTo(["type1", "type2"]);
     }
 
@@ -130,7 +130,8 @@ public class SiteFilterBuilderTests
         {
             ""deleted"": false,
             ""identifiers"" : { ""$elemMatch"" : { ""identifier"" : ""CPH123"" } },
-            ""type"" : { ""$in"" : [""type1""] }
+            ""type"" : { ""$ne"" : null }
+            ""type.code"" : { ""$in"" : [""type1""] }
         }");
 
         renderedFilter.Should().BeEquivalentTo(expectedBson);

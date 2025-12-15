@@ -84,13 +84,18 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
         }
     }
 
-    private static SiteDocument CreateSite(string name, string type, string identifier)
+    private static SiteDocument CreateSite(string name, string typeCode, string identifier)
     {
         var site = new SiteDocument
         {
             Id = Guid.NewGuid().ToString(),
             Name = name,
-            Type = type,
+            Type = new PremisesTypeSummaryDocument
+            {
+                IdentifierId = Guid.NewGuid().ToString(),
+                Code = typeCode,
+                Description = $"{typeCode} Description"
+            },
             State = "Active"
         };
 
