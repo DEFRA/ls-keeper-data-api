@@ -1,18 +1,17 @@
 namespace KeeperData.Api.Tests.Integration.Helpers;
 
-using Amazon.S3.Model;
 using Amazon.S3;
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
-using Testcontainers.LocalStack;
+using Amazon.S3.Model;
+using Amazon.SimpleNotificationService;
+using Amazon.SimpleNotificationService.Model;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using System.Text;
-using Amazon.SimpleNotificationService;
+using Testcontainers.LocalStack;
 
 public class LocalStackFixture : IAsyncLifetime
 {
-    public LocalStackContainer LocalStackContainer { get; private set; }
+    public LocalStackContainer? LocalStackContainer { get; private set; }
 
     public const string TestBucket = "test-comparison-reports-bucket";
 
@@ -21,88 +20,80 @@ public class LocalStackFixture : IAsyncLifetime
     public IAmazonS3 S3Client { get; private set; } = null!;
 
     public IAmazonSimpleNotificationService SnsClient { get; private set; } = null!;
+    public string NetworkName { get; } = "integration-tests";
 
     public string SqsEndpoint { get; private set; } = null!;
+    public string LsKeeperDataIntakeQueue { get; private set; } = null!;
+    public string? TopicArn { get; private set; }
+    public string? ImportCompleteTopicArn { get; private set; }
 
     public async Task InitializeAsync()
     {
-        DockerNetworkHelper.EnsureNetworkExists("integration-tests"); // <-- Add this line first
+        DockerNetworkHelper.EnsureNetworkExists(NetworkName); // <-- Add this line first
 
         LocalStackContainer = new LocalStackBuilder()
-            .WithImage("localstack/localstack:2.3")
-            .WithEnvironment("SERVICES", "s3,sqs,sns")
-            .WithEnvironment("DEBUG", "1")
-            .WithEnvironment("AWS_DEFAULT_REGION", "eu-west-2")
-            .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
-            .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
-            .WithEnvironment("EDGE_PORT", "4566")
-            .WithPortBinding(4566, true)
-            .WithNetwork("integration-tests")         // Shared network name
-            .WithNetworkAliases("localstack")
-            .Build();     
+                .WithImage("localstack/localstack:latest")
+                .WithName("localstack")
+                .WithEnvironment("SERVICES", "s3,sqs,sns")
+                .WithEnvironment("DEBUG", "1")
+                .WithEnvironment("AWS_DEFAULT_REGION", "eu-west-2")
+                .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
+                .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
+                .WithEnvironment("EDGE_PORT", "4566")
+                .WithPortBinding(4566, 4566)
+                .WithNetwork(NetworkName)
+                .WithNetworkAliases("localstack")
+                .Build();
 
         await LocalStackContainer.StartAsync();
 
-        //var url = Container.GetConnectionString();
-        var edgeUrl = "http://localhost:4566"; // Always use this for AWS SD
-
-        // Create S3 client with proper LocalStack configuration
-        var config = new AmazonS3Config
+        //TODO tidy me and remove assert
+        S3Client = new AmazonS3Client("test", "test", new AmazonS3Config
         {
-            ServiceURL = edgeUrl,
-            ForcePathStyle = true,
-            UseHttp = true,
-            MaxErrorRetry = 3,
-            Timeout = TimeSpan.FromMinutes(5),
-            //RegionEndpoint = Amazon.RegionEndpoint.EUWest2,
-            RequestChecksumCalculation = Amazon.Runtime.RequestChecksumCalculation.WHEN_REQUIRED,
-            ResponseChecksumValidation = Amazon.Runtime.ResponseChecksumValidation.WHEN_REQUIRED,
-        };
+            ServiceURL = "http://localhost:4566",
+            ForcePathStyle = true
+        });
+        var objectKey = "hello.txt";
+        // --- Act: create bucket and upload object ---
+        await S3Client.PutBucketAsync(new PutBucketRequest { BucketName = TestBucket });
 
-        // Use consistent credentials
-        S3Client = new AmazonS3Client("test", "test", config);
-
-        // Create 'test-comparison-reports-bucket' Bucket
-        var maxRetries = 5;
-        var retryDelay = 3000;
-
-        for (var i = 0; i < maxRetries; i++)
+        await S3Client.PutObjectAsync(new PutObjectRequest
         {
-            try
-            {
-                await S3Client.PutBucketAsync(new PutBucketRequest
-                {
-                    BucketName = TestBucket,
-                    UseClientRegion = true
-                });
+            BucketName = TestBucket,
+            Key = objectKey,
+            ContentBody = "Hello LocalStack!"
+        });
 
-                // Verify bucket creation
-                var buckets = await S3Client.ListBucketsAsync();
-                if (buckets.Buckets.Any(b => b.BucketName == TestBucket))
-                {
-                    break;
-                }
-            }
-            catch when (i < maxRetries - 1)
-            {
-                await Task.Delay(retryDelay);
-                retryDelay = Math.Min(retryDelay * 2, 10000); // Cap at 10 seconds
-            }
-        }
+        // --- Assert: verify object exists ---
+        var listResponse = await S3Client.ListObjectsV2Async(new ListObjectsV2Request
+        {
+            BucketName = TestBucket
+        });
 
-        SqsClient = new AmazonSQSClient("test", "test", new AmazonSQSConfig
+        Assert.Contains(listResponse.S3Objects, o => o.Key == objectKey);
+
+
+
+        var credentials = new Amazon.Runtime.BasicAWSCredentials("test", "test");
+        SqsClient = new AmazonSQSClient(credentials, new AmazonSQSConfig
         {
             ServiceURL = "http://localhost:4566",
             AuthenticationRegion = "eu-west-2",
             UseHttp = true
         });
 
-        var mappedPort = LocalStackContainer.GetMappedPublicPort(4566);
-        SqsEndpoint = $"http://localhost:{mappedPort}";
-
+        // SNS client
+        SnsClient = new AmazonSimpleNotificationServiceClient("test", "test", new AmazonSimpleNotificationServiceConfig
+        {
+            ServiceURL = "http://localhost:4566",
+            AuthenticationRegion = "eu-west-2",
+            UseHttp = true
+        });
 
         // 1. Create DLQ
         var dlqName = "ls_keeper_data_intake_queue-deadletter";
+        await SqsClient.CreateQueueAsync(new CreateQueueRequest { QueueName = dlqName });
+
         var createDlqResponse = await SqsClient.CreateQueueAsync(new CreateQueueRequest { QueueName = dlqName });
         var dlqUrl = createDlqResponse.QueueUrl;
 
@@ -117,31 +108,92 @@ public class LocalStackFixture : IAsyncLifetime
         // 3. Create main queue
         var mainQueueName = "ls_keeper_data_intake_queue";
         var createMainQueueResponse = await SqsClient.CreateQueueAsync(new CreateQueueRequest { QueueName = mainQueueName });
-        var mainQueueUrl = createMainQueueResponse.QueueUrl;
+        LsKeeperDataIntakeQueue = createMainQueueResponse.QueueUrl;
+        var mainQueueAttributes = await SqsClient.GetQueueAttributesAsync(new GetQueueAttributesRequest
+        {
+            QueueUrl = LsKeeperDataIntakeQueue,
+            AttributeNames = new List<string> { "QueueArn" }
+        });
 
         // 4. Set redrive policy
         var redrivePolicy = $"{{\"deadLetterTargetArn\":\"{dlqArn}\",\"maxReceiveCount\":\"3\"}}";
         await SqsClient.SetQueueAttributesAsync(new SetQueueAttributesRequest
         {
-            QueueUrl = mainQueueUrl,
+            QueueUrl = LsKeeperDataIntakeQueue,
             Attributes = new Dictionary<string, string>
                     {
                         { "RedrivePolicy", redrivePolicy }
                     }
         });
 
-        // SNS client configuration
-        var snsConfig = new AmazonSimpleNotificationServiceConfig
-        {
-            ServiceURL = edgeUrl,
-            UseHttp = true,
-            AuthenticationRegion = "eu-west-2"
-        };
-        SnsClient = new AmazonSimpleNotificationServiceClient("test", "test", snsConfig);
+        var topicName = "ls-keeper-data-bridge-events";
+        var createTopicResponse = await SnsClient.CreateTopicAsync(topicName);
+        TopicArn = createTopicResponse.TopicArn;
 
+        var mainQueueArn = mainQueueAttributes.QueueARN;
+        //
+        var importCompleteTopicName = "test-topic";
+        var importCompleteCreateTopicResponse = await SnsClient.CreateTopicAsync(importCompleteTopicName);
+        ImportCompleteTopicArn = importCompleteCreateTopicResponse.TopicArn;
+
+
+
+        // 7. SQS policy for SNS
+        var policy = $@"{{
+                    ""Version"": ""2012-10-17"",
+                    ""Statement"": [
+                        {{
+                            ""Effect"": ""Allow"",
+                            ""Principal"": ""*"",
+                            ""Action"": ""sqs:SendMessage"",
+                            ""Resource"": ""{mainQueueArn}"",
+                            ""Condition"": {{
+                                ""ArnEquals"": {{
+                                    ""aws:SourceArn"": ""{TopicArn}""
+                                }}
+                            }}
+                        }}
+                    ]
+                }}";
+
+        await SqsClient.SetQueueAttributesAsync(new SetQueueAttributesRequest
+        {
+            QueueUrl = LsKeeperDataIntakeQueue,
+            Attributes = new Dictionary<string, string>
+                    {
+                        { "Policy", policy }
+                    }
+        });
+
+        // 8. Subscribe SQS to SNS
+        var subscribeResponse = await SnsClient.SubscribeAsync(new Amazon.SimpleNotificationService.Model.SubscribeRequest
+        {
+            TopicArn = TopicArn,
+            Protocol = "sqs",
+            Endpoint = mainQueueArn
+        });
+
+        SqsEndpoint = SqsClient.Config.ServiceURL!;
 
         // Setup shared test data
         //await SetupTestDataAsync();
+    }
+
+    public async Task<PublishResponse> PublishToTopicAsync(PublishRequest publishRequest, CancellationToken cancellationToken)
+    {
+        // SNS & SQS
+        var credentials = new Amazon.Runtime.BasicAWSCredentials("test", "test");
+        var amazonSimpleNotificationServiceConfig = new AmazonSimpleNotificationServiceConfig
+        {
+            ServiceURL = SqsEndpoint,
+            AuthenticationRegion = "eu-west-2",
+            UseHttp = true
+        };
+
+        var _amazonSimpleNotificationServiceClient = new AmazonSimpleNotificationServiceClient(credentials, amazonSimpleNotificationServiceConfig);
+
+        //TODO not this
+        return await _amazonSimpleNotificationServiceClient.PublishAsync(publishRequest, cancellationToken);
     }
 
     public async Task DisposeAsync()
@@ -154,7 +206,7 @@ public class LocalStackFixture : IAsyncLifetime
         }
         finally
         {
-            await LocalStackContainer.DisposeAsync();
+            await LocalStackContainer!.DisposeAsync();
         }
     }
 

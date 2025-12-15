@@ -1,8 +1,5 @@
-using Amazon.S3.Model;
-using Amazon.S3;
 using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Helpers;
-using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Endpoints;
 

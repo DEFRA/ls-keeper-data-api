@@ -5,10 +5,11 @@ using KeeperData.Core.Messaging.Contracts.V1.Sam;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.ChangeScanning.Sam;
 
-[Trait("Dependence", "localstack")]
-[Collection("Integration Tests")]
-public class SamBulkScanOrchestratorTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
+[Trait("Dependence", "testcontainers")]
+[Collection("Integration")]
+public class SamBulkScanOrchestratorTests(LocalStackFixture localStackFixture)
 {
+    private readonly LocalStackFixture _localStackFixture = localStackFixture;
     private const int ProcessingTimeCircuitBreakerSeconds = 30;
     private const int LimitScanTotalBatchSize = 10;
 
@@ -86,15 +87,14 @@ public class SamBulkScanOrchestratorTests(IntegrationTestFixture fixture) : ICla
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
     {
-        var queueUrl = "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue";
         var additionalUserProperties = new Dictionary<string, string>
         {
             ["CorrelationId"] = correlationId
         };
-        var request = SQSMessageUtility.CreateMessage(queueUrl, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.LsKeeperDataIntakeQueue, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var cts = new CancellationTokenSource();
-        await fixture.PublishToQueueAsync(request, cts.Token);
+        await _localStackFixture.SqsClient.SendMessageAsync(request, cts.Token);
     }
 
     private static SamBulkScanMessage GetSamBulkScanMessage(string identifier) => new()

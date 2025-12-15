@@ -1,50 +1,57 @@
 namespace KeeperData.Api.Tests.Integration.Helpers;
 
 using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
-using System.Net.Http;
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit;
+using IContainer = DotNet.Testcontainers.Containers.IContainer;
 
-[Collection("Integration"), Trait("Dependence", "testcontainers")]
 public class ApiContainerFixture : IAsyncLifetime
 {
     public IContainer ApiContainer { get; private set; } = null!;
+
     public HttpClient HttpClient { get; private set; } = null!;
 
-    private readonly string _mongoConnectionString;
-    private readonly string _localStackEndpoint;
-
-    public ApiContainerFixture(string mongoConnectionString, string localStackEndpoint)
-    {
-        _mongoConnectionString = mongoConnectionString;
-        _localStackEndpoint = localStackEndpoint;
-    }
+    public string NetworkName { get; } = "integration-tests";
 
     public async Task InitializeAsync()
     {
+        DockerNetworkHelper.EnsureNetworkExists(NetworkName); // <-- Add this line first
+
         ApiContainer = new ContainerBuilder()
-            .WithImage("keeperdata_api:latest")
-            .WithPortBinding(5555, true)
-            .WithEnvironment("MONGO_CONNECTION_STRING", _mongoConnectionString)
-            .WithEnvironment("LOCALSTACK_ENDPOINT", _localStackEndpoint)
-            .WithEnvironment("AWS__Region", "eu-west-2")
-            .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
-            .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
-            .WithWaitStrategy(Wait.ForUnixContainer()
-                .UntilHttpRequestIsSucceeded(req => req.ForPath("/health").ForPort(5555)))
-            .Build();
+          .WithImage("keeperdata_api:latest")
+          .WithName("keeperdata_api")
+          .WithPortBinding(5555, 5555)
+          .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
+          .WithEnvironment("ASPNETCORE_HTTP_PORTS", "5555")
+          .WithEnvironment("Mongo__DatabaseUri", "mongodb://testuser:testpass@mongo:27017/ls-keeper-data-api?authSource=admin")
+          .WithEnvironment("Mongo__DatabaseName", "ls-keeper-data-api")
+          .WithEnvironment("StorageConfiguration__ComparisonReportsStorage__BucketName", "test-comparison-reports-bucket")
+          .WithEnvironment("QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue")
+          .WithEnvironment("QueueConsumerOptions__IntakeEventQueueOptions__DeadLetterQueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue-deadletter\r\n      - ApiClients__DataBridgeApi__BaseUrl=http://keeperdata_bridge:5560/")
+          .WithEnvironment("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicName", "test-topic")
+          .WithEnvironment("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicArn", "arn:aws:sns:eu-west-2:000000000000:test-topic")
+          .WithEnvironment("ApiClients__DataBridgeApi__BaseUrl", "http://localhost:5560/")
+          .WithEnvironment("ApiClients__DataBridgeApi__UseFakeClient", "true")
+          .WithEnvironment("DataBridgeScanConfiguration__LimitScanTotalBatchSize", "10")
+          .WithEnvironment("ServiceBusSenderConfiguration__IntakeEventQueue__QueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue")
+          .WithEnvironment("LOCALSTACK_ENDPOINT", "http://localstack:4566")
+          .WithEnvironment("AWS__Region", "eu-west-2")
+          .WithEnvironment("AWS_REGION", "eu-west-2")
+          .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
+          .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
+          .WithEnvironment("AWS__ServiceURL", "http://localstack:4566")
+          .WithNetwork(NetworkName)
+          .WithNetworkAliases("keeperdata_api")
+          .WithWaitStrategy(Wait.ForUnixContainer()
+              .UntilHttpRequestIsSucceeded(req => req.ForPort(5555).ForPath("/health"), o => o.WithTimeout(TimeSpan.FromSeconds(25))))
+          .Build();
 
         await ApiContainer.StartAsync();
 
-        var mappedPort = ApiContainer.GetMappedPublicPort(5555);
-        HttpClient = new HttpClient
-        {
-            BaseAddress = new Uri($"http://localhost:{mappedPort}"),
-            Timeout = TimeSpan.FromSeconds(30)
-        };
-        HttpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+
+        HttpClient = new HttpClient { BaseAddress = new Uri($"http://localhost:{ApiContainer.GetMappedPublicPort(5555)}") };
     }
 
     public async Task DisposeAsync()
@@ -53,4 +60,3 @@ public class ApiContainerFixture : IAsyncLifetime
         await ApiContainer.DisposeAsync();
     }
 }
-

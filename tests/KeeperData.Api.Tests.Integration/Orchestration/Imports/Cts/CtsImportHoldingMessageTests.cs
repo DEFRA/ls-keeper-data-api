@@ -1,4 +1,3 @@
-using AutoFixture;
 using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
 using KeeperData.Api.Tests.Integration.Helpers;
