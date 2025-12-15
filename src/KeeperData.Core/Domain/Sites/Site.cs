@@ -10,7 +10,7 @@ public class Site : IAggregateRoot
     public string Id { get; private set; }
     public DateTime CreatedDate { get; private set; }
     public DateTime LastUpdatedDate { get; private set; }
-    public string Type { get; private set; }
+    public PremisesType Type { get; private set; }
     public string Name { get; private set; }
     public DateTime StartDate { get; private set; }
     public DateTime? EndDate { get; private set; }
@@ -45,7 +45,7 @@ public class Site : IAggregateRoot
         string id,
         DateTime createdDate,
         DateTime lastUpdatedDate,
-        string type,
+        PremisesType type,
         string name,
         DateTime startDate,
         DateTime? endDate,
@@ -73,7 +73,7 @@ public class Site : IAggregateRoot
         string id,
         DateTime createdDate,
         DateTime lastUpdatedDate,
-        string type,
+        PremisesType type,
         string name,
         DateTime startDate,
         DateTime? endDate,
@@ -103,7 +103,7 @@ public class Site : IAggregateRoot
 
     public void Update(
         DateTime lastUpdatedDate,
-        string type,
+        PremisesType type,
         string name,
         DateTime startDate,
         DateTime? endDate,

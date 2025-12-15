@@ -29,21 +29,21 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
             new SiteDocument
             {
                 Id = SiteAId,
-                Type = "Business",
+                Type = new PremisesTypeSummaryDocument { IdentifierId = "t1", Code = "Business", Description = "Business Premise" },
                 State = "Active",
                 LastUpdatedDate = new DateTime(2010,01,01)
             },
             new SiteDocument
             {
                 Id = SiteBId,
-                Type = "Other",
+                Type = new PremisesTypeSummaryDocument { IdentifierId = "t2", Code = "Other", Description = "Other Premise" },
                 State = "Active",
                 LastUpdatedDate = new DateTime(2011,01,01)
             },
             new SiteDocument
             {
                 Id = SiteCId,
-                Type = "Business",
+                Type = new PremisesTypeSummaryDocument { IdentifierId = "t1", Code = "Business", Description = "Business Premise" },
                 State = "Active",
                 LastUpdatedDate = new DateTime(2012,01,01)
             },
@@ -86,7 +86,7 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
 
     [Theory]
     [InlineData("WhenSearchingById1", SiteAId, HttpStatusCode.OK, SiteAId)]
-    [InlineData("WhenSearchingById2", SiteBId, HttpStatusCode.OK, "\"type\":\"Other\"")]
+    [InlineData("WhenSearchingById2", SiteBId, HttpStatusCode.OK, "\"code\":\"Other\"")]
     [InlineData("WhenSearchingForIdThatDoesNotExist", "00000000-0000-0000-0000-000000000000", HttpStatusCode.NotFound, "not found")]
     public async Task GivenAnRecordRequestById_ShouldHaveExpectedResults(string scenario, string requestedId, HttpStatusCode expectedHttpCode, string responseShouldContain)
     {

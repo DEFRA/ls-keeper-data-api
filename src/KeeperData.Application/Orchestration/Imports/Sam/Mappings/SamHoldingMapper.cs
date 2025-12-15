@@ -236,10 +236,16 @@ public static class SamHoldingMapper
     {
         int? uprn = int.TryParse(representative.Location?.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
 
-        var premiseType = await GetPremiseTypeAsync(
+        var premiseTypeDoc = await GetPremiseTypeAsync(
             representative.PremiseTypeIdentifier,
             getPremiseTypeById,
             cancellationToken);
+
+        var premiseType = new PremisesType(
+            premiseTypeDoc?.IdentifierId ?? Guid.NewGuid().ToString(),
+            premiseTypeDoc?.Code ?? string.Empty,
+            premiseTypeDoc?.Name ?? string.Empty,
+            premiseTypeDoc?.LastModifiedDate);
 
         var country = await GetCountryAsync(
             representative.Location?.Address?.CountryIdentifier,
@@ -279,7 +285,7 @@ public static class SamHoldingMapper
             goldSiteId,
             representative.CreatedDate,
             representative.LastUpdatedDate,
-            premiseType?.Code ?? string.Empty,
+            premiseType,
             representative.LocationName ?? string.Empty,
             representative.HoldingStartDate,
             representative.HoldingEndDate,
@@ -324,10 +330,16 @@ public static class SamHoldingMapper
 
         int? uprn = int.TryParse(representative.Location?.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
 
-        var premiseType = await GetPremiseTypeAsync(
+        var premiseTypeDoc = await GetPremiseTypeAsync(
             representative.PremiseTypeIdentifier,
             getPremiseTypeById,
             cancellationToken);
+
+        var premiseType = new PremisesType(
+            premiseTypeDoc?.IdentifierId ?? Guid.NewGuid().ToString(),
+            premiseTypeDoc?.Code ?? string.Empty,
+            premiseTypeDoc?.Name ?? string.Empty,
+            premiseTypeDoc?.LastModifiedDate);
 
         var country = await GetCountryAsync(
             representative.Location?.Address?.CountryIdentifier,
@@ -343,7 +355,7 @@ public static class SamHoldingMapper
 
         site.Update(
             representative.LastUpdatedDate,
-            premiseType?.Code ?? string.Empty,
+            premiseType,
             representative.LocationName ?? string.Empty,
             representative.HoldingStartDate,
             representative.HoldingEndDate,

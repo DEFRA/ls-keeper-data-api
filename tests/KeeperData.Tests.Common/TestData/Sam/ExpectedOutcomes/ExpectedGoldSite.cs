@@ -15,7 +15,12 @@ public static class ExpectedGoldSite
             Id = s_siteId,
             CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0),
             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
-            Type = "AH",
+            Type = new PremisesTypeSummaryDocument
+            {
+                IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
+                Code = "AH",
+                Description = "Agricultural Holding"
+            },
             Name = "North Market Farm",
             State = HoldingStatusType.Active.ToString(),
             StartDate = new DateTime(2001, 1, 1, 0, 0, 0),
@@ -355,7 +360,12 @@ public static class ExpectedGoldSite
             Id = Guid.NewGuid().ToString(),
             CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0),
             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
-            Type = "AH",
+            Type = new PremisesTypeSummaryDocument
+            {
+                IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
+                Code = "AH",
+                Description = "Agricultural Holding"
+            },
             Name = "North Market Farm",
             State = HoldingStatusType.Active.ToString(),
             StartDate = new DateTime(2001, 1, 1, 0, 0, 0),

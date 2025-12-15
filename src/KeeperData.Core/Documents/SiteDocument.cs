@@ -29,8 +29,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("type")]
     [JsonPropertyName("type")]
-    [AutoIndexed]
-    public string Type { get; set; } = default!;
+    public PremisesTypeSummaryDocument Type { get; set; } = default!;
 
     [BsonElement("name")]
     [JsonPropertyName("name")]
@@ -91,7 +90,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         Id = m.Id,
         CreatedDate = m.CreatedDate,
         LastUpdatedDate = m.LastUpdatedDate,
-        Type = m.Type,
+        Type = PremisesTypeSummaryDocument.FromDomain(m.Type),
         Name = m.Name,
         State = m.State,
         Identifiers = [.. m.Identifiers.Select(SiteIdentifierDocument.FromDomain)],
@@ -113,7 +112,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
             Id,
             CreatedDate,
             LastUpdatedDate,
-            Type,
+            Type.ToDomain(),
             Name,
             StartDate,
             EndDate,
@@ -216,6 +215,13 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     {
         return AutoIndexedAttribute.GetIndexModels<SiteDocument>().Concat(
         [
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("type.code"),
+                new CreateIndexOptions { Name = "idxv2_type_code", Sparse = true }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("type.description"),
+                new CreateIndexOptions { Name = "idxv2_type_description", Sparse = true }),
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("identifiers.identifier"),
                 new CreateIndexOptions { Name = "idxv2_identifiers_identifier", Sparse = true }),
