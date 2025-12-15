@@ -90,7 +90,13 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
         {
             Id = Guid.NewGuid().ToString(),
             Name = name,
-            Type = type,
+            Type = new PremisesTypeSummaryDocument
+            {
+                IdentifierId = type,
+                Code = type,
+                Description = type,
+                LastUpdatedDate = DateTime.UtcNow
+            },
             State = "Active"
         };
 

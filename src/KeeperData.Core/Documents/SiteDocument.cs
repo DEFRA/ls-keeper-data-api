@@ -29,8 +29,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("type")]
     [JsonPropertyName("type")]
-    [AutoIndexed]
-    public string Type { get; set; } = default!;
+    public PremisesTypeSummaryDocument? Type { get; set; }
 
     [BsonElement("name")]
     [JsonPropertyName("name")]
@@ -91,7 +90,13 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         Id = m.Id,
         CreatedDate = m.CreatedDate,
         LastUpdatedDate = m.LastUpdatedDate,
-        Type = m.Type,
+        Type = !string.IsNullOrEmpty(m.Type) ? new PremisesTypeSummaryDocument
+        {
+            IdentifierId = m.Type,
+            Code = m.Type,
+            Description = m.Type,
+            LastUpdatedDate = m.LastUpdatedDate
+        } : null,
         Name = m.Name,
         State = m.State,
         Identifiers = [.. m.Identifiers.Select(SiteIdentifierDocument.FromDomain)],
@@ -113,7 +118,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
             Id,
             CreatedDate,
             LastUpdatedDate,
-            Type,
+            Type?.IdentifierId ?? string.Empty,
             Name,
             StartDate,
             EndDate,

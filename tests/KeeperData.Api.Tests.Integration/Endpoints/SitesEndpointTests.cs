@@ -29,21 +29,39 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
             new SiteDocument
             {
                 Id = SiteAId,
-                Type = "Business",
+                Type = new PremisesTypeSummaryDocument
+                {
+                    IdentifierId = "Business",
+                    Code = "Business",
+                    Description = "Business",
+                    LastUpdatedDate = new DateTime(2010,01,01)
+                },
                 State = "Active",
                 LastUpdatedDate = new DateTime(2010,01,01)
             },
             new SiteDocument
             {
                 Id = SiteBId,
-                Type = "Other",
+                Type = new PremisesTypeSummaryDocument
+                {
+                    IdentifierId = "Other",
+                    Code = "Other",
+                    Description = "Other",
+                    LastUpdatedDate = new DateTime(2011,01,01)
+                },
                 State = "Active",
                 LastUpdatedDate = new DateTime(2011,01,01)
             },
             new SiteDocument
             {
                 Id = SiteCId,
-                Type = "Business",
+                Type = new PremisesTypeSummaryDocument
+                {
+                    IdentifierId = "Business",
+                    Code = "Business",
+                    Description = "Business",
+                    LastUpdatedDate = new DateTime(2012,01,01)
+                },
                 State = "Active",
                 LastUpdatedDate = new DateTime(2012,01,01)
             },

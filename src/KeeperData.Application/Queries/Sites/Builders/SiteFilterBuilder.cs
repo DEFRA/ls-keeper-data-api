@@ -23,7 +23,7 @@ public static class SiteFilterBuilder
 
         if (query.Type is { Count: > 0 })
         {
-            filters.Add(builder.In(x => x.Type, query.Type));
+            filters.Add(builder.In(x => x.Type!.IdentifierId, query.Type));
         }
 
         if (query.SiteId.HasValue)
