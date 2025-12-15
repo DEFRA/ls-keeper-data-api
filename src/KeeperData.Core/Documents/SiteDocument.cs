@@ -28,7 +28,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("type")]
     [JsonPropertyName("type")]
-    public PremisesTypeSummaryDocument Type { get; set; } = default!;
+    public PremisesTypeSummaryDocument? Type { get; set; }
 
     [BsonElement("name")]
     [JsonPropertyName("name")]
@@ -38,7 +38,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     [BsonElement("state")]
     [JsonPropertyName("state")]
     [AutoIndexed]
-    public string? State { get; set; } = default!;
+    public string? State { get; set; }
 
     [BsonElement("startDate")]
     [JsonPropertyName("startDate")]
@@ -89,7 +89,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         Id = m.Id,
         CreatedDate = m.CreatedDate,
         LastUpdatedDate = m.LastUpdatedDate,
-        Type = PremisesTypeSummaryDocument.FromDomain(m.Type),
+        Type = m.Type is not null ? PremisesTypeSummaryDocument.FromDomain(m.Type) : null,
         Name = m.Name,
         State = m.State,
         Identifiers = [.. m.Identifiers.Select(SiteIdentifierDocument.FromDomain)],
@@ -111,7 +111,6 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
             Id,
             CreatedDate,
             LastUpdatedDate,
-            Type.ToDomain(),
             Name,
             StartDate,
             EndDate,
@@ -119,7 +118,8 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
             Source,
             DestroyIdentityDocumentsFlag,
             Deleted,
-            null
+            Type?.ToDomain(),
+            Location?.ToDomain()
         );
 
         foreach (var si in Identifiers)
@@ -129,11 +129,6 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
                 si.Identifier,
                 si.Type.ToDomain(),
                 si.IdentifierId);
-        }
-
-        if (Location is not null)
-        {
-            site.SetLocation(Location.ToDomain());
         }
 
         if (Species is not null && Species.Count > 0)

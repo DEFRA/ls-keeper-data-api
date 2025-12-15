@@ -235,16 +235,16 @@ public static class SamHoldingMapper
     {
         int? uprn = int.TryParse(representative.Location?.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
 
-        var premiseTypeDoc = await GetPremiseTypeAsync(
+        var premiseTypeLookup = await GetPremiseTypeAsync(
             representative.PremiseTypeIdentifier,
             getPremiseTypeById,
             cancellationToken);
 
-        var premiseType = new PremisesType(
-            premiseTypeDoc?.IdentifierId ?? Guid.NewGuid().ToString(),
-            premiseTypeDoc?.Code ?? string.Empty,
-            premiseTypeDoc?.Name ?? string.Empty,
-            premiseTypeDoc?.LastModifiedDate);
+        var premiseType = premiseTypeLookup == null ? null : PremisesType.Create(
+            premiseTypeLookup.IdentifierId,
+            premiseTypeLookup.Code,
+            premiseTypeLookup.Name,
+            premiseTypeLookup.LastModifiedDate);
 
         var country = await GetCountryAsync(
             representative.Location?.Address?.CountryIdentifier,
@@ -284,7 +284,6 @@ public static class SamHoldingMapper
             goldSiteId,
             representative.CreatedDate,
             representative.LastUpdatedDate,
-            premiseType,
             representative.LocationName ?? string.Empty,
             representative.HoldingStartDate,
             representative.HoldingEndDate,
@@ -292,6 +291,7 @@ public static class SamHoldingMapper
             SourceSystemType.SAM.ToString(),
             null,
             representative.Deleted,
+            premiseType,
             location);
 
         if (siteIdentifierType != null)
@@ -329,17 +329,6 @@ public static class SamHoldingMapper
 
         int? uprn = int.TryParse(representative.Location?.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
 
-        var premiseTypeDoc = await GetPremiseTypeAsync(
-            representative.PremiseTypeIdentifier,
-            getPremiseTypeById,
-            cancellationToken);
-
-        var premiseType = new PremisesType(
-            premiseTypeDoc?.IdentifierId ?? Guid.NewGuid().ToString(),
-            premiseTypeDoc?.Code ?? string.Empty,
-            premiseTypeDoc?.Name ?? string.Empty,
-            premiseTypeDoc?.LastModifiedDate);
-
         var country = await GetCountryAsync(
             representative.Location?.Address?.CountryIdentifier,
             getCountryById,
@@ -354,7 +343,6 @@ public static class SamHoldingMapper
 
         site.Update(
             representative.LastUpdatedDate,
-            premiseType,
             representative.LocationName ?? string.Empty,
             representative.HoldingStartDate,
             representative.HoldingEndDate,
@@ -377,6 +365,22 @@ public static class SamHoldingMapper
             representative.Communication?.Mobile,
             representative.Communication?.Landline,
             false);
+
+        if (representative.PremiseTypeIdentifier != site.Type?.Id)
+        {
+            var premiseTypeLookup = await GetPremiseTypeAsync(
+                representative.PremiseTypeIdentifier,
+                getPremiseTypeById,
+                cancellationToken);
+
+            var premiseType = premiseTypeLookup == null ? null : PremisesType.Create(
+                premiseTypeLookup.IdentifierId,
+                premiseTypeLookup.Code,
+                premiseTypeLookup.Name,
+                premiseTypeLookup.LastModifiedDate);
+
+            site.SetPremisesType(premiseType, representative.LastUpdatedDate);
+        }
 
         site.SetLocation(
             representative.LastUpdatedDate,

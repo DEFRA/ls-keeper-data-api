@@ -21,11 +21,22 @@ public class PremisesType : ValueObject
         LastUpdatedDate = lastUpdatedDate;
     }
 
+    public static PremisesType Create(
+        string id,
+        string code,
+        string description,
+        DateTime? lastUpdatedDate)
+    {
+        return new PremisesType(
+            id,
+            code,
+            description,
+            lastUpdatedDate
+        );
+    }
+
     public override IEnumerable<object> GetEqualityComponents()
     {
         yield return Id;
-        yield return Code;
-        yield return Description;
-        yield return LastUpdatedDate ?? default(DateTime);
     }
 }
