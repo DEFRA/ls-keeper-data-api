@@ -9,10 +9,10 @@ export ENDPOINT_URL=http://localhost:4566
 
 set -e
 
-# S3 buckets
+# S3
 echo "Bootstrapping S3 setup..."
 
-## Create 'test-comparison-reports-bucket' Bucket
+## S3: Create `test-comparison-reports-bucket` bucket
 existing_bucket=$(awslocal s3api list-buckets \
   --query "Buckets[?Name=='test-comparison-reports-bucket'].Name" \
   --output text)

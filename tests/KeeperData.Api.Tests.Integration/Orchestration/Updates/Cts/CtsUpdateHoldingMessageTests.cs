@@ -1,5 +1,6 @@
 using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
+using KeeperData.Api.Tests.Integration.Fixtures;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Sites.Formatters;
@@ -58,7 +59,7 @@ public class CtsUpdateHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalSt
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
     {
         var additionalUserProperties = new Dictionary<string, string> { ["CorrelationId"] = correlationId };
-        var request = SQSMessageUtility.CreateMessage(_localStackFixture.LsKeeperDataIntakeQueue, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl, message, typeof(TMessage).Name, additionalUserProperties);
         await _localStackFixture.SqsClient.SendMessageAsync(request, CancellationToken.None);
     }
 }

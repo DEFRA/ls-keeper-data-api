@@ -1,5 +1,6 @@
 using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
+using KeeperData.Api.Tests.Integration.Fixtures;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
@@ -104,7 +105,7 @@ public class SamImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalSt
         {
             ["CorrelationId"] = correlationId
         };
-        var request = SQSMessageUtility.CreateMessage(_localStackFixture.LsKeeperDataIntakeQueue, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var sam = new CancellationTokenSource();
         await _localStackFixture.SqsClient.SendMessageAsync(request, sam.Token);

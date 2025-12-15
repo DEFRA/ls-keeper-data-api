@@ -1,4 +1,6 @@
-namespace KeeperData.Api.Tests.Integration.Helpers;
+using KeeperData.Api.Tests.Integration.Helpers;
+
+namespace KeeperData.Api.Tests.Integration.Fixtures;
 
 using MongoDB.Driver;
 using Testcontainers.MongoDb;
@@ -6,57 +8,40 @@ using Testcontainers.MongoDb;
 public class MongoDbFixture : IAsyncLifetime
 {
     public MongoDbContainer? Container { get; private set; }
-
     public IMongoClient MongoClient { get; private set; } = null!;
-
     public MongoVerifier MongoVerifier { get; private set; } = null!;
 
     public string? ConnectionString { get; private set; }
-
-    public const string TestDatabaseName = "ls-keeper-data-api";
-
     private static bool s_mongoGlobalsRegistered;
-
-    public string NetworkName { get; } = "integration-tests";
+    public string NetworkName { get; } = "integration-test-network";
+    public const string KrdsDatabaseName = "ls-keeper-data-api";
 
     public async Task InitializeAsync()
     {
-        DockerNetworkHelper.EnsureNetworkExists("integration-tests"); // <-- Add this line first
+        DockerNetworkHelper.EnsureNetworkExists(NetworkName);
 
         Container = new MongoDbBuilder()
-              .WithImage("mongo:latest")
-              .WithName("mongo")
-              .WithPortBinding(27017, true) // dynamic host port
-              .WithEnvironment("MONGO_INITDB_ROOT_USERNAME", "testuser")
-              .WithEnvironment("MONGO_INITDB_ROOT_PASSWORD", "testpass")
-              .WithEnvironment("MONGO_INITDB_DATABASE", "ls-keeper-data-api")
-              .WithNetwork(NetworkName)
-              .WithNetworkAliases("mongo")
-              .Build();
+            .WithImage("mongo:latest")
+            .WithName("mongo")
+            .WithPortBinding(50773, 27017)
+            .WithEnvironment("MONGO_INITDB_ROOT_USERNAME", "testuser")
+            .WithEnvironment("MONGO_INITDB_ROOT_PASSWORD", "testpass")
+            .WithEnvironment("MONGO_INITDB_DATABASE", "ls-keeper-data-api")
+            .WithNetwork(NetworkName)
+            .WithNetworkAliases("mongo")
+            .Build();
 
         await Container.StartAsync();
 
-        // Retrieve the connection string after the container has started
-        var mappedPort = Container.GetMappedPublicPort(27017);
-        ConnectionString = $"mongodb://testuser:testpass@localhost:{mappedPort}/{TestDatabaseName}?authSource=admin";
-
-        MongoClient = new MongoClient(ConnectionString);
-        var database = MongoClient.GetDatabase(TestDatabaseName);
-
-        // Verify connection
-        await VerifyConnectionAsync();
-
-        MongoVerifier = new MongoVerifier(ConnectionString, MongoDbFixture.TestDatabaseName);
+        InitialiseClients();
+        await VerifyResourcesAsync();
     }
 
     public async Task DisposeAsync()
     {
         try
         {
-            RegisterMongoGlobals();
-
-            // Clean up database before disposing
-            await MongoClient.DropDatabaseAsync(TestDatabaseName);
+            await MongoClient.DropDatabaseAsync(KrdsDatabaseName);
         }
         catch
         {
@@ -68,7 +53,18 @@ public class MongoDbFixture : IAsyncLifetime
         }
     }
 
-    private async Task VerifyConnectionAsync()
+    private void InitialiseClients()
+    {
+        var mappedPort = Container!.GetMappedPublicPort(27017);
+        ConnectionString = $"mongodb://testuser:testpass@localhost:{mappedPort}/{KrdsDatabaseName}?authSource=admin";
+
+        RegisterMongoGlobals();
+
+        MongoClient = new MongoClient(ConnectionString);
+        MongoVerifier = new MongoVerifier(ConnectionString!, KrdsDatabaseName);
+    }
+
+    private async Task VerifyResourcesAsync()
     {
         var maxRetries = 5;
         var retryDelay = 1000;
@@ -77,7 +73,7 @@ public class MongoDbFixture : IAsyncLifetime
         {
             try
             {
-                await MongoClient.GetDatabase(TestDatabaseName)
+                await MongoClient.GetDatabase(KrdsDatabaseName)
                     .RunCommandAsync<MongoDB.Bson.BsonDocument>(
                         new MongoDB.Bson.BsonDocument("ping", 1));
 

@@ -2,7 +2,7 @@ using Amazon.SimpleNotificationService;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using FluentAssertions;
-using KeeperData.Api.Tests.Integration.Helpers;
+using KeeperData.Api.Tests.Integration.Fixtures;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -12,8 +12,7 @@ namespace KeeperData.Api.Tests.Integration.Consumers;
 public class DeadLetterQueueTests : IAsyncLifetime
 {
     private readonly LocalStackFixture _localStackFixture;
-    //We use IntegrationTestFixture here but add our own queues and we need direct access to SQS/SNS clients 
-    //for DLQ testing
+    // We use LocalStackFixture here but add our own queues and we need direct access to SQS/SNS clients for DLQ testing
     private string? LocalStackUrl = null;
     private const string MainQueueName = "keeper_main_queue";
     private const string DlqName = "keeper_main_queue-deadletter";

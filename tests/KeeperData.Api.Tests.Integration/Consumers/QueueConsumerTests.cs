@@ -1,6 +1,7 @@
 using Amazon.SimpleNotificationService.Model;
 using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
+using KeeperData.Api.Tests.Integration.Fixtures;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Tests.Common.Generators;
@@ -8,7 +9,10 @@ using KeeperData.Tests.Common.Generators;
 namespace KeeperData.Api.Tests.Integration.Consumers;
 
 [Collection("Integration"), Trait("Dependence", "testcontainers")]
-public class QueueConsumerTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture, ApiContainerFixture apiContainerFixture)
+public class QueueConsumerTests(
+    MongoDbFixture mongoDbFixture,
+    LocalStackFixture localStackFixture,
+    ApiContainerFixture apiContainerFixture)
 {
     private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
     private readonly LocalStackFixture _localStackFixture = localStackFixture;
@@ -54,7 +58,7 @@ public class QueueConsumerTests(MongoDbFixture mongoDbFixture, LocalStackFixture
 
     private async Task ExecuteTopicTest<TMessage>(string correlationId, TMessage message)
     {
-        var topic = new Topic { TopicArn = _localStackFixture.TopicArn };
+        var topic = new Topic { TopicArn = _localStackFixture.DataBridgeEventsTopicArn };
         var additionalUserProperties = new Dictionary<string, string>
         {
             ["CorrelationId"] = correlationId
@@ -71,7 +75,7 @@ public class QueueConsumerTests(MongoDbFixture mongoDbFixture, LocalStackFixture
         {
             ["CorrelationId"] = correlationId
         };
-        var request = SQSMessageUtility.CreateMessage(_localStackFixture.LsKeeperDataIntakeQueue, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var cts = new CancellationTokenSource();
         await _localStackFixture.SqsClient.SendMessageAsync(request, cts.Token);

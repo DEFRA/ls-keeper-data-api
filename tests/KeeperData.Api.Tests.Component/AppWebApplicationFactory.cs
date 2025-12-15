@@ -127,8 +127,8 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__CtsAgentsEnabled", "true");
         Environment.SetEnvironmentVariable("BulkScanEndpointsEnabled", "false");
         Environment.SetEnvironmentVariable("DailyScanEndpointsEnabled", "false");
-        Environment.SetEnvironmentVariable("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicName", "test-topic");
-        Environment.SetEnvironmentVariable("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicArn", "http://localhost:4566/000000000000/test-topic");
+        Environment.SetEnvironmentVariable("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicName", "ls_keeper_data_import_complete");
+        Environment.SetEnvironmentVariable("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicArn", "http://localhost:4566/000000000000/ls_keeper_data_import_complete");
     }
 
     private static void ConfigureAwsOptions(IServiceCollection services)

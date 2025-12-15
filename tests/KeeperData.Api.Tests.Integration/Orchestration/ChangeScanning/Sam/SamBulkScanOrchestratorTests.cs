@@ -1,5 +1,6 @@
 using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
+using KeeperData.Api.Tests.Integration.Fixtures;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 
@@ -91,7 +92,7 @@ public class SamBulkScanOrchestratorTests(LocalStackFixture localStackFixture)
         {
             ["CorrelationId"] = correlationId
         };
-        var request = SQSMessageUtility.CreateMessage(_localStackFixture.LsKeeperDataIntakeQueue, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var cts = new CancellationTokenSource();
         await _localStackFixture.SqsClient.SendMessageAsync(request, cts.Token);

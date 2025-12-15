@@ -45,4 +45,8 @@
       <ProjectReference Include="..\KeeperData.Tests.Common\KeeperData.Tests.Common.csproj" />
     </ItemGroup>
 
+    <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+      <Exec Command="docker build -t keeperdata_api:latest ..\..\ -f ..\..\Dockerfile" />
+    </Target>
+
 </Project>

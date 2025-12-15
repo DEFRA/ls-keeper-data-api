@@ -1,21 +1,17 @@
 using FluentAssertions;
-using KeeperData.Api.Tests.Integration.Helpers;
+using KeeperData.Api.Tests.Integration.Fixtures;
 
 namespace KeeperData.Api.Tests.Integration.Endpoints;
 
 [Collection("Integration"), Trait("Dependence", "testcontainers")]
-public class HealthcheckEndpointTests
+public class HealthcheckEndpointTests(
+    MongoDbFixture mongoDbFixture,
+    LocalStackFixture localStackFixture,
+    ApiContainerFixture apiContainerFixture)
 {
-    private readonly MongoDbFixture _mongoDbFixture;
-    private readonly LocalStackFixture _localStackFixture;
-    private readonly ApiContainerFixture _apiContainerFixture;
-
-    public HealthcheckEndpointTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture, ApiContainerFixture apiContainerFixture)
-    {
-        _mongoDbFixture = mongoDbFixture;
-        _localStackFixture = localStackFixture;
-        _apiContainerFixture = apiContainerFixture;
-    }
+    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture = localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
 
     [Fact]
     public async Task GivenValidHealthCheckRequest_ShouldSucceed()

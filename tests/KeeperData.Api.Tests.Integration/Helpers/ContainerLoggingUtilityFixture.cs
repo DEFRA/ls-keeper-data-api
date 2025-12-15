@@ -17,7 +17,7 @@ public static class ContainerLoggingUtilityFixture
         var logs = $"{stdout}\n{stderr}";
 
         var matchingLines = logs
-            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
             .Where(line => line.Contains(entryFragment))
             .ToList();
 

@@ -66,7 +66,6 @@ public class MongoVerifier
 
         foreach (var collectionName in collections)
         {
-            // Skip system collections
             if (collectionName.StartsWith("system."))
                 continue;
 

@@ -1,5 +1,6 @@
 using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
+using KeeperData.Api.Tests.Integration.Fixtures;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Sites.Formatters;
@@ -20,7 +21,7 @@ public class CtsImportHoldingMessageTests
     public CtsImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture)
     {
         _mongoDbFixture = mongoDbFixture;
-        _localStackFixture = localStackFixture;        
+        _localStackFixture = localStackFixture;
     }
 
     [Fact]
