@@ -14,9 +14,11 @@ using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Moq;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Json;
 using System.Reflection;
+using Xunit.Sdk;
 
 namespace KeeperData.Api.Tests.Component.Endpoints;
 
@@ -24,8 +26,6 @@ public class CountriesEndpointTests : IClassFixture<AppTestFixture>
 {
     private readonly AppTestFixture _fixture;
     private readonly HttpClient _client;
-
-
     private readonly IOptions<MongoConfig> _mongoConfig;
     private readonly Mock<IMongoClient> _mongoClientMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
@@ -69,7 +69,6 @@ public class CountriesEndpointTests : IClassFixture<AppTestFixture>
             .GetField("_collection", BindingFlags.NonPublic | BindingFlags.Instance)!
             .SetValue(_countryRepo, _mongoCollectionMock.Object);
 
-
         _fixture = fixture;
 
         _client = fixture.AppWebApplicationFactory
@@ -84,13 +83,12 @@ public class CountriesEndpointTests : IClassFixture<AppTestFixture>
             .CreateClient();
     }
 
-    private static readonly DateTime GBLastUpdated = new DateTime(2012,08,18,11,10,0);
-
+    private static readonly DateTime GBLastUpdated = new DateTime(2012, 08, 18, 11, 10, 0);
 
     private List<CountryDocument> TestCountries = new List<CountryDocument> {
             new() { IdentifierId = "GB-123", Code = "GB", Name = "UK", LongName = "United Kingdom", IsActive = true, DevolvedAuthority = true, EuTradeMember = false, SortOrder = 10, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.MinValue, LastModifiedDate = GBLastUpdated },
+            new() { IdentifierId = "NZ-123", Code = "NZ", Name = "New Zealand", IsActive = true, SortOrder = 20, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.UtcNow },
             new() { IdentifierId = "FR-123", Code = "FR", Name = "France", IsActive = true, SortOrder = 20, EuTradeMember = true, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.UtcNow },
-            new() { IdentifierId = "NZ-123", Code = "NZ", Name = "New Zealand", IsActive = true, SortOrder = 20, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.UtcNow }
         };
 
     [Fact]
@@ -108,71 +106,57 @@ public class CountriesEndpointTests : IClassFixture<AppTestFixture>
     }
 
     [Theory]
-    [InlineData("France", null, HttpStatusCode.OK, "FR-123")]
-    [InlineData(null, "FR-123,NZ-123", HttpStatusCode.OK, "FR-123,NZ-123")]
-    [InlineData("NotRealCountry", null, HttpStatusCode.OK, "")]
-    public async Task WhenUserSearchesAppropriateCountriesShouldBeReturned(string name, string codesCsv, HttpStatusCode expectedHttpCode, string expectedCodes)
+    [InlineData("Search by Name", "France", null, null, null, HttpStatusCode.OK, "FR")]
+    [InlineData("Search by Name that doesnt exist", "NotRealCountry", null, null, null, HttpStatusCode.OK, null)]
+    [InlineData("Search by One country code", null, "NZ", null, null, HttpStatusCode.OK, "NZ")]
+    [InlineData("Search by multiple country codes", null, "FR,NZ", null, null, HttpStatusCode.OK, "FR,NZ")]
+    [InlineData("Search by isEutrademember(true)", null, null, true, null, HttpStatusCode.OK, "FR")]
+    [InlineData("Search by isEutrademember(false)", null, null, false, null, HttpStatusCode.OK, "GB,NZ")]
+    [InlineData("Search by isDevolvedAuthority(true)", null, null, null, true, HttpStatusCode.OK, "GB")]
+    [InlineData("Search by isDevolvedAuthority(false)", null, null, null, false, HttpStatusCode.OK, "FR,NZ")]
+    public async Task WhenUserSearchesAppropriateCountriesShouldBeReturned(string scenario, string? name, string? codesCsv, bool? euTradeMember, bool? devolvedAuthority, HttpStatusCode expectedHttpCode, string? expectedCodes)
     {
+        Debug.WriteLine(scenario);
         GivenTheseCountries(TestCountries);
 
-        var result = await WhenPerformGetOnCountriesEndpoint(expectedHttpCode, name, codesCsv);
+        var result = await WhenPerformGetOnCountriesEndpoint(expectedHttpCode, name, codesCsv, euTradeMember, devolvedAuthority);
 
-        if (expectedHttpCode == HttpStatusCode.OK){
-            var codes = expectedCodes.Split(",");
+        if (expectedHttpCode == HttpStatusCode.OK)
+        {
+            var codes = expectedCodes?.Split(",") ?? new string[] { };
             result!.Values!.Count().Should().Be(codes.Count());
             if (codes.Any())
-                result!.Values.Select(c => c.Code).Should().BeEquivalentTo(expectedCodes);
+                result!.Values.Select(c => c.Code).Should().BeEquivalentTo(codes);
         }
     }
 
-    /*
-    Given : User wants to search for a country based on name
-When : User hits endpoint with  incorrect name
-Then : User see Country not found message with 404 code.
- 
-Given : User wants to search for a country based on name
-When : User hits endpoint with  incorrect parameter
-Then : User see 400 invalid request message.
- 
-Given : User wants to search for a country based on code
-When : User hits endpoint with  correct code
-Then : User see correct information returned with 200 code.
- 
-Given : User wants to search for a list of countries based on code
-When : User hits endpoint with  correct codes.
-Then : User see list of countries matching entered codes.
- 
-Given : User wants to search for a country based on euTradeMember flag
-When : User hits endpoint with  flag set to true.
-Then : User see list of EU countries.
- 
-Given : User wants to search for a country based on euTradeMember flag
-When : User hits endpoint with  flag set to false.
-Then : User see list of non- EU countries.
- 
-Given : User wants to search for a country based on devolvedAuthority flag
-When : User hits endpoint with  flag set to true.
-Then : User see list of devolved authority.
- 
-Given : User wants to search for a country based on euTradeMember flag
-When : User hits endpoint with  flag set to false.
-Then : User see list of non devolved authority.
- 
-Given : User wants to search for first 59 records.
-When : User enters page : 0 and  page size : 59
-Then : First 59 records are displayed.
- 
-Given : User wants to search for subsequent 59 records.
-When : User enters page : 1 and  page size : 59
-Then : Subsequent 59 records are displayed.
- 
-Given : User wants to search records in  alphabetical order.
-When : User enters order: name  and sort : asc
-Then : List of countries are displayed in alphabetical order.
+    [Theory]
+    [InlineData("Sort by Name Asc", "name", "asc", null, null, "FR,NZ,GB")]
+    [InlineData("Sort by Name Desc", "name", "desc", null, null, "GB,NZ,FR")]
+    [InlineData("Sort by Code Asc", "code", "asc", null, null, "FR,GB,NZ")]
+    [InlineData("Sort by Code Desc", "code", "desc", null, null, "NZ,GB,FR")]
+    [InlineData("Default sort with paged (1-2 of 3)", null, null, 1, 2, "FR,GB")]
+    [InlineData("Default sort with paged (3-3 of 3)", null, null, 2, 2, "NZ")]
+    public async Task WhenUserSearchesWithSort(string scenario, string? sortBy, string? ascDesc, int? page, int? pageSize, string expectedOrder)
+    {
+        Debug.WriteLine(scenario);
+        GivenTheseCountries(TestCountries);
 
-*/
+        var result = await WhenPerformGetOnCountriesEndpoint(HttpStatusCode.OK, sortBy: sortBy, ascDesc: ascDesc, page: page, pageSize: pageSize);
 
+        var codes = expectedOrder?.Split(",") ?? new string[] { };
+        result!.Values!.Count().Should().Be(codes.Count());
+        if (codes.Any())
+            result!.Values.Select(c => c.Code).Should().BeEquivalentTo(codes, options => options.WithStrictOrdering());
+    }
 
+    [Fact]
+    public async Task WhenSearchWithInvalidParameter()
+    {
+        GivenTheseCountries(TestCountries);
+
+        var result = await WhenPerformGetOnCountriesEndpoint(HttpStatusCode.BadRequest, sortBy: "invalidField");
+    }
 
     private void GivenTheseCountries(List<CountryDocument> countryList)
     {
@@ -185,20 +169,7 @@ Then : List of countries are displayed in alphabetical order.
         _asyncCursorMock.SetupGet(c => c.Current).Returns([listDocument]);
     }
 
-    /*
-        [Theory]
-        [InlineData("England", 1)]
-        public async Task WhenEndpointHitWithSearvhByName_NamedCountryShouldBeReturned()
-        {
-            var result = await WhenPerformGetOnCountriesEndpoint(HttpStatusCode.OK);
-
-            // then all countries returned with format
-            //result.Count().Should().Be(249);
-            Assert.Fail("todo - return all");
-        }*/
-
-
-    private async Task<PaginatedResult<CountryDTO>?> WhenPerformGetOnCountriesEndpoint(HttpStatusCode expectedHttpCode, string? name = null, string? codeCsv = null)
+    private async Task<PaginatedResult<CountryDTO>?> WhenPerformGetOnCountriesEndpoint(HttpStatusCode expectedHttpCode, string? name = null, string? codeCsv = null, bool? euTradeMember = null, bool? devolvedAuthority = null, string? sortBy = null, string? ascDesc = null, int? page = null, int? pageSize = null)
     {
         NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
         if (name != null)
@@ -206,10 +177,29 @@ Then : List of countries are displayed in alphabetical order.
 
         if (codeCsv != null)
             queryString.Add("code", codeCsv);
-            
+
+        if (euTradeMember.HasValue)
+            queryString.Add("euTradeMember", euTradeMember.Value.ToString());
+
+        if (devolvedAuthority.HasValue)
+            queryString.Add("devolvedAuthority", devolvedAuthority.Value.ToString());
+
+        if (sortBy != null)
+            queryString.Add("order", sortBy);
+
+        if (ascDesc != null)
+            queryString.Add("sort", ascDesc);
+
+        if (page != null)
+            queryString.Add("page", page.ToString());
+
+        if (pageSize != null)
+            queryString.Add("pageSize", pageSize.ToString());
+
         var query = queryString.ToString();
 
         var response = await _client.GetAsync("api/countries?" + query);
+        var body = await response.Content.ReadAsStringAsync();
         if (expectedHttpCode == HttpStatusCode.OK)
         {
             var result = await response.Content.ReadFromJsonAsync<PaginatedResult<CountryDTO>>();
