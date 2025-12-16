@@ -1,4 +1,6 @@
+using System.Runtime.InteropServices;
 using KeeperData.Core.Documents;
+using KeeperData.Core.DTOs;
 using KeeperData.Core.Repositories;
 
 namespace KeeperData.Application.Queries.Sites.Adapters;
@@ -7,11 +9,20 @@ public class CountriesQueryAdapter(ICountryRepository repository)
 {
     private readonly ICountryRepository _repository = repository;
 
-    public async Task<(List<CountrySummaryDocument> Items, int TotalCount)> GetCountriesAsync(
+    public async Task<(List<CountryDTO> Items, int TotalCount)> GetCountriesAsync(
         GetCountriesQuery query,
         CancellationToken cancellationToken = default)
     {
         var items = await _repository.GetAllAsync();
-        return (items.Select(c => new CountrySummaryDocument { Name = "c.", Code = "abc", IdentifierId = "123", LongName = "abcd" }).ToList(), items.Count());
+
+        var results = items.Where(c => String.IsNullOrEmpty(query.Code) || c.Code == query.Code).ToList();
+        return (
+            results
+            .Select(c => new CountryDTO 
+        { Name = c.Name, Code = c.Code, IdentifierId = c.IdentifierId, 
+        LongName = c.LongName, DevolvedAuthorityFlag = c.DevolvedAuthority, 
+        EuTradeMemberFlag = c.EuTradeMember,
+        LastUpdatedDate = c.LastModifiedDate
+         }).ToList(), items.Count());
     }
 }

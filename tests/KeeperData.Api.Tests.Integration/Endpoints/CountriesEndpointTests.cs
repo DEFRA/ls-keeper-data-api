@@ -29,6 +29,7 @@ public class CountriesEndpointTests(IntegrationTestFixture fixture) : IClassFixt
             var result = await response.Content.ReadFromJsonAsync<List<CountrySummaryDocument>>();
             return result ?? new List<CountrySummaryDocument>();
         }
+        
         return new List<CountrySummaryDocument>();
     }
 }
