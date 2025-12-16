@@ -73,7 +73,7 @@ jobs:
         with:
           path: working-dir
       - name: Build keeperdata_api image
-        run: docker build -t keeperdata_api:latest ./working-dir/KeeperData.Api
+        run: docker build -t keeperdata_api:latest -f ./working-dir/Dockerfile ./working-dir
       - name: Pull localstack and mongo images
         run: |
           docker pull localstack/localstack:latest
