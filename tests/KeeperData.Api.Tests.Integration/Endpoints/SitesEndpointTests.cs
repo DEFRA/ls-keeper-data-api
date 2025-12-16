@@ -1,18 +1,22 @@
 using FluentAssertions;
+using KeeperData.Api.Tests.Integration.Fixtures;
+using KeeperData.Application.Extensions;
 using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.Documents;
+using KeeperData.Core.Domain.Enums;
 using System.Net;
 using System.Net.Http.Json;
 using System.Web;
 
 namespace KeeperData.Api.Tests.Integration.Endpoints;
 
-[Trait("Dependence", "localstack")]
-[Collection("Integration Tests")]
-public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>, IAsyncLifetime
+[Collection("Integration"), Trait("Dependence", "testcontainers")]
+public class SitesEndpointTests(
+    MongoDbFixture mongoDbFixture,
+    ApiContainerFixture apiContainerFixture) : IAsyncLifetime
 {
-    private readonly HttpClient _httpClient = fixture.HttpClient;
-    private readonly IntegrationTestFixture _fixture = fixture;
+    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
+    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
 
     private const string SiteAId = "cdd668a1-40f1-47dd-9b88-54d9bdec8e4d";
     private const string SiteBId = "7e39414b-6d83-48d4-add2-7c8f2213d35a";
@@ -20,40 +24,79 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
     private const string SiteBIdentifier2 = "eddab507-c4c4-466a-a319-c2d099614a4b";
     private const string SiteCId = "bd750b7c-672c-4880-bf5f-620ddc1dcad2";
     private const string SiteCIdentifier1 = "ecb0f3d9-7692-406f-b967-fdacf86692af";
-    private List<SiteDocument> GivenTheseSites
+
+    private static List<SiteDocument> GivenTheseSites
     {
         get
         {
             var sites = new List<SiteDocument>
-        {
-            new SiteDocument
             {
-                Id = SiteAId,
-                Type = new PremisesTypeSummaryDocument { IdentifierId = "t1", Code = "Business", Description = "Business Premise" },
-                State = "Active",
-                LastUpdatedDate = new DateTime(2010,01,01)
-            },
-            new SiteDocument
-            {
-                Id = SiteBId,
-                Type = new PremisesTypeSummaryDocument { IdentifierId = "t2", Code = "Other", Description = "Other Premise" },
-                State = "Active",
-                LastUpdatedDate = new DateTime(2011,01,01)
-            },
-            new SiteDocument
-            {
-                Id = SiteCId,
-                Type = new PremisesTypeSummaryDocument { IdentifierId = "t1", Code = "Business", Description = "Business Premise" },
-                State = "Active",
-                LastUpdatedDate = new DateTime(2012,01,01)
-            },
-        };
-            sites[1].Identifiers.AddRange(new[] {
-                    new SiteIdentifierDocument {IdentifierId = "d41773fd-e9cd-453d-bdd5-ed698686c2cd", Identifier = SiteBIdentifier1 },
-                    new SiteIdentifierDocument {IdentifierId = "24082208-a389-463c-ace6-075fdf357458", Identifier = SiteBIdentifier2 }});
+                new()
+                {
+                    Id = SiteAId,
+                    Type = new PremisesTypeSummaryDocument { IdentifierId = "t1", Code = "Business", Description = "Business Premise" },
+                    State = "Active",
+                    Name = "Site A",
+                    CreatedDate = new DateTime(2010,01,01),
+                    LastUpdatedDate = new DateTime(2010,01,01)
+                },
+                new()
+                {
+                    Id = SiteBId,
+                    Type = new PremisesTypeSummaryDocument { IdentifierId = "t2", Code = "Other", Description = "Other Premise" },
+                    State = "Active",
+                    Name = "Site B",
+                    LastUpdatedDate = new DateTime(2011,01,01)
+                },
+                new()
+                {
+                    Id = SiteCId,
+                    Type = new PremisesTypeSummaryDocument { IdentifierId = "t1", Code = "Business", Description = "Business Premise" },
+                    State = "Active",
+                    Name = "Site C",
+                    LastUpdatedDate = new DateTime(2012,01,01)
+                }
+            };
 
-            sites[2].Identifiers.AddRange(new[] {
-                    new SiteIdentifierDocument {IdentifierId = "ac87a68c-cb01-4a87-a3d4-2947da32b63e", Identifier = SiteCIdentifier1 }});
+            sites[1].Identifiers.AddRange([
+                new SiteIdentifierDocument
+                {
+                    IdentifierId = "d41773fd-e9cd-453d-bdd5-ed698686c2cd",
+                    Identifier = SiteBIdentifier1,
+                    Type = new SiteIdentifierSummaryDocument
+                    {
+                        IdentifierId = Guid.NewGuid().ToString(),
+                        Code = HoldingIdentifierType.CPHN.ToString(),
+                        Description = HoldingIdentifierType.CPHN.GetDescription()!
+                    }
+                },
+                new SiteIdentifierDocument
+                {
+                    IdentifierId = "24082208-a389-463c-ace6-075fdf357458",
+                    Identifier = SiteBIdentifier2,
+                    Type = new SiteIdentifierSummaryDocument
+                    {
+                        IdentifierId = Guid.NewGuid().ToString(),
+                        Code = HoldingIdentifierType.CPHN.ToString(),
+                        Description = HoldingIdentifierType.CPHN.GetDescription()!
+                    }
+                }
+            ]);
+
+            sites[2].Identifiers.AddRange([
+                new SiteIdentifierDocument
+                {
+                    IdentifierId = "ac87a68c-cb01-4a87-a3d4-2947da32b63e",
+                    Identifier = SiteCIdentifier1,
+                    Type = new SiteIdentifierSummaryDocument
+                    {
+                        IdentifierId = Guid.NewGuid().ToString(),
+                        Code = HoldingIdentifierType.CPHN.ToString(),
+                        Description = HoldingIdentifierType.CPHN.GetDescription()!
+                    }
+                }
+            ]);
+
             return sites;
         }
     }
@@ -70,7 +113,7 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
     {
         Console.WriteLine(scenario);
         var date = !string.IsNullOrEmpty(dateStr) ? (DateTime?)DateTime.Parse(dateStr) : null;
-        var response = await _httpClient.GetAsync("api/site?" + BuildQueryString(type, identifier, date));
+        var response = await _apiContainerFixture.HttpClient.GetAsync("api/site?" + BuildQueryString(type, identifier, date));
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var responseBody = await response.Content.ReadAsStringAsync();
@@ -79,7 +122,7 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
         result.Should().NotBeNull();
         result.Count.Should().Be(expectedCount);
 
-        var expectedIds = expectedIdCsv.Split(',').Where(s => !String.IsNullOrEmpty(s));
+        var expectedIds = expectedIdCsv.Split(',').Where(s => !string.IsNullOrEmpty(s));
         foreach (var id in expectedIds)
             result.Values.Should().Contain(x => x.Id == id);
     }
@@ -91,7 +134,7 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
     public async Task GivenAnRecordRequestById_ShouldHaveExpectedResults(string scenario, string requestedId, HttpStatusCode expectedHttpCode, string responseShouldContain)
     {
         Console.WriteLine(scenario);
-        var response = await _httpClient.GetAsync($"api/site/{requestedId}");
+        var response = await _apiContainerFixture.HttpClient.GetAsync($"api/site/{requestedId}");
         var responseBody = await response.Content.ReadAsStringAsync();
         response.StatusCode.Should().Be(expectedHttpCode);
 
@@ -110,18 +153,19 @@ public class SitesEndpointTests(IntegrationTestFixture fixture) : IClassFixture<
             type != null ? $"type={HttpUtility.UrlEncode(type)}" : null,
             identifier != null ? $"siteIdentifier={HttpUtility.UrlEncode(identifier)}" : null,
             lastUpdatedDate != null ? $"lastUpdatedDate={HttpUtility.UrlEncode(lastUpdatedDate.ToString())}" : null
-            };
-        return String.Join('&', parameters.Where(p => p != null).ToList());
+        };
+
+        return string.Join('&', parameters.Where(p => p != null).ToList());
     }
 
     public async Task InitializeAsync()
     {
-        await _fixture.MongoVerifier.DeleteAll<SiteDocument>();
-        await _fixture.MongoVerifier.Insert(GivenTheseSites);
+        await _mongoDbFixture.MongoVerifier.DeleteAll<SiteDocument>();
+        await _mongoDbFixture.MongoVerifier.Insert(GivenTheseSites);
     }
 
     public async Task DisposeAsync()
     {
-        await _fixture.MongoVerifier.Delete(GivenTheseSites);
+        await _mongoDbFixture.MongoVerifier.Delete(GivenTheseSites);
     }
 }

@@ -11,7 +11,9 @@ public class MongoVerifier
 
     public MongoVerifier(string connectionString, string databaseName)
     {
-        var client = new MongoClient(connectionString);
+        var settings = MongoClientSettings.FromConnectionString(connectionString);
+        settings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
+        var client = new MongoClient(settings);
         _database = client.GetDatabase(databaseName);
     }
 
@@ -64,7 +66,6 @@ public class MongoVerifier
 
         foreach (var collectionName in collections)
         {
-            // Skip system collections
             if (collectionName.StartsWith("system."))
                 continue;
 
