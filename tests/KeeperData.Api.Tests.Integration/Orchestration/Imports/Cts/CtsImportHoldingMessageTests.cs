@@ -28,7 +28,7 @@ public class CtsImportHoldingMessageTests(
         var correlationId = Guid.NewGuid().ToString();
         var holdingIdentifier = CphGenerator.GenerateCtsFormattedLidIdentifier("AH");
         var message = GetCtsImportHoldingMessage(holdingIdentifier);
-        
+
         await ExecuteQueueTest(correlationId, message);
 
         var timeout = TimeSpan.FromSeconds(ProcessingTimeCircuitBreakerSeconds);
