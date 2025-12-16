@@ -1,5 +1,5 @@
 using KeeperData.Application;
-using KeeperData.Application.Queries.Sites;
+using KeeperData.Application.Queries.Countries;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KeeperData.Api.Controllers
@@ -17,12 +17,12 @@ namespace KeeperData.Api.Controllers
             var result = await _executor.ExecuteQuery(query);
             return Ok(result);
         }
-        /*
-            [HttpGet("{id}")]
-            public async Task<IActionResult> GetSiteById(string id)
-            {
-            //      var result = await _executor.ExecuteQuery(new GetSiteByIdQuery(id));
-            //       return Ok(result);
-        }*/
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetCountryById(string id)
+        {
+            var result = await _executor.ExecuteQuery(new GetCountryByIdQuery(id));
+            return Ok(result);
+        }
     }
 }

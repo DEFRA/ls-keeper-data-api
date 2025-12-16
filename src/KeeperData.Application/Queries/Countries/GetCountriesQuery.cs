@@ -1,7 +1,6 @@
-using KeeperData.Core.Documents;
 using KeeperData.Core.DTOs;
 
-namespace KeeperData.Application.Queries.Sites;
+namespace KeeperData.Application.Queries.Countries;
 
 public class GetCountriesQuery : IPagedQuery<CountryDTO>
 {

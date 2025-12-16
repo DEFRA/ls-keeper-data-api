@@ -7,6 +7,7 @@ using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Infrastructure.Database.Repositories;
+using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -88,8 +89,11 @@ public class CountriesEndpointTests : IClassFixture<AppTestFixture>
     private List<CountryDocument> TestCountries = new List<CountryDocument> {
             new() { IdentifierId = "GB-123", Code = "GB", Name = "UK", LongName = "United Kingdom", IsActive = true, DevolvedAuthority = true, EuTradeMember = false, SortOrder = 10, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.MinValue, LastModifiedDate = GBLastUpdated },
             new() { IdentifierId = "NZ-123", Code = "NZ", Name = "New Zealand", IsActive = true, SortOrder = 20, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.UtcNow },
-            new() { IdentifierId = "FR-123", Code = "FR", Name = "France", IsActive = true, SortOrder = 20, EuTradeMember = true, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.UtcNow },
+            new() { IdentifierId = "FR-123", Code = "FR", Name = "France", LongName = "France", IsActive = true, SortOrder = 20, EuTradeMember = true, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.UtcNow },
         };
+
+    private static CountryDTO CountryGBAsDTO = new CountryDTO { Code = "GB", IdentifierId = "GB-123", Name = "UK", LongName = "United Kingdom", DevolvedAuthorityFlag = true, EuTradeMemberFlag = false, LastUpdatedDate = GBLastUpdated };
+    private static CountryDTO CountryFRAsDTO = new CountryDTO { Code = "FR", IdentifierId = "FR-123", Name = "France", LongName = "France", DevolvedAuthorityFlag = false, EuTradeMemberFlag = true };
 
     [Fact]
     public async Task WhenEndpointHitWithNoParams_AllCountriesShouldBeReturned()
@@ -97,7 +101,7 @@ public class CountriesEndpointTests : IClassFixture<AppTestFixture>
         GivenTheseCountries(TestCountries);
         var result = await WhenPerformGetOnCountriesEndpoint(HttpStatusCode.OK);
 
-        var expected = new CountryDTO { Code = "GB", IdentifierId = "GB-123", Name = "UK", LongName = "United Kingdom", DevolvedAuthorityFlag = true, EuTradeMemberFlag = false, LastUpdatedDate = GBLastUpdated };
+        var expected = CountryGBAsDTO;
 
         result!.Values!.Count().Should().Be(3);
         result!.Values.Should().Contain(x => x.Code == "GB");
@@ -158,6 +162,33 @@ public class CountriesEndpointTests : IClassFixture<AppTestFixture>
         var result = await WhenPerformGetOnCountriesEndpoint(HttpStatusCode.BadRequest, sortBy: "invalidField");
     }
 
+    public static IEnumerable<object[]> CountriesByIdTestData()
+    {
+        yield return new object[] { "GB-123", HttpStatusCode.OK, CountryGBAsDTO };
+        yield return new object[] { "FR-123", HttpStatusCode.OK, CountryFRAsDTO };
+        yield return new object[] { "invalid-id", HttpStatusCode.NotFound, null! };
+    }
+
+    [Theory]
+    [MemberData(nameof(CountriesByIdTestData))]
+    public async Task GetCountryByIdShouldReturnCorrectRecord(string id, HttpStatusCode expectedHttpCode, CountryDTO? expectedRecord)
+    {
+        GivenTheseCountries(TestCountries);
+
+        var response = await WhenPerformGetOnCountryByIdEndpoint(expectedHttpCode, id);
+
+        response.StatusCode.Should().Be(expectedHttpCode);
+
+        if (expectedRecord != null)
+        {
+            var result = await response.Content.ReadFromJsonAsync<CountryDTO>();
+            if (result == null)
+                Assert.Fail("content not readable");
+
+            result.Should().BeEquivalentTo(expectedRecord);
+        }
+    }
+
     private void GivenTheseCountries(List<CountryDocument> countryList)
     {
         var listDocument = new CountryListDocument
@@ -199,7 +230,7 @@ public class CountriesEndpointTests : IClassFixture<AppTestFixture>
         var query = queryString.ToString();
 
         var response = await _client.GetAsync("api/countries?" + query);
-        var body = await response.Content.ReadAsStringAsync();
+
         if (expectedHttpCode == HttpStatusCode.OK)
         {
             var result = await response.Content.ReadFromJsonAsync<PaginatedResult<CountryDTO>>();
@@ -209,5 +240,10 @@ public class CountriesEndpointTests : IClassFixture<AppTestFixture>
             return result;
         }
         return null;
+    }
+
+    private async Task<HttpResponseMessage> WhenPerformGetOnCountryByIdEndpoint(HttpStatusCode expectedHttpCode, string id)
+    {
+        return await _client.GetAsync($"api/countries/{id}");
     }
 }
