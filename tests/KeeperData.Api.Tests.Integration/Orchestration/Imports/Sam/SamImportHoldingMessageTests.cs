@@ -1,5 +1,6 @@
 using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
+using KeeperData.Api.Tests.Integration.Fixtures;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
@@ -9,10 +10,16 @@ using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Sam;
 
-[Trait("Dependence", "localstack")]
-[Collection("Integration Tests")]
-public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>, IAsyncLifetime
+[Collection("Integration"), Trait("Dependence", "testcontainers")]
+public class SamImportHoldingMessageTests(
+    MongoDbFixture mongoDbFixture,
+    LocalStackFixture localStackFixture,
+    ApiContainerFixture apiContainerFixture) : IAsyncLifetime
 {
+    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture = localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
+
     private const int ProcessingTimeCircuitBreakerSeconds = 30;
 
     [Fact]
@@ -34,7 +41,7 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
         await VerifyGoldDataTypesAsync(holdingIdentifier);
     }
 
-    private static async Task VerifySamImportHoldingMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
+    private async Task VerifySamImportHoldingMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
     {
         var startTime = DateTime.UtcNow;
         var foundLogEntry = false;
@@ -42,7 +49,7 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
         while (DateTime.UtcNow - startTime < timeout)
         {
             foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
-                ContainerLoggingUtility.ServiceNameApi,
+                _apiContainerFixture.ApiContainer,
                 $"Handled message with correlationId: \"{correlationId}\"");
 
             if (foundLogEntry)
@@ -57,16 +64,16 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
     private async Task VerifySilverDataTypesAsync(string holdingIdentifier)
     {
         var silverSamHoldingFilter = Builders<SamHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
-        var silverSamHoldings = await fixture.MongoVerifier.FindDocumentsAsync("samHoldings", silverSamHoldingFilter);
+        var silverSamHoldings = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("samHoldings", silverSamHoldingFilter);
 
         var silverSamPartyFilter = Builders<SamPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
-        var silverSamParties = await fixture.MongoVerifier.FindDocumentsAsync("samParties", silverSamPartyFilter);
+        var silverSamParties = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("samParties", silverSamPartyFilter);
 
         silverSamHoldings.Should().NotBeNull().And.HaveCount(1);
         silverSamParties.Should().NotBeNull().And.HaveCountGreaterThanOrEqualTo(1);
 
         var silverSamHerdFilter = Builders<SamHerdDocument>.Filter.Eq(x => x.CountyParishHoldingHerd, $"{holdingIdentifier}/01");
-        var silverSamHerds = await fixture.MongoVerifier.FindDocumentsAsync("samHerds", silverSamHerdFilter);
+        var silverSamHerds = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("samHerds", silverSamHerdFilter);
         silverSamHerds.Should().NotBeNull().And.HaveCount(1);
     }
 
@@ -75,14 +82,14 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
         var siteFilter = Builders<SiteDocument>.Filter.ElemMatch(
             x => x.Identifiers,
             i => i.Identifier == holdingIdentifier);
-        var sites = await fixture.MongoVerifier.FindDocumentsAsync("sites", siteFilter);
+        var sites = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("sites", siteFilter);
 
         var partyRoleRelationshipFilter = Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
-        var partyRoleRelationships = await fixture.MongoVerifier.FindDocumentsAsync("sitePartyRoleRelationships", partyRoleRelationshipFilter);
+        var partyRoleRelationships = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("sitePartyRoleRelationships", partyRoleRelationshipFilter);
         var partyRolePartyIds = partyRoleRelationships.Select(r => r.PartyId).Distinct().ToList();
 
         var partyFilter = Builders<PartyDocument>.Filter.In(x => x.CustomerNumber, partyRolePartyIds);
-        var parties = await fixture.MongoVerifier.FindDocumentsAsync("parties", partyFilter);
+        var parties = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("parties", partyFilter);
         var partyIds = parties.Select(x => x.CustomerNumber).Distinct().ToHashSet();
 
         sites.Should().NotBeNull().And.HaveCount(1);
@@ -98,15 +105,14 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
     {
-        var queueUrl = "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue";
         var additionalUserProperties = new Dictionary<string, string>
         {
             ["CorrelationId"] = correlationId
         };
-        var request = SQSMessageUtility.CreateMessage(queueUrl, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var sam = new CancellationTokenSource();
-        await fixture.PublishToQueueAsync(request, sam.Token);
+        await _localStackFixture.SqsClient.SendMessageAsync(request, sam.Token);
     }
 
     private static SamImportHoldingMessage GetSamImportHoldingMessage(string holdingIdentifier) => new()
@@ -121,15 +127,6 @@ public class SamImportHoldingMessageTests(IntegrationTestFixture fixture) : ICla
 
     public async Task DisposeAsync()
     {
-        await fixture.MongoVerifier.DeleteAll<PartyDocument>();
-        await fixture.MongoVerifier.DeleteAll<SiteDocument>();
-        await fixture.MongoVerifier.DeleteAll<SamPartyDocument>();
-        await fixture.MongoVerifier.DeleteAll<SamHerdDocument>();
-        await fixture.MongoVerifier.DeleteAll<SamHoldingDocument>();
-        await fixture.MongoVerifier.DeleteAll<Core.Documents.Silver.SitePartyRoleRelationshipDocument>();
-        await fixture.MongoVerifier.DeleteAll<CtsHoldingDocument>();
-        await fixture.MongoVerifier.DeleteAll<CtsPartyDocument>();
-        await fixture.MongoVerifier.DeleteAll<SiteGroupMarkRelationshipDocument>();
-        await fixture.MongoVerifier.DeleteAll<Core.Documents.SitePartyRoleRelationshipDocument>();
+        await _mongoDbFixture.PurgeDataTables();
     }
 }

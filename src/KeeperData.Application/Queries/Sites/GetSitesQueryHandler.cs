@@ -11,6 +11,8 @@ public class GetSitesQueryHandler(SitesQueryAdapter adapter)
 
     protected override async Task<(List<SiteDocument> Items, int TotalCount)> FetchAsync(GetSitesQuery query, CancellationToken cancellationToken)
     {
-        return await _adapter.GetSitesAsync(query, cancellationToken);
+        var (siteDocuments, totalCount) = await _adapter.GetSitesAsync(query, cancellationToken);
+
+        return (siteDocuments, totalCount);
     }
 }

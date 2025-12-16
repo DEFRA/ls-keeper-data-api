@@ -1,5 +1,6 @@
 using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
+using KeeperData.Api.Tests.Integration.Fixtures;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
@@ -7,9 +8,16 @@ using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Updates.Cts;
 
-[Trait("Dependence", "localstack")]
-public class CtsUpdateKeeperMessageTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
+[Collection("Integration"), Trait("Dependence", "testcontainers")]
+public class CtsUpdateKeeperMessageTests(
+    MongoDbFixture mongoDbFixture,
+    LocalStackFixture localStackFixture,
+    ApiContainerFixture apiContainerFixture) : IAsyncLifetime
 {
+    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture = localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
+
     private const int ProcessingTimeCircuitBreakerSeconds = 10;
 
     [Fact]
@@ -30,7 +38,7 @@ public class CtsUpdateKeeperMessageTests(IntegrationTestFixture fixture) : IClas
         while (DateTime.UtcNow - startTime < timeout)
         {
             var filter = Builders<CtsPartyDocument>.Filter.Eq(x => x.PartyId, partyId);
-            storedDocuments = await fixture.MongoVerifier.FindDocumentsAsync("ctsParties", filter);
+            storedDocuments = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("ctsParties", filter);
 
             if (storedDocuments.Count > 0) break;
             await Task.Delay(pollInterval);
@@ -40,16 +48,25 @@ public class CtsUpdateKeeperMessageTests(IntegrationTestFixture fixture) : IClas
         storedDocuments[0].PartyId.Should().Be(partyId);
 
         var foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
-            ContainerLoggingUtility.ServiceNameApi,
+            _apiContainerFixture.ApiContainer,
             $"Handled message with correlationId: \"{correlationId}\"");
         foundLogEntry.Should().BeTrue();
     }
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
     {
-        var queueUrl = "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue";
         var additionalUserProperties = new Dictionary<string, string> { ["CorrelationId"] = correlationId };
-        var request = SQSMessageUtility.CreateMessage(queueUrl, message, typeof(TMessage).Name, additionalUserProperties);
-        await fixture.PublishToQueueAsync(request, CancellationToken.None);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
+        await _localStackFixture.SqsClient.SendMessageAsync(request, CancellationToken.None);
+    }
+
+    public async Task InitializeAsync()
+    {
+        await Task.CompletedTask;
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _mongoDbFixture.PurgeDataTables();
     }
 }

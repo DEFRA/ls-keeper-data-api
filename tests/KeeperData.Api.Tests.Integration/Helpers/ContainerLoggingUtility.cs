@@ -1,50 +1,20 @@
-using System.Diagnostics;
-
 namespace KeeperData.Api.Tests.Integration.Helpers;
+
+using DotNet.Testcontainers.Containers;
 
 public static class ContainerLoggingUtility
 {
-    public const string ServiceNameApi = "keeperdata_api";
-    public const string ServiceNameLocalstack = "kda-localstack-emulator";
-
-    public static async Task<bool> FindContainerLogEntryAsync(string containerServiceName, string entryToMatch)
+    public static async Task<bool> FindContainerLogEntryAsync(IContainer container, string entryToMatch)
     {
-        var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "docker",
-                Arguments = $"logs {containerServiceName}",
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            }
-        };
-
-        process.Start();
-        var logs = await process.StandardOutput.ReadToEndAsync();
-        process.WaitForExit();
-
+        var (stdout, stderr) = await container.GetLogsAsync();
+        var logs = $"{stdout}\n{stderr}";
         return logs.Contains(entryToMatch);
     }
 
-    public static async Task<List<string>> FindContainerLogEntriesAsync(string containerServiceName, string entryFragment)
+    public static async Task<List<string>> FindContainerLogEntriesAsync(IContainer container, string entryFragment)
     {
-        var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "docker",
-                Arguments = $"logs {containerServiceName}",
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            }
-        };
-
-        process.Start();
-        var logs = await process.StandardOutput.ReadToEndAsync();
-        process.WaitForExit();
+        var (stdout, stderr) = await container.GetLogsAsync();
+        var logs = $"{stdout}\n{stderr}";
 
         var matchingLines = logs
             .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)

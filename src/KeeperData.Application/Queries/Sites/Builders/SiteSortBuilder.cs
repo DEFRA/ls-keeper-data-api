@@ -29,7 +29,7 @@ public static class SiteSortBuilder
             "name" => "name",
             "type" => "type.description",
             "state" => "state",
-            "identifier" => "identifiers.identifier", // replaces PrimaryIdentifier
+            "identifier" => "identifiers.identifier",
             _ => "type.description"
         };
     }

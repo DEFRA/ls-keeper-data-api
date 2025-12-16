@@ -9,15 +9,15 @@ public class PremisesTypeSummaryDocument : INestedEntity
 {
     [BsonElement("id")]
     [JsonPropertyName("id")]
-    public required string IdentifierId { get; set; }
+    public string IdentifierId { get; set; } = string.Empty;
 
     [BsonElement("code")]
     [JsonPropertyName("code")]
-    public required string Code { get; set; }
+    public string Code { get; set; } = string.Empty;
 
     [BsonElement("description")]
     [JsonPropertyName("description")]
-    public required string Description { get; set; }
+    public string Description { get; set; } = string.Empty;
 
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
