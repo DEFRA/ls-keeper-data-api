@@ -70,6 +70,25 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
         await AssertPaginatedResponse(response, expectedCount: 2, expectedNames: ["Site B", "Site A"]);
     }
 
+    [Fact]
+    public async Task GetSites_WithCommaSeparatedTypes_ReturnsFilteredResult()
+    {
+        // Arrange
+        var sites = new List<SiteDocument>
+        {
+            CreateSite("Site A", "Type1", "ID1"),
+            CreateSite("Site B", "Type2", "ID2")
+        };
+
+        SetupRepository(sites, totalCount: 2);
+
+        // Act
+        var response = await _client.GetAsync("/api/site?type=Type1,Type2");
+
+        // Assert
+        await AssertPaginatedResponse(response, expectedCount: 2, expectedNames: ["Site A", "Site B"]);
+    }
+
     public void Dispose()
     {
         Dispose(true);

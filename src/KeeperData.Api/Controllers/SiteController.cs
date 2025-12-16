@@ -14,10 +14,17 @@ namespace KeeperData.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSites([FromQuery] GetSitesRequest request)
         {
+            var typeList = !string.IsNullOrWhiteSpace(request.Type)
+                ? request.Type.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(t => t.Trim())
+                    .Where(t => !string.IsNullOrWhiteSpace(t))
+                    .ToList()
+                : null;
+
             var query = new GetSitesQuery
             {
                 SiteIdentifier = request.SiteIdentifier,
-                Type = request.Type,
+                Type = typeList,
                 SiteId = request.SiteId,
                 KeeperPartyId = request.KeeperPartyId,
                 LastUpdatedDate = request.LastUpdatedDate,
