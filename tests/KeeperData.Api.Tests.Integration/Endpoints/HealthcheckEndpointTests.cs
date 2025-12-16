@@ -5,12 +5,8 @@ namespace KeeperData.Api.Tests.Integration.Endpoints;
 
 [Collection("Integration"), Trait("Dependence", "testcontainers")]
 public class HealthcheckEndpointTests(
-    MongoDbFixture mongoDbFixture,
-    LocalStackFixture localStackFixture,
     ApiContainerFixture apiContainerFixture)
 {
-    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
-    private readonly LocalStackFixture _localStackFixture = localStackFixture;
     private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
 
     [Fact]

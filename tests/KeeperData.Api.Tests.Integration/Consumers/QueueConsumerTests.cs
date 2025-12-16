@@ -10,11 +10,9 @@ namespace KeeperData.Api.Tests.Integration.Consumers;
 
 [Collection("Integration"), Trait("Dependence", "testcontainers")]
 public class QueueConsumerTests(
-    MongoDbFixture mongoDbFixture,
     LocalStackFixture localStackFixture,
     ApiContainerFixture apiContainerFixture)
 {
-    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
     private readonly LocalStackFixture _localStackFixture = localStackFixture;
     private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
 
@@ -31,7 +29,7 @@ public class QueueConsumerTests(
         await Task.Delay(TimeSpan.FromSeconds(5));
 
         var foundMessageProcesseEntryInLogs = await ContainerLoggingUtility.FindContainerLogEntryAsync(
-            ContainerLoggingUtility.ServiceNameApi,
+            _apiContainerFixture.ApiContainer,
             $"Handled message with correlationId: \"{correlationId}\"");
 
         foundMessageProcesseEntryInLogs.Should().BeTrue();
@@ -50,7 +48,7 @@ public class QueueConsumerTests(
         await Task.Delay(TimeSpan.FromSeconds(5));
 
         var foundMessageProcesseEntryInLogs = await ContainerLoggingUtility.FindContainerLogEntryAsync(
-            ContainerLoggingUtility.ServiceNameApi,
+            _apiContainerFixture.ApiContainer,
             $"Handled message with correlationId: \"{correlationId}\"");
 
         foundMessageProcesseEntryInLogs.Should().BeTrue();

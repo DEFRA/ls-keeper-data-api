@@ -2,6 +2,8 @@ using KeeperData.Api.Tests.Integration.Helpers;
 
 namespace KeeperData.Api.Tests.Integration.Fixtures;
 
+using KeeperData.Core.Documents;
+using KeeperData.Core.Documents.Silver;
 using MongoDB.Driver;
 using Testcontainers.MongoDb;
 
@@ -35,6 +37,23 @@ public class MongoDbFixture : IAsyncLifetime
 
         InitialiseClients();
         await VerifyResourcesAsync();
+    }
+
+    public async Task PurgeDataTables()
+    {
+        await Task.WhenAll([
+            MongoVerifier.DeleteAll<CtsHoldingDocument>(),
+            MongoVerifier.DeleteAll<CtsHoldingDocument>(),
+            MongoVerifier.DeleteAll<CtsPartyDocument>(),
+            MongoVerifier.DeleteAll<PartyDocument>(),
+            MongoVerifier.DeleteAll<SamHerdDocument>(),
+            MongoVerifier.DeleteAll<SamHoldingDocument>(),
+            MongoVerifier.DeleteAll<SamPartyDocument>(),
+            MongoVerifier.DeleteAll<Core.Documents.Silver.SitePartyRoleRelationshipDocument>(),
+            MongoVerifier.DeleteAll<Core.Documents.SitePartyRoleRelationshipDocument>(),
+            MongoVerifier.DeleteAll<SiteGroupMarkRelationshipDocument>(),
+            MongoVerifier.DeleteAll<SiteDocument>()
+        ]);
     }
 
     public async Task DisposeAsync()

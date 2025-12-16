@@ -11,9 +11,9 @@ namespace KeeperData.Api.Tests.Integration.Consumers;
 [Collection("Integration"), Trait("Dependence", "testcontainers")]
 public class DeadLetterQueueTests : IAsyncLifetime
 {
-    private readonly LocalStackFixture _localStackFixture;
     // We use LocalStackFixture here but add our own queues and we need direct access to SQS/SNS clients for DLQ testing
-    private string? LocalStackUrl = null;
+    private readonly LocalStackFixture _localStackFixture;
+    private readonly string? _localStackUrl = null;
     private const string MainQueueName = "keeper_main_queue";
     private const string DlqName = "keeper_main_queue-deadletter";
     private const string TopicName = "keeper-topic";
@@ -22,23 +22,23 @@ public class DeadLetterQueueTests : IAsyncLifetime
     private string _dlqUrl = "";
     private string _topicArn = "";
 
-    private readonly IAmazonSQS _sqsClient;
-    private readonly IAmazonSimpleNotificationService _snsClient;
+    private readonly AmazonSQSClient _sqsClient;
+    private readonly AmazonSimpleNotificationServiceClient _snsClient;
 
     public DeadLetterQueueTests(LocalStackFixture localStackFixture)
     {
         _localStackFixture = localStackFixture;
-        LocalStackUrl = _localStackFixture.SqsEndpoint;
+        _localStackUrl = _localStackFixture.SqsEndpoint;
         var creds = new Amazon.Runtime.BasicAWSCredentials("test", "test");
 
         _sqsClient = new AmazonSQSClient(creds, new AmazonSQSConfig
         {
-            ServiceURL = LocalStackUrl
+            ServiceURL = _localStackUrl
         });
 
         _snsClient = new AmazonSimpleNotificationServiceClient(creds, new AmazonSimpleNotificationServiceConfig
         {
-            ServiceURL = LocalStackUrl
+            ServiceURL = _localStackUrl
         });
     }
 
@@ -48,7 +48,7 @@ public class DeadLetterQueueTests : IAsyncLifetime
         var dlqResp = await _sqsClient.CreateQueueAsync(DlqName);
         _dlqUrl = dlqResp.QueueUrl;
 
-        var dlqArn = (await _sqsClient.GetQueueAttributesAsync(_dlqUrl, new List<string> { "QueueArn" }))
+        var dlqArn = (await _sqsClient.GetQueueAttributesAsync(_dlqUrl, ["QueueArn"]))
             .Attributes["QueueArn"];
 
         // Create main queue with redrive policy
@@ -66,7 +66,7 @@ public class DeadLetterQueueTests : IAsyncLifetime
 
         _mainQueueUrl = mainResp.QueueUrl;
 
-        var mainArn = (await _sqsClient.GetQueueAttributesAsync(_mainQueueUrl, new List<string> { "QueueArn" }))
+        var mainArn = (await _sqsClient.GetQueueAttributesAsync(_mainQueueUrl, ["QueueArn"]))
             .Attributes["QueueArn"];
 
         var topic = await _snsClient.CreateTopicAsync(TopicName);
@@ -121,7 +121,7 @@ public class DeadLetterQueueTests : IAsyncLifetime
         await Task.Delay(500);
 
         // simulate consumer failure by receiving and letting visibility timeout expire
-        for (int attempt = 1; attempt <= 3; attempt++)
+        for (var attempt = 1; attempt <= 3; attempt++)
         {
             var resp = await _sqsClient.ReceiveMessageAsync(new ReceiveMessageRequest
             {
@@ -140,15 +140,12 @@ public class DeadLetterQueueTests : IAsyncLifetime
         // after 3 failed receives, message should be in DLQ
         await Task.Delay(500); // give localstack time to move message to DLQ
 
-        var mainQueueCheck = await _sqsClient.ReceiveMessageAsync(new ReceiveMessageRequest
+        await _sqsClient.ReceiveMessageAsync(new ReceiveMessageRequest
         {
             QueueUrl = _mainQueueUrl,
             MaxNumberOfMessages = 10,
             WaitTimeSeconds = 1
         });
-
-        //      mainQueueCheck.Messages.Should().BeEmpty(
-        //          "message should have been moved to DLQ after 3 failed receive attempts");
 
         // assert message is in DLQ
         var dlqCheck = await _sqsClient.ReceiveMessageAsync(new ReceiveMessageRequest
@@ -189,7 +186,7 @@ public class DeadLetterQueueTests : IAsyncLifetime
 
         var dlqAttr = await _sqsClient.GetQueueAttributesAsync(
             _dlqUrl,
-            new List<string> { "ApproximateNumberOfMessages" });
+            ["ApproximateNumberOfMessages"]);
 
         dlqAttr.Attributes["ApproximateNumberOfMessages"].Should().Be("0");
     }
@@ -199,7 +196,7 @@ public class DeadLetterQueueTests : IAsyncLifetime
     {
         var mainAttrs = await _sqsClient.GetQueueAttributesAsync(
             _mainQueueUrl,
-            new List<string> { "RedrivePolicy" });
+            ["RedrivePolicy"]);
 
         var redrive = JsonSerializer.Deserialize<RedrivePolicy>(mainAttrs.Attributes["RedrivePolicy"]);
 

@@ -10,12 +10,16 @@ using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Sam;
 
-[Collection("Integration"), Trait("Dependence", "testcontainers")] // TODO affects data
-public class SamImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture, ApiContainerFixture apiContainerFixture) : IAsyncLifetime
+[Collection("Integration"), Trait("Dependence", "testcontainers")]
+public class SamImportHoldingMessageTests(
+    MongoDbFixture mongoDbFixture,
+    LocalStackFixture localStackFixture,
+    ApiContainerFixture apiContainerFixture) : IAsyncLifetime
 {
     private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
     private readonly LocalStackFixture _localStackFixture = localStackFixture;
     private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
+
     private const int ProcessingTimeCircuitBreakerSeconds = 30;
 
     [Fact]
@@ -37,7 +41,7 @@ public class SamImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalSt
         await VerifyGoldDataTypesAsync(holdingIdentifier);
     }
 
-    private static async Task VerifySamImportHoldingMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
+    private async Task VerifySamImportHoldingMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
     {
         var startTime = DateTime.UtcNow;
         var foundLogEntry = false;
@@ -45,7 +49,7 @@ public class SamImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalSt
         while (DateTime.UtcNow - startTime < timeout)
         {
             foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
-                ContainerLoggingUtility.ServiceNameApi,
+                _apiContainerFixture.ApiContainer,
                 $"Handled message with correlationId: \"{correlationId}\"");
 
             if (foundLogEntry)
@@ -105,7 +109,7 @@ public class SamImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalSt
         {
             ["CorrelationId"] = correlationId
         };
-        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var sam = new CancellationTokenSource();
         await _localStackFixture.SqsClient.SendMessageAsync(request, sam.Token);
@@ -123,15 +127,6 @@ public class SamImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalSt
 
     public async Task DisposeAsync()
     {
-        await _mongoDbFixture.MongoVerifier.DeleteAll<PartyDocument>();
-        await _mongoDbFixture.MongoVerifier.DeleteAll<SiteDocument>();
-        await _mongoDbFixture.MongoVerifier.DeleteAll<SamPartyDocument>();
-        await _mongoDbFixture.MongoVerifier.DeleteAll<SamHerdDocument>();
-        await _mongoDbFixture.MongoVerifier.DeleteAll<SamHoldingDocument>();
-        await _mongoDbFixture.MongoVerifier.DeleteAll<Core.Documents.Silver.SitePartyRoleRelationshipDocument>();
-        await _mongoDbFixture.MongoVerifier.DeleteAll<CtsHoldingDocument>();
-        await _mongoDbFixture.MongoVerifier.DeleteAll<CtsPartyDocument>();
-        await _mongoDbFixture.MongoVerifier.DeleteAll<SiteGroupMarkRelationshipDocument>();
-        await _mongoDbFixture.MongoVerifier.DeleteAll<Core.Documents.SitePartyRoleRelationshipDocument>();
+        await _mongoDbFixture.PurgeDataTables();
     }
 }

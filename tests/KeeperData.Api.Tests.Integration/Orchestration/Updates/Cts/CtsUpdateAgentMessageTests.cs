@@ -9,19 +9,16 @@ using MongoDB.Driver;
 namespace KeeperData.Api.Tests.Integration.Orchestration.Updates.Cts;
 
 [Collection("Integration"), Trait("Dependence", "testcontainers")]
-public class CtsUpdateAgentMessageTests
+public class CtsUpdateAgentMessageTests(
+    MongoDbFixture mongoDbFixture,
+    LocalStackFixture localStackFixture,
+    ApiContainerFixture apiContainerFixture) : IAsyncLifetime
 {
-    private const int ProcessingTimeCircuitBreakerSeconds = 10;
-    private readonly MongoDbFixture _mongoDbFixture;
-    private readonly LocalStackFixture _localStackFixture;
-    private readonly ApiContainerFixture _apiContainerFixture;
+    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture = localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
 
-    public CtsUpdateAgentMessageTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture, ApiContainerFixture apiContainerFixture)
-    {
-        _mongoDbFixture = mongoDbFixture;
-        _localStackFixture = localStackFixture;
-        _apiContainerFixture = apiContainerFixture;
-    }
+    private const int ProcessingTimeCircuitBreakerSeconds = 10;
 
     [Fact]
     public async Task GivenCtsUpdateAgentMessagePublishedToQueue_WhenReceived_ShouldPersistSilverData()
@@ -52,7 +49,7 @@ public class CtsUpdateAgentMessageTests
         storedDocuments.Should().NotBeEmpty();
         storedDocuments[0].PartyId.Should().Be(partyId);
 
-        var foundLogEntry = await ContainerLoggingUtilityFixture.FindContainerLogEntryAsync(
+        var foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
             _apiContainerFixture.ApiContainer,
             $"Handled message with correlationId: \"{correlationId}\"");
         foundLogEntry.Should().BeTrue();
@@ -61,7 +58,17 @@ public class CtsUpdateAgentMessageTests
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
     {
         var additionalUserProperties = new Dictionary<string, string> { ["CorrelationId"] = correlationId };
-        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
         await _localStackFixture.SqsClient.SendMessageAsync(request, CancellationToken.None);
+    }
+
+    public async Task InitializeAsync()
+    {
+        await Task.CompletedTask;
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _mongoDbFixture.PurgeDataTables();
     }
 }

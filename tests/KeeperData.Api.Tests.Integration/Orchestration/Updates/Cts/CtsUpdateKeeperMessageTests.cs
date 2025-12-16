@@ -9,11 +9,15 @@ using MongoDB.Driver;
 namespace KeeperData.Api.Tests.Integration.Orchestration.Updates.Cts;
 
 [Collection("Integration"), Trait("Dependence", "testcontainers")]
-public class CtsUpdateKeeperMessageTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture, ApiContainerFixture apiContainerFixture)
+public class CtsUpdateKeeperMessageTests(
+    MongoDbFixture mongoDbFixture,
+    LocalStackFixture localStackFixture,
+    ApiContainerFixture apiContainerFixture) : IAsyncLifetime
 {
     private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
     private readonly LocalStackFixture _localStackFixture = localStackFixture;
     private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
+
     private const int ProcessingTimeCircuitBreakerSeconds = 10;
 
     [Fact]
@@ -44,7 +48,7 @@ public class CtsUpdateKeeperMessageTests(MongoDbFixture mongoDbFixture, LocalSta
         storedDocuments[0].PartyId.Should().Be(partyId);
 
         var foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
-            ContainerLoggingUtility.ServiceNameApi,
+            _apiContainerFixture.ApiContainer,
             $"Handled message with correlationId: \"{correlationId}\"");
         foundLogEntry.Should().BeTrue();
     }
@@ -52,7 +56,17 @@ public class CtsUpdateKeeperMessageTests(MongoDbFixture mongoDbFixture, LocalSta
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
     {
         var additionalUserProperties = new Dictionary<string, string> { ["CorrelationId"] = correlationId };
-        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
         await _localStackFixture.SqsClient.SendMessageAsync(request, CancellationToken.None);
+    }
+
+    public async Task InitializeAsync()
+    {
+        await Task.CompletedTask;
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _mongoDbFixture.PurgeDataTables();
     }
 }

@@ -13,11 +13,9 @@ namespace KeeperData.Api.Tests.Integration.Endpoints;
 [Collection("Integration"), Trait("Dependence", "testcontainers")]
 public class SitesEndpointTests(
     MongoDbFixture mongoDbFixture,
-    LocalStackFixture localStackFixture,
     ApiContainerFixture apiContainerFixture) : IAsyncLifetime
 {
     private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
-    private readonly LocalStackFixture _localStackFixture = localStackFixture;
     private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
 
     private const string SiteAId = "cdd668a1-40f1-47dd-9b88-54d9bdec8e4d";

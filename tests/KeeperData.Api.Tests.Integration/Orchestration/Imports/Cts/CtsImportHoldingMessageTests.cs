@@ -11,26 +11,16 @@ using MongoDB.Driver;
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Cts;
 
 [Collection("Integration"), Trait("Dependence", "testcontainers")]
-public class CtsImportHoldingMessageTests
+public class CtsImportHoldingMessageTests(
+    MongoDbFixture mongoDbFixture,
+    LocalStackFixture localStackFixture,
+    ApiContainerFixture apiContainerFixture) : IAsyncLifetime
 {
+    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture = localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
+
     private const int ProcessingTimeCircuitBreakerSeconds = 30;
-    private readonly MongoDbFixture _mongoDbFixture;
-    private readonly LocalStackFixture _localStackFixture;
-    private readonly ApiContainerFixture _apiContainerFixture;
-
-    public CtsImportHoldingMessageTests(MongoDbFixture mongoDbFixture, LocalStackFixture localStackFixture)
-    {
-        _mongoDbFixture = mongoDbFixture;
-        _localStackFixture = localStackFixture;
-    }
-
-    [Fact]
-    public async Task SqsQueue_ShouldBeCreatedSuccessfully()
-    {
-        var queueName = "ls_keeper_data_intake_queue";
-        var response = await _localStackFixture.SqsClient.GetQueueUrlAsync(queueName);
-        response.QueueUrl.Should().NotBeNullOrEmpty();
-    }
 
     [Fact]
     public async Task GivenCtsImportHoldingMessage_WhenReceivedOnTheQueue_ShouldComplete()
@@ -38,8 +28,7 @@ public class CtsImportHoldingMessageTests
         var correlationId = Guid.NewGuid().ToString();
         var holdingIdentifier = CphGenerator.GenerateCtsFormattedLidIdentifier("AH");
         var message = GetCtsImportHoldingMessage(holdingIdentifier);
-        var testExecutedOn = DateTime.UtcNow;
-
+        
         await ExecuteQueueTest(correlationId, message);
 
         var timeout = TimeSpan.FromSeconds(ProcessingTimeCircuitBreakerSeconds);
@@ -49,7 +38,7 @@ public class CtsImportHoldingMessageTests
 
         await VerifySilverDataTypesAsync(holdingIdentifier);
 
-        await VerifyGoldDataTypesAsync(holdingIdentifier);
+        await VerifyGoldDataTypesAsync();
     }
 
     private async Task VerifyCtsImportHoldingMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
@@ -59,7 +48,7 @@ public class CtsImportHoldingMessageTests
 
         while (DateTime.UtcNow - startTime < timeout)
         {
-            foundLogEntry = await ContainerLoggingUtilityFixture.FindContainerLogEntryAsync(
+            foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
                 _apiContainerFixture.ApiContainer,
                 $"Handled message with correlationId: \"{correlationId}\"");
 
@@ -85,19 +74,18 @@ public class CtsImportHoldingMessageTests
         silverCtsParties.Should().NotBeNull().And.HaveCount(2);
     }
 
-    private Task VerifyGoldDataTypesAsync(string holdingIdentifier)
+    private static Task VerifyGoldDataTypesAsync()
     {
         return Task.CompletedTask;
     }
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
     {
-        var queueUrl = $"{_localStackFixture.SqsEndpoint}/000000000000/ls_keeper_data_intake_queue";
         var additionalUserProperties = new Dictionary<string, string>
         {
             ["CorrelationId"] = correlationId
         };
-        var request = SQSMessageUtility.CreateMessage(queueUrl, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var cts = new CancellationTokenSource();
         await _localStackFixture.SqsClient.SendMessageAsync(request, cts.Token);
@@ -107,4 +95,14 @@ public class CtsImportHoldingMessageTests
     {
         Identifier = holdingIdentifier
     };
+
+    public async Task InitializeAsync()
+    {
+        await Task.CompletedTask;
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _mongoDbFixture.PurgeDataTables();
+    }
 }

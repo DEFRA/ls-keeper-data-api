@@ -6,11 +6,16 @@ using KeeperData.Core.Messaging.Contracts.V1.Sam;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.ChangeScanning.Sam;
 
-[Trait("Dependence", "testcontainers")]
-[Collection("Integration")]
-public class SamBulkScanOrchestratorTests(LocalStackFixture localStackFixture)
+[Collection("Integration"), Trait("Dependence", "testcontainers")]
+public class SamBulkScanOrchestratorTests(
+    MongoDbFixture mongoDbFixture,
+    LocalStackFixture localStackFixture,
+    ApiContainerFixture apiContainerFixture) : IAsyncLifetime
 {
+    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
     private readonly LocalStackFixture _localStackFixture = localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
+
     private const int ProcessingTimeCircuitBreakerSeconds = 30;
     private const int LimitScanTotalBatchSize = 10;
 
@@ -35,7 +40,7 @@ public class SamBulkScanOrchestratorTests(LocalStackFixture localStackFixture)
         await VerifySamHoldingImportPersistenceStepsCompleted(correlationId, testExecutedOn, timeout, pollInterval, expectedEntries: LimitScanTotalBatchSize);
     }
 
-    private static async Task VerifySamBulkScanMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
+    private async Task VerifySamBulkScanMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
     {
         var startTime = DateTime.UtcNow;
         var foundLogEntry = false;
@@ -43,7 +48,7 @@ public class SamBulkScanOrchestratorTests(LocalStackFixture localStackFixture)
         while (DateTime.UtcNow - startTime < timeout)
         {
             foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
-                ContainerLoggingUtility.ServiceNameApi,
+                _apiContainerFixture.ApiContainer,
                 $"Handled message with correlationId: \"{correlationId}\"");
 
             if (foundLogEntry)
@@ -55,7 +60,7 @@ public class SamBulkScanOrchestratorTests(LocalStackFixture localStackFixture)
         foundLogEntry.Should().BeTrue($"Expected log entry within {ProcessingTimeCircuitBreakerSeconds} seconds but none was found.");
     }
 
-    private static async Task VerifySamHoldingImportPersistenceStepsCompleted(string correlationId, DateTime testExecutedOn, TimeSpan timeout, TimeSpan pollInterval, int expectedEntries)
+    private async Task VerifySamHoldingImportPersistenceStepsCompleted(string correlationId, DateTime testExecutedOn, TimeSpan timeout, TimeSpan pollInterval, int expectedEntries)
     {
         var startTime = DateTime.UtcNow;
         var logFragment = $"Completed import step: \"SamHoldingImportPersistenceStep\" correlationId: \"{correlationId}\"";
@@ -64,7 +69,7 @@ public class SamBulkScanOrchestratorTests(LocalStackFixture localStackFixture)
         while (DateTime.UtcNow - startTime < timeout)
         {
             var logs = await ContainerLoggingUtility.FindContainerLogEntriesAsync(
-                ContainerLoggingUtility.ServiceNameApi,
+                _apiContainerFixture.ApiContainer,
                 logFragment);
 
             matchingLogCount = logs
@@ -92,7 +97,7 @@ public class SamBulkScanOrchestratorTests(LocalStackFixture localStackFixture)
         {
             ["CorrelationId"] = correlationId
         };
-        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var cts = new CancellationTokenSource();
         await _localStackFixture.SqsClient.SendMessageAsync(request, cts.Token);
@@ -102,4 +107,14 @@ public class SamBulkScanOrchestratorTests(LocalStackFixture localStackFixture)
     {
         Identifier = identifier
     };
+
+    public async Task InitializeAsync()
+    {
+        await Task.CompletedTask;
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _mongoDbFixture.PurgeDataTables();
+    }
 }
