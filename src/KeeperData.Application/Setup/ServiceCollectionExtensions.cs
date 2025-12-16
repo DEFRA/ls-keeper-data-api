@@ -33,6 +33,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IRequestExecutor, RequestExecutor>();
         services.AddValidatorsFromAssemblyContaining<IRequestExecutor>();
 
+        services.AddScoped<CountriesQueryAdapter>();
         services.AddScoped<SitesQueryAdapter>();
         services.AddScoped<PartiesQueryAdapter>();
         services.AddTransient<IDelayProvider, RealDelayProvider>();
