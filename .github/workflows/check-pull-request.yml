@@ -74,8 +74,10 @@ jobs:
           path: working-dir
       - name: Build keeperdata_api image
         run: docker build -t keeperdata_api:latest ./working-dir/KeeperData.Api
-      - name: Pull LocalStack image
-        run: docker pull localstack/localstack:latest
+      - name: Pull localstack and mongo images
+        run: |
+          docker pull localstack/localstack:latest
+          docker pull mongo:latest
       - name: Run integration tests
         run: dotnet test ./working-dir/KeeperData.Api.sln --filter Dependence=testcontainers
 
