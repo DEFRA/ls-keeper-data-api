@@ -68,7 +68,7 @@ public class CountriesEndpointTests
         typeof(GenericRepository<CountryListDocument>)
             .GetField("_collection", BindingFlags.NonPublic | BindingFlags.Instance)!
             .SetValue(_countryRepo, _mongoCollectionMock.Object);
-        
+
         var factory = new AppWebApplicationFactory();
 
         factory.OverrideServiceAsScoped<ICountryRepository>(_countryRepo);
