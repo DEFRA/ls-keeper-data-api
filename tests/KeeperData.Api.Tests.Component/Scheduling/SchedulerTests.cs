@@ -1,6 +1,6 @@
 namespace KeeperData.Api.Tests.Component.Scheduling;
 
-using KeeperData.Api.Worker.Jobs;
+using KeeperData.Api.Tests.Component.Scheduling.FakeJobs;
 using KeeperData.Api.Worker.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -35,7 +35,7 @@ public class SchedulerTests
 
                     // Durable as don't want a timed trigger in tests
                     var jobKey = new JobKey("TestJob");
-                    q.AddJob<CtsBulkScanJob>(opts => opts.WithIdentity(jobKey).StoreDurably());
+                    q.AddJob<FakeCtsBulkScanJob>(opts => opts.WithIdentity(jobKey).StoreDurably());
                 });
                 services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
             }).Build();
@@ -43,7 +43,7 @@ public class SchedulerTests
         await host.StartAsync();
 
         var scheduler = await host.Services.GetRequiredService<ISchedulerFactory>().GetScheduler();
-
+        await scheduler.Start();
         await scheduler.TriggerJob(new JobKey("TestJob"));
 
         var completedInTime = jobDidRun.Wait(TimeSpan.FromSeconds(10));
