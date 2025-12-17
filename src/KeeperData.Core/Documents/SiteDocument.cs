@@ -18,6 +18,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("createdDate")]
     [JsonPropertyName("createdDate")]
+    [JsonIgnore]
     [AutoIndexed]
     public DateTime CreatedDate { get; set; }
 
@@ -58,6 +59,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("deleted")]
     [JsonPropertyName("deleted")]
+    [JsonIgnore]
     public bool Deleted { get; set; }
 
     [BsonElement("location")]

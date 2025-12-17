@@ -1,12 +1,9 @@
 using FluentAssertions;
-using KeeperData.Application.Extensions;
 using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Extensions;
 using KeeperData.Core.Repositories;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Moq;
 using System.Net;
 using System.Net.Http.Json;
@@ -16,26 +13,14 @@ namespace KeeperData.Api.Tests.Component.Endpoints;
 public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
 {
     private readonly Mock<ISitesRepository> _sitesRepositoryMock = new();
-    private readonly HttpClient _client;
-
-    public SitesEndpointTests(AppTestFixture fixture)
-    {
-        _client = fixture.AppWebApplicationFactory
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.RemoveAll<ISitesRepository>();
-                    services.AddScoped(_ => _sitesRepositoryMock.Object);
-                });
-            })
-            .CreateClient();
-    }
 
     [Fact]
     public async Task GetSites_WithFilterAndSort_ReturnsFilteredAndSortedOkResult()
     {
         // Arrange
+        var factory = new AppWebApplicationFactory();
+        factory.OverrideServiceAsScoped(_sitesRepositoryMock.Object);
+
         var siteId = Guid.NewGuid();
         var keeperPartyId = Guid.NewGuid();
         var sites = new List<SiteDocument> { CreateSite("Site A", "Type1", "ID1") };
@@ -45,7 +30,8 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
         var query = $"?siteIdentifier=ID1&type=Type1&siteId={siteId}&keeperPartyId={keeperPartyId}&order=name&sort=asc";
 
         // Act
-        var response = await _client.GetAsync($"/api/site{query}");
+        var httpClient = factory.CreateClient();
+        var response = await httpClient.GetAsync($"/api/site{query}");
 
         // Assert
         await AssertPaginatedResponse(response, expectedCount: 1, expectedNames: ["Site A"]);
@@ -55,6 +41,9 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
     public async Task GetSites_WithoutParameters_ReturnsDefaultOkResult()
     {
         // Arrange
+        var factory = new AppWebApplicationFactory();
+        factory.OverrideServiceAsScoped(_sitesRepositoryMock.Object);
+
         var sites = new List<SiteDocument>
         {
             CreateSite("Site B", "Type2", "ID2"),
@@ -64,7 +53,8 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
         SetupRepository(sites, totalCount: 2);
 
         // Act
-        var response = await _client.GetAsync("/api/site");
+        var httpClient = factory.CreateClient();
+        var response = await httpClient.GetAsync("/api/site");
 
         // Assert
         await AssertPaginatedResponse(response, expectedCount: 2, expectedNames: ["Site B", "Site A"]);
@@ -74,6 +64,9 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
     public async Task GetSites_WithCommaSeparatedTypes_ReturnsFilteredResult()
     {
         // Arrange
+        var factory = new AppWebApplicationFactory();
+        factory.OverrideServiceAsScoped(_sitesRepositoryMock.Object);
+
         var sites = new List<SiteDocument>
         {
             CreateSite("Site A", "Type1", "ID1"),
@@ -83,7 +76,8 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
         SetupRepository(sites, totalCount: 2);
 
         // Act
-        var response = await _client.GetAsync("/api/site?type=Type1,Type2");
+        var httpClient = factory.CreateClient();
+        var response = await httpClient.GetAsync("/api/site?type=Type1,Type2");
 
         // Assert
         await AssertPaginatedResponse(response, expectedCount: 2, expectedNames: ["Site A", "Site B"]);
@@ -99,7 +93,6 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
     {
         if (disposing)
         {
-            _client?.Dispose();
         }
     }
 
@@ -115,7 +108,7 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
                 Code = typeCode,
                 Description = $"{typeCode} Description"
             },
-            State = "Active"
+            State = HoldingStatusType.Active.GetDescription()
         };
 
         site.Identifiers.Add(new SiteIdentifierDocument

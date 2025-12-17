@@ -1,6 +1,6 @@
-using KeeperData.Application.Extensions;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Extensions;
 
 namespace KeeperData.Tests.Common.TestData.Sam.ExpectedOutcomes;
 
@@ -22,7 +22,7 @@ public static class ExpectedGoldParties
                 Name = "Mr John James P Doe",
                 CustomerNumber = "C1000001",
                 PartyType = "Person",
-                State = "Active",
+                State = PartyStatusType.Active.GetDescription(),
                 Deleted = false,
 
                 Communication =
@@ -46,7 +46,7 @@ public static class ExpectedGoldParties
                     AddressLine2 = "Elm Grove",
                     PostTown = "Manchester",
                     County = "West Didsbury",
-                    PostCode = "M20 2XY",
+                    Postcode = "M20 2XY",
                     Country = CountryData.GetSummary("GB"),
                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                 },
@@ -60,7 +60,7 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                            State = HoldingStatusType.Active.ToString(),
+                            State = HoldingStatusType.Active.GetDescription(),
                             Identifiers =
                             [
                                 new()
@@ -115,7 +115,7 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                            State = HoldingStatusType.Active.ToString(),
+                            State = HoldingStatusType.Active.GetDescription(),
                             Identifiers =
                             [
                                 new()
@@ -170,7 +170,7 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                            State = HoldingStatusType.Active.ToString(),
+                            State = HoldingStatusType.Active.GetDescription(),
                             Identifiers =
                             [
                                 new()
@@ -211,7 +211,7 @@ public static class ExpectedGoldParties
                 Name = "Mrs Jane D Doe",
                 CustomerNumber = "C1000002",
                 PartyType = "Person",
-                State = "Active",
+                State = PartyStatusType.Active.GetDescription(),
                 Deleted = false,
 
                 Communication =
@@ -235,7 +235,7 @@ public static class ExpectedGoldParties
                     AddressLine2 = "Elm Grove",
                     PostTown = "Manchester",
                     County = "West Didsbury",
-                    PostCode = "M20 2XY",
+                    Postcode = "M20 2XY",
                     Country = CountryData.GetSummary("GB"),
                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                 },
@@ -249,7 +249,7 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                            State = HoldingStatusType.Active.ToString(),
+                            State = HoldingStatusType.Active.GetDescription(),
                             Identifiers =
                             [
                                 new()
@@ -314,7 +314,7 @@ public static class ExpectedGoldParties
                 Name = "Mr John James P Doe",
                 CustomerNumber = "C1000001",
                 PartyType = "Person",
-                State = "Active",
+                State = PartyStatusType.Active.GetDescription(),
                 Deleted = false,
 
                 Communication =
@@ -338,7 +338,7 @@ public static class ExpectedGoldParties
                     AddressLine2 = "Elm Grove",
                     PostTown = "Manchester",
                     County = "West Didsbury",
-                    PostCode = "M20 2XY",
+                    Postcode = "M20 2XY",
                     Country = CountryData.GetSummary("GB"),
                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                 },
@@ -352,7 +352,7 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                            State = HoldingStatusType.Active.ToString(),
+                            State = HoldingStatusType.Active.GetDescription(),
                             Identifiers =
                             [
                                 new()
@@ -404,7 +404,7 @@ public static class ExpectedGoldParties
                 Name = "Mr Dave Smith",
                 CustomerNumber = "C1000005",
                 PartyType = "Person",
-                State = "Active",
+                State = PartyStatusType.Active.GetDescription(),
                 Deleted = false,
 
                 Communication =
@@ -428,7 +428,7 @@ public static class ExpectedGoldParties
                     AddressLine2 = "Elm Grove",
                     PostTown = "Manchester",
                     County = "West Didsbury",
-                    PostCode = "M20 2XY",
+                    Postcode = "M20 2XY",
                     Country = CountryData.GetSummary("GB"),
                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                 },
@@ -442,7 +442,7 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                            State = HoldingStatusType.Active.ToString(),
+                            State = HoldingStatusType.Active.GetDescription(),
                             Identifiers =
                             [
                                 new()
@@ -477,7 +477,7 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                            State = HoldingStatusType.Active.ToString(),
+                            State = HoldingStatusType.Active.GetDescription(),
                             Identifiers =
                             [
                                 new()

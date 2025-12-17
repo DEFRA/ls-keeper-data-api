@@ -2,6 +2,8 @@ using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Fixtures;
 using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.Documents;
+using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Extensions;
 using System.Net;
 using System.Net.Http.Json;
 using System.Web;
@@ -27,7 +29,7 @@ public class PartiesEndpointTests(
                 Id = JohnSmithId,
                 FirstName = "John",
                 LastName = "Smith",
-                State = "Active",
+                State = PartyStatusType.Active.GetDescription(),
                 LastUpdatedDate = new DateTime(2010,01,01)
             },
             new PartyDocument
@@ -35,7 +37,7 @@ public class PartiesEndpointTests(
                 Id = MarkSmithId,
                 FirstName = "Mark",
                 LastName = "Smith",
-                State = "Active",
+                State = PartyStatusType.Active.GetDescription(),
                 LastUpdatedDate = new DateTime(2011,01,01)
             },
             new PartyDocument
@@ -43,7 +45,7 @@ public class PartiesEndpointTests(
                 Id = HueyNewsId,
                 FirstName = "Huey",
                 LastName = "News",
-                State = "Active",
+                State = PartyStatusType.Active.GetDescription(),
                 LastUpdatedDate = new DateTime(2012,01,01)
             },
         ];

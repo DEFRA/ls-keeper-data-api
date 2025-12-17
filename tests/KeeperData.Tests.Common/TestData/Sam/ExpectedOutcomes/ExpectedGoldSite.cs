@@ -1,6 +1,6 @@
-using KeeperData.Application.Extensions;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Extensions;
 
 namespace KeeperData.Tests.Common.TestData.Sam.ExpectedOutcomes;
 
@@ -22,7 +22,7 @@ public static class ExpectedGoldSite
                 Description = "Agricultural Holding"
             },
             Name = "North Market Farm",
-            State = HoldingStatusType.Active.ToString(),
+            State = HoldingStatusType.Active.GetDescription(),
             StartDate = new DateTime(2001, 1, 1, 0, 0, 0),
             EndDate = null,
             Source = SourceSystemType.SAM.ToString(),
@@ -44,7 +44,7 @@ public static class ExpectedGoldSite
                     AddressLine2 = "Market Square",
                     PostTown = "Oxford",
                     County = "North Oxford",
-                    PostCode = "OX1 3EQ",
+                    Postcode = "OX1 3EQ",
                     Country = CountryData.GetSummary("GB"),
                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                 },
@@ -92,7 +92,7 @@ public static class ExpectedGoldSite
                     LastName = "Doe",
                     Name = "Mr John James P Doe",
                     PartyType = "Person",
-                    State = "Active",
+                    State = PartyStatusType.Active.GetDescription(),
                     CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0),
                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
 
@@ -117,7 +117,7 @@ public static class ExpectedGoldSite
                         AddressLine2 = "Elm Grove",
                         PostTown = "Manchester",
                         County = "West Didsbury",
-                        PostCode = "M20 2XY",
+                        Postcode = "M20 2XY",
                         Country = CountryData.GetSummary("GB"),
                         LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                     },
@@ -211,7 +211,7 @@ public static class ExpectedGoldSite
                     LastName = "Doe",
                     Name = "Mrs Jane D Doe",
                     PartyType = "Person",
-                    State = "Active",
+                    State = PartyStatusType.Active.GetDescription(),
                     CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0),
                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
 
@@ -236,7 +236,7 @@ public static class ExpectedGoldSite
                         AddressLine2 = "Elm Grove",
                         PostTown = "Manchester",
                         County = "West Didsbury",
-                        PostCode = "M20 2XY",
+                        Postcode = "M20 2XY",
                         Country = CountryData.GetSummary("GB"),
                         LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                     },
@@ -375,7 +375,7 @@ public static class ExpectedGoldSite
                 Description = "Agricultural Holding"
             },
             Name = "North Market Farm",
-            State = HoldingStatusType.Active.ToString(),
+            State = HoldingStatusType.Active.GetDescription(),
             StartDate = new DateTime(2001, 1, 1, 0, 0, 0),
             EndDate = null,
             Source = SourceSystemType.SAM.ToString(),
@@ -396,7 +396,7 @@ public static class ExpectedGoldSite
                     LastName = "Doe",
                     Name = "Mr John James P Doe",
                     PartyType = "Person",
-                    State = "Active",
+                    State = PartyStatusType.Active.GetDescription(),
                     CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0),
                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
 
@@ -421,7 +421,7 @@ public static class ExpectedGoldSite
                         AddressLine2 = "Elm Grove",
                         PostTown = "Manchester",
                         County = "West Didsbury",
-                        PostCode = "M20 2XY",
+                        Postcode = "M20 2XY",
                         Country = CountryData.GetSummary("GB"),
                         LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                     },
@@ -462,7 +462,7 @@ public static class ExpectedGoldSite
                     LastName = "Smith",
                     Name = "Mr Dave Smith",
                     PartyType = "Person",
-                    State = "Active",
+                    State = PartyStatusType.Active.GetDescription(),
                     CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0),
                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
 
@@ -487,7 +487,7 @@ public static class ExpectedGoldSite
                         AddressLine2 = "Elm Grove",
                         PostTown = "Manchester",
                         County = "West Didsbury",
-                        PostCode = "M20 2XY",
+                        Postcode = "M20 2XY",
                         Country = CountryData.GetSummary("GB"),
                         LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                     },

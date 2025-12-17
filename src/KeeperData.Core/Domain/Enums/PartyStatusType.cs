@@ -2,7 +2,7 @@ using System.ComponentModel;
 
 namespace KeeperData.Core.Domain.Enums;
 
-public enum HoldingStatusType
+public enum PartyStatusType
 {
     [Description("inactive")]
     Inactive = 0,

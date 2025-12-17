@@ -1,5 +1,6 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Extensions;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
@@ -73,7 +74,7 @@ public class SamHoldingDocument : BaseHoldingDocument, IEntity, IDeletableEntity
     [BsonElement("productionUsageCodeList")]
     public List<string> ProductionUsageCodeList { get; set; } = [];
 
-    public bool IsActive => HoldingStatus == HoldingStatusType.Active.ToString();
+    public bool IsActive => HoldingStatus == HoldingStatusType.Active.GetDescription();
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
