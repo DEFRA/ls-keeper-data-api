@@ -23,9 +23,8 @@ using Xunit.Sdk;
 
 namespace KeeperData.Api.Tests.Component.Endpoints;
 
-public class CountriesEndpointTests : IClassFixture<AppTestFixture>
+public class CountriesEndpointTests
 {
-    private readonly AppTestFixture _fixture;
     private readonly HttpClient _client;
     private readonly IOptions<MongoConfig> _mongoConfig;
     private readonly Mock<IMongoClient> _mongoClientMock = new();
@@ -36,7 +35,7 @@ public class CountriesEndpointTests : IClassFixture<AppTestFixture>
     private readonly Mock<IMongoCollection<CountryListDocument>> _mongoCollectionMock = new();
     private readonly CountryRepository _countryRepo;
 
-    public CountriesEndpointTests(AppTestFixture fixture)
+    public CountriesEndpointTests()
     {
         _mongoConfig = Options.Create(new MongoConfig { DatabaseName = "TestDatabase" });
 
@@ -69,19 +68,12 @@ public class CountriesEndpointTests : IClassFixture<AppTestFixture>
         typeof(GenericRepository<CountryListDocument>)
             .GetField("_collection", BindingFlags.NonPublic | BindingFlags.Instance)!
             .SetValue(_countryRepo, _mongoCollectionMock.Object);
+        
+        var factory = new AppWebApplicationFactory();
 
-        _fixture = fixture;
+        factory.OverrideServiceAsScoped<ICountryRepository>(_countryRepo);
 
-        _client = fixture.AppWebApplicationFactory
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.RemoveAll<ICountryRepository>();
-                    services.AddScoped(_ => (ICountryRepository)_countryRepo);
-                });
-            })
-            .CreateClient();
+        _client = factory.CreateClient();
     }
 
     private static readonly DateTime GBLastUpdated = new DateTime(2012, 08, 18, 11, 10, 0);
