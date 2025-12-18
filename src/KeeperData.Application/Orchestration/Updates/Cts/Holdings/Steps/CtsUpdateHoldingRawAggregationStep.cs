@@ -24,40 +24,44 @@ public class CtsUpdateHoldingRawAggregationStep(
         context.RawAgents = getAgentsTask.Result;
 
         var rawKeepers = getKeepersTask.Result;
-        context.RawKeepers = DeduplicateKeepersByLatest(rawKeepers);
+        var singleKeeper = DeduplicateToSingleKeeper(rawKeepers);
+        context.RawKeepers = singleKeeper != null ? [singleKeeper] : [];
 
-        var (originalCount, deduplicatedCount, duplicatesRemoved) =
+        var (originalCount, finalCount, duplicatesRemoved) =
             GetDebugStats(rawKeepers, context.RawKeepers);
 
-        logger.LogWarning("Deduplicated {DuplicatesRemoved} keeper records for CPH {Cph}. Original: {OriginalCount}, Final: {DeduplicatedCount}",
-            duplicatesRemoved, context.Cph, originalCount, deduplicatedCount);
+        logger.LogWarning("Deduplicated {DuplicatesRemoved} keeper records for CPH {Cph}. Original: {OriginalCount}, Final: {FinalCount}",
+            duplicatesRemoved, context.Cph, originalCount, finalCount);
     }
 
-    private List<CtsAgentOrKeeper> DeduplicateKeepersByLatest(List<CtsAgentOrKeeper> keepers)
+    private CtsAgentOrKeeper? DeduplicateToSingleKeeper(List<CtsAgentOrKeeper> keepers)
     {
         if (keepers == null || !keepers.Any())
-            return keepers ?? new List<CtsAgentOrKeeper>();
+            return null;
 
-        // Group by PAR_ID and select the latest record for each group
-        var deduplicatedKeepers = keepers
+        // Group by PAR_ID, get latest per keeper, then pick most recent keeper overall
+        var singleKeeper = keepers
             .GroupBy(k => k.PAR_ID)
             .Select(group => group
                 .OrderByDescending(k => k.UpdatedAtUtc ?? DateTime.MinValue)
                 .ThenByDescending(k => k.CreatedAtUtc ?? DateTime.MinValue)
                 .ThenByDescending(k => k.BATCH_ID ?? 0)
                 .First())
-            .ToList();
+            .OrderByDescending(k => k.UpdatedAtUtc ?? DateTime.MinValue)
+            .ThenByDescending(k => k.CreatedAtUtc ?? DateTime.MinValue)
+            .ThenByDescending(k => k.BATCH_ID ?? 0)
+            .FirstOrDefault();
 
-        return deduplicatedKeepers;
+        return singleKeeper;
     }
 
-    private (int originalCount, int deduplicatedCount, int duplicatesRemoved) GetDebugStats(
-        List<CtsAgentOrKeeper> original, List<CtsAgentOrKeeper> deduplicated)
+    private (int originalCount, int finalCount, int duplicatesRemoved) GetDebugStats(
+        List<CtsAgentOrKeeper> original, List<CtsAgentOrKeeper> final)
     {
         var originalCount = original?.Count ?? 0;
-        var deduplicatedCount = deduplicated?.Count ?? 0;
-        var duplicatesRemoved = Math.Max(0, originalCount - deduplicatedCount);
+        var finalCount = final?.Count ?? 0;
+        var duplicatesRemoved = Math.Max(0, originalCount - finalCount);
 
-        return (originalCount, deduplicatedCount, duplicatesRemoved);
+        return (originalCount, finalCount, duplicatesRemoved);
     }
 }
