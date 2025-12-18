@@ -1,4 +1,5 @@
 using KeeperData.Core.ApiClients.DataBridgeApi;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
 using Microsoft.Extensions.Logging;
 
@@ -26,6 +27,41 @@ public class CtsHoldingImportRawAggregationStep(
 
         context.RawAgents = getAgentsTask.Result;
 
-        context.RawKeepers = getKeepersTask.Result;
+        var rawKeepers = getKeepersTask.Result;
+        context.RawKeepers = DeduplicateKeepersByLatest(rawKeepers);
+
+        var (originalCount, deduplicatedCount, duplicatesRemoved) =
+            GetDebugStats(rawKeepers, context.RawKeepers);
+
+        logger.LogWarning("Deduplicated {DuplicatesRemoved} keeper records for CPH {Cph}. Original: {OriginalCount}, Final: {DeduplicatedCount}",
+            duplicatesRemoved, context.Cph, originalCount, deduplicatedCount);
+    }
+
+    private List<CtsAgentOrKeeper> DeduplicateKeepersByLatest(List<CtsAgentOrKeeper> keepers)
+    {
+        if (keepers == null || !keepers.Any())
+            return keepers ?? new List<CtsAgentOrKeeper>();
+
+        // Group by PAR_ID and select the latest record for each group
+        var deduplicatedKeepers = keepers
+            .GroupBy(k => k.PAR_ID)
+            .Select(group => group
+                .OrderByDescending(k => k.UpdatedAtUtc ?? DateTime.MinValue)
+                .ThenByDescending(k => k.CreatedAtUtc ?? DateTime.MinValue)
+                .ThenByDescending(k => k.BATCH_ID ?? 0)
+                .First())
+            .ToList();
+
+        return deduplicatedKeepers;
+    }
+
+    private (int originalCount, int deduplicatedCount, int duplicatesRemoved) GetDebugStats(
+        List<CtsAgentOrKeeper> original, List<CtsAgentOrKeeper> deduplicated)
+    {
+        var originalCount = original?.Count ?? 0;
+        var deduplicatedCount = deduplicated?.Count ?? 0;
+        var duplicatesRemoved = Math.Max(0, originalCount - deduplicatedCount);
+
+        return (originalCount, deduplicatedCount, duplicatesRemoved);
     }
 }
