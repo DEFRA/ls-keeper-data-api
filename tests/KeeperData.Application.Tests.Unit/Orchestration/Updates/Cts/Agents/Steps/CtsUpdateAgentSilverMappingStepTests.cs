@@ -19,7 +19,7 @@ public class CtsUpdateAgentSilverMappingStepTests
     {
         _roleTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid.NewGuid().ToString(), "Agent"));
+            .ReturnsAsync((Guid.NewGuid().ToString(), "AGENT", "Agent"));
 
         _sut = new CtsUpdateAgentSilverMappingStep(_roleTypeLookupServiceMock.Object, _loggerMock.Object);
     }

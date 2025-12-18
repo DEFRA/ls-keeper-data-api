@@ -57,7 +57,7 @@ public static class VerifyCtsAgentOrKeeperMappings
         // Roles
         target.Roles.Should().NotBeNull().And.HaveCount(1);
 
-        var roleNameToLookup = EnumExtensions.GetDescription(inferredRoleType);
+        var roleToLookup = EnumExtensions.GetDescription(inferredRoleType);
         var expectedRoleTypeName = inferredRoleType == InferredRoleType.Agent
             ? "Agent"
             : "LivestockKeeper";
@@ -66,8 +66,9 @@ public static class VerifyCtsAgentOrKeeperMappings
         role.Should().NotBeNull();
         role.IdentifierId.Should().NotBeNullOrWhiteSpace();
         role.RoleTypeId.Should().NotBeNullOrWhiteSpace();
+        role.RoleTypeCode.Should().Be(roleToLookup);
         role.RoleTypeName.Should().Be(expectedRoleTypeName);
-        role.SourceRoleName.Should().Be(roleNameToLookup);
+        role.SourceRoleName.Should().Be(roleToLookup);
         role.EffectiveFromDate.Should().Be(source.LPR_EFFECTIVE_FROM_DATE);
         role.EffectiveToDate.Should().Be(source.LPR_EFFECTIVE_TO_DATE);
     }

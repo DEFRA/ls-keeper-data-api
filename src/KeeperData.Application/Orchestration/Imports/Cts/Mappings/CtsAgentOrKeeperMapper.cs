@@ -12,19 +12,19 @@ public static class CtsAgentOrKeeperMapper
     public static async Task<List<CtsPartyDocument>> ToSilver(
         List<CtsAgentOrKeeper> rawParties,
         InferredRoleType inferredRoleType,
-        Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
+        Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeCode, string? RoleTypeName)>> resolveRoleType,
         CancellationToken cancellationToken)
     {
         var result = new List<CtsPartyDocument>();
 
         var roleNameToLookup = inferredRoleType.GetDescription();
-        var (roleTypeId, roleTypeName) = await resolveRoleType(roleNameToLookup, cancellationToken);
+        var (roleTypeId, roleTypeCode, roleTypeName) = await resolveRoleType(roleNameToLookup, cancellationToken);
 
         foreach (var p in rawParties?.Where(x => x.LID_FULL_IDENTIFIER != null) ?? [])
         {
             var party = ToSilver(
                 p,
-                (roleNameToLookup, roleTypeId, roleTypeName));
+                (roleNameToLookup, roleTypeId, roleTypeCode, roleTypeName));
 
             result.Add(party);
         }
@@ -34,7 +34,7 @@ public static class CtsAgentOrKeeperMapper
 
     public static CtsPartyDocument ToSilver(
         CtsAgentOrKeeper p,
-        (string? RoleNameToLookup, string? RoleTypeId, string? RoleTypeName) roleTypeInfo)
+        (string? RoleNameToLookup, string? RoleTypeId, string? RoleTypeCode, string? RoleTypeName) roleTypeInfo)
     {
         var partyTypeId = p.DeterminePartyType().ToString();
 
@@ -87,6 +87,7 @@ public static class CtsAgentOrKeeperMapper
                     {
                         IdentifierId = Guid.NewGuid().ToString(),
                         RoleTypeId = roleTypeInfo.RoleTypeId,
+                        RoleTypeCode = roleTypeInfo.RoleTypeCode,
                         RoleTypeName = roleTypeInfo.RoleTypeName,
                         SourceRoleName = roleTypeInfo.RoleNameToLookup,
                         EffectiveFromDate = p.LPR_EFFECTIVE_FROM_DATE,

@@ -18,8 +18,8 @@ public static class SamPartyMapper
     public static async Task<List<SamPartyDocument>> ToSilver(
         string holdingIdentifier,
         List<SamParty> rawParties,
-        Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
-        Func<string?, string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
+        Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeCode, string? RoleTypeName)>> resolveRoleType,
+        Func<string?, string?, CancellationToken, Task<(string? countryId, string? countryCode, string? countryName)>> resolveCountry,
         CancellationToken cancellationToken)
     {
         var result = new List<SamPartyDocument>();
@@ -42,11 +42,11 @@ public static class SamPartyMapper
     public static async Task<SamPartyDocument> ToSilver(
         string holdingIdentifier,
         SamParty p,
-        Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
-        Func<string?, string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
+        Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeCode, string? RoleTypeName)>> resolveRoleType,
+        Func<string?, string?, CancellationToken, Task<(string? countryId, string? countryCode, string? countryName)>> resolveCountry,
         CancellationToken cancellationToken)
     {
-        var (countryId, countryName) = await resolveCountry(p.COUNTRY_CODE, p.UK_INTERNAL_CODE, cancellationToken);
+        var (countryId, countryCode, _) = await resolveCountry(p.COUNTRY_CODE, p.UK_INTERNAL_CODE, cancellationToken);
         var partyTypeId = p.DeterminePartyType().ToString();
         var addressLine = AddressFormatters.FormatAddressRange(
                         p.SAON_START_NUMBER, p.SAON_START_NUMBER_SUFFIX,
@@ -95,7 +95,7 @@ public static class SamPartyMapper
                 CountrySubDivision = p.UK_INTERNAL_CODE,
 
                 CountryIdentifier = countryId,
-                CountryCode = p.COUNTRY_CODE,
+                CountryCode = countryCode,
 
                 UniquePropertyReferenceNumber = p.UDPRN
             },
@@ -118,7 +118,7 @@ public static class SamPartyMapper
 
         foreach (var roleNameToLookup in roleList)
         {
-            var (roleTypeId, roleTypeName) = await resolveRoleType(roleNameToLookup, cancellationToken);
+            var (roleTypeId, roleTypeCode, roleTypeName) = await resolveRoleType(roleNameToLookup, cancellationToken);
 
             if (roleTypeId != null)
             {
@@ -126,6 +126,7 @@ public static class SamPartyMapper
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
                     RoleTypeId = roleTypeId,
+                    RoleTypeCode = roleTypeCode,
                     RoleTypeName = roleTypeName,
                     SourceRoleName = roleNameToLookup,
                     EffectiveFromDate = p.PARTY_ROLE_FROM_DATE,
@@ -453,6 +454,7 @@ public static class SamPartyMapper
 
                 var partyRoleRole = PartyRoleRole.Create(
                     r.RoleTypeId ?? string.Empty,
+                    r.RoleTypeCode ?? string.Empty,
                     r.RoleTypeName ?? string.Empty
                 );
 
@@ -561,6 +563,7 @@ public static class SamPartyMapper
 
                 var partyRoleRole = PartyRoleRole.Create(
                     r.RoleTypeId ?? string.Empty,
+                    r.RoleTypeCode ?? string.Empty,
                     r.RoleTypeName ?? string.Empty
                 );
 

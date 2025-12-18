@@ -71,18 +71,20 @@ public class RoleIdentifierLookupServiceTests
     {
         // Arrange
         var lookupValue = "LIVESTOCKKEEPER";
-        var expectedResult = ("LIVESTOCKKEEPER", "Livestock Keeper");
+        var expectedResult = (Guid.NewGuid().ToString(), "LIVESTOCKKEEPER", "Livestock Keeper");
 
         _mockRoleRepository
             .Setup(x => x.FindAsync(lookupValue, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _sut.FindAsync(lookupValue, CancellationToken.None);
+        var (roleTypeId, roleTypeCode, roleTypeName) = await _sut.FindAsync(lookupValue, CancellationToken.None);
 
         // Assert
-        result.roleTypeId.Should().Be(expectedResult.Item1);
-        result.roleTypeName.Should().Be(expectedResult.Item2);
+        roleTypeId.Should().Be(expectedResult.Item1);
+        roleTypeCode.Should().Be(expectedResult.Item2);
+        roleTypeName.Should().Be(expectedResult.Item3);
+
         _mockRoleRepository.Verify(x => x.FindAsync(lookupValue, It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -91,18 +93,18 @@ public class RoleIdentifierLookupServiceTests
     {
         // Arrange
         var lookupValue = "Unknown";
-        var expectedResult = ((string?)null, (string?)null);
+        var expectedResult = ((string?)null, (string?)null, (string?)null);
 
         _mockRoleRepository
             .Setup(x => x.FindAsync(lookupValue, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _sut.FindAsync(lookupValue, CancellationToken.None);
+        var (roleTypeId, roleTypeCode, roleTypeName) = await _sut.FindAsync(lookupValue, CancellationToken.None);
 
         // Assert
-        result.roleTypeId.Should().BeNull();
-        result.roleTypeName.Should().BeNull();
+        roleTypeId.Should().BeNull();
+        roleTypeName.Should().BeNull();
         _mockRoleRepository.Verify(x => x.FindAsync(lookupValue, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

@@ -142,13 +142,13 @@ public class SiteGroupMarkMapperTests
             .ReturnsAsync(("5a86d64d-0f17-46a0-92d5-11fd5b2c5830", "Cattle"));
 
         _roleTypeLookupServiceMock.Setup(x => x.FindAsync("LIVESTOCKKEEPER", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("b2637b72-2196-4a19-bdf0-85c7ff66cf60", "Livestock Keeper"));
+            .ReturnsAsync(("b2637b72-2196-4a19-bdf0-85c7ff66cf60", "LIVESTOCKKEEPER", "Livestock Keeper"));
 
         _roleTypeLookupServiceMock.Setup(x => x.FindAsync("LIVESTOCKOWNER", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("2de15dc1-19b9-4372-9e81-a9a2f87fd197", "Livestock Owner"));
+            .ReturnsAsync(("2de15dc1-19b9-4372-9e81-a9a2f87fd197", "LIVESTOCKOWNER", "Livestock Owner"));
 
         _countryIdentifierLookupServiceMock.Setup(x => x.FindAsync("GB", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("5e4b8d0d-96a8-4102-81e2-f067ee85d030", "United Kingdom"));
+            .ReturnsAsync(("5e4b8d0d-96a8-4102-81e2-f067ee85d030", "GB", "United Kingdom"));
 
         _siteIdentifierTypeLookupServiceMock.Setup(x => x.GetByCodeAsync(HoldingIdentifierType.CPHN.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SiteIdentifierTypeDocument
@@ -216,28 +216,34 @@ public class SiteGroupMarkMapperTests
         silverParties.Should().HaveCount(2);
         silverParties[0].PartyId.Should().Be("C100001");
         silverParties[0].Roles!.Any(x => x.RoleTypeId == "2de15dc1-19b9-4372-9e81-a9a2f87fd197").Should().BeTrue();
+        silverParties[0].Roles!.Any(x => x.RoleTypeCode == "LIVESTOCKOWNER").Should().BeTrue();
         silverParties[0].Roles!.Any(x => x.RoleTypeName == "Livestock Owner").Should().BeTrue();
         silverParties[0].Roles!.Any(x => x.RoleTypeId == "b2637b72-2196-4a19-bdf0-85c7ff66cf60").Should().BeTrue();
+        silverParties[0].Roles!.Any(x => x.RoleTypeCode == "LIVESTOCKKEEPER").Should().BeTrue();
         silverParties[0].Roles!.Any(x => x.RoleTypeName == "Livestock Keeper").Should().BeTrue();
 
         silverParties[1].PartyId.Should().Be("C100002");
         silverParties[1].Roles!.Any(x => x.RoleTypeId == "b2637b72-2196-4a19-bdf0-85c7ff66cf60").Should().BeTrue();
+        silverParties[1].Roles!.Any(x => x.RoleTypeCode == "LIVESTOCKKEEPER").Should().BeTrue();
         silverParties[1].Roles!.Any(x => x.RoleTypeName == "Livestock Keeper").Should().BeTrue();
 
         var silverPartyRoles = context.SilverPartyRoles.OrderBy(x => x.PartyId).ThenBy(x => x.RoleTypeName).ToList();
         silverPartyRoles.Should().HaveCount(3);
         silverPartyRoles[0].PartyId.Should().Be("C100001");
         silverPartyRoles[0].RoleTypeId.Should().Be("b2637b72-2196-4a19-bdf0-85c7ff66cf60");
+        silverPartyRoles[0].RoleTypeCode.Should().Be("LIVESTOCKKEEPER");
         silverPartyRoles[0].RoleTypeName.Should().Be("Livestock Keeper");
         silverPartyRoles[0].HoldingIdentifier.Should().Be("12/345/6789");
 
         silverPartyRoles[1].PartyId.Should().Be("C100001");
         silverPartyRoles[1].RoleTypeId.Should().Be("2de15dc1-19b9-4372-9e81-a9a2f87fd197");
+        silverPartyRoles[1].RoleTypeCode.Should().Be("LIVESTOCKOWNER");
         silverPartyRoles[1].RoleTypeName.Should().Be("Livestock Owner");
         silverPartyRoles[1].HoldingIdentifier.Should().Be("12/345/6789");
 
         silverPartyRoles[2].PartyId.Should().Be("C100002");
         silverPartyRoles[2].RoleTypeId.Should().Be("b2637b72-2196-4a19-bdf0-85c7ff66cf60");
+        silverPartyRoles[2].RoleTypeCode.Should().Be("LIVESTOCKKEEPER");
         silverPartyRoles[2].RoleTypeName.Should().Be("Livestock Keeper");
         silverPartyRoles[2].HoldingIdentifier.Should().Be("12/345/6789");
     }

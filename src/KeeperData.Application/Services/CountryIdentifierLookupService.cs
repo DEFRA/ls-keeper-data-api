@@ -16,12 +16,12 @@ public class CountryIdentifierLookupService : ICountryIdentifierLookupService
         return await _countryRepository.GetByIdAsync(id, cancellationToken);
     }
 
-    public async Task<(string? countryId, string? countryName)> FindAsync(string? lookupValue, CancellationToken cancellationToken)
+    public async Task<(string? countryId, string? countryCode, string? countryName)> FindAsync(string? lookupValue, CancellationToken cancellationToken)
     {
         return await _countryRepository.FindAsync(lookupValue, cancellationToken);
     }
 
-    public async Task<(string? countryId, string? countryName)> FindAsync(string? countryCode, string? ukInternalCode, CancellationToken cancellationToken)
+    public async Task<(string? countryId, string? countryCode, string? countryName)> FindAsync(string? countryCode, string? ukInternalCode, CancellationToken cancellationToken)
     {
         var searchKey = DetermineSearchKey(countryCode, ukInternalCode);
         return await _countryRepository.FindAsync(searchKey, cancellationToken);

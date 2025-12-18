@@ -47,11 +47,11 @@ public static class RoleData
     private static readonly Dictionary<string, RoleDocument> s_roleById =
         s_roleByCode.Values.ToDictionary(c => c.IdentifierId);
 
-    public static (string? id, string? name) Find(string code)
+    public static (string? id, string? code, string? name) Find(string code)
     {
         var type = GetByCode(code);
-        if (type == null) return (null, null);
-        return (type.IdentifierId, type.Name);
+        if (type == null) return (null, null, null);
+        return (type.IdentifierId, type.Code, type.Name);
     }
 
     public static RoleDocument GetById(string id) => s_roleById[id];

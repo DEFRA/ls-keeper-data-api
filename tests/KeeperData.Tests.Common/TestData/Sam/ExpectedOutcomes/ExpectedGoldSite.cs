@@ -45,7 +45,7 @@ public static class ExpectedGoldSite
                     PostTown = "Oxford",
                     County = "North Oxford",
                     Postcode = "OX1 3EQ",
-                    Country = CountryData.GetSummary("GB"),
+                    Country = CountryData.GetSummary("GB-ENG"),
                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                 },
 
@@ -118,7 +118,7 @@ public static class ExpectedGoldSite
                         PostTown = "Manchester",
                         County = "West Didsbury",
                         Postcode = "M20 2XY",
-                        Country = CountryData.GetSummary("GB"),
+                        Country = CountryData.GetSummary("GB-ENG"),
                         LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                     },
 
@@ -130,6 +130,7 @@ public static class ExpectedGoldSite
                             Role = new PartyRoleRoleDocument
                             {
                                 IdentifierId = RoleData.Find("LIVESTOCKOWNER").id!,
+                                Code = "LIVESTOCKOWNER",
                                 Name = RoleData.Find("LIVESTOCKOWNER").name!,
                                 LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
                             },
@@ -162,6 +163,7 @@ public static class ExpectedGoldSite
                             Role = new PartyRoleRoleDocument
                             {
                                 IdentifierId = RoleData.Find("LIVESTOCKKEEPER").id!,
+                                Code = "LIVESTOCKKEEPER",
                                 Name = RoleData.Find("LIVESTOCKKEEPER").name!,
                                 LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
                             },
@@ -194,6 +196,7 @@ public static class ExpectedGoldSite
                             Role = new PartyRoleRoleDocument
                             {
                                 IdentifierId = RoleData.Find("CPHHOLDER").id!,
+                                Code = "CPHHOLDER",
                                 Name = RoleData.Find("CPHHOLDER").name!,
                                 LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
                             },
@@ -237,7 +240,7 @@ public static class ExpectedGoldSite
                         PostTown = "Manchester",
                         County = "West Didsbury",
                         Postcode = "M20 2XY",
-                        Country = CountryData.GetSummary("GB"),
+                        Country = CountryData.GetSummary("GB-ENG"),
                         LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                     },
 
@@ -249,6 +252,7 @@ public static class ExpectedGoldSite
                             Role = new PartyRoleRoleDocument
                             {
                                 IdentifierId = RoleData.Find("LIVESTOCKKEEPER").id!,
+                                Code = "LIVESTOCKKEEPER",
                                 Name = RoleData.Find("LIVESTOCKKEEPER").name!,
                                 LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
                             },
@@ -422,7 +426,7 @@ public static class ExpectedGoldSite
                         PostTown = "Manchester",
                         County = "West Didsbury",
                         Postcode = "M20 2XY",
-                        Country = CountryData.GetSummary("GB"),
+                        Country = CountryData.GetSummary("GB-ENG"),
                         LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                     },
 
@@ -434,6 +438,7 @@ public static class ExpectedGoldSite
                             Role = new PartyRoleRoleDocument
                             {
                                 IdentifierId = RoleData.Find("LIVESTOCKKEEPER").id!,
+                                Code = "LIVESTOCKKEEPER",
                                 Name = RoleData.Find("LIVESTOCKKEEPER").name!,
                                 LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
                             },
@@ -488,7 +493,7 @@ public static class ExpectedGoldSite
                         PostTown = "Manchester",
                         County = "West Didsbury",
                         Postcode = "M20 2XY",
-                        Country = CountryData.GetSummary("GB"),
+                        Country = CountryData.GetSummary("GB-ENG"),
                         LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                     },
 
@@ -500,6 +505,7 @@ public static class ExpectedGoldSite
                             Role = new PartyRoleRoleDocument
                             {
                                 IdentifierId = RoleData.Find("CPHHOLDER").id!,
+                                Code = "CPHHOLDER",
                                 Name = RoleData.Find("CPHHOLDER").name!,
                                 LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
                             },
@@ -512,6 +518,7 @@ public static class ExpectedGoldSite
                             Role = new PartyRoleRoleDocument
                             {
                                 IdentifierId = RoleData.Find("LIVESTOCKOWNER").id!,
+                                Code = "LIVESTOCKOWNER",
                                 Name = RoleData.Find("LIVESTOCKOWNER").name!,
                                 LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
                             },

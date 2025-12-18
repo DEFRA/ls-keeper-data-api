@@ -79,6 +79,7 @@ public static class VerifySamHolderMappings
         role.Should().NotBeNull();
         role.IdentifierId.Should().NotBeNullOrWhiteSpace();
         role.RoleTypeId.Should().NotBeNullOrWhiteSpace();
+        role.RoleTypeCode.Should().NotBeNullOrWhiteSpace();
         role.RoleTypeName.Should().NotBeNullOrWhiteSpace();
         role.SourceRoleName.Should().Be(roleNameToLookup);
         role.EffectiveFromDate.Should().BeNull();

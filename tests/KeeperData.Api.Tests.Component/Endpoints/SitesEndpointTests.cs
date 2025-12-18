@@ -31,7 +31,7 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
 
         // Act
         var httpClient = factory.CreateClient();
-        var response = await httpClient.GetAsync($"/api/site{query}");
+        var response = await httpClient.GetAsync($"/api/sites{query}");
 
         // Assert
         await AssertPaginatedResponse(response, expectedCount: 1, expectedNames: ["Site A"]);
@@ -54,7 +54,7 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
 
         // Act
         var httpClient = factory.CreateClient();
-        var response = await httpClient.GetAsync("/api/site");
+        var response = await httpClient.GetAsync("/api/sites");
 
         // Assert
         await AssertPaginatedResponse(response, expectedCount: 2, expectedNames: ["Site B", "Site A"]);
@@ -77,7 +77,7 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
 
         // Act
         var httpClient = factory.CreateClient();
-        var response = await httpClient.GetAsync("/api/site?type=Type1,Type2");
+        var response = await httpClient.GetAsync("/api/sites?type=Type1,Type2");
 
         // Assert
         await AssertPaginatedResponse(response, expectedCount: 2, expectedNames: ["Site A", "Site B"]);

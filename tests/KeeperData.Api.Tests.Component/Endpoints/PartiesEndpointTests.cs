@@ -34,7 +34,7 @@ public class PartiesEndpointTests
 
         // Act
         var httpClient = factory.CreateClient();
-        var response = await httpClient.GetAsync($"/api/party{query}");
+        var response = await httpClient.GetAsync($"/api/parties{query}");
 
         // Assert //TODO
         await AssertPaginatedResponse(response, expectedCount: 1, expectedNames: ["Party A"]);
@@ -53,7 +53,7 @@ public class PartiesEndpointTests
 
         // Act
         var httpClient = factory.CreateClient();
-        var response = await httpClient.GetAsync("/api/party");
+        var response = await httpClient.GetAsync("/api/parties");
 
         // Assert //TODO
         await AssertPaginatedResponse(response, expectedCount: 2, expectedNames: ["Party A", "Party B"]);

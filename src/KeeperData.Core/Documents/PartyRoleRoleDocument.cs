@@ -11,6 +11,10 @@ public class PartyRoleRoleDocument : INestedEntity
     [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
 
+    [BsonElement("code")]
+    [JsonPropertyName("code")]
+    public string? Code { get; set; }
+
     [BsonElement("name")]
     [JsonPropertyName("name")]
     public string? Name { get; set; }
@@ -22,6 +26,7 @@ public class PartyRoleRoleDocument : INestedEntity
     public static PartyRoleRoleDocument FromDomain(PartyRoleRole m) => new()
     {
         IdentifierId = m.Id,
+        Code = m.Code,
         Name = m.Name,
         LastUpdatedDate = m.LastUpdatedDate
     };
@@ -30,6 +35,7 @@ public class PartyRoleRoleDocument : INestedEntity
     {
         return new PartyRoleRole(
             IdentifierId,
+            Code,
             Name,
             LastUpdatedDate
         );

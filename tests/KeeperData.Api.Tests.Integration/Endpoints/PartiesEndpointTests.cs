@@ -64,7 +64,7 @@ public class PartiesEndpointTests(
     {
         Console.WriteLine(scenario);
         var date = !string.IsNullOrEmpty(dateStr) ? (DateTime?)DateTime.Parse(dateStr) : null;
-        var response = await _apiContainerFixture.HttpClient.GetAsync("api/party?" + BuildQueryString(firstName, lastName, date));
+        var response = await _apiContainerFixture.HttpClient.GetAsync("api/parties?" + BuildQueryString(firstName, lastName, date));
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var responseBody = await response.Content.ReadAsStringAsync();
@@ -85,7 +85,7 @@ public class PartiesEndpointTests(
     public async Task GivenAnRecordRequestById_ShouldHaveExpectedResults(string scenario, string requestedId, HttpStatusCode expectedHttpCode, string responseShouldContain)
     {
         Console.WriteLine(scenario);
-        var response = await _apiContainerFixture.HttpClient.GetAsync($"api/party/{requestedId}");
+        var response = await _apiContainerFixture.HttpClient.GetAsync($"api/parties/{requestedId}");
         var responseBody = await response.Content.ReadAsStringAsync();
         response.StatusCode.Should().Be(expectedHttpCode);
 

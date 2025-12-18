@@ -9,6 +9,7 @@ using Amazon.SQS.Model;
 using KeeperData.Api.Tests.Component.Consumers.Helpers;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Observers;
+using KeeperData.Infrastructure.Database.Setup;
 using KeeperData.Infrastructure.Storage.Clients;
 using KeeperData.Infrastructure.Storage.Factories;
 using KeeperData.Infrastructure.Storage.Factories.Implementations;
@@ -59,6 +60,7 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         builder.ConfigureTestServices(services =>
         {
             RemoveService<IHealthCheckPublisher>(services);
+            RemoveService<MongoIndexInitializer>(services);
 
             ConfigureAwsOptions(services);
 

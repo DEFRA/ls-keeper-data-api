@@ -7,5 +7,5 @@ public interface IRoleRepository : IReferenceDataRepository<RoleListDocument, Ro
 {
     new Task<RoleDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken = default);
 
-    Task<(string? roleId, string? roleName)> FindAsync(string? lookupValue, CancellationToken cancellationToken = default);
+    Task<(string? roleId, string? roleCode, string? roleName)> FindAsync(string? lookupValue, CancellationToken cancellationToken = default);
 }

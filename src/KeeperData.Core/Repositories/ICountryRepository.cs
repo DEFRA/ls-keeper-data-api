@@ -7,5 +7,5 @@ public interface ICountryRepository : IReferenceDataRepository<CountryListDocume
 {
     new Task<CountryDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken = default);
 
-    Task<(string? countryId, string? countryName)> FindAsync(string? lookupValue, CancellationToken cancellationToken = default);
+    Task<(string? countryId, string? countryCode, string? countryName)> FindAsync(string? lookupValue, CancellationToken cancellationToken = default);
 }

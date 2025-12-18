@@ -15,7 +15,7 @@ public static class SamHoldingMapper
         List<SamCphHolding> rawHoldings,
         Func<string?, CancellationToken, Task<(string? PremiseActivityTypeId, string? PremiseActivityTypeName)>> resolvePremiseActivityType,
         Func<string?, CancellationToken, Task<(string? PremiseTypeId, string? PremiseTypeName)>> resolvePremiseType,
-        Func<string?, string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
+        Func<string?, string?, CancellationToken, Task<(string? countryId, string? countryCode, string? countryName)>> resolveCountry,
         CancellationToken cancellationToken)
     {
         var result = new List<SamHoldingDocument>();
@@ -39,7 +39,7 @@ public static class SamHoldingMapper
         SamCphHolding h,
         Func<string?, CancellationToken, Task<(string? PremiseActivityTypeId, string? PremiseActivityTypeName)>> resolvePremiseActivityType,
         Func<string?, CancellationToken, Task<(string? PremiseTypeId, string? PremiseTypeName)>> resolvePremiseType,
-        Func<string?, string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
+        Func<string?, string?, CancellationToken, Task<(string? countryId, string? countryCode, string? countryName)>> resolveCountry,
         CancellationToken cancellationToken)
     {
         var addressLine = AddressFormatters.FormatAddressRange(
@@ -53,7 +53,7 @@ public static class SamHoldingMapper
 
         var (premiseActivityTypeId, premiseActivityTypeName) = await resolvePremiseActivityType(formattedFacilityBusinessActivityCode, cancellationToken);
         var (premiseTypeId, premiseTypeName) = await resolvePremiseType(h.FACILITY_TYPE_CODE, cancellationToken);
-        var (countryId, countryName) = await resolveCountry(h.COUNTRY_CODE, h.UK_INTERNAL_CODE, cancellationToken);
+        var (countryId, countryCode, _) = await resolveCountry(h.COUNTRY_CODE, h.UK_INTERNAL_CODE, cancellationToken);
 
         var result = new SamHoldingDocument
         {
@@ -110,7 +110,7 @@ public static class SamHoldingMapper
                     CountrySubDivision = h.UK_INTERNAL_CODE,
 
                     CountryIdentifier = countryId,
-                    CountryCode = h.COUNTRY_CODE,
+                    CountryCode = countryCode,
 
                     UniquePropertyReferenceNumber = h.UDPRN
                 }

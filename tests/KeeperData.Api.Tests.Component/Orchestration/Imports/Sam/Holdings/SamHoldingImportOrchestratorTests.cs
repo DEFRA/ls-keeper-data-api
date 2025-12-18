@@ -321,7 +321,7 @@ public class SamHoldingImportOrchestratorTests
     {
         _countryIdentifierLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input, input));
 
         _premiseActivityTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
@@ -341,7 +341,7 @@ public class SamHoldingImportOrchestratorTests
 
         _roleTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input, input));
 
         _speciesTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))

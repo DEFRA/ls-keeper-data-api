@@ -18,11 +18,11 @@ public class CtsUpdateAgentSilverMappingStep(
         if (context.RawAgent == null) return;
 
         var roleName = InferredRoleType.Agent.GetDescription();
-        var (roleTypeId, roleTypeName) = await roleTypeLookupService.FindAsync(roleName, cancellationToken);
+        var (roleTypeId, roleTypeCode, roleTypeName) = await roleTypeLookupService.FindAsync(roleName, cancellationToken);
 
         context.SilverParty = CtsAgentOrKeeperMapper.ToSilver(
             context.RawAgent,
-            (roleName, roleTypeId, roleTypeName));
+            (roleName, roleTypeId, roleTypeCode, roleTypeName));
 
         context.SilverPartyRoles = CtsPartyRoleRelationshipMapper.ToSilver([context.SilverParty]);
     }

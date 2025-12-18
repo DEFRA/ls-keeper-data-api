@@ -7,7 +7,7 @@ namespace KeeperData.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class PartyController(IRequestExecutor executor) : ControllerBase
+    public class PartiesController(IRequestExecutor executor) : ControllerBase
     {
         private readonly IRequestExecutor _executor = executor;
 
