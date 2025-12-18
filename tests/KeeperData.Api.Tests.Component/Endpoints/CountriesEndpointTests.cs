@@ -14,6 +14,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Moq;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Net;
@@ -26,52 +28,15 @@ namespace KeeperData.Api.Tests.Component.Endpoints;
 public class CountriesEndpointTests
 {
     private readonly HttpClient _client;
-    private readonly IOptions<MongoConfig> _mongoConfig;
-    private readonly Mock<IMongoClient> _mongoClientMock = new();
-    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IClientSessionHandle> _clientSessionHandleMock = new();
-    private readonly Mock<IMongoDatabase> _mongoDatabaseMock = new();
-    private readonly Mock<IAsyncCursor<CountryListDocument>> _asyncCursorMock = new();
-    private readonly Mock<IMongoCollection<CountryListDocument>> _mongoCollectionMock = new();
-    private readonly CountryRepository _countryRepo;
+    private Mock<ICountryRepository> _countryRepoMock;
 
     public CountriesEndpointTests()
     {
-        _mongoConfig = Options.Create(new MongoConfig { DatabaseName = "TestDatabase" });
-
-        _mongoDatabaseMock
-            .Setup(db => db.GetCollection<CountryListDocument>(It.IsAny<string>(), It.IsAny<MongoCollectionSettings>()))
-            .Returns(_mongoCollectionMock.Object);
-
-        _mongoClientMock
-            .Setup(client => client.GetDatabase(It.IsAny<string>(), It.IsAny<MongoDatabaseSettings>()))
-            .Returns(_mongoDatabaseMock.Object);
-
-        _asyncCursorMock
-            .SetupSequence(c => c.MoveNextAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true)
-            .ReturnsAsync(false);
-
-        _mongoCollectionMock
-            .Setup(c => c.FindAsync(
-                It.IsAny<IClientSessionHandle?>(),
-                It.IsAny<FilterDefinition<CountryListDocument>>(),
-                It.IsAny<FindOptions<CountryListDocument, CountryListDocument>>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(_asyncCursorMock.Object);
-
-        _unitOfWorkMock.Setup(u => u.Session)
-            .Returns(_clientSessionHandleMock.Object);
-
-        _countryRepo = new CountryRepository(_mongoConfig, _mongoClientMock.Object, _unitOfWorkMock.Object);
-
-        typeof(GenericRepository<CountryListDocument>)
-            .GetField("_collection", BindingFlags.NonPublic | BindingFlags.Instance)!
-            .SetValue(_countryRepo, _mongoCollectionMock.Object);
+        _countryRepoMock = new Mock<ICountryRepository>();
 
         var factory = new AppWebApplicationFactory();
 
-        factory.OverrideServiceAsScoped<ICountryRepository>(_countryRepo);
+        factory.OverrideServiceAsScoped(_countryRepoMock.Object);
 
         _client = factory.CreateClient();
     }
@@ -183,13 +148,11 @@ public class CountriesEndpointTests
 
     private void GivenTheseCountries(List<CountryDocument> countryList)
     {
-        var listDocument = new CountryListDocument
+        _countryRepoMock.Setup(c => c.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new ReadOnlyCollection<CountryDocument>(countryList));
+        foreach (var c in countryList)
         {
-            Id = "all-countries",
-            Countries = countryList
-        };
-
-        _asyncCursorMock.SetupGet(c => c.Current).Returns([listDocument]);
+            _countryRepoMock.Setup(m => m.GetByIdAsync(c.IdentifierId, It.IsAny<CancellationToken>())).ReturnsAsync(c);
+        }
     }
 
     private async Task<PaginatedResult<CountryDTO>?> WhenPerformGetOnCountriesEndpoint(HttpStatusCode expectedHttpCode, string? name = null, string? codeCsv = null, bool? euTradeMember = null, bool? devolvedAuthority = null, string? sortBy = null, string? ascDesc = null, int? page = null, int? pageSize = null)

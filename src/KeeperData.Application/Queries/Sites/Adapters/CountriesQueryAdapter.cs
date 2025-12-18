@@ -13,7 +13,7 @@ public class CountriesQueryAdapter(ICountryRepository repository)
         GetCountriesQuery query,
         CancellationToken cancellationToken = default)
     {
-        var items = await _repository.GetAllAsync();
+        var items = await _repository.GetAllAsync(cancellationToken);
 
         var codes = query!.Code?.Split(',');
         var results = items
