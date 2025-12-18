@@ -15,6 +15,10 @@ public class PartyRoleSiteDocument : INestedEntity
     [JsonPropertyName("name")]
     public string? Name { get; set; }
 
+    [BsonElement("type")]
+    [JsonPropertyName("type")]
+    public PremisesTypeSummaryDocument? Type { get; set; }
+
     [BsonElement("state")]
     [JsonPropertyName("state")]
     public string? State { get; set; } = default!;
@@ -31,6 +35,7 @@ public class PartyRoleSiteDocument : INestedEntity
     {
         IdentifierId = m.Id,
         Name = m.Name,
+        Type = m.Type != null ? PremisesTypeSummaryDocument.FromDomain(m.Type) : null,
         State = m.State,
         LastUpdatedDate = m.LastUpdatedDate,
         Identifiers = m.Identifiers?
@@ -43,6 +48,7 @@ public class PartyRoleSiteDocument : INestedEntity
         var partyRoleSite = new PartyRoleSite(
             IdentifierId,
             Name,
+            Type?.ToDomain(),
             State,
             LastUpdatedDate
         );

@@ -60,6 +60,12 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
+                            Type = new PremisesTypeSummaryDocument
+                            {
+                                IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
+                                Code = "AH",
+                                Description = "Agricultural Holding"
+                            },
                             State = HoldingStatusType.Active.ToString(),
                             Identifiers =
                             [
@@ -115,6 +121,12 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
+                            Type = new PremisesTypeSummaryDocument
+                            {
+                                IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
+                                Code = "AH",
+                                Description = "Agricultural Holding"
+                            },
                             State = HoldingStatusType.Active.ToString(),
                             Identifiers =
                             [
@@ -170,6 +182,12 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
+                            Type = new PremisesTypeSummaryDocument
+                            {
+                                IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
+                                Code = "AH",
+                                Description = "Agricultural Holding"
+                            },
                             State = HoldingStatusType.Active.ToString(),
                             Identifiers =
                             [
@@ -249,6 +267,12 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
+                            Type = new PremisesTypeSummaryDocument
+                            {
+                                IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
+                                Code = "AH",
+                                Description = "Agricultural Holding"
+                            },
                             State = HoldingStatusType.Active.ToString(),
                             Identifiers =
                             [
@@ -352,6 +376,12 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
+                            Type = new PremisesTypeSummaryDocument
+                            {
+                                IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
+                                Code = "AH",
+                                Description = "Agricultural Holding"
+                            },
                             State = HoldingStatusType.Active.ToString(),
                             Identifiers =
                             [
@@ -442,6 +472,12 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
+                            Type = new PremisesTypeSummaryDocument
+                            {
+                                IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
+                                Code = "AH",
+                                Description = "Agricultural Holding"
+                            },
                             State = HoldingStatusType.Active.ToString(),
                             Identifiers =
                             [
@@ -477,6 +513,12 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
+                            Type = new PremisesTypeSummaryDocument
+                            {
+                                IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
+                                Code = "AH",
+                                Description = "Agricultural Holding"
+                            },
                             State = HoldingStatusType.Active.ToString(),
                             Identifiers =
                             [
