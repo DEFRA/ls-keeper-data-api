@@ -13,23 +13,16 @@ using System.Net.Http.Json;
 
 namespace KeeperData.Api.Tests.Component.Endpoints;
 
-public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
+public class SitesEndpointTests : IDisposable
 {
     private readonly Mock<ISitesRepository> _sitesRepositoryMock = new();
     private readonly HttpClient _client;
 
-    public SitesEndpointTests(AppTestFixture fixture)
+    public SitesEndpointTests()
     {
-        _client = fixture.AppWebApplicationFactory
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.RemoveAll<ISitesRepository>();
-                    services.AddScoped(_ => _sitesRepositoryMock.Object);
-                });
-            })
-            .CreateClient();
+        var factory = new AppWebApplicationFactory();
+        factory.OverrideServiceAsScoped(_sitesRepositoryMock.Object);
+        _client = factory.CreateClient();
     }
 
     [Fact]

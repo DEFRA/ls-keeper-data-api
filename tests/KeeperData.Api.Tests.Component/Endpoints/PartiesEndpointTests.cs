@@ -11,58 +11,38 @@ using System.Net.Http.Json;
 
 namespace KeeperData.Api.Tests.Component.Endpoints;
 
-public class PartiesEndpointTests : IClassFixture<AppTestFixture>
+public class PartiesEndpointTests
 {
     private readonly Mock<IPartiesRepository> _partiesRepositoryMock = new();
     private readonly HttpClient _client;
 
-    public PartiesEndpointTests(AppTestFixture fixture)
+    public PartiesEndpointTests()
     {
-        _client = fixture.AppWebApplicationFactory
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.RemoveAll<IPartiesRepository>();
-                    services.AddScoped(_ => _partiesRepositoryMock.Object);
-                });
-            })
-            .CreateClient();
+        var factory = new AppWebApplicationFactory();
+        factory.OverrideServiceAsScoped(_partiesRepositoryMock.Object);
+        _client = factory.CreateClient();
     }
 
     [Fact]
     public async Task GetParties_WithFilterAndSort_ReturnsFilteredAndSortedOkResult()
     {
-        //TODO tidy
-        // Arrange
-        //var partyId = Guid.NewGuid();
-        //var keeperPartyId = Guid.NewGuid();
         var parties = new List<PartyDocument> { CreateParty("Party A") };
-
         SetupRepository(parties, totalCount: 1);
 
-        //TODO build query
-        var query = "";//$"?siteIdentifier=ID1&type=Type1&siteId={siteId}&keeperPartyId={keeperPartyId}&order=name&sort=asc";
+        var response = await _client.GetAsync($"/api/party");
 
-        // Act
-        var response = await _client.GetAsync($"/api/party{query}");
-
-        // Assert //TODO
         await AssertPaginatedResponse(response, expectedCount: 1, expectedNames: ["Party A"]);
     }
 
     [Fact]
     public async Task GetParties_WithoutParameters_ReturnsDefaultOkResult()
     {
-        // Arrange
         var parties = new List<PartyDocument> { CreateParty("Party A"), CreateParty("Party B") };
 
         SetupRepository(parties, totalCount: 2);
 
-        // Act
         var response = await _client.GetAsync("/api/party");
 
-        // Assert //TODO
         await AssertPaginatedResponse(response, expectedCount: 2, expectedNames: ["Party A", "Party B"]);
     }
 
