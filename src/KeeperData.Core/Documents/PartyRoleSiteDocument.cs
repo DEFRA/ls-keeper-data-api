@@ -18,6 +18,8 @@ public class PartyRoleSiteDocument : INestedEntity
     [BsonElement("type")]
     [JsonPropertyName("type")]
     public PremisesTypeSummaryDocument? Type { get; set; }
+
+    [BsonElement("state")]
     [JsonPropertyName("state")]
     public string? State { get; set; } = default!;
 
