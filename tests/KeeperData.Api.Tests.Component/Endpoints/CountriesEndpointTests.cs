@@ -25,19 +25,15 @@ using Xunit.Sdk;
 
 namespace KeeperData.Api.Tests.Component.Endpoints;
 
-public class CountriesEndpointTests
+public class CountriesEndpointTests : IClassFixture<AppWebApplicationFactory>
 {
     private readonly HttpClient _client;
     private Mock<ICountryRepository> _countryRepoMock;
 
-    public CountriesEndpointTests()
+    public CountriesEndpointTests(AppWebApplicationFactory factory)
     {
         _countryRepoMock = new Mock<ICountryRepository>();
-
-        var factory = new AppWebApplicationFactory();
-
         factory.OverrideServiceAsScoped(_countryRepoMock.Object);
-
         _client = factory.CreateClient();
     }
 
