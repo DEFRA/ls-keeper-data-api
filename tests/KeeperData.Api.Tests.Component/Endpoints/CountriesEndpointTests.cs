@@ -38,10 +38,48 @@ public class CountriesEndpointTests
         _client = factory.CreateClient();
     }
 
+    private static readonly DateTime GBLastUpdated = new DateTime(2012, 08, 18, 11, 10, 0);
+
+    private List<CountryDocument> TestCountries = new List<CountryDocument> {
+            new() { IdentifierId = "GB-123", Code = "GB", Name = "UK", LongName = "United Kingdom", IsActive = true, DevolvedAuthority = true, EuTradeMember = false, SortOrder = 10, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.MinValue, LastModifiedDate = GBLastUpdated },
+            new() { IdentifierId = "NZ-123", Code = "NZ", Name = "New Zealand", IsActive = true, SortOrder = 20, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.UtcNow },
+            new() { IdentifierId = "FR-123", Code = "FR", Name = "France", LongName = "France", IsActive = true, SortOrder = 20, EuTradeMember = true, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.UtcNow },
+        };
+
+    private static CountryDTO CountryGBAsDTO = new CountryDTO { Code = "GB", IdentifierId = "GB-123", Name = "UK", LongName = "United Kingdom", DevolvedAuthorityFlag = true, EuTradeMemberFlag = false, LastUpdatedDate = GBLastUpdated };
+    private static CountryDTO CountryFRAsDTO = new CountryDTO { Code = "FR", IdentifierId = "FR-123", Name = "France", LongName = "France", DevolvedAuthorityFlag = false, EuTradeMemberFlag = true };
+
     [Fact]
     public async Task WhenEndpointHitWithNoParams_AllCountriesShouldBeReturned()
     {
-        var response = await _client.GetAsync("api/countries?");
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        GivenTheseCountries(TestCountries);
+        var result = await WhenPerformGetOnCountriesEndpoint(HttpStatusCode.OK);
+
+        var expected = CountryGBAsDTO;
+
+        result!.Values!.Count().Should().Be(3);
+        result!.Values.Should().Contain(x => x.Code == "GB");
+        var gb = result!.Values.Single(x => x.Code == "GB");
+        gb.Should().BeEquivalentTo(expected);
+    }
+
+    private async Task<PaginatedResult<CountryDTO>?> WhenPerformGetOnCountriesEndpoint(HttpStatusCode expectedHttpCode)
+    {
+        var response = await _client.GetAsync("api/countries");
+
+        if (expectedHttpCode == HttpStatusCode.OK)
+        {
+            var result = await response.Content.ReadFromJsonAsync<PaginatedResult<CountryDTO>>();
+            if (result == null)
+                Assert.Fail("content not readable as paginated response");
+
+            return result;
+        }
+        return null;
+    }
+
+    private void GivenTheseCountries(List<CountryDocument> countryList)
+    {
+        _countryRepoMock.Setup(c => c.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new ReadOnlyCollection<CountryDocument>(countryList));
     }
 }

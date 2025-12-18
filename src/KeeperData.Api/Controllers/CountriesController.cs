@@ -13,8 +13,8 @@ namespace KeeperData.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetCountries([FromQuery] GetCountriesQuery query)
         {
-            // var result = await _executor.ExecuteQuery(query);
-            return await Task.FromResult((IActionResult)Ok());
+            var result = await _executor.ExecuteQuery(query);
+            return Ok(result);
         }
     }
 }

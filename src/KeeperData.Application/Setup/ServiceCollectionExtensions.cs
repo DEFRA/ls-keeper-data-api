@@ -9,6 +9,7 @@ using KeeperData.Application.Orchestration.Updates;
 using KeeperData.Application.Orchestration.Updates.Cts.Holdings;
 using KeeperData.Application.Orchestration.Updates.Cts.Holdings.Steps;
 using KeeperData.Application.Providers;
+using KeeperData.Application.Queries.Countries;
 using KeeperData.Application.Queries.Parties.Adapters;
 using KeeperData.Application.Queries.Sites.Adapters;
 using KeeperData.Application.Services;
@@ -33,6 +34,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IRequestExecutor, RequestExecutor>();
         services.AddValidatorsFromAssemblyContaining<IRequestExecutor>();
 
+        services.AddScoped<CountriesQueryAdapter>();
         services.AddScoped<SitesQueryAdapter>();
         services.AddScoped<PartiesQueryAdapter>();
         services.AddTransient<IDelayProvider, RealDelayProvider>();
