@@ -17,19 +17,18 @@ public class PartiesEndpointTests
     [Fact]
     public async Task GetParties_WithFilterAndSort_ReturnsFilteredAndSortedOkResult()
     {
-        //TODO tidy
+        // TODO tidy
         // Arrange
-        //var partyId = Guid.NewGuid();
-        //var keeperPartyId = Guid.NewGuid();
+        // var keeperPartyId = Guid.NewGuid();
 
         var factory = new AppWebApplicationFactory();
         factory.OverrideServiceAsScoped(_partiesRepositoryMock.Object);
-        
+
         var parties = new List<PartyDocument> { CreateParty("Party A") };
 
         SetupRepository(parties, totalCount: 1);
 
-        //TODO build query
+        // TODO build query
         var query = "";//$"?siteIdentifier=ID1&type=Type1&siteId={siteId}&keeperPartyId={keeperPartyId}&order=name&sort=asc";
 
         // Act

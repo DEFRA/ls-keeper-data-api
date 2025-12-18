@@ -140,8 +140,8 @@ public class SamBulkImportWithAccurateRawDataTests
         List<Core.Documents.SitePartyRoleRelationshipDocument> incoming,
         List<Core.Documents.SitePartyRoleRelationshipDocument> expected)
     {
-        incoming.OrderBy(x => x.PartyId).ThenBy(x => x.RoleTypeName).Should().BeEquivalentTo(
-            expected.OrderBy(x => x.PartyId).ThenBy(x => x.RoleTypeName),
+        incoming.OrderBy(x => x.CustomerNumber).ThenBy(x => x.RoleTypeName).Should().BeEquivalentTo(
+            expected.OrderBy(x => x.CustomerNumber).ThenBy(x => x.RoleTypeName),
             options => options
                 .Excluding(ctx => ctx.Id)
                 .Excluding(ctx => ctx.Path.EndsWith("LastUpdatedDate"))
@@ -152,8 +152,8 @@ public class SamBulkImportWithAccurateRawDataTests
         List<SiteGroupMarkRelationshipDocument> incoming,
         List<SiteGroupMarkRelationshipDocument> expected)
     {
-        incoming.OrderBy(x => x.PartyId).ThenBy(x => x.RoleTypeName).Should().BeEquivalentTo(
-            expected.OrderBy(x => x.PartyId).ThenBy(x => x.RoleTypeName),
+        incoming.OrderBy(x => x.CustomerNumber).ThenBy(x => x.RoleTypeName).Should().BeEquivalentTo(
+            expected.OrderBy(x => x.CustomerNumber).ThenBy(x => x.RoleTypeName),
             options => options
                 .Excluding(ctx => ctx.Id)
                 .Excluding(ctx => ctx.Path.EndsWith("LastUpdatedDate"))

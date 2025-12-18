@@ -8,7 +8,7 @@ using System.Text.Json.Serialization;
 namespace KeeperData.Core.Documents;
 
 /// <summary>
-/// Composite key: HoldingIdentifier, PartyId, RoleTypeId, SpeciesTypeId
+/// Composite key: HoldingIdentifier, CustomerNumber, RoleTypeId, SpeciesTypeId
 /// </summary>
 [CollectionName("sitePartyRoleRelationships")]
 public record SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
@@ -18,10 +18,10 @@ public record SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
     [BsonElement("id")]
     public string? Id { get; set; }
 
-    [BsonElement("partyId")]
-    [JsonPropertyName("partyId")]
+    [BsonElement("customerNumber")]
+    [JsonPropertyName("customerNumber")]
     [AutoIndexed]
-    public string PartyId { get; set; } = string.Empty;
+    public string CustomerNumber { get; set; } = string.Empty;
 
     [BsonElement("partyTypeId")]
     [JsonPropertyName("partyTypeId")]

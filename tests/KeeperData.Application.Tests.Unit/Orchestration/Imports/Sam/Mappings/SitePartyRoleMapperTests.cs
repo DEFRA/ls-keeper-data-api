@@ -84,7 +84,7 @@ public class SitePartyRoleMapperTests
     [
         new()
         {
-            PartyId = "C100001",
+            CustomerNumber = "C100001",
             PartyTypeId = PartyType.Person.ToString(),
             HoldingIdentifier = "12/345/6789",
             RoleTypeId = "b2637b72-2196-4a19-bdf0-85c7ff66cf60",
@@ -94,7 +94,7 @@ public class SitePartyRoleMapperTests
         },
         new()
         {
-            PartyId = "C100001",
+            CustomerNumber = "C100001",
             PartyTypeId = PartyType.Person.ToString(),
             HoldingIdentifier = "12/345/6789",
             RoleTypeId = "2de15dc1-19b9-4372-9e81-a9a2f87fd197",
@@ -104,7 +104,7 @@ public class SitePartyRoleMapperTests
         },
         new()
         {
-            PartyId = "C100002",
+            CustomerNumber = "C100002",
             PartyTypeId = PartyType.Person.ToString(),
             HoldingIdentifier = "12/345/6789",
             RoleTypeId = "b2637b72-2196-4a19-bdf0-85c7ff66cf60",
@@ -252,7 +252,7 @@ public class SitePartyRoleMapperTests
     {
         context.GoldSitePartyRoles.Should().HaveCount(3);
 
-        context.GoldSitePartyRoles.OrderBy(x => x.PartyId).ThenBy(x => x.RoleTypeName).ToList()
+        context.GoldSitePartyRoles.OrderBy(x => x.CustomerNumber).ThenBy(x => x.RoleTypeName).ToList()
             .Should().BeEquivalentTo(_expectedResult);
     }
 

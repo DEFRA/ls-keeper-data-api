@@ -113,7 +113,7 @@ public class SitesEndpointTests(
     {
         Console.WriteLine(scenario);
         var date = !string.IsNullOrEmpty(dateStr) ? (DateTime?)DateTime.Parse(dateStr) : null;
-        var response = await _apiContainerFixture.HttpClient.GetAsync("api/site?" + BuildQueryString(type, identifier, date));
+        var response = await _apiContainerFixture.HttpClient.GetAsync("api/sites?" + BuildQueryString(type, identifier, date));
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var responseBody = await response.Content.ReadAsStringAsync();
@@ -134,7 +134,7 @@ public class SitesEndpointTests(
     public async Task GivenAnRecordRequestById_ShouldHaveExpectedResults(string scenario, string requestedId, HttpStatusCode expectedHttpCode, string responseShouldContain)
     {
         Console.WriteLine(scenario);
-        var response = await _apiContainerFixture.HttpClient.GetAsync($"api/site/{requestedId}");
+        var response = await _apiContainerFixture.HttpClient.GetAsync($"api/sites/{requestedId}");
         var responseBody = await response.Content.ReadAsStringAsync();
         response.StatusCode.Should().Be(expectedHttpCode);
 

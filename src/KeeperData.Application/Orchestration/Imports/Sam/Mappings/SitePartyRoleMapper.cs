@@ -25,7 +25,7 @@ public static class SitePartyRoleMapper
                         var matchingSpecies = goldSiteGroupMarks
                             .Where(g =>
                                 g.HoldingIdentifier == holdingIdentifier &&
-                                g.PartyId == party.CustomerNumber &&
+                                g.CustomerNumber == party.CustomerNumber &&
                                 g.RoleTypeId == role.Role.IdentifierId)
                             .Select(g => new
                             {
@@ -39,7 +39,7 @@ public static class SitePartyRoleMapper
                         {
                             // Id left unset for upsert
 
-                            PartyId = party.CustomerNumber ?? string.Empty,
+                            CustomerNumber = party.CustomerNumber ?? string.Empty,
                             PartyTypeId = party.PartyType ?? string.Empty,
                             HoldingIdentifier = holdingIdentifier,
 

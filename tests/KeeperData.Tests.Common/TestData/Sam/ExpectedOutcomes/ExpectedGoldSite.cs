@@ -86,7 +86,7 @@ public static class ExpectedGoldSite
                 new()
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
-                    PartyId = "C1000001",
+                    CustomerNumber = "C1000001",
                     Title = "Mr",
                     FirstName = "John James",
                     LastName = "Doe",
@@ -208,7 +208,7 @@ public static class ExpectedGoldSite
                 new()
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
-                    PartyId = "C1000002",
+                    CustomerNumber = "C1000002",
                     Title = "Mrs",
                     FirstName = "Jane",
                     LastName = "Doe",
@@ -394,7 +394,7 @@ public static class ExpectedGoldSite
                 new()
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
-                    PartyId = "C1000001",
+                    CustomerNumber = "C1000001",
                     Title = "Mr",
                     FirstName = "John James",
                     LastName = "Doe",
@@ -461,7 +461,7 @@ public static class ExpectedGoldSite
                 new()
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
-                    PartyId = "C1000005",
+                    CustomerNumber = "C1000005",
                     Title = "Mr",
                     FirstName = "Dave",
                     LastName = "Smith",

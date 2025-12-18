@@ -65,7 +65,7 @@ public class SiteGroupMarkMapperTests
         new()
         {
             Id = null,
-            PartyId = "C100001",
+            CustomerNumber = "C100001",
             PartyTypeId = PartyType.Person.ToString(),
             Herdmark = "333333",
             CountyParishHoldingHerd = "12/345/6789/01",
@@ -83,7 +83,7 @@ public class SiteGroupMarkMapperTests
         new()
         {
             Id = null,
-            PartyId = "C100001",
+            CustomerNumber = "C100001",
             PartyTypeId = PartyType.Person.ToString(),
             Herdmark = "333333",
             CountyParishHoldingHerd = "12/345/6789/01",
@@ -101,7 +101,7 @@ public class SiteGroupMarkMapperTests
         new()
         {
             Id = null,
-            PartyId = "C100002",
+            CustomerNumber = "C100002",
             PartyTypeId = PartyType.Person.ToString(),
             Herdmark = "333333",
             CountyParishHoldingHerd = "12/345/6789/01",
@@ -252,7 +252,7 @@ public class SiteGroupMarkMapperTests
     {
         context.GoldSiteGroupMarks.Should().HaveCount(3);
 
-        context.GoldSiteGroupMarks.OrderBy(x => x.PartyId).ThenBy(x => x.RoleTypeName).ToList()
+        context.GoldSiteGroupMarks.OrderBy(x => x.CustomerNumber).ThenBy(x => x.RoleTypeName).ToList()
             .Should().BeEquivalentTo(_expectedResult, options => options.Excluding(x => x.LastUpdatedDate));
     }
 

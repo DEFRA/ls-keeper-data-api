@@ -12,7 +12,7 @@ public static class ExpectedGoldSiteGroupMarks
         {
             Id = Guid.NewGuid().ToString(),
             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
-            PartyId = "C1000001",
+            CustomerNumber = "C1000001",
             PartyTypeId = "Person",
             Herdmark = "H1000001",
             CountyParishHoldingHerd = $"{s_cphNumber}/01",
@@ -36,7 +36,7 @@ public static class ExpectedGoldSiteGroupMarks
         {
             Id = Guid.NewGuid().ToString(),
             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
-            PartyId = "C1000001",
+            CustomerNumber = "C1000001",
             PartyTypeId = "Person",
             Herdmark = "H1000001",
             CountyParishHoldingHerd = $"{s_cphNumber}/01",
@@ -60,7 +60,7 @@ public static class ExpectedGoldSiteGroupMarks
         {
             Id = Guid.NewGuid().ToString(),
             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
-            PartyId = "C1000001",
+            CustomerNumber = "C1000001",
             PartyTypeId = "Person",
             Herdmark = "H1000001",
             CountyParishHoldingHerd = $"{s_cphNumber}/01",
@@ -84,7 +84,7 @@ public static class ExpectedGoldSiteGroupMarks
         {
             Id = Guid.NewGuid().ToString(),
             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
-            PartyId = "C1000001",
+            CustomerNumber = "C1000001",
             PartyTypeId = "Person",
             Herdmark = "H1000002",
             CountyParishHoldingHerd = $"{s_cphNumber}/01",
@@ -108,7 +108,7 @@ public static class ExpectedGoldSiteGroupMarks
         {
             Id = Guid.NewGuid().ToString(),
             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
-            PartyId = "C1000001",
+            CustomerNumber = "C1000001",
             PartyTypeId = "Person",
             Herdmark = "H1000002",
             CountyParishHoldingHerd = $"{s_cphNumber}/01",
@@ -132,7 +132,7 @@ public static class ExpectedGoldSiteGroupMarks
         {
             Id = Guid.NewGuid().ToString(),
             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
-            PartyId = "C1000001",
+            CustomerNumber = "C1000001",
             PartyTypeId = "Person",
             Herdmark = "H1000002",
             CountyParishHoldingHerd = $"{s_cphNumber}/01",
@@ -156,7 +156,7 @@ public static class ExpectedGoldSiteGroupMarks
         {
             Id = Guid.NewGuid().ToString(),
             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
-            PartyId = "C1000002",
+            CustomerNumber = "C1000002",
             PartyTypeId = "Person",
             Herdmark = "H1000001",
             CountyParishHoldingHerd = $"{s_cphNumber}/01",
@@ -180,7 +180,7 @@ public static class ExpectedGoldSiteGroupMarks
         {
             Id = Guid.NewGuid().ToString(),
             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
-            PartyId = "C1000002",
+            CustomerNumber = "C1000002",
             PartyTypeId = "Person",
             Herdmark = "H1000002",
             CountyParishHoldingHerd = $"{s_cphNumber}/01",
@@ -208,7 +208,7 @@ public static class ExpectedGoldSiteGroupMarks
         {
             Id = Guid.NewGuid().ToString(),
             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
-            PartyId = "C1000001",
+            CustomerNumber = "C1000001",
             PartyTypeId = "Person",
             Herdmark = "H1000001",
             CountyParishHoldingHerd = $"{s_cphNumber}/01",
@@ -232,7 +232,7 @@ public static class ExpectedGoldSiteGroupMarks
         {
             Id = Guid.NewGuid().ToString(),
             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
-            PartyId = "C1000005",
+            CustomerNumber = "C1000005",
             PartyTypeId = "Person",
             Herdmark = "H1000001",
             CountyParishHoldingHerd = $"{s_cphNumber}/01",
@@ -256,7 +256,7 @@ public static class ExpectedGoldSiteGroupMarks
         {
             Id = Guid.NewGuid().ToString(),
             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
-            PartyId = "C1000005",
+            CustomerNumber = "C1000005",
             PartyTypeId = "Person",
             Herdmark = "H1000001",
             CountyParishHoldingHerd = $"{s_cphNumber}/01",

@@ -9,7 +9,7 @@ public static class ExpectedGoldSitePartyRoles
         new()
         {
             Id = Guid.NewGuid().ToString(),
-            PartyId = "C1000001",
+            CustomerNumber = "C1000001",
             PartyTypeId = "Person",
             HoldingIdentifier = s_cphNumber,
             RoleTypeId = RoleData.Find("LIVESTOCKOWNER").id!,
@@ -20,7 +20,7 @@ public static class ExpectedGoldSitePartyRoles
         new()
         {
             Id = Guid.NewGuid().ToString(),
-            PartyId = "C1000001",
+            CustomerNumber = "C1000001",
             PartyTypeId = "Person",
             HoldingIdentifier = s_cphNumber,
             RoleTypeId = RoleData.Find("LIVESTOCKKEEPER").id!,
@@ -31,7 +31,7 @@ public static class ExpectedGoldSitePartyRoles
         new()
         {
             Id = Guid.NewGuid().ToString(),
-            PartyId = "C1000001",
+            CustomerNumber = "C1000001",
             PartyTypeId = "Person",
             HoldingIdentifier = s_cphNumber,
             RoleTypeId = RoleData.Find("CPHHOLDER").id!,
@@ -42,7 +42,7 @@ public static class ExpectedGoldSitePartyRoles
         new()
         {
             Id = Guid.NewGuid().ToString(),
-            PartyId = "C1000001",
+            CustomerNumber = "C1000001",
             PartyTypeId = "Person",
             HoldingIdentifier = s_cphNumber,
             RoleTypeId = RoleData.Find("LIVESTOCKOWNER").id!,
@@ -53,7 +53,7 @@ public static class ExpectedGoldSitePartyRoles
         new()
         {
             Id = Guid.NewGuid().ToString(),
-            PartyId = "C1000001",
+            CustomerNumber = "C1000001",
             PartyTypeId = "Person",
             HoldingIdentifier = s_cphNumber,
             RoleTypeId = RoleData.Find("LIVESTOCKKEEPER").id!,
@@ -64,7 +64,7 @@ public static class ExpectedGoldSitePartyRoles
         new()
         {
             Id = Guid.NewGuid().ToString(),
-            PartyId = "C1000001",
+            CustomerNumber = "C1000001",
             PartyTypeId = "Person",
             HoldingIdentifier = s_cphNumber,
             RoleTypeId = RoleData.Find("CPHHOLDER").id!,
@@ -75,7 +75,7 @@ public static class ExpectedGoldSitePartyRoles
         new()
         {
             Id = Guid.NewGuid().ToString(),
-            PartyId = "C1000002",
+            CustomerNumber = "C1000002",
             PartyTypeId = "Person",
             HoldingIdentifier = s_cphNumber,
             RoleTypeId = RoleData.Find("LIVESTOCKKEEPER").id!,
@@ -86,7 +86,7 @@ public static class ExpectedGoldSitePartyRoles
         new()
         {
             Id = Guid.NewGuid().ToString(),
-            PartyId = "C1000002",
+            CustomerNumber = "C1000002",
             PartyTypeId = "Person",
             HoldingIdentifier = s_cphNumber,
             RoleTypeId = RoleData.Find("LIVESTOCKKEEPER").id!,
@@ -101,7 +101,7 @@ public static class ExpectedGoldSitePartyRoles
         new()
         {
             Id = Guid.NewGuid().ToString(),
-            PartyId = "C1000001",
+            CustomerNumber = "C1000001",
             PartyTypeId = "Person",
             HoldingIdentifier = s_cphNumber,
             RoleTypeId = RoleData.Find("LIVESTOCKKEEPER").id!,
@@ -112,7 +112,7 @@ public static class ExpectedGoldSitePartyRoles
         new()
         {
             Id = Guid.NewGuid().ToString(),
-            PartyId = "C1000005",
+            CustomerNumber = "C1000005",
             PartyTypeId = "Person",
             HoldingIdentifier = s_cphNumber,
             RoleTypeId = RoleData.Find("CPHHOLDER").id!,
@@ -123,7 +123,7 @@ public static class ExpectedGoldSitePartyRoles
         new()
         {
             Id = Guid.NewGuid().ToString(),
-            PartyId = "C1000005",
+            CustomerNumber = "C1000005",
             PartyTypeId = "Person",
             HoldingIdentifier = s_cphNumber,
             RoleTypeId = RoleData.Find("LIVESTOCKOWNER").id!,

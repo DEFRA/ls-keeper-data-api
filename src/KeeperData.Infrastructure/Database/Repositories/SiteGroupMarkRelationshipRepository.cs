@@ -17,14 +17,14 @@ public class SiteGroupMarkRelationshipRepository(IOptions<MongoConfig> mongoConf
         unitOfWork), ISiteGroupMarkRelationshipRepository
 {
     public async Task<List<SiteGroupMarkRelationship>> GetExistingSiteGroupMarkRelationships(
-        List<string> partyIds,
+        List<string> customerNumbers,
         string holdingIdentifier,
         CancellationToken cancellationToken = default)
     {
-        if (partyIds == null)
+        if (customerNumbers == null)
             return [];
 
-        var filter = Builders<SiteGroupMarkRelationshipDocument>.Filter.In(x => x.PartyId, partyIds) &
+        var filter = Builders<SiteGroupMarkRelationshipDocument>.Filter.In(x => x.CustomerNumber, customerNumbers) &
             Builders<SiteGroupMarkRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
 
         var projection = Builders<SiteGroupMarkRelationshipDocument>.Projection
@@ -32,7 +32,7 @@ public class SiteGroupMarkRelationshipRepository(IOptions<MongoConfig> mongoConf
             .Include(x => x.Herdmark)
             .Include(x => x.CountyParishHoldingHerd)
             .Include(x => x.HoldingIdentifier)
-            .Include(x => x.PartyId)
+            .Include(x => x.CustomerNumber)
             .Include(x => x.ProductionUsageCode);
 
         var result = await _collection
@@ -47,7 +47,7 @@ public class SiteGroupMarkRelationshipRepository(IOptions<MongoConfig> mongoConf
                 Herdmark = doc.GetValue("herdmark").AsString,
                 CountyParishHoldingHerd = doc.GetValue("countyParishHoldingHerd").AsString,
                 HoldingIdentifier = doc.GetValue("holdingIdentifier").AsString,
-                PartyId = doc.GetValue("partyId").AsString,
+                CustomerNumber = doc.GetValue("customerNumber").AsString,
                 ProductionUsageCode = doc.GetValue("productionUsageCode").AsString
             })
             .ToList();

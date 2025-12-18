@@ -11,9 +11,9 @@ public class SitePartyDocument : INestedEntity
     [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
 
-    [BsonElement("partyId")]
-    [JsonPropertyName("partyId")]
-    public string PartyId { get; set; } = string.Empty;
+    [BsonElement("customerNumber")]
+    [JsonPropertyName("customerNumber")]
+    public string CustomerNumber { get; set; } = string.Empty;
 
     [BsonElement("title")]
     [JsonPropertyName("title")]
@@ -63,7 +63,7 @@ public class SitePartyDocument : INestedEntity
     public static SitePartyDocument FromDomain(SiteParty m) => new()
     {
         IdentifierId = m.Id,
-        PartyId = m.PartyId,
+        CustomerNumber = m.CustomerNumber,
         Title = m.Title,
         FirstName = m.FirstName,
         LastName = m.LastName,
@@ -81,7 +81,7 @@ public class SitePartyDocument : INestedEntity
         IdentifierId,
         CreatedDate,
         LastUpdatedDate,
-        PartyId,
+        CustomerNumber,
         Title,
         FirstName,
         LastName,

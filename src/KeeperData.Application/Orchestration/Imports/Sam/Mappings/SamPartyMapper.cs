@@ -200,7 +200,7 @@ public static class SamPartyMapper
         var result = new List<PartyDocument>();
 
         var groupedOrphans = orphansToClean
-            .GroupBy(o => o.PartyId);
+            .GroupBy(o => o.CustomerNumber);
 
         foreach (var orphanGroup in groupedOrphans)
         {
@@ -460,7 +460,7 @@ public static class SamPartyMapper
 
                 var matchingMarks = goldSiteGroupMarks
                     .Where(m =>
-                        m.PartyId == incoming.PartyId
+                        m.CustomerNumber == incoming.PartyId
                         && m.RoleTypeId == r.RoleTypeId
                         && !string.IsNullOrWhiteSpace(m.SpeciesTypeId))
                     .ToList();
@@ -569,7 +569,7 @@ public static class SamPartyMapper
 
                 var matchingMarks = goldSiteGroupMarks
                     .Where(m =>
-                        m.PartyId == incoming.PartyId
+                        m.CustomerNumber == incoming.PartyId
                         && m.RoleTypeId == r.RoleTypeId
                         && !string.IsNullOrWhiteSpace(m.SpeciesTypeId))
                     .ToList();
