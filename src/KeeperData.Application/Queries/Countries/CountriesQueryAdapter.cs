@@ -13,9 +13,15 @@ public class CountriesQueryAdapter(ICountryRepository repository)
         CancellationToken cancellationToken = default)
     {
         var items = await _repository.GetAllAsync(cancellationToken);
+        var codes = query!.Code?.Split(',');
+        var results = items
+            .Where(c => String.IsNullOrEmpty(query!.Code) || codes!.Contains(c.Code))
+            .Where(c => String.IsNullOrEmpty(query?.Name) || c.Name == query!.Name)
+            .Where(c => !query!.EuTradeMember.HasValue || c.EuTradeMember == query.EuTradeMember)
+            .Where(c => !query!.DevolvedAuthority.HasValue || c.DevolvedAuthority == query.DevolvedAuthority);
 
         return (
-            items
+            results
             .Select(c => new CountryDTO
             {
                 Name = c.Name,

@@ -63,9 +63,61 @@ public class CountriesEndpointTests
         gb.Should().BeEquivalentTo(expected);
     }
 
-    private async Task<PaginatedResult<CountryDTO>?> WhenPerformGetOnCountriesEndpoint(HttpStatusCode expectedHttpCode)
+    [Theory]
+    [InlineData("Search by Name", "France", null, null, null, HttpStatusCode.OK, "FR")]
+    [InlineData("Search by Name that doesnt exist", "NotRealCountry", null, null, null, HttpStatusCode.OK, null)]
+    [InlineData("Search by One country code", null, "NZ", null, null, HttpStatusCode.OK, "NZ")]
+    [InlineData("Search by multiple country codes", null, "FR,NZ", null, null, HttpStatusCode.OK, "FR,NZ")]
+    [InlineData("Search by isEutrademember(true)", null, null, true, null, HttpStatusCode.OK, "FR")]
+    [InlineData("Search by isEutrademember(false)", null, null, false, null, HttpStatusCode.OK, "GB,NZ")]
+    [InlineData("Search by isDevolvedAuthority(true)", null, null, null, true, HttpStatusCode.OK, "GB")]
+    [InlineData("Search by isDevolvedAuthority(false)", null, null, null, false, HttpStatusCode.OK, "FR,NZ")]
+    public async Task WhenUserSearchesAppropriateCountriesShouldBeReturned(string scenario, string? name, string? codesCsv, bool? euTradeMember, bool? devolvedAuthority, HttpStatusCode expectedHttpCode, string? expectedCodes)
     {
-        var response = await _client.GetAsync("api/countries");
+        Debug.WriteLine(scenario);
+        GivenTheseCountries(TestCountries);
+
+        var result = await WhenPerformGetOnCountriesEndpoint(expectedHttpCode, name, codesCsv, euTradeMember, devolvedAuthority);
+
+        if (expectedHttpCode == HttpStatusCode.OK)
+        {
+            var codes = expectedCodes?.Split(",") ?? new string[] { };
+            result!.Values!.Count().Should().Be(codes.Count());
+            if (codes.Any())
+                result!.Values.Select(c => c.Code).Should().BeEquivalentTo(codes);
+        }
+    }
+
+    private async Task<PaginatedResult<CountryDTO>?> WhenPerformGetOnCountriesEndpoint(HttpStatusCode expectedHttpCode, string? name = null, string? codeCsv = null, bool? euTradeMember = null, bool? devolvedAuthority = null, string? sortBy = null, string? ascDesc = null, int? page = null, int? pageSize = null)
+    {
+        NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+        if (name != null)
+            queryString.Add("name", name);
+
+        if (codeCsv != null)
+            queryString.Add("code", codeCsv);
+
+        if (euTradeMember.HasValue)
+            queryString.Add("euTradeMember", euTradeMember.Value.ToString());
+
+        if (devolvedAuthority.HasValue)
+            queryString.Add("devolvedAuthority", devolvedAuthority.Value.ToString());
+
+        if (sortBy != null)
+            queryString.Add("order", sortBy);
+
+        if (ascDesc != null)
+            queryString.Add("sort", ascDesc);
+
+        if (page != null)
+            queryString.Add("page", page.ToString());
+
+        if (pageSize != null)
+            queryString.Add("pageSize", pageSize.ToString());
+
+        var query = queryString.ToString();
+
+        var response = await _client.GetAsync("api/countries?" + query);
 
         if (expectedHttpCode == HttpStatusCode.OK)
         {
