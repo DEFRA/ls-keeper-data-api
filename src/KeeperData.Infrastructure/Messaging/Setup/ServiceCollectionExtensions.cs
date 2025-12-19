@@ -78,7 +78,7 @@ public static class ServiceCollectionExtensions
             .AddSingleton<IQueuePoller, QueuePoller>();
         services.AddSingleton<IDeadLetterQueueService, DeadLetterQueueService>();
 
-        services.AddScoped<IQueuePollerObserver<MessageType>, NullQueuePollerObserver<MessageType>>();
+        services.AddTransient<IQueuePollerObserver<MessageType>, NullQueuePollerObserver<MessageType>>();
     }
 
     private static void AdddMessageSerializers(this IServiceCollection services)
