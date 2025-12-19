@@ -22,6 +22,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
     IMessageSerializer<SnsEnvelope> messageSerializer,
     IDeadLetterQueueService deadLetterQueueService,
     IOptions<IntakeEventQueueOptions> options,
+    IQueuePollerObserver<MessageType> observer,
     ILogger<QueuePoller> logger) : IQueuePoller, IAsyncDisposable
 {
     private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
@@ -30,9 +31,8 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
     private readonly IMessageSerializer<SnsEnvelope> _messageSerializer = messageSerializer;
     private readonly IDeadLetterQueueService _deadLetterQueueService = deadLetterQueueService;
     private readonly IntakeEventQueueOptions _queueConsumerOptions = options.Value;
+    private readonly IQueuePollerObserver<MessageType> _observer = observer;
     private readonly ILogger<QueuePoller> _logger = logger;
-
-    private IQueuePollerObserver<MessageType>? _observer;
 
     private Task? _pollingTask;
     private CancellationTokenSource _cts = new();
@@ -42,9 +42,6 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("QueuePoller start requested.");
-
-        using var scope = _scopeFactory.CreateScope();
-        _observer = scope.ServiceProvider.GetService<IQueuePollerObserver<MessageType>>();
 
         if (_queueConsumerOptions.Disabled == true)
         {

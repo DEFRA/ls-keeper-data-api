@@ -1,9 +1,9 @@
 using FluentAssertions;
-using KeeperData.Application.Extensions;
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Extensions;
 using KeeperData.Core.Services;
 using KeeperData.Tests.Common.Factories;
 using KeeperData.Tests.Common.Generators;
@@ -17,18 +17,18 @@ public class SamHolderMapperTests
     private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
 
-    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveRoleType;
-    private readonly Func<string?, string?, CancellationToken, Task<(string?, string?)>> _resolveCountry;
+    private readonly Func<string?, CancellationToken, Task<(string?, string?, string?)>> _resolveRoleType;
+    private readonly Func<string?, string?, CancellationToken, Task<(string?, string?, string?)>> _resolveCountry;
 
     public SamHolderMapperTests()
     {
         _roleTypeLookupServiceMock
             .Setup(x => x.FindAsync(InferredRoleType.CphHolder.GetDescription(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("5053be9f-685a-4779-a663-ce85df6e02e8", "CPH Holder"));
+            .ReturnsAsync(("5053be9f-685a-4779-a663-ce85df6e02e8", "CPHHOLDER", "CPH Holder"));
 
         _countryIdentifierLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input, input));
 
         _resolveRoleType = _roleTypeLookupServiceMock.Object.FindAsync;
         _resolveCountry = _countryIdentifierLookupServiceMock.Object.FindAsync;
@@ -67,7 +67,7 @@ public class SamHolderMapperTests
     {
         _roleTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((null, null));
+            .ReturnsAsync((null, null, null));
 
         var records = GenerateSamCphHolder(1);
 
@@ -90,7 +90,7 @@ public class SamHolderMapperTests
     {
         _countryIdentifierLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((null, null));
+            .ReturnsAsync((null, null, null));
 
         var records = GenerateSamCphHolder(1);
 
@@ -109,8 +109,8 @@ public class SamHolderMapperTests
 
         var address = result.Address;
         address.IdentifierId.Should().NotBeNullOrWhiteSpace();
-        address.CountryCode.Should().Be(records[0].COUNTRY_CODE);
         address.CountryIdentifier.Should().BeNull();
+        address.CountryCode.Should().BeNull();
     }
 
     [Theory]

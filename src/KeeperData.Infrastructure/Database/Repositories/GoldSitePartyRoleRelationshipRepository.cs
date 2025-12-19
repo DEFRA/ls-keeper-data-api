@@ -23,7 +23,7 @@ public class GoldSitePartyRoleRelationshipRepository(IOptions<MongoConfig> mongo
 
         var projection = Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Projection
             .Include(x => x.Id)
-            .Include(x => x.PartyId)
+            .Include(x => x.CustomerNumber)
             .Include(x => x.HoldingIdentifier)
             .Include(x => x.RoleTypeId);
 
@@ -36,7 +36,7 @@ public class GoldSitePartyRoleRelationshipRepository(IOptions<MongoConfig> mongo
             .Select(doc => new SitePartyRoleRelationship
             {
                 Id = doc.GetValue("_id").AsString,
-                PartyId = doc.GetValue("partyId").AsString,
+                CustomerNumber = doc.GetValue("customerNumber").AsString,
                 HoldingIdentifier = doc.GetValue("holdingIdentifier").AsString,
                 RoleTypeId = doc.GetValue("roleTypeId").AsString
             })

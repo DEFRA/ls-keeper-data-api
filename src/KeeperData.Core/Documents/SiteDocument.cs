@@ -18,6 +18,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("createdDate")]
     [JsonPropertyName("createdDate")]
+    [JsonIgnore]
     [AutoIndexed]
     public DateTime CreatedDate { get; set; }
 
@@ -58,6 +59,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("deleted")]
     [JsonPropertyName("deleted")]
+    [JsonIgnore]
     public bool Deleted { get; set; }
 
     [BsonElement("location")]
@@ -186,7 +188,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
                     id: p.IdentifierId,
                     createdDate: p.CreatedDate,
                     lastUpdatedDate: p.LastUpdatedDate,
-                    partyId: p.PartyId,
+                    customerNumber: p.CustomerNumber,
                     title: p.Title,
                     firstName: p.FirstName,
                     lastName: p.LastName,

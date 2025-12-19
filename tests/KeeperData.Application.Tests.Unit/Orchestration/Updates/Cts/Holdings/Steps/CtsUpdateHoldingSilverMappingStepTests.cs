@@ -19,7 +19,7 @@ public class CtsUpdateHoldingSilverMappingStepTests
     {
         _roleTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid.NewGuid().ToString(), "RoleName"));
+            .ReturnsAsync((Guid.NewGuid().ToString(), "RoleCode", "RoleName"));
 
         _sut = new CtsUpdateHoldingSilverMappingStep(_roleTypeLookupServiceMock.Object, _loggerMock.Object);
     }

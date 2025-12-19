@@ -22,8 +22,6 @@ public class QueuePollerTests
     private readonly Mock<IMessageHandlerManager> _handlerManagerMock = new();
     private readonly Mock<IMessageSerializer<SnsEnvelope>> _serializerMock = new();
     private readonly Mock<ILogger<QueuePoller>> _loggerMock = new();
-    private readonly Mock<IServiceScope> _scopeMock = new();
-    private readonly Mock<IServiceProvider> _providerMock = new();
     private readonly Mock<IDeadLetterQueueService> _deadLetterQueueServiceMock = new();
 
     private readonly IntakeEventQueueOptions _options = new()
@@ -36,11 +34,6 @@ public class QueuePollerTests
 
     private QueuePoller CreateSut()
     {
-        _scopeFactoryMock.Setup(x => x.CreateScope()).Returns(_scopeMock.Object);
-        _scopeMock.Setup(x => x.ServiceProvider).Returns(_providerMock.Object);
-        _providerMock.Setup(x => x.GetService(typeof(IQueuePollerObserver<MessageType>)))
-            .Returns(Mock.Of<IQueuePollerObserver<MessageType>>());
-
         return new QueuePoller(
             _scopeFactoryMock.Object,
             _sqsMock.Object,
@@ -48,6 +41,7 @@ public class QueuePollerTests
             _serializerMock.Object,
             _deadLetterQueueServiceMock.Object,
             Options.Create(_options),
+            Mock.Of<IQueuePollerObserver<MessageType>>(),
             _loggerMock.Object);
     }
 

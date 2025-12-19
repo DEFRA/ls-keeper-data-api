@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Reflection;
 
-namespace KeeperData.Application.Extensions;
+namespace KeeperData.Core.Extensions;
 
 public static class EnumExtensions
 {

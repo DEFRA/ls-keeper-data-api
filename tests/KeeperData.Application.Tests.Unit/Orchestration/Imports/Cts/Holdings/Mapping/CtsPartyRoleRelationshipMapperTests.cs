@@ -15,17 +15,17 @@ namespace KeeperData.Application.Tests.Unit.Orchestration.Imports.Cts.Holdings.M
 public class CtsPartyRoleRelationshipMapperTests
 {
     private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
-    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveRoleType;
+    private readonly Func<string?, CancellationToken, Task<(string?, string?, string?)>> _resolveRoleType;
 
     public CtsPartyRoleRelationshipMapperTests()
     {
         _roleTypeLookupServiceMock
             .Setup(x => x.FindAsync("AGENT", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("8184ae3d-c3c4-4904-b1b8-539eeadbf245", "Agent"));
+            .ReturnsAsync(("8184ae3d-c3c4-4904-b1b8-539eeadbf245", "AGENT", "Agent"));
 
         _roleTypeLookupServiceMock
             .Setup(x => x.FindAsync("LIVESTOCKKEEPER", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("b2637b72-2196-4a19-bdf0-85c7ff66cf60", "Livestock Keeper"));
+            .ReturnsAsync(("b2637b72-2196-4a19-bdf0-85c7ff66cf60", "LIVESTOCKKEEPER", "Livestock Keeper"));
 
         _resolveRoleType = _roleTypeLookupServiceMock.Object.FindAsync;
     }

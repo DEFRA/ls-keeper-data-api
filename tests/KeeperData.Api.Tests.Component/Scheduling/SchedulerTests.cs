@@ -33,7 +33,6 @@ public class SchedulerTests
                 {
                     q.UseInMemoryStore();
 
-                    // Durable as don't want a timed trigger in tests
                     var jobKey = new JobKey("TestJob");
                     q.AddJob<FakeCtsBulkScanJob>(opts => opts.WithIdentity(jobKey).StoreDurably());
                 });

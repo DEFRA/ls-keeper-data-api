@@ -1,10 +1,10 @@
 using FluentAssertions;
-using KeeperData.Application.Extensions;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Parties.Formatters;
 using KeeperData.Core.Domain.Sites.Formatters;
+using KeeperData.Core.Extensions;
 
 namespace KeeperData.Tests.Common.Mappings;
 
@@ -79,6 +79,7 @@ public static class VerifySamHolderMappings
         role.Should().NotBeNull();
         role.IdentifierId.Should().NotBeNullOrWhiteSpace();
         role.RoleTypeId.Should().NotBeNullOrWhiteSpace();
+        role.RoleTypeCode.Should().NotBeNullOrWhiteSpace();
         role.RoleTypeName.Should().NotBeNullOrWhiteSpace();
         role.SourceRoleName.Should().Be(roleNameToLookup);
         role.EffectiveFromDate.Should().BeNull();

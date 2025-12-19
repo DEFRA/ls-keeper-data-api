@@ -23,10 +23,10 @@ public class CountryRepository(
         return countries.FirstOrDefault(c => c.IdentifierId?.Equals(id, StringComparison.OrdinalIgnoreCase) == true);
     }
 
-    public async Task<(string? countryId, string? countryName)> FindAsync(string? lookupValue, CancellationToken cancellationToken = default)
+    public async Task<(string? countryId, string? countryCode, string? countryName)> FindAsync(string? lookupValue, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(lookupValue))
-            return (null, null);
+            return (null, null, null);
 
         var countries = await GetAllAsync(cancellationToken);
 
@@ -37,7 +37,7 @@ public class CountryRepository(
         country ??= countries.FirstOrDefault(c => c.Name?.Equals(lookupValue, StringComparison.OrdinalIgnoreCase) == true);
 
         return country != null
-            ? (country.IdentifierId, country.Name)
-            : (null, null);
+            ? (country.IdentifierId, country.Code, country.Name)
+            : (null, null, null);
     }
 }

@@ -28,6 +28,7 @@ public static class SamPartyRoleRelationshipMapper
                         Source = SourceSystemType.SAM.ToString(),
 
                         RoleTypeId = role.RoleTypeId,
+                        RoleTypeCode = role.RoleTypeCode,
                         RoleTypeName = role.RoleTypeName,
                         SourceRoleName = role.SourceRoleName,
 
@@ -64,6 +65,7 @@ public static class SamPartyRoleRelationshipMapper
                         Source = SourceSystemType.SAM.ToString(),
 
                         RoleTypeId = role.RoleTypeId,
+                        RoleTypeCode = role.RoleTypeCode,
                         RoleTypeName = role.RoleTypeName,
                         SourceRoleName = role.SourceRoleName,
 

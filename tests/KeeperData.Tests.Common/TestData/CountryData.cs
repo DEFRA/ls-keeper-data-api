@@ -21,17 +21,29 @@ public static class CountryData
                 EuTradeMember = false,
                 LastModifiedDate = DateTime.UtcNow,
                 IsActive = true
+            },
+            ["GB-ENG"] = new CountryDocument
+            {
+                IdentifierId = "3c04912b-88dc-42cf-a6f0-ac9cbed11c3b",
+                Code = "GB-ENG",
+                Name = "England",
+                LongName = "England - United Kingdom",
+                DevolvedAuthority = true,
+                EuTradeMember = false,
+                LastModifiedDate = DateTime.UtcNow,
+                IsActive = true
             }
         };
 
     private static readonly Dictionary<string, CountryDocument> s_countriesById =
         s_countriesByCode.Values.ToDictionary(c => c.IdentifierId);
 
-    public static (string? id, string? name) Find(string code)
+    public static (string? id, string? code, string? name) Find(string code, string? internalCode)
     {
-        var type = GetByCode(code);
-        if (type == null) return (null, null);
-        return (type.IdentifierId, type.Name);
+        var searchCode = DetermineSearchKey(code, internalCode);
+        var type = GetByCode(searchCode!);
+        if (type == null) return (null, null, null);
+        return (type.IdentifierId, type.Code, type.Name);
     }
 
     public static CountryDocument GetById(string id) => s_countriesById[id];
@@ -54,5 +66,26 @@ public static class CountryData
             EuTradeMemberFlag = type.EuTradeMember,
             LastModifiedDate = type.LastModifiedDate
         };
+    }
+
+    private static string? DetermineSearchKey(string? countryCode, string? ukInternalCode)
+    {
+        if (string.IsNullOrWhiteSpace(countryCode))
+            return null;
+
+        if (string.Equals(countryCode, "GB", StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrWhiteSpace(ukInternalCode))
+        {
+            return ukInternalCode.ToUpperInvariant().Trim() switch
+            {
+                "ENGLAND" => "GB-ENG",
+                "WALES" => "GB-WLS",
+                "SCOTLAND" => "GB-SCT",
+                "NORTHERN IRELAND" => "GB-NIR",
+                _ => countryCode
+            };
+        }
+
+        return countryCode;
     }
 }

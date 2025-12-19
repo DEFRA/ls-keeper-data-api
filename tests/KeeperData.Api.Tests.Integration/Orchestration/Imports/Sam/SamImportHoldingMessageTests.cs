@@ -86,7 +86,7 @@ public class SamImportHoldingMessageTests(
 
         var partyRoleRelationshipFilter = Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
         var partyRoleRelationships = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("sitePartyRoleRelationships", partyRoleRelationshipFilter);
-        var partyRolePartyIds = partyRoleRelationships.Select(r => r.PartyId).Distinct().ToList();
+        var partyRolePartyIds = partyRoleRelationships.Select(r => r.CustomerNumber).Distinct().ToList();
 
         var partyFilter = Builders<PartyDocument>.Filter.In(x => x.CustomerNumber, partyRolePartyIds);
         var parties = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("parties", partyFilter);

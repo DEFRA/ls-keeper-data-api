@@ -346,13 +346,13 @@ public class Site : IAggregateRoot
 
         foreach (var incoming in incomingList)
         {
-            var existing = _parties.FirstOrDefault(p => p.PartyId == incoming.PartyId);
+            var existing = _parties.FirstOrDefault(p => p.CustomerNumber == incoming.CustomerNumber);
 
             if (existing is not null)
             {
                 changed |= existing.ApplyChanges(
                     incoming.LastUpdatedDate,
-                    incoming.PartyId,
+                    incoming.CustomerNumber,
                     incoming.Title,
                     incoming.FirstName,
                     incoming.LastName,
@@ -369,7 +369,7 @@ public class Site : IAggregateRoot
                     incoming.Id,
                     incoming.CreatedDate,
                     incoming.LastUpdatedDate,
-                    incoming.PartyId,
+                    incoming.CustomerNumber,
                     incoming.Title,
                     incoming.FirstName,
                     incoming.LastName,
@@ -384,7 +384,7 @@ public class Site : IAggregateRoot
         }
 
         var orphaned = _parties
-            .Where(existing => incomingList.All(i => i.PartyId != existing.PartyId))
+            .Where(existing => incomingList.All(i => i.CustomerNumber != existing.CustomerNumber))
             .ToList();
 
         if (orphaned.Count != 0)

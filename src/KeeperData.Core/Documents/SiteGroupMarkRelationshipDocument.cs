@@ -8,7 +8,7 @@ using System.Text.Json.Serialization;
 namespace KeeperData.Core.Documents;
 
 /// <summary>
-/// Composite key: HoldingIdentifier, Herdmark, ProductionUsageId, PartyId, RoleTypeId
+/// Composite key: HoldingIdentifier, Herdmark, ProductionUsageId, CustomerNumber, RoleTypeId
 /// </summary>
 [CollectionName("siteGroupMarkRelationships")]
 public record SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes
@@ -22,10 +22,10 @@ public record SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
 
-    [BsonElement("partyId")]
-    [JsonPropertyName("partyId")]
+    [BsonElement("customerNumber")]
+    [JsonPropertyName("customerNumber")]
     [AutoIndexed]
-    public string PartyId { get; set; } = string.Empty;
+    public string CustomerNumber { get; set; } = string.Empty;
 
     [BsonElement("partyTypeId")]
     [JsonPropertyName("partyTypeId")]
