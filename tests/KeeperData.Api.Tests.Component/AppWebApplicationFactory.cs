@@ -7,9 +7,17 @@ using Amazon.SimpleNotificationService.Model;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using KeeperData.Api.Tests.Component.Consumers.Helpers;
+using KeeperData.Core.Documents;
+using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Messaging.Contracts;
+using KeeperData.Core.Messaging.Contracts.V1.Sam;
+using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Observers;
-using KeeperData.Infrastructure.Database.Setup;
+using KeeperData.Core.Repositories;
+using KeeperData.Core.Services;
+using KeeperData.Infrastructure.Messaging.Consumers;
+using KeeperData.Infrastructure.Messaging.Services;
 using KeeperData.Infrastructure.Storage.Clients;
 using KeeperData.Infrastructure.Storage.Factories;
 using KeeperData.Infrastructure.Storage.Factories.Implementations;
@@ -20,6 +28,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Moq;
@@ -34,6 +43,29 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
     public Mock<IAmazonSimpleNotificationService>? AmazonSNSMock;
     public Mock<IMongoClient>? MongoClientMock;
     public readonly Mock<HttpMessageHandler> DataBridgeApiClientHttpMessageHandlerMock = new();
+
+    public readonly Mock<ISitesRepository> _sitesRepositoryMock = new();
+    public readonly Mock<IPartiesRepository> _partiesRepositoryMock = new();
+    public readonly Mock<IGenericRepository<CtsHoldingDocument>> _silverCtsHoldingRepositoryMock = new();
+    public readonly Mock<IGenericRepository<CtsPartyDocument>> _silverCtsPartyRepositoryMock = new();
+    public readonly Mock<IGenericRepository<SamHoldingDocument>> _silverSamHoldingRepositoryMock = new();
+    public readonly Mock<IGenericRepository<SamPartyDocument>> _silverSamPartyRepositoryMock = new();
+    public readonly Mock<IGenericRepository<SamHerdDocument>> _silverSamHerdRepositoryMock = new();
+    public readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
+    public readonly Mock<IGenericRepository<PartyDocument>> _goldPartyRepositoryMock = new();
+    public readonly Mock<IGoldSitePartyRoleRelationshipRepository> _goldSitePartyRoleRelationshipRepositoryMock = new();
+    public readonly Mock<IRoleRepository> _roleRepositoryMock = new();
+
+    public readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
+    public readonly Mock<IPremiseActivityTypeLookupService> _premiseActivityTypeLookupServiceMock = new();
+    public readonly Mock<IPremiseTypeLookupService> _premiseTypeLookupServiceMock = new();
+    public readonly Mock<IProductionTypeLookupService> _productionTypeLookupServiceMock = new();
+    public readonly Mock<IProductionUsageLookupService> _productionUsageLookupServiceMock = new();
+    public readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
+    public readonly Mock<ISpeciesTypeLookupService> _speciesTypeLookupServiceMock = new();
+    public readonly Mock<ISiteIdentifierTypeLookupService> _siteIdentifierTypeLookupServiceMock = new();
+
+    public readonly Mock<IMessageHandler<SamImportHoldingMessage>> _samImportHoldingMessageHandlerMock = new();
 
     private readonly List<Action<IServiceCollection>> _overrideServices = [];
     private readonly IDictionary<string, string?> _configurationOverrides;
@@ -60,17 +92,18 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         builder.ConfigureTestServices(services =>
         {
             RemoveService<IHealthCheckPublisher>(services);
-            RemoveService<MongoIndexInitializer>(services);
+
+            ConfigureRepositories();
+            ConfigureTransientServices();
+            ConfigureTestMessageHandlers();
 
             ConfigureAwsOptions(services);
-
             ConfigureS3ClientFactory(services);
-
             ConfigureSimpleQueueService(services);
-
             ConfigureSimpleNotificationService(services);
-
             ConfigureDatabase(services);
+
+            ConfigureMessageConsumers(services);
 
             services.AddHttpClient("DataBridgeApi")
                 .ConfigurePrimaryHttpMessageHandler(() => DataBridgeApiClientHttpMessageHandlerMock.Object);
@@ -79,6 +112,8 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
             {
                 applyOverride(services);
             }
+
+            services.RemoveAll<IHostedService>();
         });
     }
 
@@ -107,6 +142,16 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         });
     }
 
+    public void OverrideServiceAsTransient<T>(T instance)
+        where T : class
+    {
+        _overrideServices.Add(services =>
+        {
+            services.RemoveAll<T>();
+            services.AddTransient(_ => instance);
+        });
+    }
+
     public void OverrideServiceAsScoped<T>(T implementation) where T : class
     {
         _overrideServices.Add(services =>
@@ -114,6 +159,14 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<T>();
             services.AddScoped(_ => implementation);
         });
+    }
+
+    public void ResetMocks()
+    {
+        ResetInfrastructureMocks();
+        ResetRepositoryMocks();
+        ResetTransientServiceMocks();
+        ResetTestMessageHandlerMocks();
     }
 
     private static void SetTestEnvironmentVariables()
@@ -133,12 +186,107 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicArn", "http://localhost:4566/000000000000/ls_keeper_data_import_complete");
     }
 
+    private void ConfigureMessageConsumers(IServiceCollection services)
+    {
+        services.RemoveAll<QueueListener>();
+        services.RemoveAll<TestQueuePollerObserver<MessageType>>();
+        services.RemoveAll<IDeadLetterQueueService>();
+        services.RemoveAll<IQueuePoller>();
+
+        services.AddScoped<IDeadLetterQueueService, DeadLetterQueueService>();
+        services.AddScoped<IQueuePoller, QueuePoller>();
+
+        services.AddScoped<TestQueuePollerObserver<MessageType>>();
+        services.AddScoped<IQueuePollerObserver<MessageType>>(sp => sp.GetRequiredService<TestQueuePollerObserver<MessageType>>());
+    }
+
+    private void ConfigureRepositories()
+    {
+        OverrideServiceAsScoped(_sitesRepositoryMock.Object);
+        OverrideServiceAsScoped(_partiesRepositoryMock.Object);
+
+        OverrideServiceAsScoped(_silverCtsHoldingRepositoryMock.Object);
+        OverrideServiceAsScoped(_silverCtsPartyRepositoryMock.Object);
+
+        OverrideServiceAsScoped(_silverSamHoldingRepositoryMock.Object);
+        OverrideServiceAsScoped(_silverSamPartyRepositoryMock.Object);
+        OverrideServiceAsScoped(_silverSamHerdRepositoryMock.Object);
+
+        OverrideServiceAsScoped(_goldSiteRepositoryMock.Object);
+        OverrideServiceAsScoped(_goldPartyRepositoryMock.Object);
+        OverrideServiceAsScoped(_goldSitePartyRoleRelationshipRepositoryMock.Object);
+
+        OverrideServiceAsScoped(_roleRepositoryMock.Object);
+    }
+
+    private void ResetRepositoryMocks()
+    {
+        _sitesRepositoryMock.Reset();
+        _partiesRepositoryMock.Reset();
+
+        _silverCtsHoldingRepositoryMock.Reset();
+        _silverCtsPartyRepositoryMock.Reset();
+
+        _silverSamHoldingRepositoryMock.Reset();
+        _silverSamPartyRepositoryMock.Reset();
+        _silverSamHerdRepositoryMock.Reset();
+
+        _goldSiteRepositoryMock.Reset();
+        _goldPartyRepositoryMock.Reset();
+        _goldSitePartyRoleRelationshipRepositoryMock.Reset();
+
+        _roleRepositoryMock.Reset();
+    }
+
+    private void ConfigureTransientServices()
+    {
+        OverrideServiceAsTransient(_countryIdentifierLookupServiceMock.Object);
+        OverrideServiceAsTransient(_premiseActivityTypeLookupServiceMock.Object);
+        OverrideServiceAsTransient(_premiseTypeLookupServiceMock.Object);
+        OverrideServiceAsTransient(_productionTypeLookupServiceMock.Object);
+        OverrideServiceAsTransient(_productionUsageLookupServiceMock.Object);
+        OverrideServiceAsTransient(_roleTypeLookupServiceMock.Object);
+        OverrideServiceAsTransient(_speciesTypeLookupServiceMock.Object);
+        OverrideServiceAsTransient(_siteIdentifierTypeLookupServiceMock.Object);
+    }
+
+    private void ResetTransientServiceMocks()
+    {
+        _countryIdentifierLookupServiceMock.Reset();
+        _premiseActivityTypeLookupServiceMock.Reset();
+        _premiseTypeLookupServiceMock.Reset();
+        _productionTypeLookupServiceMock.Reset();
+        _productionUsageLookupServiceMock.Reset();
+        _roleTypeLookupServiceMock.Reset();
+        _speciesTypeLookupServiceMock.Reset();
+        _siteIdentifierTypeLookupServiceMock.Reset();
+    }
+
+    private void ConfigureTestMessageHandlers()
+    {
+        OverrideServiceAsScoped(_samImportHoldingMessageHandlerMock.Object);
+    }
+
+    private void ResetTestMessageHandlerMocks()
+    {
+        _samImportHoldingMessageHandlerMock.Reset();
+    }
+
     private static void ConfigureAwsOptions(IServiceCollection services)
     {
         var provider = services.BuildServiceProvider();
         var awsOptions = provider.GetRequiredService<AWSOptions>();
         awsOptions.Credentials = new BasicAWSCredentials("test", "test");
         services.Replace(new ServiceDescriptor(typeof(AWSOptions), awsOptions));
+    }
+
+    private void ResetInfrastructureMocks()
+    {
+        AmazonS3Mock!.Reset();
+        AmazonSQSMock!.Reset();
+        AmazonSNSMock!.Reset();
+        MongoClientMock!.Reset();
+        DataBridgeApiClientHttpMessageHandlerMock.Reset();
     }
 
     private void ConfigureS3ClientFactory(IServiceCollection services)
@@ -173,9 +321,6 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
             .ReturnsAsync(new GetQueueAttributesResponse { HttpStatusCode = HttpStatusCode.OK });
 
         services.AddSingleton(AmazonSQSMock.Object);
-
-        services.AddSingleton<TestQueuePollerObserver<MessageType>>();
-        services.AddScoped<IQueuePollerObserver<MessageType>>(sp => sp.GetRequiredService<TestQueuePollerObserver<MessageType>>());
     }
 
     private void ConfigureSimpleNotificationService(IServiceCollection services)
@@ -248,10 +393,6 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
 
     private static void RemoveService<T>(IServiceCollection services)
     {
-        var service = services.FirstOrDefault(x => x.ServiceType == typeof(T));
-        if (service != null)
-        {
-            services.Remove(service);
-        }
+        services.RemoveAll(typeof(T));
     }
 }

@@ -7,8 +7,6 @@ using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Extensions;
 using KeeperData.Core.Messaging.Consumers;
-using KeeperData.Core.Repositories;
-using KeeperData.Core.Services;
 using KeeperData.Tests.Common.Factories;
 using KeeperData.Tests.Common.Utilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,29 +18,14 @@ using System.Net;
 
 namespace KeeperData.Api.Tests.Component.Orchestration.Imports.Sam.Holdings;
 
-public class SamHoldingImportOrchestratorTests
+public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
 {
-    private readonly Mock<IGenericRepository<SamHoldingDocument>> _silverHoldingRepositoryMock = new();
-    private readonly Mock<IGenericRepository<SamPartyDocument>> _silverPartyRepositoryMock = new();
-    private readonly Mock<IGenericRepository<SamHerdDocument>> _silverHerdRepositoryMock = new();
-
-    private readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
-    private readonly Mock<IGenericRepository<PartyDocument>> _goldPartyRepositoryMock = new();
-    private readonly Mock<IGoldSitePartyRoleRelationshipRepository> _goldSitePartyRoleRelationshipRepositoryMock = new();
-
-    private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
-    private readonly Mock<IPremiseActivityTypeLookupService> _premiseActivityTypeLookupServiceMock = new();
-    private readonly Mock<IPremiseTypeLookupService> _premiseTypeLookupServiceMock = new();
-    private readonly Mock<IProductionTypeLookupService> _productionTypeLookupServiceMock = new();
-    private readonly Mock<IProductionUsageLookupService> _productionUsageLookupServiceMock = new();
-    private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
-    private readonly Mock<ISpeciesTypeLookupService> _speciesTypeLookupServiceMock = new();
-    private readonly Mock<ISiteIdentifierTypeLookupService> _siteIdentifierTypeLookupServiceMock = new();
-
+    private readonly AppTestFixture _appTestFixture;
     private readonly Fixture _fixture;
 
-    public SamHoldingImportOrchestratorTests()
+    public SamHoldingImportOrchestratorTests(AppTestFixture appTestFixture)
     {
+        _appTestFixture = appTestFixture;
         _fixture = new Fixture();
         _fixture.Behaviors.OfType<ThrowingRecursionBehavior>().ToList()
             .ForEach(b => _fixture.Behaviors.Remove(b));
@@ -64,35 +47,17 @@ public class SamHoldingImportOrchestratorTests
         SetupRepositoryMocks();
         SetupLookupServiceMocks();
 
-        var factory = new AppWebApplicationFactory();
-        factory.OverrideServiceAsScoped(_silverHoldingRepositoryMock.Object);
-        factory.OverrideServiceAsScoped(_silverPartyRepositoryMock.Object);
-        factory.OverrideServiceAsScoped(_silverHerdRepositoryMock.Object);
-        factory.OverrideServiceAsScoped(_goldSiteRepositoryMock.Object);
-        factory.OverrideServiceAsScoped(_goldPartyRepositoryMock.Object);
-        factory.OverrideServiceAsScoped(_goldSitePartyRoleRelationshipRepositoryMock.Object);
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holdings));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, herdsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(herds));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, holdersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holders));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, partiesUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(parties));
 
-        // Register lookup service mocks
-        factory.OverrideServiceAsScoped(_countryIdentifierLookupServiceMock.Object);
-        factory.OverrideServiceAsScoped(_premiseActivityTypeLookupServiceMock.Object);
-        factory.OverrideServiceAsScoped(_premiseTypeLookupServiceMock.Object);
-        factory.OverrideServiceAsScoped(_productionTypeLookupServiceMock.Object);
-        factory.OverrideServiceAsScoped(_productionUsageLookupServiceMock.Object);
-        factory.OverrideServiceAsScoped(_roleTypeLookupServiceMock.Object);
-        factory.OverrideServiceAsScoped(_speciesTypeLookupServiceMock.Object);
-        factory.OverrideServiceAsScoped(_siteIdentifierTypeLookupServiceMock.Object);
+        var result = await ExecuteTestAsync(_appTestFixture.AppWebApplicationFactory, holdingIdentifier);
 
-        SetupDataBridgeApiRequest(factory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holdings));
-        SetupDataBridgeApiRequest(factory, herdsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(herds));
-        SetupDataBridgeApiRequest(factory, holdersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holders));
-        SetupDataBridgeApiRequest(factory, partiesUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(parties));
-
-        var result = await ExecuteTestAsync(factory, holdingIdentifier);
-
-        VerifyDataBridgeApiEndpointCalled(factory, holdingsUri, Times.Once());
-        VerifyDataBridgeApiEndpointCalled(factory, herdsUri, Times.Once());
-        VerifyDataBridgeApiEndpointCalled(factory, holdersUri, Times.Once());
-        VerifyDataBridgeApiEndpointCalled(factory, partiesUri, Times.Once());
+        VerifyDataBridgeApiEndpointCalled(_appTestFixture.AppWebApplicationFactory, holdingsUri, Times.Once());
+        VerifyDataBridgeApiEndpointCalled(_appTestFixture.AppWebApplicationFactory, herdsUri, Times.Once());
+        VerifyDataBridgeApiEndpointCalled(_appTestFixture.AppWebApplicationFactory, holdersUri, Times.Once());
+        VerifyDataBridgeApiEndpointCalled(_appTestFixture.AppWebApplicationFactory, partiesUri, Times.Once());
 
         VerifyRawDataTypes(result, holdingIdentifier, holders[0].PARTY_ID, parties[0].PARTY_ID);
         VerifySilverDataTypes(result, holdingIdentifier);
@@ -251,103 +216,103 @@ public class SamHoldingImportOrchestratorTests
             : _fixture.CreateMany<PartyDocument>(existingGoldPartiesCount);
 
         // Silver Holding
-        _silverHoldingRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamHoldingRepositoryMock
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHoldingDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
-        _silverHoldingRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamHoldingRepositoryMock
             .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamHoldingDocument>, SamHoldingDocument)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _silverHoldingRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamHoldingRepositoryMock
             .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamHoldingDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Silver Party
-        _silverPartyRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamPartyRepositoryMock
             .Setup(r => r.FindOneAsync(It.IsAny<Expression<Func<SamPartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((SamPartyDocument?)null);
 
-        _silverPartyRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamPartyRepositoryMock
             .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamPartyDocument>, SamPartyDocument)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Silver Herds
-        _silverHerdRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamHerdRepositoryMock
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHerdDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
-        _silverHerdRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamHerdRepositoryMock
             .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamHerdDocument>, SamHerdDocument)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _silverHerdRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamHerdRepositoryMock
             .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamHerdDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Gold Site
-        _goldSiteRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._goldSiteRepositoryMock
             .Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingGoldSite);
 
-        _goldSiteRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._goldSiteRepositoryMock
             .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SiteDocument>, SiteDocument)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Gold Party
-        _goldPartyRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._goldPartyRepositoryMock
             .Setup(r => r.FindOneAsync(It.IsAny<Expression<Func<PartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((PartyDocument?)null);
 
-        _goldPartyRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._goldPartyRepositoryMock
             .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<PartyDocument>, PartyDocument)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Gold Site Party Role Relationships
-        _goldSitePartyRoleRelationshipRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._goldSitePartyRoleRelationshipRepositoryMock
             .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<Core.Documents.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _goldSitePartyRoleRelationshipRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._goldSitePartyRoleRelationshipRepositoryMock
             .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<Core.Documents.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _goldSitePartyRoleRelationshipRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._goldSitePartyRoleRelationshipRepositoryMock
             .Setup(r => r.GetExistingSitePartyRoleRelationships(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
     }
 
     private void SetupLookupServiceMocks()
     {
-        _countryIdentifierLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._countryIdentifierLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input, input));
 
-        _premiseActivityTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._premiseActivityTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
-        _premiseTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._premiseTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
-        _productionTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._productionTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
-        _productionUsageLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._productionUsageLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
-        _roleTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._roleTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input, input));
 
-        _speciesTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._speciesTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
-        _siteIdentifierTypeLookupServiceMock.Setup(x => x.GetByCodeAsync(HoldingIdentifierType.CPHN.ToString(), It.IsAny<CancellationToken>()))
+        _appTestFixture.AppWebApplicationFactory._siteIdentifierTypeLookupServiceMock.Setup(x => x.GetByCodeAsync(HoldingIdentifierType.CPHN.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SiteIdentifierTypeDocument
             {
                 IdentifierId = "6b4ca299-895d-4cdb-95dd-670de71ff328",

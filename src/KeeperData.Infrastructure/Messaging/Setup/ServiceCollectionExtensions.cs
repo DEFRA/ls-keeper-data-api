@@ -10,6 +10,7 @@ using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
+using KeeperData.Core.Messaging.Observers;
 using KeeperData.Core.Messaging.Serializers;
 using KeeperData.Infrastructure.Messaging.Configuration;
 using KeeperData.Infrastructure.Messaging.Consumers;
@@ -76,6 +77,8 @@ public static class ServiceCollectionExtensions
         services.AddHostedService<QueueListener>()
             .AddSingleton<IQueuePoller, QueuePoller>();
         services.AddSingleton<IDeadLetterQueueService, DeadLetterQueueService>();
+
+        services.AddScoped<IQueuePollerObserver<MessageType>, NullQueuePollerObserver<MessageType>>();
     }
 
     private static void AdddMessageSerializers(this IServiceCollection services)

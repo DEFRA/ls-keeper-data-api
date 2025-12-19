@@ -6,8 +6,6 @@ using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Extensions;
 using KeeperData.Core.Messaging.Consumers;
-using KeeperData.Core.Repositories;
-using KeeperData.Core.Services;
 using KeeperData.Tests.Common.TestData;
 using KeeperData.Tests.Common.TestData.Sam;
 using KeeperData.Tests.Common.Utilities;
@@ -21,23 +19,9 @@ using static KeeperData.Tests.Common.TestData.Sam.SamTestScenarios;
 
 namespace KeeperData.Api.Tests.Component.Orchestration.Imports.Sam;
 
-public class SamBulkImportWithAccurateRawDataTests
+public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture) : IClassFixture<AppTestFixture>
 {
-    private readonly Mock<IGenericRepository<SamHoldingDocument>> _silverHoldingRepositoryMock = new();
-    private readonly Mock<IGenericRepository<SamPartyDocument>> _silverPartyRepositoryMock = new();
-    private readonly Mock<IGenericRepository<SamHerdDocument>> _silverHerdRepositoryMock = new();
-
-    private readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
-    private readonly Mock<IGenericRepository<PartyDocument>> _goldPartyRepositoryMock = new();
-    private readonly Mock<IGoldSitePartyRoleRelationshipRepository> _goldSitePartyRoleRelationshipRepositoryMock = new();
-
-    private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
-    private readonly Mock<IPremiseActivityTypeLookupService> _premiseActivityTypeLookupServiceMock = new();
-    private readonly Mock<IPremiseTypeLookupService> _premiseTypeLookupServiceMock = new();
-    private readonly Mock<IProductionUsageLookupService> _productionUsageLookupServiceMock = new();
-    private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
-    private readonly Mock<ISpeciesTypeLookupService> _speciesTypeLookupServiceMock = new();
-    private readonly Mock<ISiteIdentifierTypeLookupService> _siteIdentifierTypeLookupServiceMock = new();
+    private readonly AppTestFixture _appTestFixture = appTestFixture;
 
     [Fact]
     public async Task GivenAHoldingIdentifier_WhenExecutingTheBulkImportStrategy_ShouldCorrectlyTransformTheData()
@@ -75,20 +59,17 @@ public class SamBulkImportWithAccurateRawDataTests
         SetupDefaultRepositoryMocks();
         SetupDefaultLookupServiceMocks();
 
-        var factory = new AppWebApplicationFactory();
-        OverrideServiceMocks(factory);
-
         if (existingContext != null)
         {
             SetupRepositoryMocksFromContext(existingContext);
         }
 
-        SetupDataBridgeApiRequest(factory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawHoldings));
-        SetupDataBridgeApiRequest(factory, herdsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawHerds));
-        SetupDataBridgeApiRequest(factory, holdersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawHolders));
-        SetupDataBridgeApiRequest(factory, partiesUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawParties));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawHoldings));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, herdsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawHerds));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, holdersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawHolders));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, partiesUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawParties));
 
-        return await ExecuteTestAsync(factory, scenarioData.Cph);
+        return await ExecuteTestAsync(_appTestFixture.AppWebApplicationFactory, scenarioData.Cph);
     }
 
     private static async Task<SamHoldingImportContext> ExecuteTestAsync(AppWebApplicationFactory factory, string holdingIdentifier)
@@ -160,24 +141,6 @@ public class SamBulkImportWithAccurateRawDataTests
         );
     }
 
-    private void OverrideServiceMocks(AppWebApplicationFactory factory)
-    {
-        factory.OverrideServiceAsScoped(_silverHoldingRepositoryMock.Object);
-        factory.OverrideServiceAsScoped(_silverPartyRepositoryMock.Object);
-        factory.OverrideServiceAsScoped(_silverHerdRepositoryMock.Object);
-        factory.OverrideServiceAsScoped(_goldSiteRepositoryMock.Object);
-        factory.OverrideServiceAsScoped(_goldPartyRepositoryMock.Object);
-        factory.OverrideServiceAsScoped(_goldSitePartyRoleRelationshipRepositoryMock.Object);
-
-        factory.OverrideServiceAsScoped(_countryIdentifierLookupServiceMock.Object);
-        factory.OverrideServiceAsScoped(_premiseActivityTypeLookupServiceMock.Object);
-        factory.OverrideServiceAsScoped(_premiseTypeLookupServiceMock.Object);
-        factory.OverrideServiceAsScoped(_productionUsageLookupServiceMock.Object);
-        factory.OverrideServiceAsScoped(_roleTypeLookupServiceMock.Object);
-        factory.OverrideServiceAsScoped(_speciesTypeLookupServiceMock.Object);
-        factory.OverrideServiceAsScoped(_siteIdentifierTypeLookupServiceMock.Object);
-    }
-
     private static void SetupDataBridgeApiRequest(AppWebApplicationFactory factory, string uri, HttpStatusCode httpStatusCode, StringContent httpResponseMessage)
     {
         factory.DataBridgeApiClientHttpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{TestConstants.DataBridgeApiBaseUrl}/{uri}")
@@ -212,72 +175,72 @@ public class SamBulkImportWithAccurateRawDataTests
     private void SetupDefaultRepositoryMocks()
     {
         // Silver Holding
-        _silverHoldingRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamHoldingRepositoryMock
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHoldingDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
-        _silverHoldingRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamHoldingRepositoryMock
             .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamHoldingDocument>, SamHoldingDocument)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _silverHoldingRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamHoldingRepositoryMock
             .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamHoldingDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Silver Party
-        _silverPartyRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamPartyRepositoryMock
             .Setup(r => r.FindOneAsync(It.IsAny<Expression<Func<SamPartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((SamPartyDocument?)null);
 
-        _silverPartyRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamPartyRepositoryMock
             .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamPartyDocument>, SamPartyDocument)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Silver Herds
-        _silverHerdRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamHerdRepositoryMock
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHerdDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
-        _silverHerdRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamHerdRepositoryMock
             .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamHerdDocument>, SamHerdDocument)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _silverHerdRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamHerdRepositoryMock
             .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamHerdDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Gold Site
-        _goldSiteRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._goldSiteRepositoryMock
             .Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((SiteDocument?)null);
 
-        _goldSiteRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._goldSiteRepositoryMock
             .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SiteDocument>, SiteDocument)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Gold Party
-        _goldPartyRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._goldPartyRepositoryMock
             .Setup(r => r.FindOneAsync(It.IsAny<Expression<Func<PartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((PartyDocument?)null);
 
-        _goldPartyRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._goldPartyRepositoryMock
             .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<PartyDocument>, PartyDocument)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Gold Site Party Role Relationships
-        _goldSitePartyRoleRelationshipRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._goldSitePartyRoleRelationshipRepositoryMock
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Core.Documents.SitePartyRoleRelationshipDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
-        _goldSitePartyRoleRelationshipRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._goldSitePartyRoleRelationshipRepositoryMock
             .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<Core.Documents.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _goldSitePartyRoleRelationshipRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._goldSitePartyRoleRelationshipRepositoryMock
             .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<Core.Documents.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _goldSitePartyRoleRelationshipRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._goldSitePartyRoleRelationshipRepositoryMock
             .Setup(r => r.GetExistingSitePartyRoleRelationships(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
     }
@@ -285,7 +248,7 @@ public class SamBulkImportWithAccurateRawDataTests
     private void SetupRepositoryMocksFromContext(SamHoldingImportContext context)
     {
         // Silver Holding
-        _silverHoldingRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamHoldingRepositoryMock
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHoldingDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([.. context.SilverHoldings.Select(h =>
             {
@@ -294,7 +257,7 @@ public class SamBulkImportWithAccurateRawDataTests
             })]);
 
         // Silver Party
-        _silverPartyRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamPartyRepositoryMock
             .Setup(r => r.FindOneAsync(It.IsAny<Expression<Func<SamPartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Expression<Func<SamPartyDocument, bool>> expr, CancellationToken _) =>
             {
@@ -308,7 +271,7 @@ public class SamBulkImportWithAccurateRawDataTests
             });
 
         // Silver Herds
-        _silverHerdRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._silverSamHerdRepositoryMock
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHerdDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([.. context.SilverHerds.Select(h =>
             {
@@ -317,7 +280,7 @@ public class SamBulkImportWithAccurateRawDataTests
             })]);
 
         // Gold Site
-        _goldSiteRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._goldSiteRepositoryMock
             .Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(() =>
             {
@@ -326,7 +289,7 @@ public class SamBulkImportWithAccurateRawDataTests
             });
 
         // Gold Party
-        _goldPartyRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._goldPartyRepositoryMock
             .Setup(r => r.FindOneAsync(It.IsAny<Expression<Func<PartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Expression<Func<PartyDocument, bool>> expr, CancellationToken _) =>
             {
@@ -340,7 +303,7 @@ public class SamBulkImportWithAccurateRawDataTests
             });
 
         // Gold Site Party Role Relationships
-        _goldSitePartyRoleRelationshipRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._goldSitePartyRoleRelationshipRepositoryMock
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<Core.Documents.SitePartyRoleRelationshipDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([.. context.GoldSitePartyRoles.Select(h =>
             {
@@ -351,23 +314,23 @@ public class SamBulkImportWithAccurateRawDataTests
 
     private void SetupDefaultLookupServiceMocks()
     {
-        _countryIdentifierLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._countryIdentifierLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? code, string? internalCode, CancellationToken token) => (CountryData.Find(code!, internalCode)));
 
-        _countryIdentifierLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._countryIdentifierLookupServiceMock
             .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? id, CancellationToken token) => (CountryData.GetById(id!)));
 
-        _premiseActivityTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._premiseActivityTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? code, CancellationToken token) => (PremiseActivityTypeData.Find(code!)));
 
-        _premiseActivityTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._premiseActivityTypeLookupServiceMock
             .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? id, CancellationToken token) => (PremiseActivityTypeData.GetById(id!)));
 
-        _premiseActivityTypeLookupServiceMock.Setup(x => x.GetByCodeAsync("WM", It.IsAny<CancellationToken>()))
+        _appTestFixture.AppWebApplicationFactory._premiseActivityTypeLookupServiceMock.Setup(x => x.GetByCodeAsync("WM", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PremisesActivityTypeDocument
             {
                 IdentifierId = "e0dd8921-3593-4e58-b797-a7c8673d8e40",
@@ -376,7 +339,7 @@ public class SamBulkImportWithAccurateRawDataTests
                 IsActive = true
             });
 
-        _premiseActivityTypeLookupServiceMock.Setup(x => x.GetByCodeAsync("RM", It.IsAny<CancellationToken>()))
+        _appTestFixture.AppWebApplicationFactory._premiseActivityTypeLookupServiceMock.Setup(x => x.GetByCodeAsync("RM", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PremisesActivityTypeDocument
             {
                 IdentifierId = "d2d9be5e-18b4-4424-b196-fd40f3b105d8",
@@ -385,39 +348,39 @@ public class SamBulkImportWithAccurateRawDataTests
                 IsActive = true
             });
 
-        _premiseTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._premiseTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? code, CancellationToken token) => (PremiseTypeData.Find(code!)));
 
-        _premiseTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._premiseTypeLookupServiceMock
             .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? id, CancellationToken token) => (PremiseTypeData.GetById(id!)));
 
-        _productionUsageLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._productionUsageLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? code, CancellationToken token) => (ProductionUsageData.Find(code!)));
 
-        _productionUsageLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._productionUsageLookupServiceMock
             .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? id, CancellationToken token) => (ProductionUsageData.GetById(id!)));
 
-        _roleTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._roleTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? code, CancellationToken token) => (RoleData.Find(code!)));
 
-        _roleTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._roleTypeLookupServiceMock
             .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? id, CancellationToken token) => (RoleData.GetById(id!)));
 
-        _speciesTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._speciesTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? code, CancellationToken token) => (SpeciesData.Find(code!)));
 
-        _speciesTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._speciesTypeLookupServiceMock
             .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? id, CancellationToken token) => (SpeciesData.GetById(id!)));
 
-        _siteIdentifierTypeLookupServiceMock.Setup(x => x.GetByCodeAsync(HoldingIdentifierType.CPHN.ToString(), It.IsAny<CancellationToken>()))
+        _appTestFixture.AppWebApplicationFactory._siteIdentifierTypeLookupServiceMock.Setup(x => x.GetByCodeAsync(HoldingIdentifierType.CPHN.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SiteIdentifierTypeDocument
             {
                 IdentifierId = "6b4ca299-895d-4cdb-95dd-670de71ff328",
