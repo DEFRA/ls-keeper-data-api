@@ -308,7 +308,7 @@ public static class SamHoldingMapper
 
         site.SetGroupMarks(groupMarks, representative.LastUpdatedDate);
 
-        site.SetSiteParties(siteParties, representative.LastUpdatedDate);
+        site.SetSiteParties(goldSiteId, siteParties, representative.LastUpdatedDate);
 
         return site;
     }
@@ -404,7 +404,7 @@ public static class SamHoldingMapper
 
         site.SetGroupMarks(groupMarks, representative.LastUpdatedDate);
 
-        site.SetSiteParties(siteParties, representative.LastUpdatedDate);
+        site.SetSiteParties(existing.Id, siteParties, representative.LastUpdatedDate);
 
         return site;
     }

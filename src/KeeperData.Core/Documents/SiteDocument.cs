@@ -200,7 +200,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
                     partyRole: p.PartyRoles?.Select(r => r.ToDomain())))
                 .ToList();
 
-            site.SetSiteParties(siteParties, LastUpdatedDate);
+            site.SetSiteParties(site.Id, siteParties, LastUpdatedDate);
         }
 
         return site;
