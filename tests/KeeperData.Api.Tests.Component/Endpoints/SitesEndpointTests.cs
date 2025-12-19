@@ -12,7 +12,7 @@ namespace KeeperData.Api.Tests.Component.Endpoints;
 public class SitesEndpointTests(AppTestFixture appTestFixture) : IClassFixture<AppTestFixture>
 {
     private readonly AppTestFixture _appTestFixture = appTestFixture;
-    
+
     [Fact]
     public async Task GetSites_WithFilterAndSort_ReturnsFilteredAndSortedOkResult()
     {
