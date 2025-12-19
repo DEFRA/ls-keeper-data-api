@@ -19,6 +19,7 @@ public static class CtsPartyRoleRelationshipMapper
                 Source = SourceSystemType.CTS.ToString(),
 
                 RoleTypeId = role.RoleTypeId,
+                RoleTypeCode = role.RoleTypeCode,
                 RoleTypeName = role.RoleTypeName,
                 SourceRoleName = role.SourceRoleName,
 

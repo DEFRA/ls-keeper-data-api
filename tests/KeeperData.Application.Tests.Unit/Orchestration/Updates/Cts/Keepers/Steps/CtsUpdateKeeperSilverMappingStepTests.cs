@@ -19,7 +19,7 @@ public class CtsUpdateKeeperSilverMappingStepTests
     {
         _roleTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid.NewGuid().ToString(), "Keeper"));
+            .ReturnsAsync((Guid.NewGuid().ToString(), "LIVESTOCKKEEPER", "Livestock Keeper"));
 
         _sut = new CtsUpdateKeeperSilverMappingStep(_roleTypeLookupServiceMock.Object, _loggerMock.Object);
     }

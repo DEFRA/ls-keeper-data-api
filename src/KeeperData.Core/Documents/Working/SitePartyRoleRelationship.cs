@@ -6,7 +6,7 @@ public class SitePartyRoleRelationship
 
     public required string HoldingIdentifier { get; set; }
 
-    public required string PartyId { get; set; }
+    public required string CustomerNumber { get; set; }
 
     public string? RoleTypeId { get; set; }
 }

@@ -6,7 +6,7 @@ namespace KeeperData.Core.Repositories;
 public interface ISiteGroupMarkRelationshipRepository : IGenericRepository<SiteGroupMarkRelationshipDocument>
 {
     Task<List<SiteGroupMarkRelationship>> GetExistingSiteGroupMarkRelationships(
-        List<string> partyIds,
+        List<string> customerNumbers,
         string holdingIdentifier,
         CancellationToken cancellationToken = default);
 }

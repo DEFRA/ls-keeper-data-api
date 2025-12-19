@@ -15,18 +15,18 @@ public class SamPartyMapperTests
     private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
 
-    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveRoleType;
-    private readonly Func<string?, string?, CancellationToken, Task<(string?, string?)>> _resolveCountry;
+    private readonly Func<string?, CancellationToken, Task<(string?, string?, string?)>> _resolveRoleType;
+    private readonly Func<string?, string?, CancellationToken, Task<(string?, string?, string?)>> _resolveCountry;
 
     public SamPartyMapperTests()
     {
         _roleTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input, input));
 
         _countryIdentifierLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input, input));
 
         _resolveRoleType = _roleTypeLookupServiceMock.Object.FindAsync;
         _resolveCountry = _countryIdentifierLookupServiceMock.Object.FindAsync;
@@ -65,7 +65,7 @@ public class SamPartyMapperTests
     {
         _roleTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((null, null));
+            .ReturnsAsync((null, null, null));
 
         var holdingIdentifier = CphGenerator.GenerateFormattedCph();
 
@@ -95,7 +95,7 @@ public class SamPartyMapperTests
     {
         _countryIdentifierLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((null, null));
+            .ReturnsAsync((null, null, null));
 
         var holdingIdentifier = CphGenerator.GenerateFormattedCph();
 
@@ -116,8 +116,8 @@ public class SamPartyMapperTests
 
         var address = result.Address;
         address.IdentifierId.Should().NotBeNullOrWhiteSpace();
-        address.CountryCode.Should().Be(records[0].COUNTRY_CODE);
         address.CountryIdentifier.Should().BeNull();
+        address.CountryCode.Should().BeNull();
     }
 
     [Theory]
@@ -244,8 +244,6 @@ public class SamPartyMapperTests
                 CPHS = "11/234/5678"
             }
         };
-
-        var totalRoles = parties[0].RoleList.Count;
 
         var result = SamPartyMapper.AggregatePartyAndHolder(parties, holders);
 

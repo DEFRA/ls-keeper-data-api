@@ -25,16 +25,15 @@ using Xunit.Sdk;
 
 namespace KeeperData.Api.Tests.Component.Endpoints;
 
-public class CountriesEndpointTests : IClassFixture<AppWebApplicationFactory>
+public class CountriesEndpointTests : IClassFixture<AppTestFixture>
 {
     private readonly HttpClient _client;
     private Mock<ICountryRepository> _countryRepoMock;
 
-    public CountriesEndpointTests(AppWebApplicationFactory factory)
+    public CountriesEndpointTests(AppTestFixture appTestFixture)
     {
-        _countryRepoMock = new Mock<ICountryRepository>();
-        factory.OverrideServiceAsScoped(_countryRepoMock.Object);
-        _client = factory.CreateClient();
+        _countryRepoMock = appTestFixture.AppWebApplicationFactory._countriesRepositoryMock;
+        _client = appTestFixture.HttpClient;
     }
 
     private static readonly DateTime GBLastUpdated = new DateTime(2012, 08, 18, 11, 10, 0);

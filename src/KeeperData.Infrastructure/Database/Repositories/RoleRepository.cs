@@ -23,10 +23,10 @@ public class RoleRepository(
         return roles.FirstOrDefault(r => r.IdentifierId?.Equals(id, StringComparison.OrdinalIgnoreCase) == true);
     }
 
-    public async Task<(string? roleId, string? roleName)> FindAsync(string? lookupValue, CancellationToken cancellationToken = default)
+    public async Task<(string? roleId, string? roleCode, string? roleName)> FindAsync(string? lookupValue, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(lookupValue))
-            return (null, null);
+            return (null, null, null);
 
         var roles = await GetAllAsync(cancellationToken);
 
@@ -37,7 +37,7 @@ public class RoleRepository(
         role ??= roles.FirstOrDefault(r => r.Name?.Equals(lookupValue, StringComparison.OrdinalIgnoreCase) == true);
 
         return role != null
-            ? (role.IdentifierId, role.Name)
-            : (null, null);
+            ? (role.IdentifierId, role.Code, role.Name)
+            : (null, null, null);
     }
 }

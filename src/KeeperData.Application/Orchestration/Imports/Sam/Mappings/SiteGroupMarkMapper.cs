@@ -52,7 +52,7 @@ public static class SiteGroupMarkMapper
                 {
                     var doc = baseDoc with
                     {
-                        PartyId = role.PartyId,
+                        CustomerNumber = role.PartyId,
                         PartyTypeId = role.PartyTypeId,
                         RoleTypeId = role.RoleTypeId,
                         RoleTypeName = role.RoleTypeName

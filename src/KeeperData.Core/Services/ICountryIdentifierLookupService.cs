@@ -6,5 +6,5 @@ public interface ICountryIdentifierLookupService
 {
     Task<CountryDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken);
 
-    Task<(string? countryId, string? countryName)> FindAsync(string? countryCode, string? ukInternalCode, CancellationToken cancellationToken);
+    Task<(string? countryId, string? countryCode, string? countryName)> FindAsync(string? countryCode, string? ukInternalCode, CancellationToken cancellationToken);
 }

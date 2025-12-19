@@ -1,7 +1,7 @@
-using KeeperData.Application.Extensions;
 using KeeperData.Application.Orchestration.Imports.Cts.Mappings;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Extensions;
 using KeeperData.Core.Services;
 using Microsoft.Extensions.Logging;
 
@@ -18,11 +18,11 @@ public class CtsUpdateKeeperSilverMappingStep(
         if (context.RawKeeper == null) return;
 
         var roleName = InferredRoleType.LivestockKeeper.GetDescription();
-        var (roleTypeId, roleTypeName) = await roleTypeLookupService.FindAsync(roleName, cancellationToken);
+        var (roleTypeId, roleTypeCode, roleTypeName) = await roleTypeLookupService.FindAsync(roleName, cancellationToken);
 
         context.SilverParty = CtsAgentOrKeeperMapper.ToSilver(
             context.RawKeeper,
-            (roleName, roleTypeId, roleTypeName));
+            (roleName, roleTypeId, roleTypeCode, roleTypeName));
 
         context.SilverPartyRoles = CtsPartyRoleRelationshipMapper.ToSilver([context.SilverParty]);
     }

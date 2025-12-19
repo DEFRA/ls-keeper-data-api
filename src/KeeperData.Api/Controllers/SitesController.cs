@@ -7,7 +7,7 @@ namespace KeeperData.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class SiteController(IRequestExecutor executor) : ControllerBase
+    public class SitesController(IRequestExecutor executor) : ControllerBase
     {
         private readonly IRequestExecutor _executor = executor;
 

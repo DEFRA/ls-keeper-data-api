@@ -27,6 +27,7 @@ public static class VerifyCtsPartyRoleRelationshipMappings
         target.Source.Should().Be(SourceSystemType.CTS.ToString());
 
         target.RoleTypeId.Should().Be(matchingRole.RoleTypeId);
+        target.RoleTypeCode.Should().Be(matchingRole.RoleTypeCode);
         target.RoleTypeName.Should().Be(matchingRole.RoleTypeName);
         target.SourceRoleName.Should().Be(matchingRole.SourceRoleName);
 

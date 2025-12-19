@@ -27,7 +27,7 @@ public class SamHoldingImportCheckForOrphansStep(
 
         var orphans = existingRelationships
             .Where(er => !incomingPartyIds.Any(ir =>
-                ir == er.PartyId))
+                ir == er.CustomerNumber))
             .ToList();
 
         context.PartiesWithNoRelationshipToSiteToClean = orphans;

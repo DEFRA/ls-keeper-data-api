@@ -14,9 +14,13 @@ public class PartyRoleDocument : INestedEntity
     [BsonElement("roleTypeId")]
     public string? RoleTypeId { get; set; } // LOV Lookup / Internal Id
 
+    [JsonPropertyName("roleTypeCode")]
+    [BsonElement("roleTypeCode")]
+    public string? RoleTypeCode { get; set; }
+
     [JsonPropertyName("roleTypeName")]
     [BsonElement("roleTypeName")]
-    public string? RoleTypeName { get; set; } // LOV Lookup / Internal Name
+    public string? RoleTypeName { get; set; }
 
     [JsonPropertyName("sourceRoleName")]
     [BsonElement("sourceRoleName")]

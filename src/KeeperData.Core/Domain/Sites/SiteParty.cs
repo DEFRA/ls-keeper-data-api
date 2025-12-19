@@ -6,7 +6,7 @@ namespace KeeperData.Core.Domain.Sites;
 public class SiteParty : ValueObject
 {
     public string Id { get; private set; }
-    public string PartyId { get; private set; }
+    public string CustomerNumber { get; private set; }
     public string? Title { get; private set; }
     public string? FirstName { get; private set; }
     public string? LastName { get; private set; }
@@ -23,7 +23,7 @@ public class SiteParty : ValueObject
         string id,
         DateTime createdDate,
         DateTime lastUpdatedDate,
-        string partyId,
+        string customerNumber,
         string? title,
         string? firstName,
         string? lastName,
@@ -37,7 +37,7 @@ public class SiteParty : ValueObject
         Id = id;
         CreatedDate = createdDate;
         LastUpdatedDate = lastUpdatedDate;
-        PartyId = partyId;
+        CustomerNumber = customerNumber;
         Title = title;
         FirstName = firstName;
         LastName = lastName;
@@ -50,7 +50,7 @@ public class SiteParty : ValueObject
     }
 
     public static SiteParty Create(
-        string partyId,
+        string customerNumber,
         string? title,
         string? firstName,
         string? lastName,
@@ -65,7 +65,7 @@ public class SiteParty : ValueObject
             Guid.NewGuid().ToString(),
             DateTime.UtcNow,
             DateTime.UtcNow,
-            partyId,
+            customerNumber,
             title,
             firstName,
             lastName,
@@ -79,7 +79,7 @@ public class SiteParty : ValueObject
 
     public bool ApplyChanges(
         DateTime lastUpdatedDate,
-        string partyId,
+        string customerNumber,
         string? title,
         string? firstName,
         string? lastName,
@@ -92,7 +92,7 @@ public class SiteParty : ValueObject
     {
         var changed = false;
 
-        changed |= Change(PartyId, partyId, v => PartyId = v, lastUpdatedDate);
+        changed |= Change(CustomerNumber, customerNumber, v => CustomerNumber = v, lastUpdatedDate);
         changed |= Change(Title, title, v => Title = v, lastUpdatedDate);
         changed |= Change(FirstName, firstName, v => FirstName = v, lastUpdatedDate);
         changed |= Change(LastName, lastName, v => LastName = v, lastUpdatedDate);
@@ -131,7 +131,7 @@ public class SiteParty : ValueObject
 
     public override IEnumerable<object> GetEqualityComponents()
     {
-        yield return PartyId;
+        yield return CustomerNumber;
         yield return Title ?? string.Empty;
         yield return FirstName ?? string.Empty;
         yield return LastName ?? string.Empty;

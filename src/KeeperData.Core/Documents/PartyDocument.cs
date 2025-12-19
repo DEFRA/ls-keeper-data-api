@@ -20,6 +20,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("createdDate")]
     [JsonPropertyName("createdDate")]
+    [JsonIgnore]
     [AutoIndexed]
     public DateTime CreatedDate { get; set; }
 
@@ -60,6 +61,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("deleted")]
     [JsonPropertyName("deleted")]
+    [JsonIgnore]
     public bool Deleted { get; set; }
 
     [BsonElement("communication")]
@@ -146,7 +148,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
             FirstName = siteParty.FirstName,
             LastName = siteParty.LastName,
             Name = siteParty.Name,
-            CustomerNumber = siteParty.PartyId,
+            CustomerNumber = siteParty.CustomerNumber,
             PartyType = siteParty.PartyType,
             State = siteParty.State,
             Deleted = false,
@@ -162,7 +164,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
             id: Id,
             createdDate: CreatedDate,
             lastUpdatedDate: lastUpdatedDate,
-            partyId: CustomerNumber ?? string.Empty,
+            customerNumber: CustomerNumber ?? string.Empty,
             title: Title,
             firstName: FirstName,
             lastName: LastName,
