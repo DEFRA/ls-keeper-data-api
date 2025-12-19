@@ -7,6 +7,7 @@ public class PartyRoleSite : ValueObject
 {
     public string Id { get; private set; }
     public string? Name { get; private set; }
+    public PremisesType? Type { get; private set; }
     public string? State { get; private set; }
     public DateTime? LastUpdatedDate { get; private set; }
 
@@ -16,23 +17,27 @@ public class PartyRoleSite : ValueObject
     public PartyRoleSite(
         string id,
         string? name,
+        PremisesType? type,
         string? state,
         DateTime? lastUpdatedDate)
     {
         Id = id;
         Name = name;
+        Type = type;
         State = state;
         LastUpdatedDate = lastUpdatedDate;
     }
 
     public static PartyRoleSite Create(
         string siteId,
-        string? name = null,
+        string? name,
+        PremisesType? type,
         string? state = null)
     {
         return new PartyRoleSite(
             siteId,
             name,
+            type,
             state,
             DateTime.UtcNow);
     }
@@ -43,11 +48,12 @@ public class PartyRoleSite : ValueObject
         _identifiers.AddRange(identifiers);
     }
 
-    public bool ApplyChanges(string? name, string? state, DateTime lastUpdatedDate)
+    public bool ApplyChanges(string? name, PremisesType? type, string? state, DateTime lastUpdatedDate)
     {
         var changed = false;
 
         changed |= Change(Name, name, v => Name = v);
+        changed |= Change(Type, type, v => Type = v);
         changed |= Change(State, state, v => State = v);
 
         if (changed)

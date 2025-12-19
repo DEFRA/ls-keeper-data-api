@@ -450,7 +450,11 @@ public static class SamPartyMapper
 
             foreach (var r in roleList)
             {
-                var partyRoleSite = PartyRoleSite.Create(goldSiteId);
+                var partyRoleSite = PartyRoleSite.Create(
+                    siteId: goldSiteId,
+                    name: null,
+                    type: null,
+                    state: null);
 
                 var partyRoleRole = PartyRoleRole.Create(
                     r.RoleTypeId ?? string.Empty,
@@ -559,7 +563,11 @@ public static class SamPartyMapper
         {
             foreach (var r in roleList)
             {
-                var partyRoleSite = PartyRoleSite.Create(goldSiteId);
+                var partyRoleSite = PartyRoleSite.Create(
+                    siteId: goldSiteId,
+                    name: null,
+                    type: null,
+                    state: null);
 
                 var partyRoleRole = PartyRoleRole.Create(
                     r.RoleTypeId ?? string.Empty,
@@ -626,8 +634,15 @@ public static class SamPartyMapper
 
             foreach (var partyRole in party.Roles.Where(x => x.Site?.Id == goldSite.Id))
             {
+                var premiseType = goldSite.Type != null ? PremisesType.Create(
+                    goldSite.Type.IdentifierId,
+                    goldSite.Type.Code,
+                    goldSite.Type.Description,
+                    goldSite.Type.LastUpdatedDate) : null;
+
                 partyRole.Site?.ApplyChanges(
                     goldSite.Name,
+                    premiseType,
                     goldSite.State,
                     goldSite.LastUpdatedDate);
 
