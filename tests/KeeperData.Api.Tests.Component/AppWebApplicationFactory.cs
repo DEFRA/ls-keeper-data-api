@@ -46,7 +46,6 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
 
     public readonly Mock<ISitesRepository> _sitesRepositoryMock = new();
     public readonly Mock<IPartiesRepository> _partiesRepositoryMock = new();
-    public readonly Mock<ICountryRepository> _countriesRepositoryMock = new();
     public readonly Mock<IGenericRepository<CtsHoldingDocument>> _silverCtsHoldingRepositoryMock = new();
     public readonly Mock<IGenericRepository<CtsPartyDocument>> _silverCtsPartyRepositoryMock = new();
     public readonly Mock<IGenericRepository<SamHoldingDocument>> _silverSamHoldingRepositoryMock = new();
@@ -203,7 +202,6 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
 
     private void ConfigureRepositories()
     {
-        OverrideServiceAsScoped(_countriesRepositoryMock.Object);
         OverrideServiceAsScoped(_sitesRepositoryMock.Object);
         OverrideServiceAsScoped(_partiesRepositoryMock.Object);
 
@@ -225,7 +223,6 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
     {
         _sitesRepositoryMock.Reset();
         _partiesRepositoryMock.Reset();
-        _countriesRepositoryMock.Reset();
 
         _silverCtsHoldingRepositoryMock.Reset();
         _silverCtsPartyRepositoryMock.Reset();
