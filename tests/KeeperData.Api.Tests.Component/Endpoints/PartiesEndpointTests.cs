@@ -13,7 +13,6 @@ public class PartiesEndpointTests(AppTestFixture appTestFixture) : IClassFixture
 {
     private readonly AppTestFixture _appTestFixture = appTestFixture;
 
-
     [Fact]
     public async Task GetParties_WithFilterAndSort_ReturnsFilteredAndSortedOkResult()
     {

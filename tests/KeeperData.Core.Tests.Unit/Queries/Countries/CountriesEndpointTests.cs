@@ -33,10 +33,10 @@ public class CountriesQueryAdapterTests
     private static CountryDTO CountryFRAsDTO = new CountryDTO { Code = "FR", IdentifierId = "FR-123", Name = "France", LongName = "France", DevolvedAuthorityFlag = false, EuTradeMemberFlag = true };
 
     [Fact]
-    public async Task WhenEndpointHitWithNoParams_AllCountriesShouldBeReturned()
+    public async Task WhenHandlingQueryWithNoFilters_AllCountriesShouldBeReturned()
     {
         GivenTheseCountries(TestCountries);
-        var result = await WhenPerformGetOnCountriesEndpoint();
+        var result = await WhenSearchingForCountries();
         var expected = CountryGBAsDTO;
 
         result.Count().Should().Be(3);
@@ -59,7 +59,7 @@ public class CountriesQueryAdapterTests
         Debug.WriteLine(scenario);
         GivenTheseCountries(TestCountries);
 
-        var result = await WhenPerformGetOnCountriesEndpoint(name, codesCsv, euTradeMember, devolvedAuthority);
+        var result = await WhenSearchingForCountries(name, codesCsv, euTradeMember, devolvedAuthority);
 
         var codes = expectedCodes?.Split(",") ?? new string[] { };
         result.Count().Should().Be(codes.Count());
@@ -80,7 +80,7 @@ public class CountriesQueryAdapterTests
         Debug.WriteLine(scenario);
         GivenTheseCountries(TestCountries);
 
-        var result = await WhenPerformGetOnCountriesEndpoint(sortBy: sortBy, ascDesc: ascDesc, page: page, pageSize: pageSize);
+        var result = await WhenSearchingForCountries(sortBy: sortBy, ascDesc: ascDesc, page: page, pageSize: pageSize);
 
         var codes = expectedOrder?.Split(",") ?? new string[] { };
         result.Count().Should().Be(codes.Count());
@@ -104,7 +104,7 @@ public class CountriesQueryAdapterTests
         }
     }
 
-    private async Task<List<CountryDTO>> WhenPerformGetOnCountriesEndpoint(string? name = null, string? codeCsv = null, bool? euTradeMember = null, bool? devolvedAuthority = null, string? sortBy = null, string? ascDesc = null, int? page = null, int? pageSize = null)
+    private async Task<List<CountryDTO>> WhenSearchingForCountries(string? name = null, string? codeCsv = null, bool? euTradeMember = null, bool? devolvedAuthority = null, string? sortBy = null, string? ascDesc = null, int? page = null, int? pageSize = null)
     {
         var query = new Application.Queries.Countries.GetCountriesQuery()
         {

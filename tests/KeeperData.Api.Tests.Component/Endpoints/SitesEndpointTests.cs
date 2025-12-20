@@ -13,7 +13,6 @@ public class SitesEndpointTests(AppTestFixture appTestFixture) : IClassFixture<A
 {
     private readonly AppTestFixture _appTestFixture = appTestFixture;
 
-
     [Fact]
     public async Task GetSites_WithFilterAndSort_ReturnsFilteredAndSortedOkResult()
     {
