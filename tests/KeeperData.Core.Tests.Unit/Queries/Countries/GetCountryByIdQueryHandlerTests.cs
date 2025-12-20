@@ -33,9 +33,8 @@ public class GetCountryByIdQueryHandlerTests
         var repoMock = new Mock<ICountryRepository>();
         var id = "invalid-id";
         var request = new GetCountryByIdQuery(id);
-        
         var sut = new GetCountryByIdQueryHandler(repoMock.Object);
-        
+
         await Assert.ThrowsAsync<NotFoundException>(async () => await sut.Handle(request, CancellationToken.None));
     }
 }
