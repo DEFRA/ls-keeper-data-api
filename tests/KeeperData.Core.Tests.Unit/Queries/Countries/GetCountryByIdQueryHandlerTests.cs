@@ -2,6 +2,7 @@ using FluentAssertions;
 using KeeperData.Application.Queries.Countries;
 using KeeperData.Core.Documents;
 using KeeperData.Core.DTOs;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Repositories;
 using Moq;
 
@@ -24,5 +25,17 @@ public class GetCountryByIdQueryHandlerTests
 
         var expected = new CountryDTO { Code = "DE", IdentifierId = "DE-123", DevolvedAuthorityFlag = false, EuTradeMemberFlag = true, LastUpdatedDate = lastUpdated, LongName = "longname", Name = "Germany" };
         result.Should().BeEquivalentTo(expected);
+    }
+
+    [Fact]
+    public async Task WhenCountryIdDoesNotExistThenQueryHandlerShouldThrow()
+    {
+        var repoMock = new Mock<ICountryRepository>();
+        var id = "invalid-id";
+        var request = new GetCountryByIdQuery(id);
+        
+        var sut = new GetCountryByIdQueryHandler(repoMock.Object);
+        
+        await Assert.ThrowsAsync<NotFoundException>(async () => await sut.Handle(request, CancellationToken.None));
     }
 }
