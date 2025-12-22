@@ -19,7 +19,8 @@ public class CountriesQueryAdapter(ICountryRepository repository)
             .Where(c => string.IsNullOrEmpty(query!.Code) || codes!.Contains(c.Code))
             .Where(c => string.IsNullOrEmpty(query?.Name) || c.Name.Contains(query!.Name, StringComparison.InvariantCultureIgnoreCase))
             .Where(c => !query!.EuTradeMember.HasValue || c.EuTradeMember == query.EuTradeMember)
-            .Where(c => !query!.DevolvedAuthority.HasValue || c.DevolvedAuthority == query.DevolvedAuthority);
+            .Where(c => !query!.DevolvedAuthority.HasValue || c.DevolvedAuthority == query.DevolvedAuthority)
+            .Where(c => !query!.LastUpdatedDate.HasValue || c.LastModifiedDate >= query.LastUpdatedDate.Value);
 
         var sortedResults = query.Order switch
         {

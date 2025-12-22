@@ -22,17 +22,17 @@ public class CountriesQueryAdapterTests
         _sut = new CountriesQueryAdapter(_countryRepoMock.Object);
     }
 
-    private static readonly DateTime GBLastUpdated2012Nov = new DateTime(2012, 08, 18, 11, 10, 0);
-    private static readonly DateTime NZLastUpdated2013Nov = new DateTime(2013, 08, 18, 11, 10, 0);
-    private static readonly DateTime FRLastUpdated2014Nov = new DateTime(2014, 08, 18, 11, 10, 0);
+    private static readonly DateTime GBLastUpdated2012Aug = new DateTime(2012, 08, 18, 11, 10, 0);
+    private static readonly DateTime NZLastUpdated2013Aug = new DateTime(2013, 08, 18, 11, 10, 0);
+    private static readonly DateTime FRLastUpdated2014Aug = new DateTime(2014, 08, 18, 11, 10, 0);
 
     private List<CountryDocument> TestCountries = new List<CountryDocument> {
-            new() { IdentifierId = "GB-123", Code = "GB", Name = "UK", LongName = "United Kingdom", IsActive = true, DevolvedAuthority = true, EuTradeMember = false, SortOrder = 10, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.MinValue, LastModifiedDate = GBLastUpdated2012Nov },
-            new() { IdentifierId = "NZ-123", Code = "NZ", Name = "New Zealand", IsActive = true, SortOrder = 20, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.UtcNow, LastModifiedDate = NZLastUpdated2013Nov },
-            new() { IdentifierId = "FR-123", Code = "FR", Name = "France", LongName = "France", IsActive = true, SortOrder = 20, EuTradeMember = true, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.UtcNow, LastModifiedDate = FRLastUpdated2014Nov },
+            new() { IdentifierId = "GB-123", Code = "GB", Name = "UK", LongName = "United Kingdom", IsActive = true, DevolvedAuthority = true, EuTradeMember = false, SortOrder = 10, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.MinValue, LastModifiedDate = GBLastUpdated2012Aug },
+            new() { IdentifierId = "NZ-123", Code = "NZ", Name = "New Zealand", IsActive = true, SortOrder = 20, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.UtcNow, LastModifiedDate = NZLastUpdated2013Aug },
+            new() { IdentifierId = "FR-123", Code = "FR", Name = "France", LongName = "France", IsActive = true, SortOrder = 20, EuTradeMember = true, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.UtcNow, LastModifiedDate = FRLastUpdated2014Aug },
         };
 
-    private static CountryDTO CountryGBAsDTO = new CountryDTO { Code = "GB", IdentifierId = "GB-123", Name = "UK", LongName = "United Kingdom", DevolvedAuthorityFlag = true, EuTradeMemberFlag = false, LastUpdatedDate = GBLastUpdated2012Nov };
+    private static CountryDTO CountryGBAsDTO = new CountryDTO { Code = "GB", IdentifierId = "GB-123", Name = "UK", LongName = "United Kingdom", DevolvedAuthorityFlag = true, EuTradeMemberFlag = false, LastUpdatedDate = GBLastUpdated2012Aug };
     private static CountryDTO CountryFRAsDTO = new CountryDTO { Code = "FR", IdentifierId = "FR-123", Name = "France", LongName = "France", DevolvedAuthorityFlag = false, EuTradeMemberFlag = true };
 
     [Fact]
@@ -59,7 +59,7 @@ public class CountriesQueryAdapterTests
     [InlineData("Search by isEutrademember(false)", null, null, false, null, null, null, "GB,NZ")]
     [InlineData("Search by isDevolvedAuthority(true)", null, null, null, true, null, null, "GB")]
     [InlineData("Search by isDevolvedAuthority(false)", null, null, null, false, null, null, "FR,NZ")]
-    [InlineData("Search by lastupdated", null, null, null, null, 2013, 11, "NZ,FR")]
+    [InlineData("Search by lastupdated", null, null, null, null, 2013, 8, "NZ,FR")]
     public async Task WhenUserSearchesAppropriateCountriesShouldBeReturned(string scenario, string? name, string? codesCsv, bool? euTradeMember, bool? devolvedAuthority, int? year, int? month, string? expectedCodes)
     {
         Debug.WriteLine(scenario);
