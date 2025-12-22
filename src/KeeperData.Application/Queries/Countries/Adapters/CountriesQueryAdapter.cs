@@ -1,6 +1,6 @@
-using System.Collections.Immutable;
 using KeeperData.Core.DTOs;
 using KeeperData.Core.Repositories;
+using System.Collections.Immutable;
 
 namespace KeeperData.Application.Queries.Countries.Adapters;
 
@@ -16,11 +16,11 @@ public class CountriesQueryAdapter(ICountryRepository repository)
 
         var codes = query!.Code?.Split(',');
         var results = items
-            .Where(c => string.IsNullOrEmpty(query!.Code) || codes!.Contains(c.Code))
-            .Where(c => string.IsNullOrEmpty(query?.Name) || c.Name.Contains(query!.Name, StringComparison.InvariantCultureIgnoreCase))
+            .Where(c => !query!.LastUpdatedDate.HasValue || c.LastModifiedDate >= query.LastUpdatedDate.Value)
             .Where(c => !query!.EuTradeMember.HasValue || c.EuTradeMember == query.EuTradeMember)
             .Where(c => !query!.DevolvedAuthority.HasValue || c.DevolvedAuthority == query.DevolvedAuthority)
-            .Where(c => !query!.LastUpdatedDate.HasValue || c.LastModifiedDate >= query.LastUpdatedDate.Value);
+            .Where(c => string.IsNullOrEmpty(query?.Name) || c.Name.Contains(query!.Name, StringComparison.InvariantCultureIgnoreCase))
+            .Where(c => string.IsNullOrEmpty(query!.Code) || codes!.Contains(c.Code));
 
         var sortedResults = query.Order switch
         {
