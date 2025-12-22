@@ -6,7 +6,7 @@ using KeeperData.Core.Exceptions;
 using KeeperData.Core.Repositories;
 using Moq;
 
-namespace KeeperData.Core.Tests.Unit.Queries.Countries;
+namespace KeeperData.Core.Tests.Unit.Countries;
 
 public class GetCountryByIdQueryHandlerTests
 {

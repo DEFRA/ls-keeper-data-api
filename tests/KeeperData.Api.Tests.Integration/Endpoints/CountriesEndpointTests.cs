@@ -1,10 +1,6 @@
-using Amazon.Runtime;
 using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Fixtures;
-using KeeperData.Application.Queries.Pagination;
-using KeeperData.Core.DTOs;
 using System.Net;
-using System.Net.Http.Json;
 
 namespace KeeperData.Api.Tests.Integration.Endpoints;
 

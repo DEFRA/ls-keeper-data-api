@@ -1,4 +1,4 @@
-using KeeperData.Api.Controllers.RequestDtos.Parties;
+using KeeperData.Api.Controllers.RequestDtos.Countries;
 using KeeperData.Application;
 using KeeperData.Application.Queries.Countries;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +20,7 @@ namespace KeeperData.Api.Controllers
                 Code = request.Code,
                 DevolvedAuthority = request.DevolvedAuthority,
                 EuTradeMember = request.EuTradeMember,
+                LastUpdatedDate = request.LastUpdatedDate,
                 Order = request.Order,
                 Sort = request.Sort,
                 Page = request.Page,

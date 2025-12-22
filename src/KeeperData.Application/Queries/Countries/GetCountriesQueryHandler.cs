@@ -1,10 +1,8 @@
-using KeeperData.Application.Queries.Countries;
+using KeeperData.Application.Queries.Countries.Adapters;
 using KeeperData.Application.Queries.Pagination;
-using KeeperData.Application.Queries.Sites.Adapters;
-using KeeperData.Core.Documents;
 using KeeperData.Core.DTOs;
 
-namespace KeeperData.Application.Queries.Sites;
+namespace KeeperData.Application.Queries.Countries;
 
 public class GetCountriesQueryHandler(CountriesQueryAdapter adapter)
     : PagedQueryHandler<GetCountriesQuery, CountryDTO>

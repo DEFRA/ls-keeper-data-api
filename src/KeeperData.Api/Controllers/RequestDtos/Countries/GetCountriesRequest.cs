@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace KeeperData.Api.Controllers.RequestDtos.Parties;
+namespace KeeperData.Api.Controllers.RequestDtos.Countries;
 
 public class GetCountriesRequest
 {
@@ -12,4 +12,5 @@ public class GetCountriesRequest
     [FromQuery] public string? Code { get; set; }
     [FromQuery] public bool? EuTradeMember { get; set; }
     [FromQuery] public bool? DevolvedAuthority { get; set; }
+    [FromQuery] public DateTime? LastUpdatedDate { get; internal set; }
 }
