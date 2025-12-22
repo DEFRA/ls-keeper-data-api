@@ -65,7 +65,7 @@ public class CountriesQueryAdapterTests
         Debug.WriteLine(scenario);
         GivenTheseCountries(TestCountries);
 
-        var result = await WhenSearchingForCountries(name, codesCsv, euTradeMember, devolvedAuthority, year.HasValue ? new DateTime(year.Value,month ?? 1,1) : null );
+        var result = await WhenSearchingForCountries(name, codesCsv, euTradeMember, devolvedAuthority, year.HasValue ? new DateTime(year.Value, month ?? 1, 1) : null);
 
         var codes = expectedCodes?.Split(",") ?? new string[] { };
         result.Count().Should().Be(codes.Count());
