@@ -1,4 +1,3 @@
-using FluentValidation;
 using KeeperData.Core.DTOs;
 
 namespace KeeperData.Application.Queries.Countries
