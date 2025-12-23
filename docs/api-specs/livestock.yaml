@@ -2,9 +2,9 @@ openapi: 3.0.3
 info:
   title: Livestock API 
   description: |-
-    The Location API is reference data service that allows developers to build applications that connect with Defra's Livestock - Location and Party Data domain.
+    The Livestock API is reference data service that allows developers to build applications that connect with Defra's Livestock - Location and Party Data domain.
     
-    With the Location API, you can:
+    With the Livestock API, you can:
 
     * **Authenticate** with the Defra's identity system.
     * **Retrieve** location based reference data such as Sites and its related data such as Parties, Species, Marks etc.
