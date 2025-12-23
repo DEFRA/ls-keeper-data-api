@@ -4,12 +4,14 @@ using KeeperData.Core.Locking;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Behaviors;
+using KeeperData.Infrastructure.Config;
 using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Infrastructure.Database.Factories;
 using KeeperData.Infrastructure.Database.Factories.Implementations;
 using KeeperData.Infrastructure.Database.Repositories;
 using KeeperData.Infrastructure.Database.Transactions;
 using KeeperData.Infrastructure.Locking;
+using KeeperData.Infrastructure.Services;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -60,6 +62,15 @@ public static class ServiceCollectionExtensions
         services.AddScoped(sp => (ITransactionManager)sp.GetRequiredService<IUnitOfWork>());
         services.AddScoped<IAggregateTracker, AggregateTracker>();
 
+        services.AddScoped<IMongoDbInitialiser, MongoDbInitialiser>();
+
+        var mongoPreprodConfig = configuration.GetSection(MongoDbPreproductionServiceConfig.SectionName).Get<MongoDbPreproductionServiceConfig>();
+        services.Configure<MongoDbPreproductionServiceConfig>(configuration.GetSection(MongoDbPreproductionServiceConfig.SectionName));
+        if (mongoPreprodConfig?.Enabled ?? false)
+        {
+            services.AddScoped<IMongoDbPreproductionService, MongoDbPreproductionService>();
+        }
+
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(UnitOfWorkTransactionBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(DomainEventDispatchingBehavior<,>));
@@ -80,6 +91,7 @@ public static class ServiceCollectionExtensions
     {
         var client = serviceProvider.GetRequiredService<IMongoClient>();
         var config = serviceProvider.GetRequiredService<IOptions<MongoConfig>>().Value;
+        var dbInitialiser = serviceProvider.GetRequiredService<IMongoDbInitialiser>();
         var database = client.GetDatabase(config.DatabaseName);
 
         var indexableTypes = AppDomain.CurrentDomain.GetAssemblies()
@@ -89,16 +101,7 @@ public static class ServiceCollectionExtensions
 
         foreach (var type in indexableTypes)
         {
-            var collectionName = type.GetCustomAttribute<CollectionNameAttribute>()?.Name ?? type.Name;
-            var collection = database.GetCollection<BsonDocument>(collectionName);
-
-            await DropV1IndexesIfPresentAsync(collection);
-
-            var getIndexesMethod = type.GetMethod("GetIndexModels", BindingFlags.Public | BindingFlags.Static);
-            if (getIndexesMethod?.Invoke(null, null) is IEnumerable<CreateIndexModel<BsonDocument>> indexModels)
-            {
-                await collection.Indexes.CreateManyAsync(indexModels);
-            }
+            await dbInitialiser.Initialise(type);
         }
     }
 
@@ -130,22 +133,6 @@ public static class ServiceCollectionExtensions
             if (!BsonClassMap.IsClassMapRegistered(type))
             {
                 BsonClassMap.LookupClassMap(type);
-            }
-        }
-    }
-
-    private static async Task DropV1IndexesIfPresentAsync<TDocument>(IMongoCollection<TDocument> collection)
-    {
-        using var cursor = await collection.Indexes.ListAsync();
-        var indexes = await cursor.ToListAsync();
-
-        foreach (var index in indexes)
-        {
-            var indexName = index["name"].AsString;
-            if (indexName.StartsWith("idx_"))
-            {
-                await collection.Indexes.DropOneAsync(indexName);
-                Console.WriteLine($"Dropped index: {indexName}");
             }
         }
     }

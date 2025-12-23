@@ -2,8 +2,10 @@ using Amazon.Runtime.Internal;
 using KeeperData.Api.Controllers.ResponseDtos.Scans;
 using KeeperData.Api.Middleware;
 using KeeperData.Api.Worker.Tasks;
+using KeeperData.Infrastructure.Config;
 using KeeperData.Infrastructure.Telemetry;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Diagnostics.CodeAnalysis;
 
@@ -64,6 +66,12 @@ public static class WebApplicationExtensions
         {
             RegisterScanEndpoint<ICtsDailyScanTask>(app, "/api/import/startCtsDailyScan", "CTS daily scan");
             RegisterScanEndpoint<ISamDailyScanTask>(app, "/api/import/startSamDailyScan", "SAM daily scan");
+        }
+
+        var mongoPreprodConfig = configuration.GetSection(MongoDbPreproductionServiceConfig.SectionName).Get<MongoDbPreproductionServiceConfig>();
+        if (mongoPreprodConfig?.Enabled ?? false)
+        {
+            app.MapPost("/api/wipe/{collection}", async ([FromRoute] string collection, [FromServices] IMongoDbPreproductionService mongoPreprodService) => { await mongoPreprodService.WipeCollection(collection); });
         }
 
         app.MapControllers();
