@@ -2,6 +2,7 @@ using Amazon.Runtime.Internal;
 using KeeperData.Api.Controllers.ResponseDtos.Scans;
 using KeeperData.Api.Middleware;
 using KeeperData.Api.Worker.Tasks;
+using KeeperData.Core.Repositories;
 using KeeperData.Infrastructure.Config;
 using KeeperData.Infrastructure.Telemetry;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -71,7 +72,7 @@ public static class WebApplicationExtensions
         var mongoPreprodConfig = configuration.GetSection(MongoDbPreproductionServiceConfig.SectionName).Get<MongoDbPreproductionServiceConfig>();
         if (mongoPreprodConfig?.Enabled ?? false)
         {
-            app.MapPost("/api/wipe/{collection}", async ([FromRoute] string collection, [FromServices] IMongoDbPreproductionService mongoPreprodService) => { await mongoPreprodService.WipeCollection(collection); });
+            app.MapPost("/api/wipe/{collection}", async ([FromRoute] string collection, [FromServices] IMongoDbPreproductionService mongoPreprodService) => { return await mongoPreprodService.WipeCollection(collection); });
         }
 
         app.MapControllers();

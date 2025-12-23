@@ -1,4 +1,6 @@
+namespace KeeperData.Core.Repositories;
+
 public interface IMongoDbPreproductionService
 {
-    Task WipeCollection(string collection);
+    Task<string> WipeCollection(string collection);
 }

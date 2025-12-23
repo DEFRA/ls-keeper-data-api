@@ -1,10 +1,11 @@
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Infrastructure.Config;
+using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Infrastructure.Services;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Moq;
-using Xunit;
 
 namespace KeeperData.Infrastructure.Tests.Unit.Services
 {
@@ -19,13 +20,19 @@ namespace KeeperData.Infrastructure.Tests.Unit.Services
         {
             _mockDatabase = new Mock<IMongoDatabase>();
             _mockInitialiser = new Mock<IMongoDbInitialiser>();
-            _sut = new MongoDbPreproductionService(_mockDatabase.Object, _mockInitialiser.Object, _config);
+            var mockconfigOptions = new Mock<IOptions<MongoDbPreproductionServiceConfig>>();
+            mockconfigOptions.Setup(x => x.Value).Returns(_config);
+            var _mockMongoConfig = new Mock<IOptions<MongoConfig>>();
+            _mockMongoConfig.Setup(c => c.Value).Returns(new MongoConfig { DatabaseName = "TestDb" });
+            var mockClient = new Mock<IMongoClient>();
+            mockClient.Setup(x => x.GetDatabase(It.IsAny<string>(), null)).Returns(_mockDatabase.Object);
+            _sut = new MongoDbPreproductionService(mockClient.Object, _mockMongoConfig.Object, _mockInitialiser.Object, mockconfigOptions.Object);
         }
 
         [Theory]
         [InlineData("parties", typeof(PartyDocument))]
         [InlineData("ctsHoldings", typeof(CtsHoldingDocument))]
-        public async Task CanDeleteCollection_AndItShouldBeReintialisedWithIndexes(string collectionName, Type documentType)
+        public async Task WhenDeletingCollection_ItShouldBeReintialisedWithIndexes(string collectionName, Type documentType)
         {
             await _sut.WipeCollection(collectionName);
             _mockDatabase.Verify(db => db.DropCollectionAsync(collectionName, CancellationToken.None));
@@ -33,13 +40,13 @@ namespace KeeperData.Infrastructure.Tests.Unit.Services
         }
 
         [Fact]
-        public async Task CannotDeleteCollectionsThatAreNotConfiguredForDeletion()
+        public async Task WhenDeletingCollectionThatIsNotPermitted_ItShouldFail()
         {
             await Assert.ThrowsAsync<ArgumentException>(async () => await _sut.WipeCollection("refCountries"));
         }
 
         [Fact]
-        public async Task FailsWithInvalidCollectionName()
+        public async Task WhenDeletingInvalidCollectionName_ItShouldFail()
         {
             await Assert.ThrowsAsync<ArgumentException>(async () => await _sut.WipeCollection("not-a-collection"));
         }

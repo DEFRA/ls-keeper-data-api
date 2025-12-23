@@ -1,17 +1,27 @@
 using System.Reflection;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;
+using KeeperData.Infrastructure.Database.Configuration;
+using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace KeeperData.Infrastructure.Services
 {
-    public class MongoDbInitialiser(IMongoDatabase database) : IMongoDbInitialiser
+    public class MongoDbInitialiser : IMongoDbInitialiser
     {
-        private readonly IMongoDatabase _database = database;
+        private IMongoClient _mongoClient;
+        private IOptions<MongoConfig> _mongoConfig;
+
+        public MongoDbInitialiser(IMongoClient mongoClient, IOptions<MongoConfig> mongoConfig)
+        {
+            _mongoClient = mongoClient;
+            _mongoConfig = mongoConfig;
+        }
 
         public async Task Initialise(Type type)
         {
+            var _database = _mongoClient.GetDatabase(_mongoConfig.Value.DatabaseName);
             if (!type.IsAssignableTo(typeof(IContainsIndexes)))
                 throw new ArgumentException($"Type {type.Name} must be assignable to {nameof(IContainsIndexes)}");
 

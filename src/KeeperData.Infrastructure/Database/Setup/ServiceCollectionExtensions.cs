@@ -1,4 +1,3 @@
-using KeeperData.Core.Attributes;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Repositories;
@@ -15,12 +14,10 @@ using KeeperData.Infrastructure.Services;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Serializers;
-using MongoDB.Driver;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
@@ -44,6 +41,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped(sp => sp.GetRequiredService<IMongoSessionFactory>().GetSession());
         services.AddSingleton(sp => sp.GetRequiredService<IMongoDbClientFactory>().CreateClient());
 
+        services.AddSingleton<IMongoDbInitialiser, MongoDbInitialiser>();
+
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         services.AddScoped<ICountryRepository, CountryRepository>();
         services.AddScoped<ISpeciesRepository, SpeciesRepository>();
@@ -62,7 +61,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped(sp => (ITransactionManager)sp.GetRequiredService<IUnitOfWork>());
         services.AddScoped<IAggregateTracker, AggregateTracker>();
 
-        services.AddScoped<IMongoDbInitialiser, MongoDbInitialiser>();
 
         var mongoPreprodConfig = configuration.GetSection(MongoDbPreproductionServiceConfig.SectionName).Get<MongoDbPreproductionServiceConfig>();
         services.Configure<MongoDbPreproductionServiceConfig>(configuration.GetSection(MongoDbPreproductionServiceConfig.SectionName));
@@ -85,24 +83,6 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddHostedService<MongoIndexInitializer>();
-    }
-
-    public static async Task EnsureMongoIndexesAsync(IServiceProvider serviceProvider)
-    {
-        var client = serviceProvider.GetRequiredService<IMongoClient>();
-        var config = serviceProvider.GetRequiredService<IOptions<MongoConfig>>().Value;
-        var dbInitialiser = serviceProvider.GetRequiredService<IMongoDbInitialiser>();
-        var database = client.GetDatabase(config.DatabaseName);
-
-        var indexableTypes = AppDomain.CurrentDomain.GetAssemblies()
-            .Where(a => !a.IsDynamic)
-            .SelectMany(x => x.GetTypes())
-            .Where(t => typeof(IContainsIndexes).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface);
-
-        foreach (var type in indexableTypes)
-        {
-            await dbInitialiser.Initialise(type);
-        }
     }
 
     private static void RegisterMongoDbGlobals()
