@@ -28,7 +28,7 @@ public static class ServiceCollectionExtensions
 
         services.ConfigureHealthChecks();
 
-        services.AddApplicationLayer();
+        services.AddApplicationLayer(configuration);
 
         services.AddDatabaseDependencies(configuration);
 

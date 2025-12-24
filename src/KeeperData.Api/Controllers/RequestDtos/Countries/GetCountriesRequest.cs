@@ -4,8 +4,8 @@ namespace KeeperData.Api.Controllers.RequestDtos.Countries;
 
 public class GetCountriesRequest
 {
-    [FromQuery] public int Page { get; set; }
-    [FromQuery] public int PageSize { get; set; }
+    [FromQuery] public int? Page { get; set; }
+    [FromQuery] public int? PageSize { get; set; }
     [FromQuery] public string? Order { get; set; }
     [FromQuery] public string? Sort { get; set; }
     [FromQuery] public string? Name { get; set; }
