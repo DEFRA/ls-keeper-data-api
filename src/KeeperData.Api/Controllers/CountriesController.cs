@@ -23,8 +23,8 @@ namespace KeeperData.Api.Controllers
                 LastUpdatedDate = request.LastUpdatedDate,
                 Order = request.Order,
                 Sort = request.Sort,
-                Page = request.Page,
-                PageSize = request.PageSize
+                Page = request.Page ?? 1,
+                PageSize = request.PageSize ?? 10
             };
             var result = await _executor.ExecuteQuery(query);
             return Ok(result);

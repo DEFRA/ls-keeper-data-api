@@ -1,4 +1,5 @@
 using FluentValidation;
+using KeeperData.Application.Configuration;
 using KeeperData.Application.Orchestration.ChangeScanning;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk.Steps;
@@ -17,6 +18,7 @@ using KeeperData.Application.Services.BatchCompletion;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Providers;
 using KeeperData.Core.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
@@ -24,7 +26,7 @@ namespace KeeperData.Application.Setup;
 
 public static class ServiceCollectionExtensions
 {
-    public static void AddApplicationLayer(this IServiceCollection services)
+    public static void AddApplicationLayer(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddMediatR(cfg =>
         {
@@ -32,6 +34,8 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddScoped<IRequestExecutor, RequestExecutor>();
+        var queryValidationConfig = configuration.GetSection(QueryValidationConfig.SectionName).Get<QueryValidationConfig>() ?? new();
+        services.AddSingleton(queryValidationConfig);
         services.AddValidatorsFromAssemblyContaining<IRequestExecutor>();
 
         services.AddScoped<CountriesQueryAdapter>();
