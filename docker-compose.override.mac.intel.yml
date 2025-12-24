@@ -26,6 +26,7 @@ services:
       - DataBridgeScanConfiguration__DailyScanIncludeChangesWithinTotalHours=24
       - BulkScanEndpointsEnabled=true
       - DailyScanEndpointsEnabled=true
+      - MongoDbPreproductionService__Enabled=true
     ports:
       - "5555"
     volumes:
