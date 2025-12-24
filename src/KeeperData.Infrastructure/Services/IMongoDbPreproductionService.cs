@@ -1,4 +1,4 @@
-namespace KeeperData.Core.Repositories;
+namespace KeeperData.Infrastructure.Services;
 
 public interface IMongoDbPreproductionService
 {
