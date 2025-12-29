@@ -1,36 +1,17 @@
 using FluentAssertions;
-using KeeperData.Application.Extensions;
 using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Domain.Enums;
-using KeeperData.Core.Repositories;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
+using KeeperData.Core.Extensions;
 using Moq;
 using System.Net;
 using System.Net.Http.Json;
 
 namespace KeeperData.Api.Tests.Component.Endpoints;
 
-public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
+public class SitesEndpointTests(AppTestFixture appTestFixture) : IClassFixture<AppTestFixture>
 {
-    private readonly Mock<ISitesRepository> _sitesRepositoryMock = new();
-    private readonly HttpClient _client;
-
-    public SitesEndpointTests(AppTestFixture fixture)
-    {
-        _client = fixture.AppWebApplicationFactory
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.RemoveAll<ISitesRepository>();
-                    services.AddScoped(_ => _sitesRepositoryMock.Object);
-                });
-            })
-            .CreateClient();
-    }
+    private readonly AppTestFixture _appTestFixture = appTestFixture;
 
     [Fact]
     public async Task GetSites_WithFilterAndSort_ReturnsFilteredAndSortedOkResult()
@@ -45,7 +26,7 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
         var query = $"?siteIdentifier=ID1&type=Type1&siteId={siteId}&keeperPartyId={keeperPartyId}&order=name&sort=asc";
 
         // Act
-        var response = await _client.GetAsync($"/api/site{query}");
+        var response = await _appTestFixture.HttpClient.GetAsync($"/api/sites{query}");
 
         // Assert
         await AssertPaginatedResponse(response, expectedCount: 1, expectedNames: ["Site A"]);
@@ -64,7 +45,7 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
         SetupRepository(sites, totalCount: 2);
 
         // Act
-        var response = await _client.GetAsync("/api/site");
+        var response = await _appTestFixture.HttpClient.GetAsync("/api/sites");
 
         // Assert
         await AssertPaginatedResponse(response, expectedCount: 2, expectedNames: ["Site B", "Site A"]);
@@ -83,24 +64,10 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
         SetupRepository(sites, totalCount: 2);
 
         // Act
-        var response = await _client.GetAsync("/api/site?type=Type1,Type2");
+        var response = await _appTestFixture.HttpClient.GetAsync("/api/sites?type=Type1,Type2");
 
         // Assert
         await AssertPaginatedResponse(response, expectedCount: 2, expectedNames: ["Site A", "Site B"]);
-    }
-
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            _client?.Dispose();
-        }
     }
 
     private static SiteDocument CreateSite(string name, string typeCode, string identifier)
@@ -115,7 +82,7 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
                 Code = typeCode,
                 Description = $"{typeCode} Description"
             },
-            State = "Active"
+            State = HoldingStatusType.Active.GetDescription()
         };
 
         site.Identifiers.Add(new SiteIdentifierDocument
@@ -136,14 +103,14 @@ public class SitesEndpointTests : IClassFixture<AppTestFixture>, IDisposable
 
     private void SetupRepository(List<SiteDocument> sites, int totalCount)
     {
-        _sitesRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._sitesRepositoryMock
             .Setup(r => r.FindAsync(
                 It.IsAny<MongoDB.Driver.FilterDefinition<SiteDocument>>(),
                 It.IsAny<MongoDB.Driver.SortDefinition<SiteDocument>>(),
                 0, 10, It.IsAny<CancellationToken>()))
             .ReturnsAsync(sites);
 
-        _sitesRepositoryMock
+        _appTestFixture.AppWebApplicationFactory._sitesRepositoryMock
             .Setup(r => r.CountAsync(
                 It.IsAny<MongoDB.Driver.FilterDefinition<SiteDocument>>(),
                 It.IsAny<CancellationToken>()))

@@ -18,7 +18,7 @@ public class RoleTypeLookupService : IRoleTypeLookupService
         return await _roleRepository.GetByIdAsync(id, cancellationToken);
     }
 
-    public async Task<(string? roleTypeId, string? roleTypeName)> FindAsync(string? lookupValue, CancellationToken cancellationToken)
+    public async Task<(string? roleTypeId, string? roleTypeCode, string? roleTypeName)> FindAsync(string? lookupValue, CancellationToken cancellationToken)
     {
         return await _roleRepository.FindAsync(lookupValue, cancellationToken);
     }

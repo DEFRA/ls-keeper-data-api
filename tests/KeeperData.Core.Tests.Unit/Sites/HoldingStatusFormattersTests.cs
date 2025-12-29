@@ -1,18 +1,20 @@
 using FluentAssertions;
+using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Sites.Formatters;
+using KeeperData.Core.Extensions;
 
 namespace KeeperData.Core.Tests.Unit.Sites;
 
 public class HoldingStatusFormattersTests
 {
     [Theory]
-    [InlineData(false, "Active")]
-    [InlineData(true, "Inactive")]
-    public void FormatHoldingStatus_ReturnsExpectedStatus(bool deleted, string expectedStatus)
+    [InlineData(false, HoldingStatusType.Active)]
+    [InlineData(true, HoldingStatusType.Inactive)]
+    public void FormatHoldingStatus_ReturnsExpectedStatus(bool deleted, HoldingStatusType expectedStatus)
     {
         var result = HoldingStatusFormatters.FormatHoldingStatus(deleted);
 
-        result.Should().Be(expectedStatus);
+        result.Should().Be(expectedStatus.GetDescription());
     }
 
     [Fact]
@@ -20,13 +22,12 @@ public class HoldingStatusFormattersTests
     {
         // Arrange
         var deleted = false;
-        var endDate = DateTime.Now.AddDays(-1);
 
         // Act
         var result = HoldingStatusFormatters.FormatHoldingStatus(deleted);
 
         // Assert
-        result.Should().Be("Active", "status should be based on deleted flag, not end date");
+        result.Should().Be(HoldingStatusType.Active.GetDescription(), "status should be based on deleted flag, not end date");
     }
 
     [Fact]
@@ -39,6 +40,6 @@ public class HoldingStatusFormattersTests
         var result = HoldingStatusFormatters.FormatHoldingStatus(deleted);
 
         // Assert
-        result.Should().Be("Inactive", "status should be based on deleted flag, not presence of end date");
+        result.Should().Be(HoldingStatusType.Inactive.GetDescription(), "status should be based on deleted flag, not presence of end date");
     }
 }

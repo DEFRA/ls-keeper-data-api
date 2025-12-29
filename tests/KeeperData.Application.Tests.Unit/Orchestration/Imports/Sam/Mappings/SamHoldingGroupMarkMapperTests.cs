@@ -19,7 +19,7 @@ public class SamHoldingGroupMarkMapperTests
 
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolvePremiseActivityType;
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolvePremiseType;
-    private readonly Func<string?, string?, CancellationToken, Task<(string?, string?)>> _resolveCountry;
+    private readonly Func<string?, string?, CancellationToken, Task<(string?, string?, string?)>> _resolveCountry;
 
     // Herds
     private readonly Mock<IProductionUsageLookupService> _productionUsageLookupServiceMock = new();
@@ -43,7 +43,7 @@ public class SamHoldingGroupMarkMapperTests
 
         _countryIdentifierLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+            .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input, input));
 
         _resolvePremiseActivityType = _premiseActivityTypeLookupServiceMock.Object.FindAsync;
         _resolvePremiseType = _premiseTypeLookupServiceMock.Object.FindAsync;

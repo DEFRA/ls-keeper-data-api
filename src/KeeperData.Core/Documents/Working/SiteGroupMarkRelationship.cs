@@ -10,7 +10,7 @@ public class SiteGroupMarkRelationship
 
     public required string HoldingIdentifier { get; set; }
 
-    public required string PartyId { get; set; }
+    public required string CustomerNumber { get; set; }
 
     public string? ProductionUsageCode { get; set; }
 }

@@ -339,20 +339,21 @@ public class Site : IAggregateRoot
         }
     }
 
-    public void SetSiteParties(IEnumerable<SiteParty> incomingParties, DateTime lastUpdatedDate)
+    public void SetSiteParties(string goldSiteId, IEnumerable<SiteParty> incomingParties, DateTime lastUpdatedDate)
     {
         var incomingList = incomingParties.ToList();
         var changed = false;
 
         foreach (var incoming in incomingList)
         {
-            var existing = _parties.FirstOrDefault(p => p.PartyId == incoming.PartyId);
+            var existing = _parties.FirstOrDefault(p => p.CustomerNumber == incoming.CustomerNumber);
+            var siteSpecificPartyRoles = incoming.PartyRoles?.Where(x => x.Site != null && x.Site.Id == goldSiteId).ToList() ?? [];
 
             if (existing is not null)
             {
                 changed |= existing.ApplyChanges(
                     incoming.LastUpdatedDate,
-                    incoming.PartyId,
+                    incoming.CustomerNumber,
                     incoming.Title,
                     incoming.FirstName,
                     incoming.LastName,
@@ -361,7 +362,7 @@ public class Site : IAggregateRoot
                     incoming.State,
                     incoming.CorrespondanceAddress,
                     incoming.Communication,
-                    incoming.PartyRoles);
+                    siteSpecificPartyRoles);
             }
             else
             {
@@ -369,7 +370,7 @@ public class Site : IAggregateRoot
                     incoming.Id,
                     incoming.CreatedDate,
                     incoming.LastUpdatedDate,
-                    incoming.PartyId,
+                    incoming.CustomerNumber,
                     incoming.Title,
                     incoming.FirstName,
                     incoming.LastName,
@@ -378,13 +379,13 @@ public class Site : IAggregateRoot
                     incoming.State,
                     incoming.CorrespondanceAddress,
                     incoming.Communication,
-                    incoming.PartyRoles));
+                    siteSpecificPartyRoles));
                 changed = true;
             }
         }
 
         var orphaned = _parties
-            .Where(existing => incomingList.All(i => i.PartyId != existing.PartyId))
+            .Where(existing => incomingList.All(i => i.CustomerNumber != existing.CustomerNumber))
             .ToList();
 
         if (orphaned.Count != 0)

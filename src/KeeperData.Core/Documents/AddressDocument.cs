@@ -31,9 +31,9 @@ public class AddressDocument : INestedEntity
     [JsonPropertyName("county")]
     public string? County { get; set; }
 
-    [BsonElement("postCode")]
-    [JsonPropertyName("postCode")]
-    public required string PostCode { get; set; }
+    [BsonElement("postcode")]
+    [JsonPropertyName("postcode")]
+    public required string Postcode { get; set; }
 
     [BsonElement("country")]
     [JsonPropertyName("country")]
@@ -51,7 +51,7 @@ public class AddressDocument : INestedEntity
         AddressLine2 = address.AddressLine2,
         PostTown = address.PostTown,
         County = address.County,
-        PostCode = address.PostCode,
+        Postcode = address.PostCode,
         Country = address.Country is not null ? CountrySummaryDocument.FromDomain(address.Country) : null,
         LastUpdatedDate = address.LastUpdatedDate
     };
@@ -63,7 +63,7 @@ public class AddressDocument : INestedEntity
         AddressLine2,
         PostTown,
         County,
-        PostCode,
+        Postcode,
         Country?.ToDomain(),
         LastUpdatedDate);
 }

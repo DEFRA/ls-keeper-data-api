@@ -252,7 +252,7 @@ public class SamHoldingImportPersistenceStep(
         incomingSitePartyRoles ??= [];
 
         var incomingKeys = incomingSitePartyRoles
-            .Select(p => $"{p.HoldingIdentifier}::{p.PartyId}::{p.RoleTypeId}::{p.SpeciesTypeId}")
+            .Select(p => $"{p.HoldingIdentifier}::{p.CustomerNumber}::{p.RoleTypeId}::{p.SpeciesTypeId}")
             .ToHashSet();
 
         var existingSitePartyRoles = await GetExistingGoldSitePartyRoleRelationshipsAsync(
@@ -264,7 +264,7 @@ public class SamHoldingImportPersistenceStep(
             var upserts = incomingSitePartyRoles.Select(p =>
             {
                 var existing = existingSitePartyRoles.FirstOrDefault(e =>
-                    e.PartyId == p.PartyId &&
+                    e.CustomerNumber == p.CustomerNumber &&
                     e.HoldingIdentifier == p.HoldingIdentifier &&
                     e.RoleTypeId == p.RoleTypeId &&
                     e.SpeciesTypeId == p.SpeciesTypeId);
@@ -274,7 +274,7 @@ public class SamHoldingImportPersistenceStep(
                 return (
                     Filter: Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.And(
                         Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, p.HoldingIdentifier),
-                        Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.PartyId, p.PartyId),
+                        Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.CustomerNumber, p.CustomerNumber),
                         Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.RoleTypeId, p.RoleTypeId),
                         Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.SpeciesTypeId, p.SpeciesTypeId)
                     ),
@@ -286,7 +286,7 @@ public class SamHoldingImportPersistenceStep(
         }
 
         var orphanedSitePartyRoles = existingSitePartyRoles?.Where(e =>
-            !incomingKeys.Contains($"{e.HoldingIdentifier}::{e.PartyId}::{e.RoleTypeId}::{e.SpeciesTypeId}"))
+            !incomingKeys.Contains($"{e.HoldingIdentifier}::{e.CustomerNumber}::{e.RoleTypeId}::{e.SpeciesTypeId}"))
         .ToList() ?? [];
 
         if (orphanedSitePartyRoles.Count > 0)

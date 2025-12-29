@@ -1,9 +1,9 @@
 using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Fixtures;
-using KeeperData.Application.Extensions;
 using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Extensions;
 using System.Net;
 using System.Net.Http.Json;
 using System.Web;
@@ -35,7 +35,7 @@ public class SitesEndpointTests(
                 {
                     Id = SiteAId,
                     Type = new PremisesTypeSummaryDocument { IdentifierId = "t1", Code = "Business", Description = "Business Premise" },
-                    State = "Active",
+                    State = HoldingStatusType.Active.GetDescription(),
                     Name = "Site A",
                     CreatedDate = new DateTime(2010,01,01),
                     LastUpdatedDate = new DateTime(2010,01,01)
@@ -44,7 +44,7 @@ public class SitesEndpointTests(
                 {
                     Id = SiteBId,
                     Type = new PremisesTypeSummaryDocument { IdentifierId = "t2", Code = "Other", Description = "Other Premise" },
-                    State = "Active",
+                    State = HoldingStatusType.Active.GetDescription(),
                     Name = "Site B",
                     LastUpdatedDate = new DateTime(2011,01,01)
                 },
@@ -52,7 +52,7 @@ public class SitesEndpointTests(
                 {
                     Id = SiteCId,
                     Type = new PremisesTypeSummaryDocument { IdentifierId = "t1", Code = "Business", Description = "Business Premise" },
-                    State = "Active",
+                    State = HoldingStatusType.Active.GetDescription(),
                     Name = "Site C",
                     LastUpdatedDate = new DateTime(2012,01,01)
                 }
@@ -113,7 +113,7 @@ public class SitesEndpointTests(
     {
         Console.WriteLine(scenario);
         var date = !string.IsNullOrEmpty(dateStr) ? (DateTime?)DateTime.Parse(dateStr) : null;
-        var response = await _apiContainerFixture.HttpClient.GetAsync("api/site?" + BuildQueryString(type, identifier, date));
+        var response = await _apiContainerFixture.HttpClient.GetAsync("api/sites?" + BuildQueryString(type, identifier, date));
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var responseBody = await response.Content.ReadAsStringAsync();
@@ -134,7 +134,7 @@ public class SitesEndpointTests(
     public async Task GivenAnRecordRequestById_ShouldHaveExpectedResults(string scenario, string requestedId, HttpStatusCode expectedHttpCode, string responseShouldContain)
     {
         Console.WriteLine(scenario);
-        var response = await _apiContainerFixture.HttpClient.GetAsync($"api/site/{requestedId}");
+        var response = await _apiContainerFixture.HttpClient.GetAsync($"api/sites/{requestedId}");
         var responseBody = await response.Content.ReadAsStringAsync();
         response.StatusCode.Should().Be(expectedHttpCode);
 

@@ -1,3 +1,4 @@
+using KeeperData.Application.Orchestration.Helpers;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.Attributes;
 using Microsoft.Extensions.Logging;
@@ -21,6 +22,14 @@ public class CtsUpdateHoldingRawAggregationStep(
 
         context.RawHolding = getHoldingsTask.Result.FirstOrDefault();
         context.RawAgents = getAgentsTask.Result;
-        context.RawKeepers = getKeepersTask.Result;
+
+        var rawKeepers = getKeepersTask.Result;
+        context.RawKeepers = CtsKeeperDeduplicationHelper.DeduplicateKeepersByLatest(rawKeepers);
+
+        var (originalCount, deduplicatedCount, duplicatesRemoved) =
+            CtsKeeperDeduplicationHelper.GetDeduplicationStats(rawKeepers, context.RawKeepers);
+
+        logger.LogWarning("Deduplicated {DuplicatesRemoved} keeper records for CPH {Cph}. Original: {OriginalCount}, Final: {DeduplicatedCount}",
+            duplicatesRemoved, context.Cph, originalCount, deduplicatedCount);
     }
 }
