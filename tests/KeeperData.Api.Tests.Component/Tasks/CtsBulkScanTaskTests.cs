@@ -4,6 +4,7 @@ using KeeperData.Api.Worker.Tasks.Implementations;
 using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Locking;
+using KeeperData.Core.Providers;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -31,6 +32,8 @@ public class CtsBulkScanTaskTests
         var loggerMock = new Mock<ILogger<CtsBulkScanTask>>();
         var lockHandleMock = new Mock<IDistributedLockHandle>();
         var distributedLockMock = new Mock<IDistributedLock>();
+        var delayProviderMock = new Mock<IDelayProvider>();
+
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(lockHandleMock.Object);
@@ -41,6 +44,7 @@ public class CtsBulkScanTaskTests
             _dataBridgeScanConfiguration,
             distributedLockMock.Object,
             appLifetimeMock.Object,
+            delayProviderMock.Object,
             loggerMock.Object);
 
         // Act
@@ -48,7 +52,7 @@ public class CtsBulkScanTaskTests
 
         // Assert
         distributedLockMock.Verify(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Once);
-        lockHandleMock.Verify(l => l.DisposeAsync(), Times.Once); // Ensures lock is disposed after use
+        lockHandleMock.Verify(l => l.DisposeAsync(), Times.Once);
     }
 
     [Fact]
@@ -57,6 +61,8 @@ public class CtsBulkScanTaskTests
         // Arrange
         var loggerMock = new Mock<ILogger<CtsBulkScanTask>>();
         var distributedLockMock = new Mock<IDistributedLock>();
+        var delayProviderMock = new Mock<IDelayProvider>();
+
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((IDistributedLockHandle?)null);
@@ -67,6 +73,7 @@ public class CtsBulkScanTaskTests
             _dataBridgeScanConfiguration,
             distributedLockMock.Object,
             appLifetimeMock.Object,
+            delayProviderMock.Object,
             loggerMock.Object);
 
         // Act
@@ -75,7 +82,6 @@ public class CtsBulkScanTaskTests
         // Assert
         distributedLockMock.Verify(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Once);
 
-        // No further action should be taken if lock is not acquired
         loggerMock.Verify(l => l.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
