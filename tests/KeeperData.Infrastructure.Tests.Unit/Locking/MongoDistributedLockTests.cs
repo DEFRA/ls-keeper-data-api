@@ -108,7 +108,7 @@ public class MongoDistributedLockTests : IDisposable
         var duration = TimeSpan.FromMinutes(5);
 
         // Act & Assert
-        await _sut.Invoking(x => x.TryAcquireAsync(lockName, duration))
+        await _sut.Invoking(x => x.TryAcquireAsync(lockName!, duration))
             .Should().ThrowAsync<ArgumentException>();
     }
 
@@ -171,7 +171,7 @@ public class MongoDistributedLockTests : IDisposable
                 It.IsAny<DistributedLock>(),
                 It.IsAny<FindOneAndReplaceOptions<DistributedLock>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((DistributedLock?)null);
+            .ReturnsAsync((DistributedLock)null!);
 
         _mockCollection.Setup(x => x.InsertOneAsync(
                 It.IsAny<DistributedLock>(),
@@ -204,7 +204,7 @@ public class MongoDistributedLockTests : IDisposable
                 It.IsAny<DistributedLock>(),
                 It.IsAny<FindOneAndReplaceOptions<DistributedLock>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((DistributedLock?)null);
+            .ReturnsAsync((DistributedLock)null!);
 
         _mockCollection.Setup(x => x.InsertOneAsync(
                 It.IsAny<DistributedLock>(),

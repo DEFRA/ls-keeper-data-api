@@ -142,7 +142,7 @@ public class BatchCompletionTopicPublisherTests
         var sut = CreateSut();
         var message = new { Content = "Test message" };
 
-        var batchCompletionEventsTopic = new TopicConfiguration { TopicArn = null };
+        var batchCompletionEventsTopic = new TopicConfiguration { TopicArn = null! };
         _configurationMock.Setup(x => x.BatchCompletionEventsTopic).Returns(batchCompletionEventsTopic);
 
         // Act
@@ -169,7 +169,7 @@ public class BatchCompletionTopicPublisherTests
         var sut = CreateSut();
         var message = new { Content = "Test message" };
 
-        var batchCompletionEventsTopic = new TopicConfiguration { TopicArn = null };
+        var batchCompletionEventsTopic = new TopicConfiguration { TopicArn = string.Empty };
         _configurationMock.Setup(x => x.BatchCompletionEventsTopic).Returns(batchCompletionEventsTopic);
 
         // Act
