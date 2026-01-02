@@ -121,7 +121,7 @@ public class PartiesRepositoryTests
 
         // This test validates that the method exists and can be called without throwing
         // The MongoDB driver extension methods cannot be mocked effectively with Moq
-        
+
         // Act & Assert - should not throw
         var act = () => sut.FindAsync(filter, sort, skip, take);
         await act.Should().NotThrowAsync();
