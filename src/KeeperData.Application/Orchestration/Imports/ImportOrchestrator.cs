@@ -3,8 +3,8 @@ namespace KeeperData.Application.Orchestration.Imports;
 public abstract class ImportOrchestrator<TContext>(IEnumerable<IImportStep<TContext>> steps)
 {
     private readonly IEnumerable<IImportStep<TContext>> _steps = steps;
-
-    public async Task ExecuteAsync(TContext context, CancellationToken cancellationToken)
+    //changed to virtual to allow mocking in unit tests
+    public virtual async Task ExecuteAsync(TContext context, CancellationToken cancellationToken)
     {
         foreach (var step in _steps)
         {
