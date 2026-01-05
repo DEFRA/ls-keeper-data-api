@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace DataConverter.Models;
+namespace TsvToJsonConverter.DataConverter;
 
 public record CountryJson(
     [property: JsonPropertyName("id")] string Id,

@@ -1,11 +1,13 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 
-namespace DataConverter.Logic;
+namespace TsvToJsonConverter.DataConverter;
 
+[ExcludeFromCodeCoverage]
 public class GenericTsvConverter
 {
-    public async Task<string> Convert<T>(string tsvInputPath, Func<string[], T> mapFunction)
+    public static async Task<string> Convert<T>(string tsvInputPath, Func<string[], T> mapFunction)
     {
         if (!File.Exists(tsvInputPath))
         {
@@ -22,11 +24,21 @@ public class GenericTsvConverter
             records.Add(record);
         }
 
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        };
-        return JsonSerializer.Serialize(records, options);
+        return JsonSerializer.Serialize(records, ConverterJsonDefaults.DefaultOptions);
+    }
+}
+
+public static class ConverterJsonDefaults
+{
+    private static JsonSerializerOptions s_defaultOptions = new()
+    {
+        WriteIndented = true,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
+    public static JsonSerializerOptions DefaultOptions
+    {
+        get => s_defaultOptions;
+        set => s_defaultOptions = value;
     }
 }
