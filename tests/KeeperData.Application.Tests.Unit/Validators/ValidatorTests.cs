@@ -1,15 +1,19 @@
 using FluentAssertions;
+using KeeperData.Application.Configuration;
 using KeeperData.Application.Queries.Parties;
 using KeeperData.Application.Queries.Sites;
+using Xunit;
 
 namespace KeeperData.Application.Tests.Unit.Validators;
 
 public class ValidatorTests
 {
+    private readonly QueryValidationConfig _validationConfig = new() { MaxPageSize = 100 };
+
     [Fact]
     public void GetPartiesQueryValidator_ValidatesCorrectly()
     {
-        var validator = new GetPartiesQueryValidator();
+        var validator = new GetPartiesQueryValidator(_validationConfig);
 
         var validQuery = new GetPartiesQuery { Page = 1, PageSize = 10, Sort = "asc", Order = "name", FirstName = "John", Email = "test@test.com" };
         validator.Validate(validQuery).IsValid.Should().BeTrue();
@@ -20,7 +24,7 @@ public class ValidatorTests
         var invalidSort = new GetPartiesQuery { Sort = "invalid" };
         validator.Validate(invalidSort).IsValid.Should().BeFalse();
 
-        var missingOrder = new GetPartiesQuery { Sort = "asc" };
+        var missingOrder = new GetPartiesQuery { Sort = "asc" }; // Order is required if Sort is present
         validator.Validate(missingOrder).IsValid.Should().BeFalse();
     }
 
@@ -36,7 +40,7 @@ public class ValidatorTests
     [Fact]
     public void GetSitesQueryValidator_ValidatesCorrectly()
     {
-        var validator = new GetSitesQueryValidator();
+        var validator = new GetSitesQueryValidator(_validationConfig);
 
         var validQuery = new GetSitesQuery { Page = 1, PageSize = 10, Sort = "asc", Order = "name" };
         validator.Validate(validQuery).IsValid.Should().BeTrue();
