@@ -1,4 +1,5 @@
 using FluentValidation;
+using KeeperData.Application.Configuration;
 using KeeperData.Core.Documents;
 
 namespace KeeperData.Application.Queries.Sites;
@@ -19,10 +20,10 @@ public class GetSitesQuery : IPagedQuery<SiteDocument>
 
 public class GetSitesQueryValidator : AbstractValidator<GetSitesQuery>
 {
-    public GetSitesQueryValidator()
+    public GetSitesQueryValidator(QueryValidationConfig config)
     {
         RuleFor(x => x.Page).GreaterThan(0);
-        RuleFor(x => x.PageSize).InclusiveBetween(1, 100);
+        RuleFor(x => x.PageSize).InclusiveBetween(1, config.MaxPageSize);
 
         RuleForEach(x => x.Type).NotEmpty().When(x => x.Type is not null);
         RuleFor(x => x.Sort).Must(s => s == "asc" || s == "desc").When(x => !string.IsNullOrEmpty(x.Sort));
