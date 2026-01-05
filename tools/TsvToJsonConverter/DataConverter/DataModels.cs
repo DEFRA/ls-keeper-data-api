@@ -1,7 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace TsvToJsonConverter.DataConverter;
 
+[ExcludeFromCodeCoverage]
 public record CountryJson(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("code")] string Code,
@@ -19,6 +21,7 @@ public record CountryJson(
     [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
 );
 
+[ExcludeFromCodeCoverage]
 public record SpeciesJson(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("code")] string Code,
@@ -33,6 +36,7 @@ public record SpeciesJson(
     [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
 );
 
+[ExcludeFromCodeCoverage]
 public record RoleJson(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("code")] string Code,
@@ -47,6 +51,7 @@ public record RoleJson(
     [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
 );
 
+[ExcludeFromCodeCoverage]
 public record PremisesTypeJson(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("code")] string Code,
@@ -61,6 +66,7 @@ public record PremisesTypeJson(
     [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
 );
 
+[ExcludeFromCodeCoverage]
 public record PremisesActivityTypeJson(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("code")] string Code,
@@ -75,6 +81,7 @@ public record PremisesActivityTypeJson(
     [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
 );
 
+[ExcludeFromCodeCoverage]
 public record SiteIdentifierTypeJson(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("code")] string Code,
@@ -88,6 +95,7 @@ public record SiteIdentifierTypeJson(
     [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
 );
 
+[ExcludeFromCodeCoverage]
 public record ProductionUsageJson(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("code")] string Code,

@@ -28,6 +28,7 @@ public class GenericTsvConverter
     }
 }
 
+[ExcludeFromCodeCoverage]
 public static class ConverterJsonDefaults
 {
     private static JsonSerializerOptions s_defaultOptions = new()
