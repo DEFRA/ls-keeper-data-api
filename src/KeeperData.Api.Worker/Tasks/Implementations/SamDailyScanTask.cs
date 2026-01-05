@@ -1,6 +1,7 @@
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Locking;
+using KeeperData.Core.Providers;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -11,6 +12,7 @@ public class SamDailyScanTask(
     DataBridgeScanConfiguration dataBridgeScanConfiguration,
     IDistributedLock distributedLock,
     IHostApplicationLifetime applicationLifetime,
+    IDelayProvider delayProvider,
     ILogger<SamDailyScanTask> logger) : ISamDailyScanTask
 {
     private const string LockName = nameof(SamDailyScanTask);
@@ -47,7 +49,7 @@ public class SamDailyScanTask(
                             cancellationToken,
                             stoppingToken);
 
-                        await ExecuteTaskAsync(@lock, scanCorrelationId, cancellationToken);
+                        await ExecuteTaskAsync(@lock, scanCorrelationId, cts);
                     }
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -83,17 +85,17 @@ public class SamDailyScanTask(
 
         logger.LogInformation("Lock acquired for {LockName}. Task started at {startTime} scanCorrelationId: {scanCorrelationId}.", LockName, DateTime.UtcNow, scanCorrelationId);
 
-        await ExecuteTaskAsync(@lock, scanCorrelationId, cancellationToken);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        await ExecuteTaskAsync(@lock, scanCorrelationId, cts);
     }
 
     private async Task ExecuteTaskAsync(
         IDistributedLockHandle lockHandle,
         Guid scanCorrelationId,
-        CancellationToken externalCancellationToken)
+        CancellationTokenSource linkedCts)
     {
-        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken);
-
-        var renewalTask = RenewLockPeriodicallyAsync(lockHandle, scanCorrelationId, linkedCts.Token);
+        var externalToken = linkedCts.Token;
+        var renewalTask = RenewLockPeriodicallyAsync(lockHandle, scanCorrelationId, linkedCts);
 
         try
         {
@@ -113,15 +115,20 @@ public class SamDailyScanTask(
 
             logger.LogInformation("Import completed successfully at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
         }
-        catch (OperationCanceledException) when (externalCancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException)
         {
-            logger.LogInformation("Import was cancelled at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
+            if (renewalTask.IsFaulted || (renewalTask.IsCompleted && !externalToken.IsCancellationRequested))
+            {
+                logger.LogError("Import was stopped due to lock renewal failure at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
+                throw new InvalidOperationException("Task was cancelled due to lock renewal failure");
+            }
+
+            if (externalToken.IsCancellationRequested)
+            {
+                logger.LogInformation("Import was cancelled at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
+                throw;
+            }
             throw;
-        }
-        catch (OperationCanceledException) when (linkedCts.IsCancellationRequested && !externalCancellationToken.IsCancellationRequested)
-        {
-            logger.LogError("Import was stopped due to lock renewal failure at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
-            throw new InvalidOperationException("Task was cancelled due to lock renewal failure");
         }
         catch (Exception ex)
         {
@@ -139,9 +146,7 @@ public class SamDailyScanTask(
             {
                 await renewalTask;
             }
-            catch (OperationCanceledException)
-            {
-            }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unexpected error in lock renewal task for {LockName} scanCorrelationId: {scanCorrelationId}", LockName, scanCorrelationId);
@@ -149,15 +154,16 @@ public class SamDailyScanTask(
         }
     }
 
-    private async Task RenewLockPeriodicallyAsync(IDistributedLockHandle lockHandle, Guid scanCorrelationId, CancellationToken cancellationToken)
+    private async Task RenewLockPeriodicallyAsync(IDistributedLockHandle lockHandle, Guid scanCorrelationId, CancellationTokenSource linkedCts)
     {
+        var token = linkedCts.Token;
         logger.LogDebug("Starting lock renewal task for {LockName} with interval {RenewalInterval} scanCorrelationId: {scanCorrelationId}", LockName, s_renewalInterval, scanCorrelationId);
 
-        while (!cancellationToken.IsCancellationRequested)
+        while (!token.IsCancellationRequested)
         {
             try
             {
-                await Task.Delay(s_renewalInterval, cancellationToken);
+                await delayProvider.DelayAsync(s_renewalInterval, token);
             }
             catch (OperationCanceledException)
             {
@@ -165,17 +171,14 @@ public class SamDailyScanTask(
                 return;
             }
 
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return;
-            }
+            if (token.IsCancellationRequested) return;
 
             logger.LogDebug("Attempting to renew lock for {LockName} scanCorrelationId: {scanCorrelationId}", LockName, scanCorrelationId);
 
             bool renewed;
             try
             {
-                renewed = await lockHandle.TryRenewAsync(s_renewalExtension, cancellationToken);
+                renewed = await lockHandle.TryRenewAsync(s_renewalExtension, token);
             }
             catch (OperationCanceledException)
             {
@@ -190,7 +193,7 @@ public class SamDailyScanTask(
             else
             {
                 logger.LogError("Failed to renew lock for {LockName}. Lock may have been lost. Cancelling main task. scanCorrelationId: {scanCorrelationId}", LockName, scanCorrelationId);
-
+                await linkedCts.CancelAsync();
                 throw new InvalidOperationException($"Failed to renew lock for {LockName} scanCorrelationId: {scanCorrelationId}");
             }
         }

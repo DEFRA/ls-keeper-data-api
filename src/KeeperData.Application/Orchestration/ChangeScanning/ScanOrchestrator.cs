@@ -5,7 +5,7 @@ public abstract class ScanOrchestrator<TContext>(IEnumerable<IScanStep<TContext>
 {
     private readonly IEnumerable<IScanStep<TContext>> _steps = steps;
 
-    public async Task ExecuteAsync(TContext context, CancellationToken cancellationToken)
+    public virtual async Task ExecuteAsync(TContext context, CancellationToken cancellationToken)
     {
         foreach (var step in _steps)
         {
