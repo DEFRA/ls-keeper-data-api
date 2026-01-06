@@ -1,9 +1,11 @@
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace KeeperData.Infrastructure.ApiClients.Fakes;
 
+[ExcludeFromCodeCoverage]
 public class FakeDataBridgeClient : IDataBridgeClient
 {
     private readonly Random _random = new();
