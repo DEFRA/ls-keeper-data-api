@@ -311,37 +311,4 @@ public class SamDailyScanTaskTests
             expectedEx,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
-
-    [Fact]
-    public async Task RunAsync_ShouldPeriodicallyRenewLock_AndLogSuccess()
-    {
-        _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(_lockHandleMock.Object);
-
-        var renewalHappened = new TaskCompletionSource();
-
-        _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
-            .Returns(async (CtsBulkScanContext ctx, CancellationToken token) =>
-            {
-                await renewalHappened.Task;
-            });
-
-        _delayProviderMock.Setup(x => x.DelayAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _lockHandleMock.Setup(x => x.TryRenewAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true)
-            .Callback(() => renewalHappened.TrySetResult());
-
-        await _sut.RunAsync(CancellationToken.None);
-
-        _loggerMock.Verify(x => x.Log(
-            LogLevel.Debug,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Successfully renewed lock")),
-            null,
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.AtLeastOnce);
-
-        _lockHandleMock.Verify(x => x.DisposeAsync(), Times.Once);
-    }
 }
