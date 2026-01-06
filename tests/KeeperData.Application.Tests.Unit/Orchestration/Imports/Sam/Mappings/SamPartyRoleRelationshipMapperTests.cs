@@ -2,6 +2,7 @@ using FluentAssertions;
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Services;
 using KeeperData.Tests.Common.Factories;
 using KeeperData.Tests.Common.Generators;
@@ -85,6 +86,30 @@ public class SamPartyRoleRelationshipMapperTests
                     holdingIdentifier);
             }
         }
+    }
+
+    [Fact]
+    public void ToSilver_PartyWithNullRoles_ReturnsEmpty()
+    {
+        var party = new SamPartyDocument { PartyId = "P1", Roles = null };
+        var result = SamPartyRoleRelationshipMapper.ToSilver([party], "CPH");
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ToSilverUsingCphList_UsesPartyCphList()
+    {
+        var party = new SamPartyDocument
+        {
+            PartyId = "P1",
+            CphList = ["CPH1", "CPH2"],
+            Roles = [new Core.Documents.Silver.PartyRoleDocument { RoleTypeId = "R1", IdentifierId = "1" }]
+        };
+
+        var result = SamPartyRoleRelationshipMapper.ToSilverUsingCphList([party]);
+
+        result.Should().HaveCount(2);
+        result.Select(r => r.HoldingIdentifier).Should().BeEquivalentTo("CPH1", "CPH2");
     }
 
     private static List<SamParty> GenerateSamParty(int quantity)

@@ -145,6 +145,29 @@ public class CtsHoldingImportPersistenceStepTests
         _ctsPartyRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<CtsPartyDocument>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    [Fact]
+    public async Task ExecuteCoreAsync_WhenSilverHoldingIsNull_DoesNotUpsertHolding()
+    {
+        var context = new CtsHoldingImportContext
+        {
+            Cph = "AH-123",
+            SilverHoldings = []
+        };
+
+        SetupDefaultRepositoryMocks();
+
+        var sut = new CtsHoldingImportPersistenceStep(
+            _ctsHoldingRepositoryMock.Object,
+            _ctsPartyRepositoryMock.Object,
+            Mock.Of<ILogger<CtsHoldingImportPersistenceStep>>());
+
+        await sut.ExecuteAsync(context, CancellationToken.None);
+
+        _ctsHoldingRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(
+            It.IsAny<IEnumerable<(FilterDefinition<CtsHoldingDocument>, CtsHoldingDocument)>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     private void SetupDefaultRepositoryMocks()
     {
         // Holding

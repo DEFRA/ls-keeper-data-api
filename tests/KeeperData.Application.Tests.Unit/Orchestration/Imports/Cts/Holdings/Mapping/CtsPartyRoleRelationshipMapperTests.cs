@@ -2,6 +2,7 @@ using FluentAssertions;
 using KeeperData.Application.Orchestration.Imports.Cts.Mappings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Services;
@@ -83,6 +84,19 @@ public class CtsPartyRoleRelationshipMapperTests
         }
     }
 
+    [Fact]
+    public void ToSilver_PartyWithNullRoles_SkipsRoles()
+    {
+        var party = new CtsPartyDocument
+        {
+            PartyId = "P1",
+            Roles = null
+        };
+
+        var result = CtsPartyRoleRelationshipMapper.ToSilver([party]);
+
+        result.Should().BeEmpty();
+    }
     private static List<CtsAgentOrKeeper> GenerateCtsAgentOrKeeper(int quantity, string holdingIdentifier)
     {
         var records = new List<CtsAgentOrKeeper>();

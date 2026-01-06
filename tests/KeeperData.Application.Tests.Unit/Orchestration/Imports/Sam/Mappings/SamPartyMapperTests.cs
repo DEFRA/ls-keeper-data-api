@@ -261,6 +261,122 @@ public class SamPartyMapperTests
         party.CPHS.Should().Be("11/234/5678");
     }
 
+    [Fact]
+    public void AggregatePartyAndHolder_WhenPartyFieldsAreEmpty_ShouldPopulateFromHolder()
+    {
+        var party = new SamParty { PARTY_ID = "P1" };
+
+        var holder = new SamCphHolder
+        {
+            PARTY_ID = "P1",
+            PERSON_TITLE = "Mr",
+            PERSON_GIVEN_NAME = "HolderName",
+            PERSON_GIVEN_NAME2 = "HolderName2",
+            PERSON_INITIALS = "H",
+            PERSON_FAMILY_NAME = "HolderFamily",
+            ORGANISATION_NAME = "HolderOrg",
+            TELEPHONE_NUMBER = "111",
+            MOBILE_NUMBER = "222",
+            INTERNET_EMAIL_ADDRESS = "h@h.com",
+            SAON_START_NUMBER = 1,
+            SAON_START_NUMBER_SUFFIX = 'A',
+            SAON_END_NUMBER = 2,
+            SAON_END_NUMBER_SUFFIX = 'B',
+            SAON_DESCRIPTION = "Desc",
+            PAON_START_NUMBER = 10,
+            PAON_START_NUMBER_SUFFIX = 'C',
+            PAON_END_NUMBER = 20,
+            PAON_END_NUMBER_SUFFIX = 'D',
+            PAON_DESCRIPTION = "PDesc",
+            STREET = "St",
+            TOWN = "Tn",
+            LOCALITY = "Loc",
+            UK_INTERNAL_CODE = "UK",
+            POSTCODE = "PC",
+            COUNTRY_CODE = "GB",
+            UDPRN = "U1",
+            PREFERRED_CONTACT_METHOD_IND = 'M',
+            CPHS = "12/34/56"
+        };
+
+        // Act
+        var result = SamPartyMapper.AggregatePartyAndHolder([party], [holder]);
+
+        // Assert
+        var merged = result.Single();
+        merged.PERSON_TITLE.Should().Be("Mr");
+        merged.PERSON_GIVEN_NAME.Should().Be("HolderName");
+        merged.PERSON_GIVEN_NAME2.Should().Be("HolderName2");
+        merged.PERSON_INITIALS.Should().Be("H");
+        merged.PERSON_FAMILY_NAME.Should().Be("HolderFamily");
+        merged.ORGANISATION_NAME.Should().Be("HolderOrg");
+        merged.TELEPHONE_NUMBER.Should().Be("111");
+        merged.MOBILE_NUMBER.Should().Be("222");
+        merged.INTERNET_EMAIL_ADDRESS.Should().Be("h@h.com");
+        merged.SAON_START_NUMBER.Should().Be(1);
+        merged.STREET.Should().Be("St");
+        merged.CPHS.Should().Be("12/34/56");
+    }
+
+    [Fact]
+    public void AggregatePartyAndHolder_WhenPartyFieldsArePopulated_ShouldPreservePartyValues()
+    {
+        var party = new SamParty
+        {
+            PARTY_ID = "P1",
+            PERSON_TITLE = "Ms",
+            PERSON_GIVEN_NAME = "PartyName",
+            PERSON_GIVEN_NAME2 = "PartyName2",
+            PERSON_INITIALS = "P",
+            PERSON_FAMILY_NAME = "PartyFamily",
+            ORGANISATION_NAME = "PartyOrg",
+            TELEPHONE_NUMBER = "999",
+            MOBILE_NUMBER = "888",
+            INTERNET_EMAIL_ADDRESS = "p@p.com",
+            SAON_START_NUMBER = 99,
+            STREET = "PartySt"
+        };
+
+        var holder = new SamCphHolder
+        {
+            PARTY_ID = "P1",
+            PERSON_TITLE = "Mr",
+            PERSON_GIVEN_NAME = "HolderName",
+            STREET = "HolderSt"
+        };
+
+        // Act
+        var result = SamPartyMapper.AggregatePartyAndHolder([party], [holder]);
+
+        // Assert
+        var merged = result.Single();
+        merged.PERSON_TITLE.Should().Be("Ms");
+        merged.PERSON_GIVEN_NAME.Should().Be("PartyName");
+        merged.STREET.Should().Be("PartySt");
+    }
+
+    [Fact]
+    public void AggregatePartyAndHolder_WhenHolderFieldsAreEmpty_ShouldNotOverwritePartyWithNulls()
+    {
+        var party = new SamParty
+        {
+            PARTY_ID = "P1",
+            PERSON_TITLE = "Ms"
+        };
+
+        var holder = new SamCphHolder
+        {
+            PARTY_ID = "P1",
+            PERSON_TITLE = null
+        };
+
+        // Act
+        var result = SamPartyMapper.AggregatePartyAndHolder([party], [holder]);
+
+        // Assert
+        result.Single().PERSON_TITLE.Should().Be("Ms");
+    }
+
     private static List<SamParty> GenerateSamParty(int quantity)
     {
         var factory = new MockSamRawDataFactory();

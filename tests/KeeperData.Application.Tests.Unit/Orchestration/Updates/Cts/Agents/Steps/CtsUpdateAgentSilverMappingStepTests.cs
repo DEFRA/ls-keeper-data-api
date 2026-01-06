@@ -43,4 +43,21 @@ public class CtsUpdateAgentSilverMappingStepTests
         context.SilverParty!.PartyId.Should().Be(agent.PAR_ID);
         context.SilverPartyRoles.Should().ContainSingle();
     }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_WhenRawAgentIsNull_ShouldDoNothing()
+    {
+        var context = new CtsUpdateAgentContext
+        {
+            PartyId = "P1",
+            CurrentDateTime = DateTime.UtcNow,
+            RawAgent = null
+        };
+
+        await _sut.ExecuteAsync(context, CancellationToken.None);
+
+        context.SilverParty.Should().BeNull();
+        context.SilverPartyRoles.Should().BeEmpty();
+        _roleTypeLookupServiceMock.Verify(x => x.FindAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 }
