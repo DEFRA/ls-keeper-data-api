@@ -9,14 +9,8 @@ using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.Serializers;
 using KeeperData.Tests.Common.Factories;
-using KeeperData.Tests.Common.Fakes;
 using MongoDB.Driver;
-using MongoDB.Driver.Core.Clusters;
-using MongoDB.Driver.Core.Connections;
-using MongoDB.Driver.Core.Servers;
 using Moq;
-using System.Net;
-using System.Reflection;
 
 namespace KeeperData.Application.Tests.Unit.MessageHandlers.Sam;
 
@@ -43,6 +37,20 @@ public class SamHandlersTests
     }
 
     [Fact]
+    public async Task SamBulkScanMessageHandler_Handle_DeserializationReturnsNull_ThrowsNonRetryable()
+    {
+        var orchestrator = new Mock<SamBulkScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<SamBulkScanContext>>());
+        var serializer = new Mock<IUnwrappedMessageSerializer<SamBulkScanMessage>>();
+        var message = new UnwrappedMessage { MessageId = "1" };
+
+        serializer.Setup(x => x.Deserialize(message)).Returns((SamBulkScanMessage?)null);
+
+        var handler = new SamBulkScanMessageHandler(orchestrator.Object, serializer.Object, _config);
+
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
+    }
+
+    [Fact]
     public async Task SamDailyScanMessageHandler_Handle_Success()
     {
         var orchestrator = new Mock<SamDailyScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<SamDailyScanContext>>());
@@ -57,6 +65,20 @@ public class SamHandlersTests
         await handler.Handle(message, _ct);
 
         orchestrator.Verify(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), _ct), Times.Once);
+    }
+
+    [Fact]
+    public async Task SamDailyScanMessageHandler_Handle_DeserializationReturnsNull_ThrowsNonRetryable()
+    {
+        var orchestrator = new Mock<SamDailyScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<SamDailyScanContext>>());
+        var serializer = new Mock<IUnwrappedMessageSerializer<SamDailyScanMessage>>();
+        var message = new UnwrappedMessage { MessageId = "1" };
+
+        serializer.Setup(x => x.Deserialize(message)).Returns((SamDailyScanMessage?)null);
+
+        var handler = new SamDailyScanMessageHandler(orchestrator.Object, serializer.Object, _config);
+
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
     }
 
     [Fact]
@@ -123,6 +145,20 @@ public class SamHandlersTests
         await handler.Handle(message, _ct);
 
         orchestrator.Verify(x => x.ExecuteAsync(It.Is<SamHoldingImportContext>(c => c.Cph == "CPH"), _ct), Times.Once);
+    }
+
+    [Fact]
+    public async Task SamUpdateHoldingMessageHandler_Handle_DeserializationReturnsNull_ThrowsNonRetryable()
+    {
+        var orchestrator = new Mock<SamHoldingImportOrchestrator>(Enumerable.Empty<Application.Orchestration.Imports.IImportStep<SamHoldingImportContext>>());
+        var serializer = new Mock<IUnwrappedMessageSerializer<SamUpdateHoldingMessage>>();
+        var message = new UnwrappedMessage { MessageId = "1" };
+
+        serializer.Setup(x => x.Deserialize(message)).Returns((SamUpdateHoldingMessage?)null);
+
+        var handler = new SamUpdateHoldingMessageHandler(orchestrator.Object, serializer.Object);
+
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
     }
 
     [Fact]

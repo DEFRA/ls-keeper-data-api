@@ -2,6 +2,7 @@ using FluentAssertions;
 using KeeperData.Application.Orchestration.Updates.Cts.Keepers;
 using KeeperData.Application.Orchestration.Updates.Cts.Keepers.Steps;
 using KeeperData.Core.ApiClients.DataBridgeApi;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Tests.Common.Factories;
 using KeeperData.Tests.Common.Generators;
 using Microsoft.Extensions.Logging;
@@ -38,5 +39,22 @@ public class CtsUpdateKeeperRawAggregationStepTests
 
         context.RawKeeper.Should().NotBeNull();
         context.RawKeeper!.PAR_ID.Should().Be(partyId);
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_PopulatesRawKeeper()
+    {
+        var clientMock = new Mock<IDataBridgeClient>();
+        var keeper = new CtsAgentOrKeeper { PAR_ID = "P1" };
+
+        clientMock.Setup(x => x.GetCtsKeeperByPartyIdAsync("P1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(keeper);
+
+        var step = new CtsUpdateKeeperRawAggregationStep(clientMock.Object, Mock.Of<ILogger<CtsUpdateKeeperRawAggregationStep>>());
+        var context = new CtsUpdateKeeperContext { PartyId = "P1" };
+
+        await step.ExecuteAsync(context, CancellationToken.None);
+
+        context.RawKeeper.Should().Be(keeper);
     }
 }
