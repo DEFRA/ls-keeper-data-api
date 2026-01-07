@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using FluentAssertions;
 using KeeperData.Application.Configuration;
 using KeeperData.Application.Queries.Sites;
@@ -32,5 +33,16 @@ public class GetSitesQueryValidatorTests
         var sut = new GetSitesQueryValidator(new QueryValidationConfig() { MaxPageSize = 6 });
         var result = sut.Validate(query);
         result.Errors.Count.Should().Be(1);
+    }
+
+    [Theory]
+    [InlineData(4, 3, 1)]
+    [InlineData(5, 5, 0)]
+    public void WhenQueryingWithReducedMaxSiteTypes_HigherNumberShouldFail(int numberInQuery, int maxAllowed, int expectedNumberOfErrors)
+    {
+        var query = new GetSitesQuery() { Type = Enumerable.Range(1, numberInQuery).Select(x => x.ToString()).ToList() };
+        var sut = new GetSitesQueryValidator(new QueryValidationConfig() { MaxQueryableTypes = maxAllowed });
+        var result = sut.Validate(query);
+        result.Errors.Count.Should().Be(expectedNumberOfErrors);
     }
 }
