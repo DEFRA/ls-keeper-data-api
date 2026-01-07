@@ -20,7 +20,7 @@ public class GetCountriesQueryValidatorTests
     public void QueryWithInvalidParameters_ShouldFail(int? page, int? pageSize, string? codeCsv, string? sort, string? order, int numberOfErrors)
     {
         var query = new GetCountriesQuery() { Page = page ?? 1, PageSize = pageSize ?? 10, Code = codeCsv?.Split(',').ToList(), Sort = sort, Order = order };
-        var sut = new GetCountriesQueryValidator(new QueryValidationConfig() { MaxPageSize = 100 });
+        var sut = new GetCountriesQueryValidator(new QueryValidationConfig<GetCountriesQueryValidator>() { MaxPageSize = 100 });
         var result = sut.Validate(query);
         result.Errors.Count.Should().Be(numberOfErrors);
     }
@@ -29,7 +29,7 @@ public class GetCountriesQueryValidatorTests
     public void WhenQueryingWithReducedMaxPageSize_HigherSizeShouldFail()
     {
         var query = new GetCountriesQuery() { Page = 1, PageSize = 7 };
-        var sut = new GetCountriesQueryValidator(new QueryValidationConfig() { MaxPageSize = 6 });
+        var sut = new GetCountriesQueryValidator(new QueryValidationConfig<GetCountriesQueryValidator>() { MaxPageSize = 6 });
         var result = sut.Validate(query);
         result.Errors.Count.Should().Be(1);
     }
@@ -40,7 +40,7 @@ public class GetCountriesQueryValidatorTests
     public void WhenQueryingWithReducedMaxSiteTypes_ShouldFailOnlyIfMaxExceeded(int numberInQuery, int maxAllowed, int expectedNumberOfErrors)
     {
         var query = new GetCountriesQuery() { Code = Enumerable.Range(1, numberInQuery).Select(x => x.ToString()).ToList() };
-        var sut = new GetCountriesQueryValidator(new QueryValidationConfig() { MaxQueryableTypes = maxAllowed });
+        var sut = new GetCountriesQueryValidator(new QueryValidationConfig<GetCountriesQueryValidator>() { MaxQueryableTypes = maxAllowed });
         var result = sut.Validate(query);
         result.Errors.Count.Should().Be(expectedNumberOfErrors);
     }

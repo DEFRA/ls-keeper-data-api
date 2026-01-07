@@ -21,7 +21,7 @@ public class GetSitesQuery : IPagedQuery<SiteDocument>
 
 public class GetSitesQueryValidator : AbstractValidator<GetSitesQuery>
 {
-    public GetSitesQueryValidator(QueryValidationConfig config)
+    public GetSitesQueryValidator(QueryValidationConfig<GetSitesQueryValidator> config)
     {
         RuleFor(x => x.Page).GreaterThan(0);
         RuleFor(x => x.PageSize).InclusiveBetween(1, config.MaxPageSize);

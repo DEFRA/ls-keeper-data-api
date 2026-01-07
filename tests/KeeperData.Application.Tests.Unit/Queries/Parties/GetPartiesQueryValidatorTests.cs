@@ -23,7 +23,7 @@ public class GetPartiesQueryValidatorTests
     public void ShouldValidateQueryParametersCorrectly(int? page, int? pageSize, string? email, string? sort, string? order, string? firstName, bool expectedIsValid)
     {
         var query = new GetPartiesQuery() { Page = page ?? 1, PageSize = pageSize ?? 10, Email = email, Sort = sort, Order = order, FirstName = firstName };
-        var sut = new GetPartiesQueryValidator(new QueryValidationConfig() { MaxPageSize = 100 });
+        var sut = new GetPartiesQueryValidator(new QueryValidationConfig<GetPartiesQueryValidator>() { MaxPageSize = 100 });
         var result = sut.Validate(query);
         result.IsValid.Should().Be(expectedIsValid);
     }
@@ -32,7 +32,7 @@ public class GetPartiesQueryValidatorTests
     public void WhenQueryingWithReducedMaxPageSize_HigherSizeShouldFail()
     {
         var query = new GetPartiesQuery() { Page = 1, PageSize = 7 };
-        var sut = new GetPartiesQueryValidator(new QueryValidationConfig() { MaxPageSize = 6 });
+        var sut = new GetPartiesQueryValidator(new QueryValidationConfig<GetPartiesQueryValidator>() { MaxPageSize = 6 });
         var result = sut.Validate(query);
         result.Errors.Count.Should().Be(1);
     }
