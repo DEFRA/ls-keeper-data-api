@@ -1,5 +1,7 @@
 using FluentAssertions;
 using KeeperData.Api.Worker.Tasks.Implementations;
+using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
+using KeeperData.Application.Orchestration.ChangeScanning.Cts.Daily;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Locking;
