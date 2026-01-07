@@ -18,7 +18,7 @@ public class GetPartiesQueryValidatorTests
     [InlineData(null, null, null, "asc", "type", null, true)]
     [InlineData(null, null, null, "desc", "type", null, true)]
     [InlineData(null, null, null, "other", "type", null, false)]
-    [InlineData(null, null, null, "asc", "invalid", null, false)]
+    [InlineData(null, null, null, "invalid", "type", null, false)]
     [InlineData(null, null, null, "asc", null, null, false)]
     public void ShouldValidateQueryParametersCorrectly(int? page, int? pageSize, string? email, string? sort, string? order, string? firstName, bool expectedIsValid)
     {
