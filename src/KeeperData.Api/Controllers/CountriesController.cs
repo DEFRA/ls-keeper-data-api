@@ -14,10 +14,17 @@ namespace KeeperData.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetCountries([FromQuery] GetCountriesRequest request)
         {
+            var codeList = !string.IsNullOrWhiteSpace(request.Code)
+                ? request.Code.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(t => t.Trim())
+                    .Where(t => !string.IsNullOrWhiteSpace(t))
+                    .ToList()
+                : null;
+
             var query = new GetCountriesQuery
             {
                 Name = request.Name,
-                Code = request.Code,
+                Code = codeList,
                 DevolvedAuthority = request.DevolvedAuthority,
                 EuTradeMember = request.EuTradeMember,
                 LastUpdatedDate = request.LastUpdatedDate,
