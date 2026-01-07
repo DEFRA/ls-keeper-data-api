@@ -33,4 +33,15 @@ public class GetCountriesQueryValidatorTests
         var result = sut.Validate(query);
         result.Errors.Count.Should().Be(1);
     }
+
+    [Theory]
+    [InlineData(4, 3, 1)]
+    [InlineData(5, 5, 0)]
+    public void WhenQueryingWithReducedMaxSiteTypes_ShouldFailOnlyIfMaxExceeded(int numberInQuery, int maxAllowed, int expectedNumberOfErrors)
+    {
+        var query = new GetCountriesQuery() { Code = Enumerable.Range(1, numberInQuery).Select(x => x.ToString()).ToList() };
+        var sut = new GetCountriesQueryValidator(new QueryValidationConfig() { MaxQueryableTypes = maxAllowed });
+        var result = sut.Validate(query);
+        result.Errors.Count.Should().Be(expectedNumberOfErrors);
+    }
 }

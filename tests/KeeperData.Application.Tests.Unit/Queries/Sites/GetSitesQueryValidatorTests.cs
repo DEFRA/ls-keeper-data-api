@@ -38,7 +38,7 @@ public class GetSitesQueryValidatorTests
     [Theory]
     [InlineData(4, 3, 1)]
     [InlineData(5, 5, 0)]
-    public void WhenQueryingWithReducedMaxSiteTypes_HigherNumberShouldFail(int numberInQuery, int maxAllowed, int expectedNumberOfErrors)
+    public void WhenQueryingWithReducedMaxSiteTypes_ShouldFailOnlyIfMaxExceeded(int numberInQuery, int maxAllowed, int expectedNumberOfErrors)
     {
         var query = new GetSitesQuery() { Type = Enumerable.Range(1, numberInQuery).Select(x => x.ToString()).ToList() };
         var sut = new GetSitesQueryValidator(new QueryValidationConfig() { MaxQueryableTypes = maxAllowed });
