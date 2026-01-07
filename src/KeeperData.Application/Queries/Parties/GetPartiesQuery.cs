@@ -19,7 +19,7 @@ public class GetPartiesQuery : IPagedQuery<PartyDocument>
 
 public class GetPartiesQueryValidator : AbstractValidator<GetPartiesQuery>
 {
-    public GetPartiesQueryValidator(QueryValidationConfig config)
+    public GetPartiesQueryValidator(QueryValidationConfig<GetPartiesQueryValidator> config)
     {
         RuleFor(x => x.Page).GreaterThan(0);
         RuleFor(x => x.PageSize).InclusiveBetween(1, config.MaxPageSize);

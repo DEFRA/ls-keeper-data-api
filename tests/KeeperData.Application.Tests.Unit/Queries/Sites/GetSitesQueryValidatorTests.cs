@@ -21,7 +21,7 @@ public class GetSitesQueryValidatorTests
     public void QueryWithInvalidParameters_ShouldFail(int? page, int? pageSize, string? typeCsv, string? sort, string? order, int numberOfErrors)
     {
         var query = new GetSitesQuery() { Page = page ?? 1, PageSize = pageSize ?? 10, Type = typeCsv?.Split(',').ToList(), Sort = sort, Order = order };
-        var sut = new GetSitesQueryValidator(new QueryValidationConfig() { MaxPageSize = 100 });
+        var sut = new GetSitesQueryValidator(new QueryValidationConfig<GetSitesQueryValidator>() { MaxPageSize = 100 });
         var result = sut.Validate(query);
         result.Errors.Count.Should().Be(numberOfErrors);
     }
@@ -30,7 +30,7 @@ public class GetSitesQueryValidatorTests
     public void WhenQueryingWithReducedMaxPageSize_HigherSizeShouldFail()
     {
         var query = new GetSitesQuery() { Page = 1, PageSize = 7 };
-        var sut = new GetSitesQueryValidator(new QueryValidationConfig() { MaxPageSize = 6 });
+        var sut = new GetSitesQueryValidator(new QueryValidationConfig<GetSitesQueryValidator>() { MaxPageSize = 6 });
         var result = sut.Validate(query);
         result.Errors.Count.Should().Be(1);
     }
@@ -41,7 +41,7 @@ public class GetSitesQueryValidatorTests
     public void WhenQueryingWithReducedMaxSiteTypes_ShouldFailOnlyIfMaxExceeded(int numberInQuery, int maxAllowed, int expectedNumberOfErrors)
     {
         var query = new GetSitesQuery() { Type = Enumerable.Range(1, numberInQuery).Select(x => x.ToString()).ToList() };
-        var sut = new GetSitesQueryValidator(new QueryValidationConfig() { MaxQueryableTypes = maxAllowed });
+        var sut = new GetSitesQueryValidator(new QueryValidationConfig<GetSitesQueryValidator>() { MaxQueryableTypes = maxAllowed });
         var result = sut.Validate(query);
         result.Errors.Count.Should().Be(expectedNumberOfErrors);
     }
