@@ -34,8 +34,8 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddScoped<IRequestExecutor, RequestExecutor>();
-        var queryValidationConfig = configuration.GetSection(QueryValidationConfig.SectionName).Get<QueryValidationConfig>() ?? new();
-        services.AddSingleton(queryValidationConfig);
+        RegisterValidationConfig(configuration, services);
+
         services.AddValidatorsFromAssemblyContaining<IRequestExecutor>();
 
         services.AddScoped<CountriesQueryAdapter>();
@@ -52,6 +52,7 @@ public static class ServiceCollectionExtensions
         RegisterLookupServices(services);
         RegisterNotificationService(services);
     }
+
 
     public static void RegisterImportOrchestrators(IServiceCollection services, Assembly assembly)
     {
@@ -158,5 +159,32 @@ public static class ServiceCollectionExtensions
     public static void RegisterNotificationService(IServiceCollection services)
     {
         services.AddScoped<IBatchCompletionNotificationService, BatchCompletionNotificationService>();
+    }
+
+    /// <summary>
+    /// Register strongly-typed config for each query validator.
+    /// </summary>
+    /// <remarks>Each validator constructor can request a strongly typed config for its own particular defaults
+    /// (e.g. GetSiteQueryValidator constructor takes parameter of type QueryValidationConfig<GetSiteQueryValidator>)</remarks>
+    private static void RegisterValidationConfig(IConfiguration configuration, IServiceCollection services)
+    {
+        var queryValidationConfig = configuration.GetSection(QueryValidationConfig.SectionName).Get<List<QueryValidationConfig>>();
+        var validatorTypes = typeof(Queries.Sites.GetSitesQueryValidator).Assembly.GetTypes();
+        var getConfigSectionMethod = typeof(ConfigurationBinder)
+            .GetMethods()
+            .Single(m => m.Name == "Get"
+                && m.ContainsGenericParameters
+                && m.GetParameters().Count() == 1
+                && m.GetParameters().Single().ParameterType == typeof(IConfiguration));
+
+        for (int i = 0; i < queryValidationConfig?.Count; i++)
+        {
+            var validatorType = validatorTypes.Single(t => t.Name == queryValidationConfig[i].ValidatorType);
+            var typeOfConfigForValidator = typeof(QueryValidationConfig<>).MakeGenericType(validatorType);
+            var configInstance = getConfigSectionMethod
+                .MakeGenericMethod(typeOfConfigForValidator)
+                .Invoke(null, [configuration.GetSection($"{QueryValidationConfig.SectionName}:{i}")]);
+            services.AddSingleton(typeOfConfigForValidator, configInstance!);
+        }
     }
 }

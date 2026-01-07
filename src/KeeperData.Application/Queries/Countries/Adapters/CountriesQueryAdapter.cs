@@ -14,13 +14,12 @@ public class CountriesQueryAdapter(ICountryRepository repository)
     {
         var items = await _repository.GetAllAsync(cancellationToken);
 
-        var codes = query!.Code?.Split(',');
         var results = items
-            .Where(c => !query!.LastUpdatedDate.HasValue || c.LastModifiedDate >= query.LastUpdatedDate.Value)
-            .Where(c => !query!.EuTradeMember.HasValue || c.EuTradeMember == query.EuTradeMember)
-            .Where(c => !query!.DevolvedAuthority.HasValue || c.DevolvedAuthority == query.DevolvedAuthority)
-            .Where(c => string.IsNullOrEmpty(query?.Name) || c.Name.Contains(query!.Name, StringComparison.InvariantCultureIgnoreCase))
-            .Where(c => string.IsNullOrEmpty(query!.Code) || codes!.Contains(c.Code));
+            .Where(c => !query.LastUpdatedDate.HasValue || c.LastModifiedDate >= query.LastUpdatedDate.Value)
+            .Where(c => !query.EuTradeMember.HasValue || c.EuTradeMember == query.EuTradeMember)
+            .Where(c => !query.DevolvedAuthority.HasValue || c.DevolvedAuthority == query.DevolvedAuthority)
+            .Where(c => string.IsNullOrEmpty(query.Name) || c.Name.Contains(query.Name, StringComparison.InvariantCultureIgnoreCase))
+            .Where(c => !(query.Code is { Count: > 0 }) || query.Code.Contains(c.Code));
 
         var sortedResults = query.Order switch
         {

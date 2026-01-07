@@ -115,7 +115,7 @@ public class CountriesQueryAdapterTests
     {
         var query = new GetCountriesQuery()
         {
-            Code = codeCsv,
+            Code = codeCsv?.Split(',').ToList(),
             Name = name,
             EuTradeMember = euTradeMember,
             DevolvedAuthority = devolvedAuthority,
