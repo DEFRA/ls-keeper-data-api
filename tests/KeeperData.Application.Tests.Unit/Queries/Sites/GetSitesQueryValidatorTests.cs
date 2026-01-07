@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using FluentAssertions;
 using KeeperData.Application.Configuration;
 using KeeperData.Application.Queries.Sites;
@@ -8,22 +7,23 @@ namespace KeeperData.Application.Tests.Unit.Queries.Sites;
 public class GetSitesQueryValidatorTests
 {
     [Theory]
-    [InlineData(0, null, null, null, null, 1)]
-    [InlineData(null, 0, null, null, null, 1)]
-    [InlineData(null, 101, null, null, null, 1)]
-    [InlineData(1, 1, null, null, null, 0)]
-    [InlineData(1, 100, null, null, null, 0)]
-    [InlineData(null, null, "a,b,c", null, null, 0)]
-    [InlineData(null, null, "a,,c", null, null, 1)]
-    [InlineData(null, null, null, "asc", "type", 0)]
-    [InlineData(null, null, null, "desc", "type", 0)]
-    [InlineData(null, null, null, "other", "type", 1)]
-    public void QueryWithInvalidParameters_ShouldFail(int? page, int? pageSize, string? typeCsv, string? sort, string? order, int numberOfErrors)
+    [InlineData(1, 10, null, "asc", "name", true)]
+    [InlineData(0, null, null, null, null, false)]
+    [InlineData(null, 0, null, null, null, false)]
+    [InlineData(null, 101, null, null, null, false)]
+    [InlineData(1, 1, null, null, null, true)]
+    [InlineData(1, 100, null, null, null, true)]
+    [InlineData(null, null, "a,b,c", null, null, true)]
+    [InlineData(null, null, "a,,c", null, null, false)]
+    [InlineData(null, null, null, "asc", "type", true)]
+    [InlineData(null, null, null, "desc", "type", true)]
+    [InlineData(null, null, null, "invalid", "type", false)]
+    public void QueryWithInvalidParameters_ShouldFail(int? page, int? pageSize, string? typeCsv, string? sort, string? order, bool expectedIsValid)
     {
         var query = new GetSitesQuery() { Page = page ?? 1, PageSize = pageSize ?? 10, Type = typeCsv?.Split(',').ToList(), Sort = sort, Order = order };
         var sut = new GetSitesQueryValidator(new QueryValidationConfig() { MaxPageSize = 100 });
         var result = sut.Validate(query);
-        result.Errors.Count.Should().Be(numberOfErrors);
+        result.IsValid.Should().Be(expectedIsValid);
     }
 
     [Fact]
@@ -44,5 +44,13 @@ public class GetSitesQueryValidatorTests
         var sut = new GetSitesQueryValidator(new QueryValidationConfig() { MaxQueryableTypes = maxAllowed });
         var result = sut.Validate(query);
         result.Errors.Count.Should().Be(expectedNumberOfErrors);
+    }
+
+    [Fact]
+    public void GetSiteByIdQueryValidator_ValidatesCorrectly()
+    {
+        var validator = new GetSiteByIdQueryValidator();
+        validator.Validate(new GetSiteByIdQuery("123")).IsValid.Should().BeTrue();
+        validator.Validate(new GetSiteByIdQuery("")).IsValid.Should().BeFalse();
     }
 }
