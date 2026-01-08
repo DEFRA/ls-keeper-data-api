@@ -67,6 +67,12 @@ public class Program
                     jsonString = await GenericTsvConverter.Convert(inputPath, MapProductionUsage);
                     break;
 
+                case "facilitybusinessactivitymaps":
+                    inputPath = "facilitybusinessactivitymaps.tsv";
+                    outputPath = "facilitybusinessactivitymaps_generated.json";
+                    jsonString = await GenericTsvConverter.Convert(inputPath, MapFacilityBusinessActivityMap);
+                    break;
+
                 default:
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine($"\nERROR: Unknown data type '{dataType}'.");
@@ -226,11 +232,38 @@ public class Program
         );
     }
 
+    public static FacilityBusinessActivityMapJson MapFacilityBusinessActivityMap(string[] parts)
+    {
+        if (parts.Length < 3)
+            throw new InvalidDataException($"TSV line has fewer than 3 columns: {string.Join(",", parts)}");
+
+        var now = DateTime.UtcNow;
+
+        return new FacilityBusinessActivityMapJson(
+            // 1. Generate a new System ID
+            Id: Guid.NewGuid().ToString(),
+
+            // 2. Map the 3 columns from the TSV
+            FacilityActivityCode: parts[0].Trim(),
+            AssociatedPremiseTypeCode: string.IsNullOrWhiteSpace(parts[1]) ? null : parts[1].Trim(),
+            AssociatedPremiseActivityCode: (parts.Length > 2 && !string.IsNullOrWhiteSpace(parts[2])) ? parts[2].Trim() : null,
+
+            // 3. Generate Defaults for Audit fields required by Schema
+            IsActive: true,
+            EffectiveStartDate: now,
+            EffectiveEndDate: null,
+            CreatedBy: "System",
+            CreatedDate: now,
+            LastModifiedBy: "System",
+            LastModifiedDate: now
+        );
+    }
+
     private static void PrintUsage()
     {
         Console.WriteLine("\nUsage: dotnet run <data_type>");
         Console.WriteLine("Available data types: countries, species, partyroles, " +
-            "premisesactivitytypes, siteidentifiertypes, productionusages");
+            "premisesactivitytypes, siteidentifiertypes, productionusages, facilitybusinessactivitymaps");
     }
 
     private static void PrintSuccess(string outputPath, string inputPath)
