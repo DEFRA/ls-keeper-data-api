@@ -5,7 +5,7 @@
     "name": "United Kingdom",
     "longName": "United Kingdom of Great Britain and Northern Ireland",
     "isActive": false,
-    "euTradeMember": false,
+    "euTradeMember": true,
     "devolvedAuthority": false,
     "sortOrder": 10,
     "effectiveStartDate": "2025-10-09T23:00:00Z",
