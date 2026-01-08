@@ -108,3 +108,18 @@ public record ProductionUsageJson(
     [property: JsonPropertyName("lastModifiedBy")] string? LastModifiedBy,
     [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
 );
+
+[ExcludeFromCodeCoverage]
+public record FacilityBusinessActivityMapJson(
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("facilityActivityCode")] string FacilityActivityCode,
+    [property: JsonPropertyName("associatedPremiseTypeCode")] string? AssociatedPremiseTypeCode,
+    [property: JsonPropertyName("associatedPremiseActivityCode")] string? AssociatedPremiseActivityCode,
+    [property: JsonPropertyName("isActive")] bool IsActive,
+    [property: JsonPropertyName("effectiveStartDate")] DateTime EffectiveStartDate,
+    [property: JsonPropertyName("effectiveEndDate")] DateTime? EffectiveEndDate,
+    [property: JsonPropertyName("createdBy")] string CreatedBy,
+    [property: JsonPropertyName("createdDate")] DateTime CreatedDate,
+    [property: JsonPropertyName("lastModifiedBy")] string? LastModifiedBy,
+    [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
+);
