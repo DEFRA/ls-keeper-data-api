@@ -11,7 +11,6 @@ public class FacilityBusinessActivityMapRepositoryTests
 
     public FacilityBusinessActivityMapRepositoryTests()
     {
-
         _fixture = new ReferenceRepositoryTestFixture<FacilityBusinessActivityMapRepository, FacilityBusinessActivityMapListDocument, FacilityBusinessActivityMapDocument>();
         _sut = _fixture.CreateSut((config, client, unitOfWork) => new FacilityBusinessActivityMapRepository(config, client, unitOfWork));
     }
