@@ -4,6 +4,7 @@ using KeeperData.Core.Documents.Reference;
 using KeeperData.Infrastructure.Database.Repositories;
 
 namespace KeeperData.Infrastructure.Tests.Unit.Database.Repositories;
+
 public class FacilityBusinessActivityMapRepositoryTests
 {
     private readonly ReferenceRepositoryTestFixture<FacilityBusinessActivityMapRepository, FacilityBusinessActivityMapListDocument, FacilityBusinessActivityMapDocument> _fixture;
