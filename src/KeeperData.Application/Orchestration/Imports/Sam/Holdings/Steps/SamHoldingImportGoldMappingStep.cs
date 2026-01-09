@@ -1,6 +1,8 @@
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents;
+using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Extensions;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
 using Microsoft.Extensions.Logging;
@@ -24,8 +26,8 @@ public class SamHoldingImportGoldMappingStep(
     {
         if (context.SilverHoldings.Count > 0)
         {
-            var representative = context.SilverHoldings.Any(x => x.IsActive)
-            ? context.SilverHoldings.Where(x => x.IsActive).OrderByDescending(h => h.LastUpdatedDate).First()
+            var representative = context.SilverHoldings.Any(x => x.HoldingStatus == HoldingStatusType.Active.GetDescription())
+            ? context.SilverHoldings.Where(x => x.HoldingStatus == HoldingStatusType.Active.GetDescription()).OrderByDescending(h => h.LastUpdatedDate).First()
             : context.SilverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
 
             var existingHoldingFilter = Builders<SiteDocument>.Filter.ElemMatch(

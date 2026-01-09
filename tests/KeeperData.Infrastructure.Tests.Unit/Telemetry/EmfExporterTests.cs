@@ -1,9 +1,9 @@
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
 using FluentAssertions;
 using KeeperData.Infrastructure.Telemetry;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 
 namespace KeeperData.Infrastructure.Tests.Unit.Telemetry;
 

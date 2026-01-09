@@ -5,6 +5,7 @@ using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Domain.Sites.Formatters;
+using KeeperData.Core.Extensions;
 using MongoDB.Driver;
 
 namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
@@ -146,8 +147,8 @@ public static class SamHoldingMapper
         if (silverHoldings == null || silverHoldings.Count == 0)
             return null;
 
-        var representative = silverHoldings.Any(x => x.IsActive)
-            ? silverHoldings.Where(x => x.IsActive).OrderByDescending(h => h.LastUpdatedDate).First()
+        var representative = silverHoldings.Any(x => x.HoldingStatus == HoldingStatusType.Active.GetDescription())
+            ? silverHoldings.Where(x => x.HoldingStatus == HoldingStatusType.Active.GetDescription()).OrderByDescending(h => h.LastUpdatedDate).First()
             : silverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
 
         var distinctSpecies = await GetDistinctReferenceDataAsync<SpeciesDocument>(

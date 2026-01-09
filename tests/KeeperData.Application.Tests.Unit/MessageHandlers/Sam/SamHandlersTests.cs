@@ -1,4 +1,3 @@
-using FluentAssertions;
 using KeeperData.Application.MessageHandlers.Sam;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily;
@@ -9,7 +8,6 @@ using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.Serializers;
 using KeeperData.Tests.Common.Factories;
-using MongoDB.Driver;
 using Moq;
 
 namespace KeeperData.Application.Tests.Unit.MessageHandlers.Sam;

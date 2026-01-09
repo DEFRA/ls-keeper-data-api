@@ -34,6 +34,7 @@ public class SamHoldingDocument : BaseHoldingDocument, IEntity, IDeletableEntity
 
     [JsonPropertyName("deleted")]
     [BsonElement("deleted")]
+    [AutoIndexed]
     public bool Deleted { get; set; }
 
     [JsonPropertyName("cphRelationshipType")]
@@ -73,8 +74,6 @@ public class SamHoldingDocument : BaseHoldingDocument, IEntity, IDeletableEntity
     [JsonPropertyName("productionUsageCodeList")]
     [BsonElement("productionUsageCodeList")]
     public List<string> ProductionUsageCodeList { get; set; } = [];
-
-    public bool IsActive => HoldingStatus == HoldingStatusType.Active.GetDescription();
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {

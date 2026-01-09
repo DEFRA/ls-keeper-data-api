@@ -27,10 +27,9 @@ public static class SiteSortBuilder
         return field switch
         {
             "name" => "name",
-            "type" => "type.description",
-            "state" => "state",
-            "identifier" => "identifiers.identifier",
-            _ => "type.description"
+            "type" => "type.code",
+            "siteidentifier" => "identifiers.identifier",
+            _ => "name"
         };
     }
 }

@@ -21,7 +21,6 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
     [BsonElement("createdDate")]
     [JsonPropertyName("createdDate")]
     [JsonIgnore]
-    [AutoIndexed]
     public DateTime CreatedDate { get; set; }
 
     [BsonElement("lastUpdatedDate")]
@@ -43,6 +42,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("name")]
     [JsonPropertyName("name")]
+    [AutoIndexed]
     public string? Name { get; set; }
 
     [BsonElement("customerNumber")]
@@ -52,17 +52,22 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("partyType")]
     [JsonPropertyName("partyType")]
-    [AutoIndexed]
     public string? PartyType { get; set; }
 
     [BsonElement("state")]
     [JsonPropertyName("state")]
+    [AutoIndexed]
     public string? State { get; set; }
 
     [BsonElement("deleted")]
     [JsonPropertyName("deleted")]
     [JsonIgnore]
+    [AutoIndexed]
     public bool Deleted { get; set; }
+
+    [BsonIgnore]
+    [JsonIgnore]
+    public bool IsInsert { get; set; }
 
     [BsonElement("communication")]
     [JsonPropertyName("communication")]
@@ -202,8 +207,20 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
         return Enumerable.Concat(
         [
             new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("lastName"),
+                new CreateIndexOptions { Name = "idxv2_lastName", Collation = IndexDefaults.CollationCaseInsensitive }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("firstName"),
+                new CreateIndexOptions { Name = "idxv2_firstName", Collation = IndexDefaults.CollationCaseInsensitive }),
+
+            new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("lastName").Ascending("firstName"),
                 new CreateIndexOptions { Name = "idxv2_firstlastName", Collation = IndexDefaults.CollationCaseInsensitive }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("communication.email"),
+                new CreateIndexOptions { Name = "idxv2_communication_email", Collation = IndexDefaults.CollationCaseInsensitive, Sparse = true }),
         ],
         AutoIndexedAttribute.GetIndexModels<PartyDocument>());
     }

@@ -75,8 +75,9 @@ public class SamHoldingImportPersistenceStepTests
         await step.ExecuteAsync(context, CancellationToken.None);
 
         _silverHoldingRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamHoldingDocument>>(), It.IsAny<CancellationToken>()), Times.Once);
-        _silverHoldingRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(
-            It.IsAny<IEnumerable<(FilterDefinition<SamHoldingDocument>, SamHoldingDocument)>>(),
+        _silverHoldingRepositoryMock.Verify(r => r.AddManyAsync(It.IsAny<IEnumerable<SamHoldingDocument>>(), It.IsAny<CancellationToken>()), Times.Never);
+        _silverHoldingRepositoryMock.Verify(r => r.BulkUpdateWithCustomFilterAsync(
+            It.IsAny<IEnumerable<(FilterDefinition<SamHoldingDocument>, UpdateDefinition<SamHoldingDocument>)>>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -103,9 +104,10 @@ public class SamHoldingImportPersistenceStepTests
         await sut.ExecuteAsync(context, CancellationToken.None);
 
         _silverHoldingRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamHoldingDocument>>(), It.IsAny<CancellationToken>()), Times.Never);
-        _silverHoldingRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(
-            It.Is<IEnumerable<(FilterDefinition<SamHoldingDocument>, SamHoldingDocument)>>(items => items.Count() == 1),
-            It.IsAny<CancellationToken>()), Times.Once);
+        _silverHoldingRepositoryMock.Verify(r => r.AddManyAsync(It.Is<IEnumerable<SamHoldingDocument>>(items => items.Count() == 1), It.IsAny<CancellationToken>()), Times.Once);
+        _silverHoldingRepositoryMock.Verify(r => r.BulkUpdateWithCustomFilterAsync(
+            It.IsAny<IEnumerable<(FilterDefinition<SamHoldingDocument>, UpdateDefinition<SamHoldingDocument>)>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -172,7 +174,10 @@ public class SamHoldingImportPersistenceStepTests
 
         await sut.ExecuteAsync(context, CancellationToken.None);
 
-        _silverHoldingRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(It.Is<IEnumerable<(FilterDefinition<SamHoldingDocument>, SamHoldingDocument)>>(items => items.Count() == 3), It.IsAny<CancellationToken>()), Times.Once);
+        _silverHoldingRepositoryMock.Verify(r => r.AddManyAsync(It.Is<IEnumerable<SamHoldingDocument>>(items => items.Count() == 2), It.IsAny<CancellationToken>()), Times.Once);
+        _silverHoldingRepositoryMock.Verify(r => r.BulkUpdateWithCustomFilterAsync(
+            It.Is<IEnumerable<(FilterDefinition<SamHoldingDocument>, UpdateDefinition<SamHoldingDocument>)>>(items => items.Count() == 1),
+            It.IsAny<CancellationToken>()), Times.Once);
         _silverHoldingRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamHoldingDocument>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -199,7 +204,10 @@ public class SamHoldingImportPersistenceStepTests
 
         await step.ExecuteAsync(context, CancellationToken.None);
 
-        _silverPartyRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamPartyDocument>, SamPartyDocument)>>(), It.IsAny<CancellationToken>()), Times.Never);
+        _silverPartyRepositoryMock.Verify(r => r.AddManyAsync(It.IsAny<IEnumerable<SamPartyDocument>>(), It.IsAny<CancellationToken>()), Times.Never);
+        _silverPartyRepositoryMock.Verify(r => r.BulkUpdateWithCustomFilterAsync(
+            It.IsAny<IEnumerable<(FilterDefinition<SamPartyDocument>, UpdateDefinition<SamPartyDocument>)>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
         _silverPartyRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamPartyDocument>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -230,7 +238,10 @@ public class SamHoldingImportPersistenceStepTests
 
         await step.ExecuteAsync(context, CancellationToken.None);
 
-        _silverPartyRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(It.Is<IEnumerable<(FilterDefinition<SamPartyDocument>, SamPartyDocument)>>(items => items.Count() == 1), It.IsAny<CancellationToken>()), Times.Once);
+        _silverPartyRepositoryMock.Verify(r => r.AddManyAsync(It.Is<IEnumerable<SamPartyDocument>>(items => items.Count() == 1), It.IsAny<CancellationToken>()), Times.Once);
+        _silverPartyRepositoryMock.Verify(r => r.BulkUpdateWithCustomFilterAsync(
+            It.IsAny<IEnumerable<(FilterDefinition<SamPartyDocument>, UpdateDefinition<SamPartyDocument>)>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -269,7 +280,10 @@ public class SamHoldingImportPersistenceStepTests
 
         await step.ExecuteAsync(context, CancellationToken.None);
 
-        _silverPartyRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(It.Is<IEnumerable<(FilterDefinition<SamPartyDocument>, SamPartyDocument)>>(items => items.Count() == 3), It.IsAny<CancellationToken>()), Times.Once);
+        _silverPartyRepositoryMock.Verify(r => r.AddManyAsync(It.Is<IEnumerable<SamPartyDocument>>(items => items.Count() == 3), It.IsAny<CancellationToken>()), Times.Once);
+        _silverPartyRepositoryMock.Verify(r => r.BulkUpdateWithCustomFilterAsync(
+            It.IsAny<IEnumerable<(FilterDefinition<SamPartyDocument>, UpdateDefinition<SamPartyDocument>)>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -316,8 +330,9 @@ public class SamHoldingImportPersistenceStepTests
         await step.ExecuteAsync(context, CancellationToken.None);
 
         _silverHerdRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamHerdDocument>>(), It.IsAny<CancellationToken>()), Times.Once);
-        _silverHerdRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(
-            It.IsAny<IEnumerable<(FilterDefinition<SamHerdDocument>, SamHerdDocument)>>(),
+        _silverHerdRepositoryMock.Verify(r => r.AddManyAsync(It.IsAny<IEnumerable<SamHerdDocument>>(), It.IsAny<CancellationToken>()), Times.Never);
+        _silverHerdRepositoryMock.Verify(r => r.BulkUpdateWithCustomFilterAsync(
+            It.IsAny<IEnumerable<(FilterDefinition<SamHerdDocument>, UpdateDefinition<SamHerdDocument>)>>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -345,9 +360,10 @@ public class SamHoldingImportPersistenceStepTests
         await step.ExecuteAsync(context, CancellationToken.None);
 
         _silverHerdRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamHerdDocument>>(), It.IsAny<CancellationToken>()), Times.Never);
-        _silverHerdRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(
-            It.Is<IEnumerable<(FilterDefinition<SamHerdDocument>, SamHerdDocument)>>(items => items.Count() == 1),
-            It.IsAny<CancellationToken>()), Times.Once);
+        _silverHerdRepositoryMock.Verify(r => r.AddManyAsync(It.Is<IEnumerable<SamHerdDocument>>(items => items.Count() == 1), It.IsAny<CancellationToken>()), Times.Once);
+        _silverHerdRepositoryMock.Verify(r => r.BulkUpdateWithCustomFilterAsync(
+            It.IsAny<IEnumerable<(FilterDefinition<SamHerdDocument>, UpdateDefinition<SamHerdDocument>)>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -415,7 +431,10 @@ public class SamHoldingImportPersistenceStepTests
 
         await step.ExecuteAsync(context, CancellationToken.None);
 
-        _silverHerdRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(It.Is<IEnumerable<(FilterDefinition<SamHerdDocument>, SamHerdDocument)>>(items => items.Count() == 3), It.IsAny<CancellationToken>()), Times.Once);
+        _silverHerdRepositoryMock.Verify(r => r.AddManyAsync(It.Is<IEnumerable<SamHerdDocument>>(items => items.Count() == 2), It.IsAny<CancellationToken>()), Times.Once);
+        _silverHerdRepositoryMock.Verify(r => r.BulkUpdateWithCustomFilterAsync(
+            It.Is<IEnumerable<(FilterDefinition<SamHerdDocument>, UpdateDefinition<SamHerdDocument>)>>(items => items.Count() == 1),
+            It.IsAny<CancellationToken>()), Times.Once);
         _silverHerdRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamHerdDocument>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -429,7 +448,11 @@ public class SamHoldingImportPersistenceStepTests
             .ReturnsAsync([]);
 
         _silverHoldingRepositoryMock
-            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamHoldingDocument>, SamHoldingDocument)>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<SamHoldingDocument>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _silverHoldingRepositoryMock
+            .Setup(r => r.BulkUpdateWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamHoldingDocument>, UpdateDefinition<SamHoldingDocument>)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _silverHoldingRepositoryMock
@@ -442,7 +465,11 @@ public class SamHoldingImportPersistenceStepTests
             .ReturnsAsync((SamPartyDocument?)null);
 
         _silverPartyRepositoryMock
-            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamPartyDocument>, SamPartyDocument)>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<SamPartyDocument>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _silverPartyRepositoryMock
+            .Setup(r => r.BulkUpdateWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamPartyDocument>, UpdateDefinition<SamPartyDocument>)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Silver Herds
@@ -451,7 +478,11 @@ public class SamHoldingImportPersistenceStepTests
             .ReturnsAsync([]);
 
         _silverHerdRepositoryMock
-            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamHerdDocument>, SamHerdDocument)>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<SamHerdDocument>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _silverHerdRepositoryMock
+            .Setup(r => r.BulkUpdateWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamHerdDocument>, UpdateDefinition<SamHerdDocument>)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _silverHerdRepositoryMock
@@ -464,7 +495,11 @@ public class SamHoldingImportPersistenceStepTests
             .ReturnsAsync((SiteDocument?)null);
 
         _goldSiteRepositoryMock
-            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SiteDocument>, SiteDocument)>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<SiteDocument>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _goldSiteRepositoryMock
+            .Setup(r => r.BulkUpdateWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SiteDocument>, UpdateDefinition<SiteDocument>)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Gold Party
@@ -473,7 +508,11 @@ public class SamHoldingImportPersistenceStepTests
             .ReturnsAsync((PartyDocument?)null);
 
         _goldPartyRepositoryMock
-            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<PartyDocument>, PartyDocument)>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<PartyDocument>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _goldPartyRepositoryMock
+            .Setup(r => r.BulkUpdateWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<PartyDocument>, UpdateDefinition<PartyDocument>)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Gold Site Party Role Relationships

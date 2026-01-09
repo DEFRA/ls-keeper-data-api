@@ -1,4 +1,3 @@
-using FluentAssertions;
 using KeeperData.Application.MessageHandlers.Cts;
 using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
 using KeeperData.Application.Orchestration.ChangeScanning.Cts.Daily;
@@ -12,9 +11,7 @@ using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.Serializers;
 using KeeperData.Tests.Common.Factories;
-using MongoDB.Driver;
 using Moq;
-using System.Net;
 
 namespace KeeperData.Application.Tests.Unit.MessageHandlers.Cts;
 

@@ -1,5 +1,6 @@
 using AutoFixture;
 using FluentAssertions;
+using KeeperData.Api.Tests.Component.Orchestration.Imports.Sam.Mocks;
 using KeeperData.Application.Orchestration.Imports.Cts.Holdings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.Documents.Silver;
@@ -154,27 +155,20 @@ public class CtsHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
             ? []
             : _fixture.CreateMany<CtsPartyDocument>(existingPartiesCount);
 
+        // Silver
+        CommonRepositoryMocks.SetupDefaultCtsSilverRepositoryMocks(_appTestFixture.AppWebApplicationFactory);
+
+        // Overrides
+
         // Holding
         _appTestFixture.AppWebApplicationFactory._silverCtsHoldingRepositoryMock
             .Setup(r => r.FindOneAsync(It.IsAny<Expression<Func<CtsHoldingDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingHolding);
 
-        _appTestFixture.AppWebApplicationFactory._silverCtsHoldingRepositoryMock
-            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<CtsHoldingDocument>, CtsHoldingDocument)>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
         // Party
         _appTestFixture.AppWebApplicationFactory._silverCtsPartyRepositoryMock
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<CtsPartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.FromResult(existingParties.ToList()));
-
-        _appTestFixture.AppWebApplicationFactory._silverCtsPartyRepositoryMock
-            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<CtsPartyDocument>, CtsPartyDocument)>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _appTestFixture.AppWebApplicationFactory._silverCtsPartyRepositoryMock
-            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<CtsPartyDocument>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
     }
 
     private void SetupRoleRepositoryMock()

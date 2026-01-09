@@ -24,6 +24,7 @@ public static class ExpectedGoldParties
                 PartyType = "Person",
                 State = PartyStatusType.Active.GetDescription(),
                 Deleted = false,
+                IsInsert = false,
 
                 Communication =
                 [
@@ -234,6 +235,7 @@ public static class ExpectedGoldParties
                 PartyType = "Person",
                 State = PartyStatusType.Active.GetDescription(),
                 Deleted = false,
+                IsInsert = false,
 
                 Communication =
                 [
@@ -344,6 +346,7 @@ public static class ExpectedGoldParties
                 PartyType = "Person",
                 State = PartyStatusType.Active.GetDescription(),
                 Deleted = false,
+                IsInsert = false,
 
                 Communication =
                 [
@@ -441,6 +444,7 @@ public static class ExpectedGoldParties
                 PartyType = "Person",
                 State = PartyStatusType.Active.GetDescription(),
                 Deleted = false,
+                IsInsert = false,
 
                 Communication =
                 [

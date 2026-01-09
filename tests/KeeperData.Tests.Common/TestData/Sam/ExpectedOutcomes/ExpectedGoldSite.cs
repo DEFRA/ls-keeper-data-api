@@ -28,6 +28,7 @@ public static class ExpectedGoldSite
             Source = SourceSystemType.SAM.ToString(),
             DestroyIdentityDocumentsFlag = null,
             Deleted = false,
+            IsInsert = true,
 
             Location = new LocationDocument()
             {
@@ -385,6 +386,7 @@ public static class ExpectedGoldSite
             Source = SourceSystemType.SAM.ToString(),
             DestroyIdentityDocumentsFlag = null,
             Deleted = false,
+            IsInsert = false,
 
             Location = DefaultExpectedSite.Location,
             Identifiers = DefaultExpectedSite.Identifiers,

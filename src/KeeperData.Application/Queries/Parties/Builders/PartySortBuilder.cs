@@ -24,13 +24,11 @@ public static class PartySortBuilder
 
     private static string GetSortFieldPath(string field)
     {
-        /* TODO */
         return field switch
         {
-            "lastname" => "lastName",
-            "partytype" => "partyType",
-            "state" => "state",
-            _ => "lastName"
+            "id" => "customerNumber",
+            "name" => "name",
+            _ => "name"
         };
     }
 }

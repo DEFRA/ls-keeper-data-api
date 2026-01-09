@@ -19,7 +19,6 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     [BsonElement("createdDate")]
     [JsonPropertyName("createdDate")]
     [JsonIgnore]
-    [AutoIndexed]
     public DateTime CreatedDate { get; set; }
 
     [BsonElement("lastUpdatedDate")]
@@ -51,6 +50,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("source")]
     [JsonPropertyName("source")]
+    [AutoIndexed]
     public string? Source { get; set; }
 
     [BsonElement("destroyIdentityDocumentsFlag")]
@@ -60,7 +60,12 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     [BsonElement("deleted")]
     [JsonPropertyName("deleted")]
     [JsonIgnore]
+    [AutoIndexed]
     public bool Deleted { get; set; }
+
+    [BsonIgnore]
+    [JsonIgnore]
+    public bool IsInsert { get; set; }
 
     [BsonElement("location")]
     [JsonPropertyName("location")]
@@ -101,6 +106,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         Source = m.Source,
         DestroyIdentityDocumentsFlag = m.DestroyIdentityDocumentsFlag,
         Deleted = m.Deleted,
+        IsInsert = m.IsInsert,
         Parties = [.. m.Parties.Select(SitePartyDocument.FromDomain)],
         Species = [.. m.Species.Select(SpeciesSummaryDocument.FromDomain)],
         Marks = [.. m.Marks.Select(GroupMarkDocument.FromDomain)],
@@ -215,15 +221,16 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
                 new CreateIndexOptions { Name = "idxv2_type_code", Sparse = true }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("type.description"),
-                new CreateIndexOptions { Name = "idxv2_type_description", Sparse = true }),
-            new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("identifiers.identifier"),
                 new CreateIndexOptions { Name = "idxv2_identifiers_identifier", Sparse = true }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("identifiers.type"),
-                new CreateIndexOptions { Name = "idxv2_identifiers_type", Sparse = true })
+                Builders<BsonDocument>.IndexKeys.Ascending("parties.id"),
+                new CreateIndexOptions { Name = "idxv2_parties_id", Sparse = true }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("parties.customerNumber"),
+                new CreateIndexOptions { Name = "idxv2_parties_customerNumber", Sparse = true })
         ]);
     }
 }
