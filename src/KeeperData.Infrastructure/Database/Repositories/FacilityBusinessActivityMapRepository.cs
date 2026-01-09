@@ -21,7 +21,6 @@ public class FacilityBusinessActivityMapRepository(
 
         var activityMaps = await GetAllAsync(cancellationToken);
 
-        var activityMap = activityMaps.FirstOrDefault(s => s.FacilityActivityCode == lookupValue);
-        return await Task.FromResult(activityMap);
+        return activityMaps.FirstOrDefault(s => s.FacilityActivityCode.Equals(lookupValue, StringComparison.OrdinalIgnoreCase));
     }
 }
