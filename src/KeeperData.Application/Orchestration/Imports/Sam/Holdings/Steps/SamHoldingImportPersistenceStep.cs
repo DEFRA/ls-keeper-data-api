@@ -37,10 +37,13 @@ public class SamHoldingImportPersistenceStep(
 
         if (context.GoldSite != null)
         {
-            await UpsertGoldSiteAsync(context.GoldSite, cancellationToken);
+            await UpsertGoldSiteAsync(
+                context.ExistingGoldSite == null,
+                context.GoldSite,
+                cancellationToken);
         }
 
-        await UpsertGoldPartiesAsync(context.GoldParties, cancellationToken);
+        await UpsertGoldPartiesAsync(context.ExistingGoldPartyIds, context.GoldParties, cancellationToken);
 
         await UpsertGoldPartyRolesAndDeleteOrphansAsync(
             context.Cph,
@@ -219,10 +222,11 @@ public class SamHoldingImportPersistenceStep(
     }
 
     private async Task UpsertGoldSiteAsync(
+        bool isInsert,
         SiteDocument incomingSite,
         CancellationToken cancellationToken)
     {
-        if (incomingSite.IsInsert)
+        if (isInsert)
         {
             await _goldSiteRepository.AddAsync(incomingSite, cancellationToken);
         }
@@ -233,6 +237,7 @@ public class SamHoldingImportPersistenceStep(
     }
 
     private async Task UpsertGoldPartiesAsync(
+        List<string> existingGoldPartyIds,
         List<PartyDocument> incomingParties,
         CancellationToken cancellationToken)
     {
@@ -248,7 +253,7 @@ public class SamHoldingImportPersistenceStep(
 
         foreach (var incoming in incomingParties)
         {
-            if (incoming.IsInsert)
+            if (!existingGoldPartyIds.Contains(incoming.Id))
             {
                 newItems.Add(incoming);
             }

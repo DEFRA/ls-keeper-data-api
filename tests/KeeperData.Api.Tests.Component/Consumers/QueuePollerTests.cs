@@ -1,6 +1,7 @@
 using Amazon.SQS.Model;
 using FluentAssertions;
 using KeeperData.Api.Tests.Component.Consumers.Helpers;
+using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Messaging.Contracts;
@@ -47,7 +48,7 @@ public class QueuePollerTests : IClassFixture<AppTestFixture>
             .ReturnsAsync(new DeleteMessageResponse { HttpStatusCode = HttpStatusCode.OK });
 
         _appTestFixture.AppWebApplicationFactory._samImportHoldingMessageHandlerMock.Setup(
-            x => x.Handle(It.IsAny<UnwrappedMessage>(), It.IsAny<CancellationToken>()))
+            x => x.Handle(It.IsAny<ProcessSamImportHoldingMessageCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(componentTestMessage);
 
         await using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateAsyncScope();
@@ -92,7 +93,7 @@ public class QueuePollerTests : IClassFixture<AppTestFixture>
             .ReturnsAsync(new DeleteMessageResponse { HttpStatusCode = HttpStatusCode.OK });
 
         _appTestFixture.AppWebApplicationFactory._samImportHoldingMessageHandlerMock.Setup(
-            x => x.Handle(It.IsAny<UnwrappedMessage>(), It.IsAny<CancellationToken>()))
+            x => x.Handle(It.IsAny<ProcessSamImportHoldingMessageCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(componentTestMessage);
 
         await using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateAsyncScope();
@@ -134,7 +135,7 @@ public class QueuePollerTests : IClassFixture<AppTestFixture>
             .ReturnsAsync(new ReceiveMessageResponse { HttpStatusCode = HttpStatusCode.OK, Messages = [] });
 
         _appTestFixture.AppWebApplicationFactory._samImportHoldingMessageHandlerMock
-            .Setup(x => x.Handle(It.IsAny<UnwrappedMessage>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Handle(It.IsAny<ProcessSamImportHoldingMessageCommand>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new RetryableException("A temporary failure has occurred"));
 
         await using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateAsyncScope();
@@ -173,7 +174,7 @@ public class QueuePollerTests : IClassFixture<AppTestFixture>
             .ReturnsAsync(new ReceiveMessageResponse { HttpStatusCode = HttpStatusCode.OK, Messages = [] });
 
         _appTestFixture.AppWebApplicationFactory._samImportHoldingMessageHandlerMock
-            .Setup(x => x.Handle(It.IsAny<UnwrappedMessage>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Handle(It.IsAny<ProcessSamImportHoldingMessageCommand>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new NonRetryableException("A permanent failure has occurred"));
 
         await using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateAsyncScope();
@@ -221,8 +222,8 @@ public class QueuePollerTests : IClassFixture<AppTestFixture>
         var (MessageId, Exception) = await queuePollerObserver.MessageFailed;
 
         MessageId.Should().NotBeNull().And.Be(messageId);
-        Exception.Should().BeOfType<KeyNotFoundException>();
-        Exception.Message.Should().Be("The given key 'QueuePollerTest' was not present in the dictionary.");
+        Exception.Should().BeOfType<InvalidOperationException>();
+        Exception.Message.Should().Be($"No command registered for subject QueuePollerTest");
     }
 
     private static SamImportHoldingMessage GetSamCphHoldingImportedMessage(string identifier) => new()

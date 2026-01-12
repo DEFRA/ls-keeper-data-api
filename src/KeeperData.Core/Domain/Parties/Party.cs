@@ -18,7 +18,6 @@ public class Party : IAggregateRoot
     public string? PartyType { get; private set; }
     public string? State { get; private set; }
     public bool Deleted { get; private set; }
-    public bool IsInsert { get; private set; }
 
     private readonly List<Communication> _communications = [];
     public IReadOnlyCollection<Communication> Communications => _communications.AsReadOnly();
@@ -86,10 +85,7 @@ public class Party : IAggregateRoot
             partyType,
             state,
             deleted,
-            address)
-        {
-            IsInsert = true
-        };
+            address);
 
         party._domainEvents.Add(new PartyCreatedDomainEvent(party.Id));
         return party;

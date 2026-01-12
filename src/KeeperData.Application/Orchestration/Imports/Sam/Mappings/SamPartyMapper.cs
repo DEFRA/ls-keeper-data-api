@@ -148,6 +148,7 @@ public static class SamPartyMapper
     }
 
     public static async Task<List<PartyDocument>> ToGold(
+        List<string> existingGoldPartyIds,
         string goldSiteId,
         List<SamPartyDocument> silverParties,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
@@ -166,6 +167,9 @@ public static class SamPartyMapper
             var existingPartyFilter = Builders<PartyDocument>.Filter.Eq(x => x.CustomerNumber, silverParty.PartyId);
 
             var existingParty = await goldPartyRepository.FindOneByFilterAsync(existingPartyFilter, cancellationToken);
+
+            if (existingParty is not null)
+                existingGoldPartyIds.Add(existingParty.Id);
 
             var party = existingParty is not null
                 ? await UpdatePartyAsync(

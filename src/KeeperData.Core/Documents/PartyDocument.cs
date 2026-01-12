@@ -65,10 +65,6 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
     [AutoIndexed]
     public bool Deleted { get; set; }
 
-    [BsonIgnore]
-    [JsonIgnore]
-    public bool IsInsert { get; set; }
-
     [BsonElement("communication")]
     [JsonPropertyName("communication")]
     public List<CommunicationDocument> Communication { get; set; } = [];
@@ -103,7 +99,6 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
             PartyType = domain.PartyType,
             State = domain.State,
             Deleted = domain.Deleted,
-            IsInsert = domain.IsInsert,
             CorrespondanceAddress = addressDoc,
             Communication = communications,
             PartyRoles = roles

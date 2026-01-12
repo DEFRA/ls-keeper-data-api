@@ -1,3 +1,4 @@
+using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Application.MessageHandlers.Cts;
 using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
 using KeeperData.Application.Orchestration.ChangeScanning.Cts.Daily;
@@ -27,13 +28,14 @@ public class CtsHandlersTests
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsBulkScanMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1", CorrelationId = "2" };
+        var command = new ProcessCtsBulkScanMessageCommand(message);
         var payload = new CtsBulkScanMessage { Identifier = "Test" };
 
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
 
         var handler = new CtsBulkScanMessageHandler(orchestrator.Object, serializer.Object, _config);
 
-        await handler.Handle(message, _ct);
+        await handler.Handle(command, _ct);
 
         orchestrator.Verify(x => x.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), _ct), Times.Once);
     }
@@ -44,12 +46,13 @@ public class CtsHandlersTests
         var orchestrator = new Mock<CtsBulkScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<CtsBulkScanContext>>());
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsBulkScanMessage>>();
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessCtsBulkScanMessageCommand(message);
 
         serializer.Setup(x => x.Deserialize(message)).Returns((CtsBulkScanMessage?)null);
 
         var handler = new CtsBulkScanMessageHandler(orchestrator.Object, serializer.Object, _config);
 
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
 
     [Fact]
@@ -59,13 +62,14 @@ public class CtsHandlersTests
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsDailyScanMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1", CorrelationId = "2" };
+        var command = new ProcessCtsDailyScanMessageCommand(message);
         var payload = new CtsDailyScanMessage { Identifier = "Test" };
 
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
 
         var handler = new CtsDailyScanMessageHandler(orchestrator.Object, serializer.Object, _config);
 
-        await handler.Handle(message, _ct);
+        await handler.Handle(command, _ct);
 
         orchestrator.Verify(x => x.ExecuteAsync(It.IsAny<CtsDailyScanContext>(), _ct), Times.Once);
     }
@@ -76,12 +80,13 @@ public class CtsHandlersTests
         var orchestrator = new Mock<CtsDailyScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<CtsDailyScanContext>>());
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsDailyScanMessage>>();
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessCtsDailyScanMessageCommand(message);
 
         serializer.Setup(x => x.Deserialize(message)).Returns((CtsDailyScanMessage?)null);
 
         var handler = new CtsDailyScanMessageHandler(orchestrator.Object, serializer.Object, _config);
 
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
 
     [Fact]
@@ -91,13 +96,14 @@ public class CtsHandlersTests
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsImportHoldingMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessCtsImportHoldingMessageCommand(message);
         var payload = new CtsImportHoldingMessage { Identifier = "CPH123" };
 
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
 
         var handler = new CtsImportHoldingMessageHandler(orchestrator.Object, serializer.Object);
 
-        await handler.Handle(message, _ct);
+        await handler.Handle(command, _ct);
 
         orchestrator.Verify(x => x.ExecuteAsync(It.Is<CtsHoldingImportContext>(c => c.Cph == "CPH123"), _ct), Times.Once);
     }
@@ -108,12 +114,13 @@ public class CtsHandlersTests
         var orchestrator = new Mock<CtsHoldingImportOrchestrator>(Enumerable.Empty<Application.Orchestration.Imports.IImportStep<CtsHoldingImportContext>>());
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsImportHoldingMessage>>();
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessCtsImportHoldingMessageCommand(message);
 
         serializer.Setup(x => x.Deserialize(message)).Returns((CtsImportHoldingMessage?)null);
 
         var handler = new CtsImportHoldingMessageHandler(orchestrator.Object, serializer.Object);
 
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
 
     [Fact]
@@ -123,13 +130,14 @@ public class CtsHandlersTests
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsUpdateHoldingMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessCtsUpdateHoldingMessageCommand(message);
         var payload = new CtsUpdateHoldingMessage { Identifier = "CPH123" };
 
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
 
         var handler = new CtsUpdateHoldingMessageHandler(serializer.Object, orchestrator.Object);
 
-        await handler.Handle(message, _ct);
+        await handler.Handle(command, _ct);
 
         orchestrator.Verify(x => x.ExecuteAsync(It.Is<CtsUpdateHoldingContext>(c => c.Cph == "CPH123"), _ct), Times.Once);
     }
@@ -140,12 +148,13 @@ public class CtsHandlersTests
         var orchestrator = new Mock<CtsUpdateHoldingOrchestrator>(Enumerable.Empty<Application.Orchestration.Updates.IUpdateStep<CtsUpdateHoldingContext>>());
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsUpdateHoldingMessage>>();
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessCtsUpdateHoldingMessageCommand(message);
 
         serializer.Setup(x => x.Deserialize(message)).Returns((CtsUpdateHoldingMessage?)null);
 
         var handler = new CtsUpdateHoldingMessageHandler(serializer.Object, orchestrator.Object);
 
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
 
     [Fact]
@@ -155,6 +164,7 @@ public class CtsHandlersTests
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsUpdateHoldingMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessCtsUpdateHoldingMessageCommand(message);
         var payload = new CtsUpdateHoldingMessage { Identifier = "CPH123" };
 
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
@@ -164,7 +174,7 @@ public class CtsHandlersTests
 
         var handler = new CtsUpdateHoldingMessageHandler(serializer.Object, orchestrator.Object);
 
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
 
     [Fact]
@@ -174,6 +184,7 @@ public class CtsHandlersTests
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsUpdateHoldingMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessCtsUpdateHoldingMessageCommand(message);
         var payload = new CtsUpdateHoldingMessage { Identifier = "CPH123" };
 
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
@@ -181,7 +192,7 @@ public class CtsHandlersTests
 
         var handler = new CtsUpdateHoldingMessageHandler(serializer.Object, orchestrator.Object);
 
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
 
     [Fact]
@@ -191,13 +202,14 @@ public class CtsHandlersTests
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsUpdateAgentMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessCtsUpdateAgentMessageCommand(message);
         var payload = new CtsUpdateAgentMessage { Identifier = "P1" };
 
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
 
         var handler = new CtsUpdateAgentMessageHandler(serializer.Object, orchestrator.Object);
 
-        await handler.Handle(message, _ct);
+        await handler.Handle(command, _ct);
 
         orchestrator.Verify(x => x.ExecuteAsync(It.Is<CtsUpdateAgentContext>(c => c.PartyId == "P1"), _ct), Times.Once);
     }
@@ -208,12 +220,13 @@ public class CtsHandlersTests
         var orchestrator = new Mock<CtsUpdateAgentOrchestrator>(Enumerable.Empty<Application.Orchestration.Updates.IUpdateStep<CtsUpdateAgentContext>>());
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsUpdateAgentMessage>>();
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessCtsUpdateAgentMessageCommand(message);
 
         serializer.Setup(x => x.Deserialize(message)).Returns((CtsUpdateAgentMessage?)null);
 
         var handler = new CtsUpdateAgentMessageHandler(serializer.Object, orchestrator.Object);
 
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
 
     [Fact]
@@ -223,13 +236,14 @@ public class CtsHandlersTests
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsUpdateKeeperMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessCtsUpdateKeeperMessageCommand(message);
         var payload = new CtsUpdateKeeperMessage { Identifier = "P1" };
 
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
 
         var handler = new CtsUpdateKeeperMessageHandler(serializer.Object, orchestrator.Object);
 
-        await handler.Handle(message, _ct);
+        await handler.Handle(command, _ct);
 
         orchestrator.Verify(x => x.ExecuteAsync(It.Is<CtsUpdateKeeperContext>(c => c.PartyId == "P1"), _ct), Times.Once);
     }
@@ -240,12 +254,13 @@ public class CtsHandlersTests
         var orchestrator = new Mock<CtsUpdateKeeperOrchestrator>(Enumerable.Empty<Application.Orchestration.Updates.IUpdateStep<CtsUpdateKeeperContext>>());
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsUpdateKeeperMessage>>();
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessCtsUpdateKeeperMessageCommand(message);
 
         serializer.Setup(x => x.Deserialize(message)).Returns((CtsUpdateKeeperMessage?)null);
 
         var handler = new CtsUpdateKeeperMessageHandler(serializer.Object, orchestrator.Object);
 
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
 
     [Fact]
@@ -255,6 +270,7 @@ public class CtsHandlersTests
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsUpdateKeeperMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessCtsUpdateKeeperMessageCommand(message);
         var payload = new CtsUpdateKeeperMessage { Identifier = "P1" };
 
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
@@ -264,6 +280,6 @@ public class CtsHandlersTests
 
         var handler = new CtsUpdateKeeperMessageHandler(serializer.Object, orchestrator.Object);
 
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
 }

@@ -5,11 +5,12 @@ using KeeperData.Core.Messaging;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Extensions;
-using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Observers;
 using KeeperData.Core.Messaging.Serializers;
 using KeeperData.Infrastructure.Messaging.Configuration;
+using KeeperData.Infrastructure.Messaging.Factories.Implementations;
 using KeeperData.Infrastructure.Messaging.Services;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -18,26 +19,24 @@ namespace KeeperData.Infrastructure.Messaging.Consumers;
 
 public class QueuePoller(IServiceScopeFactory scopeFactory,
     IAmazonSQS amazonSQS,
-    IMessageHandlerManager messageHandlerManager,
     IMessageSerializer<SnsEnvelope> messageSerializer,
     IDeadLetterQueueService deadLetterQueueService,
+    MessageCommandRegistry messageCommandRegistry,
     IOptions<IntakeEventQueueOptions> options,
     IQueuePollerObserver<MessageType> observer,
     ILogger<QueuePoller> logger) : IQueuePoller, IAsyncDisposable
 {
     private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
     private readonly IAmazonSQS _amazonSQS = amazonSQS;
-    private readonly IMessageHandlerManager _messageHandlerManager = messageHandlerManager;
     private readonly IMessageSerializer<SnsEnvelope> _messageSerializer = messageSerializer;
     private readonly IDeadLetterQueueService _deadLetterQueueService = deadLetterQueueService;
+    private readonly MessageCommandRegistry _messageCommandRegistry = messageCommandRegistry;
     private readonly IntakeEventQueueOptions _queueConsumerOptions = options.Value;
     private readonly IQueuePollerObserver<MessageType> _observer = observer;
     private readonly ILogger<QueuePoller> _logger = logger;
 
     private Task? _pollingTask;
     private CancellationTokenSource _cts = new();
-
-    private const string MESSAGE_SUFFIX = "Message";
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -154,24 +153,17 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
 
             _logger.LogDebug("HandleMessageAsync using correlationId: {correlationId}", CorrelationIdContext.Value);
 
-            var handlerTypes = _messageHandlerManager.GetHandlersForMessage(unwrappedMessage.Subject);
-            foreach (var handlerInfo in handlerTypes)
-            {
-                var messageType = _messageHandlerManager.GetMessageTypeByName($"{unwrappedMessage.Subject}{MESSAGE_SUFFIX}");
+            var command = _messageCommandRegistry.CreateCommand(unwrappedMessage);
 
-                using var scope = _scopeFactory.CreateScope();
-                var handler = scope.ServiceProvider.GetService(handlerInfo.HandlerType);
-                if (handler == null) continue;
+            using var scope = _scopeFactory.CreateScope();
+            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            var result = await mediator.Send(command, cancellationToken);
 
-                var concreteType = typeof(IMessageHandler<>).MakeGenericType(messageType);
-                var messagePayload = await (Task<MessageType>)concreteType.GetMethod("Handle")!.Invoke(handler, [unwrappedMessage, cancellationToken])!;
+            await _amazonSQS.DeleteMessageAsync(queueUrl, message.ReceiptHandle, cancellationToken);
 
-                await _amazonSQS.DeleteMessageAsync(queueUrl, message.ReceiptHandle, cancellationToken);
+            _logger.LogInformation("Handled message with correlationId: {correlationId}", CorrelationIdContext.Value);
 
-                _logger.LogInformation("Handled message with correlationId: {correlationId}", CorrelationIdContext.Value);
-
-                _observer?.OnMessageHandled(message.MessageId, DateTime.UtcNow, messagePayload, message);
-            }
+            _observer?.OnMessageHandled(message.MessageId, DateTime.UtcNow, result, message);
         }
         catch (RetryableException ex)
         {

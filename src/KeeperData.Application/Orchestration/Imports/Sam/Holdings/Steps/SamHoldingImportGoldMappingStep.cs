@@ -44,6 +44,7 @@ public class SamHoldingImportGoldMappingStep(
                 context.Cph);
 
             context.GoldParties = await SamPartyMapper.ToGold(
+                context.ExistingGoldPartyIds,
                 context.GoldSiteId,
                 context.SilverParties,
                 context.GoldSiteGroupMarks,

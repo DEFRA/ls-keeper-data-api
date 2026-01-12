@@ -1,4 +1,5 @@
 using FluentAssertions;
+using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Application.MessageHandlers;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
@@ -35,6 +36,7 @@ public class BatchCompletionMessageHandlerTests
             CorrelationId = correlationId,
             Payload = "test payload"
         };
+        var command = new ProcessBatchCompletionMessageCommand(unwrappedMessage);
 
         var batchCompletionMessage = new BatchCompletionMessage
         {
@@ -45,7 +47,7 @@ public class BatchCompletionMessageHandlerTests
             .Returns(batchCompletionMessage);
 
         // Act
-        var result = await _sut.Handle(unwrappedMessage);
+        var result = await _sut.Handle(command);
 
         // Assert
         result.Should().Be(batchCompletionMessage);
@@ -60,9 +62,10 @@ public class BatchCompletionMessageHandlerTests
     {
         // Arrange
         UnwrappedMessage? nullMessage = null;
+        var command = new ProcessBatchCompletionMessageCommand(nullMessage!);
 
         // Act & Assert
-        var act = () => _sut.Handle(nullMessage!);
+        var act = () => _sut.Handle(command);
         await act.Should().ThrowAsync<ArgumentNullException>();
     }
 
@@ -76,12 +79,13 @@ public class BatchCompletionMessageHandlerTests
             CorrelationId = Guid.NewGuid().ToString(),
             Payload = "invalid payload"
         };
+        var command = new ProcessBatchCompletionMessageCommand(unwrappedMessage);
 
         _mockSerializer.Setup(x => x.Deserialize(unwrappedMessage))
             .Returns((BatchCompletionMessage?)null);
 
         // Act & Assert
-        var act = () => _sut.Handle(unwrappedMessage);
+        var act = () => _sut.Handle(command);
         await act.Should().ThrowAsync<NonRetryableException>();
     }
 
@@ -95,6 +99,7 @@ public class BatchCompletionMessageHandlerTests
             CorrelationId = Guid.NewGuid().ToString(),
             Payload = "test payload"
         };
+        var command = new ProcessBatchCompletionMessageCommand(unwrappedMessage);
 
         var batchCompletionMessage = new BatchCompletionMessage
         {
@@ -108,7 +113,7 @@ public class BatchCompletionMessageHandlerTests
             .ThrowsAsync(new InvalidOperationException("SNS publish failed"));
 
         // Act
-        var result = await _sut.Handle(unwrappedMessage);
+        var result = await _sut.Handle(command);
 
         // Assert
         result.Should().Be(batchCompletionMessage);

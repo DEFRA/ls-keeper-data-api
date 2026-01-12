@@ -2,11 +2,11 @@ using Amazon.SQS;
 using Amazon.SQS.Model;
 using FluentAssertions;
 using KeeperData.Core.Messaging.Contracts;
-using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Observers;
 using KeeperData.Core.Messaging.Serializers;
 using KeeperData.Infrastructure.Messaging.Configuration;
 using KeeperData.Infrastructure.Messaging.Consumers;
+using KeeperData.Infrastructure.Messaging.Factories.Implementations;
 using KeeperData.Infrastructure.Messaging.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -19,10 +19,10 @@ public class QueuePollerTests
 {
     private readonly Mock<IServiceScopeFactory> _scopeFactoryMock = new();
     private readonly Mock<IAmazonSQS> _sqsMock = new();
-    private readonly Mock<IMessageHandlerManager> _handlerManagerMock = new();
     private readonly Mock<IMessageSerializer<SnsEnvelope>> _serializerMock = new();
     private readonly Mock<ILogger<QueuePoller>> _loggerMock = new();
     private readonly Mock<IDeadLetterQueueService> _deadLetterQueueServiceMock = new();
+    private readonly MessageCommandRegistry _messageCommandRegistry = new();
 
     private readonly IntakeEventQueueOptions _options = new()
     {
@@ -37,9 +37,9 @@ public class QueuePollerTests
         return new QueuePoller(
             _scopeFactoryMock.Object,
             _sqsMock.Object,
-            _handlerManagerMock.Object,
             _serializerMock.Object,
             _deadLetterQueueServiceMock.Object,
+            _messageCommandRegistry,
             Options.Create(_options),
             Mock.Of<IQueuePollerObserver<MessageType>>(),
             _loggerMock.Object);

@@ -1,11 +1,12 @@
+using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1;
-using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
 using KeeperData.Core.Messaging.Serializers;
+using MediatR;
 using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Application.MessageHandlers;
@@ -14,10 +15,12 @@ public class BatchCompletionMessageHandler(
     IUnwrappedMessageSerializer<BatchCompletionMessage> serializer,
     IMessagePublisher<BatchCompletionTopicClient> topicPublisher,
     ILogger<BatchCompletionMessageHandler> logger)
-    : IMessageHandler<BatchCompletionMessage>
+    : IRequestHandler<ProcessBatchCompletionMessageCommand, MessageType>
 {
-    public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)
+    public async Task<MessageType> Handle(ProcessBatchCompletionMessageCommand request, CancellationToken cancellationToken = default)
     {
+        var message = request.Message;
+
         ArgumentNullException.ThrowIfNull(message, nameof(message));
 
         logger.LogInformation("Batch completion notification received. MessageId: {MessageId}, CorrelationId: {CorrelationId}",

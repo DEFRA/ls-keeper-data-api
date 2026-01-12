@@ -18,7 +18,6 @@ public class Site : IAggregateRoot
     public string? Source { get; private set; }
     public bool? DestroyIdentityDocumentsFlag { get; private set; }
     public bool Deleted { get; private set; }
-    public bool IsInsert { get; private set; }
 
     private readonly List<SiteIdentifier> _identifiers = [];
     public IReadOnlyCollection<SiteIdentifier> Identifiers => _identifiers.AsReadOnly();
@@ -96,10 +95,7 @@ public class Site : IAggregateRoot
             destroyIdentityDocumentsFlag,
             deleted,
             type,
-            location)
-        {
-            IsInsert = true
-        };
+            location);
 
         site._domainEvents.Add(new SiteCreatedDomainEvent(site.Id));
         return site;

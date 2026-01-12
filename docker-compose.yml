@@ -35,13 +35,14 @@ services:
 
   mongodb:
     container_name: kda_mongodb
+    hostname: kda_mongodb
     image: mongo:6.0.13
     networks:
       - cdp-tenant
     ports:
       - '27019:27017'
     volumes:
-      - mongodb-data:/data
+      - mongodb-data:/data/db
     restart: always
   
   keeperdata_api:

@@ -87,16 +87,16 @@ public static class ServiceCollectionExtensions
 
         var messageIdentifierTypes = new[]
         {
-            typeof(SamImportHoldingMessage),
-            typeof(CtsImportHoldingMessage),
             typeof(SamBulkScanMessage),
+            typeof(SamDailyScanMessage),
             typeof(CtsBulkScanMessage),
             typeof(CtsDailyScanMessage),
+            typeof(SamImportHoldingMessage),
+            typeof(SamUpdateHoldingMessage),
+            typeof(CtsImportHoldingMessage),
             typeof(CtsUpdateHoldingMessage),
             typeof(CtsUpdateKeeperMessage),
             typeof(CtsUpdateAgentMessage),
-            typeof(SamDailyScanMessage),
-            typeof(SamUpdateHoldingMessage),
             typeof(BatchCompletionMessage)
         };
 
@@ -139,6 +139,25 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddSingleton<IMessageHandlerManager>(messageHandlerManager);
+
+        services.AddSingleton(sp =>
+        {
+            var registry = new MessageCommandRegistry();
+
+            registry.Register<SamBulkScanMessageCommandFactory>("SamBulkScan");
+            registry.Register<SamDailyScanMessageCommandFactory>("SamDailyScan");
+            registry.Register<CtsBulkScanMessageCommandFactory>("CtsBulkScan");
+            registry.Register<CtsDailyScanMessageCommandFactory>("CtsDailyScan");
+            registry.Register<SamImportHoldingCommandFactory>("SamImportHolding");
+            registry.Register<SamUpdateHoldingMessageCommandFactory>("SamUpdateHolding");
+            registry.Register<CtsImportHoldingMessageCommandFactory>("CtsImportHolding");
+            registry.Register<CtsUpdateHoldingMessageCommandFactory>("CtsUpdateHolding");
+            registry.Register<CtsUpdateKeeperMessageCommandFactory>("CtsUpdateKeeper");
+            registry.Register<CtsUpdateAgentMessageCommandFactory>("CtsUpdateAgent");
+            registry.Register<BatchCompletionMessageCommandFactory>("BatchCompletion");
+
+            return registry;
+        });
 
         return services;
     }

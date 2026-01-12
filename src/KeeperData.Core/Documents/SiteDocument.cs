@@ -63,10 +63,6 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     [AutoIndexed]
     public bool Deleted { get; set; }
 
-    [BsonIgnore]
-    [JsonIgnore]
-    public bool IsInsert { get; set; }
-
     [BsonElement("location")]
     [JsonPropertyName("location")]
     public LocationDocument? Location { get; set; }
@@ -106,7 +102,6 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         Source = m.Source,
         DestroyIdentityDocumentsFlag = m.DestroyIdentityDocumentsFlag,
         Deleted = m.Deleted,
-        IsInsert = m.IsInsert,
         Parties = [.. m.Parties.Select(SitePartyDocument.FromDomain)],
         Species = [.. m.Species.Select(SpeciesSummaryDocument.FromDomain)],
         Marks = [.. m.Marks.Select(GroupMarkDocument.FromDomain)],

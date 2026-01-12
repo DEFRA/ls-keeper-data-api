@@ -1,3 +1,4 @@
+using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Application.MessageHandlers.Sam;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily;
@@ -24,12 +25,13 @@ public class SamHandlersTests
         var serializer = new Mock<IUnwrappedMessageSerializer<SamBulkScanMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessSamBulkScanMessageCommand(message);
         var payload = new SamBulkScanMessage();
 
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
 
         var handler = new SamBulkScanMessageHandler(orchestrator.Object, serializer.Object, _config);
-        await handler.Handle(message, _ct);
+        await handler.Handle(command, _ct);
 
         orchestrator.Verify(x => x.ExecuteAsync(It.IsAny<SamBulkScanContext>(), _ct), Times.Once);
     }
@@ -40,12 +42,13 @@ public class SamHandlersTests
         var orchestrator = new Mock<SamBulkScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<SamBulkScanContext>>());
         var serializer = new Mock<IUnwrappedMessageSerializer<SamBulkScanMessage>>();
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessSamBulkScanMessageCommand(message);
 
         serializer.Setup(x => x.Deserialize(message)).Returns((SamBulkScanMessage?)null);
 
         var handler = new SamBulkScanMessageHandler(orchestrator.Object, serializer.Object, _config);
 
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
 
     [Fact]
@@ -55,12 +58,13 @@ public class SamHandlersTests
         var serializer = new Mock<IUnwrappedMessageSerializer<SamDailyScanMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessSamDailyScanMessageCommand(message);
         var payload = new SamDailyScanMessage();
 
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
 
         var handler = new SamDailyScanMessageHandler(orchestrator.Object, serializer.Object, _config);
-        await handler.Handle(message, _ct);
+        await handler.Handle(command, _ct);
 
         orchestrator.Verify(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), _ct), Times.Once);
     }
@@ -71,12 +75,13 @@ public class SamHandlersTests
         var orchestrator = new Mock<SamDailyScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<SamDailyScanContext>>());
         var serializer = new Mock<IUnwrappedMessageSerializer<SamDailyScanMessage>>();
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessSamDailyScanMessageCommand(message);
 
         serializer.Setup(x => x.Deserialize(message)).Returns((SamDailyScanMessage?)null);
 
         var handler = new SamDailyScanMessageHandler(orchestrator.Object, serializer.Object, _config);
 
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
 
     [Fact]
@@ -86,12 +91,13 @@ public class SamHandlersTests
         var serializer = new Mock<IUnwrappedMessageSerializer<SamImportHoldingMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessSamImportHoldingMessageCommand(message);
         var payload = new SamImportHoldingMessage { Identifier = "CPH" };
 
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
 
         var handler = new SamImportHoldingMessageHandler(orchestrator.Object, serializer.Object);
-        await handler.Handle(message, _ct);
+        await handler.Handle(command, _ct);
 
         orchestrator.Verify(x => x.ExecuteAsync(It.Is<SamHoldingImportContext>(c => c.Cph == "CPH"), _ct), Times.Once);
     }
@@ -103,11 +109,13 @@ public class SamHandlersTests
         var serializer = new Mock<IUnwrappedMessageSerializer<SamImportHoldingMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessSamImportHoldingMessageCommand(message);
+
         serializer.Setup(x => x.Deserialize(message)).Returns((SamImportHoldingMessage?)null);
 
         var handler = new SamImportHoldingMessageHandler(orchestrator.Object, serializer.Object);
 
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
 
     [Fact]
@@ -117,7 +125,9 @@ public class SamHandlersTests
         var serializer = new Mock<IUnwrappedMessageSerializer<SamImportHoldingMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessSamImportHoldingMessageCommand(message);
         var payload = new SamImportHoldingMessage { Identifier = "CPH" };
+
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
 
         var mongoException = MongoExceptionFactory.CreateMongoBulkWriteException();
@@ -125,7 +135,7 @@ public class SamHandlersTests
 
         var handler = new SamImportHoldingMessageHandler(orchestrator.Object, serializer.Object);
 
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
 
     [Fact]
@@ -135,12 +145,13 @@ public class SamHandlersTests
         var serializer = new Mock<IUnwrappedMessageSerializer<SamUpdateHoldingMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessSamUpdateHoldingMessageCommand(message);
         var payload = new SamUpdateHoldingMessage { Identifier = "CPH" };
 
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
 
         var handler = new SamUpdateHoldingMessageHandler(orchestrator.Object, serializer.Object);
-        await handler.Handle(message, _ct);
+        await handler.Handle(command, _ct);
 
         orchestrator.Verify(x => x.ExecuteAsync(It.Is<SamHoldingImportContext>(c => c.Cph == "CPH"), _ct), Times.Once);
     }
@@ -151,12 +162,13 @@ public class SamHandlersTests
         var orchestrator = new Mock<SamHoldingImportOrchestrator>(Enumerable.Empty<Application.Orchestration.Imports.IImportStep<SamHoldingImportContext>>());
         var serializer = new Mock<IUnwrappedMessageSerializer<SamUpdateHoldingMessage>>();
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessSamUpdateHoldingMessageCommand(message);
 
         serializer.Setup(x => x.Deserialize(message)).Returns((SamUpdateHoldingMessage?)null);
 
         var handler = new SamUpdateHoldingMessageHandler(orchestrator.Object, serializer.Object);
 
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
 
     [Fact]
@@ -166,6 +178,7 @@ public class SamHandlersTests
         var serializer = new Mock<IUnwrappedMessageSerializer<SamUpdateHoldingMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessSamUpdateHoldingMessageCommand(message);
         var payload = new SamUpdateHoldingMessage { Identifier = "CPH" };
 
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
@@ -173,7 +186,7 @@ public class SamHandlersTests
 
         var handler = new SamUpdateHoldingMessageHandler(orchestrator.Object, serializer.Object);
 
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
 
     [Fact]
@@ -183,6 +196,7 @@ public class SamHandlersTests
         var serializer = new Mock<IUnwrappedMessageSerializer<SamUpdateHoldingMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessSamUpdateHoldingMessageCommand(message);
         var payload = new SamUpdateHoldingMessage { Identifier = "CPH" };
 
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
@@ -192,6 +206,6 @@ public class SamHandlersTests
 
         var handler = new SamUpdateHoldingMessageHandler(orchestrator.Object, serializer.Object);
 
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(message, _ct));
+        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
 }

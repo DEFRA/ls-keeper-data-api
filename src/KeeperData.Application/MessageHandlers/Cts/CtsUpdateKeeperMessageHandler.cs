@@ -1,9 +1,10 @@
+using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Application.Orchestration.Updates.Cts.Keepers;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
-using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Serializers;
+using MediatR;
 using MongoDB.Driver;
 
 namespace KeeperData.Application.MessageHandlers.Cts;
@@ -11,12 +12,14 @@ namespace KeeperData.Application.MessageHandlers.Cts;
 public class CtsUpdateKeeperMessageHandler(
     IUnwrappedMessageSerializer<CtsUpdateKeeperMessage> serializer,
     CtsUpdateKeeperOrchestrator orchestrator)
-    : IMessageHandler<CtsUpdateKeeperMessage>
+    : IRequestHandler<ProcessCtsUpdateKeeperMessageCommand, MessageType>
 {
     private readonly IUnwrappedMessageSerializer<CtsUpdateKeeperMessage> _serializer = serializer;
     private readonly CtsUpdateKeeperOrchestrator _orchestrator = orchestrator;
-    public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)
+    public async Task<MessageType> Handle(ProcessCtsUpdateKeeperMessageCommand request, CancellationToken cancellationToken = default)
     {
+        var message = request.Message;
+
         ArgumentNullException.ThrowIfNull(message, nameof(message));
 
         var messagePayload = _serializer.Deserialize(message)

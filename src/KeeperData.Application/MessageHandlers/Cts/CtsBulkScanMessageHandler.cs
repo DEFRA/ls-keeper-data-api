@@ -1,24 +1,27 @@
+using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
-using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Serializers;
+using MediatR;
 
 namespace KeeperData.Application.MessageHandlers.Cts;
 
 public class CtsBulkScanMessageHandler(CtsBulkScanOrchestrator orchestrator,
   IUnwrappedMessageSerializer<CtsBulkScanMessage> serializer,
   DataBridgeScanConfiguration dataBridgeScanConfiguration)
-  : IMessageHandler<CtsBulkScanMessage>
+  : IRequestHandler<ProcessCtsBulkScanMessageCommand, MessageType>
 {
     private readonly IUnwrappedMessageSerializer<CtsBulkScanMessage> _serializer = serializer;
     private readonly CtsBulkScanOrchestrator _orchestrator = orchestrator;
     private readonly DataBridgeScanConfiguration _dataBridgeScanConfiguration = dataBridgeScanConfiguration;
 
-    public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)
+    public async Task<MessageType> Handle(ProcessCtsBulkScanMessageCommand request, CancellationToken cancellationToken = default)
     {
+        var message = request.Message;
+
         ArgumentNullException.ThrowIfNull(message, nameof(message));
 
         var messagePayload = _serializer.Deserialize(message)

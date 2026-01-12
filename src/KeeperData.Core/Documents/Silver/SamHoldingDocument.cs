@@ -1,6 +1,4 @@
 using KeeperData.Core.Attributes;
-using KeeperData.Core.Domain.Enums;
-using KeeperData.Core.Extensions;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;

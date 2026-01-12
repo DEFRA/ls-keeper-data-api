@@ -23,6 +23,7 @@ public class SamHoldingImportContext
 
     public string GoldSiteId { get; set; } = string.Empty;
     public SiteDocument? ExistingGoldSite { get; set; }
+    public List<string> ExistingGoldPartyIds { get; set; } = [];
 
     public SiteDocument? GoldSite { get; set; }
     public List<PartyDocument> GoldParties { get; set; } = [];

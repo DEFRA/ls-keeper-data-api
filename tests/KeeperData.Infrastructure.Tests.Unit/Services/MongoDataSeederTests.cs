@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Moq;
-using NSubstitute;
 using System.Reflection;
 using System.Text.Json;
 
