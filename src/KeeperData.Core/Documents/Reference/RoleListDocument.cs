@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents.Reference;
 
-[CollectionName("refRoles")]
+[CollectionName("referenceData")]
 public class RoleListDocument : IListDocument, IReferenceListDocument<RoleDocument>
 {
     public static string DocumentId => "all-roles";

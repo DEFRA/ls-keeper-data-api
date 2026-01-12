@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents.Reference;
 
-[CollectionName("refSiteIdentifierTypes")]
+[CollectionName("referenceData")]
 public class SiteIdentifierTypeListDocument : IListDocument, IReferenceListDocument<SiteIdentifierTypeDocument>
 {
     public static string DocumentId => "all-siteidentifiertypes";

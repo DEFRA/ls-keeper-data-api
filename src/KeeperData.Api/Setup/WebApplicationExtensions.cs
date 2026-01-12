@@ -72,7 +72,7 @@ public static class WebApplicationExtensions
         var mongoPreprodConfig = configuration.GetSection(MongoDbPreproductionServiceConfig.SectionName).Get<MongoDbPreproductionServiceConfig>();
         if (mongoPreprodConfig?.Enabled ?? false)
         {
-            app.MapPost("/api/wipe/{collection}", async ([FromRoute] string collection, [FromServices] IMongoDbPreproductionService mongoPreprodService) => { return await mongoPreprodService.WipeCollection(collection); });
+            app.MapPost("/api/dbdropcollection/{collection}", async ([FromRoute] string collection, [FromServices] IMongoDbPreproductionService mongoPreprodService) => { return await mongoPreprodService.DropCollection(collection); });
         }
 
         app.MapControllers();

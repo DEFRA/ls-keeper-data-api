@@ -50,7 +50,6 @@ public class MongoDbFixture : IAsyncLifetime
             MongoVerifier.DeleteAll<SamHoldingDocument>(),
             MongoVerifier.DeleteAll<SamPartyDocument>(),
             MongoVerifier.DeleteAll<Core.Documents.SitePartyRoleRelationshipDocument>(),
-            MongoVerifier.DeleteAll<SiteGroupMarkRelationshipDocument>(),
             MongoVerifier.DeleteAll<SiteDocument>()
         ]);
     }

@@ -103,6 +103,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
             PartyType = domain.PartyType,
             State = domain.State,
             Deleted = domain.Deleted,
+            IsInsert = domain.IsInsert,
             CorrespondanceAddress = addressDoc,
             Communication = communications,
             PartyRoles = roles
