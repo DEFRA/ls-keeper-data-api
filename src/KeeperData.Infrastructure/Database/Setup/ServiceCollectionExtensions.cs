@@ -44,8 +44,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IMongoDbInitialiser, MongoDbInitialiser>();
 
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
         services.AddScoped<ICountryRepository, CountryRepository>();
         services.AddScoped<ISpeciesRepository, SpeciesRepository>();
+        services.AddScoped<IFacilityBusinessActivityMapRepository, FacilityBusinessActivityMapRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IPremisesTypeRepository, PremisesTypeRepository>();
         services.AddScoped<IPremisesActivityTypeRepository, PremisesActivityTypeRepository>();

@@ -6,6 +6,19 @@ namespace KeeperData.Tests.Common.TestData.Sam;
 
 public static class SamTestScenarios
 {
+    public static readonly (string? facilitySubActivityCode, string? associatedPremiseTypeCode, string? associatedPremiseActivityCode)[] SampleActivities
+        = [
+            ("AB-EMB-ECT", "AI", "EMB"),
+            ("AB-SEM-ECT", "AH", "WM"),
+            ("SLG-MPC-NA", "AH", "RM"),
+             (null,null,null)];
+
+    public static (string? associatedPremiseTypeCode, string? associatedPremiseActivityCode) LookupCodes(string? key)
+    {
+        var item = SampleActivities.SingleOrDefault(x => x.facilitySubActivityCode == key);
+        return (item.associatedPremiseTypeCode, item.associatedPremiseActivityCode);
+    }
+
     private static readonly string s_cphNumber = "12/345/6789";
 
     public static SamTestScenarioData DefaultScenario => new()
@@ -110,8 +123,8 @@ public static class SamTestScenarios
 
         SECONDARY_CPH = "12/345/9999",
 
-        FACILITY_BUSINSS_ACTVTY_CODE = "SLG-RM",
-        FACILITY_TYPE_CODE = "AH",
+        FACILITY_BUSINSS_ACTVTY_CODE = null,
+        FACILITY_TYPE_CODE = null,
 
         ANIMAL_SPECIES_CODE = "CTT",
         ANIMAL_PRODUCTION_USAGE_CODE = "CTT-BEEF",
@@ -128,7 +141,7 @@ public static class SamTestScenarios
         INTERVAL = null,
         INTERVAL_UNIT_OF_TIME = null,
         CPH_RELATIONSHIP_TYPE = null,
-        FCLTY_SUB_BSNSS_ACTVTY_CODE = null,
+        FCLTY_SUB_BSNSS_ACTVTY_CODE = "SLG-MPC-NA",
         FEATURE_STATUS_CODE = null,
         MOVEMENT_RSTRCTN_RSN_CODE = null
     };
@@ -168,8 +181,8 @@ public static class SamTestScenarios
 
         SECONDARY_CPH = "12/345/9999",
 
-        FACILITY_BUSINSS_ACTVTY_CODE = "SLG-WM",
-        FACILITY_TYPE_CODE = "AH",
+        FACILITY_BUSINSS_ACTVTY_CODE = null,
+        FACILITY_TYPE_CODE = null,
 
         ANIMAL_SPECIES_CODE = "SHP",
         ANIMAL_PRODUCTION_USAGE_CODE = "SHP-MEAT",
@@ -186,7 +199,7 @@ public static class SamTestScenarios
         INTERVAL = null,
         INTERVAL_UNIT_OF_TIME = null,
         CPH_RELATIONSHIP_TYPE = null,
-        FCLTY_SUB_BSNSS_ACTVTY_CODE = null,
+        FCLTY_SUB_BSNSS_ACTVTY_CODE = "AB-SEM-ECT",
         FEATURE_STATUS_CODE = null,
         MOVEMENT_RSTRCTN_RSN_CODE = null
     };

@@ -58,6 +58,7 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
 
     public readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
     public readonly Mock<IPremiseActivityTypeLookupService> _premiseActivityTypeLookupServiceMock = new();
+    public readonly Mock<IActivityCodeLookupService> _activityCodeLookupServiceMock = new();
     public readonly Mock<IPremiseTypeLookupService> _premiseTypeLookupServiceMock = new();
     public readonly Mock<IProductionTypeLookupService> _productionTypeLookupServiceMock = new();
     public readonly Mock<IProductionUsageLookupService> _productionUsageLookupServiceMock = new();
@@ -242,6 +243,7 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
     {
         OverrideServiceAsTransient(_countryIdentifierLookupServiceMock.Object);
         OverrideServiceAsTransient(_premiseActivityTypeLookupServiceMock.Object);
+        OverrideServiceAsTransient(_activityCodeLookupServiceMock.Object);
         OverrideServiceAsTransient(_premiseTypeLookupServiceMock.Object);
         OverrideServiceAsTransient(_productionTypeLookupServiceMock.Object);
         OverrideServiceAsTransient(_productionUsageLookupServiceMock.Object);

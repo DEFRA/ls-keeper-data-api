@@ -7,9 +7,12 @@ public class ActivityCodeLookupService(IFacilityBusinessActivityMapRepository fa
 {
     private readonly IFacilityBusinessActivityMapRepository _facilityRepository = facilityRepository;
 
-    public async Task<(string? premiseType, string? premiseActivityType)> FindByActivityCodeAsync(string activityCode)
+    public async Task<(string? premiseType, string? premiseActivityType)> FindByActivityCodeAsync(string? activityCode, CancellationToken cancellationToken = default)
     {
-        var result = await _facilityRepository.FindByActivityCodeAsync(activityCode);
+        if (activityCode == null)
+            return (null, null);
+
+        var result = await _facilityRepository.FindByActivityCodeAsync(activityCode, cancellationToken);
         return (result?.AssociatedPremiseTypeCode, result?.AssociatedPremiseActivityCode);
     }
 }

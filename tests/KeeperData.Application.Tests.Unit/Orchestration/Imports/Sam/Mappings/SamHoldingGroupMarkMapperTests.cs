@@ -16,6 +16,7 @@ public class SamHoldingGroupMarkMapperTests
     private readonly Mock<IPremiseActivityTypeLookupService> _premiseActivityTypeLookupServiceMock = new();
     private readonly Mock<IPremiseTypeLookupService> _premiseTypeLookupServiceMock = new();
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
+    private readonly Mock<IActivityCodeLookupService> _activityCodeLookupService = new();
 
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolvePremiseActivityType;
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolvePremiseType;
@@ -29,6 +30,7 @@ public class SamHoldingGroupMarkMapperTests
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveProductionUsage;
     // private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveProductionType;
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveSpeciesType;
+    private readonly Func<string?, CancellationToken, Task<(string? premiseTypeCode, string? premiseActivityTypeCode)>> _resolveCodes;
 
     public SamHoldingGroupMarkMapperTests()
     {
@@ -48,6 +50,7 @@ public class SamHoldingGroupMarkMapperTests
         _resolvePremiseActivityType = _premiseActivityTypeLookupServiceMock.Object.FindAsync;
         _resolvePremiseType = _premiseTypeLookupServiceMock.Object.FindAsync;
         _resolveCountry = _countryIdentifierLookupServiceMock.Object.FindAsync;
+        _resolveCodes = _activityCodeLookupService.Object.FindByActivityCodeAsync;
 
         // Herds
         _productionUsageLookupServiceMock
@@ -103,6 +106,7 @@ public class SamHoldingGroupMarkMapperTests
             _resolvePremiseActivityType,
             _resolvePremiseType,
             _resolveCountry,
+            _resolveCodes,
             CancellationToken.None);
 
         silverHoldings.Should().NotBeNull();
