@@ -6,6 +6,7 @@ using KeeperData.Core.Services;
 using KeeperData.Tests.Common.Factories;
 using KeeperData.Tests.Common.Generators;
 using KeeperData.Tests.Common.Mappings;
+using Microsoft.AspNetCore.Mvc.Diagnostics;
 using Moq;
 
 namespace KeeperData.Application.Tests.Unit.Orchestration.Imports.Sam.Mappings;
@@ -15,10 +16,11 @@ public class SamHoldingMapperTests
     private readonly Mock<IPremiseActivityTypeLookupService> _premiseActivityTypeLookupServiceMock = new();
     private readonly Mock<IPremiseTypeLookupService> _premiseTypeLookupServiceMock = new();
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
-
+    private readonly Mock<IActivityCodeLookupService> _activityCodeLookupServiceMock = new();
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolvePremiseActivityType;
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolvePremiseType;
     private readonly Func<string?, string?, CancellationToken, Task<(string?, string?, string?)>> _resolveCountry;
+    private readonly Func<string?, CancellationToken, Task<(string? premiseType, string? premiseActivityType)>> _resolveCodes;
 
     public SamHoldingMapperTests()
     {
@@ -34,9 +36,23 @@ public class SamHoldingMapperTests
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input, input));
 
+        _activityCodeLookupServiceMock.Setup(x => x.FindByActivityCodeAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? key, CancellationToken token) =>
+            {
+                if (key == null)
+                    return (null, null);
+                var segments = key.Split('-');
+
+                if (key == "-")
+                    return (null, null);
+
+                return (String.IsNullOrEmpty(segments[1]) ? null : segments[1], String.IsNullOrEmpty(segments[0]) ? null : segments[0]);
+            }); // TODO validate
+
         _resolvePremiseActivityType = _premiseActivityTypeLookupServiceMock.Object.FindAsync;
         _resolvePremiseType = _premiseTypeLookupServiceMock.Object.FindAsync;
         _resolveCountry = _countryIdentifierLookupServiceMock.Object.FindAsync;
+        _resolveCodes = _activityCodeLookupServiceMock.Object.FindByActivityCodeAsync;
     }
 
     [Fact]
@@ -47,6 +63,7 @@ public class SamHoldingMapperTests
             _resolvePremiseActivityType,
             _resolvePremiseType,
             _resolveCountry,
+            _resolveCodes,
             CancellationToken.None);
 
         results.Should().NotBeNull();
@@ -61,6 +78,7 @@ public class SamHoldingMapperTests
             _resolvePremiseActivityType,
             _resolvePremiseType,
             _resolveCountry,
+            _resolveCodes,
             CancellationToken.None);
 
         results.Should().NotBeNull();
@@ -79,6 +97,7 @@ public class SamHoldingMapperTests
             _resolvePremiseActivityType,
             _resolvePremiseType,
             _resolveCountry,
+            _resolveCodes,
             CancellationToken.None);
 
         results.Should().NotBeNull();

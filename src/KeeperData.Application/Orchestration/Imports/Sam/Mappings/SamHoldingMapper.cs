@@ -16,6 +16,7 @@ public static class SamHoldingMapper
         Func<string?, CancellationToken, Task<(string? PremiseActivityTypeId, string? PremiseActivityTypeName)>> resolvePremiseActivityType,
         Func<string?, CancellationToken, Task<(string? PremiseTypeId, string? PremiseTypeName)>> resolvePremiseType,
         Func<string?, string?, CancellationToken, Task<(string? countryId, string? countryCode, string? countryName)>> resolveCountry,
+        Func<string?, CancellationToken, Task<(string? premiseTypeCode, string? premiseActivityTypeCode)>> findByActivityCode,
         CancellationToken cancellationToken)
     {
         var result = new List<SamHoldingDocument>();
@@ -27,6 +28,7 @@ public static class SamHoldingMapper
                 resolvePremiseActivityType,
                 resolvePremiseType,
                 resolveCountry,
+                findByActivityCode,
                 cancellationToken);
 
             result.Add(holding);
@@ -40,6 +42,7 @@ public static class SamHoldingMapper
         Func<string?, CancellationToken, Task<(string? PremiseActivityTypeId, string? PremiseActivityTypeName)>> resolvePremiseActivityType,
         Func<string?, CancellationToken, Task<(string? PremiseTypeId, string? PremiseTypeName)>> resolvePremiseType,
         Func<string?, string?, CancellationToken, Task<(string? countryId, string? countryCode, string? countryName)>> resolveCountry,
+        Func<string?, CancellationToken, Task<(string? premiseTypeCode, string? premiseActivityTypeCode)>> findByActivityCode,
         CancellationToken cancellationToken)
     {
         var addressLine = AddressFormatters.FormatAddressRange(
@@ -49,10 +52,10 @@ public static class SamHoldingMapper
                             h.PAON_END_NUMBER, h.PAON_END_NUMBER_SUFFIX,
                             h.SAON_DESCRIPTION, h.PAON_DESCRIPTION);
 
-        var formattedFacilityBusinessActivityCode = PremiseActivityTypeFormatters.TrimFacilityActivityCode(h.FACILITY_BUSINSS_ACTVTY_CODE);
+        var (premiseTypeCode, premiseActivityTypeCode) = await findByActivityCode(h.FCLTY_SUB_BSNSS_ACTVTY_CODE, cancellationToken);
 
-        var (premiseActivityTypeId, premiseActivityTypeName) = await resolvePremiseActivityType(formattedFacilityBusinessActivityCode, cancellationToken);
-        var (premiseTypeId, premiseTypeName) = await resolvePremiseType(h.FACILITY_TYPE_CODE, cancellationToken);
+        var (premiseActivityTypeId, premiseActivityTypeName) = await resolvePremiseActivityType(premiseActivityTypeCode, cancellationToken);
+        var (premiseTypeId, premiseTypeName) = await resolvePremiseType(premiseTypeCode, cancellationToken);
         var (countryId, countryCode, _) = await resolveCountry(h.COUNTRY_CODE, h.UK_INTERNAL_CODE, cancellationToken);
 
         var result = new SamHoldingDocument
@@ -82,13 +85,13 @@ public static class SamHoldingMapper
             HoldingStatus = HoldingStatusFormatters.FormatHoldingStatus(h.IsDeleted ?? false),
 
             PremiseActivityTypeId = premiseActivityTypeId,
-            PremiseActivityTypeCode = formattedFacilityBusinessActivityCode,
+            PremiseActivityTypeCode = premiseActivityTypeCode,
             PremiseSubActivityTypeCode = h.FCLTY_SUB_BSNSS_ACTVTY_CODE,
 
             MovementRestrictionReasonCode = h.MOVEMENT_RSTRCTN_RSN_CODE,
 
             PremiseTypeIdentifier = premiseTypeId,
-            PremiseTypeCode = h.FACILITY_TYPE_CODE,
+            PremiseTypeCode = premiseTypeCode,
 
             SpeciesTypeCode = h.AnimalSpeciesCodeUnwrapped,
             ProductionUsageCodeList = [.. h.AnimalProductionUsageCodeList.Select(ProductionUsageCodeFormatters.TrimProductionUsageCodeHolding)],

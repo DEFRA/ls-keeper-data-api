@@ -21,7 +21,7 @@ public class FacilityGenerator
     {
         var businessActivityCode = allowNulls && s_random.Next(2) == 0 ? null : s_businessActivities[s_random.Next(s_businessActivities.Length)];
         var facilityTypeCode = allowNulls && s_random.Next(2) == 0 ? null : s_facilityTypes[s_random.Next(s_facilityTypes.Length)];
-        var businessSubActivityCode = allowNulls && s_random.Next(2) == 0 ? null : Guid.NewGuid().ToString();
+        var businessSubActivityCode = businessActivityCode + "-" + facilityTypeCode;// TODO validate
         var statusCode = allowNulls && s_random.Next(2) == 0 ? null : Guid.NewGuid().ToString();
         var movementRestrictionCode = allowNulls && s_random.Next(2) == 0 ? null : Guid.NewGuid().ToString();
         var animalSpeciesCode = allowNulls && s_random.Next(2) == 0 ? string.Empty : s_speciesCodes[s_random.Next(s_speciesCodes.Length)];

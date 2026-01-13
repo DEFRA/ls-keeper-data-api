@@ -128,7 +128,7 @@ public static class SamTestScenarios
         INTERVAL = null,
         INTERVAL_UNIT_OF_TIME = null,
         CPH_RELATIONSHIP_TYPE = null,
-        FCLTY_SUB_BSNSS_ACTVTY_CODE = null,
+        FCLTY_SUB_BSNSS_ACTVTY_CODE = "SLG-RM-AH",
         FEATURE_STATUS_CODE = null,
         MOVEMENT_RSTRCTN_RSN_CODE = null
     };
@@ -186,7 +186,7 @@ public static class SamTestScenarios
         INTERVAL = null,
         INTERVAL_UNIT_OF_TIME = null,
         CPH_RELATIONSHIP_TYPE = null,
-        FCLTY_SUB_BSNSS_ACTVTY_CODE = null,
+        FCLTY_SUB_BSNSS_ACTVTY_CODE = "SLG-WM-AH",
         FEATURE_STATUS_CODE = null,
         MOVEMENT_RSTRCTN_RSN_CODE = null
     };

@@ -322,6 +322,10 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
             .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? id, CancellationToken token) => (CountryData.GetById(id!)));
 
+        //TODO validate against data
+        _appTestFixture.AppWebApplicationFactory._activityCodeLookupServiceMock.Setup(x => x.FindByActivityCodeAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string? key, CancellationToken token) => key == null ? (null, null) : (key.Split('-')[2], key.Split('-')[1]));
+
         _appTestFixture.AppWebApplicationFactory._premiseActivityTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? code, CancellationToken token) => (PremiseActivityTypeData.Find(code!)));
