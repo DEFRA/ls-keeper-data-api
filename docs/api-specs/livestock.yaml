@@ -1,13 +1,14 @@
 openapi: 3.0.3
 info:
-  title: Location API 
+  title: Livestock API 
   description: |-
-    The Location API is reference data service that allows developers to build applications that connect with Defra's Livestock - Location Data domain.
+    The Livestock API is reference data service that allows developers to build applications that connect with Defra's Livestock - Location and Party Data domain.
     
-    With the Location API, you can:
+    With the Livestock API, you can:
 
     * **Authenticate** with the Defra's identity system.
     * **Retrieve** location based reference data such as Sites and its related data such as Parties, Species, Marks etc.
+    * **Retrieve** reference data for Parties and its related information.
     * **Provide** count of the current sites within the scope of Livestock Information Service.
     
   termsOfService: http://www.defra.gov.uk/legal
@@ -21,20 +22,10 @@ info:
     name: Livestock Data Services Agreement
     url: https://www.defra.gov.uk/services-agreement/
   
-  version: 1.4.0
+  version: 1.0.0
 
   # Change History
-  # 0.1.0 - Initial Draft
-  # 0.2.0 - Amendments based on the initial peer review.
-  # 0.3.0 - Amendments based on review from LI Ltd.
-  # 0.4.0 - Amendments based on further review comments from internal stakeholders and LI Ltd.
-  # 0.5.0 - Amendments based on further review comments from LI Ltd.
-  # 1.0.0 - KRDS API specification has now been baselined on the 06/10/2025.
-  # 1.1.0 - Amended the Site types enumeration list after the final list confirmed by business stakeholders.
-  # 1.2.0 - Amended the specification to reflect the amended structure of the base reference models such as Site Indentifier Type, Activity Type etc.
-  # 1.3.0 - Updated the specs to include a new parameter in api/sites endpoint which accepts an array of site identifiers.
-  # 1.4.0 - Updated the specs to include a new parameter in api/sites endpoint which accepts an array of Site Ids(UUIS) to enable publication of multiple Site details. 
-  #         Also, set a threshold limit of 50 values in arrays in input parameters. The maximum number of records per page is restricted to 100 and the default records per page is set to 20.
+  # 1.0.0 - Initial Draft, where both Location and Party API specifications have been merged into a single Open API 3.0.3 specs.
  
 externalDocs:
   description: Defra website
@@ -43,6 +34,7 @@ tags:
   - name: site
   - name: site reference
   - name: location
+  - name: party
   - name: housekeeping
 
 security:
@@ -113,7 +105,7 @@ components:
         devolvedAuthorityFlag:
           type: boolean
           readOnly: false
-          example: false
+          example: true
         lastUpdatedDate:
           type: string
           format: date-time
@@ -156,8 +148,19 @@ components:
         mark: 
           type: string
           example: 564545
+          
+        #communication:
+        #    type: array
+        #    readOnly: true
+        #    items:
+        #        $ref: '#/components/schemas/Communication'
+                
         species:
-          $ref: '#/components/schemas/Species'
+            type: array
+            readOnly: true
+            items:
+                $ref: '#/components/schemas/Species'
+                
         startDate:
           type: string
           format: date-time
@@ -459,6 +462,17 @@ components:
           type: string
           format: date-time
           description: "The timestamp of the last time the Party record was updated"
+          
+    PartyList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 1
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/Party'
  
     SiteIdentifier:
       type: object
@@ -509,7 +523,6 @@ components:
       required:
         - siteType
         - source
-        - destroyIdentityDocumentsFlag
     
     SiteDetail:
       allOf:
@@ -531,6 +544,9 @@ components:
               example: SAM
             destroyIdentityDocumentsFlag:
               type: boolean
+              required: false
+              nullable: true
+              example: null
             location:
               $ref: '#/components/schemas/Location'
               required: false
@@ -1905,3 +1921,176 @@ paths:
           
         '503':
           description: Service Unavailable          
+          
+  /api/parties:
+    get:
+      tags:
+        - party
+      summary: Retrieve a list of parties.
+      description: The endpoint allows searching and retrieving a list of parties.
+      operationId: getParties
+      parameters:
+        - name: firstName
+          in: query
+          required: false
+          schema:
+            type: string
+            example: Jane
+        - name: lastName
+          in: query
+          required: false
+          schema:
+            type: string
+            example: Doe
+        - name: email
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          allowEmptyValue: false
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          required: false
+          allowEmptyValue: false
+          schema:
+            type: integer
+        - name: order
+          in: query
+          required: false
+          allowEmptyValue: false
+          schema: 
+            type: string
+            enum:
+              - id
+              - name
+        - name: sort
+          in: query
+          required: false
+          allowEmptyValue: false
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc 
+        - name: lastUpdatedDate
+          in:   query
+          required: false
+          schema:
+            type: string
+            format: date-time
+            description: Returns only Party that have been updated since this timestamp. This is the key parameter for Change Data Capture (CDC)
+      responses:
+        '200':
+          description: OK - Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartyList'
+        '404':
+          description: Party not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+               
+  /api/parties/{id}:
+    get:
+      tags:
+        - party
+      summary: Retrieve details of a party.
+      description: The endpoint allows to retrieve details of a given party.
+      operationId: getPartiesById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK - Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+               allOf:
+                 - $ref: '../error.yaml#/components/schemas/Errors'
+                 - type: object
+                   properties:
+                      status:
+                        type: integer
+                        enum: [BadRequest]
+              examples:
+                invalid-request-schema: 
+                  $ref: '../error.yaml#/components/examples/invalid-request-schema'   
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+               allOf:
+                - $ref: '../error.yaml#/components/schemas/Errors'
+                - type: object
+                  properties:
+                      status:
+                        type: integer                 
+                        enum: [Forbidden]
+              examples:
+                not-found: 
+                  $ref: '../error.yaml#/components/examples/forbidden' 
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '../error.yaml#/components/schemas/Errors'
+                - type: object
+                  properties:
+                      status:
+                        type: integer    
+                        enum: [NotFound]
+              examples:
+                  not-found: 
+                    $ref: '../error.yaml#/components/examples/not-found' 
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '../error.yaml#/components/schemas/Errors'
+                - type: object
+                  properties:
+                      status:
+                        type: integer    
+                        enum: [ServerError]
+              examples:
+                    server-error:
+                      $ref: '../error.yaml#/components/examples/server-error' 
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '../error.yaml#/components/schemas/Errors'
+                - type: object
+                  properties:
+                      status:
+                        type: integer    
+                        enum: [ServiceUnavailable]
+              examples:
+                    server-error:
+                      $ref: '../error.yaml#/components/examples/service-unavailable'      
