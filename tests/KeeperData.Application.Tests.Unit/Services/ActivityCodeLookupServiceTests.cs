@@ -25,10 +25,11 @@ public class ActivityCodeLookupServiceTests
         returned.premiseType.Should().Be(premiseTypeCode);
     }
 
-    [Fact]
-    public async Task WhenNotFound_ShouldReturnNull()
+    [Theory]
+    [InlineData("invalid")]
+    [InlineData(null)]
+    public async Task WhenNotFound_ShouldReturnNull(string? key)
     {
-        var key = "invalid";
         var repo = new Mock<IFacilityBusinessActivityMapRepository>();
         var sut = new ActivityCodeLookupService(repo.Object);
 
