@@ -20,7 +20,7 @@ info:
     name: Livestock Data Services Agreement
     url: https://www.defra.gov.uk/services-agreement/
   
-  version: 1.0.0
+  version: 1.2.0
 
 # Change History
   # 0.1.0 - Initial Draft
@@ -29,6 +29,8 @@ info:
   # 0.4.0 - Amendments to the object model based on the changes done to the Location service model.
   # 0.5.0 - Amendments based on further review comments from LI Ltd.
   # 1.0.0 - KRDS Party API specification has now been baselined on the 06/10/2025.
+  # 1.1.0 - Amendments to the specs to update the Role definition.
+  # 1.2.0 - Updated the definition of the Role entity object.
   
 externalDocs:
   description: Defra APHA website
@@ -85,13 +87,17 @@ components:
           type: string
           format: uuid
           readOnly: true
+          description : "This is an immutable field which represents the golden key of the reference object."
         code: 
           type: string
           example: GB-ENG
+          readOnly: true
+          description: "This the business code/key of the Country object. This is a mutable field, where this field data could possibly change."
         name:
           type: string
           readOnly: true
           example: England
+          description: "This the business name of the Country object. This is a mutable field, where this field data could possibly change."
         longName:
           type: string
           readOnly: true
@@ -208,6 +214,90 @@ components:
         - code
         - name
     
+    SiteIdentifier:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        identifier:
+          type: string
+          example: "57/103/2335"
+          nullable: false
+        type:
+          $ref: '#/components/schemas/SiteIdentifierType'
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the SiteIdentifier record was updated"
+      required:
+        - identifier
+        - type    
+        
+    SiteType:
+      type: object
+      required:
+        - type
+        - description
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description : "This is an immutable field which represents the golden key of the reference object."
+        code:
+          type: string
+          description: "The business key/code values for a siteType"
+          example: "AH"
+        description:
+          type: string
+          description: The type of site an animal may reside at.
+          example: "Agricultural Holding"
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the SiteType record was updated"
+    
+    SiteIdentifierType:
+      type: object
+      required:
+        - type
+        - description
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description : "This is an immutable field which represents the golden key of the reference object."
+        code:
+          type: string
+          description: "The business key/code values for a Site Identiier Type"
+          example: "CPHN"
+        description:
+          type: string
+          description: The type which identifies the site identifier.
+          example: "CPH Number"
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the SiteIdentifier Type record was updated"
+          
+    #Site:
+    #  type: object
+    #  properties:
+    #    id:
+    #      type: string
+    #      format: uuid
+    #      readOnly: true
+    #    name:
+    #      type: string
+    #      example: Hansel & Gretel Farm
+    #    lastUpdatedDate:
+    #      type: string
+    #      format: date-time
+    #      description: "The timestamp of the last time the Site record was updated"
+    
     Site:
       type: object
       properties:
@@ -218,11 +308,23 @@ components:
         name:
           type: string
           example: Hansel & Gretel Farm
+        state:
+          type: string
+          enum:
+          - active
+          - inactive
+        type:
+          $ref: '#/components/schemas/SiteType'        
+        identifiers:
+              type: array
+              items:
+                $ref: '#/components/schemas/SiteIdentifier'        
         lastUpdatedDate:
           type: string
           format: date-time
           description: "The timestamp of the last time the Site record was updated"
-    
+      required:
+        - siteType        
     
     ManagedSpecies:
       type: object
@@ -264,9 +366,15 @@ components:
           type: string
           format: uuid
           readOnly: true
+          description : "This is an immutable field which represents the golden key of the reference object."
+        code:
+          type: string
+          readOnly : true
+          description: "This is the unique code assigned to the Role entity"
+          example: "LIVESTOCKKEEPER"
         name:
           type: string
-          example: "Keeper"
+          example: "Livestock Keeper"
           nullable: false
         lastUpdatedDate:
           type: string
