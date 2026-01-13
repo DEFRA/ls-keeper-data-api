@@ -55,7 +55,7 @@ public static class SamHoldingMapper
         var (premiseTypeCode, premiseActivityTypeCode) = await findByActivityCode(h.FCLTY_SUB_BSNSS_ACTVTY_CODE, cancellationToken);
 
         var (premiseActivityTypeId, premiseActivityTypeName) = await resolvePremiseActivityType(premiseActivityTypeCode, cancellationToken);
-        var (premiseTypeId, premiseTypeName) = await resolvePremiseType(premiseTypeCode, cancellationToken); 
+        var (premiseTypeId, premiseTypeName) = await resolvePremiseType(premiseTypeCode, cancellationToken);
         var (countryId, countryCode, _) = await resolveCountry(h.COUNTRY_CODE, h.UK_INTERNAL_CODE, cancellationToken);
 
         var result = new SamHoldingDocument
