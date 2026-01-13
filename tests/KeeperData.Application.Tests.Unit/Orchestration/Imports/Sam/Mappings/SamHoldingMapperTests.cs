@@ -6,7 +6,7 @@ using KeeperData.Core.Services;
 using KeeperData.Tests.Common.Factories;
 using KeeperData.Tests.Common.Generators;
 using KeeperData.Tests.Common.Mappings;
-using Microsoft.AspNetCore.Mvc.Diagnostics;
+using KeeperData.Tests.Common.TestData.Sam;
 using Moq;
 
 namespace KeeperData.Application.Tests.Unit.Orchestration.Imports.Sam.Mappings;
@@ -37,17 +37,7 @@ public class SamHoldingMapperTests
             .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input, input));
 
         _activityCodeLookupServiceMock.Setup(x => x.FindByActivityCodeAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? key, CancellationToken token) =>
-            {
-                if (key == null)
-                    return (null, null);
-                var segments = key.Split('-');
-
-                if (key == "-")
-                    return (null, null);
-
-                return (String.IsNullOrEmpty(segments[1]) ? null : segments[1], String.IsNullOrEmpty(segments[0]) ? null : segments[0]);
-            }); // TODO validate
+            .ReturnsAsync((string? key, CancellationToken token) => SamTestScenarios.LookupCodes(key));
 
         _resolvePremiseActivityType = _premiseActivityTypeLookupServiceMock.Object.FindAsync;
         _resolvePremiseType = _premiseTypeLookupServiceMock.Object.FindAsync;

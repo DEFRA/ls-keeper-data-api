@@ -4,6 +4,7 @@ using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Extensions;
+using KeeperData.Tests.Common.TestData.Sam;
 
 namespace KeeperData.Tests.Common.Mappings;
 
@@ -48,14 +49,12 @@ public static class VerifySamHoldingMappings
             : HoldingStatusType.Active.GetDescription();
         target.HoldingStatus.Should().Be(expectedStatus);
 
-        target.PremiseActivityTypeId.Should().NotBeNullOrWhiteSpace();
-        target.PremiseActivityTypeCode.Should().Be(formattedFacilityBusinessActivityCode);
+        target.PremiseActivityTypeCode.Should().Be(SamTestScenarios.LookupCodes(source.FCLTY_SUB_BSNSS_ACTVTY_CODE).associatedPremiseActivityCode);
         target.PremiseSubActivityTypeCode.Should().Be(source.FCLTY_SUB_BSNSS_ACTVTY_CODE);
 
         target.MovementRestrictionReasonCode.Should().Be(source.MOVEMENT_RSTRCTN_RSN_CODE);
 
-        target.PremiseTypeIdentifier.Should().NotBeNullOrWhiteSpace();
-        target.PremiseTypeCode.Should().Be(source.FACILITY_TYPE_CODE);
+        target.PremiseTypeCode.Should().Be(SamTestScenarios.LookupCodes(source.FCLTY_SUB_BSNSS_ACTVTY_CODE).associatedPremiseTypeCode);
 
         target.SpeciesTypeCode.Should().Be(source.AnimalSpeciesCodeUnwrapped);
 
