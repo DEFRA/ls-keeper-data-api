@@ -1,3 +1,5 @@
+using KeeperData.Tests.Common.TestData.Sam;
+
 namespace KeeperData.Tests.Common.Generators;
 
 public class FacilityGenerator
@@ -19,9 +21,12 @@ public class FacilityGenerator
         string animalProductionUsageCode
     ) GenerateFacility(bool allowNulls = false)
     {
+        var randomActivityIndex = s_random.Next(allowNulls ? SamTestScenarios.SampleActivities.Length : SamTestScenarios.SampleActivities.Length - 1);
+
         var businessActivityCode = allowNulls && s_random.Next(2) == 0 ? null : s_businessActivities[s_random.Next(s_businessActivities.Length)];
         var facilityTypeCode = allowNulls && s_random.Next(2) == 0 ? null : s_facilityTypes[s_random.Next(s_facilityTypes.Length)];
-        var businessSubActivityCode = allowNulls && s_random.Next(2) == 0 ? null : Guid.NewGuid().ToString();
+
+        var businessSubActivityCode = SamTestScenarios.SampleActivities[randomActivityIndex].facilitySubActivityCode;
         var statusCode = allowNulls && s_random.Next(2) == 0 ? null : Guid.NewGuid().ToString();
         var movementRestrictionCode = allowNulls && s_random.Next(2) == 0 ? null : Guid.NewGuid().ToString();
         var animalSpeciesCode = allowNulls && s_random.Next(2) == 0 ? string.Empty : s_speciesCodes[s_random.Next(s_speciesCodes.Length)];

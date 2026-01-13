@@ -15,6 +15,7 @@ public class PremiseActivityTypeLookupService(IPremisesActivityTypeRepository pr
         if (string.IsNullOrWhiteSpace(premiseActivityTypeId)) return null;
         return await GetByIdAsync(premiseActivityTypeId, cancellationToken);
     }
+
     public Task<(string? premiseActivityTypeId, string? premiseActivityTypeName)> FindAsync(string? lookupValue, CancellationToken cancellationToken) =>
         premisesActivityTypeRepository.FindAsync(lookupValue, cancellationToken);
 }
