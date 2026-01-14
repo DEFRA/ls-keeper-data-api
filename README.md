@@ -2,7 +2,7 @@
 
 Core delivery C# ASP.NET API providing RESTful data access for the Land Services Keeper Data Bridge.
 
-## Table of Contents - TODO
+## Table of Contents
 
 - [Overview](#overview)
 - [Prerequisites](#prerequisites)
@@ -21,7 +21,6 @@ Core delivery C# ASP.NET API providing RESTful data access for the Land Services
 - [Deployment](#deployment)
   - [CDP Environments](#cdp-environments)
 - [Architecture](#architecture)
-- [Troubleshooting](#troubleshooting)
 - [Licence](#licence)
 
 ## Overview
