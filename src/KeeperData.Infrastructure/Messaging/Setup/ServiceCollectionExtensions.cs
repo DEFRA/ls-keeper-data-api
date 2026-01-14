@@ -87,7 +87,7 @@ public static class ServiceCollectionExtensions
 
     private static void AddDataImportThrottling(this IServiceCollection services, IConfiguration configuration)
     {
-        var dataImportThrottlingConfiguration = configuration.GetSection(nameof(DataImportThrottlingConfiguration)).Get<DataImportThrottlingConfiguration>() ?? new();
+        var dataImportThrottlingConfiguration = configuration.GetSection(DataImportThrottlingConfiguration.SectionName).Get<DataImportThrottlingConfiguration>() ?? new();
         services.AddSingleton<IDataImportThrottlingConfiguration>(dataImportThrottlingConfiguration);
     }
 
