@@ -31,19 +31,19 @@ public class GenericRepository<T> : IGenericRepository<T>
     public async Task<T> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         var filter = Builders<T>.Filter.Eq(x => x.Id, id);
-        var cursor = await _collection.FindAsync(Session, filter, cancellationToken: cancellationToken);
+        var cursor = await _collection.FindAsync(filter, cancellationToken: cancellationToken);
         return await cursor.FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<T?> FindOneAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
     {
-        var cursor = await _collection.FindAsync(Session, predicate, cancellationToken: cancellationToken);
+        var cursor = await _collection.FindAsync(predicate, cancellationToken: cancellationToken);
         return await cursor.FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<T?> FindOneByFilterAsync(FilterDefinition<T> filter, CancellationToken cancellationToken = default)
     {
-        var cursor = await _collection.FindAsync(Session, filter, cancellationToken: cancellationToken);
+        var cursor = await _collection.FindAsync(filter, cancellationToken: cancellationToken);
         return await cursor.FirstOrDefaultAsync(cancellationToken);
     }
 
