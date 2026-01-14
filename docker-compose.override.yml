@@ -7,6 +7,7 @@ services:
       - ASPNETCORE_HTTP_PORTS=5555
       - AWS__ServiceURL=http://kda-localstack-emulator:4566
       - Mongo__DatabaseUri=mongodb://kda_mongodb:27017
+      - Mongo__EnableTransactions=true
       - StorageConfiguration__ComparisonReportsStorage__BucketName=test-comparison-reports-bucket
       - QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl=http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue
       - QueueConsumerOptions__IntakeEventQueueOptions__DeadLetterQueueUrl=http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue-deadletter
@@ -24,6 +25,7 @@ services:
       - DataBridgeScanConfiguration__DailyScanIncludeChangesWithinTotalHours=24
       - BulkScanEndpointsEnabled=true
       - DailyScanEndpointsEnabled=true
+      - DataImportThrottlingSettings__MessageCompletionDelayMs=1000
       - MongoDbPreproductionService__Enabled=true
     ports:
       - "5555"
