@@ -27,13 +27,13 @@ Core delivery C# ASP.NET API providing RESTful data access for the Land Services
 
 This project provides an API that:
 - Integrates with MongoDB for data persistence
-- Leverages AWS services (S3, SQS) via LocalStack for local development
+- Leverages AWS services (S3, SQS, SNS) via LocalStack for local development
 - Triggers daily jobs to scan for data updates
 - Provides REST API endpoints for data import and querying
 - Includes comprehensive unit, component, and integration tests
 
 **Technology Stack:**
-- .NET 10
+- .NET 8
 - ASP.NET Core
 - MongoDB
 - Redis
@@ -42,7 +42,7 @@ This project provides an API that:
 
 ## Prerequisites
 
-- **.NET 10 SDK** - [Download](https://dotnet.microsoft.com/download/dotnet/10.0)
+- **.NET 8 SDK** - [Download](https://dotnet.microsoft.com/download/dotnet/8.0)
 - **Docker & Docker Compose** - [Download](https://www.docker.com/products/docker-desktop)
 - **Git** - [Download](https://git-scm.com/)
 - **MongoDB CLI tools** (optional) - [mongosh](https://www.mongodb.com/docs/mongodb-shell/install/)
