@@ -7,12 +7,11 @@ using Amazon.SimpleNotificationService.Model;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using KeeperData.Api.Tests.Component.Consumers.Helpers;
+using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Messaging.Contracts;
-using KeeperData.Core.Messaging.Contracts.V1.Sam;
-using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Observers;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
@@ -21,6 +20,7 @@ using KeeperData.Infrastructure.Messaging.Services;
 using KeeperData.Infrastructure.Storage.Clients;
 using KeeperData.Infrastructure.Storage.Factories;
 using KeeperData.Infrastructure.Storage.Factories.Implementations;
+using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -66,7 +66,7 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
     public readonly Mock<ISpeciesTypeLookupService> _speciesTypeLookupServiceMock = new();
     public readonly Mock<ISiteIdentifierTypeLookupService> _siteIdentifierTypeLookupServiceMock = new();
 
-    public readonly Mock<IMessageHandler<SamImportHoldingMessage>> _samImportHoldingMessageHandlerMock = new();
+    public readonly Mock<IRequestHandler<ProcessSamImportHoldingMessageCommand, MessageType>> _samImportHoldingMessageHandlerMock = new();
 
     private readonly List<Action<IServiceCollection>> _overrideServices = [];
     private readonly IDictionary<string, string?> _configurationOverrides;

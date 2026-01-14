@@ -29,6 +29,7 @@ public class CtsHoldingDocument : BaseHoldingDocument, IEntity, IDeletableEntity
 
     [JsonPropertyName("deleted")]
     [BsonElement("deleted")]
+    [AutoIndexed]
     public bool Deleted { get; set; }
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()

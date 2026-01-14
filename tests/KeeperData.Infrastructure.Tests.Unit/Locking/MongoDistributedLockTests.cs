@@ -4,7 +4,6 @@ using KeeperData.Core.Locking;
 using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Infrastructure.Locking;
 using Microsoft.Extensions.Options;
-using MongoDB.Bson;
 using MongoDB.Driver;
 using Moq;
 

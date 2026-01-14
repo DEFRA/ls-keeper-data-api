@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents.Reference;
 
-[CollectionName("refCountries")]
+[CollectionName("referenceData")]
 public class CountryListDocument : IListDocument, IReferenceListDocument<CountryDocument>
 {
     public static string DocumentId => "all-countries";

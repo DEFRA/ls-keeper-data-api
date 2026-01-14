@@ -14,7 +14,7 @@ namespace KeeperData.Infrastructure.Tests.Unit.Services
         private readonly Mock<IMongoDatabase> _mockDatabase;
         private readonly Mock<IMongoDbInitialiser> _mockInitialiser;
         private readonly MongoDbPreproductionService _sut;
-        private readonly MongoDbPreproductionServiceConfig _config = new MongoDbPreproductionServiceConfig { Enabled = true, PermittedTables = new[] { "parties", "ctsHoldings" } };
+        private readonly MongoDbPreproductionServiceConfig _config = new MongoDbPreproductionServiceConfig { Enabled = true, PermittedTables = ["parties", "ctsHoldings"] };
 
         public MongoDbPreproductionServiceTests()
         {
@@ -34,7 +34,7 @@ namespace KeeperData.Infrastructure.Tests.Unit.Services
         [InlineData("ctsHoldings", typeof(CtsHoldingDocument))]
         public async Task WhenDeletingCollection_ItShouldBeReintialisedWithIndexes(string collectionName, Type documentType)
         {
-            await _sut.WipeCollection(collectionName);
+            await _sut.DropCollection(collectionName);
             _mockDatabase.Verify(db => db.DropCollectionAsync(collectionName, CancellationToken.None));
             _mockInitialiser.Verify(i => i.Initialise(documentType));
         }
@@ -42,13 +42,13 @@ namespace KeeperData.Infrastructure.Tests.Unit.Services
         [Fact]
         public async Task WhenDeletingCollectionThatIsNotPermitted_ItShouldFail()
         {
-            await Assert.ThrowsAsync<ArgumentException>(async () => await _sut.WipeCollection("refCountries"));
+            await Assert.ThrowsAsync<ArgumentException>(async () => await _sut.DropCollection("referenceData"));
         }
 
         [Fact]
         public async Task WhenDeletingInvalidCollectionName_ItShouldFail()
         {
-            await Assert.ThrowsAsync<ArgumentException>(async () => await _sut.WipeCollection("not-a-collection"));
+            await Assert.ThrowsAsync<ArgumentException>(async () => await _sut.DropCollection("not-a-collection"));
         }
     }
 }

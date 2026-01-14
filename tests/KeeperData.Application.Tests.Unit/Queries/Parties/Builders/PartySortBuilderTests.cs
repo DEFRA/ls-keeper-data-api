@@ -17,15 +17,15 @@ public class PartySortBuilderTests
     }
 
     [Theory]
-    [InlineData("lastName", "asc", "{ \"lastName\" : 1 }")]
-    [InlineData("lastName", "desc", "{ \"lastName\" : -1 }")]
-    [InlineData("lastName", null, "{ \"lastName\" : 1 }")]
-    [InlineData(null, null, "{ \"lastName\" : 1 }")]
-    [InlineData("partyType", "asc", "{ \"partyType\" : 1 }")]
-    [InlineData("state", "desc", "{ \"state\" : -1 }")]
-    // [InlineData("invalid", "asc", "{ \"type\" : 1 }")] // TODO why
+    [InlineData("name", "asc", "{ \"name\" : 1 }")]
+    [InlineData("name", "desc", "{ \"name\" : -1 }")]
+    [InlineData("name", null, "{ \"name\" : 1 }")]
+    [InlineData(null, null, "{ \"name\" : 1 }")]
+    [InlineData("id", "asc", "{ \"customerNumber\" : 1 }")]
+    [InlineData("id", "desc", "{ \"customerNumber\" : -1 }")]
+    [InlineData("id", null, "{ \"customerNumber\" : 1 }")]
     public void Build_ShouldReturnCorrectSortDefinition(string? order, string? sort, string expected)
-    { //TODO - no notes in swagger about allowable values
+    {
         var query = new GetPartiesQuery { Order = order, Sort = sort };
         var sortDefinition = PartySortBuilder.Build(query);
 

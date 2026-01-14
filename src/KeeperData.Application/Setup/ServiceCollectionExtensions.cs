@@ -53,7 +53,6 @@ public static class ServiceCollectionExtensions
         RegisterNotificationService(services);
     }
 
-
     public static void RegisterImportOrchestrators(IServiceCollection services, Assembly assembly)
     {
         var orchestratorTypes = assembly.GetTypes()
@@ -175,10 +174,10 @@ public static class ServiceCollectionExtensions
             .GetMethods()
             .Single(m => m.Name == "Get"
                 && m.ContainsGenericParameters
-                && m.GetParameters().Count() == 1
+                && m.GetParameters().Length == 1
                 && m.GetParameters().Single().ParameterType == typeof(IConfiguration));
 
-        for (int i = 0; i < queryValidationConfig?.Count; i++)
+        for (var i = 0; i < queryValidationConfig?.Count; i++)
         {
             var validatorType = validatorTypes.Single(t => t.Name == queryValidationConfig[i].ValidatorType);
             var typeOfConfigForValidator = typeof(QueryValidationConfig<>).MakeGenericType(validatorType);

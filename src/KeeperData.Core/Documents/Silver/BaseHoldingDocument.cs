@@ -1,4 +1,4 @@
-using KeeperData.Core.Repositories;
+using KeeperData.Core.Attributes;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
 

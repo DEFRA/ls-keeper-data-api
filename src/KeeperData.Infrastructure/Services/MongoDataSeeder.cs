@@ -6,7 +6,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
-using System.Reflection;
 using System.Text.Json;
 using File = System.IO.File;
 
@@ -73,20 +72,15 @@ public class MongoDataSeeder : IHostedService
     private async Task SeedAsync<TDocument, TItem>(CancellationToken cancellationToken)
         where TDocument : class, IListDocument, new()
     {
-        var collectionName = typeof(TDocument).GetCustomAttribute<KeeperData.Core.Attributes.CollectionNameAttribute>()?.Name;
+        var collectionName = "referenceData";
         var documentId = new TDocument().Id;
-        var jsonFileName = $"{collectionName?.Replace("ref", "").ToLower()}.json";
-
-        if (string.IsNullOrEmpty(collectionName))
-        {
-            _logger.LogError("Cannot seed type {TypeName} because it is missing a CollectionName attribute.", typeof(TDocument).Name);
-            return;
-        }
+        var dataTypeName = documentId?.Replace("all-", "").ToLower();
+        var jsonFileName = $"{dataTypeName}.json";
 
         var targetJsonPath = Path.Combine(_env.ContentRootPath, "Data", "Seed", jsonFileName);
         if (!File.Exists(targetJsonPath))
         {
-            _logger.LogInformation("Seed file '{FileName}' not found. Skipping seed for '{CollectionName}'.", jsonFileName, collectionName);
+            _logger.LogInformation("Seed file '{FileName}' not found. Skipping seed for '{DocumentName}'.", jsonFileName, typeof(TDocument).Name);
             return;
         }
 

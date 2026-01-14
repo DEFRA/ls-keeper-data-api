@@ -20,12 +20,10 @@ public record SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
 
     [BsonElement("customerNumber")]
     [JsonPropertyName("customerNumber")]
-    [AutoIndexed]
     public string CustomerNumber { get; set; } = string.Empty;
 
     [BsonElement("partyTypeId")]
     [JsonPropertyName("partyTypeId")]
-    [AutoIndexed]
     public string PartyTypeId { get; set; } = string.Empty;
 
     [BsonElement("holdingIdentifier")]
@@ -35,7 +33,6 @@ public record SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
 
     [BsonElement("roleTypeId")]
     [JsonPropertyName("roleTypeId")]
-    [AutoIndexed]
     public string? RoleTypeId { get; set; }
 
     [BsonElement("roleTypeName")]
@@ -44,12 +41,10 @@ public record SitePartyRoleRelationshipDocument : IEntity, IContainsIndexes
 
     [BsonElement("speciesTypeId")]
     [JsonPropertyName("speciesTypeId")]
-    [AutoIndexed]
     public string? SpeciesTypeId { get; set; }
 
     [BsonElement("speciesTypeCode")]
     [JsonPropertyName("speciesTypeCode")]
-    [AutoIndexed]
     public string? SpeciesTypeCode { get; set; }
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()

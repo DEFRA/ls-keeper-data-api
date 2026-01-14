@@ -1,9 +1,10 @@
+using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
-using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Serializers;
+using MediatR;
 using MongoDB.Driver;
 
 namespace KeeperData.Application.MessageHandlers.Sam;
@@ -11,13 +12,15 @@ namespace KeeperData.Application.MessageHandlers.Sam;
 public class SamUpdateHoldingMessageHandler(
     SamHoldingImportOrchestrator orchestrator,
     IUnwrappedMessageSerializer<SamUpdateHoldingMessage> serializer)
-    : IMessageHandler<SamUpdateHoldingMessage>
+    : IRequestHandler<ProcessSamUpdateHoldingMessageCommand, MessageType>
 {
     private readonly IUnwrappedMessageSerializer<SamUpdateHoldingMessage> _serializer = serializer;
     private readonly SamHoldingImportOrchestrator _orchestrator = orchestrator;
 
-    public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)
+    public async Task<MessageType> Handle(ProcessSamUpdateHoldingMessageCommand request, CancellationToken cancellationToken = default)
     {
+        var message = request.Message;
+
         ArgumentNullException.ThrowIfNull(message, nameof(message));
 
         var messagePayload = _serializer.Deserialize(message)

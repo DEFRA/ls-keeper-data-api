@@ -1,24 +1,27 @@
+using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
-using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Serializers;
+using MediatR;
 
 namespace KeeperData.Application.MessageHandlers.Sam;
 
 public class SamDailyScanMessageHandler(SamDailyScanOrchestrator orchestrator,
   IUnwrappedMessageSerializer<SamDailyScanMessage> serializer,
   DataBridgeScanConfiguration dataBridgeScanConfiguration)
-  : IMessageHandler<SamDailyScanMessage>
+  : IRequestHandler<ProcessSamDailyScanMessageCommand, MessageType>
 {
     private readonly IUnwrappedMessageSerializer<SamDailyScanMessage> _serializer = serializer;
     private readonly SamDailyScanOrchestrator _orchestrator = orchestrator;
     private readonly DataBridgeScanConfiguration _dataBridgeScanConfiguration = dataBridgeScanConfiguration;
 
-    public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)
+    public async Task<MessageType> Handle(ProcessSamDailyScanMessageCommand request, CancellationToken cancellationToken = default)
     {
+        var message = request.Message;
+
         ArgumentNullException.ThrowIfNull(message, nameof(message));
 
         var messagePayload = _serializer.Deserialize(message)

@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents.Reference;
 
-[CollectionName("refPremisesTypes")]
+[CollectionName("referenceData")]
 public class PremisesTypeListDocument : IListDocument, IReferenceListDocument<PremisesTypeDocument>
 {
     public static string DocumentId => "all-premisestypes";

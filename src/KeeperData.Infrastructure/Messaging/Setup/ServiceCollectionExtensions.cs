@@ -12,6 +12,7 @@ using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
 using KeeperData.Core.Messaging.Observers;
 using KeeperData.Core.Messaging.Serializers;
+using KeeperData.Core.Messaging.Throttling;
 using KeeperData.Infrastructure.Messaging.Configuration;
 using KeeperData.Infrastructure.Messaging.Consumers;
 using KeeperData.Infrastructure.Messaging.Factories;
@@ -20,6 +21,7 @@ using KeeperData.Infrastructure.Messaging.MessageHandlers;
 using KeeperData.Infrastructure.Messaging.Publishers;
 using KeeperData.Infrastructure.Messaging.Publishers.Configuration;
 using KeeperData.Infrastructure.Messaging.Services;
+using KeeperData.Infrastructure.Messaging.Throttling;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -56,6 +58,8 @@ public static class ServiceCollectionExtensions
 
         services.AddMessageConsumers();
 
+        services.AddDataImportThrottling(configuration);
+
         services.AdddMessageSerializers();
 
         services.AddMessageHandlers();
@@ -81,22 +85,28 @@ public static class ServiceCollectionExtensions
         services.AddTransient<IQueuePollerObserver<MessageType>, NullQueuePollerObserver<MessageType>>();
     }
 
+    private static void AddDataImportThrottling(this IServiceCollection services, IConfiguration configuration)
+    {
+        var dataImportThrottlingConfiguration = configuration.GetSection(nameof(DataImportThrottlingConfiguration)).Get<DataImportThrottlingConfiguration>() ?? new();
+        services.AddSingleton<IDataImportThrottlingConfiguration>(dataImportThrottlingConfiguration);
+    }
+
     private static void AdddMessageSerializers(this IServiceCollection services)
     {
         services.AddSingleton<IMessageSerializer<SnsEnvelope>, SnsEnvelopeSerializer>();
 
         var messageIdentifierTypes = new[]
         {
-            typeof(SamImportHoldingMessage),
-            typeof(CtsImportHoldingMessage),
             typeof(SamBulkScanMessage),
+            typeof(SamDailyScanMessage),
             typeof(CtsBulkScanMessage),
             typeof(CtsDailyScanMessage),
+            typeof(SamImportHoldingMessage),
+            typeof(SamUpdateHoldingMessage),
+            typeof(CtsImportHoldingMessage),
             typeof(CtsUpdateHoldingMessage),
             typeof(CtsUpdateKeeperMessage),
             typeof(CtsUpdateAgentMessage),
-            typeof(SamDailyScanMessage),
-            typeof(SamUpdateHoldingMessage),
             typeof(BatchCompletionMessage)
         };
 
@@ -139,6 +149,25 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddSingleton<IMessageHandlerManager>(messageHandlerManager);
+
+        services.AddSingleton(sp =>
+        {
+            var registry = new MessageCommandRegistry();
+
+            registry.Register<SamBulkScanMessageCommandFactory>("SamBulkScan");
+            registry.Register<SamDailyScanMessageCommandFactory>("SamDailyScan");
+            registry.Register<CtsBulkScanMessageCommandFactory>("CtsBulkScan");
+            registry.Register<CtsDailyScanMessageCommandFactory>("CtsDailyScan");
+            registry.Register<SamImportHoldingCommandFactory>("SamImportHolding");
+            registry.Register<SamUpdateHoldingMessageCommandFactory>("SamUpdateHolding");
+            registry.Register<CtsImportHoldingMessageCommandFactory>("CtsImportHolding");
+            registry.Register<CtsUpdateHoldingMessageCommandFactory>("CtsUpdateHolding");
+            registry.Register<CtsUpdateKeeperMessageCommandFactory>("CtsUpdateKeeper");
+            registry.Register<CtsUpdateAgentMessageCommandFactory>("CtsUpdateAgent");
+            registry.Register<BatchCompletionMessageCommandFactory>("BatchCompletion");
+
+            return registry;
+        });
 
         return services;
     }

@@ -1,5 +1,6 @@
 using AutoFixture;
 using FluentAssertions;
+using KeeperData.Api.Tests.Component.Orchestration.Imports.Sam.Mocks;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.Documents;
@@ -13,7 +14,6 @@ using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using Moq;
 using Moq.Contrib.HttpClient;
-using System.Linq.Expressions;
 using System.Net;
 
 namespace KeeperData.Api.Tests.Component.Orchestration.Imports.Sam.Holdings;
@@ -215,71 +215,18 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
             ? []
             : _fixture.CreateMany<PartyDocument>(existingGoldPartiesCount);
 
-        // Silver Holding
-        _appTestFixture.AppWebApplicationFactory._silverSamHoldingRepositoryMock
-            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHoldingDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+        // Silver
+        CommonRepositoryMocks.SetupDefaultSamSilverRepositoryMocks(_appTestFixture.AppWebApplicationFactory);
 
-        _appTestFixture.AppWebApplicationFactory._silverSamHoldingRepositoryMock
-            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamHoldingDocument>, SamHoldingDocument)>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        // Gold
+        CommonRepositoryMocks.SetupDefaultGoldRepositoryMocks(_appTestFixture.AppWebApplicationFactory);
 
-        _appTestFixture.AppWebApplicationFactory._silverSamHoldingRepositoryMock
-            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamHoldingDocument>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Silver Party
-        _appTestFixture.AppWebApplicationFactory._silverSamPartyRepositoryMock
-            .Setup(r => r.FindOneAsync(It.IsAny<Expression<Func<SamPartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((SamPartyDocument?)null);
-
-        _appTestFixture.AppWebApplicationFactory._silverSamPartyRepositoryMock
-            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamPartyDocument>, SamPartyDocument)>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Silver Herds
-        _appTestFixture.AppWebApplicationFactory._silverSamHerdRepositoryMock
-            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHerdDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
-
-        _appTestFixture.AppWebApplicationFactory._silverSamHerdRepositoryMock
-            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamHerdDocument>, SamHerdDocument)>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _appTestFixture.AppWebApplicationFactory._silverSamHerdRepositoryMock
-            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamHerdDocument>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        // Overrides
 
         // Gold Site
         _appTestFixture.AppWebApplicationFactory._goldSiteRepositoryMock
             .Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingGoldSite);
-
-        _appTestFixture.AppWebApplicationFactory._goldSiteRepositoryMock
-            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SiteDocument>, SiteDocument)>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Gold Party
-        _appTestFixture.AppWebApplicationFactory._goldPartyRepositoryMock
-            .Setup(r => r.FindOneAsync(It.IsAny<Expression<Func<PartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((PartyDocument?)null);
-
-        _appTestFixture.AppWebApplicationFactory._goldPartyRepositoryMock
-            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<PartyDocument>, PartyDocument)>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Gold Site Party Role Relationships
-        _appTestFixture.AppWebApplicationFactory._goldSitePartyRoleRelationshipRepositoryMock
-            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<Core.Documents.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _appTestFixture.AppWebApplicationFactory._goldSitePartyRoleRelationshipRepositoryMock
-            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<Core.Documents.SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _appTestFixture.AppWebApplicationFactory._goldSitePartyRoleRelationshipRepositoryMock
-            .Setup(r => r.GetExistingSitePartyRoleRelationships(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
     }
 
     private void SetupLookupServiceMocks()

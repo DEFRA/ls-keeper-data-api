@@ -1,5 +1,6 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Extensions;
 using KeeperData.Core.Repositories;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -27,23 +28,22 @@ public class CtsHoldingImportPersistenceStep(
         await UpsertSilverPartiesAndDeleteOrphansAsync(context.CphTrimmed, context.SilverParties, cancellationToken);
     }
 
-    private async Task UpsertSilverHoldingAsync(
-        CtsHoldingDocument incomingHolding,
-        CancellationToken cancellationToken)
+    private async Task UpsertSilverHoldingAsync(CtsHoldingDocument incomingHolding, CancellationToken cancellationToken)
     {
         var existingHolding = await _silverHoldingRepository.FindOneAsync(
             x => x.CountyParishHoldingNumber == incomingHolding.CountyParishHoldingNumber,
             cancellationToken);
 
-        incomingHolding.Id = existingHolding?.Id ?? Guid.NewGuid().ToString();
-
-        var holdingUpsert = (
-            Filter: Builders<CtsHoldingDocument>.Filter.Eq(
-                x => x.CountyParishHoldingNumber, incomingHolding.CountyParishHoldingNumber),
-            Entity: incomingHolding);
-
-        await _silverHoldingRepository.BulkUpsertWithCustomFilterAsync(
-            [holdingUpsert], cancellationToken);
+        if (existingHolding is null)
+        {
+            incomingHolding.Id = Guid.NewGuid().ToString();
+            await _silverHoldingRepository.AddAsync(incomingHolding, cancellationToken);
+        }
+        else
+        {
+            incomingHolding.Id = existingHolding.Id;
+            await _silverHoldingRepository.UpdateAsync(incomingHolding, cancellationToken);
+        }
     }
 
     private async Task UpsertSilverPartiesAndDeleteOrphansAsync(
@@ -59,27 +59,35 @@ public class CtsHoldingImportPersistenceStep(
 
         var existingParties = await GetExistingSilverPartiesAsync(holdingIdentifier, cancellationToken);
 
-        if (incomingParties.Count > 0)
+        var newItems = new List<CtsPartyDocument>();
+        var updateItems = new List<(FilterDefinition<CtsPartyDocument> Filter, UpdateDefinition<CtsPartyDocument> Update)>();
+
+        foreach (var incoming in incomingParties)
         {
-            var partyUpserts = incomingParties.Select(p =>
+            var existing = existingParties.FirstOrDefault(e =>
+                e.PartyId == incoming.PartyId &&
+                e.CountyParishHoldingNumber == incoming.CountyParishHoldingNumber);
+
+            if (existing is null)
             {
-                var existing = existingParties.FirstOrDefault(e =>
-                    e.PartyId == p.PartyId &&
-                    e.CountyParishHoldingNumber == p.CountyParishHoldingNumber);
+                incoming.Id = Guid.NewGuid().ToString();
+                newItems.Add(incoming);
+            }
+            else
+            {
+                incoming.Id = existing.Id;
 
-                p.Id = existing?.Id ?? Guid.NewGuid().ToString();
-
-                return (
-                    Filter: Builders<CtsPartyDocument>.Filter.And(
-                        Builders<CtsPartyDocument>.Filter.Eq(x => x.PartyId, p.PartyId),
-                        Builders<CtsPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, p.CountyParishHoldingNumber)
-                    ),
-                    Entity: p
-                );
-            });
-
-            await _silverPartyRepository.BulkUpsertWithCustomFilterAsync(partyUpserts, cancellationToken);
+                var filter = Builders<CtsPartyDocument>.Filter.Eq(x => x.Id, incoming.Id);
+                var update = Builders<CtsPartyDocument>.Update.SetAll(incoming);
+                updateItems.Add((filter, update));
+            }
         }
+
+        if (newItems.Count > 0)
+            await _silverPartyRepository.AddManyAsync(newItems, cancellationToken);
+
+        if (updateItems.Count > 0)
+            await _silverPartyRepository.BulkUpdateWithCustomFilterAsync(updateItems, cancellationToken);
 
         var orphanedParties = existingParties?
             .Where(e => !incomingKeys.Contains($"{e.PartyId}::{e.CountyParishHoldingNumber}"))

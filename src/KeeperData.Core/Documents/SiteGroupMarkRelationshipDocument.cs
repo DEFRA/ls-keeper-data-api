@@ -1,8 +1,6 @@
-using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using MongoDB.Driver;
 using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
@@ -10,8 +8,7 @@ namespace KeeperData.Core.Documents;
 /// <summary>
 /// Composite key: HoldingIdentifier, Herdmark, ProductionUsageId, CustomerNumber, RoleTypeId
 /// </summary>
-[CollectionName("siteGroupMarkRelationships")]
-public record SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes
+public record SiteGroupMarkRelationshipDocument : IEntity
 {
     [BsonId]
     [JsonPropertyName("id")]
@@ -24,7 +21,6 @@ public record SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes
 
     [BsonElement("customerNumber")]
     [JsonPropertyName("customerNumber")]
-    [AutoIndexed]
     public string CustomerNumber { get; set; } = string.Empty;
 
     [BsonElement("partyTypeId")]
@@ -33,7 +29,6 @@ public record SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes
 
     [BsonElement("herdmark")]
     [JsonPropertyName("herdmark")]
-    [AutoIndexed]
     public string Herdmark { get; set; } = string.Empty;
 
     [BsonElement("countyParishHoldingHerd")]
@@ -42,27 +37,22 @@ public record SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes
 
     [BsonElement("holdingIdentifier")]
     [JsonPropertyName("holdingIdentifier")]
-    [AutoIndexed]
     public string HoldingIdentifier { get; set; } = string.Empty;
 
     [BsonElement("roleTypeId")]
     [JsonPropertyName("roleTypeId")]
-    [AutoIndexed]
     public string? RoleTypeId { get; set; }
 
     [BsonElement("roleTypeName")]
     [JsonPropertyName("roleTypeName")]
-    [AutoIndexed]
     public string? RoleTypeName { get; set; }
 
     [BsonElement("speciesTypeId")]
     [JsonPropertyName("speciesTypeId")]
-    [AutoIndexed]
     public string? SpeciesTypeId { get; set; }
 
     [BsonElement("speciesTypeCode")]
     [JsonPropertyName("speciesTypeCode")]
-    [AutoIndexed]
     public string? SpeciesTypeCode { get; set; }
 
     [BsonElement("speciesTypeName")]
@@ -71,22 +61,18 @@ public record SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes
 
     [BsonElement("productionUsageId")]
     [JsonPropertyName("productionUsageId")]
-    [AutoIndexed]
     public string? ProductionUsageId { get; set; }
 
     [BsonElement("productionUsageCode")]
     [JsonPropertyName("productionUsageCode")]
-    [AutoIndexed]
     public string? ProductionUsageCode { get; set; }
 
     [BsonElement("productionTypeId")]
     [JsonPropertyName("productionTypeId")]
-    [AutoIndexed]
     public string? ProductionTypeId { get; set; }
 
     [BsonElement("productionTypeCode")]
     [JsonPropertyName("productionTypeCode")]
-    [AutoIndexed]
     public string? ProductionTypeCode { get; set; }
 
     [BsonElement("diseaseType")]
@@ -108,9 +94,4 @@ public record SiteGroupMarkRelationshipDocument : IEntity, IContainsIndexes
     [BsonElement("groupMarkEndDate")]
     [JsonPropertyName("groupMarkEndDate")]
     public DateTime? GroupMarkEndDate { get; set; }
-
-    public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
-    {
-        return AutoIndexedAttribute.GetIndexModels<SiteGroupMarkRelationshipDocument>();
-    }
 }

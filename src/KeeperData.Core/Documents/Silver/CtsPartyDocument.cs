@@ -29,6 +29,7 @@ public class CtsPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IC
 
     [JsonPropertyName("deleted")]
     [BsonElement("deleted")]
+    [AutoIndexed]
     public bool Deleted { get; set; }
 
     [JsonPropertyName("countyParishHoldingNumber")]

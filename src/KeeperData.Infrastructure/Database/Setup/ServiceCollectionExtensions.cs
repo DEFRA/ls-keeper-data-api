@@ -61,7 +61,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped(sp => (ITransactionManager)sp.GetRequiredService<IUnitOfWork>());
         services.AddScoped<IAggregateTracker, AggregateTracker>();
 
-
         var mongoPreprodConfig = configuration.GetSection(MongoDbPreproductionServiceConfig.SectionName).Get<MongoDbPreproductionServiceConfig>();
         services.Configure<MongoDbPreproductionServiceConfig>(configuration.GetSection(MongoDbPreproductionServiceConfig.SectionName));
         if (mongoPreprodConfig?.Enabled ?? false)

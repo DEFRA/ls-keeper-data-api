@@ -1,7 +1,6 @@
 using FluentAssertions;
 using KeeperData.Infrastructure.Telemetry;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Moq;
 using System.Diagnostics.Metrics;
 
 namespace KeeperData.Infrastructure.Tests.Unit.Telemetry;

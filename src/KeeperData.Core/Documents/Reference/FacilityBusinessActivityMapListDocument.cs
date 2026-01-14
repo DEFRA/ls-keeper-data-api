@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents.Reference;
 
-[CollectionName("refFacilityBusinessActivityMaps")]
+[CollectionName("referenceData")]
 public class FacilityBusinessActivityMapListDocument : IListDocument, IReferenceListDocument<FacilityBusinessActivityMapDocument>
 {
     public static string DocumentId => "all-facilitybusinessactivitymaps";

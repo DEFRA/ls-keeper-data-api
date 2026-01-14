@@ -28,15 +28,15 @@ public class CtsUpdateAgentPersistenceStep(
                  x.CountyParishHoldingNumber == incomingParty.CountyParishHoldingNumber,
             cancellationToken);
 
-        incomingParty.Id = existingParty?.Id ?? Guid.NewGuid().ToString();
-
-        if (existingParty != null)
+        if (existingParty is null)
         {
-            await _silverPartyRepository.UpdateAsync(incomingParty, cancellationToken);
+            incomingParty.Id = Guid.NewGuid().ToString();
+            await _silverPartyRepository.AddAsync(incomingParty, cancellationToken);
         }
         else
         {
-            await _silverPartyRepository.AddAsync(incomingParty, cancellationToken);
+            incomingParty.Id = existingParty.Id;
+            await _silverPartyRepository.UpdateAsync(incomingParty, cancellationToken);
         }
     }
 }

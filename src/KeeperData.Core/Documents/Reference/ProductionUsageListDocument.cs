@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents.Reference;
 
-[CollectionName("refProductionUsages")]
+[CollectionName("referenceData")]
 public class ProductionUsageListDocument : IListDocument, IReferenceListDocument<ProductionUsageDocument>
 {
     public static string DocumentId => "all-productionusages";

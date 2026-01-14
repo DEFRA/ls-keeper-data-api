@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents.Reference;
 
-[CollectionName("refSpecies")]
+[CollectionName("referenceData")]
 public class SpeciesListDocument : IListDocument, IReferenceListDocument<SpeciesDocument>
 {
     public static string DocumentId => "all-species";

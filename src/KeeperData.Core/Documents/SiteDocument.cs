@@ -19,7 +19,6 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     [BsonElement("createdDate")]
     [JsonPropertyName("createdDate")]
     [JsonIgnore]
-    [AutoIndexed]
     public DateTime CreatedDate { get; set; }
 
     [BsonElement("lastUpdatedDate")]
@@ -51,6 +50,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("source")]
     [JsonPropertyName("source")]
+    [AutoIndexed]
     public string? Source { get; set; }
 
     [BsonElement("destroyIdentityDocumentsFlag")]
@@ -60,6 +60,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     [BsonElement("deleted")]
     [JsonPropertyName("deleted")]
     [JsonIgnore]
+    [AutoIndexed]
     public bool Deleted { get; set; }
 
     [BsonElement("location")]
@@ -215,15 +216,16 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
                 new CreateIndexOptions { Name = "idxv2_type_code", Sparse = true }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("type.description"),
-                new CreateIndexOptions { Name = "idxv2_type_description", Sparse = true }),
-            new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("identifiers.identifier"),
                 new CreateIndexOptions { Name = "idxv2_identifiers_identifier", Sparse = true }),
 
             new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("identifiers.type"),
-                new CreateIndexOptions { Name = "idxv2_identifiers_type", Sparse = true })
+                Builders<BsonDocument>.IndexKeys.Ascending("parties.id"),
+                new CreateIndexOptions { Name = "idxv2_parties_id", Sparse = true }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("parties.customerNumber"),
+                new CreateIndexOptions { Name = "idxv2_parties_customerNumber", Sparse = true })
         ]);
     }
 }

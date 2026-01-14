@@ -32,10 +32,15 @@ public class SamPartyDocument : BasePartyDocument, IEntity, IDeletableEntity, IC
 
     [JsonPropertyName("deleted")]
     [BsonElement("deleted")]
+    [AutoIndexed]
     public bool Deleted { get; set; }
 
+    /// <summary>
+    /// Set only if source is SAM Holder
+    /// </summary>
     [JsonPropertyName("countyParishHoldingNumber")]
     [BsonElement("countyParishHoldingNumber")]
+    [AutoIndexed]
     public string? CountyParishHoldingNumber { get; set; }
 
     [JsonPropertyName("cphList")]

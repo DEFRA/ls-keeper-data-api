@@ -43,9 +43,8 @@ public class CtsHoldingImportPersistenceStepTests
 
         await sut.ExecuteAsync(context, CancellationToken.None);
 
-        _ctsHoldingRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(
-            It.Is<IEnumerable<(FilterDefinition<CtsHoldingDocument>, CtsHoldingDocument)>>(items => items.Count() == 1),
-            It.IsAny<CancellationToken>()), Times.Once);
+        _ctsHoldingRepositoryMock.Verify(r => r.AddAsync(It.IsAny<CtsHoldingDocument>(), It.IsAny<CancellationToken>()), Times.Once);
+        _ctsHoldingRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<CtsHoldingDocument>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -76,7 +75,10 @@ public class CtsHoldingImportPersistenceStepTests
 
         await step.ExecuteAsync(context, CancellationToken.None);
 
-        _ctsPartyRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<CtsPartyDocument>, CtsPartyDocument)>>(), It.IsAny<CancellationToken>()), Times.Never);
+        _ctsPartyRepositoryMock.Verify(r => r.AddManyAsync(It.IsAny<IEnumerable<CtsPartyDocument>>(), It.IsAny<CancellationToken>()), Times.Never);
+        _ctsPartyRepositoryMock.Verify(r => r.BulkUpdateWithCustomFilterAsync(
+            It.IsAny<IEnumerable<(FilterDefinition<CtsPartyDocument>, UpdateDefinition<CtsPartyDocument>)>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
         _ctsPartyRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<CtsPartyDocument>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -104,7 +106,10 @@ public class CtsHoldingImportPersistenceStepTests
 
         await step.ExecuteAsync(context, CancellationToken.None);
 
-        _ctsPartyRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<CtsPartyDocument>, CtsPartyDocument)>>(), It.IsAny<CancellationToken>()), Times.Once);
+        _ctsPartyRepositoryMock.Verify(r => r.AddManyAsync(It.Is<IEnumerable<CtsPartyDocument>>(items => items.Count() == 1), It.IsAny<CancellationToken>()), Times.Once);
+        _ctsPartyRepositoryMock.Verify(r => r.BulkUpdateWithCustomFilterAsync(
+            It.IsAny<IEnumerable<(FilterDefinition<CtsPartyDocument>, UpdateDefinition<CtsPartyDocument>)>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
         _ctsPartyRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<CtsPartyDocument>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -141,7 +146,10 @@ public class CtsHoldingImportPersistenceStepTests
 
         await step.ExecuteAsync(context, CancellationToken.None);
 
-        _ctsPartyRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<CtsPartyDocument>, CtsPartyDocument)>>(), It.IsAny<CancellationToken>()), Times.Once);
+        _ctsPartyRepositoryMock.Verify(r => r.AddManyAsync(It.Is<IEnumerable<CtsPartyDocument>>(items => items.Count() == 1), It.IsAny<CancellationToken>()), Times.Once);
+        _ctsPartyRepositoryMock.Verify(r => r.BulkUpdateWithCustomFilterAsync(
+            It.IsAny<IEnumerable<(FilterDefinition<CtsPartyDocument>, UpdateDefinition<CtsPartyDocument>)>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
         _ctsPartyRepositoryMock.Verify(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<CtsPartyDocument>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -163,9 +171,8 @@ public class CtsHoldingImportPersistenceStepTests
 
         await sut.ExecuteAsync(context, CancellationToken.None);
 
-        _ctsHoldingRepositoryMock.Verify(r => r.BulkUpsertWithCustomFilterAsync(
-            It.IsAny<IEnumerable<(FilterDefinition<CtsHoldingDocument>, CtsHoldingDocument)>>(),
-            It.IsAny<CancellationToken>()), Times.Never);
+        _ctsHoldingRepositoryMock.Verify(r => r.AddAsync(It.IsAny<CtsHoldingDocument>(), It.IsAny<CancellationToken>()), Times.Never);
+        _ctsHoldingRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<CtsHoldingDocument>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     private void SetupDefaultRepositoryMocks()
@@ -176,7 +183,11 @@ public class CtsHoldingImportPersistenceStepTests
             .ReturnsAsync((CtsHoldingDocument?)null);
 
         _ctsHoldingRepositoryMock
-            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<CtsHoldingDocument>, CtsHoldingDocument)>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.AddAsync(It.IsAny<CtsHoldingDocument>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _ctsHoldingRepositoryMock
+            .Setup(r => r.UpdateAsync(It.IsAny<CtsHoldingDocument>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Party
@@ -185,7 +196,11 @@ public class CtsHoldingImportPersistenceStepTests
             .ReturnsAsync([]);
 
         _ctsPartyRepositoryMock
-            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<CtsPartyDocument>, CtsPartyDocument)>>(), It.IsAny<CancellationToken>()))
+           .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<CtsPartyDocument>>(), It.IsAny<CancellationToken>()))
+           .Returns(Task.CompletedTask);
+
+        _ctsPartyRepositoryMock
+            .Setup(r => r.BulkUpdateWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<CtsPartyDocument>, UpdateDefinition<CtsPartyDocument>)>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _ctsPartyRepositoryMock

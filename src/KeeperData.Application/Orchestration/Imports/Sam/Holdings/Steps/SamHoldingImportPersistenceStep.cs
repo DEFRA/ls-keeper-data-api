@@ -1,6 +1,7 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Extensions;
 using KeeperData.Core.Repositories;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -36,10 +37,13 @@ public class SamHoldingImportPersistenceStep(
 
         if (context.GoldSite != null)
         {
-            await UpsertGoldSiteAsync(context.GoldSite, cancellationToken);
+            await UpsertGoldSiteAsync(
+                context.ExistingGoldSite == null,
+                context.GoldSite,
+                cancellationToken);
         }
 
-        await UpsertGoldPartiesAsync(context.GoldParties, cancellationToken);
+        await UpsertGoldPartiesAsync(context.ExistingGoldPartyIds, context.GoldParties, cancellationToken);
 
         await UpsertGoldPartyRolesAndDeleteOrphansAsync(
             context.Cph,
@@ -60,31 +64,37 @@ public class SamHoldingImportPersistenceStep(
 
         var existingHoldings = await GetExistingSilverHoldingsAsync(holdingIdentifier, cancellationToken);
 
-        if (incomingHoldings.Count > 0)
+        var newItems = new List<SamHoldingDocument>();
+        var updateItems = new List<(FilterDefinition<SamHoldingDocument> Filter, UpdateDefinition<SamHoldingDocument> Update)>();
+
+        foreach (var incoming in incomingHoldings)
         {
-            var upserts = incomingHoldings.Select(p =>
+            var existing = existingHoldings.FirstOrDefault(e =>
+                e.CountyParishHoldingNumber == incoming.CountyParishHoldingNumber
+                && e.LocationName == incoming.LocationName
+                && e.SpeciesTypeCode == incoming.SpeciesTypeCode
+                && e.SecondaryCph == incoming.SecondaryCph);
+
+            if (existing is null)
             {
-                var existing = existingHoldings.FirstOrDefault(e =>
-                    e.CountyParishHoldingNumber == p.CountyParishHoldingNumber
-                    && e.LocationName == p.LocationName
-                    && e.SpeciesTypeCode == p.SpeciesTypeCode
-                    && e.SecondaryCph == p.SecondaryCph);
+                incoming.Id = Guid.NewGuid().ToString();
+                newItems.Add(incoming);
+            }
+            else
+            {
+                incoming.Id = existing.Id;
 
-                p.Id = existing?.Id ?? Guid.NewGuid().ToString();
-
-                return (
-                    Filter: Builders<SamHoldingDocument>.Filter.And(
-                        Builders<SamHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, p.CountyParishHoldingNumber),
-                        Builders<SamHoldingDocument>.Filter.Eq(x => x.LocationName, p.LocationName),
-                        Builders<SamHoldingDocument>.Filter.Eq(x => x.SpeciesTypeCode, p.SpeciesTypeCode),
-                        Builders<SamHoldingDocument>.Filter.Eq(x => x.SecondaryCph, p.SecondaryCph)
-                    ),
-                    Entity: p
-                );
-            });
-
-            await _silverHoldingRepository.BulkUpsertWithCustomFilterAsync(upserts, cancellationToken);
+                var filter = Builders<SamHoldingDocument>.Filter.Eq(x => x.Id, incoming.Id);
+                var update = Builders<SamHoldingDocument>.Update.SetAll(incoming);
+                updateItems.Add((filter, update));
+            }
         }
+
+        if (newItems.Count > 0)
+            await _silverHoldingRepository.AddManyAsync(newItems, cancellationToken);
+
+        if (updateItems.Count > 0)
+            await _silverHoldingRepository.BulkUpdateWithCustomFilterAsync(updateItems, cancellationToken);
 
         var orphanedHoldings = existingHoldings?
             .Where(e => !incomingKeys.Contains($"{e.CountyParishHoldingNumber}::{e.LocationName}::{e.SecondaryCph}::{e.SpeciesTypeCode}"))
@@ -110,29 +120,46 @@ public class SamHoldingImportPersistenceStep(
         var incomingPartyIds = incomingParties
             .Select(p => p.PartyId)
             .Where(id => !string.IsNullOrWhiteSpace(id))
-            .ToHashSet();
+            .ToList();
 
-        var upserts = new List<(FilterDefinition<SamPartyDocument> Filter, SamPartyDocument Entity)>();
+        var existingParties = await _silverPartyRepository.FindAsync(
+            x => incomingPartyIds.Contains(x.PartyId),
+            cancellationToken);
+
+        existingParties ??= [];
+
+        var existingPartiesById = existingParties.ToDictionary(p => p.PartyId);
+
+        var newItems = new List<SamPartyDocument>();
+        var updateItems = new List<(FilterDefinition<SamPartyDocument> Filter, UpdateDefinition<SamPartyDocument> Update)>();
 
         foreach (var incoming in incomingParties)
         {
             if (string.IsNullOrWhiteSpace(incoming.PartyId))
                 continue;
 
-            var existing = await _silverPartyRepository.FindOneAsync(
-                x => x.PartyId == incoming.PartyId,
-                cancellationToken);
+            existingPartiesById.TryGetValue(incoming.PartyId, out var existing);
 
-            incoming.Id = existing?.Id ?? Guid.NewGuid().ToString();
+            if (existing is null)
+            {
+                incoming.Id = Guid.NewGuid().ToString();
+                newItems.Add(incoming);
+            }
+            else
+            {
+                incoming.Id = existing.Id;
 
-            var filter = Builders<SamPartyDocument>.Filter.Eq(x => x.PartyId, incoming.PartyId);
-            upserts.Add((filter, incoming));
+                var filter = Builders<SamPartyDocument>.Filter.Eq(x => x.Id, incoming.Id);
+                var update = Builders<SamPartyDocument>.Update.SetAll(incoming);
+                updateItems.Add((filter, update));
+            }
         }
 
-        if (upserts.Count > 0)
-        {
-            await _silverPartyRepository.BulkUpsertWithCustomFilterAsync(upserts, cancellationToken);
-        }
+        if (newItems.Count > 0)
+            await _silverPartyRepository.AddManyAsync(newItems, cancellationToken);
+
+        if (updateItems.Count > 0)
+            await _silverPartyRepository.BulkUpdateWithCustomFilterAsync(updateItems, cancellationToken);
     }
 
     private async Task UpsertSilverHerdsAndDeleteOrphansAsync(
@@ -148,29 +175,36 @@ public class SamHoldingImportPersistenceStep(
 
         var existingHerds = await GetExistingSilverHerdsAsync(holdingIdentifier, cancellationToken);
 
-        if (incomingHerds.Count > 0)
+        var newItems = new List<SamHerdDocument>();
+        var updateItems = new List<(FilterDefinition<SamHerdDocument> Filter, UpdateDefinition<SamHerdDocument> Update)>();
+
+        foreach (var incoming in incomingHerds)
         {
-            var upserts = incomingHerds.Select(p =>
+            var existing = existingHerds.FirstOrDefault(e =>
+                e.CountyParishHoldingHerd == incoming.CountyParishHoldingHerd &&
+                e.ProductionUsageCode == incoming.ProductionUsageCode &&
+                e.Herdmark == incoming.Herdmark);
+
+            if (existing is null)
             {
-                var existing = existingHerds.FirstOrDefault(e =>
-                    e.CountyParishHoldingHerd == p.CountyParishHoldingHerd
-                    && e.ProductionUsageCode == p.ProductionUsageCode
-                    && e.Herdmark == p.Herdmark);
+                incoming.Id = Guid.NewGuid().ToString();
+                newItems.Add(incoming);
+            }
+            else
+            {
+                incoming.Id = existing.Id;
 
-                p.Id = existing?.Id ?? Guid.NewGuid().ToString();
-
-                return (
-                    Filter: Builders<SamHerdDocument>.Filter.And(
-                        Builders<SamHerdDocument>.Filter.Eq(x => x.CountyParishHoldingHerd, p.CountyParishHoldingHerd),
-                        Builders<SamHerdDocument>.Filter.Eq(x => x.ProductionUsageCode, p.ProductionUsageCode),
-                        Builders<SamHerdDocument>.Filter.Eq(x => x.Herdmark, p.Herdmark)
-                    ),
-                    Entity: p
-                );
-            });
-
-            await _silverHerdRepository.BulkUpsertWithCustomFilterAsync(upserts, cancellationToken);
+                var filter = Builders<SamHerdDocument>.Filter.Eq(x => x.Id, incoming.Id);
+                var update = Builders<SamHerdDocument>.Update.SetAll(incoming);
+                updateItems.Add((filter, update));
+            }
         }
+
+        if (newItems.Count > 0)
+            await _silverHerdRepository.AddManyAsync(newItems, cancellationToken);
+
+        if (updateItems.Count > 0)
+            await _silverHerdRepository.BulkUpdateWithCustomFilterAsync(updateItems, cancellationToken);
 
         var orphanedHerds = existingHerds?
             .Where(e => !incomingKeys.Contains($"{e.CountyParishHoldingHerd}::{e.ProductionUsageCode}::{e.Herdmark}"))
@@ -188,29 +222,22 @@ public class SamHoldingImportPersistenceStep(
     }
 
     private async Task UpsertGoldSiteAsync(
+        bool isInsert,
         SiteDocument incomingSite,
         CancellationToken cancellationToken)
     {
-        var holdingIdentifier = incomingSite.Identifiers.FirstOrDefault()?.Identifier
-            ?? string.Empty;
-
-        var filter = Builders<SiteDocument>.Filter.ElemMatch(
-            x => x.Identifiers,
-            i => i.Identifier == holdingIdentifier);
-
-        // Done in mapper now using domain objects
-        // var existingHolding = await _goldSiteRepository.FindOneByFilterAsync(filter, cancellationToken);
-        // incomingSite.Id = existingHolding?.Id ?? Guid.NewGuid().ToString();
-
-        var siteUpsert = (
-            Filter: filter,
-            Entity: incomingSite);
-
-        await _goldSiteRepository.BulkUpsertWithCustomFilterAsync(
-            [siteUpsert], cancellationToken);
+        if (isInsert)
+        {
+            await _goldSiteRepository.AddAsync(incomingSite, cancellationToken);
+        }
+        else
+        {
+            await _goldSiteRepository.UpdateAsync(incomingSite, cancellationToken);
+        }
     }
 
     private async Task UpsertGoldPartiesAsync(
+        List<string> existingGoldPartyIds,
         List<PartyDocument> incomingParties,
         CancellationToken cancellationToken)
     {
@@ -219,29 +246,30 @@ public class SamHoldingImportPersistenceStep(
         var incomingCustomerNumbers = incomingParties
             .Select(p => p.CustomerNumber)
             .Where(cn => !string.IsNullOrWhiteSpace(cn))
-            .ToHashSet();
+            .ToList();
 
-        var upserts = new List<(FilterDefinition<PartyDocument> Filter, PartyDocument Entity)>();
+        var newItems = new List<PartyDocument>();
+        var updateItems = new List<(FilterDefinition<PartyDocument> Filter, UpdateDefinition<PartyDocument> Update)>();
 
         foreach (var incoming in incomingParties)
         {
-            if (string.IsNullOrWhiteSpace(incoming.CustomerNumber))
-                continue;
-
-            // Done in mapper now using domain objects
-            // var existing = await _goldPartyRepository.FindOneAsync(
-            //    x => x.CustomerNumber == incoming.CustomerNumber,
-            //    cancellationToken);
-            // incoming.Id = existing?.Id ?? Guid.NewGuid().ToString();
-
-            var filter = Builders<PartyDocument>.Filter.Eq(x => x.CustomerNumber, incoming.CustomerNumber);
-            upserts.Add((filter, incoming));
+            if (!existingGoldPartyIds.Contains(incoming.Id))
+            {
+                newItems.Add(incoming);
+            }
+            else
+            {
+                var filter = Builders<PartyDocument>.Filter.Eq(x => x.Id, incoming.Id);
+                var update = Builders<PartyDocument>.Update.SetAll(incoming);
+                updateItems.Add((filter, update));
+            }
         }
 
-        if (upserts.Count > 0)
-        {
-            await _goldPartyRepository.BulkUpsertWithCustomFilterAsync(upserts, cancellationToken);
-        }
+        if (newItems.Count > 0)
+            await _goldPartyRepository.AddManyAsync(newItems, cancellationToken);
+
+        if (updateItems.Count > 0)
+            await _goldPartyRepository.BulkUpdateWithCustomFilterAsync(updateItems, cancellationToken);
     }
 
     private async Task UpsertGoldPartyRolesAndDeleteOrphansAsync(
@@ -259,35 +287,41 @@ public class SamHoldingImportPersistenceStep(
             holdingIdentifier,
             cancellationToken);
 
-        if (incomingSitePartyRoles.Count > 0)
+        var newItems = new List<Core.Documents.SitePartyRoleRelationshipDocument>();
+        var updateItems = new List<(FilterDefinition<Core.Documents.SitePartyRoleRelationshipDocument> Filter, UpdateDefinition<Core.Documents.SitePartyRoleRelationshipDocument> Update)>();
+
+        foreach (var incoming in incomingSitePartyRoles)
         {
-            var upserts = incomingSitePartyRoles.Select(p =>
+            var existing = existingSitePartyRoles.FirstOrDefault(e =>
+                e.CustomerNumber == incoming.CustomerNumber &&
+                e.HoldingIdentifier == incoming.HoldingIdentifier &&
+                e.RoleTypeId == incoming.RoleTypeId &&
+                e.SpeciesTypeId == incoming.SpeciesTypeId);
+
+            if (existing is null)
             {
-                var existing = existingSitePartyRoles.FirstOrDefault(e =>
-                    e.CustomerNumber == p.CustomerNumber &&
-                    e.HoldingIdentifier == p.HoldingIdentifier &&
-                    e.RoleTypeId == p.RoleTypeId &&
-                    e.SpeciesTypeId == p.SpeciesTypeId);
+                incoming.Id = Guid.NewGuid().ToString();
+                newItems.Add(incoming);
+            }
+            else
+            {
+                incoming.Id = existing.Id;
 
-                p.Id = existing?.Id ?? Guid.NewGuid().ToString();
-
-                return (
-                    Filter: Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.And(
-                        Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, p.HoldingIdentifier),
-                        Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.CustomerNumber, p.CustomerNumber),
-                        Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.RoleTypeId, p.RoleTypeId),
-                        Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.SpeciesTypeId, p.SpeciesTypeId)
-                    ),
-                    Entity: p
-                );
-            });
-
-            await _goldSitePartyRoleRelationshipRepository.BulkUpsertWithCustomFilterAsync(upserts, cancellationToken);
+                var filter = Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.Id, incoming.Id);
+                var update = Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Update.SetAll(incoming);
+                updateItems.Add((filter, update));
+            }
         }
+
+        if (newItems.Count > 0)
+            await _goldSitePartyRoleRelationshipRepository.AddManyAsync(newItems, cancellationToken);
+
+        if (updateItems.Count > 0)
+            await _goldSitePartyRoleRelationshipRepository.BulkUpdateWithCustomFilterAsync(updateItems, cancellationToken);
 
         var orphanedSitePartyRoles = existingSitePartyRoles?.Where(e =>
             !incomingKeys.Contains($"{e.HoldingIdentifier}::{e.CustomerNumber}::{e.RoleTypeId}::{e.SpeciesTypeId}"))
-        .ToList() ?? [];
+            .ToList() ?? [];
 
         if (orphanedSitePartyRoles.Count > 0)
         {

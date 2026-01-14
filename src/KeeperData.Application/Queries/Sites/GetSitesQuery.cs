@@ -1,4 +1,3 @@
-using System.Data;
 using FluentValidation;
 using KeeperData.Application.Configuration;
 using KeeperData.Core.Documents;
