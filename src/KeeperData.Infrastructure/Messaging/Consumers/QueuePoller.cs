@@ -7,6 +7,8 @@ using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Extensions;
 using KeeperData.Core.Messaging.Observers;
 using KeeperData.Core.Messaging.Serializers;
+using KeeperData.Core.Messaging.Throttling;
+using KeeperData.Core.Providers;
 using KeeperData.Infrastructure.Messaging.Configuration;
 using KeeperData.Infrastructure.Messaging.Factories.Implementations;
 using KeeperData.Infrastructure.Messaging.Services;
@@ -22,7 +24,9 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
     IMessageSerializer<SnsEnvelope> messageSerializer,
     IDeadLetterQueueService deadLetterQueueService,
     MessageCommandRegistry messageCommandRegistry,
+    IDataImportThrottlingConfiguration dataImportThrottlingConfiguration,
     IOptions<IntakeEventQueueOptions> options,
+    IDelayProvider delayProvider,
     IQueuePollerObserver<MessageType> observer,
     ILogger<QueuePoller> logger) : IQueuePoller, IAsyncDisposable
 {
@@ -31,7 +35,9 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
     private readonly IMessageSerializer<SnsEnvelope> _messageSerializer = messageSerializer;
     private readonly IDeadLetterQueueService _deadLetterQueueService = deadLetterQueueService;
     private readonly MessageCommandRegistry _messageCommandRegistry = messageCommandRegistry;
+    private readonly IDataImportThrottlingConfiguration _dataImportThrottlingConfiguration = dataImportThrottlingConfiguration;
     private readonly IntakeEventQueueOptions _queueConsumerOptions = options.Value;
+    private readonly IDelayProvider _delayProvider = delayProvider;
     private readonly IQueuePollerObserver<MessageType> _observer = observer;
     private readonly ILogger<QueuePoller> _logger = logger;
 
@@ -159,6 +165,11 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
             var result = await mediator.Send(command, cancellationToken);
 
+            if (_dataImportThrottlingConfiguration.MessageCompletionDelayMs > 0)
+            {
+                await ThrottleMessageProcessing(_dataImportThrottlingConfiguration.MessageCompletionDelayMs, cancellationToken);
+            }
+
             await _amazonSQS.DeleteMessageAsync(queueUrl, message.ReceiptHandle, cancellationToken);
 
             _logger.LogInformation("Handled message with correlationId: {correlationId}", CorrelationIdContext.Value);
@@ -192,5 +203,15 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
 
             _observer?.OnMessageFailed(message.MessageId, DateTime.UtcNow, ex, message);
         }
+    }
+
+    private async Task ThrottleMessageProcessing(int messageCompletionDelayMs, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("HandleMessageAsync throttling message completion: waiting {messageCompletionDelayMs} ms before completing",
+            messageCompletionDelayMs);
+
+        await _delayProvider.DelayAsync(
+            TimeSpan.FromMilliseconds(messageCompletionDelayMs),
+            cancellationToken);
     }
 }
