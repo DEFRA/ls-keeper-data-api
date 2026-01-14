@@ -2,7 +2,6 @@ using KeeperData.Core.Documents.Reference;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
-using KeeperData.Infrastructure.Database.Repositories;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Moq;
@@ -44,7 +43,6 @@ public class ReferenceRepositoryTestFixture<TSut, TListDocument, TItem> where TL
             });
 
         _collectionMock.Setup(c => c.FindAsync(
-                It.IsAny<IClientSessionHandle?>(),
                 It.IsAny<FilterDefinition<TListDocument>>(),
                 It.IsAny<FindOptions<TListDocument, TListDocument>>(),
                 It.IsAny<CancellationToken>()))

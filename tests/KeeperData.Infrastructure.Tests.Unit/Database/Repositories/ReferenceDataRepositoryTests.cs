@@ -63,7 +63,6 @@ public class ReferenceDataRepositoryTests
         var findCallCount = 0;
         _fixture._collectionMock
             .Setup(c => c.FindAsync(
-                It.IsAny<IClientSessionHandle?>(),
                 It.IsAny<FilterDefinition<TestReferenceListDocument>>(),
                 It.IsAny<FindOptions<TestReferenceListDocument, TestReferenceListDocument>>(),
                 It.IsAny<CancellationToken>()))

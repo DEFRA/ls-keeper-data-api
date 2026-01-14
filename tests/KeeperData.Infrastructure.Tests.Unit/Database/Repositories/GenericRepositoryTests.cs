@@ -47,7 +47,6 @@ public class GenericRepositoryTests
 
         _mongoCollectionMock
             .Setup(c => c.FindAsync(
-                It.IsAny<IClientSessionHandle?>(),
                 It.IsAny<FilterDefinition<TestEntity>>(),
                 It.IsAny<FindOptions<TestEntity, TestEntity>>(),
                 It.IsAny<CancellationToken>()))

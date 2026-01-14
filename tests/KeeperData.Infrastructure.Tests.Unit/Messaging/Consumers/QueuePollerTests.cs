@@ -4,7 +4,6 @@ using FluentAssertions;
 using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
-using KeeperData.Core.Messaging.Extensions;
 using KeeperData.Core.Messaging.Observers;
 using KeeperData.Core.Messaging.Serializers;
 using KeeperData.Core.Messaging.Throttling;
