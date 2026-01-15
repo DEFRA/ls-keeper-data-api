@@ -1,3 +1,4 @@
+using KeeperData.Application.Commands;
 using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging;
@@ -6,7 +7,6 @@ using KeeperData.Core.Messaging.Contracts.V1;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
 using KeeperData.Core.Messaging.Serializers;
-using MediatR;
 using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Application.MessageHandlers;
@@ -15,7 +15,7 @@ public class BatchCompletionMessageHandler(
     IUnwrappedMessageSerializer<BatchCompletionMessage> serializer,
     IMessagePublisher<BatchCompletionTopicClient> topicPublisher,
     ILogger<BatchCompletionMessageHandler> logger)
-    : IRequestHandler<ProcessBatchCompletionMessageCommand, MessageType>
+    : ICommandHandler<ProcessBatchCompletionMessageCommand, MessageType>
 {
     public async Task<MessageType> Handle(ProcessBatchCompletionMessageCommand request, CancellationToken cancellationToken = default)
     {

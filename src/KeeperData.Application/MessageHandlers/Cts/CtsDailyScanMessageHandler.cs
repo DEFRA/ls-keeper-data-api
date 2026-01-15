@@ -1,3 +1,4 @@
+using KeeperData.Application.Commands;
 using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Application.Orchestration.ChangeScanning.Cts.Daily;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
@@ -5,14 +6,13 @@ using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.Serializers;
-using MediatR;
 
 namespace KeeperData.Application.MessageHandlers.Cts;
 
 public class CtsDailyScanMessageHandler(CtsDailyScanOrchestrator orchestrator,
   IUnwrappedMessageSerializer<CtsDailyScanMessage> serializer,
   DataBridgeScanConfiguration dataBridgeScanConfiguration)
-  : IRequestHandler<ProcessCtsDailyScanMessageCommand, MessageType>
+  : ICommandHandler<ProcessCtsDailyScanMessageCommand, MessageType>
 {
     private readonly IUnwrappedMessageSerializer<CtsDailyScanMessage> _serializer = serializer;
     private readonly CtsDailyScanOrchestrator _orchestrator = orchestrator;

@@ -1,13 +1,11 @@
 using Amazon.SimpleNotificationService;
 using Amazon.SQS;
-using KeeperData.Application.MessageHandlers.Sam;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.Serializers;
 using KeeperData.Core.Messaging.Contracts.V1;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
-using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
 using KeeperData.Core.Messaging.Observers;
@@ -17,7 +15,6 @@ using KeeperData.Infrastructure.Messaging.Configuration;
 using KeeperData.Infrastructure.Messaging.Consumers;
 using KeeperData.Infrastructure.Messaging.Factories;
 using KeeperData.Infrastructure.Messaging.Factories.Implementations;
-using KeeperData.Infrastructure.Messaging.MessageHandlers;
 using KeeperData.Infrastructure.Messaging.Publishers;
 using KeeperData.Infrastructure.Messaging.Publishers.Configuration;
 using KeeperData.Infrastructure.Messaging.Services;
@@ -123,33 +120,6 @@ public static class ServiceCollectionExtensions
 
     private static IServiceCollection AddMessageHandlers(this IServiceCollection services)
     {
-        var handlerInterfaceType = typeof(IMessageHandler<>);
-        var handlerTypes = typeof(SamImportHoldingMessageHandler).Assembly.GetTypes()
-            .Where(type => !type.IsAbstract && !type.IsInterface)
-            .Select(type => new
-            {
-                Implementation = type,
-                Interface = type.GetInterfaces()
-                    .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == handlerInterfaceType)
-            })
-            .Where(x => x.Interface != null);
-
-        var messageHandlerManager = new InMemoryMessageHandlerManager();
-
-        foreach (var types in handlerTypes)
-        {
-            services.AddTransient(types.Interface!, types.Implementation);
-
-            var messageType = types.Interface!.GenericTypeArguments[0];
-            var addReceiverMethod = typeof(InMemoryMessageHandlerManager)
-                .GetMethod(nameof(InMemoryMessageHandlerManager.AddReceiver))!
-                .MakeGenericMethod(messageType, types.Interface);
-
-            addReceiverMethod.Invoke(messageHandlerManager, null);
-        }
-
-        services.AddSingleton<IMessageHandlerManager>(messageHandlerManager);
-
         services.AddSingleton(sp =>
         {
             var registry = new MessageCommandRegistry();
