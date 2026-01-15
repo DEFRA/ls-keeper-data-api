@@ -1,19 +1,19 @@
 using FluentAssertions;
+using KeeperData.Application.Commands;
 using KeeperData.Core.Domain.BuildingBlocks;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
 using KeeperData.Infrastructure.Behaviors;
-using MediatR;
 using Moq;
 
 namespace KeeperData.Infrastructure.Tests.Unit.Behaviors;
 
 public class AggregateRootChangedBehaviorTests
 {
-    public record TrackedResultRequest : IRequest<ITrackedResult>;
-    public record AggregateRootRequest : IRequest<IAggregateRoot>;
-    public record EnumerableRequest : IRequest<IEnumerable<IAggregateRoot>>;
-    public record NestedResultRequest : IRequest<NestedResult>;
-    public record NullableRequest : IRequest<object?>;
+    public record TrackedResultRequest : ICommand<ITrackedResult>;
+    public record AggregateRootRequest : ICommand<IAggregateRoot>;
+    public record EnumerableRequest : ICommand<IEnumerable<IAggregateRoot>>;
+    public record NestedResultRequest : ICommand<NestedResult>;
+    public record NullableRequest : ICommand<object?>;
 
     public class TestAggregate : IAggregateRoot
     {

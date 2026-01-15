@@ -1,3 +1,4 @@
+using KeeperData.Application.Commands;
 using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
@@ -5,14 +6,13 @@ using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.Serializers;
-using MediatR;
 
 namespace KeeperData.Application.MessageHandlers.Sam;
 
 public class SamBulkScanMessageHandler(SamBulkScanOrchestrator orchestrator,
   IUnwrappedMessageSerializer<SamBulkScanMessage> serializer,
   DataBridgeScanConfiguration dataBridgeScanConfiguration)
-  : IRequestHandler<ProcessSamBulkScanMessageCommand, MessageType>
+  : ICommandHandler<ProcessSamBulkScanMessageCommand, MessageType>
 {
     private readonly IUnwrappedMessageSerializer<SamBulkScanMessage> _serializer = serializer;
     private readonly SamBulkScanOrchestrator _orchestrator = orchestrator;

@@ -1,8 +1,8 @@
 using FluentAssertions;
+using KeeperData.Application.Commands;
 using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Behaviors;
 using KeeperData.Infrastructure.Database.Configuration;
-using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -91,7 +91,7 @@ public class UnitOfWorkTransactionBehaviorTests
     }
 }
 
-public class TransactionTestRequest : IRequest<string>
+public class TransactionTestRequest : ICommand<string>, ITransactionalCommand
 {
     public string Payload { get; set; } = string.Empty;
 }

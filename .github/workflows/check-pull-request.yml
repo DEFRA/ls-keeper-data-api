@@ -64,6 +64,9 @@ jobs:
     name: Run Integration Tests
     runs-on: ubuntu-latest
     needs: pr-validator
+    env:
+      TESTCONTAINERS_RYUK_DISABLED: true
+      TESTCONTAINERS_CHECKS_DISABLE: true
     steps:
       - uses: actions/setup-dotnet@v3
         with:
@@ -76,8 +79,8 @@ jobs:
         run: docker build -t keeperdata_api:latest -f ./working-dir/Dockerfile ./working-dir
       - name: Pull localstack and mongo images
         run: |
-          docker pull localstack/localstack:latest
-          docker pull mongo:latest
+          docker pull localstack/localstack:3.0.2
+          docker pull mongo:6.0.13
       - name: Run integration tests
         run: dotnet test ./working-dir/KeeperData.Api.sln --filter Dependence=testcontainers
 

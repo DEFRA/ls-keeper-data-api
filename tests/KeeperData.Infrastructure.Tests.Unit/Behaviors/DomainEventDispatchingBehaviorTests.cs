@@ -1,4 +1,5 @@
 using FluentAssertions;
+using KeeperData.Application.Commands;
 using KeeperData.Core.Domain.BuildingBlocks;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
 using KeeperData.Infrastructure.Behaviors;
@@ -9,7 +10,7 @@ namespace KeeperData.Infrastructure.Tests.Unit.Behaviors;
 
 public class DomainEventDispatchingBehaviorTests
 {
-    public class TestRequest : IRequest<string> { }
+    public class TestRequest : ICommand<string> { }
     public class DomainEventDispatchingTestDomainEvent(string id) : IDomainEvent
     {
         public string Id { get; } = id;

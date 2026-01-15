@@ -1,4 +1,4 @@
-using Elastic.CommonSchema.Serilog;
+using Elastic.Serilog.Enrichers.Web;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;

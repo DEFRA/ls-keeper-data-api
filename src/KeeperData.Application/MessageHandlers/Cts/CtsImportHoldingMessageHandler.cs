@@ -1,17 +1,17 @@
+using KeeperData.Application.Commands;
 using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Application.Orchestration.Imports.Cts.Holdings;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.Serializers;
-using MediatR;
 using MongoDB.Driver;
 
 namespace KeeperData.Application.MessageHandlers.Cts;
 
 public class CtsImportHoldingMessageHandler(CtsHoldingImportOrchestrator orchestrator,
   IUnwrappedMessageSerializer<CtsImportHoldingMessage> serializer)
-  : IRequestHandler<ProcessCtsImportHoldingMessageCommand, MessageType>
+  : ICommandHandler<ProcessCtsImportHoldingMessageCommand, MessageType>
 {
     private readonly IUnwrappedMessageSerializer<CtsImportHoldingMessage> _serializer = serializer;
     private readonly CtsHoldingImportOrchestrator _orchestrator = orchestrator;

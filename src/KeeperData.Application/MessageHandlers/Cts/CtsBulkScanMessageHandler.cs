@@ -1,3 +1,4 @@
+using KeeperData.Application.Commands;
 using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
@@ -5,14 +6,13 @@ using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.Serializers;
-using MediatR;
 
 namespace KeeperData.Application.MessageHandlers.Cts;
 
 public class CtsBulkScanMessageHandler(CtsBulkScanOrchestrator orchestrator,
   IUnwrappedMessageSerializer<CtsBulkScanMessage> serializer,
   DataBridgeScanConfiguration dataBridgeScanConfiguration)
-  : IRequestHandler<ProcessCtsBulkScanMessageCommand, MessageType>
+  : ICommandHandler<ProcessCtsBulkScanMessageCommand, MessageType>
 {
     private readonly IUnwrappedMessageSerializer<CtsBulkScanMessage> _serializer = serializer;
     private readonly CtsBulkScanOrchestrator _orchestrator = orchestrator;
