@@ -22,10 +22,9 @@ public class MongoDbFixture : IAsyncLifetime
     {
         DockerNetworkHelper.EnsureNetworkExists(NetworkName);
 
-        Container = new MongoDbBuilder()
-            .WithImage("mongo:latest")
+        Container = new MongoDbBuilder("mongo:6.0.13")
             .WithName("mongo")
-            .WithPortBinding(50773, 27017)
+            .WithPortBinding(0, 27017)
             .WithEnvironment("MONGO_INITDB_ROOT_USERNAME", "testuser")
             .WithEnvironment("MONGO_INITDB_ROOT_PASSWORD", "testpass")
             .WithEnvironment("MONGO_INITDB_DATABASE", "ls-keeper-data-api")

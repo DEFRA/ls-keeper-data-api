@@ -20,8 +20,7 @@ public class ApiContainerFixture : IAsyncLifetime
     {
         DockerNetworkHelper.EnsureNetworkExists(NetworkName);
 
-        ApiContainer = new ContainerBuilder()
-          .WithImage("keeperdata_api:latest")
+        ApiContainer = new ContainerBuilder("keeperdata_api:latest")
           .WithName("keeperdata_api")
           .WithPortBinding(5555, 5555)
           .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")

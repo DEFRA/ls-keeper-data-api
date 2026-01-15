@@ -42,18 +42,12 @@ services:
       - ./src/KeeperData.Infrastructure/Data/Seed:/app/Data/Seed:ro
 
   mongodb:
-    container_name: kda_mongodb
-    hostname: kda_mongodb
-    image: mongo:6.0.13
     command: ["--replSet", "rs0", "--bind_ip_all"]
-    volumes:
-      - mongodb-data:/data/db
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.runCommand({ ping: 1 })"]
       interval: 5s
       timeout: 5s
       retries: 20
-    restart: always
 
   mongo-init-rs:
     image: mongo:6.0.13
@@ -62,17 +56,24 @@ services:
         condition: service_healthy
     networks:
       - cdp-tenant
-    entrypoint: >
-      sh -c "
-        mongosh --host kda_mongodb:27017 --eval '
-          try {
-            rs.initiate({
-              _id: \"rs0\",
-              members: [ { _id: 0, host: \"kda_mongodb:27017\" } ]
-            })
-          } catch(e) {
-            // ignore errors
-          }
-        ';
-      "
+    entrypoint:
+      - sh
+      - -c
+      - |
+          echo "Waiting for MongoDB to accept connections..."
+          until mongosh --host kda_mongodb:27017 --eval "db.adminCommand('ping')" >/dev/null 2>&1; do
+            sleep 2
+          done
+
+          echo "Initialising replica set..."
+          mongosh --host kda_mongodb:27017 --eval '
+            try {
+              rs.initiate({
+                _id: "rs0",
+                members: [ { _id: 0, host: "kda_mongodb:27017" } ]
+              })
+            } catch (e) {
+              print("Replica set already initialised: " + e)
+            }
+          '
     restart: "no"
