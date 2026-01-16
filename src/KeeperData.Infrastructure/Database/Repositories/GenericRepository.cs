@@ -31,39 +31,24 @@ public class GenericRepository<T> : IGenericRepository<T>
     public async Task<T> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         var filter = Builders<T>.Filter.Eq(x => x.Id, id);
-        var cursor = await _collection.FindAsync(Session, filter, cancellationToken: cancellationToken);
+        var cursor = await _collection.FindAsync(filter, cancellationToken: cancellationToken);
         return await cursor.FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<T?> FindOneAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
     {
-        var cursor = await _collection.FindAsync(Session, predicate, cancellationToken: cancellationToken);
+        var cursor = await _collection.FindAsync(predicate, cancellationToken: cancellationToken);
         return await cursor.FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<T?> FindOneByFilterAsync(FilterDefinition<T> filter, CancellationToken cancellationToken = default)
     {
-        var cursor = await _collection.FindAsync(Session, filter, cancellationToken: cancellationToken);
+        var cursor = await _collection.FindAsync(filter, cancellationToken: cancellationToken);
         return await cursor.FirstOrDefaultAsync(cancellationToken);
     }
 
     public Task<List<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default) =>
         _collection.Find(predicate).ToListAsync(cancellationToken);
-
-    public async Task<List<T>> FindAsync<TNested>(
-        Expression<Func<T, IEnumerable<TNested>>> arrayField,
-        FilterDefinition<TNested> nestedFilter,
-        CancellationToken cancellationToken = default)
-    {
-        var filter = Builders<T>.Filter.ElemMatch(arrayField, nestedFilter);
-        return await _collection.Find(filter).ToListAsync(cancellationToken);
-    }
-
-    public Task<List<T>> FindAsync(FilterDefinition<T> filter, CancellationToken cancellationToken = default) =>
-        _collection.Find(filter).ToListAsync(cancellationToken);
-
-    public Task<List<T>> FindAsync(FilterDefinition<T> filter, SortDefinition<T> sort, CancellationToken cancellationToken = default) =>
-        _collection.Find(filter).Sort(sort).ToListAsync(cancellationToken);
 
     public Task AddAsync(T entity, CancellationToken cancellationToken = default) =>
         _collection.InsertOneAsync(Session, entity, new InsertOneOptions { BypassDocumentValidation = true }, cancellationToken);
@@ -74,17 +59,19 @@ public class GenericRepository<T> : IGenericRepository<T>
     public Task UpdateAsync(T entity, CancellationToken cancellationToken = default) =>
         _collection.ReplaceOneAsync(Session, x => x.Id == entity.Id, entity, cancellationToken: cancellationToken);
 
-    public Task BulkUpsertAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+    public Task BulkUpdateWithCustomFilterAsync(IEnumerable<(FilterDefinition<T> Filter, UpdateDefinition<T> Update)> items, CancellationToken cancellationToken = default)
     {
-        var models = entities.Select(entity =>
-            new ReplaceOneModel<T>(
-                filter: Builders<T>.Filter.Eq(x => x.Id, entity.Id),
-                replacement: entity)
+        var models = items.Select(item =>
+            new UpdateOneModel<T>(item.Filter, item.Update)
             {
-                IsUpsert = true
+                IsUpsert = false
             });
 
-        return _collection.BulkWriteAsync(Session, models.ToList(), cancellationToken: cancellationToken);
+        return _collection.BulkWriteAsync(
+            Session,
+            models.ToList(),
+            cancellationToken: cancellationToken
+        );
     }
 
     public Task BulkUpsertWithCustomFilterAsync(IEnumerable<(FilterDefinition<T> Filter, T Entity)> items, CancellationToken cancellationToken = default)
@@ -99,12 +86,6 @@ public class GenericRepository<T> : IGenericRepository<T>
 
         return _collection.BulkWriteAsync(Session, models.ToList(), cancellationToken: cancellationToken);
     }
-
-    public Task DeleteAsync(string id, CancellationToken cancellationToken = default) =>
-        _collection.DeleteOneAsync(
-            session: Session,
-            filter: Builders<T>.Filter.Eq(x => x.Id, id),
-            cancellationToken: cancellationToken);
 
     public Task DeleteManyAsync(FilterDefinition<T> filter, CancellationToken cancellationToken = default) =>
         _collection.DeleteManyAsync(

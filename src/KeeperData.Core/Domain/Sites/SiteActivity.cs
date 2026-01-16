@@ -5,54 +5,49 @@ namespace KeeperData.Core.Domain.Sites;
 public class SiteActivity : ValueObject
 {
     public string Id { get; private set; }
-    public string Activity { get; private set; }
-    public string? Description { get; private set; }
-    public DateTime StartDate { get; private set; }
+    public SiteActivityType Type { get; private set; }
+    public DateTime? StartDate { get; private set; }
     public DateTime? EndDate { get; private set; }
     public DateTime LastUpdatedDate { get; private set; }
 
     public SiteActivity(
         string id,
-        string activity,
-        string? description,
-        DateTime startDate,
+        SiteActivityType type,
+        DateTime? startDate,
         DateTime? endDate,
         DateTime lastUpdatedDate)
     {
         Id = id;
-        Activity = activity;
-        Description = description;
+        Type = type;
         StartDate = startDate;
         EndDate = endDate;
         LastUpdatedDate = lastUpdatedDate;
     }
 
     public static SiteActivity Create(
-        string activity,
-        string? description,
-        DateTime startDate,
-        DateTime? endDate)
+        string id,
+        SiteActivityType type,
+        DateTime? startDate,
+        DateTime? endDate,
+        DateTime lastUpdatedDate)
     {
         return new SiteActivity(
-            Guid.NewGuid().ToString(),
-            activity,
-            description,
+            id,
+            type,
             startDate,
             endDate,
-            DateTime.UtcNow);
+            lastUpdatedDate);
     }
 
     public bool ApplyChanges(
         DateTime lastUpdatedDate,
-        string activity,
-        string? description,
-        DateTime startDate,
+        SiteActivityType type,
+        DateTime? startDate,
         DateTime? endDate)
     {
         var changed = false;
 
-        changed |= Change(Activity, activity, v => Activity = v, lastUpdatedDate);
-        changed |= Change(Description, description, v => Description = v, lastUpdatedDate);
+        changed |= Change(Type, type, v => Type = v, lastUpdatedDate);
         changed |= Change(StartDate, startDate, v => StartDate = v, lastUpdatedDate);
         changed |= Change(EndDate, endDate, v => EndDate = v, lastUpdatedDate);
 
@@ -69,9 +64,6 @@ public class SiteActivity : ValueObject
 
     public override IEnumerable<object> GetEqualityComponents()
     {
-        yield return Activity;
-        yield return Description ?? string.Empty;
-        yield return StartDate;
-        yield return EndDate ?? default;
+        yield return Id;
     }
 }

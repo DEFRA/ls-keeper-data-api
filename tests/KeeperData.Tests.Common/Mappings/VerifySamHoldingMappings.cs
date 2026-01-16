@@ -3,6 +3,8 @@ using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Sites.Formatters;
+using KeeperData.Core.Extensions;
+using KeeperData.Tests.Common.TestData.Sam;
 
 namespace KeeperData.Tests.Common.Mappings;
 
@@ -16,6 +18,8 @@ public static class VerifySamHoldingMappings
                             source.PAON_START_NUMBER, source.PAON_START_NUMBER_SUFFIX,
                             source.PAON_END_NUMBER, source.PAON_END_NUMBER_SUFFIX,
                             source.SAON_DESCRIPTION, source.PAON_DESCRIPTION);
+
+        var formattedFacilityBusinessActivityCode = PremiseActivityTypeFormatters.TrimFacilityActivityCode(source.FACILITY_BUSINSS_ACTVTY_CODE);
 
         source.Should().NotBeNull();
         target.Should().NotBeNull();
@@ -40,19 +44,17 @@ public static class VerifySamHoldingMappings
         target.HoldingStartDate.Should().Be(source.FEATURE_ADDRESS_FROM_DATE);
         target.HoldingEndDate.Should().Be(source.FEATURE_ADDRESS_TO_DATE);
 
-        var expectedStatus = source.FEATURE_ADDRESS_TO_DATE.HasValue && source.FEATURE_ADDRESS_TO_DATE != default
-            ? HoldingStatusType.Inactive.ToString()
-            : HoldingStatusType.Active.ToString();
+        var expectedStatus = (source.IsDeleted ?? false)
+            ? HoldingStatusType.Inactive.GetDescription()
+            : HoldingStatusType.Active.GetDescription();
         target.HoldingStatus.Should().Be(expectedStatus);
 
-        target.PremiseActivityTypeId.Should().NotBeNullOrWhiteSpace();
-        target.PremiseActivityTypeCode.Should().Be(source.FACILITY_BUSINSS_ACTVTY_CODE);
+        target.PremiseActivityTypeCode.Should().Be(SamTestScenarios.LookupCodes(source.FCLTY_SUB_BSNSS_ACTVTY_CODE).associatedPremiseActivityCode);
         target.PremiseSubActivityTypeCode.Should().Be(source.FCLTY_SUB_BSNSS_ACTVTY_CODE);
 
         target.MovementRestrictionReasonCode.Should().Be(source.MOVEMENT_RSTRCTN_RSN_CODE);
 
-        target.PremiseTypeIdentifier.Should().NotBeNullOrWhiteSpace();
-        target.PremiseTypeCode.Should().Be(source.FACILITY_TYPE_CODE);
+        target.PremiseTypeCode.Should().Be(SamTestScenarios.LookupCodes(source.FCLTY_SUB_BSNSS_ACTVTY_CODE).associatedPremiseTypeCode);
 
         target.SpeciesTypeCode.Should().Be(source.AnimalSpeciesCodeUnwrapped);
 
@@ -60,10 +62,12 @@ public static class VerifySamHoldingMappings
             .Select(p => p)
             .OrderBy(p => p)
             .ToHashSet();
+
         var sourceProductionUsageCodes = source.AnimalProductionUsageCodeList
-            .Select(p => p)
+            .Select(ProductionUsageCodeFormatters.TrimProductionUsageCodeHolding)
             .OrderBy(p => p)
             .ToHashSet();
+
         targetProductionUsageCodes.Should().BeEquivalentTo(sourceProductionUsageCodes);
 
         // Location

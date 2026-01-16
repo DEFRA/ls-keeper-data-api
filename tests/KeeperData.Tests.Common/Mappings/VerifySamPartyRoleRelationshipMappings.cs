@@ -9,8 +9,7 @@ public static class VerifySamPartyRoleRelationshipMappings
     public static void VerifyMapping_From_SamPartyDocument_To_PartyRoleRelationshipDocument(
         SamPartyDocument source,
         Core.Documents.Silver.SitePartyRoleRelationshipDocument target,
-        string expectedHoldingIdentifier,
-        string expectedHoldingIdentifierType)
+        string expectedHoldingIdentifier)
     {
         source.Should().NotBeNull();
         target.Should().NotBeNull();
@@ -24,12 +23,11 @@ public static class VerifySamPartyRoleRelationshipMappings
 
         target.PartyId.Should().Be(source.PartyId);
         target.PartyTypeId.Should().Be(source.PartyTypeId);
-        target.IsHolder.Should().Be(source.IsHolder);
         target.HoldingIdentifier.Should().Be(expectedHoldingIdentifier);
-        target.HoldingIdentifierType.Should().Be(expectedHoldingIdentifierType);
         target.Source.Should().Be(SourceSystemType.SAM.ToString());
 
         target.RoleTypeId.Should().Be(matchingRole.RoleTypeId);
+        target.RoleTypeCode.Should().Be(matchingRole.RoleTypeCode);
         target.RoleTypeName.Should().Be(matchingRole.RoleTypeName);
         target.SourceRoleName.Should().Be(matchingRole.SourceRoleName);
 

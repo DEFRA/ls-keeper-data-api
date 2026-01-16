@@ -15,22 +15,17 @@ public class CtsHoldingImportSilverMappingStep(
     protected override async Task ExecuteCoreAsync(CtsHoldingImportContext context, CancellationToken cancellationToken)
     {
         context.SilverHoldings = CtsHoldingMapper.ToSilver(
-            context.CurrentDateTime,
             context.RawHoldings);
 
         context.SilverParties = [
             .. await CtsAgentOrKeeperMapper.ToSilver(
-                context.CurrentDateTime,
                 context.RawAgents,
-                HoldingIdentifierType.CphNumber,
                 InferredRoleType.Agent,
                 roleTypeLookupService.FindAsync,
                 cancellationToken),
 
             .. await CtsAgentOrKeeperMapper.ToSilver(
-                context.CurrentDateTime,
                 context.RawKeepers,
-                HoldingIdentifierType.CphNumber,
                 InferredRoleType.LivestockKeeper,
                 roleTypeLookupService.FindAsync,
                 cancellationToken)

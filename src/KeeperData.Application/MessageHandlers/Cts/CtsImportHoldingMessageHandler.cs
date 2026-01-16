@@ -1,21 +1,25 @@
+using KeeperData.Application.Commands;
+using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Application.Orchestration.Imports.Cts.Holdings;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
-using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Serializers;
+using MongoDB.Driver;
 
 namespace KeeperData.Application.MessageHandlers.Cts;
 
 public class CtsImportHoldingMessageHandler(CtsHoldingImportOrchestrator orchestrator,
   IUnwrappedMessageSerializer<CtsImportHoldingMessage> serializer)
-  : IMessageHandler<CtsImportHoldingMessage>
+  : ICommandHandler<ProcessCtsImportHoldingMessageCommand, MessageType>
 {
     private readonly IUnwrappedMessageSerializer<CtsImportHoldingMessage> _serializer = serializer;
     private readonly CtsHoldingImportOrchestrator _orchestrator = orchestrator;
 
-    public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)
+    public async Task<MessageType> Handle(ProcessCtsImportHoldingMessageCommand request, CancellationToken cancellationToken = default)
     {
+        var message = request.Message;
+
         ArgumentNullException.ThrowIfNull(message, nameof(message));
 
         var messagePayload = _serializer.Deserialize(message)
@@ -31,7 +35,18 @@ public class CtsImportHoldingMessageHandler(CtsHoldingImportOrchestrator orchest
             CurrentDateTime = DateTime.UtcNow
         };
 
-        await _orchestrator.ExecuteAsync(context, cancellationToken);
+        try
+        {
+            await _orchestrator.ExecuteAsync(context, cancellationToken);
+        }
+        catch (MongoBulkWriteException ex)
+        {
+            throw new NonRetryableException($"Exception Message: {ex.Message}, Message Identifier: {messagePayload.Identifier}", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new NonRetryableException(ex.Message, ex);
+        }
 
         return await Task.FromResult(messagePayload!);
     }

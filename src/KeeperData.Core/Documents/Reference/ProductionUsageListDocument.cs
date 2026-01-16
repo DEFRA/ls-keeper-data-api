@@ -1,15 +1,26 @@
 using KeeperData.Core.Attributes;
 using MongoDB.Bson.Serialization.Attributes;
+using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents.Reference;
 
-[CollectionName("refProductionUsages")]
-public class ProductionUsageListDocument : IListDocument
+[CollectionName("referenceData")]
+public class ProductionUsageListDocument : IListDocument, IReferenceListDocument<ProductionUsageDocument>
 {
-    [BsonId]
-    public string Id { get; set; } = "all-productionusages";
+    public static string DocumentId => "all-productionusages";
 
+    [BsonId]
+    [BsonElement("id")]
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = DocumentId;
+
+    [BsonElement("lastUpdatedDate")]
+    [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
 
+    [BsonElement("productionUsages")]
+    [JsonPropertyName("productionUsages")]
     public List<ProductionUsageDocument> ProductionUsages { get; set; } = [];
+
+    public IReadOnlyCollection<ProductionUsageDocument> Items => ProductionUsages.AsReadOnly();
 }

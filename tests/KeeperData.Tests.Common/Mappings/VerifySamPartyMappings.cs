@@ -9,7 +9,7 @@ namespace KeeperData.Tests.Common.Mappings;
 
 public static class VerifySamPartyMappings
 {
-    public static void VerifyMapping_From_SamParty_To_SamPartyDocument(SamParty source, SamPartyDocument target)
+    public static void VerifyMapping_From_SamParty_To_SamPartyDocument(SamParty source, SamPartyDocument target, bool sourceIsHolder)
     {
         var addressLine = AddressFormatters.FormatAddressRange(
                             source.SAON_START_NUMBER, source.SAON_START_NUMBER_SUFFIX,
@@ -24,7 +24,6 @@ public static class VerifySamPartyMappings
         target.Id.Should().BeNull();
         target.LastUpdatedBatchId.Should().Be(source.BATCH_ID);
         target.Deleted.Should().BeFalse();
-        target.IsHolder.Should().BeFalse();
 
         target.PartyId.Should().Be(source.PARTY_ID);
 
@@ -88,8 +87,19 @@ public static class VerifySamPartyMappings
             role.RoleTypeId.Should().NotBeNullOrWhiteSpace();
             role.RoleTypeName.Should().Be(roleNameToLookup);
             role.SourceRoleName.Should().Be(roleNameToLookup);
-            role.EffectiveFromDate.Should().BeNull();
-            role.EffectiveToDate.Should().BeNull();
+            role.EffectiveFromDate.Should().Be(source.PARTY_ROLE_FROM_DATE);
+            role.EffectiveToDate.Should().Be(source.PARTY_ROLE_TO_DATE);
+        }
+
+        if (!sourceIsHolder)
+        {
+            target.CountyParishHoldingNumber.Should().NotBeNull();
+            target.CphList.Should().BeEmpty();
+        }
+        else
+        {
+            target.CountyParishHoldingNumber.Should().BeNull();
+            target.CphList.Should().NotBeEmpty();
         }
     }
 }

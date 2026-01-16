@@ -9,10 +9,10 @@ export ENDPOINT_URL=http://localhost:4566
 
 set -e
 
-# S3 buckets
-echo "Bootstrapping S3 setup..."
+# S3
+echo "Create comparison reports bucket..."
 
-## Create 'test-comparison-reports-bucket' Bucket
+## S3: Create comparison reports bucket
 existing_bucket=$(awslocal s3api list-buckets \
   --query "Buckets[?Name=='test-comparison-reports-bucket'].Name" \
   --output text)
@@ -26,33 +26,34 @@ else
   echo "S3 bucket created: test-comparison-reports-bucket"
 fi
 
-echo "Bootstrapping SQS setup..."
+# SQS
 
-# Create the Dead-Letter Queue (DLQ) first.
+echo "Create intake DLQ..."
+
+# Create intake DLQ
 dlq_url=$(awslocal sqs create-queue \
   --queue-name ls_keeper_data_intake_queue-deadletter \
   --endpoint-url=http://localhost:4566 \
   --output text \
   --query 'QueueUrl')
-echo "SQS Dead-Letter Queue created: $dlq_url"
+echo "Intake DLQ created: $dlq_url"
 
-# Get the ARN of the DLQ, which is needed for the main queue's redrive policy.
+# Get the ARN of the DLQ, which is needed for the redrive policy
 dlq_arn=$(awslocal sqs get-queue-attributes \
   --queue-url "$dlq_url" \
   --attribute-names QueueArn \
   --endpoint-url=http://localhost:4566 \
   --output text \
   --query 'Attributes.QueueArn')
-echo "DLQ ARN: $dlq_arn"
+echo "Intake DLQ ARN: $dlq_arn"
 
-# Create the main SQS queue.
+# Create intake queue
 queue_url=$(awslocal sqs create-queue \
   --queue-name ls_keeper_data_intake_queue \
   --endpoint-url=http://localhost:4566 \
   --output text \
   --query 'QueueUrl')
-echo "SQS Main Queue created: $queue_url"
-
+echo "Intake queue created: $queue_url"
 
 # Define the Redrive Policy, linking the main queue to the DLQ.
 redrive_policy_json=$(cat <<EOF
@@ -63,30 +64,32 @@ redrive_policy_json=$(cat <<EOF
 EOF
 )
 
-# Apply the Redrive Policy to the main queue.
-echo "Configuring Redrive Policy..."
+# Set redrive policy for intake DLQ
+echo "Set redrive policy for intake DLQ..."
 awslocal sqs set-queue-attributes \
   --queue-url "$queue_url" \
   --attributes "{\"RedrivePolicy\":\"{\\\"deadLetterTargetArn\\\":\\\"$dlq_arn\\\",\\\"maxReceiveCount\\\":\\\"3\\\"}\"}" \
   --endpoint-url=$ENDPOINT_URL
 # =================================================================
 
-# Get the SQS Queue ARN
+# Get the Intake queue ARN
 queue_arn=$(awslocal sqs get-queue-attributes \
   --queue-url "$queue_url" \
   --attribute-name QueueArn \
   --endpoint-url=http://localhost:4566 \
   --output text \
   --query 'Attributes.QueueArn')
-echo "SQS Main Queue ARN: $queue_arn"
+echo "Intake queue ARN: $queue_arn"
 
-# Create SNS Topic.
+# SNS
+
+# Create data bridge events topic
 topic_arn=$(awslocal sns create-topic \
   --name ls-keeper-data-bridge-events \
   --endpoint-url=http://localhost:4566 \
   --output text \
   --query 'TopicArn')
-echo "SNS Topic created: $topic_arn"
+echo "Data bridge events topic created: $topic_arn"
 
 # Construct the policy JSON inline with escaped quotes
 policy_escaped=$(cat <<EOF | tr -d '\n' | sed 's/"/\\"/g'
@@ -109,15 +112,15 @@ policy_escaped=$(cat <<EOF | tr -d '\n' | sed 's/"/\\"/g'
 EOF
 )
 
-# Set the SQS policy on the main queue.
+# Set the SQS policy on the intake queue
 awslocal sqs set-queue-attributes \
   --queue-url "$queue_url" \
   --attributes "{\"Policy\": \"$policy_escaped\"}" \
   --endpoint-url=$ENDPOINT_URL
 
-echo "SQS policy configured successfully"
+echo "Intake queue policy configured successfully"
 
-# Subscribe the main SQS queue to the SNS Topic.
+# Subscribe the intake queue to the SNS Topic
 subscription_arn=$(awslocal sns subscribe \
   --topic-arn "$topic_arn" \
   --protocol sqs \
@@ -126,5 +129,13 @@ subscription_arn=$(awslocal sns subscribe \
   --output text \
   --query 'SubscriptionArn')
 echo "SNS Topic subscription complete for main queue: $subscription_arn"
+
+# Create import completed topic
+topic_arn=$(awslocal sns create-topic \
+  --name ls_keeper_data_import_complete \
+  --endpoint-url=http://localhost:4566 \
+  --output text \
+  --query 'TopicArn')
+echo "Import completed topic created: $topic_arn"
 
 echo "Bootstrapping Complete"

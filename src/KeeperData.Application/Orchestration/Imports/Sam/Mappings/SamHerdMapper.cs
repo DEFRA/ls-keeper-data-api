@@ -7,10 +7,8 @@ namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 public static class SamHerdMapper
 {
     public static async Task<List<SamHerdDocument>> ToSilver(
-        DateTime currentDateTime,
         List<SamHerd> rawHerds,
         Func<string?, CancellationToken, Task<(string? ProductionUsageId, string? ProductionUsageName)>> resolveProductionUsage,
-        // Func<string?, CancellationToken, Task<(string? ProductionTypeId, string? ProductionTypeName)>> resolveProductionType,
         Func<string?, CancellationToken, Task<(string? SpeciesTypeId, string? SpeciesTypeName)>> resolveSpeciesType,
         CancellationToken cancellationToken)
     {
@@ -19,10 +17,8 @@ public static class SamHerdMapper
         foreach (var h in rawHerds?.Where(x => x.CPHH != null) ?? [])
         {
             var herd = await ToSilver(
-                currentDateTime,
                 h,
                 resolveProductionUsage,
-                // resolveProductionType,
                 resolveSpeciesType,
                 cancellationToken);
 
@@ -33,25 +29,22 @@ public static class SamHerdMapper
     }
 
     public static async Task<SamHerdDocument> ToSilver(
-        DateTime currentDateTime,
         SamHerd h,
         Func<string?, CancellationToken, Task<(string? ProductionUsageId, string? ProductionUsageName)>> resolveProductionUsage,
-        // Func<string?, CancellationToken, Task<(string? ProductionTypeId, string? ProductionTypeName)>> resolveProductionType,
         Func<string?, CancellationToken, Task<(string? SpeciesTypeId, string? SpeciesTypeName)>> resolveSpeciesType,
         CancellationToken cancellationToken)
     {
-        var (speciesTypeId, speciesTypeCode) = await resolveSpeciesType(h.AnimalSpeciesCodeUnwrapped, cancellationToken);
-        var (productionUsageId, productionUsageCode) = await resolveProductionUsage(h.AnimalPurposeCodeUnwrapped, cancellationToken);
-
-        // TODO - Mapped from where
-        // var (productionTypeId, productionTypeCode) = await resolveProductionType(herd.TBC, cancellationToken);
+        var formattedProductionUsageCode = ProductionUsageCodeFormatters.TrimProductionUsageCodeHerd(h.AnimalPurposeCodeUnwrapped);
+        var (speciesTypeId, speciesTypeName) = await resolveSpeciesType(h.AnimalSpeciesCodeUnwrapped, cancellationToken);
+        var (productionUsageId, _) = await resolveProductionUsage(formattedProductionUsageCode, cancellationToken);
 
         var result = new SamHerdDocument
         {
             // Id - Leave to support upsert assigning Id
 
             LastUpdatedBatchId = h.BATCH_ID,
-            LastUpdatedDate = currentDateTime,
+            CreatedDate = h.CreatedAtUtc ?? DateTime.UtcNow,
+            LastUpdatedDate = h.UpdatedAtUtc ?? DateTime.UtcNow,
             Deleted = h.IsDeleted ?? false,
 
             Herdmark = h.HERDMARK,
@@ -60,13 +53,14 @@ public static class SamHerdMapper
 
             SpeciesTypeId = speciesTypeId,
             SpeciesTypeCode = h.AnimalSpeciesCodeUnwrapped,
+            SpeciesTypeName = speciesTypeName,
 
             ProductionUsageId = productionUsageId,
-            ProductionUsageCode = h.AnimalPurposeCodeUnwrapped,
+            ProductionUsageCode = formattedProductionUsageCode,
+            AnimalPurposeCode = h.AnimalPurposeCodeUnwrapped,
 
-            // TODO - Mapped from where
-            // ProductionTypeId = productionTypeId,
-            // ProductionTypeCode = herd.TBC,
+            ProductionTypeId = null,
+            ProductionTypeCode = null,
 
             DiseaseType = h.DISEASE_TYPE,
             Interval = h.INTERVALS,

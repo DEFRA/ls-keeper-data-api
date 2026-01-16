@@ -2,6 +2,7 @@ using FluentAssertions;
 using KeeperData.Application.Orchestration.Imports.Cts.Mappings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Services;
@@ -15,17 +16,17 @@ namespace KeeperData.Application.Tests.Unit.Orchestration.Imports.Cts.Holdings.M
 public class CtsPartyRoleRelationshipMapperTests
 {
     private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
-    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveRoleType;
+    private readonly Func<string?, CancellationToken, Task<(string?, string?, string?)>> _resolveRoleType;
 
     public CtsPartyRoleRelationshipMapperTests()
     {
         _roleTypeLookupServiceMock
-            .Setup(x => x.FindAsync("Agent", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("AgentId", "Agent"));
+            .Setup(x => x.FindAsync("AGENT", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("8184ae3d-c3c4-4904-b1b8-539eeadbf245", "AGENT", "Agent"));
 
         _roleTypeLookupServiceMock
-            .Setup(x => x.FindAsync("Keeper", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("KeeperId", "Keeper"));
+            .Setup(x => x.FindAsync("LIVESTOCKKEEPER", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("b2637b72-2196-4a19-bdf0-85c7ff66cf60", "LIVESTOCKKEEPER", "Livestock Keeper"));
 
         _resolveRoleType = _roleTypeLookupServiceMock.Object.FindAsync;
     }
@@ -60,9 +61,7 @@ public class CtsPartyRoleRelationshipMapperTests
         var records = GenerateCtsAgentOrKeeper(quantity, holdingIdentifier);
 
         var silverParties = await CtsAgentOrKeeperMapper.ToSilver(
-            DateTime.UtcNow,
             records,
-            HoldingIdentifierType.CphNumber,
             inferredRoleType,
             _resolveRoleType,
             CancellationToken.None);
@@ -76,16 +75,28 @@ public class CtsPartyRoleRelationshipMapperTests
 
             foreach (var role in party.Roles)
             {
-                var mapped = results.Single(r => r.Id == role.IdentifierId);
+                var mapped = results.Single(r => r.PartyId == party.PartyId && r.RoleTypeId == role.RoleTypeId);
                 VerifyCtsPartyRoleRelationshipMappings.VerifyMapping_From_CtsPartyDocument_To_PartyRoleRelationshipDocument(
                     party,
                     mapped,
-                    holdingIdentifier.LidIdentifierToCph(),
-                    HoldingIdentifierType.CphNumber.ToString());
+                    holdingIdentifier.LidIdentifierToCph());
             }
         }
     }
 
+    [Fact]
+    public void ToSilver_PartyWithNullRoles_SkipsRoles()
+    {
+        var party = new CtsPartyDocument
+        {
+            PartyId = "P1",
+            Roles = null
+        };
+
+        var result = CtsPartyRoleRelationshipMapper.ToSilver([party]);
+
+        result.Should().BeEmpty();
+    }
     private static List<CtsAgentOrKeeper> GenerateCtsAgentOrKeeper(int quantity, string holdingIdentifier)
     {
         var records = new List<CtsAgentOrKeeper>();

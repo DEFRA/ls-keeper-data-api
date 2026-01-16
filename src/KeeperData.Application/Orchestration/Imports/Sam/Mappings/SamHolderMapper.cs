@@ -1,34 +1,32 @@
-using KeeperData.Application.Extensions;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Parties.Formatters;
 using KeeperData.Core.Domain.Parties.Rules;
 using KeeperData.Core.Domain.Sites.Formatters;
+using KeeperData.Core.Extensions;
 
 namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 
 public static class SamHolderMapper
 {
     public static async Task<List<SamPartyDocument>> ToSilver(
-        DateTime currentDateTime,
         List<SamCphHolder> rawHolders,
         InferredRoleType inferredRoleType,
-        Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeName)>> resolveRoleType,
-        Func<string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
+        Func<string?, CancellationToken, Task<(string? RoleTypeId, string? RoleTypeCode, string? RoleTypeName)>> resolveRoleType,
+        Func<string?, string?, CancellationToken, Task<(string? countryId, string? countryCode, string? countryName)>> resolveCountry,
         CancellationToken cancellationToken)
     {
         var result = new List<SamPartyDocument>();
 
         var roleNameToLookup = EnumExtensions.GetDescription(inferredRoleType);
-        var (roleTypeId, roleTypeName) = await resolveRoleType(roleNameToLookup, cancellationToken);
+        var (roleTypeId, roleTypeCode, roleTypeName) = await resolveRoleType(roleNameToLookup, cancellationToken);
 
         foreach (var p in rawHolders?.Where(x => x.PARTY_ID != null) ?? [])
         {
             var party = await ToSilver(
-                currentDateTime,
                 p,
-                (roleNameToLookup, roleTypeId, roleTypeName),
+                (roleNameToLookup, roleTypeId, roleTypeCode, roleTypeName),
                 resolveCountry,
                 cancellationToken);
 
@@ -39,13 +37,12 @@ public static class SamHolderMapper
     }
 
     public static async Task<SamPartyDocument> ToSilver(
-        DateTime currentDateTime,
         SamCphHolder p,
-        (string? RoleNameToLookup, string? RoleTypeId, string? RoleTypeName) roleTypeInfo,
-        Func<string?, CancellationToken, Task<(string? CountryId, string? CountryName)>> resolveCountry,
+        (string? RoleNameToLookup, string? RoleTypeId, string? RoleTypeCode, string? RoleTypeName) roleTypeInfo,
+        Func<string?, string?, CancellationToken, Task<(string? countryId, string? countryCode, string? countryName)>> resolveCountry,
         CancellationToken cancellationToken)
     {
-        var (countryId, countryName) = await resolveCountry(p.COUNTRY_CODE, cancellationToken);
+        var (countryId, countryCode, _) = await resolveCountry(p.COUNTRY_CODE, p.UK_INTERNAL_CODE, cancellationToken);
         var partyTypeId = p.DeterminePartyType().ToString();
         var addressLine = AddressFormatters.FormatAddressRange(
                         p.SAON_START_NUMBER, p.SAON_START_NUMBER_SUFFIX,
@@ -59,9 +56,9 @@ public static class SamHolderMapper
             // Id - Leave to support upsert assigning Id
 
             LastUpdatedBatchId = p.BATCH_ID,
-            LastUpdatedDate = currentDateTime,
+            CreatedDate = p.CreatedAtUtc ?? DateTime.UtcNow,
+            LastUpdatedDate = p.UpdatedAtUtc ?? DateTime.UtcNow,
             Deleted = p.IsDeleted ?? false,
-            IsHolder = true,
 
             PartyId = p.PARTY_ID.ToString(),
             PartyTypeId = partyTypeId,
@@ -94,7 +91,7 @@ public static class SamHolderMapper
                 CountrySubDivision = p.UK_INTERNAL_CODE,
 
                 CountryIdentifier = countryId,
-                CountryCode = p.COUNTRY_CODE,
+                CountryCode = countryCode,
 
                 UniquePropertyReferenceNumber = p.UDPRN
             },
@@ -107,18 +104,20 @@ public static class SamHolderMapper
                 Landline = p.TELEPHONE_NUMBER
             },
 
-            Roles =
-            [
-                new PartyRoleDocument
+            Roles = roleTypeInfo.RoleTypeId != null
+                ? [
+                    new PartyRoleDocument
                     {
                         IdentifierId = Guid.NewGuid().ToString(),
                         RoleTypeId = roleTypeInfo.RoleTypeId,
+                        RoleTypeCode = roleTypeInfo.RoleTypeCode,
                         RoleTypeName = roleTypeInfo.RoleTypeName,
                         SourceRoleName = roleTypeInfo.RoleNameToLookup,
                         EffectiveFromDate = null,
                         EffectiveToDate = null
                     }
-            ]
+                  ]
+                : []
         };
 
         return result;

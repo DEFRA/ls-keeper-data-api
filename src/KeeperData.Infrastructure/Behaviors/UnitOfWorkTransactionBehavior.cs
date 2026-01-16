@@ -1,3 +1,4 @@
+using KeeperData.Application.Commands;
 using KeeperData.Core.Messaging;
 using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
@@ -12,7 +13,7 @@ public class UnitOfWorkTransactionBehavior<TRequest, TResponse>(
     IUnitOfWork unitOfWork,
     ILogger<UnitOfWorkTransactionBehavior<TRequest, TResponse>> logger)
     : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IRequest<TResponse>
+    where TRequest : ICommand<TResponse>
 {
     private readonly IOptions<MongoConfig> _mongoConfig = mongoConfig;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
@@ -22,44 +23,46 @@ public class UnitOfWorkTransactionBehavior<TRequest, TResponse>(
     {
         var correlationId = CorrelationIdContext.Value ?? string.Empty;
 
-        using (_logger.BeginScope(new Dictionary<string, object>
+        if (!_mongoConfig.Value.EnableTransactions)
+            return await next(cancellationToken);
+
+        if (request is not ITransactionalCommand)
+            return await next(cancellationToken);
+
+        if (_unitOfWork.Session is null)
+            throw new InvalidOperationException(
+                $"UnitOfWork session is not initialized for requestType: {typeof(TRequest).Name}, correlationId: {correlationId}");
+
+        if (_unitOfWork.Session.IsInTransaction)
+            return await next(cancellationToken);
+
+        _logger.LogInformation("Starting MongoDB transaction for requestType: {requestType}, correlationId: {correlationId}",
+                typeof(TRequest).Name, correlationId);
+
+        _unitOfWork.Session.StartTransaction();
+
+        try
         {
-            ["CorrelationId"] = correlationId,
-            ["RequestType"] = typeof(TRequest).Name
-        }))
+            var response = await next(cancellationToken);
+
+            await _unitOfWork.CommitAsync();
+
+            _logger.LogInformation("Committed MongoDB transaction for requestType: {requestType}, correlationId: {correlationId}",
+                typeof(TRequest).Name, correlationId);
+
+            return response;
+        }
+        catch (Exception ex)
         {
-            var transactionsEnabled = _mongoConfig.Value.EnableTransactions;
-            var transactionStarted = false;
-
-            if (transactionsEnabled && _unitOfWork.Session?.IsInTransaction == false)
+            if (_unitOfWork.Session.IsInTransaction)
             {
-                _logger.LogInformation("Starting MongoDB transaction for {RequestType}", typeof(TRequest).Name);
-                _unitOfWork.Session.StartTransaction();
-                transactionStarted = true;
+                await _unitOfWork.RollbackAsync();
+
+                _logger.LogWarning(ex, "Rolled back MongoDB transaction due to exception for requestType: {requestType}, correlationId: {correlationId}",
+                    typeof(TRequest).Name, correlationId);
             }
 
-            try
-            {
-                var response = await next(cancellationToken);
-
-                if (transactionStarted)
-                {
-                    await _unitOfWork.CommitAsync();
-                    _logger.LogInformation("Committed MongoDB transaction");
-                }
-
-                return response;
-            }
-            catch (Exception ex)
-            {
-                if (transactionStarted && _unitOfWork.Session != null && _unitOfWork.Session.IsInTransaction)
-                {
-                    await _unitOfWork.RollbackAsync();
-                    _logger.LogWarning(ex, "Rolled back MongoDB transaction due to exception");
-                }
-
-                throw;
-            }
+            throw;
         }
     }
 }

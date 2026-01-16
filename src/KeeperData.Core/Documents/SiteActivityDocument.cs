@@ -11,26 +11,26 @@ public class SiteActivityDocument : INestedEntity
     [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
 
-    [JsonPropertyName("activity")]
-    public string? Activity { get; set; }
+    [BsonElement("type")]
+    [JsonPropertyName("type")]
+    public required PremisesActivityTypeSummaryDocument Type { get; set; }
 
-    [JsonPropertyName("description")]
-    public string? Description { get; set; }
-
+    [BsonElement("startDate")]
     [JsonPropertyName("startDate")]
     public DateTime? StartDate { get; set; }
 
+    [BsonElement("endDate")]
     [JsonPropertyName("endDate")]
     public DateTime? EndDate { get; set; }
 
+    [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
 
     public static SiteActivityDocument FromDomain(SiteActivity m) => new()
     {
         IdentifierId = m.Id,
-        Activity = m.Activity,
-        Description = m.Description,
+        Type = PremisesActivityTypeSummaryDocument.FromDomain(m.Type),
         StartDate = m.StartDate,
         EndDate = m.EndDate,
         LastUpdatedDate = m.LastUpdatedDate
@@ -38,8 +38,7 @@ public class SiteActivityDocument : INestedEntity
 
     public SiteActivity ToDomain() => new(
         IdentifierId,
-        Activity ?? string.Empty,
-        Description,
+        Type.ToDomain(),
         StartDate ?? DateTime.MinValue,
         EndDate,
         LastUpdatedDate

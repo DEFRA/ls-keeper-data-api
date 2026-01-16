@@ -1,11 +1,11 @@
 using AutoFixture;
 using FluentAssertions;
+using KeeperData.Api.Tests.Component.Orchestration.Imports.Sam.Mocks;
 using KeeperData.Application.Orchestration.Imports.Cts.Holdings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Messaging.Consumers;
-using KeeperData.Core.Repositories;
 using KeeperData.Tests.Common.Factories;
 using KeeperData.Tests.Common.Utilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,16 +17,14 @@ using System.Net;
 
 namespace KeeperData.Api.Tests.Component.Orchestration.Imports.Cts.Holdings;
 
-public class CtsHoldingImportOrchestratorTests
+public class CtsHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
 {
-    private readonly Mock<IGenericRepository<CtsHoldingDocument>> _silverHoldingRepositoryMock = new();
-    private readonly Mock<IGenericRepository<CtsPartyDocument>> _silverPartyRepositoryMock = new();
-    private readonly Mock<IGenericRepository<SitePartyRoleRelationshipDocument>> _silverPartyRoleRelationshipRepositoryMock = new();
-
+    private readonly AppTestFixture _appTestFixture;
     private readonly Fixture _fixture;
 
-    public CtsHoldingImportOrchestratorTests()
+    public CtsHoldingImportOrchestratorTests(AppTestFixture appTestFixture)
     {
+        _appTestFixture = appTestFixture;
         _fixture = new Fixture();
         _fixture.Behaviors.OfType<ThrowingRecursionBehavior>().ToList()
             .ForEach(b => _fixture.Behaviors.Remove(b));
@@ -45,21 +43,17 @@ public class CtsHoldingImportOrchestratorTests
         var (holdingsUri, agentsUri, keepersUri) = GetAllQueryUris(holdingIdentifier);
 
         SetupRepositoryMocks(1, 2);
+        SetupRoleRepositoryMock();
 
-        var factory = new AppWebApplicationFactory();
-        factory.OverrideServiceAsScoped(_silverHoldingRepositoryMock.Object);
-        factory.OverrideServiceAsScoped(_silverPartyRepositoryMock.Object);
-        factory.OverrideServiceAsScoped(_silverPartyRoleRelationshipRepositoryMock.Object);
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holdings));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, agentsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(agents));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, keepersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(keepers));
 
-        SetupDataBridgeApiRequest(factory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holdings));
-        SetupDataBridgeApiRequest(factory, agentsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(agents));
-        SetupDataBridgeApiRequest(factory, keepersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(keepers));
+        var result = await ExecuteTestAsync(_appTestFixture.AppWebApplicationFactory, holdingIdentifier);
 
-        var result = await ExecuteTestAsync(factory, holdingIdentifier);
-
-        VerifyDataBridgeApiEndpointCalled(factory, holdingsUri, Times.Once());
-        VerifyDataBridgeApiEndpointCalled(factory, agentsUri, Times.Once());
-        VerifyDataBridgeApiEndpointCalled(factory, keepersUri, Times.Once());
+        VerifyDataBridgeApiEndpointCalled(_appTestFixture.AppWebApplicationFactory, holdingsUri, Times.Once());
+        VerifyDataBridgeApiEndpointCalled(_appTestFixture.AppWebApplicationFactory, agentsUri, Times.Once());
+        VerifyDataBridgeApiEndpointCalled(_appTestFixture.AppWebApplicationFactory, keepersUri, Times.Once());
 
         VerifyRawDataTypes(result, holdingIdentifier);
         VerifySilverDataTypes(result, holdingIdentifier.LidIdentifierToCph());
@@ -161,35 +155,27 @@ public class CtsHoldingImportOrchestratorTests
             ? []
             : _fixture.CreateMany<CtsPartyDocument>(existingPartiesCount);
 
-        // CtsHoldingDocument
-        _silverHoldingRepositoryMock
+        // Silver
+        CommonRepositoryMocks.SetupDefaultCtsSilverRepositoryMocks(_appTestFixture.AppWebApplicationFactory);
+
+        // Overrides
+
+        // Holding
+        _appTestFixture.AppWebApplicationFactory._silverCtsHoldingRepositoryMock
             .Setup(r => r.FindOneAsync(It.IsAny<Expression<Func<CtsHoldingDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingHolding);
 
-        _silverHoldingRepositoryMock
-            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<CtsHoldingDocument>, CtsHoldingDocument)>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // CtsPartyDocuments
-        _silverPartyRepositoryMock
+        // Party
+        _appTestFixture.AppWebApplicationFactory._silverCtsPartyRepositoryMock
             .Setup(r => r.FindAsync(It.IsAny<Expression<Func<CtsPartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.FromResult(existingParties.ToList()));
+    }
 
-        _silverPartyRepositoryMock
-            .Setup(r => r.BulkUpsertWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<CtsPartyDocument>, CtsPartyDocument)>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _silverPartyRepositoryMock
-            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<CtsPartyDocument>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // PartyRoleRelationshipDocuments
-        _silverPartyRoleRelationshipRepositoryMock
-            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _silverPartyRoleRelationshipRepositoryMock
-            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<SitePartyRoleRelationshipDocument>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+    private void SetupRoleRepositoryMock()
+    {
+        // Setup FindAsync to return role data for common roles used in tests
+        _appTestFixture.AppWebApplicationFactory._roleRepositoryMock
+            .Setup(r => r.FindAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("8184ae3d-c3c4-4904-b1b8-539eeadbf245", "AGENT", "Agent"));
     }
 }

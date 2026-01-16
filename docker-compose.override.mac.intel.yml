@@ -2,7 +2,7 @@ services:
   keeperdata_api:
     build:
       args:
-        TARGETARCH: arm64
+        TARGETARCH: x64
     labels:
       com.microsoft.visual-studio.project-name: "KeeperData.Api"
     environment:
@@ -10,11 +10,26 @@ services:
       - ASPNETCORE_HTTP_PORTS=5555
       - AWS__ServiceURL=http://kda-localstack-emulator:4566
       - Mongo__DatabaseUri=mongodb://kda_mongodb:27017
+      - Mongo__EnableTransactions=true
       - StorageConfiguration__ComparisonReportsStorage__BucketName=test-comparison-reports-bucket
       - QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl=http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue
+      - QueueConsumerOptions__IntakeEventQueueOptions__DeadLetterQueueUrl=http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue-deadletter
       - ApiClients__DataBridgeApi__BaseUrl=http://keeperdata_bridge:5560/
+      - ApiClients__DataBridgeApi__BridgeApiSubscriptionKey=
+      - ApiClients__DataBridgeApi__ServiceName=
+      - ApiClients__DataBridgeApi__XApiKey=
       - ApiClients__DataBridgeApi__UseFakeClient=true
       - ServiceBusSenderConfiguration__IntakeEventQueue__QueueUrl=http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue
+      - BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicName=ls_keeper_data_import_complete
+      - BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicArn=arn:aws:sns:eu-west-2:000000000000:ls_keeper_data_import_complete
+      - DataBridgeScanConfiguration__QueryPageSize=5
+      - DataBridgeScanConfiguration__DelayBetweenQueriesSeconds=0
+      - DataBridgeScanConfiguration__LimitScanTotalBatchSize=10
+      - DataBridgeScanConfiguration__DailyScanIncludeChangesWithinTotalHours=24
+      - BulkScanEndpointsEnabled=true
+      - DailyScanEndpointsEnabled=true
+      - DataImportThrottlingSettings__MessageCompletionDelayMs=1000
+      - MongoDbPreproductionService__Enabled=true
     ports:
       - "5555"
     volumes:
@@ -25,3 +40,40 @@ services:
       - ~/.aspnet/https:/root/.aspnet/https:ro
       # Mount seed files directly for Rider Fast Mode
       - ./src/KeeperData.Infrastructure/Data/Seed:/app/Data/Seed:ro
+
+  mongodb:
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand({ ping: 1 })"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mongo-init-rs:
+    image: mongo:6.0.13
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - cdp-tenant
+    entrypoint:
+      - sh
+      - -c
+      - |
+          echo "Waiting for MongoDB to accept connections..."
+          until mongosh --host kda_mongodb:27017 --eval "db.adminCommand('ping')" >/dev/null 2>&1; do
+            sleep 2
+          done
+
+          echo "Initialising replica set..."
+          mongosh --host kda_mongodb:27017 --eval '
+            try {
+              rs.initiate({
+                _id: "rs0",
+                members: [ { _id: 0, host: "kda_mongodb:27017" } ]
+              })
+            } catch (e) {
+              print("Replica set already initialised: " + e)
+            }
+          '
+    restart: "no"

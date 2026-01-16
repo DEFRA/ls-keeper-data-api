@@ -1,8 +1,12 @@
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.Attributes;
+using KeeperData.Core.Documents;
 using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Extensions;
+using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
 using Microsoft.Extensions.Logging;
+using MongoDB.Driver;
 
 namespace KeeperData.Application.Orchestration.Imports.Sam.Holdings.Steps;
 
@@ -11,43 +15,66 @@ public class SamHoldingImportGoldMappingStep(
     ICountryIdentifierLookupService countryIdentifierLookupService,
     IPremiseTypeLookupService premiseTypeLookupService,
     ISpeciesTypeLookupService speciesTypeLookupService,
+    IPremiseActivityTypeLookupService premiseActivityTypeLookupService,
+    ISiteIdentifierTypeLookupService siteIdentifierTypeLookupService,
+    IGenericRepository<SiteDocument> goldSiteRepository,
+    IGenericRepository<PartyDocument> goldPartyRepository,
     ILogger<SamHoldingImportGoldMappingStep> logger)
     : ImportStepBase<SamHoldingImportContext>(logger)
 {
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
     {
-        context.GoldSite = await SamHoldingMapper.ToGold(
-            context.CurrentDateTime,
-            context.SilverHoldings,
-            countryIdentifierLookupService.GetByIdAsync,
-            premiseTypeLookupService.GetByIdAsync,
-            cancellationToken);
+        if (context.SilverHoldings.Count > 0)
+        {
+            var representative = context.SilverHoldings.Any(x => x.HoldingStatus == HoldingStatusType.Active.GetDescription())
+            ? context.SilverHoldings.Where(x => x.HoldingStatus == HoldingStatusType.Active.GetDescription()).OrderByDescending(h => h.LastUpdatedDate).First()
+            : context.SilverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
 
-        context.GoldSiteGroupMarks = SiteGroupMarkMapper.ToGold(
-            context.CurrentDateTime,
-            context.SilverHerds,
-            context.Cph,
-            HoldingIdentifierType.CphNumber.ToString());
+            var existingHoldingFilter = Builders<SiteDocument>.Filter.ElemMatch(
+                x => x.Identifiers,
+                i => i.Identifier == representative.CountyParishHoldingNumber);
 
-        context.GoldParties = await SamPartyMapper.ToGold(
-            context.CurrentDateTime,
-            context.SilverParties,
-            context.GoldSiteGroupMarks,
-            countryIdentifierLookupService.GetByIdAsync,
-            speciesTypeLookupService.GetByIdAsync,
-            cancellationToken);
+            var existingSite = await goldSiteRepository.FindOneByFilterAsync(existingHoldingFilter, cancellationToken);
+            context.ExistingGoldSite = existingSite;
+            context.GoldSiteId = existingSite != null ? existingSite.Id : Guid.NewGuid().ToString();
 
-        context.GoldSitePartyRoles = SitePartyRoleMapper.ToGold(
-            context.CurrentDateTime,
-            context.GoldParties,
-            context.GoldSiteGroupMarks);
+            context.GoldSiteGroupMarks = SiteGroupMarkMapper.ToGold(
+                context.SilverHerds,
+                context.SilverPartyRoles,
+                context.Cph);
 
-        context.GoldSite = SitePartyRoleMapper.EnrichSiteWithParties(
-            context.GoldSite,
-            context.GoldParties);
+            context.GoldParties = await SamPartyMapper.ToGold(
+                context.ExistingGoldPartyIds,
+                context.GoldSiteId,
+                context.SilverParties,
+                context.GoldSiteGroupMarks,
+                goldPartyRepository,
+                countryIdentifierLookupService.GetByIdAsync,
+                speciesTypeLookupService.GetByIdAsync,
+                cancellationToken);
 
-        context.GoldSite = SiteGroupMarkMapper.EnrichSiteWithGroupMarks(
-            context.GoldSite,
-            context.GoldSiteGroupMarks);
+            context.GoldSite = await SamHoldingMapper.ToGold(
+                context.GoldSiteId,
+                context.ExistingGoldSite,
+                context.SilverHoldings,
+                context.GoldSiteGroupMarks,
+                context.GoldParties,
+                countryIdentifierLookupService.GetByIdAsync,
+                premiseTypeLookupService.GetByIdAsync,
+                siteIdentifierTypeLookupService.GetByCodeAsync,
+                speciesTypeLookupService.FindAsync,
+                premiseActivityTypeLookupService.GetByCodeAsync,
+                cancellationToken);
+
+            context.GoldSitePartyRoles = SitePartyRoleMapper.ToGold(
+                context.GoldParties,
+                context.GoldSiteGroupMarks,
+                context.GoldSiteId,
+                context.Cph);
+
+            SamPartyMapper.EnrichPartyRoleWithSiteInformation(
+                context.GoldParties,
+                context.GoldSite);
+        }
     }
 }

@@ -1,21 +1,25 @@
+using KeeperData.Application.Commands;
+using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
-using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Serializers;
+using MongoDB.Driver;
 
 namespace KeeperData.Application.MessageHandlers.Sam;
 
 public class SamImportHoldingMessageHandler(SamHoldingImportOrchestrator orchestrator,
   IUnwrappedMessageSerializer<SamImportHoldingMessage> serializer)
-  : IMessageHandler<SamImportHoldingMessage>
+  : ICommandHandler<ProcessSamImportHoldingMessageCommand, MessageType>
 {
     private readonly IUnwrappedMessageSerializer<SamImportHoldingMessage> _serializer = serializer;
     private readonly SamHoldingImportOrchestrator _orchestrator = orchestrator;
 
-    public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)
+    public async Task<MessageType> Handle(ProcessSamImportHoldingMessageCommand request, CancellationToken cancellationToken = default)
     {
+        var message = request.Message;
+
         ArgumentNullException.ThrowIfNull(message, nameof(message));
 
         var messagePayload = _serializer.Deserialize(message)
@@ -27,12 +31,22 @@ public class SamImportHoldingMessageHandler(SamHoldingImportOrchestrator orchest
         var context = new SamHoldingImportContext
         {
             Cph = messagePayload.Identifier,
-            BatchId = messagePayload.BatchId,
             CurrentDateTime = DateTime.UtcNow
         };
 
-        await _orchestrator.ExecuteAsync(context, cancellationToken);
+        try
+        {
+            await _orchestrator.ExecuteAsync(context, cancellationToken);
+        }
+        catch (MongoBulkWriteException ex)
+        {
+            throw new NonRetryableException($"Exception Message: {ex.Message}, Message Identifier: {messagePayload.Identifier}", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new NonRetryableException(ex.Message, ex);
+        }
 
-        return await Task.FromResult(messagePayload!);
+        return messagePayload;
     }
 }

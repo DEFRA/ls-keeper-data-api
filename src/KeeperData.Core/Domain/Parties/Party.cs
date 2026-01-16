@@ -61,6 +61,8 @@ public class Party : IAggregateRoot
     }
 
     public static Party Create(
+        DateTime createdDate,
+        DateTime lastUpdatedDate,
         string? title,
         string? firstName,
         string? lastName,
@@ -73,8 +75,8 @@ public class Party : IAggregateRoot
     {
         var party = new Party(
             Guid.NewGuid().ToString(),
-            DateTime.UtcNow,
-            DateTime.UtcNow,
+            createdDate,
+            lastUpdatedDate,
             title,
             firstName,
             lastName,
@@ -206,19 +208,34 @@ public class Party : IAggregateRoot
 
     public void AddOrUpdateRole(DateTime lastUpdatedDate, PartyRole incoming)
     {
-        var existing = _roles.FirstOrDefault(r => r.Id == incoming.Id);
+        var existing = _roles.FirstOrDefault(r =>
+            r.Role.Id == incoming.Role.Id &&
+            r.Site?.Id == incoming.Site?.Id);
 
         if (existing is null)
         {
-            var newRole = PartyRole.Create(incoming.Role, incoming.SpeciesManagedByRole);
+            var newRole = PartyRole.Create(incoming.Site, incoming.Role, incoming.SpeciesManagedByRole);
             _roles.Add(newRole);
             UpdateLastUpdatedDate(lastUpdatedDate);
             return;
         }
 
-        if (existing.ApplyChanges(incoming.Role, incoming.SpeciesManagedByRole, lastUpdatedDate))
+        if (existing.ApplyChanges(incoming.Site, incoming.Role, incoming.SpeciesManagedByRole, lastUpdatedDate))
         {
             UpdateLastUpdatedDate(lastUpdatedDate);
+        }
+    }
+
+    public void DeleteRole(string roleId, string siteId)
+    {
+        var existing = _roles.FirstOrDefault(r =>
+            r.Role.Id == roleId &&
+            r.Site?.Id == siteId);
+
+        if (existing is not null)
+        {
+            _roles.Remove(existing);
+            UpdateLastUpdatedDate(DateTime.UtcNow);
         }
     }
 

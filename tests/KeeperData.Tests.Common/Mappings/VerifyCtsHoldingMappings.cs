@@ -2,6 +2,7 @@ using FluentAssertions;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Extensions;
 
 namespace KeeperData.Tests.Common.Mappings;
 
@@ -25,9 +26,9 @@ public static class VerifyCtsHoldingMappings
         target.HoldingStartDate.Should().Be(source.LOC_EFFECTIVE_FROM);
         target.HoldingEndDate.Should().Be(source.LOC_EFFECTIVE_TO);
 
-        var expectedStatus = source.LOC_EFFECTIVE_TO.HasValue && source.LOC_EFFECTIVE_TO != default
-            ? HoldingStatusType.Inactive.ToString()
-            : HoldingStatusType.Active.ToString();
+        var expectedStatus = (source.IsDeleted ?? false)
+            ? HoldingStatusType.Inactive.GetDescription()
+            : HoldingStatusType.Active.GetDescription();
         target.HoldingStatus.Should().Be(expectedStatus);
 
         target.PremiseActivityTypeId.Should().BeNull();

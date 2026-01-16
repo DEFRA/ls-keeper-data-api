@@ -5,11 +5,14 @@ using KeeperData.Core.Messaging;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Extensions;
-using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.Observers;
 using KeeperData.Core.Messaging.Serializers;
+using KeeperData.Core.Messaging.Throttling;
+using KeeperData.Core.Providers;
 using KeeperData.Infrastructure.Messaging.Configuration;
+using KeeperData.Infrastructure.Messaging.Factories.Implementations;
 using KeeperData.Infrastructure.Messaging.Services;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -18,33 +21,32 @@ namespace KeeperData.Infrastructure.Messaging.Consumers;
 
 public class QueuePoller(IServiceScopeFactory scopeFactory,
     IAmazonSQS amazonSQS,
-    IMessageHandlerManager messageHandlerManager,
     IMessageSerializer<SnsEnvelope> messageSerializer,
     IDeadLetterQueueService deadLetterQueueService,
+    MessageCommandRegistry messageCommandRegistry,
+    IDataImportThrottlingConfiguration dataImportThrottlingConfiguration,
     IOptions<IntakeEventQueueOptions> options,
+    IDelayProvider delayProvider,
+    IQueuePollerObserver<MessageType> observer,
     ILogger<QueuePoller> logger) : IQueuePoller, IAsyncDisposable
 {
     private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
     private readonly IAmazonSQS _amazonSQS = amazonSQS;
-    private readonly IMessageHandlerManager _messageHandlerManager = messageHandlerManager;
     private readonly IMessageSerializer<SnsEnvelope> _messageSerializer = messageSerializer;
     private readonly IDeadLetterQueueService _deadLetterQueueService = deadLetterQueueService;
+    private readonly MessageCommandRegistry _messageCommandRegistry = messageCommandRegistry;
+    private readonly IDataImportThrottlingConfiguration _dataImportThrottlingConfiguration = dataImportThrottlingConfiguration;
     private readonly IntakeEventQueueOptions _queueConsumerOptions = options.Value;
+    private readonly IDelayProvider _delayProvider = delayProvider;
+    private readonly IQueuePollerObserver<MessageType> _observer = observer;
     private readonly ILogger<QueuePoller> _logger = logger;
-
-    private IQueuePollerObserver<MessageType>? _observer;
 
     private Task? _pollingTask;
     private CancellationTokenSource _cts = new();
 
-    private const string MESSAGE_SUFFIX = "Message";
-
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("QueuePoller start requested.");
-
-        using var scope = _scopeFactory.CreateScope();
-        _observer = scope.ServiceProvider.GetService<IQueuePollerObserver<MessageType>>();
 
         if (_queueConsumerOptions.Disabled == true)
         {
@@ -115,7 +117,8 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
                     QueueUrl = _queueConsumerOptions.QueueUrl,
                     MaxNumberOfMessages = _queueConsumerOptions.MaxNumberOfMessages,
                     WaitTimeSeconds = _queueConsumerOptions.WaitTimeSeconds,
-                    MessageAttributeNames = ["All"]
+                    MessageAttributeNames = ["All"],
+                    MessageSystemAttributeNames = ["All"]
                 }, cancellationToken);
 
                 var messages = response?.Messages;
@@ -156,24 +159,22 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
 
             _logger.LogDebug("HandleMessageAsync using correlationId: {correlationId}", CorrelationIdContext.Value);
 
-            var handlerTypes = _messageHandlerManager.GetHandlersForMessage(unwrappedMessage.Subject);
-            foreach (var handlerInfo in handlerTypes)
+            var command = _messageCommandRegistry.CreateCommand(unwrappedMessage);
+
+            using var scope = _scopeFactory.CreateScope();
+            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            var result = await mediator.Send(command, cancellationToken);
+
+            if (_dataImportThrottlingConfiguration.MessageCompletionDelayMs > 0)
             {
-                var messageType = _messageHandlerManager.GetMessageTypeByName($"{unwrappedMessage.Subject}{MESSAGE_SUFFIX}");
-
-                using var scope = _scopeFactory.CreateScope();
-                var handler = scope.ServiceProvider.GetService(handlerInfo.HandlerType);
-                if (handler == null) continue;
-
-                var concreteType = typeof(IMessageHandler<>).MakeGenericType(messageType);
-                var messagePayload = await (Task<MessageType>)concreteType.GetMethod("Handle")!.Invoke(handler, [unwrappedMessage, cancellationToken])!;
-
-                await _amazonSQS.DeleteMessageAsync(queueUrl, message.ReceiptHandle, cancellationToken);
-
-                _logger.LogInformation("Handled message with correlationId: {correlationId}", CorrelationIdContext.Value);
-
-                _observer?.OnMessageHandled(message.MessageId, DateTime.UtcNow, messagePayload, message);
+                await ThrottleMessageProcessing(_dataImportThrottlingConfiguration.MessageCompletionDelayMs, cancellationToken);
             }
+
+            await _amazonSQS.DeleteMessageAsync(queueUrl, message.ReceiptHandle, cancellationToken);
+
+            _logger.LogInformation("Handled message with correlationId: {correlationId}", CorrelationIdContext.Value);
+
+            _observer?.OnMessageHandled(message.MessageId, DateTime.UtcNow, result, message);
         }
         catch (RetryableException ex)
         {
@@ -188,7 +189,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         {
             _logger.LogError("NonRetryableException in queue: {queue}, correlationId: {correlationId}, messageId: {messageId}, Exception: {ex}",
                 _queueConsumerOptions.QueueUrl, CorrelationIdContext.Value, message.MessageId, ex);
-            //Can check DLQ move result if needed
+
             await _deadLetterQueueService.MoveToDeadLetterQueueAsync(message, queueUrl, ex, cancellationToken);
 
             _observer?.OnMessageFailed(message.MessageId, DateTime.UtcNow, ex, message);
@@ -198,7 +199,19 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
             _logger.LogError("Unhandled Exception in queue: {queue}, correlationId: {correlationId}, messageId: {messageId}, Exception: {ex}",
                 _queueConsumerOptions.QueueUrl, CorrelationIdContext.Value, message.MessageId, ex);
 
+            await _deadLetterQueueService.MoveToDeadLetterQueueAsync(message, queueUrl, ex, cancellationToken);
+
             _observer?.OnMessageFailed(message.MessageId, DateTime.UtcNow, ex, message);
         }
+    }
+
+    private async Task ThrottleMessageProcessing(int messageCompletionDelayMs, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("HandleMessageAsync throttling message completion: waiting {messageCompletionDelayMs} ms before completing",
+            messageCompletionDelayMs);
+
+        await _delayProvider.DelayAsync(
+            TimeSpan.FromMilliseconds(messageCompletionDelayMs),
+            cancellationToken);
     }
 }

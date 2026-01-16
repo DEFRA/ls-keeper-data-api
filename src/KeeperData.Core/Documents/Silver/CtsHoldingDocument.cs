@@ -1,29 +1,39 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
+using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents.Silver;
 
 [CollectionName("ctsHoldings")]
 public class CtsHoldingDocument : BaseHoldingDocument, IEntity, IDeletableEntity, IContainsIndexes
 {
+    [BsonId]
+    [JsonPropertyName("id")]
+    [BsonElement("id")]
     public string? Id { get; set; }
+
+    [JsonPropertyName("lastUpdatedBatchId")]
+    [BsonElement("lastUpdatedBatchId")]
     public int? LastUpdatedBatchId { get; set; }
+
+    [BsonElement("createdDate")]
+    [JsonPropertyName("createdDate")]
+    public DateTime CreatedDate { get; set; }
+
+    [JsonPropertyName("lastUpdatedDate")]
+    [BsonElement("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
+
+    [JsonPropertyName("deleted")]
+    [BsonElement("deleted")]
+    [AutoIndexed]
     public bool Deleted { get; set; }
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
-        return
-        [
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("CountyParishHoldingNumber"),
-                new CreateIndexOptions { Name = "idx_cphNumber" }),
-
-            new CreateIndexModel<BsonDocument>(
-                Builders<BsonDocument>.IndexKeys.Ascending("AlternativeHoldingIdentifier"),
-                new CreateIndexOptions { Name = "idx_altIdentifier" })
-        ];
+        return AutoIndexedAttribute.GetIndexModels<CtsHoldingDocument>();
     }
 }

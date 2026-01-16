@@ -1,7 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
-namespace DataConverter.Models;
+namespace TsvToJsonConverter.DataConverter;
 
+[ExcludeFromCodeCoverage]
 public record CountryJson(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("code")] string Code,
@@ -19,6 +21,7 @@ public record CountryJson(
     [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
 );
 
+[ExcludeFromCodeCoverage]
 public record SpeciesJson(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("code")] string Code,
@@ -33,6 +36,7 @@ public record SpeciesJson(
     [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
 );
 
+[ExcludeFromCodeCoverage]
 public record RoleJson(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("code")] string Code,
@@ -47,6 +51,7 @@ public record RoleJson(
     [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
 );
 
+[ExcludeFromCodeCoverage]
 public record PremisesTypeJson(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("code")] string Code,
@@ -61,6 +66,7 @@ public record PremisesTypeJson(
     [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
 );
 
+[ExcludeFromCodeCoverage]
 public record PremisesActivityTypeJson(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("code")] string Code,
@@ -75,6 +81,7 @@ public record PremisesActivityTypeJson(
     [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
 );
 
+[ExcludeFromCodeCoverage]
 public record SiteIdentifierTypeJson(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("code")] string Code,
@@ -88,10 +95,26 @@ public record SiteIdentifierTypeJson(
     [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
 );
 
+[ExcludeFromCodeCoverage]
 public record ProductionUsageJson(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("code")] string Code,
     [property: JsonPropertyName("description")] string Description,
+    [property: JsonPropertyName("isActive")] bool IsActive,
+    [property: JsonPropertyName("effectiveStartDate")] DateTime EffectiveStartDate,
+    [property: JsonPropertyName("effectiveEndDate")] DateTime? EffectiveEndDate,
+    [property: JsonPropertyName("createdBy")] string CreatedBy,
+    [property: JsonPropertyName("createdDate")] DateTime CreatedDate,
+    [property: JsonPropertyName("lastModifiedBy")] string? LastModifiedBy,
+    [property: JsonPropertyName("lastModifiedDate")] DateTime? LastModifiedDate
+);
+
+[ExcludeFromCodeCoverage]
+public record FacilityBusinessActivityMapJson(
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("facilityActivityCode")] string FacilityActivityCode,
+    [property: JsonPropertyName("associatedPremiseTypeCode")] string? AssociatedPremiseTypeCode,
+    [property: JsonPropertyName("associatedPremiseActivityCode")] string? AssociatedPremiseActivityCode,
     [property: JsonPropertyName("isActive")] bool IsActive,
     [property: JsonPropertyName("effectiveStartDate")] DateTime EffectiveStartDate,
     [property: JsonPropertyName("effectiveEndDate")] DateTime? EffectiveEndDate,

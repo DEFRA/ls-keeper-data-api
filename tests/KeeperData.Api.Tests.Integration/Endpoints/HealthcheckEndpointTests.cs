@@ -1,16 +1,18 @@
 using FluentAssertions;
+using KeeperData.Api.Tests.Integration.Fixtures;
 
 namespace KeeperData.Api.Tests.Integration.Endpoints;
 
-[Trait("Dependence", "localstack")]
-public class HealthcheckEndpointTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
+[Collection("Integration"), Trait("Dependence", "testcontainers")]
+public class HealthcheckEndpointTests(
+    ApiContainerFixture apiContainerFixture)
 {
-    private readonly HttpClient _httpClient = fixture.HttpClient;
+    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
 
     [Fact]
     public async Task GivenValidHealthCheckRequest_ShouldSucceed()
     {
-        var response = await _httpClient.GetAsync("health");
+        var response = await _apiContainerFixture.HttpClient.GetAsync("health");
         var responseBody = await response.Content.ReadAsStringAsync();
 
         response.EnsureSuccessStatusCode();

@@ -1,24 +1,23 @@
-using KeeperData.Core.Attributes;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Behaviors;
+using KeeperData.Infrastructure.Config;
 using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Infrastructure.Database.Factories;
 using KeeperData.Infrastructure.Database.Factories.Implementations;
 using KeeperData.Infrastructure.Database.Repositories;
 using KeeperData.Infrastructure.Database.Transactions;
 using KeeperData.Infrastructure.Locking;
+using KeeperData.Infrastructure.Services;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Serializers;
-using MongoDB.Driver;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
@@ -42,14 +41,32 @@ public static class ServiceCollectionExtensions
         services.AddScoped(sp => sp.GetRequiredService<IMongoSessionFactory>().GetSession());
         services.AddSingleton(sp => sp.GetRequiredService<IMongoDbClientFactory>().CreateClient());
 
+        services.AddSingleton<IMongoDbInitialiser, MongoDbInitialiser>();
+
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
         services.AddScoped<ICountryRepository, CountryRepository>();
+        services.AddScoped<ISpeciesRepository, SpeciesRepository>();
+        services.AddScoped<IFacilityBusinessActivityMapRepository, FacilityBusinessActivityMapRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<IPremisesTypeRepository, PremisesTypeRepository>();
+        services.AddScoped<IPremisesActivityTypeRepository, PremisesActivityTypeRepository>();
+        services.AddScoped<IProductionUsageRepository, ProductionUsageRepository>();
+        services.AddScoped<ISiteIdentifierTypeRepository, SiteIdentifierTypeRepository>();
         services.AddScoped<ISitesRepository, SitesRepository>();
-        services.AddScoped<ISilverSitePartyRoleRelationshipRepository, SilverSitePartyRoleRelationshipRepository>();
+        services.AddScoped<IPartiesRepository, PartiesRepository>();
+        services.AddScoped<IGoldSitePartyRoleRelationshipRepository, GoldSitePartyRoleRelationshipRepository>();
 
         services.AddScoped<IUnitOfWork, MongoUnitOfWork>();
         services.AddScoped(sp => (ITransactionManager)sp.GetRequiredService<IUnitOfWork>());
         services.AddScoped<IAggregateTracker, AggregateTracker>();
+
+        var mongoPreprodConfig = configuration.GetSection(MongoDbPreproductionServiceConfig.SectionName).Get<MongoDbPreproductionServiceConfig>();
+        services.Configure<MongoDbPreproductionServiceConfig>(configuration.GetSection(MongoDbPreproductionServiceConfig.SectionName));
+        if (mongoPreprodConfig?.Enabled ?? false)
+        {
+            services.AddScoped<IMongoDbPreproductionService, MongoDbPreproductionService>();
+        }
 
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(UnitOfWorkTransactionBehavior<,>));
@@ -65,30 +82,6 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddHostedService<MongoIndexInitializer>();
-    }
-
-    public static async Task EnsureMongoIndexesAsync(IServiceProvider serviceProvider)
-    {
-        var client = serviceProvider.GetRequiredService<IMongoClient>();
-        var config = serviceProvider.GetRequiredService<IOptions<MongoConfig>>().Value;
-        var database = client.GetDatabase(config.DatabaseName);
-
-        var indexableTypes = AppDomain.CurrentDomain.GetAssemblies()
-            .Where(a => !a.IsDynamic)
-            .SelectMany(x => x.GetTypes())
-            .Where(t => typeof(IContainsIndexes).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface);
-
-        foreach (var type in indexableTypes)
-        {
-            var collectionName = type.GetCustomAttribute<CollectionNameAttribute>()?.Name ?? type.Name;
-            var collection = database.GetCollection<BsonDocument>(collectionName);
-
-            var getIndexesMethod = type.GetMethod("GetIndexModels", BindingFlags.Public | BindingFlags.Static);
-            if (getIndexesMethod?.Invoke(null, null) is IEnumerable<CreateIndexModel<BsonDocument>> indexModels)
-            {
-                await collection.Indexes.CreateManyAsync(indexModels);
-            }
-        }
     }
 
     private static void RegisterMongoDbGlobals()

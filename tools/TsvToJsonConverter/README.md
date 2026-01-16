@@ -47,3 +47,7 @@ dotnet run siteidentifiertypes
 **To convert productionusages:**
 
 dotnet run productionusages
+
+**To convert facilitybusinessactivitymaps:**
+
+dotnet run facilitybusinessactivitymaps

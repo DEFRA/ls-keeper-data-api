@@ -9,6 +9,7 @@ public static class SiteFilterBuilder
     {
         var filters = new List<FilterDefinition<SiteDocument>>();
         var builder = Builders<SiteDocument>.Filter;
+        filters.Add(builder.Eq(x => x.Deleted, false));
 
         if (query.LastUpdatedDate.HasValue)
         {
@@ -22,7 +23,10 @@ public static class SiteFilterBuilder
 
         if (query.Type is { Count: > 0 })
         {
-            filters.Add(builder.In(x => x.Type, query.Type));
+            filters.Add(builder.And(
+                builder.Ne(x => x.Type, null),
+                builder.In("type.code", query.Type)
+            ));
         }
 
         if (query.SiteId.HasValue)
@@ -30,11 +34,12 @@ public static class SiteFilterBuilder
             filters.Add(builder.Eq(x => x.Id, query.SiteId.Value.ToString()));
         }
 
-        // TODO - Update to use site parties
-        //if (query.KeeperPartyId.HasValue)
-        //{
-        //    filters.Add(builder.AnyEq(x => x.KeeperPartyIds, query.KeeperPartyId.Value.ToString()));
-        //}
+        if (query.KeeperPartyId.HasValue)
+        {
+            var partyIdString = query.KeeperPartyId.Value.ToString();
+
+            filters.Add(builder.ElemMatch(x => x.Parties, p => p.CustomerNumber == partyIdString));
+        }
 
         return filters.Count > 0 ? builder.And(filters) : builder.Empty;
     }

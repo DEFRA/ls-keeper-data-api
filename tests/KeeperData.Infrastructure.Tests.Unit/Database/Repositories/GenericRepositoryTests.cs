@@ -1,13 +1,18 @@
 using FluentAssertions;
 using KeeperData.Core.Attributes;
+using KeeperData.Core.Documents;
+using KeeperData.Core.Extensions;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Infrastructure.Database.Repositories;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 using Moq;
 using System.Reflection;
+using System.Text.Json.Serialization;
 
 namespace KeeperData.Infrastructure.Tests.Unit.Database.Repositories;
 
@@ -42,7 +47,6 @@ public class GenericRepositoryTests
 
         _mongoCollectionMock
             .Setup(c => c.FindAsync(
-                It.IsAny<IClientSessionHandle?>(),
                 It.IsAny<FilterDefinition<TestEntity>>(),
                 It.IsAny<FindOptions<TestEntity, TestEntity>>(),
                 It.IsAny<CancellationToken>()))
@@ -171,14 +175,14 @@ public class GenericRepositoryTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task GivenEntities_WhenCallingBulkUpsertAsync_ThenBulkWriteIsCalledWithUpsert(bool useTransaction)
+    public async Task GivenFilteredEntities_WhenCallingBulkUpdateWithCustomFilterAsync_ThenBulkWriteIsCalledWithUpsert(bool useTransaction)
     {
         _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(useTransaction);
 
-        var entities = new[]
+        var items = new (FilterDefinition<TestEntity> Filter, UpdateDefinition<TestEntity> Entity)[]
         {
-            new TestEntity { Id = Guid.NewGuid().ToString(), Name = "Test Entity 1" },
-            new TestEntity { Id = Guid.NewGuid().ToString(), Name = "Test Entity 2" }
+            (Builders<TestEntity>.Filter.Eq(x => x.Name, "One"), Builders<TestEntity>.Update.SetAll(new TestEntity { Id = "1", Name = "One" })),
+            (Builders<TestEntity>.Filter.Eq(x => x.Name, "Two"), Builders<TestEntity>.Update.SetAll(new TestEntity { Id = "2", Name = "Two" }))
         };
 
         IEnumerable<WriteModel<TestEntity>>? capturedModels = null;
@@ -193,7 +197,7 @@ public class GenericRepositoryTests
             })
             .ReturnsAsync((BulkWriteResult<TestEntity>?)null);
 
-        await _sut.BulkUpsertAsync(entities, CancellationToken.None);
+        await _sut.BulkUpdateWithCustomFilterAsync(items, CancellationToken.None);
 
         _mongoCollectionMock.Verify(c => c.BulkWriteAsync(
             It.IsAny<IClientSessionHandle?>(),
@@ -203,9 +207,37 @@ public class GenericRepositoryTests
             Times.Once);
 
         capturedModels.Should().NotBeNull().And.HaveCount(2);
-        capturedModels!.All(m => m is ReplaceOneModel<TestEntity> model
-            && model.IsUpsert
-            && entities.Any(e => e.Id == model.Replacement.Id)).Should().BeTrue();
+        capturedModels!.All(m =>
+        {
+            if (m is not UpdateOneModel<TestEntity> u)
+                return false;
+
+            if (u.IsUpsert)
+                return false;
+
+            // Render the actual update document
+            var serializer = BsonSerializer.SerializerRegistry.GetSerializer<TestEntity>();
+            var registry = BsonSerializer.SerializerRegistry;
+
+            var actualUpdate = u.Update.Render(serializer, registry);
+
+            // Find the matching expected update
+            var (Filter, Entity) = items.FirstOrDefault(i =>
+                i.Filter.Render(serializer, registry).ToString() ==
+                u.Filter.Render(serializer, registry).ToString());
+
+            if (Entity == null)
+                return false;
+
+            // Render the expected update
+            var expectedUpdate = Entity.Render(serializer, registry);
+
+            // Compare the $set documents
+            var actualSet = actualUpdate["$set"].AsBsonDocument;
+            var expectedSet = expectedUpdate["$set"].AsBsonDocument;
+
+            return actualSet.Equals(expectedSet);
+        }).Should().BeTrue();
     }
 
     [Theory]
@@ -255,29 +287,6 @@ public class GenericRepositoryTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task GivenValidId_WhenCallingDeleteAsync_ThenDeleteOneIsCalled(bool useTransaction)
-    {
-        _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(useTransaction);
-
-        var id = Guid.NewGuid().ToString();
-
-        _mongoCollectionMock
-            .Setup(c => c.DeleteOneAsync(
-                It.IsAny<IClientSessionHandle>(),
-                It.IsAny<FilterDefinition<TestEntity>>(),
-                It.IsAny<DeleteOptions>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Mock.Of<DeleteResult>())
-            .Verifiable();
-
-        await _sut.DeleteAsync(id, CancellationToken.None);
-
-        _mongoCollectionMock.Verify();
-    }
-
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
     public async Task GivenValidId_WhenCallingDeleteManyAsync_ThenDeleteManyIsCalled(bool useTransaction)
     {
         _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(useTransaction);
@@ -298,6 +307,57 @@ public class GenericRepositoryTests
         await _sut.DeleteManyAsync(id, CancellationToken.None);
 
         _mongoCollectionMock.Verify();
+    }
+
+    [Fact]
+    public void AllDocumentsShouldHaveMatchingJsonAndBsonAttributes()
+    {
+        var assembly = Assembly.GetAssembly(typeof(PartyDocument));
+        var documentTypes = assembly?.GetTypes().Where(t => t.IsAssignableTo(typeof(IEntity)) || t.IsAssignableTo(typeof(INestedEntity)));
+        documentTypes.Should().NotBeNull();
+        foreach (var type in documentTypes)
+        {
+            var properties = type.GetMembers()
+            .Where(p => p.IsDefined(typeof(BsonElementAttribute)))
+            .Select(member =>
+            new
+            {
+                member,
+                bsonAttribute = member.GetCustomAttribute<BsonElementAttribute>(),
+                jsonAttribute = member.GetCustomAttribute<JsonPropertyNameAttribute>()
+            })
+            .ToList();
+            foreach (var property in properties)
+            {
+                property.jsonAttribute.Should().NotBeNull($"Class {type.Name} member {property.member.Name} must have a JsonPropertyNameAttribute if it has a BsonElementAttribute");
+                property.jsonAttribute.Name.Should().Be(property.bsonAttribute?.ElementName, $"Class {type.Name} member {property.member.Name} should have matching JsonPropertyNameAttribute '{property.jsonAttribute.Name}' and BsonElementAttribute '{property.bsonAttribute?.ElementName}'");
+            }
+        }
+    }
+
+    [Fact]
+    public void AllAutoIndexedDocumentsShouldHaveBsonAttribute()
+    {
+        var assembly = Assembly.GetAssembly(typeof(PartyDocument));
+        var documentTypes = assembly?.GetTypes().Where(t => t.IsAssignableTo(typeof(IEntity)) || t.IsAssignableTo(typeof(INestedEntity)));
+        documentTypes.Should().NotBeNull();
+        foreach (var type in documentTypes)
+        {
+            var properties = type.GetMembers()
+            .Where(p => p.IsDefined(typeof(AutoIndexedAttribute)))
+            .Select(member =>
+            new
+            {
+                member,
+                indexAttribute = member.GetCustomAttribute<AutoIndexedAttribute>(),
+                bsonAttribute = member.GetCustomAttribute<BsonElementAttribute>()
+            })
+            .ToList();
+            foreach (var property in properties)
+            {
+                property.bsonAttribute.Should().NotBeNull($"Class {type.Name} member {property.member.Name} must have a BsonPropertyNameAttribute if it has a AutoIndexedAttribute");
+            }
+        }
     }
 }
 

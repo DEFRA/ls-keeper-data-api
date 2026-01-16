@@ -1,21 +1,45 @@
 using FluentAssertions;
+using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Sites.Formatters;
+using KeeperData.Core.Extensions;
 
 namespace KeeperData.Core.Tests.Unit.Sites;
 
 public class HoldingStatusFormattersTests
 {
     [Theory]
-    [InlineData(null, "Active")]
-    [InlineData("0001-01-01", "Active")]
-    [InlineData("2023-01-01", "Inactive")]
-    [InlineData("2050-12-31", "Inactive")]
-    public void FormatHoldingStatus_ReturnsExpectedStatus(string? dateString, string expectedStatus)
+    [InlineData(false, HoldingStatusType.Active)]
+    [InlineData(true, HoldingStatusType.Inactive)]
+    public void FormatHoldingStatus_ReturnsExpectedStatus(bool deleted, HoldingStatusType expectedStatus)
     {
-        DateTime? endDate = dateString is null ? null : DateTime.Parse(dateString);
+        var result = HoldingStatusFormatters.FormatHoldingStatus(deleted);
 
-        var result = HoldingStatusFormatters.FormatHoldingStatus(endDate);
+        result.Should().Be(expectedStatus.GetDescription());
+    }
 
-        result.Should().Be(expectedStatus);
+    [Fact]
+    public void FormatHoldingStatus_WithDeletedFalse_ReturnsActive_RegardlessOfEndDate()
+    {
+        // Arrange
+        var deleted = false;
+
+        // Act
+        var result = HoldingStatusFormatters.FormatHoldingStatus(deleted);
+
+        // Assert
+        result.Should().Be(HoldingStatusType.Active.GetDescription(), "status should be based on deleted flag, not end date");
+    }
+
+    [Fact]
+    public void FormatHoldingStatus_WithDeletedTrue_ReturnsInactive_RegardlessOfNoEndDate()
+    {
+        // Arrange
+        var deleted = true;
+
+        // Act
+        var result = HoldingStatusFormatters.FormatHoldingStatus(deleted);
+
+        // Assert
+        result.Should().Be(HoldingStatusType.Inactive.GetDescription(), "status should be based on deleted flag, not presence of end date");
     }
 }

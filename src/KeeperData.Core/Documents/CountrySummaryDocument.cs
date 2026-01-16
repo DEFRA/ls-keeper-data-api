@@ -11,21 +11,27 @@ public class CountrySummaryDocument : INestedEntity
     [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
 
+    [BsonElement("code")]
     [JsonPropertyName("code")]
     public required string Code { get; set; }
 
+    [BsonElement("name")]
     [JsonPropertyName("name")]
     public required string Name { get; set; }
 
+    [BsonElement("longName")]
     [JsonPropertyName("longName")]
     public string? LongName { get; set; }
 
+    [BsonElement("euTradeMemberFlag")]
     [JsonPropertyName("euTradeMemberFlag")]
     public bool EuTradeMemberFlag { get; set; }
 
+    [BsonElement("devolvedAuthorityFlag")]
     [JsonPropertyName("devolvedAuthorityFlag")]
     public bool DevolvedAuthorityFlag { get; set; }
 
+    [BsonElement("lastModifiedDate")]
     [JsonPropertyName("lastModifiedDate")]
     public DateTime? LastModifiedDate { get; set; }
 

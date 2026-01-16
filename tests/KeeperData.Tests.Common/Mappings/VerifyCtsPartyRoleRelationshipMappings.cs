@@ -9,25 +9,25 @@ public static class VerifyCtsPartyRoleRelationshipMappings
     public static void VerifyMapping_From_CtsPartyDocument_To_PartyRoleRelationshipDocument(
         CtsPartyDocument source,
         Core.Documents.Silver.SitePartyRoleRelationshipDocument target,
-        string expectedHoldingIdentifier,
-        string expectedHoldingIdentifierType)
+        string expectedHoldingIdentifier)
     {
         source.Should().NotBeNull();
         target.Should().NotBeNull();
 
         source.Roles.Should().NotBeNullOrEmpty();
 
-        var matchingRole = source.Roles.SingleOrDefault(r => r.IdentifierId == target.Id);
-        matchingRole.Should().NotBeNull($"Expected role with ID {target.Id} to exist in source.Roles");
+        var matchingRole = source.Roles.SingleOrDefault(r => r.RoleTypeId == target.RoleTypeId);
+        matchingRole.Should().NotBeNull($"Expected role with ID {target.RoleTypeId} to exist in source.Roles");
 
-        target.Id.Should().Be(matchingRole.IdentifierId);
+        target.Id.Should().NotBeNullOrWhiteSpace();
+
         target.PartyId.Should().Be(source.PartyId);
         target.PartyTypeId.Should().Be(source.PartyTypeId);
         target.HoldingIdentifier.Should().Be(expectedHoldingIdentifier);
-        target.HoldingIdentifierType.Should().Be(expectedHoldingIdentifierType);
         target.Source.Should().Be(SourceSystemType.CTS.ToString());
 
         target.RoleTypeId.Should().Be(matchingRole.RoleTypeId);
+        target.RoleTypeCode.Should().Be(matchingRole.RoleTypeCode);
         target.RoleTypeName.Should().Be(matchingRole.RoleTypeName);
         target.SourceRoleName.Should().Be(matchingRole.SourceRoleName);
 

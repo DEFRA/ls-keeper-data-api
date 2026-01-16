@@ -1,3 +1,4 @@
+using KeeperData.Application.Commands;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
 using MediatR;
 using System.Reflection;
@@ -5,7 +6,7 @@ using System.Reflection;
 namespace KeeperData.Infrastructure.Behaviors;
 
 public class AggregateRootChangedBehavior<TRequest, TResponse>(IAggregateTracker tracker) : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IRequest<TResponse>
+    where TRequest : ICommand<TResponse>
 {
     private readonly IAggregateTracker _tracker = tracker;
 

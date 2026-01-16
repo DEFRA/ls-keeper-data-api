@@ -187,4 +187,63 @@ public class MappingTests
         result.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         Guid.TryParse(result.Id, out _).Should().BeTrue();
     }
+
+    [Fact]
+    public void MapFacilityBusinessActivityMap_WithValidData_CreatesCorrectObject()
+    {
+        // Arrange
+        var tsvLine = "AB-EMB-ESEC\tAI\tActivity123";
+        var parts = tsvLine.Split('\t');
+
+        // Act
+        var result = Program.MapFacilityBusinessActivityMap(parts);
+
+        result.FacilityActivityCode.Should().Be("AB-EMB-ESEC");
+        result.AssociatedPremiseTypeCode.Should().Be("AI");
+        result.AssociatedPremiseActivityCode.Should().Be("Activity123");
+
+        // Assert
+        Guid.TryParse(result.Id, out _).Should().BeTrue();
+        result.IsActive.Should().BeTrue();
+
+        result.CreatedBy.Should().Be("System");
+        result.LastModifiedBy.Should().Be("System");
+
+        result.CreatedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        result.EffectiveStartDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        result.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+
+        result.EffectiveEndDate.Should().BeNull();
+    }
+
+    [Fact]
+    public void MapFacilityBusinessActivityMap_WithEmptyOptionalColumns_MapsToNull()
+    {
+        // Arrange
+        var tsvLine = "TB-AFU-\t\t   ";
+        var parts = tsvLine.Split('\t');
+
+        // Act
+        var result = Program.MapFacilityBusinessActivityMap(parts);
+
+        // Assert
+        result.FacilityActivityCode.Should().Be("TB-AFU-");
+        result.AssociatedPremiseTypeCode.Should().BeNull();
+        result.AssociatedPremiseActivityCode.Should().BeNull();
+    }
+
+    [Fact]
+    public void MapFacilityBusinessActivityMap_WithTooFewColumns_ThrowsInvalidDataException()
+    {
+        // Arrange
+        var tsvLine = "Code\tType";
+        var parts = tsvLine.Split('\t');
+
+        // Act
+        Action act = () => Program.MapFacilityBusinessActivityMap(parts);
+
+        // Assert
+        act.Should().Throw<InvalidDataException>()
+           .WithMessage("TSV line has fewer than 3 columns*");
+    }
 }

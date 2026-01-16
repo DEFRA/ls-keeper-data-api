@@ -1,7 +1,10 @@
-using DataConverter.Logic;
-using DataConverter.Models;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using TsvToJsonConverter.DataConverter;
 
+namespace TsvToJsonConverter;
+
+[ExcludeFromCodeCoverage]
 public class Program
 {
     public static async Task Main(string[] args)
@@ -15,8 +18,8 @@ public class Program
         var converter = new GenericTsvConverter();
         var dataType = args[0].ToLower();
         string jsonString;
-        string inputPath = "";
-        string outputPath = "";
+        var inputPath = "";
+        var outputPath = "";
 
         try
         {
@@ -25,43 +28,49 @@ public class Program
                 case "countries":
                     inputPath = "countries.tsv";
                     outputPath = "countries_generated.json";
-                    jsonString = await converter.Convert<CountryJson>(inputPath, MapCountry);
+                    jsonString = await GenericTsvConverter.Convert(inputPath, MapCountry);
                     break;
 
                 case "species":
                     inputPath = "species.tsv";
                     outputPath = "species_generated.json";
-                    jsonString = await converter.Convert<SpeciesJson>(inputPath, MapSpecies);
+                    jsonString = await GenericTsvConverter.Convert(inputPath, MapSpecies);
                     break;
 
                 case "roles":
                     inputPath = "roles.tsv";
                     outputPath = "roles_generated.json";
-                    jsonString = await converter.Convert<RoleJson>(inputPath, MapRole);
+                    jsonString = await GenericTsvConverter.Convert(inputPath, MapRole);
                     break;
 
                 case "premisestypes":
                     inputPath = "premisestypes.tsv";
                     outputPath = "premisestypes_generated.json";
-                    jsonString = await converter.Convert<PremisesTypeJson>(inputPath, MapPremisesType);
+                    jsonString = await GenericTsvConverter.Convert(inputPath, MapPremisesType);
                     break;
 
                 case "premisesactivitytypes":
                     inputPath = "premisesactivitytypes.tsv";
                     outputPath = "premisesactivitytypes_generated.json";
-                    jsonString = await converter.Convert<PremisesActivityTypeJson>(inputPath, MapPremisesActivityType);
+                    jsonString = await GenericTsvConverter.Convert(inputPath, MapPremisesActivityType);
                     break;
 
                 case "siteidentifiertypes":
                     inputPath = "siteidentifiertypes.tsv";
                     outputPath = "siteidentifiertypes_generated.json";
-                    jsonString = await converter.Convert<SiteIdentifierTypeJson>(inputPath, MapSiteIdentifierType);
+                    jsonString = await GenericTsvConverter.Convert(inputPath, MapSiteIdentifierType);
                     break;
 
                 case "productionusages":
                     inputPath = "productionusages.tsv";
                     outputPath = "productionusages_generated.json";
-                    jsonString = await converter.Convert<ProductionUsageJson>(inputPath, MapProductionUsage);
+                    jsonString = await GenericTsvConverter.Convert(inputPath, MapProductionUsage);
+                    break;
+
+                case "facilitybusinessactivitymaps":
+                    inputPath = "facilitybusinessactivitymaps.tsv";
+                    outputPath = "facilitybusinessactivitymaps_generated.json";
+                    jsonString = await GenericTsvConverter.Convert(inputPath, MapFacilityBusinessActivityMap);
                     break;
 
                 default:
@@ -223,11 +232,38 @@ public class Program
         );
     }
 
+    public static FacilityBusinessActivityMapJson MapFacilityBusinessActivityMap(string[] parts)
+    {
+        if (parts.Length < 3)
+            throw new InvalidDataException($"TSV line has fewer than 3 columns: {string.Join(",", parts)}");
+
+        var now = DateTime.UtcNow;
+
+        return new FacilityBusinessActivityMapJson(
+            // 1. Generate a new System ID
+            Id: Guid.NewGuid().ToString(),
+
+            // 2. Map the 3 columns from the TSV
+            FacilityActivityCode: parts[0].Trim(),
+            AssociatedPremiseTypeCode: string.IsNullOrWhiteSpace(parts[1]) ? null : parts[1].Trim(),
+            AssociatedPremiseActivityCode: (parts.Length > 2 && !string.IsNullOrWhiteSpace(parts[2])) ? parts[2].Trim() : null,
+
+            // 3. Generate Defaults for Audit fields required by Schema
+            IsActive: true,
+            EffectiveStartDate: now,
+            EffectiveEndDate: null,
+            CreatedBy: "System",
+            CreatedDate: now,
+            LastModifiedBy: "System",
+            LastModifiedDate: now
+        );
+    }
+
     private static void PrintUsage()
     {
         Console.WriteLine("\nUsage: dotnet run <data_type>");
         Console.WriteLine("Available data types: countries, species, partyroles, " +
-            "premisesactivitytypes, siteidentifiertypes, productionusages");
+            "premisesactivitytypes, siteidentifiertypes, productionusages, facilitybusinessactivitymaps");
     }
 
     private static void PrintSuccess(string outputPath, string inputPath)

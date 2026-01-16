@@ -1,9 +1,9 @@
 using FluentAssertions;
-using KeeperData.Application.Extensions;
 using KeeperData.Application.Orchestration.Imports.Cts.Mappings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Extensions;
 using KeeperData.Core.Services;
 using KeeperData.Tests.Common.Factories;
 using KeeperData.Tests.Common.Generators;
@@ -15,17 +15,17 @@ namespace KeeperData.Application.Tests.Unit.Orchestration.Imports.Cts.Holdings.M
 public class CtsAgentOrKeeperMapperTests
 {
     private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
-    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveRoleType;
+    private readonly Func<string?, CancellationToken, Task<(string?, string?, string?)>> _resolveRoleType;
 
     public CtsAgentOrKeeperMapperTests()
     {
         _roleTypeLookupServiceMock
             .Setup(x => x.FindAsync(EnumExtensions.GetDescription(InferredRoleType.Agent), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), InferredRoleType.Agent.ToString()));
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), InferredRoleType.Agent.GetDescription(), InferredRoleType.Agent.ToString()));
 
         _roleTypeLookupServiceMock
             .Setup(x => x.FindAsync(EnumExtensions.GetDescription(InferredRoleType.LivestockKeeper), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), InferredRoleType.LivestockKeeper.ToString()));
+            .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), InferredRoleType.LivestockKeeper.GetDescription(), InferredRoleType.LivestockKeeper.ToString()));
 
         _resolveRoleType = _roleTypeLookupServiceMock.Object.FindAsync;
     }
@@ -34,9 +34,7 @@ public class CtsAgentOrKeeperMapperTests
     public async Task GivenNullableRawAgentOrKeepers_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = await CtsAgentOrKeeperMapper.ToSilver(
-            DateTime.UtcNow,
             null!,
-            HoldingIdentifierType.CphNumber,
             InferredRoleType.Agent,
             _resolveRoleType,
             CancellationToken.None);
@@ -49,9 +47,7 @@ public class CtsAgentOrKeeperMapperTests
     public async Task GivenEmptyRawAgentOrKeepers_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = await CtsAgentOrKeeperMapper.ToSilver(
-            DateTime.UtcNow,
             [],
-            HoldingIdentifierType.CphNumber,
             InferredRoleType.Agent,
             _resolveRoleType,
             CancellationToken.None);
@@ -65,14 +61,12 @@ public class CtsAgentOrKeeperMapperTests
     {
         _roleTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((null, null));
+            .ReturnsAsync((null, null, null));
 
         var records = GenerateCtsAgentOrKeeper(1);
 
         var results = await CtsAgentOrKeeperMapper.ToSilver(
-            DateTime.UtcNow,
             records,
-            HoldingIdentifierType.CphNumber,
             InferredRoleType.Agent,
             _resolveRoleType,
             CancellationToken.None);
@@ -102,9 +96,7 @@ public class CtsAgentOrKeeperMapperTests
         var records = GenerateCtsAgentOrKeeper(quantity);
 
         var results = await CtsAgentOrKeeperMapper.ToSilver(
-            DateTime.UtcNow,
             records,
-            HoldingIdentifierType.CphNumber,
             inferredRoleType,
             _resolveRoleType,
             CancellationToken.None);

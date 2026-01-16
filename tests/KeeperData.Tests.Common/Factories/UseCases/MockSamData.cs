@@ -14,10 +14,21 @@ public static class MockSamData
         {
             CollectionName = "collection",
             Top = top,
-            Skip = top,
+            Skip = 0,
             Count = count,
             TotalCount = totalCount,
             Data = [.. s_fixture.CreateMany<SamCphHolding>(count)]
+        };
+
+    public static DataBridgeResponse<SamScanHoldingIdentifier> GetSamHoldingsScanIdentifierDataBridgeResponse(int top, int count, int totalCount) =>
+        new()
+        {
+            CollectionName = "collection",
+            Top = top,
+            Skip = 0,
+            Count = count,
+            TotalCount = totalCount,
+            Data = [.. s_fixture.CreateMany<SamScanHoldingIdentifier>(count)]
         };
 
     public static StringContent GetSamHoldingsStringContentResponse(int top, int skip) =>
@@ -49,10 +60,21 @@ public static class MockSamData
         {
             CollectionName = "collection",
             Top = top,
-            Skip = top,
+            Skip = 0,
             Count = count,
             TotalCount = totalCount,
             Data = [.. s_fixture.CreateMany<SamCphHolder>(count)]
+        };
+
+    public static DataBridgeResponse<SamScanHolderIdentifier> GetSamHolderScanIdentifierDataBridgeResponse(int top, int count, int totalCount) =>
+        new()
+        {
+            CollectionName = "collection",
+            Top = top,
+            Skip = 0,
+            Count = count,
+            TotalCount = totalCount,
+            Data = [.. s_fixture.CreateMany<SamScanHolderIdentifier>(count)]
         };
 
     public static StringContent GetSamHolderStringContentResponse(int top, int skip) =>
@@ -85,10 +107,21 @@ public static class MockSamData
         {
             CollectionName = "collection",
             Top = top,
-            Skip = top,
+            Skip = 0,
             Count = count,
             TotalCount = totalCount,
             Data = [.. s_fixture.CreateMany<SamHerd>(count)]
+        };
+
+    public static DataBridgeResponse<SamScanHerdIdentifier> GetSamHerdsScanIdentifierDataBridgeResponse(int top, int count, int totalCount) =>
+        new()
+        {
+            CollectionName = "collection",
+            Top = top,
+            Skip = 0,
+            Count = count,
+            TotalCount = totalCount,
+            Data = [.. s_fixture.CreateMany<SamScanHerdIdentifier>(count)]
         };
 
     public static StringContent GetSamHerdsStringContentResponse(int top, int skip) =>
@@ -135,10 +168,21 @@ public static class MockSamData
         {
             CollectionName = "collection",
             Top = top,
-            Skip = top,
+            Skip = 0,
             Count = count,
             TotalCount = totalCount,
             Data = [.. s_fixture.CreateMany<SamParty>(count)]
+        };
+
+    public static DataBridgeResponse<SamScanPartyIdentifier> GetSamPartiesScanIdentifierDataBridgeResponse(int top, int count, int totalCount) =>
+        new()
+        {
+            CollectionName = "collection",
+            Top = top,
+            Skip = 0,
+            Count = count,
+            TotalCount = totalCount,
+            Data = [.. s_fixture.CreateMany<SamScanPartyIdentifier>(count)]
         };
 
     public static StringContent GetSamPartiesStringContentResponse(int top, int skip) =>

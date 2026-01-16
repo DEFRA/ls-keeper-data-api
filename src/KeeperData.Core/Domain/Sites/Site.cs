@@ -10,7 +10,7 @@ public class Site : IAggregateRoot
     public string Id { get; private set; }
     public DateTime CreatedDate { get; private set; }
     public DateTime LastUpdatedDate { get; private set; }
-    public string Type { get; private set; }
+    public PremisesType? Type { get; private set; }
     public string Name { get; private set; }
     public DateTime StartDate { get; private set; }
     public DateTime? EndDate { get; private set; }
@@ -45,7 +45,6 @@ public class Site : IAggregateRoot
         string id,
         DateTime createdDate,
         DateTime lastUpdatedDate,
-        string type,
         string name,
         DateTime startDate,
         DateTime? endDate,
@@ -53,12 +52,12 @@ public class Site : IAggregateRoot
         string? source,
         bool? destroyIdentityDocumentsFlag,
         bool deleted,
+        PremisesType? type,
         Location? location)
     {
         Id = id;
         CreatedDate = createdDate;
         LastUpdatedDate = lastUpdatedDate;
-        Type = type;
         Name = name;
         StartDate = startDate;
         EndDate = endDate;
@@ -66,11 +65,14 @@ public class Site : IAggregateRoot
         Source = source;
         DestroyIdentityDocumentsFlag = destroyIdentityDocumentsFlag;
         Deleted = deleted;
+        Type = type;
         _location = location;
     }
 
     public static Site Create(
-        string type,
+        string id,
+        DateTime createdDate,
+        DateTime lastUpdatedDate,
         string name,
         DateTime startDate,
         DateTime? endDate,
@@ -78,13 +80,13 @@ public class Site : IAggregateRoot
         string? source,
         bool? destroyIdentityDocumentsFlag,
         bool deleted,
+        PremisesType? type = null,
         Location? location = null)
     {
         var site = new Site(
-            Guid.NewGuid().ToString(),
-            DateTime.UtcNow,
-            DateTime.UtcNow,
-            type,
+            id,
+            createdDate,
+            lastUpdatedDate,
             name,
             startDate,
             endDate,
@@ -92,6 +94,7 @@ public class Site : IAggregateRoot
             source,
             destroyIdentityDocumentsFlag,
             deleted,
+            type,
             location);
 
         site._domainEvents.Add(new SiteCreatedDomainEvent(site.Id));
@@ -100,7 +103,6 @@ public class Site : IAggregateRoot
 
     public void Update(
         DateTime lastUpdatedDate,
-        string type,
         string name,
         DateTime startDate,
         DateTime? endDate,
@@ -111,7 +113,6 @@ public class Site : IAggregateRoot
     {
         var changed = false;
 
-        changed |= Change(Type, type, v => Type = v, lastUpdatedDate);
         changed |= Change(Name, name, v => Name = v, lastUpdatedDate);
         changed |= Change(StartDate, startDate, v => StartDate = v, lastUpdatedDate);
         changed |= Change(EndDate, endDate, v => EndDate = v, lastUpdatedDate);
@@ -133,6 +134,17 @@ public class Site : IAggregateRoot
         Deleted = true;
         State = "Inactive";
         LastUpdatedDate = DateTime.UtcNow;
+    }
+
+    public void SetPremisesType(PremisesType? type, DateTime lastUpdatedDate)
+    {
+        if (Type == null && type == null) return;
+
+        if (Type is null || !Type.Equals(type))
+        {
+            Type = type;
+            UpdateLastUpdatedDate(lastUpdatedDate);
+        }
     }
 
     public void SetLocation(Location location)
@@ -161,9 +173,13 @@ public class Site : IAggregateRoot
         }
     }
 
-    public void SetSiteIdentifier(DateTime lastUpdatedDate, string identifier, string type, string? id = null)
+    public void SetSiteIdentifier(
+        DateTime lastUpdatedDate,
+        string identifier,
+        SiteIdentifierType type,
+        string? id = null)
     {
-        var existing = _identifiers.FirstOrDefault(i => i.Type == type);
+        var existing = _identifiers.FirstOrDefault(i => i.Type.Id == type.Id);
 
         if (existing is not null)
         {
@@ -181,6 +197,210 @@ public class Site : IAggregateRoot
 
         _identifiers.Add(siteIdentifier);
         UpdateLastUpdatedDate(DateTime.UtcNow);
+    }
+
+    public void SetSpecies(IEnumerable<Species> incomingSpecies, DateTime lastUpdatedDate)
+    {
+        var incomingList = incomingSpecies.ToList();
+        var changed = false;
+
+        foreach (var incoming in incomingList)
+        {
+            var existing = _species.FirstOrDefault(s => s.Code == incoming.Code);
+
+            if (existing is not null)
+            {
+                changed |= existing.ApplyChanges(lastUpdatedDate, incoming.Code, incoming.Name);
+            }
+            else
+            {
+                _species.Add(Shared.Species.Create(incoming.Id, lastUpdatedDate, incoming.Code, incoming.Name));
+                changed = true;
+            }
+        }
+
+        var orphaned = _species
+            .Where(existing => incomingList.All(i => i.Code != existing.Code))
+            .ToList();
+
+        if (orphaned.Count != 0)
+        {
+            foreach (var orphan in orphaned)
+            {
+                _species.Remove(orphan);
+            }
+            changed = true;
+        }
+
+        if (changed)
+        {
+            UpdateLastUpdatedDate(lastUpdatedDate);
+        }
+    }
+
+    public void SetActivities(IEnumerable<SiteActivity> incomingActivities, DateTime lastUpdatedDate)
+    {
+        var incomingList = incomingActivities.ToList();
+        var changed = false;
+
+        foreach (var incoming in incomingList)
+        {
+            var existing = _activities.FirstOrDefault(a => a.Id == incoming.Id);
+
+            if (existing is not null)
+            {
+                changed |= existing.ApplyChanges(
+                    lastUpdatedDate,
+                    incoming.Type,
+                    incoming.StartDate,
+                    incoming.EndDate);
+            }
+            else
+            {
+                _activities.Add(SiteActivity.Create(
+                    incoming.Id,
+                    incoming.Type,
+                    incoming.StartDate,
+                    incoming.EndDate,
+                    lastUpdatedDate));
+                changed = true;
+            }
+        }
+
+        var incomingIds = incomingList.Select(i => i.Id).ToHashSet();
+        var orphaned = _activities.Where(a => !incomingIds.Contains(a.Id)).ToList();
+
+        if (orphaned.Count > 0)
+        {
+            foreach (var orphan in orphaned)
+            {
+                _activities.Remove(orphan);
+            }
+            changed = true;
+        }
+
+        if (changed)
+        {
+            UpdateLastUpdatedDate(lastUpdatedDate);
+        }
+    }
+
+    public void SetGroupMarks(IEnumerable<GroupMark> incomingMarks, DateTime lastUpdatedDate)
+    {
+        var incomingList = incomingMarks.ToList();
+        var changed = false;
+
+        foreach (var incoming in incomingList)
+        {
+            var existing = _marks.FirstOrDefault(m =>
+                m.Mark == incoming.Mark &&
+                m.Species?.Id == incoming.Species?.Id);
+
+            if (existing is not null)
+            {
+                changed |= existing.ApplyChanges(
+                    lastUpdatedDate,
+                    incoming.Mark,
+                    incoming.StartDate,
+                    incoming.EndDate,
+                    incoming.Species);
+            }
+            else
+            {
+                _marks.Add(new GroupMark(
+                    incoming.Id,
+                    lastUpdatedDate,
+                    incoming.Mark,
+                    incoming.StartDate,
+                    incoming.EndDate,
+                    incoming.Species));
+                changed = true;
+            }
+        }
+
+        var orphaned = _marks
+            .Where(existing => incomingList.All(i =>
+                i.Mark != existing.Mark ||
+                i.Species?.Id != existing.Species?.Id))
+            .ToList();
+
+        if (orphaned.Count != 0)
+        {
+            foreach (var orphan in orphaned)
+            {
+                _marks.Remove(orphan);
+            }
+            changed = true;
+        }
+
+        if (changed)
+        {
+            UpdateLastUpdatedDate(lastUpdatedDate);
+        }
+    }
+
+    public void SetSiteParties(string goldSiteId, IEnumerable<SiteParty> incomingParties, DateTime lastUpdatedDate)
+    {
+        var incomingList = incomingParties.ToList();
+        var changed = false;
+
+        foreach (var incoming in incomingList)
+        {
+            var existing = _parties.FirstOrDefault(p => p.CustomerNumber == incoming.CustomerNumber);
+            var siteSpecificPartyRoles = incoming.PartyRoles?.Where(x => x.Site != null && x.Site.Id == goldSiteId).ToList() ?? [];
+
+            if (existing is not null)
+            {
+                changed |= existing.ApplyChanges(
+                    incoming.LastUpdatedDate,
+                    incoming.CustomerNumber,
+                    incoming.Title,
+                    incoming.FirstName,
+                    incoming.LastName,
+                    incoming.Name,
+                    incoming.PartyType,
+                    incoming.State,
+                    incoming.CorrespondanceAddress,
+                    incoming.Communication,
+                    siteSpecificPartyRoles);
+            }
+            else
+            {
+                _parties.Add(new SiteParty(
+                    incoming.Id,
+                    incoming.CreatedDate,
+                    incoming.LastUpdatedDate,
+                    incoming.CustomerNumber,
+                    incoming.Title,
+                    incoming.FirstName,
+                    incoming.LastName,
+                    incoming.Name,
+                    incoming.PartyType,
+                    incoming.State,
+                    incoming.CorrespondanceAddress,
+                    incoming.Communication,
+                    siteSpecificPartyRoles));
+                changed = true;
+            }
+        }
+
+        var orphaned = _parties
+            .Where(existing => incomingList.All(i => i.CustomerNumber != existing.CustomerNumber))
+            .ToList();
+
+        if (orphaned.Count != 0)
+        {
+            foreach (var orphan in orphaned)
+            {
+                _parties.Remove(orphan);
+            }
+            changed = true;
+        }
+
+        if (changed)
+        {
+            UpdateLastUpdatedDate(lastUpdatedDate);
+        }
     }
 
     private bool Change<T>(T currentValue, T newValue, Action<T> setter, DateTime lastUpdatedAt)

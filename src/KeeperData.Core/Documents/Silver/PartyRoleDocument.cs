@@ -10,10 +10,27 @@ public class PartyRoleDocument : INestedEntity
     [BsonElement("id")]
     public required string IdentifierId { get; set; }
 
+    [JsonPropertyName("roleTypeId")]
+    [BsonElement("roleTypeId")]
     public string? RoleTypeId { get; set; } // LOV Lookup / Internal Id
-    public string? RoleTypeName { get; set; } // LOV Lookup / Internal Name
+
+    [JsonPropertyName("roleTypeCode")]
+    [BsonElement("roleTypeCode")]
+    public string? RoleTypeCode { get; set; }
+
+    [JsonPropertyName("roleTypeName")]
+    [BsonElement("roleTypeName")]
+    public string? RoleTypeName { get; set; }
+
+    [JsonPropertyName("sourceRoleName")]
+    [BsonElement("sourceRoleName")]
     public string? SourceRoleName { get; set; }
 
+    [JsonPropertyName("effectiveFromDate")]
+    [BsonElement("effectiveFromDate")]
     public DateTime? EffectiveFromDate { get; set; }
+
+    [JsonPropertyName("effectiveToDate")]
+    [BsonElement("effectiveToDate")]
     public DateTime? EffectiveToDate { get; set; }
 }

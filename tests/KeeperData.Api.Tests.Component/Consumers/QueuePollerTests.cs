@@ -1,13 +1,11 @@
-using Amazon.SQS;
 using Amazon.SQS.Model;
 using FluentAssertions;
 using KeeperData.Api.Tests.Component.Consumers.Helpers;
+using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
-using KeeperData.Core.Messaging.MessageHandlers;
-using KeeperData.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using NSubstitute.ExceptionExtensions;
@@ -15,11 +13,21 @@ using System.Net;
 
 namespace KeeperData.Api.Tests.Component.Consumers;
 
-public class QueuePollerTests
+[Collection("QueuePollerTests")]
+public class QueuePollerTests : IClassFixture<AppTestFixture>
 {
+    private readonly AppTestFixture _appTestFixture;
+
+    public QueuePollerTests(AppTestFixture appTestFixture)
+    {
+        _appTestFixture = appTestFixture;
+    }
+
     [Fact]
     public async Task GivenMessageOriginatesFromSns_WhenReceiveMessageCalled_ShouldCompleteMessage()
     {
+        _appTestFixture.AppWebApplicationFactory.ResetMocks();
+
         var messageId = Guid.NewGuid().ToString();
         var correlationId = Guid.NewGuid().ToString();
         var identifierId = Guid.NewGuid();
@@ -28,23 +36,22 @@ public class QueuePollerTests
         var messageArgs = GetMessageWithOriginSnsArgs(messageId, correlationId, componentTestMessage);
         var receiveMessageResponseArgs = GetReceiveMessageResponseArgs(messageArgs);
 
-        var amazonSqsMock = new Mock<IAmazonSQS>();
-        amazonSqsMock
+        _appTestFixture.AppWebApplicationFactory.AmazonSQSMock!
             .Setup(x => x.ReceiveMessageAsync(It.IsAny<ReceiveMessageRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ReceiveMessageResponse { HttpStatusCode = HttpStatusCode.OK, Messages = [] });
-        amazonSqsMock
+        _appTestFixture.AppWebApplicationFactory.AmazonSQSMock!
             .SetupSequence(x => x.ReceiveMessageAsync(It.IsAny<ReceiveMessageRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(receiveMessageResponseArgs)
             .ReturnsAsync(new ReceiveMessageResponse { HttpStatusCode = HttpStatusCode.OK, Messages = [] });
-        amazonSqsMock
+        _appTestFixture.AppWebApplicationFactory.AmazonSQSMock!
             .Setup(x => x.DeleteMessageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new DeleteMessageResponse { HttpStatusCode = HttpStatusCode.OK });
 
-        var factory = new AppWebApplicationFactory();
-        factory.OverrideServiceAsSingleton(amazonSqsMock.Object);
-        factory.OverrideServiceAsTransient<IMessageHandler<SamImportHoldingMessage>, TestSamCphHoldingImportedMessage>();
+        _appTestFixture.AppWebApplicationFactory._samImportHoldingMessageHandlerMock.Setup(
+            x => x.Handle(It.IsAny<ProcessSamImportHoldingMessageCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(componentTestMessage);
 
-        using var scope = factory.Services.CreateAsyncScope();
+        await using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateAsyncScope();
         var queuePoller = scope.ServiceProvider.GetRequiredService<IQueuePoller>();
         var queuePollerObserver = scope.ServiceProvider.GetRequiredService<TestQueuePollerObserver<MessageType>>();
 
@@ -58,13 +65,14 @@ public class QueuePollerTests
         payloadAsType.Should().NotBeNull();
         payloadAsType.Identifier.Should().NotBeNull().And.Be(identifierId.ToString());
 
-        SQSMessageUtility.VerifyMessageWasCompleted(amazonSqsMock);
+        SQSMessageUtility.VerifyMessageWasCompleted(_appTestFixture.AppWebApplicationFactory.AmazonSQSMock!);
     }
 
     [Fact]
     public async Task GivenMessageOriginatesFromSqs_WhenReceiveMessageCalled_ShouldCompleteMessage()
     {
-        // Arrange
+        _appTestFixture.AppWebApplicationFactory.ResetMocks();
+
         var messageId = Guid.NewGuid().ToString();
         var correlationId = Guid.NewGuid().ToString();
         var identifierId = Guid.NewGuid();
@@ -73,23 +81,22 @@ public class QueuePollerTests
         var messageArgs = GetMessageWithOriginSqsArgs(messageId, correlationId, componentTestMessage);
         var receiveMessageResponseArgs = GetReceiveMessageResponseArgs(messageArgs);
 
-        var amazonSqsMock = new Mock<IAmazonSQS>();
-        amazonSqsMock
+        _appTestFixture.AppWebApplicationFactory.AmazonSQSMock!
             .Setup(x => x.ReceiveMessageAsync(It.IsAny<ReceiveMessageRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ReceiveMessageResponse { HttpStatusCode = HttpStatusCode.OK, Messages = [] });
-        amazonSqsMock
+        _appTestFixture.AppWebApplicationFactory.AmazonSQSMock!
             .SetupSequence(x => x.ReceiveMessageAsync(It.IsAny<ReceiveMessageRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(receiveMessageResponseArgs)
             .ReturnsAsync(new ReceiveMessageResponse { HttpStatusCode = HttpStatusCode.OK, Messages = [] });
-        amazonSqsMock
+        _appTestFixture.AppWebApplicationFactory.AmazonSQSMock!
             .Setup(x => x.DeleteMessageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new DeleteMessageResponse { HttpStatusCode = HttpStatusCode.OK });
 
-        var factory = new AppWebApplicationFactory();
-        factory.OverrideServiceAsSingleton(amazonSqsMock.Object);
-        factory.OverrideServiceAsTransient<IMessageHandler<SamImportHoldingMessage>, TestSamCphHoldingImportedMessage>();
+        _appTestFixture.AppWebApplicationFactory._samImportHoldingMessageHandlerMock.Setup(
+            x => x.Handle(It.IsAny<ProcessSamImportHoldingMessageCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(componentTestMessage);
 
-        using var scope = factory.Services.CreateAsyncScope();
+        await using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateAsyncScope();
         var queuePoller = scope.ServiceProvider.GetRequiredService<IQueuePoller>();
         var queuePollerObserver = scope.ServiceProvider.GetRequiredService<TestQueuePollerObserver<MessageType>>();
 
@@ -103,12 +110,14 @@ public class QueuePollerTests
         payloadAsType.Should().NotBeNull();
         payloadAsType.Identifier.Should().NotBeNull().And.Be(identifierId.ToString());
 
-        SQSMessageUtility.VerifyMessageWasCompleted(amazonSqsMock);
+        SQSMessageUtility.VerifyMessageWasCompleted(_appTestFixture.AppWebApplicationFactory.AmazonSQSMock!);
     }
 
     [Fact]
     public async Task GivenValidMessage_WhenMessageHandlerReturnsTemporaryFailure_ThenShouldCallOnMessageFailed()
     {
+        _appTestFixture.AppWebApplicationFactory.ResetMocks();
+
         var messageId = Guid.NewGuid().ToString();
         var correlationId = Guid.NewGuid().ToString();
         var identifierId = Guid.NewGuid();
@@ -117,25 +126,19 @@ public class QueuePollerTests
         var messageArgs = GetMessageWithOriginSnsArgs(messageId, correlationId, componentTestMessage);
         var receiveMessageResponseArgs = GetReceiveMessageResponseArgs(messageArgs);
 
-        var amazonSqsMock = new Mock<IAmazonSQS>();
-        amazonSqsMock
+        _appTestFixture.AppWebApplicationFactory.AmazonSQSMock!
             .Setup(x => x.ReceiveMessageAsync(It.IsAny<ReceiveMessageRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ReceiveMessageResponse { HttpStatusCode = HttpStatusCode.OK, Messages = [] });
-        amazonSqsMock
+        _appTestFixture.AppWebApplicationFactory.AmazonSQSMock!
             .SetupSequence(x => x.ReceiveMessageAsync(It.IsAny<ReceiveMessageRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(receiveMessageResponseArgs)
             .ReturnsAsync(new ReceiveMessageResponse { HttpStatusCode = HttpStatusCode.OK, Messages = [] });
 
-        var samCphHoldingImportedMessageMock = new Mock<IMessageHandler<SamImportHoldingMessage>>();
-        samCphHoldingImportedMessageMock
-            .Setup(x => x.Handle(It.IsAny<UnwrappedMessage>(), It.IsAny<CancellationToken>()))
+        _appTestFixture.AppWebApplicationFactory._samImportHoldingMessageHandlerMock
+            .Setup(x => x.Handle(It.IsAny<ProcessSamImportHoldingMessageCommand>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new RetryableException("A temporary failure has occurred"));
 
-        var factory = new AppWebApplicationFactory();
-        factory.OverrideServiceAsSingleton(amazonSqsMock.Object);
-        factory.OverrideServiceAsSingleton(samCphHoldingImportedMessageMock.Object);
-
-        using var scope = factory.Services.CreateAsyncScope();
+        await using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateAsyncScope();
         var queuePoller = scope.ServiceProvider.GetRequiredService<IQueuePoller>();
         var queuePollerObserver = scope.ServiceProvider.GetRequiredService<TestQueuePollerObserver<MessageType>>();
 
@@ -152,6 +155,8 @@ public class QueuePollerTests
     [Fact]
     public async Task GivenValidMessage_WhenMessageHandlerReturnsPermanentFailure_ThenShouldCallOnMessageFailed()
     {
+        _appTestFixture.AppWebApplicationFactory.ResetMocks();
+
         var messageId = Guid.NewGuid().ToString();
         var correlationId = Guid.NewGuid().ToString();
         var identifierId = Guid.NewGuid();
@@ -160,25 +165,19 @@ public class QueuePollerTests
         var messageArgs = GetMessageWithOriginSnsArgs(messageId, correlationId, componentTestMessage);
         var receiveMessageResponseArgs = GetReceiveMessageResponseArgs(messageArgs);
 
-        var amazonSqsMock = new Mock<IAmazonSQS>();
-        amazonSqsMock
+        _appTestFixture.AppWebApplicationFactory.AmazonSQSMock!
             .Setup(x => x.ReceiveMessageAsync(It.IsAny<ReceiveMessageRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ReceiveMessageResponse { HttpStatusCode = HttpStatusCode.OK, Messages = [] });
-        amazonSqsMock
+        _appTestFixture.AppWebApplicationFactory.AmazonSQSMock!
             .SetupSequence(x => x.ReceiveMessageAsync(It.IsAny<ReceiveMessageRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(receiveMessageResponseArgs)
             .ReturnsAsync(new ReceiveMessageResponse { HttpStatusCode = HttpStatusCode.OK, Messages = [] });
 
-        var samCphHoldingImportedMessageMock = new Mock<IMessageHandler<SamImportHoldingMessage>>();
-        samCphHoldingImportedMessageMock
-            .Setup(x => x.Handle(It.IsAny<UnwrappedMessage>(), It.IsAny<CancellationToken>()))
+        _appTestFixture.AppWebApplicationFactory._samImportHoldingMessageHandlerMock
+            .Setup(x => x.Handle(It.IsAny<ProcessSamImportHoldingMessageCommand>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new NonRetryableException("A permanent failure has occurred"));
 
-        var factory = new AppWebApplicationFactory();
-        factory.OverrideServiceAsSingleton(amazonSqsMock.Object);
-        factory.OverrideServiceAsSingleton(samCphHoldingImportedMessageMock.Object);
-
-        using var scope = factory.Services.CreateAsyncScope();
+        await using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateAsyncScope();
         var queuePoller = scope.ServiceProvider.GetRequiredService<IQueuePoller>();
         var queuePollerObserver = scope.ServiceProvider.GetRequiredService<TestQueuePollerObserver<MessageType>>();
 
@@ -195,6 +194,8 @@ public class QueuePollerTests
     [Fact]
     public async Task GivenValidMessage_WhenNoMessageHandlerIsRegistered_ThenShouldCallOnMessageFailed()
     {
+        _appTestFixture.AppWebApplicationFactory.ResetMocks();
+
         var messageId = Guid.NewGuid().ToString();
         var correlationId = Guid.NewGuid().ToString();
         var messageText = Guid.NewGuid();
@@ -203,19 +204,15 @@ public class QueuePollerTests
         var messageArgs = GetMessageWithOriginSnsArgs(messageId, correlationId, componentTestMessage);
         var receiveMessageResponseArgs = GetReceiveMessageResponseArgs(messageArgs);
 
-        var amazonSqsMock = new Mock<IAmazonSQS>();
-        amazonSqsMock
+        _appTestFixture.AppWebApplicationFactory.AmazonSQSMock!
             .Setup(x => x.ReceiveMessageAsync(It.IsAny<ReceiveMessageRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ReceiveMessageResponse { HttpStatusCode = HttpStatusCode.OK, Messages = [] });
-        amazonSqsMock
+        _appTestFixture.AppWebApplicationFactory.AmazonSQSMock!
             .SetupSequence(x => x.ReceiveMessageAsync(It.IsAny<ReceiveMessageRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(receiveMessageResponseArgs)
             .ReturnsAsync(new ReceiveMessageResponse { HttpStatusCode = HttpStatusCode.OK, Messages = [] });
 
-        var factory = new AppWebApplicationFactory();
-        factory.OverrideServiceAsSingleton(amazonSqsMock.Object);
-
-        using var scope = factory.Services.CreateAsyncScope();
+        await using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateAsyncScope();
         var queuePoller = scope.ServiceProvider.GetRequiredService<IQueuePoller>();
         var queuePollerObserver = scope.ServiceProvider.GetRequiredService<TestQueuePollerObserver<MessageType>>();
 
@@ -225,8 +222,8 @@ public class QueuePollerTests
         var (MessageId, Exception) = await queuePollerObserver.MessageFailed;
 
         MessageId.Should().NotBeNull().And.Be(messageId);
-        Exception.Should().BeOfType<KeyNotFoundException>();
-        Exception.Message.Should().Be("The given key 'QueuePollerTest' was not present in the dictionary.");
+        Exception.Should().BeOfType<InvalidOperationException>();
+        Exception.Message.Should().Be($"No command registered for subject QueuePollerTest");
     }
 
     private static SamImportHoldingMessage GetSamCphHoldingImportedMessage(string identifier) => new()
@@ -253,16 +250,4 @@ public class QueuePollerTests
     }
 
     public class QueuePollerTestMessage : MessageType { }
-
-    public class TestSamCphHoldingImportedMessage() : IMessageHandler<SamImportHoldingMessage>
-    {
-        public async Task<MessageType> Handle(UnwrappedMessage message, CancellationToken cancellationToken = default)
-        {
-            ArgumentNullException.ThrowIfNull(message, nameof(message));
-
-            var messagePayload = System.Text.Json.JsonSerializer.Deserialize<SamImportHoldingMessage>(message.Payload, JsonDefaults.DefaultOptions);
-
-            return await Task.FromResult(messagePayload!);
-        }
-    }
 }

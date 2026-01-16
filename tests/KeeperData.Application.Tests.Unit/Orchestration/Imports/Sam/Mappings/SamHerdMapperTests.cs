@@ -2,6 +2,7 @@ using FluentAssertions;
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Services;
 using KeeperData.Tests.Common.Factories;
 using KeeperData.Tests.Common.Generators;
@@ -13,11 +14,9 @@ namespace KeeperData.Application.Tests.Unit.Orchestration.Imports.Sam.Mappings;
 public class SamHerdMapperTests
 {
     private readonly Mock<IProductionUsageLookupService> _productionUsageLookupServiceMock = new();
-    // private readonly Mock<IProductionTypeLookupService> _productionTypeLookupServiceMock = new();
     private readonly Mock<ISpeciesTypeLookupService> _speciesTypeLookupServiceMock = new();
 
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveProductionUsage;
-    // private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveProductionType;
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveSpeciesType;
 
     public SamHerdMapperTests()
@@ -31,7 +30,6 @@ public class SamHerdMapperTests
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
         _resolveProductionUsage = _productionUsageLookupServiceMock.Object.FindAsync;
-        // _resolveProductionType = _productionTypeLookupServiceMock.Object.FindAsync;
         _resolveSpeciesType = _speciesTypeLookupServiceMock.Object.FindAsync;
     }
 
@@ -39,10 +37,8 @@ public class SamHerdMapperTests
     public async Task GivenNullableRawHerds_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = await SamHerdMapper.ToSilver(
-            DateTime.UtcNow,
             (List<SamHerd>?)null!,
             _resolveProductionUsage,
-            // _resolveProductionType,
             _resolveSpeciesType,
             CancellationToken.None);
 
@@ -54,10 +50,8 @@ public class SamHerdMapperTests
     public async Task GivenEmptyRawHerds_WhenCallingToSilver_ShouldReturnEmptyList()
     {
         var results = await SamHerdMapper.ToSilver(
-            DateTime.UtcNow,
             [],
             _resolveProductionUsage,
-            // _resolveProductionType,
             _resolveSpeciesType,
             CancellationToken.None);
 
@@ -75,10 +69,8 @@ public class SamHerdMapperTests
         var records = GenerateSamHerds(quantityHerds: 1, quantityParties: 2);
 
         var results = await SamHerdMapper.ToSilver(
-            DateTime.UtcNow,
             records,
             _resolveProductionUsage,
-            // _resolveProductionType,
             _resolveSpeciesType,
             CancellationToken.None);
 
@@ -88,7 +80,7 @@ public class SamHerdMapperTests
         var herd = results[0];
 
         herd.Should().NotBeNull();
-        herd.ProductionUsageCode.Should().Be(records[0].AnimalPurposeCodeUnwrapped);
+        herd.ProductionUsageCode.Should().Be(ProductionUsageCodeFormatters.TrimProductionUsageCodeHerd(records[0].AnimalPurposeCodeUnwrapped));
         herd.ProductionUsageId.Should().BeNull();
     }
 
@@ -102,10 +94,8 @@ public class SamHerdMapperTests
         var records = GenerateSamHerds(quantityHerds: 1, quantityParties: 2);
 
         var results = await SamHerdMapper.ToSilver(
-            DateTime.UtcNow,
             records,
             _resolveProductionUsage,
-            // _resolveProductionType,
             _resolveSpeciesType,
             CancellationToken.None);
 
@@ -130,10 +120,8 @@ public class SamHerdMapperTests
         var records = GenerateSamHerds(quantityHerds, quantityParties);
 
         var results = await SamHerdMapper.ToSilver(
-            DateTime.UtcNow,
             records,
             _resolveProductionUsage,
-            // _resolveProductionType,
             _resolveSpeciesType,
             CancellationToken.None);
 

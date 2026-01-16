@@ -22,12 +22,14 @@ public class Species : ValueObject
     }
 
     public static Species Create(
+        string id,
+        DateTime? lastUpdatedDate,
         string code,
         string name)
     {
         return new Species(
-            Guid.NewGuid().ToString(),
-            DateTime.UtcNow,
+            id,
+            lastUpdatedDate,
             code,
             name
         );
@@ -56,7 +58,6 @@ public class Species : ValueObject
 
     public override IEnumerable<object> GetEqualityComponents()
     {
-        yield return Code;
-        yield return Name;
+        yield return Id;
     }
 }

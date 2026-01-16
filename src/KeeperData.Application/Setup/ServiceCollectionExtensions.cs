@@ -1,16 +1,24 @@
 using FluentValidation;
+using KeeperData.Application.Configuration;
 using KeeperData.Application.Orchestration.ChangeScanning;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk.Steps;
 using KeeperData.Application.Orchestration.Imports;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings.Steps;
+using KeeperData.Application.Orchestration.Updates;
+using KeeperData.Application.Orchestration.Updates.Cts.Holdings;
+using KeeperData.Application.Orchestration.Updates.Cts.Holdings.Steps;
 using KeeperData.Application.Providers;
+using KeeperData.Application.Queries.Countries.Adapters;
+using KeeperData.Application.Queries.Parties.Adapters;
 using KeeperData.Application.Queries.Sites.Adapters;
 using KeeperData.Application.Services;
+using KeeperData.Application.Services.BatchCompletion;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Providers;
 using KeeperData.Core.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
@@ -18,7 +26,7 @@ namespace KeeperData.Application.Setup;
 
 public static class ServiceCollectionExtensions
 {
-    public static void AddApplicationLayer(this IServiceCollection services)
+    public static void AddApplicationLayer(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddMediatR(cfg =>
         {
@@ -26,16 +34,23 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddScoped<IRequestExecutor, RequestExecutor>();
+        RegisterValidationConfig(configuration, services);
+
         services.AddValidatorsFromAssemblyContaining<IRequestExecutor>();
 
+        services.AddScoped<CountriesQueryAdapter>();
         services.AddScoped<SitesQueryAdapter>();
+        services.AddScoped<PartiesQueryAdapter>();
         services.AddTransient<IDelayProvider, RealDelayProvider>();
 
         RegisterImportOrchestrators(services, typeof(SamHoldingImportOrchestrator).Assembly);
         RegisterImportSteps(services, typeof(SamHoldingImportAggregationStep).Assembly);
         RegisterScanOrchestrators(services, typeof(SamBulkScanOrchestrator).Assembly);
         RegisterScanSteps(services, typeof(SamHoldingBulkScanStep).Assembly);
+        RegisterUpdateOrchestrators(services, typeof(CtsUpdateHoldingOrchestrator).Assembly);
+        RegisterUpdateSteps(services, typeof(CtsUpdateHoldingRawAggregationStep).Assembly);
         RegisterLookupServices(services);
+        RegisterNotificationService(services);
     }
 
     public static void RegisterImportOrchestrators(IServiceCollection services, Assembly assembly)
@@ -98,6 +113,36 @@ public static class ServiceCollectionExtensions
         }
     }
 
+    public static void RegisterUpdateOrchestrators(IServiceCollection services, Assembly assembly)
+    {
+        var orchestratorTypes = assembly.GetTypes()
+            .Where(t => !t.IsAbstract && !t.IsInterface)
+            .Where(t => t.BaseType?.IsGenericType == true &&
+                        t.BaseType.GetGenericTypeDefinition() == typeof(UpdateOrchestrator<>));
+
+        foreach (var orchestrator in orchestratorTypes)
+        {
+            services.AddScoped(orchestrator);
+        }
+    }
+
+    public static void RegisterUpdateSteps(IServiceCollection services, Assembly assembly)
+    {
+        var stepTypes = assembly.GetTypes()
+            .Where(t => !t.IsAbstract && !t.IsInterface)
+            .SelectMany(t => t.GetInterfaces()
+                .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IUpdateStep<>))
+                .Select(i => new { Implementation = t, Service = i }));
+
+        var orderedSteps = stepTypes
+            .OrderBy(t => t.Implementation.GetCustomAttribute<StepOrderAttribute>()?.Order ?? int.MaxValue);
+
+        foreach (var step in orderedSteps)
+        {
+            services.AddScoped(step.Service, step.Implementation);
+        }
+    }
+
     public static void RegisterLookupServices(IServiceCollection services)
     {
         services.AddTransient<ICountryIdentifierLookupService, CountryIdentifierLookupService>();
@@ -108,5 +153,38 @@ public static class ServiceCollectionExtensions
         services.AddTransient<IRoleTypeLookupService, RoleTypeLookupService>();
         services.AddTransient<ISpeciesTypeLookupService, SpeciesTypeLookupService>();
         services.AddTransient<ISiteIdentifierTypeLookupService, SiteIdentifierTypeLookupService>();
+        services.AddTransient<IActivityCodeLookupService, ActivityCodeLookupService>();
+    }
+
+    public static void RegisterNotificationService(IServiceCollection services)
+    {
+        services.AddScoped<IBatchCompletionNotificationService, BatchCompletionNotificationService>();
+    }
+
+    /// <summary>
+    /// Register strongly-typed config for each query validator.
+    /// </summary>
+    /// <remarks>Each validator constructor can request a strongly typed config for its own particular defaults
+    /// (e.g. GetSiteQueryValidator constructor takes parameter of type QueryValidationConfig<GetSiteQueryValidator>)</remarks>
+    private static void RegisterValidationConfig(IConfiguration configuration, IServiceCollection services)
+    {
+        var queryValidationConfig = configuration.GetSection(QueryValidationConfig.SectionName).Get<List<QueryValidationConfig>>();
+        var validatorTypes = typeof(Queries.Sites.GetSitesQueryValidator).Assembly.GetTypes();
+        var getConfigSectionMethod = typeof(ConfigurationBinder)
+            .GetMethods()
+            .Single(m => m.Name == "Get"
+                && m.ContainsGenericParameters
+                && m.GetParameters().Length == 1
+                && m.GetParameters().Single().ParameterType == typeof(IConfiguration));
+
+        for (var i = 0; i < queryValidationConfig?.Count; i++)
+        {
+            var validatorType = validatorTypes.Single(t => t.Name == queryValidationConfig[i].ValidatorType);
+            var typeOfConfigForValidator = typeof(QueryValidationConfig<>).MakeGenericType(validatorType);
+            var configInstance = getConfigSectionMethod
+                .MakeGenericMethod(typeOfConfigForValidator)
+                .Invoke(null, [configuration.GetSection($"{QueryValidationConfig.SectionName}:{i}")]);
+            services.AddSingleton(typeOfConfigForValidator, configInstance!);
+        }
     }
 }

@@ -1,4 +1,7 @@
+using KeeperData.Core.Attributes;
+using KeeperData.Core.Repositories;
 using MongoDB.Driver;
+using System.Reflection;
 
 namespace KeeperData.Api.Tests.Integration.Helpers;
 
@@ -8,7 +11,9 @@ public class MongoVerifier
 
     public MongoVerifier(string connectionString, string databaseName)
     {
-        var client = new MongoClient(connectionString);
+        var settings = MongoClientSettings.FromConnectionString(connectionString);
+        settings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
+        var client = new MongoClient(settings);
         _database = client.GetDatabase(databaseName);
     }
 
@@ -29,5 +34,42 @@ public class MongoVerifier
     {
         var collection = _database.GetCollection<TDocument>(collectionName);
         return await collection.Find(filter).ToListAsync(cancellationToken);
+    }
+
+    public async Task Insert<T>(IEnumerable<T> entities) where T : IEntity
+    {
+        var collectionName = typeof(T).GetCustomAttribute<CollectionNameAttribute>()?.Name ?? typeof(T).Name;
+        var collection = _database.GetCollection<T>(collectionName);
+        await collection.InsertManyAsync(entities, new InsertManyOptions { BypassDocumentValidation = true });
+    }
+
+    public async Task Delete<T>(IEnumerable<T> entities) where T : IEntity
+    {
+        var collectionName = typeof(T).GetCustomAttribute<CollectionNameAttribute>()?.Name ?? typeof(T).Name;
+        var collection = _database.GetCollection<T>(collectionName);
+
+        var ids = entities.Select(e => e.Id).ToList();
+        await collection.DeleteManyAsync(Builders<T>.Filter.In("_id", ids));
+    }
+
+    public async Task DeleteAll<T>() where T : IEntity
+    {
+        var collectionName = typeof(T).GetCustomAttribute<CollectionNameAttribute>()?.Name ?? typeof(T).Name;
+        var collection = _database.GetCollection<T>(collectionName);
+        await collection.DeleteManyAsync(FilterDefinition<T>.Empty);
+    }
+
+    public async Task ClearAllCollections()
+    {
+        var collectionNames = await _database.ListCollectionNamesAsync();
+        var collections = await collectionNames.ToListAsync();
+
+        foreach (var collectionName in collections)
+        {
+            if (collectionName.StartsWith("system."))
+                continue;
+
+            await _database.DropCollectionAsync(collectionName);
+        }
     }
 }

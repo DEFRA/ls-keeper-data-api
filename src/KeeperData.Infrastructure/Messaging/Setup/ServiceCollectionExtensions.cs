@@ -1,22 +1,24 @@
+using Amazon.SimpleNotificationService;
 using Amazon.SQS;
-using KeeperData.Application.MessageHandlers.Sam;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.Serializers;
+using KeeperData.Core.Messaging.Contracts.V1;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
-using KeeperData.Core.Messaging.MessageHandlers;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
+using KeeperData.Core.Messaging.Observers;
 using KeeperData.Core.Messaging.Serializers;
+using KeeperData.Core.Messaging.Throttling;
 using KeeperData.Infrastructure.Messaging.Configuration;
 using KeeperData.Infrastructure.Messaging.Consumers;
 using KeeperData.Infrastructure.Messaging.Factories;
 using KeeperData.Infrastructure.Messaging.Factories.Implementations;
-using KeeperData.Infrastructure.Messaging.MessageHandlers;
 using KeeperData.Infrastructure.Messaging.Publishers;
 using KeeperData.Infrastructure.Messaging.Publishers.Configuration;
 using KeeperData.Infrastructure.Messaging.Services;
+using KeeperData.Infrastructure.Messaging.Throttling;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -53,16 +55,21 @@ public static class ServiceCollectionExtensions
 
         services.AddMessageConsumers();
 
+        services.AddDataImportThrottling(configuration);
+
         services.AdddMessageSerializers();
 
         services.AddMessageHandlers();
 
         services.AddServiceBusSenderDependencies(configuration);
 
+        services.AddBatchCompletionNotificationDependencies(configuration);
+
         if (!intakeEventQueueOptions.Disabled)
         {
             services.AddHealthChecks()
-                .AddCheck<QueueHealthCheck<IntakeEventQueueOptions>>("intake-event-consumer", tags: ["aws", "sqs"]);
+                .AddCheck<QueueHealthCheck<IntakeEventQueueOptions>>("intake-event-consumer", tags: ["aws", "sqs"])
+                .AddCheck<AwsSnsHealthCheck>("batch-completion-publisher", tags: ["aws", "sns"]);
         }
     }
 
@@ -71,6 +78,14 @@ public static class ServiceCollectionExtensions
         services.AddHostedService<QueueListener>()
             .AddSingleton<IQueuePoller, QueuePoller>();
         services.AddSingleton<IDeadLetterQueueService, DeadLetterQueueService>();
+
+        services.AddTransient<IQueuePollerObserver<MessageType>, NullQueuePollerObserver<MessageType>>();
+    }
+
+    private static void AddDataImportThrottling(this IServiceCollection services, IConfiguration configuration)
+    {
+        var dataImportThrottlingConfiguration = configuration.GetSection(DataImportThrottlingConfiguration.SectionName).Get<DataImportThrottlingConfiguration>() ?? new();
+        services.AddSingleton<IDataImportThrottlingConfiguration>(dataImportThrottlingConfiguration);
     }
 
     private static void AdddMessageSerializers(this IServiceCollection services)
@@ -79,11 +94,17 @@ public static class ServiceCollectionExtensions
 
         var messageIdentifierTypes = new[]
         {
-            typeof(SamImportHoldingMessage),
-            typeof(SamImportHolderMessage),
-            typeof(CtsImportHoldingMessage),
             typeof(SamBulkScanMessage),
-            typeof(CtsBulkScanMessage)
+            typeof(SamDailyScanMessage),
+            typeof(CtsBulkScanMessage),
+            typeof(CtsDailyScanMessage),
+            typeof(SamImportHoldingMessage),
+            typeof(SamUpdateHoldingMessage),
+            typeof(CtsImportHoldingMessage),
+            typeof(CtsUpdateHoldingMessage),
+            typeof(CtsUpdateKeeperMessage),
+            typeof(CtsUpdateAgentMessage),
+            typeof(BatchCompletionMessage)
         };
 
         foreach (var messageType in messageIdentifierTypes)
@@ -99,32 +120,24 @@ public static class ServiceCollectionExtensions
 
     private static IServiceCollection AddMessageHandlers(this IServiceCollection services)
     {
-        var handlerInterfaceType = typeof(IMessageHandler<>);
-        var handlerTypes = typeof(SamImportHoldingMessageHandler).Assembly.GetTypes()
-            .Where(type => !type.IsAbstract && !type.IsInterface)
-            .Select(type => new
-            {
-                Implementation = type,
-                Interface = type.GetInterfaces()
-                    .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == handlerInterfaceType)
-            })
-            .Where(x => x.Interface != null);
-
-        var messageHandlerManager = new InMemoryMessageHandlerManager();
-
-        foreach (var types in handlerTypes)
+        services.AddSingleton(sp =>
         {
-            services.AddTransient(types.Interface!, types.Implementation);
+            var registry = new MessageCommandRegistry();
 
-            var messageType = types.Interface!.GenericTypeArguments[0];
-            var addReceiverMethod = typeof(InMemoryMessageHandlerManager)
-                .GetMethod(nameof(InMemoryMessageHandlerManager.AddReceiver))!
-                .MakeGenericMethod(messageType, types.Interface);
+            registry.Register<SamBulkScanMessageCommandFactory>("SamBulkScan");
+            registry.Register<SamDailyScanMessageCommandFactory>("SamDailyScan");
+            registry.Register<CtsBulkScanMessageCommandFactory>("CtsBulkScan");
+            registry.Register<CtsDailyScanMessageCommandFactory>("CtsDailyScan");
+            registry.Register<SamImportHoldingCommandFactory>("SamImportHolding");
+            registry.Register<SamUpdateHoldingMessageCommandFactory>("SamUpdateHolding");
+            registry.Register<CtsImportHoldingMessageCommandFactory>("CtsImportHolding");
+            registry.Register<CtsUpdateHoldingMessageCommandFactory>("CtsUpdateHolding");
+            registry.Register<CtsUpdateKeeperMessageCommandFactory>("CtsUpdateKeeper");
+            registry.Register<CtsUpdateAgentMessageCommandFactory>("CtsUpdateAgent");
+            registry.Register<BatchCompletionMessageCommandFactory>("BatchCompletion");
 
-            addReceiverMethod.Invoke(messageHandlerManager, null);
-        }
-
-        services.AddSingleton<IMessageHandlerManager>(messageHandlerManager);
+            return registry;
+        });
 
         return services;
     }
@@ -144,5 +157,32 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IMessagePublisher<IntakeEventsQueueClient>, IntakeEventQueuePublisher>();
 
         return services;
+    }
+
+    private static void AddBatchCompletionNotificationDependencies(this IServiceCollection services, IConfiguration configuration)
+    {
+        var batchCompletionConfig = configuration.GetSection(nameof(BatchCompletionNotificationConfiguration)).Get<BatchCompletionNotificationConfiguration>() ?? new();
+        services.AddSingleton<IBatchCompletionNotificationConfiguration>(batchCompletionConfig);
+
+        if (configuration["LOCALSTACK_ENDPOINT"] != null)
+        {
+            services.AddSingleton<IAmazonSimpleNotificationService>(sp =>
+            {
+                var config = new AmazonSimpleNotificationServiceConfig
+                {
+                    ServiceURL = configuration["AWS:ServiceURL"],
+                    AuthenticationRegion = configuration["AWS:Region"],
+                    UseHttp = true
+                };
+                var credentials = new Amazon.Runtime.BasicAWSCredentials("test", "test");
+                return new AmazonSimpleNotificationServiceClient(credentials, config);
+            });
+        }
+        else
+        {
+            services.AddAWSService<IAmazonSimpleNotificationService>();
+        }
+
+        services.AddSingleton<IMessagePublisher<BatchCompletionTopicClient>, BatchCompletionTopicPublisher>();
     }
 }

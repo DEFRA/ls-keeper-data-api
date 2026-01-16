@@ -1,13 +1,21 @@
 using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
+using KeeperData.Api.Tests.Integration.Fixtures;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.ChangeScanning.Sam;
 
-[Trait("Dependence", "localstack")]
-public class SamBulkScanOrchestratorTests(IntegrationTestFixture fixture) : IClassFixture<IntegrationTestFixture>
+[Collection("Integration"), Trait("Dependence", "testcontainers")]
+public class SamBulkScanOrchestratorTests(
+    MongoDbFixture mongoDbFixture,
+    LocalStackFixture localStackFixture,
+    ApiContainerFixture apiContainerFixture) : IAsyncLifetime
 {
+    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture = localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
+
     private const int ProcessingTimeCircuitBreakerSeconds = 30;
     private const int LimitScanTotalBatchSize = 10;
 
@@ -29,13 +37,10 @@ public class SamBulkScanOrchestratorTests(IntegrationTestFixture fixture) : ICla
         var pollInterval = TimeSpan.FromSeconds(2);
 
         await VerifySamBulkScanMessageCompleted(correlationId, timeout, pollInterval);
-
-        await VerifySamHolderImportPersistenceStepsCompleted(correlationId, testExecutedOn, timeout, pollInterval, expectedEntries: LimitScanTotalBatchSize);
-
         await VerifySamHoldingImportPersistenceStepsCompleted(correlationId, testExecutedOn, timeout, pollInterval, expectedEntries: LimitScanTotalBatchSize);
     }
 
-    private static async Task VerifySamBulkScanMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
+    private async Task VerifySamBulkScanMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
     {
         var startTime = DateTime.UtcNow;
         var foundLogEntry = false;
@@ -43,7 +48,7 @@ public class SamBulkScanOrchestratorTests(IntegrationTestFixture fixture) : ICla
         while (DateTime.UtcNow - startTime < timeout)
         {
             foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
-                ContainerLoggingUtility.ServiceNameApi,
+                _apiContainerFixture.ApiContainer,
                 $"Handled message with correlationId: \"{correlationId}\"");
 
             if (foundLogEntry)
@@ -55,38 +60,7 @@ public class SamBulkScanOrchestratorTests(IntegrationTestFixture fixture) : ICla
         foundLogEntry.Should().BeTrue($"Expected log entry within {ProcessingTimeCircuitBreakerSeconds} seconds but none was found.");
     }
 
-    private static async Task VerifySamHolderImportPersistenceStepsCompleted(string correlationId, DateTime testExecutedOn, TimeSpan timeout, TimeSpan pollInterval, int expectedEntries)
-    {
-        var startTime = DateTime.UtcNow;
-        var logFragment = $"Completed import step: \"SamHolderImportPersistenceStep\" correlationId: \"{correlationId}\"";
-        var matchingLogCount = 0;
-
-        while (DateTime.UtcNow - startTime < timeout)
-        {
-            var logs = await ContainerLoggingUtility.FindContainerLogEntriesAsync(
-                ContainerLoggingUtility.ServiceNameApi,
-                logFragment);
-
-            matchingLogCount = logs
-                .Select(log =>
-                {
-                    var timestampToken = log.Split(' ').FirstOrDefault();
-                    return DateTime.TryParse(timestampToken, out var timestamp) ? timestamp : (DateTime?)null;
-                })
-                .Where(ts => ts.HasValue && ts.Value >= testExecutedOn)
-                .Count();
-
-            if (matchingLogCount >= expectedEntries)
-                break;
-
-            await Task.Delay(pollInterval);
-        }
-
-        matchingLogCount.Should().Be(expectedEntries,
-            $"Expected {expectedEntries} import step completions after {testExecutedOn:o} within {timeout.TotalSeconds} seconds.");
-    }
-
-    private static async Task VerifySamHoldingImportPersistenceStepsCompleted(string correlationId, DateTime testExecutedOn, TimeSpan timeout, TimeSpan pollInterval, int expectedEntries)
+    private async Task VerifySamHoldingImportPersistenceStepsCompleted(string correlationId, DateTime testExecutedOn, TimeSpan timeout, TimeSpan pollInterval, int expectedEntries)
     {
         var startTime = DateTime.UtcNow;
         var logFragment = $"Completed import step: \"SamHoldingImportPersistenceStep\" correlationId: \"{correlationId}\"";
@@ -95,7 +69,7 @@ public class SamBulkScanOrchestratorTests(IntegrationTestFixture fixture) : ICla
         while (DateTime.UtcNow - startTime < timeout)
         {
             var logs = await ContainerLoggingUtility.FindContainerLogEntriesAsync(
-                ContainerLoggingUtility.ServiceNameApi,
+                _apiContainerFixture.ApiContainer,
                 logFragment);
 
             matchingLogCount = logs
@@ -119,19 +93,28 @@ public class SamBulkScanOrchestratorTests(IntegrationTestFixture fixture) : ICla
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
     {
-        var queueUrl = "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue";
         var additionalUserProperties = new Dictionary<string, string>
         {
             ["CorrelationId"] = correlationId
         };
-        var request = SQSMessageUtility.CreateMessage(queueUrl, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var cts = new CancellationTokenSource();
-        await fixture.PublishToQueueAsync(request, cts.Token);
+        await _localStackFixture.SqsClient.SendMessageAsync(request, cts.Token);
     }
 
     private static SamBulkScanMessage GetSamBulkScanMessage(string identifier) => new()
     {
         Identifier = identifier
     };
+
+    public async Task InitializeAsync()
+    {
+        await Task.CompletedTask;
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _mongoDbFixture.PurgeDataTables();
+    }
 }
