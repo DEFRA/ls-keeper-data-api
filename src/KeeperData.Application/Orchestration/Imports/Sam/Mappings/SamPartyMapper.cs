@@ -11,6 +11,8 @@ using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Extensions;
 using KeeperData.Core.Repositories;
 using MongoDB.Driver;
+using PartyRoleDocument = KeeperData.Core.Documents.Silver.PartyRoleDocument;
+
 namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 
 public static class SamPartyMapper
@@ -448,62 +450,16 @@ public static class SamPartyMapper
             .Where(x => !string.IsNullOrWhiteSpace(x.RoleTypeId))
             .ToList();
 
-        if (roleList?.Count > 0)
+        var partyRoles = new List<PartyRole>();
+
+        foreach (var r in roleList ?? [])
         {
-            var partyRoles = new List<PartyRole>();
-
-            foreach (var r in roleList)
-            {
-                var partyRoleSite = PartyRoleSite.Create(
-                    siteId: goldSiteId,
-                    name: null,
-                    type: null,
-                    state: null);
-
-                var partyRoleRole = PartyRoleRole.Create(
-                    r.RoleTypeId ?? string.Empty,
-                    r.RoleTypeCode ?? string.Empty,
-                    r.RoleTypeName ?? string.Empty
-                );
-
-                var matchingMarks = goldSiteGroupMarks
-                    .Where(m =>
-                        m.CustomerNumber == incoming.PartyId
-                        && m.RoleTypeId == r.RoleTypeId
-                        && !string.IsNullOrWhiteSpace(m.SpeciesTypeId))
-                    .ToList();
-
-                var speciesManaged = new List<ManagedSpecies>();
-
-                if (!partyRoleRole.IsCphHolderRole)
-                {
-                    foreach (var mark in matchingMarks)
-                    {
-                        var speciesDoc = await getSpeciesTypeById(mark.SpeciesTypeId, cancellationToken);
-                        if (speciesDoc is null)
-                            continue;
-
-                        var managedSpecies = ManagedSpecies.Create(
-                            code: speciesDoc.Code,
-                            name: speciesDoc.Name,
-                            startDate: mark.GroupMarkStartDate,
-                            endDate: mark.GroupMarkEndDate);
-
-                        speciesManaged.Add(managedSpecies);
-                    }
-                }
-
-                var partyRole = PartyRole.Create(
-                    partyRoleSite,
-                    partyRoleRole,
-                    speciesManaged);
-
-                partyRoles.Add(partyRole);
-            }
-
-            party.SetRoles(partyRoles);
+            var partyRole = await CreatePartyRole(goldSiteId, incoming, goldSiteGroupMarks, getSpeciesTypeById, cancellationToken, r);
+            partyRoles.Add(partyRole);
         }
 
+        party.SetRoles(partyRoles);
+            
         return await Task.FromResult(party);
     }
 
@@ -563,56 +519,10 @@ public static class SamPartyMapper
             .Where(r => !string.IsNullOrWhiteSpace(r.RoleTypeId))
             .ToList();
 
-        if (roleList?.Count > 0)
+        foreach (var r in roleList ?? [])
         {
-            foreach (var r in roleList)
-            {
-                var partyRoleSite = PartyRoleSite.Create(
-                    siteId: goldSiteId,
-                    name: null,
-                    type: null,
-                    state: null);
-
-                var partyRoleRole = PartyRoleRole.Create(
-                    r.RoleTypeId ?? string.Empty,
-                    r.RoleTypeCode ?? string.Empty,
-                    r.RoleTypeName ?? string.Empty
-                );
-
-                var matchingMarks = goldSiteGroupMarks
-                    .Where(m =>
-                        m.CustomerNumber == incoming.PartyId
-                        && m.RoleTypeId == r.RoleTypeId
-                        && !string.IsNullOrWhiteSpace(m.SpeciesTypeId))
-                    .ToList();
-
-                var speciesManaged = new List<ManagedSpecies>();
-
-                if (!partyRoleRole.IsCphHolderRole)
-                {
-                    foreach (var mark in matchingMarks)
-                    {
-                        var speciesDoc = await getSpeciesTypeById(mark.SpeciesTypeId, cancellationToken);
-                        if (speciesDoc is null)
-                            continue;
-
-                        var managedSpecies = ManagedSpecies.Create(
-                            code: speciesDoc.Code,
-                            name: speciesDoc.Name,
-                            startDate: mark.GroupMarkStartDate,
-                            endDate: mark.GroupMarkEndDate);
-
-                        speciesManaged.Add(managedSpecies);
-                    }
-                }
-
-                var partyRole = PartyRole.Create(
-                    partyRoleSite,
-                    partyRoleRole,
-                    speciesManaged);
-
-                party.AddOrUpdateRole(party.LastUpdatedDate, partyRole);
-            }
+            var partyRole = await CreatePartyRole(goldSiteId, incoming, goldSiteGroupMarks, getSpeciesTypeById, cancellationToken, r);
+            party.AddOrUpdateRole(party.LastUpdatedDate, partyRole);
         }
 
         return party;
@@ -674,5 +584,58 @@ public static class SamPartyMapper
             return null;
 
         return countryDocument.ToDomain();
+    }
+    
+    private static async Task<PartyRole> CreatePartyRole(
+        string goldSiteId,
+        SamPartyDocument incoming,
+        List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
+        Func<string?, CancellationToken, Task<SpeciesDocument?>> getSpeciesTypeById,
+        CancellationToken cancellationToken,
+        PartyRoleDocument partyRoleDocument)
+    {
+        var partyRoleSite = PartyRoleSite.Create(
+            siteId: goldSiteId,
+            name: null,
+            type: null,
+            state: null);
+
+        var partyRoleRole = PartyRoleRole.Create(
+            partyRoleDocument.RoleTypeId ?? string.Empty,
+            partyRoleDocument.RoleTypeCode ?? string.Empty,
+            partyRoleDocument.RoleTypeName ?? string.Empty
+        );
+
+        var matchingMarks = goldSiteGroupMarks
+            .Where(m =>
+                m.CustomerNumber == incoming.PartyId
+                && m.RoleTypeId == partyRoleDocument.RoleTypeId
+                && !string.IsNullOrWhiteSpace(m.SpeciesTypeId))
+            .ToList();
+
+        var speciesManaged = new List<ManagedSpecies>();
+
+        if (!partyRoleRole.IsCphHolderRole)
+        {
+            foreach (var mark in matchingMarks)
+            {
+                var speciesDoc = await getSpeciesTypeById(mark.SpeciesTypeId, cancellationToken);
+                if (speciesDoc is null)
+                    continue;
+
+                var managedSpecies = ManagedSpecies.Create(
+                    code: speciesDoc.Code,
+                    name: speciesDoc.Name,
+                    startDate: mark.GroupMarkStartDate,
+                    endDate: mark.GroupMarkEndDate);
+
+                speciesManaged.Add(managedSpecies);
+            }
+        }
+
+        return PartyRole.Create(
+            partyRoleSite,
+            partyRoleRole,
+            speciesManaged);
     }
 }
