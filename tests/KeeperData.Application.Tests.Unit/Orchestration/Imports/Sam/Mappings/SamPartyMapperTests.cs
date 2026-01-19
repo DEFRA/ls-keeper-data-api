@@ -376,7 +376,7 @@ public class SamPartyMapperTests
         // Assert
         result.Single().PERSON_TITLE.Should().Be("Ms");
     }
-    
+
     //TODO confirm whether we actually care about preserving empty strings where original == "" and newValue = null 
     [Fact]
     public void AggregatePartyAndHolder_WhenPartyFieldIsEmptyAndHolderFieldIsNull_ShouldPreserveEmpty()

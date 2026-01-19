@@ -194,7 +194,6 @@ public static class SamPartyMapper
         return result;
     }
 
-    // TODO - Add tests for RemoveSitePartyOrphans
     public static async Task<List<PartyDocument>> RemoveSitePartyOrphans(
         string goldSiteId,
         List<SitePartyRoleRelationship> orphansToClean,
