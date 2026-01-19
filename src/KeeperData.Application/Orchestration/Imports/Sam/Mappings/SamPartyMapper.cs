@@ -154,7 +154,7 @@ public static class SamPartyMapper
         string goldSiteId,
         List<SamPartyDocument> silverParties,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
-        IGenericRepository<PartyDocument> goldPartyRepository,
+        IPartiesRepository goldPartyRepository,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
         Func<string?, CancellationToken, Task<SpeciesDocument?>> getSpeciesTypeById,
         CancellationToken cancellationToken)
@@ -166,9 +166,7 @@ public static class SamPartyMapper
 
         foreach (var silverParty in silverParties ?? [])
         {
-            var existingPartyFilter = Builders<PartyDocument>.Filter.Eq(x => x.CustomerNumber, silverParty.PartyId);
-
-            var existingParty = await goldPartyRepository.FindOneByFilterAsync(existingPartyFilter, cancellationToken);
+            var existingParty = await goldPartyRepository.FindPartyByCustomerNumber(silverParty.PartyId, cancellationToken);
 
             if (existingParty is not null)
                 existingGoldPartyIds.Add(existingParty.Id);
@@ -200,7 +198,7 @@ public static class SamPartyMapper
     public static async Task<List<PartyDocument>> RemoveSitePartyOrphans(
         string goldSiteId,
         List<SitePartyRoleRelationship> orphansToClean,
-        IGenericRepository<PartyDocument> goldPartyRepository,
+        IPartiesRepository goldPartyRepository,
         CancellationToken cancellationToken)
     {
         var result = new List<PartyDocument>();
@@ -210,8 +208,7 @@ public static class SamPartyMapper
 
         foreach (var orphanGroup in groupedOrphans)
         {
-            var existingPartyFilter = Builders<PartyDocument>.Filter.Eq(x => x.CustomerNumber, orphanGroup.Key);
-            var existingParty = await goldPartyRepository.FindOneByFilterAsync(existingPartyFilter, cancellationToken);
+            var existingParty = await goldPartyRepository.FindPartyByCustomerNumber(orphanGroup.Key, cancellationToken);
 
             if (existingParty is null) continue;
 

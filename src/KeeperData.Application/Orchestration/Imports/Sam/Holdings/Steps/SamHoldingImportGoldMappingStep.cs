@@ -18,7 +18,7 @@ public class SamHoldingImportGoldMappingStep(
     IPremiseActivityTypeLookupService premiseActivityTypeLookupService,
     ISiteIdentifierTypeLookupService siteIdentifierTypeLookupService,
     IGenericRepository<SiteDocument> goldSiteRepository,
-    IGenericRepository<PartyDocument> goldPartyRepository,
+    IPartiesRepository goldPartyRepository,
     ILogger<SamHoldingImportGoldMappingStep> logger)
     : ImportStepBase<SamHoldingImportContext>(logger)
 {

@@ -1,11 +1,10 @@
 using System.Diagnostics;
-using AutoFixture;
 using FluentAssertions;
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Documents.Working;
 using KeeperData.Core.Repositories;
-using MongoDB.Driver;
 using Moq;
 using CommunicationDocument = KeeperData.Core.Documents.Silver.CommunicationDocument;
 using PartyRoleDocument = KeeperData.Core.Documents.Silver.PartyRoleDocument;
@@ -16,8 +15,8 @@ public class SamPartyMapperToGoldTests
 {
     private Func<string?, CancellationToken, Task<CountryDocument?>> _getCountryById;
     private Func<string?, CancellationToken, Task<SpeciesDocument?>> _getSpeciesById;
-    private Mock<IGenericRepository<PartyDocument>> _goldRepoMock;
-    const string _goldSiteId = "gold-site-id";
+    private Mock<IPartiesRepository> _goldRepoMock;
+    const string GoldSiteId = "gold-site-id";
 
     private List<CountryDocument> _countryData = [
         new CountryDocument { IdentifierId = "en123", Code = "GB-ENG", Name = "England", LongName = "England - United Kingdom"},
@@ -26,7 +25,7 @@ public class SamPartyMapperToGoldTests
 
     public SamPartyMapperToGoldTests()
     {
-        _goldRepoMock = new Mock<IGenericRepository<PartyDocument>>();
+        _goldRepoMock = new Mock<IPartiesRepository>();
         var species = new SpeciesDocument() { IdentifierId = "p123", Code = "P", Name = "Pig" };
         _getCountryById = (string? key, CancellationToken token) => Task.FromResult(_countryData.SingleOrDefault(x => x.IdentifierId == key));
         _getSpeciesById = (string? key, CancellationToken token) => Task.FromResult<SpeciesDocument?>(species);
@@ -174,7 +173,7 @@ public class SamPartyMapperToGoldTests
                             Role = new PartyRoleRoleDocument { IdentifierId = "role-a", Code = "role-code", Name = "role-name" },
                             Site = new PartyRoleSiteDocument
                             {
-                                IdentifierId = _goldSiteId // TODO seems odd - elsewhere identifierid is a primary key; this looks to be a foreign key
+                                IdentifierId = GoldSiteId // TODO seems odd - elsewhere identifierid is a primary key; this looks to be a foreign key
                                 // lastupdated date is set to now
                                 // the rest are null
                             },
@@ -207,33 +206,33 @@ public class SamPartyMapperToGoldTests
     [Fact]
     public async Task ToGoldShouldNotModifyCollectionOfExistingPartyIdsWhenPartyIsNew()
     {
-        var existingPartyIds = new List<string> { "id-a", "id-b" };
+        var existingPartyIds = new List<string> { "gold-id-a", "gold-id-b" };
         var inputParty = new SamPartyDocument();
-        inputParty.PartyId = "new-id";
+        inputParty.PartyId = "customer-number";
 
         var result = await WhenIMapNewPartyToGold(inputParty, existingPartyIds: existingPartyIds);
-        var expectedPartyIds = new List<string>() { "id-a", "id-b" };
+        var expectedPartyIds = new List<string>() { "gold-id-a", "gold-id-b" };
 
-        result.CustomerNumber.Should().Be("new-id");
+        result.CustomerNumber.Should().Be("customer-number");
         existingPartyIds.Should().BeEquivalentTo(expectedPartyIds);
     }
 
     [Fact]
     public async Task ToGoldShouldModifyCollectionOfExistingPartyIdsWhenPartyIdExists()
     {
-        var existingPartyIds = new List<string> { "a" };
-        var existingPartyId = "existingPartyId";
-        var expectedPartyIds = new List<string> { "a", existingPartyId };
+        var existingPartyIds = new List<string> { "gold-id-a" };
+        var existingCustomerNumber = "existing-customer-number";
         var inputParty = new SamPartyDocument();
-        inputParty.PartyId = existingPartyId;
-        var existingParty = new PartyDocument() { Id = existingPartyId };
+        inputParty.PartyId = existingCustomerNumber;
+        var existingParty = new PartyDocument() { Id = "gold-id", CustomerNumber = existingCustomerNumber };
+        var expectedPartyIds = new List<string> { "gold-id-a", "gold-id" };
         _goldRepoMock
-            .Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<PartyDocument>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.FindPartyByCustomerNumber(existingCustomerNumber, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingParty);
 
         var result = await WhenIMapNewPartyToGold(inputParty, existingPartyIds: existingPartyIds);
 
-        result.CustomerNumber.Should().Be(existingPartyId);
+        result.CustomerNumber.Should().Be(existingCustomerNumber);
         existingPartyIds.Should().BeEquivalentTo(expectedPartyIds);
     }
 
@@ -244,9 +243,9 @@ public class SamPartyMapperToGoldTests
         var existingId = "existing-id";
         var inputParty = new SamPartyDocument();
         inputParty.PartyId = existingId;
-        var existingParty = new PartyDocument() { Id = existingId };
+        var existingParty = new PartyDocument() { Id = "gold-id", CustomerNumber = existingId };
         _goldRepoMock
-            .Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<PartyDocument>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.FindPartyByCustomerNumber(existingId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingParty);
 
         var expected = CreateNewEmptyPartyDocument();
@@ -257,7 +256,7 @@ public class SamPartyMapperToGoldTests
 
         expected.CustomerNumber = existingId;
 
-        var result = await WhenIMapNewPartyToGold(inputParty, existingPartyIds: new List<string> { existingId });
+        var result = await WhenIMapNewPartyToGold(inputParty, existingPartyIds: new List<string> { "gold-id" });
 
         WipeIdsAndLastUpdatedDates(result);
         WipeIdsAndLastUpdatedDates(expected);
@@ -271,11 +270,11 @@ public class SamPartyMapperToGoldTests
     [Fact]
     public async Task ToGoldShouldNotUpdateCodeOrNameOfRolesAlreadyMappedToParty()
     {
-        var existingId = "existing-id";
+        var customerId = "customer-id";
         var matchingRoleId = "roleMatchId";
         var inputParty = new SamPartyDocument
         {
-            PartyId = existingId,
+            PartyId = customerId,
             Roles = new List<PartyRoleDocument>
             {
                 new ()
@@ -288,10 +287,11 @@ public class SamPartyMapperToGoldTests
                 }
             }
         };
-        inputParty.PartyId = existingId;
+        inputParty.PartyId = customerId;
         var existingParty = new PartyDocument
         {
-            Id = existingId,
+            Id = "gold-id",
+            CustomerNumber = customerId,
             PartyRoles = new List<PartyRoleWithSiteDocument>
             {
                 new()
@@ -300,7 +300,7 @@ public class SamPartyMapperToGoldTests
                     Role = new() { IdentifierId = matchingRoleId, Code = "oldcode", Name = "oldname" },
                     Site = new()
                     {
-                        IdentifierId = _goldSiteId,
+                        IdentifierId = GoldSiteId,
                         Name = "oldsitename",
                         State = "oldstate",
                         Type = new PremisesTypeSummaryDocument { IdentifierId = "any-ptsd-id", Code = "ptsdcode", Description = "ptsd-desc" }
@@ -310,8 +310,8 @@ public class SamPartyMapperToGoldTests
         };
 
         var expected = CreateNewEmptyPartyDocument();
-        expected.Id = "existing-id";
-        expected.CustomerNumber = "existing-id";
+        expected.Id = "gold-id";
+        expected.CustomerNumber = customerId;
         expected.PartyRoles = new List<PartyRoleWithSiteDocument>()
         {
             new PartyRoleWithSiteDocument()
@@ -324,7 +324,7 @@ public class SamPartyMapperToGoldTests
                     },
                     Site = new PartyRoleSiteDocument()
                     {
-                        IdentifierId = _goldSiteId,
+                        IdentifierId = GoldSiteId,
                         Name = "oldsitename",
                         State = "oldstate",
                         Type = new PremisesTypeSummaryDocument { IdentifierId = "any-ptsd-id", Code = "ptsdcode", Description = "ptsd-desc" }
@@ -333,10 +333,10 @@ public class SamPartyMapperToGoldTests
         };
 
         _goldRepoMock
-            .Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<PartyDocument>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.FindPartyByCustomerNumber(customerId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingParty);
 
-        var result = await WhenIMapNewPartyToGold(inputParty, existingPartyIds: new List<string> { existingId });
+        var result = await WhenIMapNewPartyToGold(inputParty, existingPartyIds: new List<string> { customerId });
 
         WipeIdsAndLastUpdatedDates(result);
         WipeIdsAndLastUpdatedDates(expected);
@@ -349,12 +349,12 @@ public class SamPartyMapperToGoldTests
     [Fact]
     public async Task ToGoldShouldAddNewRoleAlongsideExistingRoles()
     {
-        var existingId = "existing-id";
+        var customerId = "customer-id";
         var newRoleTypeId = "new-roleId";
         var existingRoleTypeId = "existing-roleId";
         var inputParty = new SamPartyDocument()
         {
-            PartyId = existingId,
+            PartyId = customerId,
             Roles = new List<PartyRoleDocument>
             {
                 new PartyRoleDocument()
@@ -368,23 +368,24 @@ public class SamPartyMapperToGoldTests
             }
         };
 
-        inputParty.PartyId = existingId;
+        inputParty.PartyId = customerId;
         var existingParty = new PartyDocument()
         {
-            Id = existingId,
+            Id = "gold-id",
+            CustomerNumber = customerId,
             PartyRoles = new List<PartyRoleWithSiteDocument>() { new PartyRoleWithSiteDocument()
             {
                 IdentifierId = "old-role-id",
                 Role = new PartyRoleRoleDocument() { IdentifierId = existingRoleTypeId, Code = "oldcode", Name = "oldname",},
-                Site = new PartyRoleSiteDocument() { IdentifierId = _goldSiteId, Name = "oldsitename", State = "oldstate"
+                Site = new PartyRoleSiteDocument() { IdentifierId = GoldSiteId, Name = "oldsitename", State = "oldstate"
                 , Type = new PremisesTypeSummaryDocument { IdentifierId = "any-ptsd-id", Code = "ptsdcode", Description = "ptsd-desc" } }
             } }
 
         };
 
         var expected = CreateNewEmptyPartyDocument();
-        expected.Id = "existing-id";
-        expected.CustomerNumber = "existing-id";
+        expected.Id = "gold-id";
+        expected.CustomerNumber = customerId;
         expected.PartyRoles = new List<PartyRoleWithSiteDocument>()
         {
             new ()
@@ -397,7 +398,7 @@ public class SamPartyMapperToGoldTests
                     },
                     Site = new PartyRoleSiteDocument()
                     {
-                        IdentifierId = _goldSiteId,Name = "oldsitename", State = "oldstate"
+                        IdentifierId = GoldSiteId,Name = "oldsitename", State = "oldstate"
                         , Type = new PremisesTypeSummaryDocument { IdentifierId = "any-ptsd-id", Code = "ptsdcode", Description = "ptsd-desc" }
                     }
                 },
@@ -412,7 +413,7 @@ public class SamPartyMapperToGoldTests
                 },
                 Site = new PartyRoleSiteDocument()
                 {
-                    IdentifierId = _goldSiteId,
+                    IdentifierId = GoldSiteId,
                     Name = null,
                     State = null,
                     Type = null
@@ -421,10 +422,10 @@ public class SamPartyMapperToGoldTests
         };
 
         _goldRepoMock
-            .Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<PartyDocument>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.FindPartyByCustomerNumber(customerId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingParty);
 
-        var result = await WhenIMapNewPartyToGold(inputParty, existingPartyIds: new List<string> { existingId });
+        var result = await WhenIMapNewPartyToGold(inputParty, existingPartyIds: new List<string> { customerId });
 
         WipeIdsAndLastUpdatedDates(result);
         WipeIdsAndLastUpdatedDates(expected);
@@ -460,7 +461,7 @@ public class SamPartyMapperToGoldTests
         existingPartyIds = existingPartyIds ?? new List<string>();
         return (await SamPartyMapper.ToGold(
             existingPartyIds,
-            _goldSiteId,
+            GoldSiteId,
             new List<SamPartyDocument> { inputParty },
             new List<SiteGroupMarkRelationshipDocument>(),
             _goldRepoMock.Object,
