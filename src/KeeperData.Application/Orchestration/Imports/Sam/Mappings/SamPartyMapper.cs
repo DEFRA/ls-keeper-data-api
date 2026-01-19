@@ -481,16 +481,9 @@ public static class SamPartyMapper
         if (goldSite == null)
             return;
 
-        if (goldParties?.Count == 0)
-            return;
-
-        foreach (var goldParty in goldParties ?? [])
+        foreach (var goldParty in goldParties)
         {
-            if (goldParty == null)
-                continue;
-
             var party = goldParty.ToDomain();
-            if (party.Roles == null) continue;
 
             foreach (var partyRole in party.Roles.Where(x => x.Site?.Id == goldSite.Id))
             {
@@ -500,7 +493,7 @@ public static class SamPartyMapper
                     goldSite.Type.Description,
                     goldSite.Type.LastUpdatedDate) : null;
 
-                partyRole.Site?.ApplyChanges(
+                partyRole.Site!.ApplyChanges(
                     goldSite.Name,
                     premiseType,
                     goldSite.State,
@@ -509,7 +502,7 @@ public static class SamPartyMapper
                 if (goldSite.Identifiers != null && goldSite.Identifiers.Count > 0)
                 {
                     var identifiers = goldSite.Identifiers.Select(i => i.ToDomain()).ToList();
-                    partyRole.Site?.SetIdentifiers(identifiers);
+                    partyRole.Site!.SetIdentifiers(identifiers);
                 }
             }
 
