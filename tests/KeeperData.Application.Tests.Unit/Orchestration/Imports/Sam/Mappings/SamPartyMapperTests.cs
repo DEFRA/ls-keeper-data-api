@@ -376,6 +376,27 @@ public class SamPartyMapperTests
         // Assert
         result.Single().PERSON_TITLE.Should().Be("Ms");
     }
+    
+    //TODO confirm whether we actually care about preserving empty strings where original == "" and newValue = null 
+    [Fact]
+    public void AggregatePartyAndHolder_WhenPartyFieldIsEmptyAndHolderFieldIsNull_ShouldPreserveEmpty()
+    {
+        var party = new SamParty
+        {
+            PARTY_ID = "P1",
+            PERSON_FAMILY_NAME = ""
+        };
+
+        var holder = new SamCphHolder
+        {
+            PARTY_ID = "P1",
+            PERSON_FAMILY_NAME = null
+        };
+
+        var result = SamPartyMapper.AggregatePartyAndHolder([party], [holder]);
+
+        result.Single().PERSON_FAMILY_NAME.Should().Be("");
+    }
 
     private static List<SamParty> GenerateSamParty(int quantity)
     {
