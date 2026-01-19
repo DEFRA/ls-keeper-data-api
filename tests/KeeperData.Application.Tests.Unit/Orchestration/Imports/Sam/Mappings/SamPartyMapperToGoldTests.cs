@@ -3,7 +3,6 @@ using FluentAssertions;
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
-using KeeperData.Core.Documents.Working;
 using KeeperData.Core.Repositories;
 using Moq;
 using CommunicationDocument = KeeperData.Core.Documents.Silver.CommunicationDocument;
@@ -469,6 +468,8 @@ public class SamPartyMapperToGoldTests
             _getSpeciesById,
             CancellationToken.None)).Single();
     }
+
+    // TODO test representative.PremiseTypeIdentifier != site.Type?.Id
 
     /// <summary>
     /// For comparing objects in test assertion, a destructive action that wipes unpredictable fields so the rest can be compared naturally
