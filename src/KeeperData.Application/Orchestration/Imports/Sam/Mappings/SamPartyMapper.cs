@@ -363,27 +363,7 @@ public static class SamPartyMapper
         Func<string?, CancellationToken, Task<SpeciesDocument?>> getSpeciesTypeById,
         CancellationToken cancellationToken)
     {
-        int? uprn = int.TryParse(incoming.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
-
-        var country = await GetCountryAsync(
-            incoming.Address?.CountryIdentifier,
-            getCountryById,
-            cancellationToken);
-
-        var address = Address.Create(
-            uprn,
-            incoming.Address?.AddressLine ?? string.Empty,
-            incoming.Address?.AddressStreet,
-            incoming.Address?.AddressTown,
-            incoming.Address?.AddressLocality,
-            incoming.Address?.AddressPostCode ?? string.Empty,
-            country);
-
-        var communication = Communication.Create(
-            incoming.Communication?.Email,
-            incoming.Communication?.Mobile,
-            incoming.Communication?.Landline,
-            false);
+        var (address, communication) = await MapSilverPartyToGoldAddressAndComms(incoming, getCountryById, cancellationToken);
 
         var party = Party.Create(
             incoming.CreatedDate,
@@ -430,27 +410,7 @@ public static class SamPartyMapper
     {
         var party = existing.ToDomain();
 
-        int? uprn = int.TryParse(incoming.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
-
-        var country = await GetCountryAsync(
-            incoming.Address?.CountryIdentifier,
-            getCountryById,
-            cancellationToken);
-
-        var updatedAddress = Address.Create(
-            uprn,
-            incoming.Address?.AddressLine ?? string.Empty,
-            incoming.Address?.AddressStreet,
-            incoming.Address?.AddressTown,
-            incoming.Address?.AddressLocality,
-            incoming.Address?.AddressPostCode ?? string.Empty,
-            country);
-
-        var updatedCommunication = Communication.Create(
-            incoming.Communication?.Email,
-            incoming.Communication?.Mobile,
-            incoming.Communication?.Landline,
-            false);
+        var (updatedAddress, updatedCommunication) = await MapSilverPartyToGoldAddressAndComms(incoming, getCountryById, cancellationToken);
 
         party.Update(
             incoming.LastUpdatedDate,
@@ -482,6 +442,36 @@ public static class SamPartyMapper
         }
 
         return party;
+    }
+
+    private static async Task<(Address updatedAddress, Communication updatedCommunication)> MapSilverPartyToGoldAddressAndComms(
+        SamPartyDocument incoming,
+        Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
+        CancellationToken cancellationToken)
+    {
+        int? uprn = int.TryParse(incoming.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
+
+        var country = await GetCountryAsync(
+            incoming.Address?.CountryIdentifier,
+            getCountryById,
+            cancellationToken);
+
+        var updatedAddress = Address.Create(
+            uprn,
+            incoming.Address?.AddressLine ?? string.Empty,
+            incoming.Address?.AddressStreet,
+            incoming.Address?.AddressTown,
+            incoming.Address?.AddressLocality,
+            incoming.Address?.AddressPostCode ?? string.Empty,
+            country);
+
+        var updatedCommunication = Communication.Create(
+            incoming.Communication?.Email,
+            incoming.Communication?.Mobile,
+            incoming.Communication?.Landline,
+            false);
+
+        return (updatedAddress, updatedCommunication);
     }
 
     public static void EnrichPartyRoleWithSiteInformation(
