@@ -459,7 +459,7 @@ public static class SamPartyMapper
         }
 
         party.SetRoles(partyRoles);
-            
+
         return await Task.FromResult(party);
     }
 
@@ -585,7 +585,7 @@ public static class SamPartyMapper
 
         return countryDocument.ToDomain();
     }
-    
+
     private static async Task<PartyRole> CreatePartyRole(
         string goldSiteId,
         SamPartyDocument incoming,

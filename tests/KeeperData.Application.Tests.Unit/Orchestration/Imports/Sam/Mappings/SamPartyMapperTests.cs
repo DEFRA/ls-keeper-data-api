@@ -376,7 +376,7 @@ public class SamPartyMapperTests
         // Assert
         result.Single().PERSON_TITLE.Should().Be("Ms");
     }
-    
+
     private static List<SamParty> GenerateSamParty(int quantity)
     {
         var factory = new MockSamRawDataFactory();
