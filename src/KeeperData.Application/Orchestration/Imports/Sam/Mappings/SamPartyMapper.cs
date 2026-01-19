@@ -259,88 +259,47 @@ public static class SamPartyMapper
         return [.. partyMap.Values];
     }
 
+    private static string? MergeStrings(string? original, string? newValue)
+    {
+        //TODO confirm whether we actually care about preserving empty strings where original == "" and newValue = null 
+        return string.IsNullOrEmpty(original) && !string.IsNullOrEmpty(newValue) ? newValue : original;
+    }
+
+
     private static void MergeSamPartyFromHolder(SamParty party, SamCphHolder holder)
     {
-        if (string.IsNullOrEmpty(party.PERSON_TITLE) && !string.IsNullOrEmpty(holder.PERSON_TITLE))
-            party.PERSON_TITLE = holder.PERSON_TITLE;
+        party.PERSON_TITLE = MergeStrings(party.PERSON_TITLE, holder.PERSON_TITLE);
+        party.PERSON_GIVEN_NAME = MergeStrings(party.PERSON_GIVEN_NAME, holder.PERSON_GIVEN_NAME);
+        party.PERSON_GIVEN_NAME2 = MergeStrings(party.PERSON_GIVEN_NAME2, holder.PERSON_GIVEN_NAME2);
+        party.PERSON_INITIALS = MergeStrings(party.PERSON_INITIALS, holder.PERSON_INITIALS);
+        party.PERSON_FAMILY_NAME = MergeStrings(party.PERSON_FAMILY_NAME, holder.PERSON_FAMILY_NAME);
+        party.ORGANISATION_NAME = MergeStrings(party.ORGANISATION_NAME, holder.ORGANISATION_NAME);
+        party.TELEPHONE_NUMBER = MergeStrings(party.TELEPHONE_NUMBER, holder.TELEPHONE_NUMBER);
+        party.MOBILE_NUMBER = MergeStrings(party.MOBILE_NUMBER, holder.MOBILE_NUMBER);
+        party.INTERNET_EMAIL_ADDRESS = MergeStrings(party.INTERNET_EMAIL_ADDRESS, holder.INTERNET_EMAIL_ADDRESS);
 
-        if (string.IsNullOrEmpty(party.PERSON_GIVEN_NAME) && !string.IsNullOrEmpty(holder.PERSON_GIVEN_NAME))
-            party.PERSON_GIVEN_NAME = holder.PERSON_GIVEN_NAME;
+        party.SAON_START_NUMBER ??= holder.SAON_START_NUMBER;
+        party.SAON_START_NUMBER_SUFFIX ??= holder.SAON_START_NUMBER_SUFFIX;
+        party.SAON_END_NUMBER ??= holder.SAON_END_NUMBER;
+        party.SAON_END_NUMBER_SUFFIX ??= holder.SAON_END_NUMBER_SUFFIX;
 
-        if (string.IsNullOrEmpty(party.PERSON_GIVEN_NAME2) && !string.IsNullOrEmpty(holder.PERSON_GIVEN_NAME2))
-            party.PERSON_GIVEN_NAME2 = holder.PERSON_GIVEN_NAME2;
+        party.SAON_DESCRIPTION = MergeStrings(party.SAON_DESCRIPTION, holder.SAON_DESCRIPTION);
 
-        if (string.IsNullOrEmpty(party.PERSON_INITIALS) && !string.IsNullOrEmpty(holder.PERSON_INITIALS))
-            party.PERSON_INITIALS = holder.PERSON_INITIALS;
+        party.PAON_START_NUMBER ??= holder.PAON_START_NUMBER;
+        party.PAON_START_NUMBER_SUFFIX ??= holder.PAON_START_NUMBER_SUFFIX;
+        party.PAON_END_NUMBER ??= holder.PAON_END_NUMBER;
+        party.PAON_END_NUMBER_SUFFIX ??= holder.PAON_END_NUMBER_SUFFIX;
 
-        if (string.IsNullOrEmpty(party.PERSON_FAMILY_NAME) && !string.IsNullOrEmpty(holder.PERSON_FAMILY_NAME))
-            party.PERSON_FAMILY_NAME = holder.PERSON_FAMILY_NAME;
+        party.PAON_DESCRIPTION = MergeStrings(party.PAON_DESCRIPTION, holder.PAON_DESCRIPTION);
+        party.STREET = MergeStrings(party.STREET, holder.STREET);
+        party.TOWN = MergeStrings(party.TOWN, holder.TOWN);
+        party.LOCALITY = MergeStrings(party.LOCALITY, holder.LOCALITY);
+        party.UK_INTERNAL_CODE = MergeStrings(party.UK_INTERNAL_CODE, holder.UK_INTERNAL_CODE);
+        party.POSTCODE = MergeStrings(party.POSTCODE, holder.POSTCODE);
+        party.COUNTRY_CODE = MergeStrings(party.COUNTRY_CODE, holder.COUNTRY_CODE);
+        party.UDPRN = MergeStrings(party.UDPRN, holder.UDPRN);
 
-        if (string.IsNullOrEmpty(party.ORGANISATION_NAME) && !string.IsNullOrEmpty(holder.ORGANISATION_NAME))
-            party.ORGANISATION_NAME = holder.ORGANISATION_NAME;
-
-        if (string.IsNullOrEmpty(party.TELEPHONE_NUMBER) && !string.IsNullOrEmpty(holder.TELEPHONE_NUMBER))
-            party.TELEPHONE_NUMBER = holder.TELEPHONE_NUMBER;
-
-        if (string.IsNullOrEmpty(party.MOBILE_NUMBER) && !string.IsNullOrEmpty(holder.MOBILE_NUMBER))
-            party.MOBILE_NUMBER = holder.MOBILE_NUMBER;
-
-        if (string.IsNullOrEmpty(party.INTERNET_EMAIL_ADDRESS) && !string.IsNullOrEmpty(holder.INTERNET_EMAIL_ADDRESS))
-            party.INTERNET_EMAIL_ADDRESS = holder.INTERNET_EMAIL_ADDRESS;
-
-        if (party.SAON_START_NUMBER == null && holder.SAON_START_NUMBER != null)
-            party.SAON_START_NUMBER = holder.SAON_START_NUMBER;
-
-        if (party.SAON_START_NUMBER_SUFFIX == null && holder.SAON_START_NUMBER_SUFFIX != null)
-            party.SAON_START_NUMBER_SUFFIX = holder.SAON_START_NUMBER_SUFFIX;
-
-        if (party.SAON_END_NUMBER == null && holder.SAON_END_NUMBER != null)
-            party.SAON_END_NUMBER = holder.SAON_END_NUMBER;
-
-        if (party.SAON_END_NUMBER_SUFFIX == null && holder.SAON_END_NUMBER_SUFFIX != null)
-            party.SAON_END_NUMBER_SUFFIX = holder.SAON_END_NUMBER_SUFFIX;
-
-        if (string.IsNullOrEmpty(party.SAON_DESCRIPTION) && !string.IsNullOrEmpty(holder.SAON_DESCRIPTION))
-            party.SAON_DESCRIPTION = holder.SAON_DESCRIPTION;
-
-        if (party.PAON_START_NUMBER == null && holder.PAON_START_NUMBER != null)
-            party.PAON_START_NUMBER = holder.PAON_START_NUMBER;
-
-        if (party.PAON_START_NUMBER_SUFFIX == null && holder.PAON_START_NUMBER_SUFFIX != null)
-            party.PAON_START_NUMBER_SUFFIX = holder.PAON_START_NUMBER_SUFFIX;
-
-        if (party.PAON_END_NUMBER == null && holder.PAON_END_NUMBER != null)
-            party.PAON_END_NUMBER = holder.PAON_END_NUMBER;
-
-        if (party.PAON_END_NUMBER_SUFFIX == null && holder.PAON_END_NUMBER_SUFFIX != null)
-            party.PAON_END_NUMBER_SUFFIX = holder.PAON_END_NUMBER_SUFFIX;
-
-        if (string.IsNullOrEmpty(party.PAON_DESCRIPTION) && !string.IsNullOrEmpty(holder.PAON_DESCRIPTION))
-            party.PAON_DESCRIPTION = holder.PAON_DESCRIPTION;
-
-        if (string.IsNullOrEmpty(party.STREET) && !string.IsNullOrEmpty(holder.STREET))
-            party.STREET = holder.STREET;
-
-        if (string.IsNullOrEmpty(party.TOWN) && !string.IsNullOrEmpty(holder.TOWN))
-            party.TOWN = holder.TOWN;
-
-        if (string.IsNullOrEmpty(party.LOCALITY) && !string.IsNullOrEmpty(holder.LOCALITY))
-            party.LOCALITY = holder.LOCALITY;
-
-        if (string.IsNullOrEmpty(party.UK_INTERNAL_CODE) && !string.IsNullOrEmpty(holder.UK_INTERNAL_CODE))
-            party.UK_INTERNAL_CODE = holder.UK_INTERNAL_CODE;
-
-        if (string.IsNullOrEmpty(party.POSTCODE) && !string.IsNullOrEmpty(holder.POSTCODE))
-            party.POSTCODE = holder.POSTCODE;
-
-        if (string.IsNullOrEmpty(party.COUNTRY_CODE) && !string.IsNullOrEmpty(holder.COUNTRY_CODE))
-            party.COUNTRY_CODE = holder.COUNTRY_CODE;
-
-        if (string.IsNullOrEmpty(party.UDPRN) && !string.IsNullOrEmpty(holder.UDPRN))
-            party.UDPRN = holder.UDPRN;
-
-        if (party.PREFERRED_CONTACT_METHOD_IND == null && holder.PREFERRED_CONTACT_METHOD_IND != null)
-            party.PREFERRED_CONTACT_METHOD_IND = holder.PREFERRED_CONTACT_METHOD_IND;
+        party.PREFERRED_CONTACT_METHOD_IND ??= holder.PREFERRED_CONTACT_METHOD_IND;
 
         party.CPHS = holder.CPHS;
     }
