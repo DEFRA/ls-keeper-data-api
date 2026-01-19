@@ -136,15 +136,25 @@ public class SamPartyMapperToGoldTests
                         [new Core.Documents.CommunicationDocument { IdentifierId = "some-guid", Email = "email", Landline = "landline", Mobile = "mobile", PrimaryContactFlag = false }];
                 }];
             yield return [ "When mapping empty PartyDocument.Roles",
-                    (SamPartyDocument input) =>
-                    {
-                        input.Roles = new List<PartyRoleDocument>() { };
-                    },
-                    (PartyDocument expected) =>
-                    {
-                        /*no change*/
-                    }
-                ];
+                (SamPartyDocument input) =>
+                {
+                    input.Roles = new List<PartyRoleDocument>() { };
+                },
+                (PartyDocument expected) =>
+                {
+                    /*no change*/
+                }
+            ];
+            yield return [ "When mapping null PartyDocument.Roles",
+                (SamPartyDocument input) =>
+                {
+                    input.Roles = null;
+                },
+                (PartyDocument expected) =>
+                {
+                    /*no change*/
+                }
+            ];
             yield return [ "When mapping PartyDocument.Roles",
                 (SamPartyDocument input) =>
                 {
