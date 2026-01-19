@@ -165,12 +165,6 @@ public class Party : IAggregateRoot
         }
     }
 
-    public void SetCommunications(Communication communication)
-    {
-        _communications.Clear();
-        _communications.Add(communication);
-    }
-
     public void AddOrUpdatePrimaryCommunication(
         DateTime lastUpdatedDate,
         Communication communication)
