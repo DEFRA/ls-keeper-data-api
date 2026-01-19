@@ -151,7 +151,7 @@ internal static class PartyDocumentExtensions
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
                     Role = new PartyRoleRoleDocument() { IdentifierId = roleTypeId },
-                    Site = new PartyRoleSiteDocument() { IdentifierId = siteId }
+                    Site = siteId != null ? new PartyRoleSiteDocument() { IdentifierId = siteId } : null
                 });
             return this;
         }
