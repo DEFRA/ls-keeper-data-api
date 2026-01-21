@@ -3,6 +3,7 @@ using KeeperData.Api.Tests.Integration.Helpers;
 namespace KeeperData.Api.Tests.Integration.Fixtures;
 
 using DotNet.Testcontainers.Builders;
+using KeeperData.Tests.Common.Utilities;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -15,6 +16,8 @@ public class ApiContainerFixture : IAsyncLifetime
     public HttpClient HttpClient { get; private set; } = null!;
 
     public string NetworkName { get; } = "integration-test-network";
+    private const string BasicApiKey = "ApiKey";
+    private const string BasicSecret = "integration-test-secret";
 
     public async Task InitializeAsync()
     {
@@ -57,6 +60,7 @@ public class ApiContainerFixture : IAsyncLifetime
         await ApiContainer.StartAsync();
 
         HttpClient = new HttpClient { BaseAddress = new Uri($"http://localhost:{ApiContainer.GetMappedPublicPort(5555)}") };
+        HttpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
     }
 
     public async Task DisposeAsync()

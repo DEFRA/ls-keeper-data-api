@@ -1,10 +1,12 @@
 using KeeperData.Api.Controllers.RequestDtos.Parties;
 using KeeperData.Application;
 using KeeperData.Application.Queries.Parties;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KeeperData.Api.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class PartiesController(IRequestExecutor executor) : ControllerBase

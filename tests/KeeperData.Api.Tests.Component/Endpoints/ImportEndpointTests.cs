@@ -1,5 +1,6 @@
 using FluentAssertions;
 using KeeperData.Api.Worker.Tasks;
+using KeeperData.Tests.Common.Utilities;
 using Moq;
 using System.Net;
 
@@ -11,6 +12,9 @@ public class ImportEndpointTests
     private readonly Mock<ISamBulkScanTask> _samBulkScanTaskMock = new();
     private readonly Mock<ICtsDailyScanTask> _ctsDailyScanTaskMock = new();
     private readonly Mock<ISamDailyScanTask> _samDailyScanTaskMock = new();
+
+    private const string BasicApiKey = "ApiKey";
+    private const string BasicSecret = "integration-test-secret";
 
     public ImportEndpointTests()
     {
@@ -84,7 +88,7 @@ public class ImportEndpointTests
             expectedStatusCode: HttpStatusCode.Accepted);
     }
 
-    private async Task ExecuteScanEndpointTest<TService>(
+    private static async Task ExecuteScanEndpointTest<TService>(
         string endpoint,
         TService service,
         bool bulkScanEnabled = false,
@@ -101,6 +105,8 @@ public class ImportEndpointTests
         factory.OverrideServiceAsSingleton(service);
 
         var httpClient = factory.CreateClient();
+        httpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
+
         var response = await httpClient.PostAsync(endpoint, null);
 
         response.StatusCode.Should().Be(expectedStatusCode);

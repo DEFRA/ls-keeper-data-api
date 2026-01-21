@@ -2,9 +2,11 @@ using Amazon.Runtime.Internal;
 using KeeperData.Api.Controllers.ResponseDtos.Scans;
 using KeeperData.Api.Middleware;
 using KeeperData.Api.Worker.Tasks;
+using KeeperData.Infrastructure.Authentication.Handlers;
 using KeeperData.Infrastructure.Config;
 using KeeperData.Infrastructure.Services;
 using KeeperData.Infrastructure.Telemetry;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -39,6 +41,9 @@ public static class WebApplicationExtensions
         app.UseHeaderPropagation();
         app.UseRouting();
 
+        app.UseAuthentication();
+        app.UseAuthorization();
+
         app.MapHealthChecks("/health", new HealthCheckOptions()
         {
             Predicate = _ => true,
@@ -72,19 +77,23 @@ public static class WebApplicationExtensions
         var mongoPreprodConfig = configuration.GetSection(MongoDbPreproductionServiceConfig.SectionName).Get<MongoDbPreproductionServiceConfig>();
         if (mongoPreprodConfig?.Enabled ?? false)
         {
-            app.MapPost("/api/dbdropcollection/{collection}", async ([FromRoute] string collection, [FromServices] IMongoDbPreproductionService mongoPreprodService) => { return await mongoPreprodService.DropCollection(collection); });
+            app.MapPost("/api/dbdropcollection/{collection}", async ([FromRoute] string collection, [FromServices] IMongoDbPreproductionService mongoPreprodService) => { return await mongoPreprodService.DropCollection(collection); })
+                .RequireAuthorization(new AuthorizeAttribute
+                {
+                    AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
+                });
         }
 
         app.MapControllers();
     }
 
-    private static void RegisterScanEndpoint<TTask>(
+    private static RouteHandlerBuilder RegisterScanEndpoint<TTask>(
         WebApplication app,
         string route,
         string scanName)
         where TTask : IScanTask
     {
-        app.MapPost(route, async (
+        var builder = app.MapPost(route, async (
             TTask scanTask,
             ILogger<IScanTask> logger,
             CancellationToken cancellationToken) =>
@@ -122,5 +131,12 @@ public static class WebApplicationExtensions
                 );
             }
         });
+
+        builder.RequireAuthorization(new AuthorizeAttribute
+        {
+            AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
+        });
+
+        return builder;
     }
 }

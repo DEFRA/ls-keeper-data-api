@@ -1,62 +1,54 @@
+namespace KeeperData.Api;
+
 using KeeperData.Api.Setup;
 using KeeperData.Api.Utils;
+using KeeperData.Infrastructure.Authentication.Setup;
 using KeeperData.Infrastructure.Telemetry.Logging;
 using Serilog;
 using System.Diagnostics.CodeAnalysis;
 
-var app = CreateWebApplication(args);
-await app.RunAsync();
-return;
-
-[ExcludeFromCodeCoverage]
-static WebApplication CreateWebApplication(string[] args)
+public partial class Program
 {
-    var builder = WebApplication.CreateBuilder(args);
-    ConfigureBuilder(builder);
-
-    var app = builder.Build();
-
-    app.ConfigureRequestPipeline();
-
-    return app;
-}
-
-[ExcludeFromCodeCoverage]
-static void ConfigureBuilder(WebApplicationBuilder builder)
-{
-    builder.Configuration.AddEnvironmentVariables();
-
-    // Load certificates into Trust Store - Note must happen before Mongo and Http client connections.
-    builder.Services.AddCustomTrustStore();
-
-    // Configure logging to use the CDP Platform standards.
-    builder.Services.AddHttpContextAccessor();
-    builder.Host.UseSerilog(SerilogLoggingExtensions.AddLogging);
-
-    // Default HTTP Client
-    builder.Services
-        .AddHttpClient("DefaultClient")
-        .AddHeaderPropagation();
-
-    // Proxy HTTP Client
-    builder.Services.AddTransient<ProxyHttpMessageHandler>();
-    builder.Services
-        .AddHttpClient("proxy")
-        .ConfigurePrimaryHttpMessageHandler<ProxyHttpMessageHandler>();
-
-    // Propagate trace header.
-    builder.Services.AddHeaderPropagation(options =>
+    public static void Main(string[] args)
     {
-        var traceHeader = builder.Configuration.GetValue<string>("TraceHeader");
-        if (!string.IsNullOrWhiteSpace(traceHeader))
+        var builder = CreateBuilder(args);
+        ConfigureBuilder(builder);
+
+        var app = builder.Build();
+        app.ConfigureRequestPipeline();
+        app.Run();
+    }
+
+    public static WebApplicationBuilder CreateBuilder(string[] args)
+        => WebApplication.CreateBuilder(args);
+
+    [ExcludeFromCodeCoverage]
+    public static void ConfigureBuilder(WebApplicationBuilder builder)
+    {
+        builder.Services.AddCustomTrustStore();
+        builder.Services.AddHttpContextAccessor();
+        builder.Host.UseSerilog(SerilogLoggingExtensions.AddLogging);
+
+        builder.Services
+            .AddHttpClient("DefaultClient")
+            .AddHeaderPropagation();
+
+        builder.Services.AddTransient<ProxyHttpMessageHandler>();
+        builder.Services
+            .AddHttpClient("proxy")
+            .ConfigurePrimaryHttpMessageHandler<ProxyHttpMessageHandler>();
+
+        builder.Services.AddHeaderPropagation(options =>
         {
-            options.Headers.Add(traceHeader);
-        }
-    });
+            var traceHeader = builder.Configuration.GetValue<string>("TraceHeader");
+            if (!string.IsNullOrWhiteSpace(traceHeader))
+                options.Headers.Add(traceHeader);
+        });
 
-    builder.Services.AddHostedService<KeeperData.Infrastructure.Services.MongoDataSeeder>();
+        builder.Services.AddHostedService<Infrastructure.Services.MongoDataSeeder>();
 
-    builder.Services.ConfigureApi(builder.Configuration);
+        builder.Services.ConfigureApi(builder.Configuration);
+
+        builder.Services.AddAuthenticationDependencies();
+    }
 }
-
-public partial class Program { }

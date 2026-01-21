@@ -10,7 +10,7 @@ public class DbDropCollectionEndpointTests(ApiContainerFixture fixture)
     private readonly ApiContainerFixture _fixture = fixture;
 
     [Fact]
-    public async Task WipeShouldReturnOK()
+    public async Task DropShouldReturnOK()
     {
         var response = await _fixture.HttpClient.PostAsync("api/dbdropcollection/parties", null);
         response.StatusCode.Should().Be(HttpStatusCode.OK);
