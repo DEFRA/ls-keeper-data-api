@@ -205,7 +205,7 @@ public class SamPartyMapperToGoldTests
         modifyInput(inputParty);
         modifyExpected(expected);
 
-        var result = await WhenIMapNewPartyToGold(inputParty);
+        var result = await WhenIMapSilverPartyToGold(inputParty);
 
         WipeIdsAndLastUpdatedDates(result);
         WipeIdsAndLastUpdatedDates(expected);
@@ -219,7 +219,7 @@ public class SamPartyMapperToGoldTests
         var inputParty = new SamPartyDocument();
         inputParty.PartyId = "customer-number";
 
-        var result = await WhenIMapNewPartyToGold(inputParty, existingPartyIds: existingPartyIds);
+        var result = await WhenIMapSilverPartyToGold(inputParty, existingPartyIds: existingPartyIds);
         var expectedPartyIds = new List<string>() { "gold-id-a", "gold-id-b" };
 
         result.CustomerNumber.Should().Be("customer-number");
@@ -239,7 +239,7 @@ public class SamPartyMapperToGoldTests
             .Setup(r => r.FindPartyByCustomerNumber(existingCustomerNumber, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingParty);
 
-        var result = await WhenIMapNewPartyToGold(inputParty, existingPartyIds: existingPartyIds);
+        var result = await WhenIMapSilverPartyToGold(inputParty, existingPartyIds: existingPartyIds);
 
         result.CustomerNumber.Should().Be(existingCustomerNumber);
         existingPartyIds.Should().BeEquivalentTo(expectedPartyIds);
@@ -265,7 +265,7 @@ public class SamPartyMapperToGoldTests
 
         expected.CustomerNumber = existingId;
 
-        var result = await WhenIMapNewPartyToGold(inputParty, existingPartyIds: new List<string> { "gold-id" });
+        var result = await WhenIMapSilverPartyToGold(inputParty, existingPartyIds: new List<string> { "gold-id" });
 
         WipeIdsAndLastUpdatedDates(result);
         WipeIdsAndLastUpdatedDates(expected);
@@ -345,7 +345,7 @@ public class SamPartyMapperToGoldTests
             .Setup(r => r.FindPartyByCustomerNumber(customerId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingParty);
 
-        var result = await WhenIMapNewPartyToGold(inputParty, existingPartyIds: new List<string> { customerId });
+        var result = await WhenIMapSilverPartyToGold(inputParty, existingPartyIds: new List<string> { customerId });
 
         WipeIdsAndLastUpdatedDates(result);
         WipeIdsAndLastUpdatedDates(expected);
@@ -434,7 +434,7 @@ public class SamPartyMapperToGoldTests
             .Setup(r => r.FindPartyByCustomerNumber(customerId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingParty);
 
-        var result = await WhenIMapNewPartyToGold(inputParty, existingPartyIds: new List<string> { customerId });
+        var result = await WhenIMapSilverPartyToGold(inputParty, existingPartyIds: new List<string> { customerId });
 
         WipeIdsAndLastUpdatedDates(result);
         WipeIdsAndLastUpdatedDates(expected);
@@ -465,7 +465,7 @@ public class SamPartyMapperToGoldTests
         };
     }
 
-    private async Task<PartyDocument> WhenIMapNewPartyToGold(SamPartyDocument inputParty, string id = "goldSiteId", List<string>? existingPartyIds = null)
+    private async Task<PartyDocument> WhenIMapSilverPartyToGold(SamPartyDocument inputParty, string id = "goldSiteId", List<string>? existingPartyIds = null)
     {
         existingPartyIds = existingPartyIds ?? new List<string>();
         return (await SamPartyMapper.ToGold(
