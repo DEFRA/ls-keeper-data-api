@@ -4,6 +4,7 @@ using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
 using AddressDocument = KeeperData.Core.Documents.AddressDocument;
+using GroupMarkDocument = KeeperData.Core.Documents.Silver.GroupMarkDocument;
 using LocationDocument = KeeperData.Core.Documents.LocationDocument;
 
 namespace KeeperData.Application.Tests.Unit.Orchestration.Imports.Sam.Mappings;
@@ -60,7 +61,8 @@ public class SamHoldingMapperToGoldTests
         };
         ;
         _getPremiseTypeById = (key, token) => Task.FromResult<PremisesTypeDocument?>(_premiseTypeData.SingleOrDefault(x => x.IdentifierId == key));
-        _getSiteIdentifierTypeByCode = (s, token) => Task.FromResult<SiteIdentifierTypeDocument?>(null);
+        var sit = new SiteIdentifierTypeDocument() { IdentifierId = "cphn-sit-id", Code = "CPHN", Name = "CPH Number" };
+        _getSiteIdentifierTypeByCode = (s, token) => Task.FromResult(s == "CPHN" ? sit : null);
         _getPremiseActivityTypeByCode = (key, token) => Task.FromResult<PremisesActivityTypeDocument?>(_activityData.SingleOrDefault(x => x.Code == key));
     }
 
@@ -147,10 +149,20 @@ public class SamHoldingMapperToGoldTests
                         OsMapReference = "SU087290"
                     };
                 }];
-
-            // with cphn site identifier type
-
-            //TODO is it possible for a premise to change its type during its lifetime? (our code says no)
+            yield return
+            ["When mapping SamHoldingDocument with cphn",
+                (SamHoldingDocument s) => { s.CountyParishHoldingNumber = "site-cphn"; },
+                (SiteDocument d) =>
+                {
+                    d.Identifiers[0].Identifier = "site-cphn";
+                }];
+            // TODO - confirm - SamHoldingDocument.GroupMarks is assigned in one place (Import Silver / EnrichWithGroupMarks),
+            // but never used; and in ToGold it is ignored preferring a different source for that data
+            // should the (complex) code for EnrichWithGroupMarks be maintained?
+            
+            // todo should ignore groupmarks without a herdmark
+            
+            // TODO is it possible for a premise to change its type during its lifetime? (our code says no)
         }
     }
 
@@ -211,6 +223,7 @@ public class SamHoldingMapperToGoldTests
         result.Should().BeEquivalentTo(expected);
     }
 
+    //TODO similar to test below, should species be denoted by time??? or is this what group marks do?
     [Theory]
     [InlineData("should map 1 species correctly", new string[] { "spec1code" }, new string[] { "spec1code" })]
     [InlineData("should map 2 duplicated species correctly", new string[] { "spec1code", "spec1code" }, new string[] { "spec1code" })]
@@ -383,6 +396,169 @@ public class SamHoldingMapperToGoldTests
         result.Should().BeEquivalentTo(expected);
     }
 
+    [Fact]
+    // TODO - Can we guarantee that there is always a SiteMappingIdentifierDoc for CPHN? Seems pretty fundamental  
+    public async Task GivenNoCHPNSiteMappingIdentifierDocButIncomingSiteHasCPHN_WhenMappingToGold_ShouldNotCreateIdentifierForCPHN()
+    {
+        var inputParty = new SamHoldingDocument() { CountyParishHoldingNumber = "site-cphn"};
+        var expected = GetBlankSiteDocument();
+        expected.Identifiers.Clear();
+
+        _getSiteIdentifierTypeByCode = (s, token) => Task.FromResult<SiteIdentifierTypeDocument?>(null);
+        
+        var result = await WhenIMapSilverSiteToGold(inputParty, null);
+
+        WipeIdsAndLastUpdatedDates(result!);
+        WipeIdsAndLastUpdatedDates(expected);
+        result.Should().BeEquivalentTo(expected);
+    }
+
+    [Fact]
+    public async Task ShouldMapNewGroupMarksCorrectly()
+    {
+        var representativelastUpdatedDate = new DateTime(2016,1,1);
+        var inputParty = new SamHoldingDocument() { LastUpdatedDate = representativelastUpdatedDate };
+        var endDate = new DateTime(2015,1,1);
+        var startDate = new DateTime(2010,1,1);
+        var groupMarkId = "group-mark-id";
+
+        var lastUpdatedDateForGoldMark = new DateTime(2013,12,13);
+        var herdmark = "H1000001";
+        var groupMarks = new List<SiteGroupMarkRelationshipDocument>()
+        {
+            new SiteGroupMarkRelationshipDocument()
+            {
+                GroupMarkEndDate = endDate,
+                GroupMarkStartDate = startDate,
+                SpeciesTypeName = "Cattle",
+                Herdmark = herdmark,
+                SpeciesTypeCode = "CTT",
+                HoldingIdentifier = "holding-id",
+                LastUpdatedDate = lastUpdatedDateForGoldMark,
+                SpeciesTypeId = "spec-type-id",
+                Id = groupMarkId,
+            }
+        };
+        var expectedMark = new Core.Documents.GroupMarkDocument() {
+                LastUpdatedDate = representativelastUpdatedDate,
+                EndDate = endDate,
+                StartDate = startDate,
+                IdentifierId = groupMarkId,
+                Mark = herdmark,
+                Species = new SpeciesSummaryDocument()
+                {
+                    Code = "CTT",
+                    IdentifierId = "spec-type-id",
+                    LastModifiedDate = lastUpdatedDateForGoldMark,  // TODO is this SpeciesSummaryDocument supposed to be a representation of the global Species; in which case the date is not correct
+                    Name = "Cattle" 
+                }
+            };
+        
+        var result = await WhenIMapSilverSiteToGold(inputParty, null, groupMarks);
+
+        result!.Marks.Should().BeEquivalentTo([expectedMark]);
+    }
+    
+    [Fact]
+    public async Task WhenGroupMarkHerdMarkIsEmpty_ShouldNotGroupMark()
+    {
+        var inputParty = new SamHoldingDocument() {  };
+        List<SiteGroupMarkRelationshipDocument> groupMarks = [CreateGroupMarkRelationshipDocument()];
+        groupMarks[0].Herdmark = "";
+        
+        var result = await WhenIMapSilverSiteToGold(inputParty, null, groupMarks);
+
+        result!.Marks.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task WhenSpeciesTypeIdIsNull_ShouldMapMarkWithoutSpecies()
+    {
+        var inputParty = new SamHoldingDocument() {  };
+        List<SiteGroupMarkRelationshipDocument> groupMarks = [CreateGroupMarkRelationshipDocument()];
+        groupMarks[0].SpeciesTypeId = null;
+        
+        var expectedMark = CreateBaseLineExpectedGroupMarkDocument();
+        expectedMark.Species = null;
+        
+        var result = await WhenIMapSilverSiteToGold(inputParty, null, groupMarks);
+
+        result.Marks.Should().BeEquivalentTo([expectedMark]);
+    }
+
+    [Fact]
+    public async Task WhenMarkIdIsNull_ShouldCreateMarkWithNewGuidId()
+    {
+        var inputParty = new SamHoldingDocument() {  };
+        List<SiteGroupMarkRelationshipDocument> groupMarks = [CreateGroupMarkRelationshipDocument(id:null)];
+        
+        var result = await WhenIMapSilverSiteToGold(inputParty, null, groupMarks);
+
+        result!.Marks.Single().IdentifierId.ShouldBeANonEmptyGuid();
+    }
+
+    /* this is too complicated
+
+    // update existing marks
+    // remove orphan marks
+    [Fact]
+    public async Task WhenUpdatingAGroupMark_ShouldUpdateDatesOfGroupMarkMatchedByHerdMarkIdAndSpeciesId()
+    {
+        var updatedEndDate = new DateTime(2021,11,11);
+        var inputParty = new SamHoldingDocument() {  };
+        var existingSite = new SiteDocument() { Id = GoldSiteId };
+        existingSite.Marks = [new Core.Documents.GroupMarkDocument() { IdentifierId = "preexistingMark" , Mark = "herd-1", Species = new SpeciesSummaryDocument() { IdentifierId = "spec-id-1", Code = "code-1", Name=""} }];
+        
+        var updatedMark = CreateGroupMarkRelationshipDocument(id:"group-mark-id", herdmark: "herd-1");
+        updatedMark.GroupMarkEndDate = updatedEndDate;
+        updatedMark.SpeciesTypeId = "spec-id-1";
+        
+        var newMark = CreateGroupMarkRelationshipDocument(id:null, herdmark: "herd-2");
+        List<SiteGroupMarkRelationshipDocument> groupMarksInput = [updatedMark, newMark];
+        
+        
+        var result = await WhenIMapSilverSiteToGold(inputParty, existingSite, groupMarksInput);
+
+        result!.Marks.Count().Should().Be(2);
+        result!.Marks[0].IdentifierId.Should().Be("group-mark-id");
+        result!.Marks[0].EndDate.Should().Be(updatedEndDate);
+        result!.Marks[1].IdentifierId.ShouldBeANonEmptyGuid();
+    }*/
+
+    private static SiteGroupMarkRelationshipDocument CreateGroupMarkRelationshipDocument(string? id = "group-mark-id", string herdmark = "H1000001")
+    {
+        return new SiteGroupMarkRelationshipDocument()
+        {
+            GroupMarkEndDate = new DateTime(2015,1,1),
+            GroupMarkStartDate = new DateTime(2010,1,1),
+            SpeciesTypeName = "Cattle",
+            Herdmark = herdmark,
+            SpeciesTypeCode = "CTT",
+            HoldingIdentifier = "holding-id",
+            LastUpdatedDate = new DateTime(2013,12,13),
+            SpeciesTypeId = "spec-type-id",
+            Id = id,
+        };
+    }
+    
+    private static Core.Documents.GroupMarkDocument CreateBaseLineExpectedGroupMarkDocument(string? identifierId = "group-mark-id")
+    {
+        return new Core.Documents.GroupMarkDocument() {
+            LastUpdatedDate = DateTime.MinValue,
+            EndDate = new DateTime(2015,1,1),
+            StartDate = new DateTime(2010,1,1),
+            IdentifierId = identifierId,
+            Mark = "H1000001",
+            Species = new SpeciesSummaryDocument()
+            {
+                Code = "CTT",
+                IdentifierId = "spec-type-id",
+                LastModifiedDate = new DateTime(2013,12,13),
+                Name = "Cattle" 
+            }
+        };
+    }
+
     private static SiteDocument GetBlankSiteDocument()
     {
         return new SiteDocument()
@@ -403,23 +579,38 @@ public class SamHoldingMapperToGoldTests
                 {
                     IdentifierId = "any-guid",
                     PrimaryContactFlag = false
-                }]
+                }
+                ]
+            },
+            Identifiers = new List<SiteIdentifierDocument>()
+            {
+                new SiteIdentifierDocument()
+                {
+                    IdentifierId = "any-guid",
+                    Identifier = "", // TODO confirm - should we create Site identifiers if the id incoming (here CPHN) is null or empty???
+                    Type = new SiteIdentifierSummaryDocument()
+                    {
+                        Code = "CPHN",
+                        Description = "CPH Number",
+                        IdentifierId = "cphn-sit-id"
+                    }
+                }
             }
         };
     }
 
-    private async Task<SiteDocument?> WhenIMapSilverSiteToGold(SamHoldingDocument inputHolding, SiteDocument? existingSite)
+    private async Task<SiteDocument?> WhenIMapSilverSiteToGold(SamHoldingDocument inputHolding, SiteDocument? existingSite, List<SiteGroupMarkRelationshipDocument>? goldSiteGroupMarks = null)
     {
-        return await WhenIMapSilverSitesToGold(new List<SamHoldingDocument>() { inputHolding }, existingSite);
+        return await WhenIMapSilverSitesToGold(new List<SamHoldingDocument>() { inputHolding }, existingSite, goldSiteGroupMarks);
     }
 
-    private async Task<SiteDocument?> WhenIMapSilverSitesToGold(List<SamHoldingDocument> inputHoldings, SiteDocument? existingSite)
+    private async Task<SiteDocument?> WhenIMapSilverSitesToGold(List<SamHoldingDocument> inputHoldings, SiteDocument? existingSite, List<SiteGroupMarkRelationshipDocument>? goldSiteGroupMarks = null)
     {
         return await SamHoldingMapper.ToGold(
             GoldSiteId,
             existingSite,
             inputHoldings,
-            new List<SiteGroupMarkRelationshipDocument>(),
+            goldSiteGroupMarks ?? [],
             new List<PartyDocument>(),
             _getCountryById,
             _getPremiseTypeById,
@@ -432,6 +623,8 @@ public class SamHoldingMapperToGoldTests
 
     private void WipeIdsAndLastUpdatedDates(SiteDocument record)
     {
+        record.LastUpdatedDate = DateTime.MinValue;
+        
         if (record.Location != null)
         {
             record.Location.IdentifierId = "";
@@ -454,5 +647,22 @@ public class SamHoldingMapperToGoldTests
         {
             s.LastModifiedDate = DateTime.MinValue;
         }
+
+        foreach (var i in record.Identifiers)
+        {
+            i.IdentifierId = "";
+            i.LastUpdatedDate = DateTime.MinValue;
+        }
+    }
+}
+
+public static class GuidAssertionExtensions
+{
+    public static void ShouldBeANonEmptyGuid(this string? guid)
+    {
+        guid.Should().NotBeNullOrEmpty();
+        Guid val;
+        Guid.TryParse(guid, out val).Should().BeTrue();
+        val.Should().NotBe(Guid.Empty);
     }
 }
