@@ -179,7 +179,6 @@ public static class SamHoldingMapper
             .ToList();
 
         var activities = distinctPremiseActivities
-            .Where(doc => doc is not null)
             .Select(doc => SiteActivity.Create(
                 id: doc.IdentifierId,
                 type: doc.ToDomain(),
@@ -237,8 +236,6 @@ public static class SamHoldingMapper
         SiteIdentifierType? siteIdentifierType,
         CancellationToken cancellationToken)
     {
-        int? uprn = int.TryParse(representative.Location?.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
-
         var premiseTypeLookup = await GetPremiseTypeAsync(
             representative.PremiseTypeIdentifier,
             getPremiseTypeById,
@@ -250,25 +247,8 @@ public static class SamHoldingMapper
             premiseTypeLookup.Name,
             premiseTypeLookup.LastModifiedDate);
 
-        var country = await GetCountryAsync(
-            representative.Location?.Address?.CountryIdentifier,
-            getCountryById,
-            cancellationToken);
-
-        var address = Address.Create(
-            uprn,
-            representative.Location?.Address?.AddressLine ?? string.Empty,
-            representative.Location?.Address?.AddressStreet,
-            representative.Location?.Address?.AddressTown,
-            representative.Location?.Address?.AddressLocality,
-            representative.Location?.Address?.AddressPostCode ?? string.Empty,
-            country);
-
-        var communication = Communication.Create(
-            representative.Communication?.Email,
-            representative.Communication?.Mobile,
-            representative.Communication?.Landline,
-            false);
+        var address = await LocationMapper.AddressToGold(representative.Location?.Address, getCountryById, cancellationToken);
+        var communication = LocationMapper.CommunicationToGold(representative.Communication);
 
         var location = Location.Create(
             representative.Location?.OsMapReference,
@@ -307,11 +287,8 @@ public static class SamHoldingMapper
         }
 
         site.SetSpecies(species, representative.LastUpdatedDate);
-
         site.SetActivities(activities, representative.LastUpdatedDate);
-
         site.SetGroupMarks(groupMarks, representative.LastUpdatedDate);
-
         site.SetSiteParties(goldSiteId, siteParties, representative.LastUpdatedDate);
 
         return site;
@@ -331,13 +308,6 @@ public static class SamHoldingMapper
     {
         var site = existing.ToDomain();
 
-        int? uprn = int.TryParse(representative.Location?.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
-
-        var country = await GetCountryAsync(
-            representative.Location?.Address?.CountryIdentifier,
-            getCountryById,
-            cancellationToken);
-
         var groupMarks = ToGroupMarks(goldSiteGroupMarks);
 
         var siteParties = goldParties
@@ -355,20 +325,8 @@ public static class SamHoldingMapper
             null,
             representative.Deleted);
 
-        var updatedAddress = Address.Create(
-            uprn,
-            representative.Location?.Address?.AddressLine ?? string.Empty,
-            representative.Location?.Address?.AddressStreet,
-            representative.Location?.Address?.AddressTown,
-            representative.Location?.Address?.AddressLocality,
-            representative.Location?.Address?.AddressPostCode ?? string.Empty,
-            country);
-
-        var updatedCommunication = Communication.Create(
-            representative.Communication?.Email,
-            representative.Communication?.Mobile,
-            representative.Communication?.Landline,
-            false);
+        var updatedAddress = await LocationMapper.AddressToGold(representative.Location?.Address, getCountryById, cancellationToken);
+        var updatedCommunication = LocationMapper.CommunicationToGold(representative.Communication);
 
         if (representative.PremiseTypeIdentifier != site.Type?.Id)
         {
@@ -403,13 +361,10 @@ public static class SamHoldingMapper
         }
 
         site.SetSpecies(species, representative.LastUpdatedDate);
-
         site.SetActivities(activities, representative.LastUpdatedDate);
-
         site.SetGroupMarks(groupMarks, representative.LastUpdatedDate);
-
         site.SetSiteParties(existing.Id, siteParties, representative.LastUpdatedDate);
-
+        
         return site;
     }
 
