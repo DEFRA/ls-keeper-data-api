@@ -272,7 +272,7 @@ public class SamPartyMapperToGoldTests
         result.Should().BeEquivalentTo(expected);
     }
 
-    // TODO
+    // TODO - On reflection This test doesn't seem to be maybe a realistic scenario - if the role type id hasn't changed we shouldn't need to update the other role properties because they should remain constant. 
     // most we can say is role isn't added as it is already in list;
     // but there are comparisons that look like they are attempting to update properties like .Code
     // could this be a defect?
@@ -352,7 +352,7 @@ public class SamPartyMapperToGoldTests
         result.Should().BeEquivalentTo(expected);
     }
 
-    // TODO 
+    // TODO - confirm - can a party CHANGE roles?  if they can, this test indicates that old roles won't be removed by the import
     // this test seems to suggest that
     // if a role is no longer in the source, it isn't removed
     [Fact]
