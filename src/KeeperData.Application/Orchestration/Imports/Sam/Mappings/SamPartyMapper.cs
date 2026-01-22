@@ -159,12 +159,9 @@ public static class SamPartyMapper
         Func<string?, CancellationToken, Task<SpeciesDocument?>> getSpeciesTypeById,
         CancellationToken cancellationToken)
     {
-        if (silverParties?.Count == 0)
-            return [];
-
         var result = new List<PartyDocument>();
 
-        foreach (var silverParty in silverParties ?? [])
+        foreach (var silverParty in silverParties)
         {
             var existingParty = await goldPartyRepository.FindPartyByCustomerNumber(silverParty.PartyId, cancellationToken);
 
@@ -235,7 +232,7 @@ public static class SamPartyMapper
 
         foreach (var holder in rawHolders)
         {
-            if (holder.PARTY_ID != null && partyMap.TryGetValue(holder.PARTY_ID, out var party))
+            if (partyMap.TryGetValue(holder.PARTY_ID, out var party))
             {
                 party.ROLES ??= string.Empty;
 

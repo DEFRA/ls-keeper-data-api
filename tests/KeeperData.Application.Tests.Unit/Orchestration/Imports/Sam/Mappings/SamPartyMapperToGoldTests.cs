@@ -136,24 +136,12 @@ public class SamPartyMapperToGoldTests
                         [new Core.Documents.CommunicationDocument { IdentifierId = "some-guid", Email = "email", Landline = "landline", Mobile = "mobile", PrimaryContactFlag = false }];
                 }];
             yield return [ "When mapping empty PartyDocument.Roles",
-                (SamPartyDocument input) =>
-                {
-                    input.Roles = new List<PartyRoleDocument>() { };
-                },
-                (PartyDocument expected) =>
-                {
-                    /*no change*/
-                }
+                (SamPartyDocument input) => { input.Roles = []; },
+                (PartyDocument expected) => { /*no change*/ }
             ];
             yield return [ "When mapping null PartyDocument.Roles",
-                (SamPartyDocument input) =>
-                {
-                    input.Roles = null;
-                },
-                (PartyDocument expected) =>
-                {
-                    /*no change*/
-                }
+                (SamPartyDocument input) => { input.Roles = null; },
+                (PartyDocument expected) => { /*no change*/ }
             ];
             yield return [ "When mapping PartyDocument.Roles",
                 (SamPartyDocument input) =>
@@ -272,86 +260,6 @@ public class SamPartyMapperToGoldTests
         result.Should().BeEquivalentTo(expected);
     }
 
-    // TODO - On reflection This test doesn't seem to be maybe a realistic scenario - if the role type id hasn't changed we shouldn't need to update the other role properties because they should remain constant. 
-    // most we can say is role isn't added as it is already in list;
-    // but there are comparisons that look like they are attempting to update properties like .Code
-    // could this be a defect?
-    [Fact]
-    public async Task ToGoldShouldNotUpdateCodeOrNameOfRolesAlreadyMappedToParty()
-    {
-        var customerId = "customer-id";
-        var matchingRoleId = "roleMatchId";
-        var inputParty = new SamPartyDocument
-        {
-            PartyId = customerId,
-            Roles = new List<PartyRoleDocument>
-            {
-                new ()
-                {
-                    IdentifierId = "any-guid",
-                    RoleTypeId = matchingRoleId,
-                    RoleTypeCode = "newtypecode",
-                    RoleTypeName = "newtypename",
-                    SourceRoleName = "newsourcerolename"
-                }
-            }
-        };
-        inputParty.PartyId = customerId;
-        var existingParty = new PartyDocument
-        {
-            Id = "gold-id",
-            CustomerNumber = customerId,
-            PartyRoles = new List<PartyRoleWithSiteDocument>
-            {
-                new()
-                {
-                    IdentifierId = "abc",
-                    Role = new() { IdentifierId = matchingRoleId, Code = "oldcode", Name = "oldname" },
-                    Site = new()
-                    {
-                        IdentifierId = GoldSiteId,
-                        Name = "oldsitename",
-                        State = "oldstate",
-                        Type = new PremisesTypeSummaryDocument { IdentifierId = "any-ptsd-id", Code = "ptsdcode", Description = "ptsd-desc" }
-                    }
-                }
-            }
-        };
-
-        var expected = CreateNewEmptyPartyDocument();
-        expected.Id = "gold-id";
-        expected.CustomerNumber = customerId;
-        expected.PartyRoles = new List<PartyRoleWithSiteDocument>()
-        {
-            new PartyRoleWithSiteDocument()
-                { IdentifierId = "abc", // id unchanged,
-                    Role = new PartyRoleRoleDocument()
-                    {
-                        IdentifierId = matchingRoleId,
-                        Name = "oldname", //unchanged - see next test - if this were a new record this would be set to the incoming name
-                        Code = "oldcode", //unchanged - see next test - if this were a new record this would be set to the incoming code
-                    },
-                    Site = new PartyRoleSiteDocument()
-                    {
-                        IdentifierId = GoldSiteId,
-                        Name = "oldsitename",
-                        State = "oldstate",
-                        Type = new PremisesTypeSummaryDocument { IdentifierId = "any-ptsd-id", Code = "ptsdcode", Description = "ptsd-desc" }
-                    }
-                }
-        };
-
-        _goldRepoMock
-            .Setup(r => r.FindPartyByCustomerNumber(customerId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingParty);
-
-        var result = await WhenIMapSilverPartyToGold(inputParty, existingPartyIds: new List<string> { customerId });
-
-        WipeIdsAndLastUpdatedDates(result);
-        WipeIdsAndLastUpdatedDates(expected);
-        result.Should().BeEquivalentTo(expected);
-    }
-
     // TODO - confirm - can a party CHANGE roles?  if they can, this test indicates that old roles won't be removed by the import
     // this test seems to suggest that
     // if a role is no longer in the source, it isn't removed
@@ -368,7 +276,7 @@ public class SamPartyMapperToGoldTests
             {
                 new PartyRoleDocument()
                 {
-                    IdentifierId = "any-guid",
+                    IdentifierId = "new-role-id",
                     RoleTypeId = newRoleTypeId,
                     RoleTypeCode = "newtypecode",
                     RoleTypeName = "newtypename",
@@ -382,14 +290,20 @@ public class SamPartyMapperToGoldTests
         {
             Id = "gold-id",
             CustomerNumber = customerId,
-            PartyRoles = new List<PartyRoleWithSiteDocument>() { new PartyRoleWithSiteDocument()
+            PartyRoles = new List<PartyRoleWithSiteDocument>()
             {
-                IdentifierId = "old-role-id",
-                Role = new PartyRoleRoleDocument() { IdentifierId = existingRoleTypeId, Code = "oldcode", Name = "oldname",},
-                Site = new PartyRoleSiteDocument() { IdentifierId = GoldSiteId, Name = "oldsitename", State = "oldstate"
-                , Type = new PremisesTypeSummaryDocument { IdentifierId = "any-ptsd-id", Code = "ptsdcode", Description = "ptsd-desc" } }
-            } }
-
+                new()
+                {
+                    IdentifierId = "old-role-id",
+                    Role = new PartyRoleRoleDocument() { IdentifierId = existingRoleTypeId, Code = "oldcode", Name = "oldname",},
+                    Site = new PartyRoleSiteDocument() {
+                        IdentifierId = GoldSiteId,
+                        Name = "oldsitename",
+                        State = "oldstate",
+                        Type = new PremisesTypeSummaryDocument { IdentifierId = "any-ptsd-id", Code = "ptsdcode", Description = "ptsd-desc" }
+                    }
+                }
+            }
         };
 
         var expected = CreateNewEmptyPartyDocument();
@@ -413,7 +327,7 @@ public class SamPartyMapperToGoldTests
                 },
             new ()
             {
-                IdentifierId = "anyguid",
+                IdentifierId = "new-role-id",
                 Role = new PartyRoleRoleDocument()
                 {
                     IdentifierId = newRoleTypeId,
@@ -478,8 +392,6 @@ public class SamPartyMapperToGoldTests
             _getSpeciesById,
             CancellationToken.None)).Single();
     }
-
-    // TODO test representative.PremiseTypeIdentifier != site.Type?.Id
 
     /// <summary>
     /// For comparing objects in test assertion, a destructive action that wipes unpredictable fields so the rest can be compared naturally

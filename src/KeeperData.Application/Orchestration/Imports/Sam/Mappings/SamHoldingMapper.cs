@@ -148,6 +148,7 @@ public static class SamHoldingMapper
         CancellationToken cancellationToken)
     {
         if (silverHoldings == null || silverHoldings.Count == 0)
+        if (silverHoldings.Count == 0)
             return null;
 
         var representative = silverHoldings.Any(x => x.HoldingStatus == HoldingStatusType.Active.GetDescription())
@@ -187,15 +188,15 @@ public static class SamHoldingMapper
                 lastUpdatedDate: representative.LastUpdatedDate))
             .ToList();
 
-        var siteIdentifierTypeLookup = await getSiteIdentifierTypeByCode(
+        var cphnSiteIdentifierTypeDocument = await getSiteIdentifierTypeByCode(
             HoldingIdentifierType.CPHN.ToString(),
             cancellationToken);
 
-        var siteIdentifierType = siteIdentifierTypeLookup == null ? null : new SiteIdentifierType(
-            siteIdentifierTypeLookup.IdentifierId,
-            siteIdentifierTypeLookup.Code,
-            siteIdentifierTypeLookup.Name,
-            siteIdentifierTypeLookup.LastModifiedDate);
+        var cphnSiteIdentifierType = cphnSiteIdentifierTypeDocument == null ? null : new SiteIdentifierType(
+            cphnSiteIdentifierTypeDocument.IdentifierId,
+            cphnSiteIdentifierTypeDocument.Code,
+            cphnSiteIdentifierTypeDocument.Name,
+            cphnSiteIdentifierTypeDocument.LastModifiedDate);
 
         var site = existingSite is not null
             ? await UpdateSiteAsync(
@@ -207,7 +208,7 @@ public static class SamHoldingMapper
                 getPremiseTypeById,
                 species,
                 activities,
-                siteIdentifierType,
+                cphnSiteIdentifierType,
                 cancellationToken)
             : await CreateSiteAsync(
                 goldSiteId,
@@ -218,7 +219,7 @@ public static class SamHoldingMapper
                 getPremiseTypeById,
                 species,
                 activities,
-                siteIdentifierType,
+                cphnSiteIdentifierType,
                 cancellationToken);
 
         return SiteDocument.FromDomain(site);
@@ -364,23 +365,8 @@ public static class SamHoldingMapper
         site.SetActivities(activities, representative.LastUpdatedDate);
         site.SetGroupMarks(groupMarks, representative.LastUpdatedDate);
         site.SetSiteParties(existing.Id, siteParties, representative.LastUpdatedDate);
-        
+
         return site;
-    }
-
-    private static async Task<Country?> GetCountryAsync(
-        string? countryIdentifier,
-        Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
-        CancellationToken cancellationToken)
-    {
-        if (countryIdentifier == null) return null;
-
-        var countryDocument = await getCountryById(countryIdentifier, cancellationToken);
-
-        if (countryDocument == null)
-            return null;
-
-        return countryDocument.ToDomain();
     }
 
     private static async Task<PremisesTypeDocument?> GetPremiseTypeAsync(
@@ -398,9 +384,6 @@ public static class SamHoldingMapper
         Func<string?, CancellationToken, Task<(string? typeId, string? typeName)>> findAsync,
         CancellationToken cancellationToken)
     {
-        if (rawCodes == null)
-            return [];
-
         var distinctCodes = rawCodes
             .Where(code => !string.IsNullOrWhiteSpace(code))
             .Distinct()
@@ -422,9 +405,6 @@ public static class SamHoldingMapper
         Func<string?, CancellationToken, Task<T?>> getTypeByCodeAsync,
         CancellationToken cancellationToken)
     {
-        if (rawCodes == null)
-            return [];
-
         var distinctCodes = rawCodes
             .Where(code => !string.IsNullOrWhiteSpace(code))
             .Distinct()

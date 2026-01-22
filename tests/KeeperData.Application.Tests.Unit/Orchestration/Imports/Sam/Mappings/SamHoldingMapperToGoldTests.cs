@@ -4,7 +4,6 @@ using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
 using AddressDocument = KeeperData.Core.Documents.AddressDocument;
-using GroupMarkDocument = KeeperData.Core.Documents.Silver.GroupMarkDocument;
 using LocationDocument = KeeperData.Core.Documents.LocationDocument;
 
 namespace KeeperData.Application.Tests.Unit.Orchestration.Imports.Sam.Mappings;
@@ -159,8 +158,6 @@ public class SamHoldingMapperToGoldTests
             // TODO - confirm - SamHoldingDocument.GroupMarks is assigned in one place (Import Silver / EnrichWithGroupMarks),
             // but never used; and in ToGold it is ignored preferring a different source for that data
             // should the (complex) code for EnrichWithGroupMarks be maintained?
-
-            // todo should ignore groupmarks without a herdmark
 
             // TODO is it possible for a premise to change its type during its lifetime? (our code says no)
         }
