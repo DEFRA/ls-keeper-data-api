@@ -159,10 +159,7 @@ public static class SamHoldingMapper
             findSpecies,
             cancellationToken);
 
-        //var distinctProductionUsages = await GetDistinctReferenceDataAsync<ProductionUsageDocument>(
-        //    silverHoldings.SelectMany(h => h.ProductionUsageCodeList),
-        //    findProductionUsage,
-        //    cancellationToken);
+
 
         var distinctPremiseActivities = await GetDistinctReferenceDataAsync(
             silverHoldings.Select(h => h.PremiseActivityTypeCode),
@@ -490,23 +487,29 @@ public static class SamHoldingMapper
     {
         return [.. relationships
             .Where(m => !string.IsNullOrWhiteSpace(m.Herdmark))
-            .Select(m =>
+            .GroupBy(m => m.Herdmark) // Group by Herdmark
+            .Select(group =>
             {
-                var species = m.SpeciesTypeId is not null
-                    ? Species.Create(
-                        id: m.SpeciesTypeId,
+                var representative = group.First();
+                
+                // Aggregate distinct species for this herdmark
+                var speciesList = group
+                    .Where(m => m.SpeciesTypeId is not null)
+                    .Select(m => Species.Create(
+                        id: m.SpeciesTypeId!,
                         lastUpdatedDate: m.LastUpdatedDate,
                         code: m.SpeciesTypeCode ?? string.Empty,
-                        name: m.SpeciesTypeName ?? string.Empty)
-                    : null;
+                        name: m.SpeciesTypeName ?? string.Empty))
+                    .DistinctBy(s => s.Code)
+                    .ToList();
 
                 return new GroupMark(
-                    id: m.Id ?? Guid.NewGuid().ToString(),
-                    lastUpdatedDate: m.LastUpdatedDate,
-                    mark: m.Herdmark,
-                    startDate: m.GroupMarkStartDate,
-                    endDate: m.GroupMarkEndDate,
-                    species: species);
+                    id: representative.Id ?? Guid.NewGuid().ToString(),
+                    lastUpdatedDate: representative.LastUpdatedDate,
+                    mark: group.Key,
+                    startDate: representative.GroupMarkStartDate,
+                    endDate: representative.GroupMarkEndDate,
+                    species: speciesList);
             })];
     }
 }

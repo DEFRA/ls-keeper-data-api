@@ -493,10 +493,16 @@ public static class SamPartyMapper
                     }
                 }
 
+                //Get distinct species to avoid duplicates
+                var distinctSpeciesManaged = speciesManaged
+                    .GroupBy(s => s.Code)
+                    .Select(g => g.First())
+                    .ToList();
+
                 var partyRole = PartyRole.Create(
                     partyRoleSite,
                     partyRoleRole,
-                    speciesManaged);
+                    distinctSpeciesManaged);
 
                 partyRoles.Add(partyRole);
             }

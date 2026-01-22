@@ -423,6 +423,15 @@ public static class ExpectedGoldParties
                                 StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
                                 EndDate = null,
                                 LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                            },
+                            new()
+                            {
+                                IdentifierId = Guid.NewGuid().ToString(),
+                                Code = "SHP",
+                                Name = SpeciesData.Find("SHP").name!,
+                                StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
+                                EndDate = null,
+                                LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                             }
                         ]
                     }
@@ -559,6 +568,15 @@ public static class ExpectedGoldParties
                                 IdentifierId = Guid.NewGuid().ToString(),
                                 Code = "CTT",
                                 Name = SpeciesData.Find("CTT").name!,
+                                StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
+                                EndDate = null,
+                                LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                            },
+                            new()
+                            {
+                                IdentifierId = Guid.NewGuid().ToString(),
+                                Code = "SHP",
+                                Name = SpeciesData.Find("SHP").name!,
                                 StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
                                 EndDate = null,
                                 LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)

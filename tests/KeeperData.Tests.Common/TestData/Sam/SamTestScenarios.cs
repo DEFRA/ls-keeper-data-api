@@ -30,7 +30,8 @@ public static class SamTestScenarios
         ],
         RawHerds = [
             SamHerd_Cattle_1,
-            SamHerd_Sheep_1
+            SamHerd_Sheep_1,
+            SamHerd_Cattle_1_Sheep_Addon
         ],
         RawHolders = [
             SamCphHolder_C1000001
@@ -50,6 +51,10 @@ public static class SamTestScenarios
         var p1_updated = SamParty_C1000001;
         p1_updated.ROLES = "LIVESTOCKKEEPER";
 
+        var sheepAddonForScenario2 = SamHerd_Cattle_1_Sheep_Addon;
+        sheepAddonForScenario2.OWNER_PARTY_IDS = "C1000005";
+        sheepAddonForScenario2.KEEPER_PARTY_IDS = "C1000001";
+
         return new()
         {
             Cph = s_cphNumber,
@@ -57,7 +62,8 @@ public static class SamTestScenarios
                 SamCphHolding_Cattle_1
             ],
             RawHerds = [
-                SamHerd_Cattle_2
+                SamHerd_Cattle_2,
+                sheepAddonForScenario2
             ],
             RawHolders = [
                 SamCphHolder_C1000005
@@ -284,6 +290,35 @@ public static class SamTestScenarios
         INTERVAL_UNIT_OF_TIME = "Months",
 
         // Optional fields left blank for now
+        DISEASE_TYPE = null,
+        MOVEMENT_RSTRCTN_RSN_CODE = null
+    };
+
+    private static SamHerd SamHerd_Cattle_1_Sheep_Addon => new()
+    {
+        BATCH_ID = 1,
+        CHANGE_TYPE = "I",
+        CreatedAtUtc = new DateTime(2025, 1, 1, 0, 0, 0),
+        UpdatedAtUtc = new DateTime(2025, 2, 2, 0, 0, 0),
+        IsDeleted = false,
+
+        // SAME Herdmark as Cattle_1
+        HERDMARK = "H1000001",
+        CPHH = $"{s_cphNumber}/01",
+
+        // DIFFERENT Species
+        ANIMAL_SPECIES_CODE = "SHP",
+        ANIMAL_PURPOSE_CODE = "SHP-MEAT-DLR",
+
+        OWNER_PARTY_IDS = "C1000001",
+        KEEPER_PARTY_IDS = "C1000001,C1000002",
+
+        ANIMAL_GROUP_ID_MCH_FRM_DAT = new DateTime(2005, 1, 1, 0, 0, 0),
+        ANIMAL_GROUP_ID_MCH_TO_DAT = null,
+
+        INTERVALS = 6,
+        INTERVAL_UNIT_OF_TIME = "Months",
+
         DISEASE_TYPE = null,
         MOVEMENT_RSTRCTN_RSN_CODE = null
     };
