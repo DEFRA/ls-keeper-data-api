@@ -16,7 +16,6 @@ using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Observers;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
-using KeeperData.Infrastructure.Authentication.Configuration;
 using KeeperData.Infrastructure.Messaging.Consumers;
 using KeeperData.Infrastructure.Messaging.Services;
 using KeeperData.Infrastructure.Storage.Clients;
@@ -206,23 +205,30 @@ public class AppWebApplicationFactory(
         Environment.SetEnvironmentVariable("DailyScanEndpointsEnabled", "false");
         Environment.SetEnvironmentVariable("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicName", "ls_keeper_data_import_complete");
         Environment.SetEnvironmentVariable("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicArn", "http://localhost:4566/000000000000/ls_keeper_data_import_complete");
+        Environment.SetEnvironmentVariable("AuthenticationConfiguration__EnableApiKey", "true");
+        Environment.SetEnvironmentVariable("AuthenticationConfiguration__ApiGatewayExists", "true");
+        Environment.SetEnvironmentVariable("AuthenticationConfiguration__Authority", "https://fake-authority/");
     }
 
     private static void ConfigureFakeAuthorization(IServiceCollection services)
     {
-        services.RemoveAll<IConfigureOptions<AuthenticationOptions>>();
         services.RemoveAll<IConfigureNamedOptions<JwtBearerOptions>>();
-        services.RemoveAll<IConfigureOptions<AuthenticationConfiguration>>();
-        services.RemoveAll<AuthenticationSchemeProvider>();
-        services.AddSingleton<IAuthenticationSchemeProvider, AuthenticationSchemeProvider>();
 
-        services.AddAuthentication(options =>
+        services.RemoveAll<IAuthenticationSchemeProvider>();
+
+        services.AddSingleton<IAuthenticationSchemeProvider>(sp =>
         {
-            options.DefaultAuthenticateScheme = FakeJwtHandler.SchemeName;
-            options.DefaultChallengeScheme = FakeJwtHandler.SchemeName;
-        })
-        .AddScheme<AuthenticationSchemeOptions, FakeJwtHandler>(
-            FakeJwtHandler.SchemeName, _ => { });
+            var options = sp.GetRequiredService<IOptions<AuthenticationOptions>>();
+            var provider = new AuthenticationSchemeProvider(options);
+
+            provider.RemoveScheme("Bearer");
+            provider.AddScheme(new AuthenticationScheme(
+                FakeJwtHandler.SchemeName,
+                FakeJwtHandler.SchemeName,
+                typeof(FakeJwtHandler)));
+
+            return provider;
+        });
     }
 
     private static void ConfigureMessageConsumers(IServiceCollection services)

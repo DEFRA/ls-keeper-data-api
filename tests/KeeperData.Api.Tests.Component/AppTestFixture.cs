@@ -13,10 +13,20 @@ public class AppTestFixture
     private const string BasicSecret = "integration-test-secret";
 
     public AppTestFixture()
+        : this(useFakeAuth: false)
     {
-        AppWebApplicationFactory = new AppWebApplicationFactory();
+    }
+
+    protected AppTestFixture(bool useFakeAuth = false)
+    {
+        AppWebApplicationFactory = new AppWebApplicationFactory(useFakeAuth: useFakeAuth);
         HttpClient = AppWebApplicationFactory.CreateClient();
-        HttpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
+
+        if (useFakeAuth)
+            HttpClient.AddJwt();
+        else
+            HttpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
+
         DataBridgeApiClientHttpMessageHandlerMock = AppWebApplicationFactory.DataBridgeApiClientHttpMessageHandlerMock;
     }
 }

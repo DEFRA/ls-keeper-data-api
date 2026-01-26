@@ -10,9 +10,12 @@ public class AuthenticationOptionsConfigurator(IOptions<AuthenticationConfigurat
 
     public void Configure(AuthenticationOptions options)
     {
-        options.DefaultAuthenticateScheme =
-            _authConfig.ApiGatewayExists ? "Bearer" : BasicAuthenticationHandler.SchemeName;
+        var scheme = _authConfig.ApiGatewayExists
+            ? "Bearer"
+            : BasicAuthenticationHandler.SchemeName;
 
-        options.DefaultChallengeScheme = options.DefaultAuthenticateScheme;
+        options.DefaultScheme = scheme;
+        options.DefaultAuthenticateScheme = scheme;
+        options.DefaultChallengeScheme = scheme;
     }
 }

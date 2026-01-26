@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace KeeperData.Api.Controllers
 {
-    [Authorize]
+    [Authorize(Policy = "BasicOrBearer")]
     [ApiController]
     [Route("api/[controller]")]
     public class PartiesController(IRequestExecutor executor) : ControllerBase

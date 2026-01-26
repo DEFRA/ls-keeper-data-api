@@ -44,6 +44,8 @@ public static class WebApplicationExtensions
         app.UseAuthentication();
         app.UseAuthorization();
 
+        app.MapControllers();
+
         app.MapHealthChecks("/health", new HealthCheckOptions()
         {
             Predicate = _ => true,
@@ -64,14 +66,30 @@ public static class WebApplicationExtensions
 
         if (bulkScanEndpointsEnabled)
         {
-            RegisterScanEndpoint<ICtsBulkScanTask>(app, "/api/import/startCtsBulkScan", "CTS bulk scan");
-            RegisterScanEndpoint<ISamBulkScanTask>(app, "/api/import/startSamBulkScan", "SAM bulk scan");
+            RegisterScanEndpoint<ICtsBulkScanTask>(app, "/api/import/startCtsBulkScan", "CTS bulk scan")
+                .RequireAuthorization(new AuthorizeAttribute
+                {
+                    AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
+                });
+            RegisterScanEndpoint<ISamBulkScanTask>(app, "/api/import/startSamBulkScan", "SAM bulk scan")
+                .RequireAuthorization(new AuthorizeAttribute
+                {
+                    AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
+                });
         }
 
         if (dailyScanEndpointsEnabled)
         {
-            RegisterScanEndpoint<ICtsDailyScanTask>(app, "/api/import/startCtsDailyScan", "CTS daily scan");
-            RegisterScanEndpoint<ISamDailyScanTask>(app, "/api/import/startSamDailyScan", "SAM daily scan");
+            RegisterScanEndpoint<ICtsDailyScanTask>(app, "/api/import/startCtsDailyScan", "CTS daily scan")
+                .RequireAuthorization(new AuthorizeAttribute
+                {
+                    AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
+                });
+            RegisterScanEndpoint<ISamDailyScanTask>(app, "/api/import/startSamDailyScan", "SAM daily scan")
+                .RequireAuthorization(new AuthorizeAttribute
+                {
+                    AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
+                });
         }
 
         var mongoPreprodConfig = configuration.GetSection(MongoDbPreproductionServiceConfig.SectionName).Get<MongoDbPreproductionServiceConfig>();
@@ -83,8 +101,6 @@ public static class WebApplicationExtensions
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
                 });
         }
-
-        app.MapControllers();
     }
 
     private static RouteHandlerBuilder RegisterScanEndpoint<TTask>(
@@ -130,11 +146,6 @@ public static class WebApplicationExtensions
                     statusCode: 499
                 );
             }
-        });
-
-        builder.RequireAuthorization(new AuthorizeAttribute
-        {
-            AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
         });
 
         return builder;
