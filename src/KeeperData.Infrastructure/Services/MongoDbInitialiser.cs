@@ -37,7 +37,7 @@ namespace KeeperData.Infrastructure.Services
             }
         }
 
-        private static async Task DropV1IndexesIfPresentAsync<TDocument>(IMongoCollection<TDocument> collection)
+        private static async Task DropV1IndexesIfPresentAsync(IMongoCollection<BsonDocument> collection)
         {
             using var cursor = await collection.Indexes.ListAsync();
             var indexes = await cursor.ToListAsync();
