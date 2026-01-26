@@ -37,19 +37,24 @@ namespace KeeperData.Infrastructure.Services
             }
         }
 
-        private static async Task DropV1IndexesIfPresentAsync<TDocument>(IMongoCollection<TDocument> collection)
+        private static async Task DropV1IndexesIfPresentAsync(IMongoCollection<BsonDocument> collection)
         {
             using var cursor = await collection.Indexes.ListAsync();
             var indexes = await cursor.ToListAsync();
 
             foreach (var index in indexes)
             {
-                var indexName = index["name"].AsString;
-                if (indexName.StartsWith("idx_"))
-                {
-                    await collection.Indexes.DropOneAsync(indexName);
-                    Console.WriteLine($"Dropped index: {indexName}");
-                }
+                await DropIndexIfItIsV1(collection, index);
+            }
+        }
+
+        private static async Task DropIndexIfItIsV1<TDocument>(IMongoCollection<TDocument> collection, BsonDocument index)
+        {
+            var indexName = index["name"].AsString;
+            if (indexName.StartsWith("idx_"))
+            {
+                await collection.Indexes.DropOneAsync(indexName);
+                Console.WriteLine($"Dropped index: {indexName}");
             }
         }
     }

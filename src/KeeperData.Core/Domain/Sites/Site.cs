@@ -127,15 +127,6 @@ public class Site : IAggregateRoot
         }
     }
 
-    public void Delete()
-    {
-        if (Deleted) return;
-
-        Deleted = true;
-        State = "Inactive";
-        LastUpdatedDate = DateTime.UtcNow;
-    }
-
     public void SetPremisesType(PremisesType? type, DateTime lastUpdatedDate)
     {
         if (Type == null && type == null) return;

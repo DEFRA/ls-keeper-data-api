@@ -180,7 +180,7 @@ public class SiteGroupMarkMapperTests
             _premiseActivityTypeLookupServiceMock.Object,
             _siteIdentifierTypeLookupServiceMock.Object,
             _goldSiteRepositoryMock.Object,
-            Mock.Of<IGenericRepository<PartyDocument>>(),
+            Mock.Of<IPartiesRepository>(),
             Mock.Of<ILogger<SamHoldingImportGoldMappingStep>>());
     }
 

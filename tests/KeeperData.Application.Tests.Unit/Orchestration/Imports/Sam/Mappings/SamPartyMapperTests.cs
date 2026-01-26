@@ -377,6 +377,27 @@ public class SamPartyMapperTests
         result.Single().PERSON_TITLE.Should().Be("Ms");
     }
 
+    //TODO JIRA ULITP-3998
+    [Fact]
+    public void AggregatePartyAndHolder_WhenPartyFieldIsEmptyAndHolderFieldIsNull_ShouldPreserveEmpty()
+    {
+        var party = new SamParty
+        {
+            PARTY_ID = "P1",
+            PERSON_FAMILY_NAME = ""
+        };
+
+        var holder = new SamCphHolder
+        {
+            PARTY_ID = "P1",
+            PERSON_FAMILY_NAME = null
+        };
+
+        var result = SamPartyMapper.AggregatePartyAndHolder([party], [holder]);
+
+        result.Single().PERSON_FAMILY_NAME.Should().Be("");
+    }
+
     private static List<SamParty> GenerateSamParty(int quantity)
     {
         var factory = new MockSamRawDataFactory();

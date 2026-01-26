@@ -11,7 +11,7 @@ public class PartyRoleRole : ValueObject
     public string? Name { get; private set; }
     public DateTime? LastUpdatedDate { get; private set; }
 
-    public bool IsCphHolderRole => Id != null && Id == CphHolderRoleId;
+    public bool IsCphHolderRole => Id == CphHolderRoleId;
 
     public PartyRoleRole(
         string id,

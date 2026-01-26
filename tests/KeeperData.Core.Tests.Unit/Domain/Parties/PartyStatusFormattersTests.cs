@@ -3,7 +3,7 @@ using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Parties.Formatters;
 using KeeperData.Core.Extensions;
 
-namespace KeeperData.Core.Tests.Unit.Parties;
+namespace KeeperData.Core.Tests.Unit.Domain.Parties;
 
 public class PartyStatusFormattersTests
 {

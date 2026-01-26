@@ -15,4 +15,6 @@ public interface IPartiesRepository : IGenericRepository<PartyDocument>
         int skip,
         int take,
         CancellationToken cancellationToken = default);
+
+    Task<PartyDocument?> FindPartyByCustomerNumber(string customerNumber, CancellationToken cancellationToken = default);
 }

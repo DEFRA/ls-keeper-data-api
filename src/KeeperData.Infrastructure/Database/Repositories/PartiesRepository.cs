@@ -36,4 +36,10 @@ public class PartiesRepository(
             .Limit(take)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<PartyDocument?> FindPartyByCustomerNumber(string customerNumber, CancellationToken cancellationToken = default)
+    {
+        var partyFilter = Builders<PartyDocument>.Filter.Eq(x => x.CustomerNumber, customerNumber);
+        return await FindOneByFilterAsync(partyFilter, cancellationToken);
+    }
 }
