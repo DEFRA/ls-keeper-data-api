@@ -72,6 +72,18 @@ public class SamHoldingMapperToGoldTests
             yield return
                 ["When mapping empty SamHoldingDocument", (SamHoldingDocument s) => { }, (SiteDocument d) => { }];
             yield return
+                ["When mapping empty SamHoldingDocument with dates",
+                    (SamHoldingDocument s) =>
+                    {
+                        s.HoldingStartDate = new DateTime(2001, 1, 1);
+                        s.HoldingEndDate = new DateTime(2005, 1, 1);
+                    },
+                    (SiteDocument d) =>
+                    {
+                        d.StartDate = new DateTime(2001, 1, 1);
+                        d.EndDate = new DateTime(2005, 1, 1);
+                    }];
+            yield return
             ["When mapping SamHoldingDocument with unknown premise",
                 (SamHoldingDocument s) => { s.PremiseTypeIdentifier = "prem-invalid-id"; },
                 (SiteDocument d) => {}];
@@ -218,7 +230,6 @@ public class SamHoldingMapperToGoldTests
         result.Should().BeEquivalentTo(expected);
     }
 
-    //TODO similar to test below, should species be denoted by time??? or is this what group marks do?
     [Theory]
     [InlineData("should map 1 species correctly", new string[] { "spec1code" }, new string[] { "spec1code" })]
     [InlineData("should map 2 duplicated species correctly", new string[] { "spec1code", "spec1code" }, new string[] { "spec1code" })]

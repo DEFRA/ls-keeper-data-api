@@ -123,7 +123,8 @@ public class LocationTests
         Assert.NotEqual(Left, Right);
     }
 
-    //TODO - possible defect - discuss intention here - using referenceequals - so LEFT != RIGHT but when LEFT updated to RIGHT, return no change.
+    // using referenceequals - so LEFT != RIGHT but when LEFT updated to RIGHT, return no change.
+    // TODO fix - ULITP-4006 - should return a change if the address is updated.
     [Fact]
     public void LocationsWithDifferentAddressesReturnNoChange()
     {
