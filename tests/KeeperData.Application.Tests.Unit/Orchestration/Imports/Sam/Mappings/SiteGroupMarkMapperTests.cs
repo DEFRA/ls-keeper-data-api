@@ -127,7 +127,6 @@ public class SiteGroupMarkMapperTests
     private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
     private readonly Mock<ISiteIdentifierTypeLookupService> _siteIdentifierTypeLookupServiceMock = new();
-    private readonly Mock<IActivityCodeLookupService> _activityCodeLookupService = new();
     private readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
 
     public SiteGroupMarkMapperTests()
@@ -170,7 +169,6 @@ public class SiteGroupMarkMapperTests
             _countryIdentifierLookupServiceMock.Object,
             _productionUsageLookupServiceMock.Object,
             _speciesTypeLookupServiceMock.Object,
-            _activityCodeLookupService.Object,
             Mock.Of<ILogger<SamHoldingImportSilverMappingStep>>());
 
         _goldMappingStep = new SamHoldingImportGoldMappingStep(

@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using FluentAssertions;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents;
@@ -6,6 +5,7 @@ using KeeperData.Core.Repositories;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
+using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Tests.Unit;
 

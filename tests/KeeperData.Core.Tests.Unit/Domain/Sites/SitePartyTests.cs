@@ -1,7 +1,7 @@
-using System.Diagnostics;
 using FluentAssertions;
 using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Domain.Sites;
+using System.Diagnostics;
 
 namespace KeeperData.Core.Tests.Unit.Domain.Sites;
 

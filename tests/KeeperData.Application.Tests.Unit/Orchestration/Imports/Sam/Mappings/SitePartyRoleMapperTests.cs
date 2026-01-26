@@ -122,7 +122,6 @@ public class SitePartyRoleMapperTests
     private readonly Mock<ISpeciesTypeLookupService> _speciesTypeLookupServiceMock = new();
     private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
     private readonly Mock<ISiteIdentifierTypeLookupService> _siteIdentifierTypeLookupServiceMock = new();
-    private readonly Mock<IActivityCodeLookupService> _activityCodeLookupService = new();
 
     private readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
 
@@ -163,7 +162,6 @@ public class SitePartyRoleMapperTests
             Mock.Of<ICountryIdentifierLookupService>(),
             _productionUsageLookupServiceMock.Object,
             _speciesTypeLookupServiceMock.Object,
-            _activityCodeLookupService.Object,
             Mock.Of<ILogger<SamHoldingImportSilverMappingStep>>());
 
         _goldMappingStep = new SamHoldingImportGoldMappingStep(
