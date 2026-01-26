@@ -1,7 +1,7 @@
 using FluentAssertions;
 using KeeperData.Core.Domain.Parties.Formatters;
 
-namespace KeeperData.Core.Tests.Unit.Parties;
+namespace KeeperData.Core.Tests.Unit.Domain.Parties;
 
 public class PartyNameFormattersTests
 {

@@ -3,7 +3,7 @@ using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Parties.Rules;
 
-namespace KeeperData.Core.Tests.Unit.Parties;
+namespace KeeperData.Core.Tests.Unit.Domain.Parties;
 
 public class PartyTypeRulesTests
 {
