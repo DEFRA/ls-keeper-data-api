@@ -20,7 +20,6 @@ public class SamHoldingMapperTests
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolvePremiseActivityType;
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolvePremiseType;
     private readonly Func<string?, string?, CancellationToken, Task<(string?, string?, string?)>> _resolveCountry;
-    private readonly Func<string?, CancellationToken, Task<(string? premiseType, string? premiseActivityType)>> _resolveCodes;
 
     public SamHoldingMapperTests()
     {
@@ -42,7 +41,6 @@ public class SamHoldingMapperTests
         _resolvePremiseActivityType = _premiseActivityTypeLookupServiceMock.Object.FindAsync;
         _resolvePremiseType = _premiseTypeLookupServiceMock.Object.FindAsync;
         _resolveCountry = _countryIdentifierLookupServiceMock.Object.FindAsync;
-        _resolveCodes = _activityCodeLookupServiceMock.Object.FindByActivityCodeAsync;
     }
 
     [Fact]
@@ -53,7 +51,6 @@ public class SamHoldingMapperTests
             _resolvePremiseActivityType,
             _resolvePremiseType,
             _resolveCountry,
-            _resolveCodes,
             CancellationToken.None);
 
         results.Should().NotBeNull();
@@ -68,7 +65,6 @@ public class SamHoldingMapperTests
             _resolvePremiseActivityType,
             _resolvePremiseType,
             _resolveCountry,
-            _resolveCodes,
             CancellationToken.None);
 
         results.Should().NotBeNull();
@@ -87,7 +83,6 @@ public class SamHoldingMapperTests
             _resolvePremiseActivityType,
             _resolvePremiseType,
             _resolveCountry,
-            _resolveCodes,
             CancellationToken.None);
 
         results.Should().NotBeNull();

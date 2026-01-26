@@ -13,7 +13,6 @@ public class SamHoldingImportSilverMappingStep(
     ICountryIdentifierLookupService countryIdentifierLookupService,
     IProductionUsageLookupService productionUsageLookupService,
     ISpeciesTypeLookupService speciesTypeLookupService,
-    IActivityCodeLookupService activityCodeLookupService,
     ILogger<SamHoldingImportSilverMappingStep> logger)
     : ImportStepBase<SamHoldingImportContext>(logger)
 {
@@ -24,7 +23,6 @@ public class SamHoldingImportSilverMappingStep(
             premiseActivityTypeLookupService.FindAsync,
             premiseTypeLookupService.FindAsync,
             countryIdentifierLookupService.FindAsync,
-            activityCodeLookupService.FindByActivityCodeAsync,
             cancellationToken);
 
         context.SilverParties = [
