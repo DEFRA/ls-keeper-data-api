@@ -64,10 +64,10 @@ public class ReferenceDataRepositoryTests
         await _sut.GetAllAsync(CancellationToken.None);
 
         _fixture.CollectionMock
-            .Verify(c => 
+            .Verify(c =>
             c.FindAsync(It.IsAny<FilterDefinition<TestReferenceListDocument>>(),
             It.IsAny<FindOptions<TestReferenceListDocument, TestReferenceListDocument>>(),
-            It.IsAny<CancellationToken>()),  Times.Exactly(1));
+            It.IsAny<CancellationToken>()), Times.Exactly(1));
     }
 
     [Fact]

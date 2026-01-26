@@ -31,7 +31,7 @@ public class PartiesRepositoryTests
             .ReturnsAsync(expectedCount);
 
         var result = await _sut.CountAsync(filter);
-        
+
         result.Should().Be(7);
     }
 

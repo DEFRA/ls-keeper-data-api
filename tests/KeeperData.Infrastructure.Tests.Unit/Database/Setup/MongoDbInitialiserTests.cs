@@ -22,7 +22,7 @@ public class MongoDbInitialiserTests
         _mockMongoIndexHandler
             .Setup(x => x.ListAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => new MockMongoDatabase.StubAsyncCursor<BsonDocument>(_collectionIndexList));
-        
+
         _mockDb.SetupCollection<BsonDocument>(CollectionName);
         _mockDb.MockCollection<BsonDocument>().Setup(x => x.Indexes).Returns(_mockMongoIndexHandler.Object);
 

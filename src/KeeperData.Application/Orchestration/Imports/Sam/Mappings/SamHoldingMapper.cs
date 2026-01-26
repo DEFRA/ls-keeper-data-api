@@ -148,7 +148,6 @@ public static class SamHoldingMapper
         CancellationToken cancellationToken)
     {
         if (silverHoldings == null || silverHoldings.Count == 0)
-        if (silverHoldings.Count == 0)
             return null;
 
         var representative = silverHoldings.Any(x => x.HoldingStatus == HoldingStatusType.Active.GetDescription())

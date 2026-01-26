@@ -481,7 +481,7 @@ public class SamHoldingMapperToGoldTests
 
         var result = await WhenIMapSilverSiteToGold(inputParty, null, groupMarks);
 
-        result.Marks.Should().BeEquivalentTo([expectedMark]);
+        result!.Marks.Should().BeEquivalentTo([expectedMark]);
     }
 
     [Fact]
@@ -494,34 +494,6 @@ public class SamHoldingMapperToGoldTests
 
         result!.Marks.Single().IdentifierId.ShouldBeANonEmptyGuid();
     }
-
-    /* this is too complicated
-
-    // update existing marks
-    // remove orphan marks
-    [Fact]
-    public async Task WhenUpdatingAGroupMark_ShouldUpdateDatesOfGroupMarkMatchedByHerdMarkIdAndSpeciesId()
-    {
-        var updatedEndDate = new DateTime(2021,11,11);
-        var inputParty = new SamHoldingDocument() {  };
-        var existingSite = new SiteDocument() { Id = GoldSiteId };
-        existingSite.Marks = [new Core.Documents.GroupMarkDocument() { IdentifierId = "preexistingMark" , Mark = "herd-1", Species = new SpeciesSummaryDocument() { IdentifierId = "spec-id-1", Code = "code-1", Name=""} }];
-        
-        var updatedMark = CreateGroupMarkRelationshipDocument(id:"group-mark-id", herdmark: "herd-1");
-        updatedMark.GroupMarkEndDate = updatedEndDate;
-        updatedMark.SpeciesTypeId = "spec-id-1";
-        
-        var newMark = CreateGroupMarkRelationshipDocument(id:null, herdmark: "herd-2");
-        List<SiteGroupMarkRelationshipDocument> groupMarksInput = [updatedMark, newMark];
-        
-        
-        var result = await WhenIMapSilverSiteToGold(inputParty, existingSite, groupMarksInput);
-
-        result!.Marks.Count().Should().Be(2);
-        result!.Marks[0].IdentifierId.Should().Be("group-mark-id");
-        result!.Marks[0].EndDate.Should().Be(updatedEndDate);
-        result!.Marks[1].IdentifierId.ShouldBeANonEmptyGuid();
-    }*/
 
     private static SiteGroupMarkRelationshipDocument CreateGroupMarkRelationshipDocument(string? id = "group-mark-id", string herdmark = "H1000001")
     {
@@ -539,7 +511,7 @@ public class SamHoldingMapperToGoldTests
         };
     }
 
-    private static Core.Documents.GroupMarkDocument CreateBaseLineExpectedGroupMarkDocument(string? identifierId = "group-mark-id")
+    private static Core.Documents.GroupMarkDocument CreateBaseLineExpectedGroupMarkDocument(string identifierId = "group-mark-id")
     {
         return new Core.Documents.GroupMarkDocument()
         {

@@ -52,7 +52,7 @@ public class SitesRepositoryTests
         var result = await _sut.CountAsync(filter, cancellationToken);
 
         result.Should().Be(3);
-        
+
         _mockDb.MockCollection<SiteDocument>()
             .Verify(x => x.CountDocumentsAsync(
             It.IsAny<FilterDefinition<SiteDocument>>(),

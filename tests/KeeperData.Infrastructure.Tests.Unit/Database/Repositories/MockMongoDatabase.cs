@@ -23,7 +23,7 @@ public class MockMongoDatabase
         _mongoConfigMock.Setup(x => x.Value).Returns(_mongoConfig);
         _mongoClientMock.Setup(x => x.GetDatabase(_mongoConfig.DatabaseName, null))
             .Returns(_mongoDatabaseMock.Object);
-        
+
         _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(false);
         _unitOfWorkMock.Setup(u => u.Session).Returns(_clientSessionHandleMock.Object);
     }
@@ -39,7 +39,7 @@ public class MockMongoDatabase
         _mongoDatabaseMock
             .Setup(x => x.GetCollection<T>(collectionName, null))
             .Returns(collectionMock.Object);
-        
+
         _mongoCollectionMocks.Add(typeof(T), collectionMock);
     }
 
@@ -53,7 +53,7 @@ public class MockMongoDatabase
     {
         return (Mock<IMongoCollection<T>>)_mongoCollectionMocks[typeof(T)];
     }
-    
+
     public class StubAsyncCursor<T> : IAsyncCursor<T>
     {
         private List<T>.Enumerator _enumerator;

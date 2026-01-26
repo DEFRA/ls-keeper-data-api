@@ -13,7 +13,7 @@ public class ReferenceRepositoryTestFixture<TSut, TListDocument, TItem> where TL
 {
     private readonly MockMongoDatabase _mockDb;
     public Mock<IMongoCollection<TListDocument>> CollectionMock => _mockDb.MockCollection<TListDocument>();
-    
+
     public ReferenceRepositoryTestFixture()
     {
         _mockDb = new MockMongoDatabase();
@@ -34,7 +34,7 @@ public class ReferenceRepositoryTestFixture<TSut, TListDocument, TItem> where TL
     {
         SetUpDocuments([]);
     }
-    
+
     public void SetUpDocuments(TListDocument documentList)
     {
         SetUpDocuments([documentList]);
