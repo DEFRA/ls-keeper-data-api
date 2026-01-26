@@ -170,9 +170,7 @@ public class SamPartyMapperToGoldTests
                             Role = new PartyRoleRoleDocument { IdentifierId = "role-a", Code = "role-code", Name = "role-name" },
                             Site = new PartyRoleSiteDocument
                             {
-                                IdentifierId = GoldSiteId // TODO seems odd - elsewhere identifierid is a primary key; this looks to be a foreign key
-                                // lastupdated date is set to now
-                                // the rest are null
+                                IdentifierId = GoldSiteId
                             },
                         }
                     };
@@ -260,9 +258,10 @@ public class SamPartyMapperToGoldTests
         result.Should().BeEquivalentTo(expected);
     }
 
-    // TODO - confirm - can a party CHANGE roles?  if they can, this test indicates that old roles won't be removed by the import
+    // TODO - a party can CHANGE roles.  however this test indicates that old roles won't be removed by the import
     // this test seems to suggest that
     // if a role is no longer in the source, it isn't removed
+    // TODO JIRA ULITP-4001
     [Fact]
     public async Task ToGoldShouldAddNewRoleAlongsideExistingRoles()
     {

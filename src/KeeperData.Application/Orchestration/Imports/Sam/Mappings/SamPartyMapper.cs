@@ -257,10 +257,11 @@ public static class SamPartyMapper
 
     private static string? MergeStrings(string? original, string? newValue)
     {
-        //TODO confirm whether we actually care about preserving empty strings where original == "" and newValue = null 
+        //TODO JIRA ULITP-3998 - refine to
+        // return string.IsNullOrEmpty(original) ? newValue : original;
+        // or to return string.IsNullOrEmpty(original) ? (string.IsNullOrEmpty(newValue) ? null : newValue) : original;
         return string.IsNullOrEmpty(original) && !string.IsNullOrEmpty(newValue) ? newValue : original;
     }
-
 
     private static void MergeSamPartyFromHolder(SamParty party, SamCphHolder holder)
     {

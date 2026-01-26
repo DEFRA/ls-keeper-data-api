@@ -155,11 +155,9 @@ public class SamHoldingMapperToGoldTests
                 {
                     d.Identifiers[0].Identifier = "site-cphn";
                 }];
-            // TODO - confirm - SamHoldingDocument.GroupMarks is assigned in one place (Import Silver / EnrichWithGroupMarks),
-            // but never used; and in ToGold it is ignored preferring a different source for that data
-            // should the (complex) code for EnrichWithGroupMarks be maintained?
 
             // TODO is it possible for a premise to change its type during its lifetime? (our code says no)
+            // TODO Jira ULITP-4000
         }
     }
 
