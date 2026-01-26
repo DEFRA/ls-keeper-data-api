@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Reflection;
+using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Infrastructure.Services
 {
@@ -12,11 +13,16 @@ namespace KeeperData.Infrastructure.Services
     {
         private IMongoClient _mongoClient;
         private IOptions<MongoConfig> _mongoConfig;
+        private readonly ILogger<MongoDbInitialiser> _logger;
 
-        public MongoDbInitialiser(IMongoClient mongoClient, IOptions<MongoConfig> mongoConfig)
+        public MongoDbInitialiser(
+            IMongoClient mongoClient,
+            IOptions<MongoConfig> mongoConfig,
+            ILogger<MongoDbInitialiser> logger)
         {
             _mongoClient = mongoClient;
             _mongoConfig = mongoConfig;
+            _logger = logger;
         }
 
         public async Task Initialise(Type type)
@@ -28,7 +34,7 @@ namespace KeeperData.Infrastructure.Services
             var collectionName = type.GetCustomAttribute<CollectionNameAttribute>()?.Name ?? type.Name;
             var collection = _database.GetCollection<BsonDocument>(collectionName);
 
-            await DropV1IndexesIfPresentAsync(collection);
+            await DropV1IndexesIfPresentAsync(collection, _logger);
 
             var getIndexesMethod = type.GetMethod("GetIndexModels", BindingFlags.Public | BindingFlags.Static);
             if (getIndexesMethod?.Invoke(null, null) is IEnumerable<CreateIndexModel<BsonDocument>> indexModels)
@@ -37,24 +43,24 @@ namespace KeeperData.Infrastructure.Services
             }
         }
 
-        private static async Task DropV1IndexesIfPresentAsync(IMongoCollection<BsonDocument> collection)
+        private static async Task DropV1IndexesIfPresentAsync(IMongoCollection<BsonDocument> collection, ILogger logger)
         {
             using var cursor = await collection.Indexes.ListAsync();
             var indexes = await cursor.ToListAsync();
 
             foreach (var index in indexes)
             {
-                await DropIndexIfItIsV1(collection, index);
+                await DropIndexIfItIsV1(collection, index, logger);
             }
         }
 
-        private static async Task DropIndexIfItIsV1<TDocument>(IMongoCollection<TDocument> collection, BsonDocument index)
+        private static async Task DropIndexIfItIsV1<TDocument>(IMongoCollection<TDocument> collection, BsonDocument index, ILogger logger)
         {
             var indexName = index["name"].AsString;
             if (indexName.StartsWith("idx_"))
             {
                 await collection.Indexes.DropOneAsync(indexName);
-                Console.WriteLine($"Dropped index: {indexName}");
+                logger.LogInformation($"Dropped index: {indexName}");
             }
         }
     }
