@@ -11,58 +11,42 @@ namespace KeeperData.Infrastructure.Tests.Unit.Database.Repositories;
 
 public class ReferenceRepositoryTestFixture<TSut, TListDocument, TItem> where TListDocument : class, IReferenceListDocument<TItem> where TSut : IReferenceDataRepository<TListDocument, TItem>
 {
-    private readonly Mock<IOptions<MongoConfig>> _configMock;
-    private readonly Mock<IMongoClient> _mongoClientMock;
-    private readonly Mock<IUnitOfWork> _unitOfWorkMock;
-    private readonly Mock<IClientSessionHandle> _clientSessionHandleMock;
-    public readonly Mock<IMongoCollection<TListDocument>> _collectionMock;
-    public readonly Mock<IAsyncCursor<TListDocument>> _asyncCursorMock;
-
+    private readonly MockMongoDatabase _mockDb;
+    public Mock<IMongoCollection<TListDocument>> CollectionMock => _mockDb.MockCollection<TListDocument>();
+    
     public ReferenceRepositoryTestFixture()
     {
-        _configMock = new Mock<IOptions<MongoConfig>>();
-        _mongoClientMock = new Mock<IMongoClient>();
-        _unitOfWorkMock = new Mock<IUnitOfWork>();
-        _clientSessionHandleMock = new Mock<IClientSessionHandle>();
-        _collectionMock = new Mock<IMongoCollection<TListDocument>>();
-        _asyncCursorMock = new Mock<IAsyncCursor<TListDocument>>();
-
-        _configMock.Setup(c => c.Value).Returns(new MongoConfig { DatabaseName = "test" });
-        _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(false);
-
-        var mockDatabase = new Mock<IMongoDatabase>();
-        _mongoClientMock.Setup(c => c.GetDatabase(It.IsAny<string>(), null)).Returns(mockDatabase.Object);
-        mockDatabase.Setup(d => d.GetCollection<TListDocument>(It.IsAny<string>(), null))
-            .Returns(_collectionMock.Object);
-
-        _asyncCursorMock.Setup(c => c.MoveNextAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true)
-            .Callback(() =>
-            {
-                _asyncCursorMock.Setup(c => c.MoveNextAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
-            });
-
-        _collectionMock.Setup(c => c.FindAsync(
-                It.IsAny<FilterDefinition<TListDocument>>(),
-                It.IsAny<FindOptions<TListDocument, TListDocument>>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(_asyncCursorMock.Object);
-
-        _unitOfWorkMock.Setup(u => u.Session).Returns(_clientSessionHandleMock.Object);
+        _mockDb = new MockMongoDatabase();
+        _mockDb.SetupCollection<TListDocument>();
     }
 
     public TSut CreateSut(Func<IOptions<MongoConfig>, IMongoClient, IUnitOfWork, TSut> sutConstructor)
     {
-        var sut = sutConstructor(_configMock.Object, _mongoClientMock.Object, _unitOfWorkMock.Object);
+        var sut = sutConstructor(_mockDb.Config, _mockDb.Client, _mockDb.UnitOfWork);
 
         var collectionField = typeof(TSut).BaseType!.BaseType!
             .GetField("_collection", BindingFlags.NonPublic | BindingFlags.Instance);
-        collectionField!.SetValue(sut, _collectionMock.Object);
+        collectionField!.SetValue(sut, _mockDb.MockCollection<TListDocument>().Object);
         return sut;
     }
 
+    public void SetUpNoDocuments()
+    {
+        SetUpDocuments([]);
+    }
+    
     public void SetUpDocuments(TListDocument documentList)
     {
-        _asyncCursorMock.SetupGet(c => c.Current).Returns([documentList]);
+        SetUpDocuments([documentList]);
+    }
+
+    private void SetUpDocuments(List<TListDocument> documentList)
+    {
+        _mockDb.MockCollection<TListDocument>()
+            .Setup(c => c.FindAsync(
+                It.IsAny<FilterDefinition<TListDocument>>(),
+                It.IsAny<FindOptions<TListDocument, TListDocument>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MockMongoDatabase.StubAsyncCursor<TListDocument>(documentList));
     }
 }

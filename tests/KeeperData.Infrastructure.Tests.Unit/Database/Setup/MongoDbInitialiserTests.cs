@@ -1,9 +1,7 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;
-using KeeperData.Core.Transactions;
-using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Infrastructure.Services;
-using Microsoft.Extensions.Options;
+using KeeperData.Infrastructure.Tests.Unit.Database.Repositories;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Moq;
@@ -15,59 +13,20 @@ public class MongoDbInitialiserTests
     private readonly MongoDbInitialiser _sut;
     private readonly Mock<IMongoIndexManager<BsonDocument>> _mockMongoIndexHandler;
     private readonly List<BsonDocument> _collectionIndexList = [];
+    private readonly MockMongoDatabase _mockDb = new();
     private static readonly IEnumerable<CreateIndexModel<BsonDocument>> _typeIndexList = [];
-
-    private class StubAsyncCursor<T> : IAsyncCursor<T>
-    {
-        private List<T>.Enumerator _enumerator;
-
-        public StubAsyncCursor(List<T> inner)
-        {
-            _enumerator = inner.GetEnumerator();
-        }
-
-        public void Dispose()
-        {
-        }
-
-        public bool MoveNext(CancellationToken cancellationToken = new CancellationToken())
-        {
-            return _enumerator.MoveNext();
-        }
-
-        public Task<bool> MoveNextAsync(CancellationToken cancellationToken = new CancellationToken())
-        {
-            return Task.FromResult(_enumerator.MoveNext());
-        }
-
-        public IEnumerable<T> Current => [_enumerator.Current];
-    }
 
     public MongoDbInitialiserTests()
     {
-        var mongoClientMock = new Mock<IMongoClient>();
-        var unitOfWorkMock = new Mock<IUnitOfWork>();
-        var clientSessionHandleMock = new Mock<IClientSessionHandle>();
-        var collectionMock = new Mock<IMongoCollection<BsonDocument>>();
-        Mock<IOptions<MongoConfig>> configMock = new();
         _mockMongoIndexHandler = new();
-
-        configMock.Setup(c => c.Value).Returns(new MongoConfig { DatabaseName = "test" });
-        clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(false);
-
-        var mockDatabase = new Mock<IMongoDatabase>();
-        mongoClientMock.Setup(c => c.GetDatabase(It.IsAny<string>(), null)).Returns(mockDatabase.Object);
-        mockDatabase.Setup(d => d.GetCollection<BsonDocument>(CollectionName, null))
-            .Returns(collectionMock.Object);
-
-        unitOfWorkMock.Setup(u => u.Session).Returns(clientSessionHandleMock.Object);
-        collectionMock.Setup(x => x.Indexes).Returns(_mockMongoIndexHandler.Object);
-
         _mockMongoIndexHandler
             .Setup(x => x.ListAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() => new StubAsyncCursor<BsonDocument>(_collectionIndexList));
+            .ReturnsAsync(() => new MockMongoDatabase.StubAsyncCursor<BsonDocument>(_collectionIndexList));
+        
+        _mockDb.SetupCollection<BsonDocument>(CollectionName);
+        _mockDb.MockCollection<BsonDocument>().Setup(x => x.Indexes).Returns(_mockMongoIndexHandler.Object);
 
-        _sut = new MongoDbInitialiser(mongoClientMock.Object, configMock.Object);
+        _sut = new MongoDbInitialiser(_mockDb.Client, _mockDb.Config);
     }
 
     private class DocumentWithoutIndexes
