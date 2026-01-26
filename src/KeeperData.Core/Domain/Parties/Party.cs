@@ -119,15 +119,6 @@ public class Party : IAggregateRoot
         }
     }
 
-    public void Delete()
-    {
-        if (Deleted) return;
-
-        Deleted = true;
-        State = "Inactive";
-        LastUpdatedDate = DateTime.UtcNow;
-    }
-
     public void SetAddress(Address address)
     {
         _address = address;
