@@ -18,7 +18,6 @@ public static class SamHoldingMapper
         Func<string?, CancellationToken, Task<(string? PremiseActivityTypeId, string? PremiseActivityTypeName)>> resolvePremiseActivityType,
         Func<string?, CancellationToken, Task<(string? PremiseTypeId, string? PremiseTypeName)>> resolvePremiseType,
         Func<string?, string?, CancellationToken, Task<(string? countryId, string? countryCode, string? countryName)>> resolveCountry,
-        Func<string?, CancellationToken, Task<(string? premiseTypeCode, string? premiseActivityTypeCode)>> findByActivityCode,
         CancellationToken cancellationToken)
     {
         var result = new List<SamHoldingDocument>();
@@ -30,7 +29,6 @@ public static class SamHoldingMapper
                 resolvePremiseActivityType,
                 resolvePremiseType,
                 resolveCountry,
-                findByActivityCode,
                 cancellationToken);
 
             result.Add(holding);
@@ -44,7 +42,6 @@ public static class SamHoldingMapper
         Func<string?, CancellationToken, Task<(string? PremiseActivityTypeId, string? PremiseActivityTypeName)>> resolvePremiseActivityType,
         Func<string?, CancellationToken, Task<(string? PremiseTypeId, string? PremiseTypeName)>> resolvePremiseType,
         Func<string?, string?, CancellationToken, Task<(string? countryId, string? countryCode, string? countryName)>> resolveCountry,
-        Func<string?, CancellationToken, Task<(string? premiseTypeCode, string? premiseActivityTypeCode)>> findByActivityCode,
         CancellationToken cancellationToken)
     {
         var addressLine = AddressFormatters.FormatAddressRange(
@@ -54,10 +51,6 @@ public static class SamHoldingMapper
                             h.PAON_END_NUMBER, h.PAON_END_NUMBER_SUFFIX,
                             h.SAON_DESCRIPTION, h.PAON_DESCRIPTION);
 
-        var (premiseTypeCode, premiseActivityTypeCode) = await findByActivityCode(h.FCLTY_SUB_BSNSS_ACTVTY_CODE, cancellationToken);
-
-        var (premiseActivityTypeId, premiseActivityTypeName) = await resolvePremiseActivityType(premiseActivityTypeCode, cancellationToken);
-        var (premiseTypeId, premiseTypeName) = await resolvePremiseType(premiseTypeCode, cancellationToken);
         var (countryId, countryCode, _) = await resolveCountry(h.COUNTRY_CODE, h.UK_INTERNAL_CODE, cancellationToken);
 
         var result = new SamHoldingDocument
@@ -86,14 +79,17 @@ public static class SamHoldingMapper
             HoldingEndDate = h.FEATURE_ADDRESS_TO_DATE,
             HoldingStatus = HoldingStatusFormatters.FormatHoldingStatus(h.IsDeleted ?? false),
 
-            PremiseActivityTypeId = premiseActivityTypeId,
-            PremiseActivityTypeCode = premiseActivityTypeCode,
-            PremiseSubActivityTypeCode = h.FCLTY_SUB_BSNSS_ACTVTY_CODE,
-
             MovementRestrictionReasonCode = h.MOVEMENT_RSTRCTN_RSN_CODE,
 
-            PremiseTypeIdentifier = premiseTypeId,
-            PremiseTypeCode = premiseTypeCode,
+            SourceFacilityTypeCode = h.FACILITY_TYPE_CODE,
+            SourceFacilityBusinessActivityCode = h.FACILITY_BUSINSS_ACTVTY_CODE,
+            SourceFacilitySubBusinessActivityCode = h.FCLTY_SUB_BSNSS_ACTVTY_CODE,
+
+            PremiseActivityTypeId = null,
+            PremiseActivityTypeCode = null,
+
+            PremiseTypeIdentifier = null,
+            PremiseTypeCode = null,
 
             SpeciesTypeCode = h.AnimalSpeciesCodeUnwrapped,
             ProductionUsageCodeList = [.. h.AnimalProductionUsageCodeList.Select(ProductionUsageCodeFormatters.TrimProductionUsageCodeHolding)],
@@ -175,7 +171,6 @@ public static class SamHoldingMapper
             .ToList();
 
         var activities = distinctPremiseActivities
-            .Where(doc => doc is not null)
             .Select(doc => SiteActivity.Create(
                 id: doc.IdentifierId,
                 type: doc.ToDomain(),
@@ -184,15 +179,15 @@ public static class SamHoldingMapper
                 lastUpdatedDate: representative.LastUpdatedDate))
             .ToList();
 
-        var siteIdentifierTypeLookup = await getSiteIdentifierTypeByCode(
+        var cphnSiteIdentifierTypeDocument = await getSiteIdentifierTypeByCode(
             HoldingIdentifierType.CPHN.ToString(),
             cancellationToken);
 
-        var siteIdentifierType = siteIdentifierTypeLookup == null ? null : new SiteIdentifierType(
-            siteIdentifierTypeLookup.IdentifierId,
-            siteIdentifierTypeLookup.Code,
-            siteIdentifierTypeLookup.Name,
-            siteIdentifierTypeLookup.LastModifiedDate);
+        var cphnSiteIdentifierType = cphnSiteIdentifierTypeDocument == null ? null : new SiteIdentifierType(
+            cphnSiteIdentifierTypeDocument.IdentifierId,
+            cphnSiteIdentifierTypeDocument.Code,
+            cphnSiteIdentifierTypeDocument.Name,
+            cphnSiteIdentifierTypeDocument.LastModifiedDate);
 
         var site = existingSite is not null
             ? await UpdateSiteAsync(
@@ -204,7 +199,7 @@ public static class SamHoldingMapper
                 getPremiseTypeById,
                 species,
                 activities,
-                siteIdentifierType,
+                cphnSiteIdentifierType,
                 cancellationToken)
             : await CreateSiteAsync(
                 goldSiteId,
@@ -215,7 +210,7 @@ public static class SamHoldingMapper
                 getPremiseTypeById,
                 species,
                 activities,
-                siteIdentifierType,
+                cphnSiteIdentifierType,
                 cancellationToken);
 
         return SiteDocument.FromDomain(site);
@@ -233,8 +228,6 @@ public static class SamHoldingMapper
         SiteIdentifierType? siteIdentifierType,
         CancellationToken cancellationToken)
     {
-        int? uprn = int.TryParse(representative.Location?.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
-
         var premiseTypeLookup = await GetPremiseTypeAsync(
             representative.PremiseTypeIdentifier,
             getPremiseTypeById,
@@ -246,25 +239,8 @@ public static class SamHoldingMapper
             premiseTypeLookup.Name,
             premiseTypeLookup.LastModifiedDate);
 
-        var country = await GetCountryAsync(
-            representative.Location?.Address?.CountryIdentifier,
-            getCountryById,
-            cancellationToken);
-
-        var address = Address.Create(
-            uprn,
-            representative.Location?.Address?.AddressLine ?? string.Empty,
-            representative.Location?.Address?.AddressStreet,
-            representative.Location?.Address?.AddressTown,
-            representative.Location?.Address?.AddressLocality,
-            representative.Location?.Address?.AddressPostCode ?? string.Empty,
-            country);
-
-        var communication = Communication.Create(
-            representative.Communication?.Email,
-            representative.Communication?.Mobile,
-            representative.Communication?.Landline,
-            false);
+        var address = await LocationMapper.AddressToGold(representative.Location?.Address, getCountryById, cancellationToken);
+        var communication = LocationMapper.CommunicationToGold(representative.Communication);
 
         var location = Location.Create(
             representative.Location?.OsMapReference,
@@ -297,17 +273,16 @@ public static class SamHoldingMapper
         if (siteIdentifierType != null)
         {
             site.SetSiteIdentifier(
-                lastUpdatedDate: representative.LastUpdatedDate,
+                identifierLastUpdatedDate: representative.LastUpdatedDate,
                 identifier: representative.CountyParishHoldingNumber,
-                type: siteIdentifierType);
+                type: siteIdentifierType,
+                id: null,
+                siteLastUpdatedDate: representative.LastUpdatedDate);
         }
 
         site.SetSpecies(species, representative.LastUpdatedDate);
-
         site.SetActivities(activities, representative.LastUpdatedDate);
-
         site.SetGroupMarks(groupMarks, representative.LastUpdatedDate);
-
         site.SetSiteParties(goldSiteId, siteParties, representative.LastUpdatedDate);
 
         return site;
@@ -327,13 +302,6 @@ public static class SamHoldingMapper
     {
         var site = existing.ToDomain();
 
-        int? uprn = int.TryParse(representative.Location?.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
-
-        var country = await GetCountryAsync(
-            representative.Location?.Address?.CountryIdentifier,
-            getCountryById,
-            cancellationToken);
-
         var groupMarks = ToGroupMarks(goldSiteGroupMarks);
 
         var siteParties = goldParties
@@ -351,20 +319,8 @@ public static class SamHoldingMapper
             null,
             representative.Deleted);
 
-        var updatedAddress = Address.Create(
-            uprn,
-            representative.Location?.Address?.AddressLine ?? string.Empty,
-            representative.Location?.Address?.AddressStreet,
-            representative.Location?.Address?.AddressTown,
-            representative.Location?.Address?.AddressLocality,
-            representative.Location?.Address?.AddressPostCode ?? string.Empty,
-            country);
-
-        var updatedCommunication = Communication.Create(
-            representative.Communication?.Email,
-            representative.Communication?.Mobile,
-            representative.Communication?.Landline,
-            false);
+        var updatedAddress = await LocationMapper.AddressToGold(representative.Location?.Address, getCountryById, cancellationToken);
+        var updatedCommunication = LocationMapper.CommunicationToGold(representative.Communication);
 
         if (representative.PremiseTypeIdentifier != site.Type?.Id)
         {
@@ -393,35 +349,19 @@ public static class SamHoldingMapper
         if (siteIdentifierType != null)
         {
             site.SetSiteIdentifier(
-                lastUpdatedDate: representative.LastUpdatedDate,
+                identifierLastUpdatedDate: representative.LastUpdatedDate,
                 identifier: representative.CountyParishHoldingNumber,
-                type: siteIdentifierType);
+                type: siteIdentifierType,
+                id: null,
+                siteLastUpdatedDate: representative.LastUpdatedDate);
         }
 
         site.SetSpecies(species, representative.LastUpdatedDate);
-
         site.SetActivities(activities, representative.LastUpdatedDate);
-
         site.SetGroupMarks(groupMarks, representative.LastUpdatedDate);
-
         site.SetSiteParties(existing.Id, siteParties, representative.LastUpdatedDate);
 
         return site;
-    }
-
-    private static async Task<Country?> GetCountryAsync(
-        string? countryIdentifier,
-        Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
-        CancellationToken cancellationToken)
-    {
-        if (countryIdentifier == null) return null;
-
-        var countryDocument = await getCountryById(countryIdentifier, cancellationToken);
-
-        if (countryDocument == null)
-            return null;
-
-        return countryDocument.ToDomain();
     }
 
     private static async Task<PremisesTypeDocument?> GetPremiseTypeAsync(
@@ -439,9 +379,6 @@ public static class SamHoldingMapper
         Func<string?, CancellationToken, Task<(string? typeId, string? typeName)>> findAsync,
         CancellationToken cancellationToken)
     {
-        if (rawCodes == null)
-            return [];
-
         var distinctCodes = rawCodes
             .Where(code => !string.IsNullOrWhiteSpace(code))
             .Distinct()
@@ -463,9 +400,6 @@ public static class SamHoldingMapper
         Func<string?, CancellationToken, Task<T?>> getTypeByCodeAsync,
         CancellationToken cancellationToken)
     {
-        if (rawCodes == null)
-            return [];
-
         var distinctCodes = rawCodes
             .Where(code => !string.IsNullOrWhiteSpace(code))
             .Distinct()
@@ -490,7 +424,7 @@ public static class SamHoldingMapper
             .Select(group =>
             {
                 var herdmarkGroup = group.First();
-                
+
                 var speciesList = group
                     .Where(m => m.SpeciesTypeId is not null)
                     .Select(m => Species.Create(

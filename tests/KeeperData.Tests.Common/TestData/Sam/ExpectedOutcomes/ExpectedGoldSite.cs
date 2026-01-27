@@ -15,12 +15,15 @@ public static class ExpectedGoldSite
             Id = s_siteId,
             CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0),
             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
-            Type = new PremisesTypeSummaryDocument
-            {
-                IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
-                Code = "AH",
-                Description = "Agricultural Holding"
-            },
+            // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
+            // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+            Type = null,
+            //Type = new PremisesTypeSummaryDocument
+            //{
+            //    IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
+            //    Code = "AH",
+            //    Description = "Agricultural Holding"
+            //},
             Name = "North Market Farm",
             State = HoldingStatusType.Active.GetDescription(),
             StartDate = new DateTime(2001, 1, 1, 0, 0, 0),
@@ -375,35 +378,38 @@ public static class ExpectedGoldSite
                 }
             ],
 
-            Activities =
-            [
-                new()
-                {
-                    IdentifierId = Guid.NewGuid().ToString(),
-                    Type = new PremisesActivityTypeSummaryDocument {
-                        IdentifierId = Guid.NewGuid().ToString(),
-                        Code = "RM",
-                        Name = PremiseActivityTypeData.Find("RM").name!,
-                        LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
-                    },
-                    StartDate = new DateTime(2001, 1, 1, 0, 0, 0),
-                    EndDate = null,
-                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
-                },
-                new()
-                {
-                    IdentifierId = Guid.NewGuid().ToString(),
-                    Type = new PremisesActivityTypeSummaryDocument {
-                        IdentifierId = Guid.NewGuid().ToString(),
-                        Code = "WM",
-                        Name = PremiseActivityTypeData.Find("WM").name!,
-                        LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
-                    },
-                    StartDate = new DateTime(2001, 1, 1, 0, 0, 0),
-                    EndDate = null,
-                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
-                }
-            ]
+            // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
+            // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+            Activities = []
+            //Activities =
+            //[
+            //    new()
+            //    {
+            //        IdentifierId = Guid.NewGuid().ToString(),
+            //        Type = new PremisesActivityTypeSummaryDocument {
+            //            IdentifierId = Guid.NewGuid().ToString(),
+            //            Code = "RM",
+            //            Name = PremiseActivityTypeData.Find("RM").name!,
+            //            LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+            //        },
+            //        StartDate = new DateTime(2001, 1, 1, 0, 0, 0),
+            //        EndDate = null,
+            //        LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+            //    },
+            //    new()
+            //    {
+            //        IdentifierId = Guid.NewGuid().ToString(),
+            //        Type = new PremisesActivityTypeSummaryDocument {
+            //            IdentifierId = Guid.NewGuid().ToString(),
+            //            Code = "WM",
+            //            Name = PremiseActivityTypeData.Find("WM").name!,
+            //            LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+            //        },
+            //        StartDate = new DateTime(2001, 1, 1, 0, 0, 0),
+            //        EndDate = null,
+            //        LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+            //    }
+            //]
         };
 
     public static SiteDocument ExpectedSite_UpdatedHolderAndParties =>
@@ -412,12 +418,15 @@ public static class ExpectedGoldSite
             Id = Guid.NewGuid().ToString(),
             CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0),
             LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
-            Type = new PremisesTypeSummaryDocument
-            {
-                IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
-                Code = "AH",
-                Description = "Agricultural Holding"
-            },
+            // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
+            // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+            Type = null,
+            //Type = new PremisesTypeSummaryDocument
+            //{
+            //    IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
+            //    Code = "AH",
+            //    Description = "Agricultural Holding"
+            //},
             Name = "North Market Farm",
             State = HoldingStatusType.Active.GetDescription(),
             StartDate = new DateTime(2001, 1, 1, 0, 0, 0),
@@ -600,6 +609,9 @@ public static class ExpectedGoldSite
 
             Species = [.. DefaultExpectedSite.Species.Where(x => x.Code == "CTT")],
             Marks = [.. DefaultExpectedSite.Marks.Where(x => x.Species.Any(s => s.Code == "CTT"))],
-            Activities = [.. DefaultExpectedSite.Activities.Where(x => x.Type.Code == "RM")]
+            // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
+            // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+            Activities = []
+            //Activities = [.. DefaultExpectedSite.Activities.Where(x => x.Type.Code == "RM")]
         };
 }

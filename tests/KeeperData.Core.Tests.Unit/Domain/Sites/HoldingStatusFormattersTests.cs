@@ -3,7 +3,7 @@ using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Extensions;
 
-namespace KeeperData.Core.Tests.Unit.Sites;
+namespace KeeperData.Core.Tests.Unit.Domain.Sites;
 
 public class HoldingStatusFormattersTests
 {

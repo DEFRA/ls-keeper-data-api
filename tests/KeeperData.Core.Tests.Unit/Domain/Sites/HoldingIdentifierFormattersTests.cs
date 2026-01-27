@@ -1,7 +1,7 @@
 using FluentAssertions;
 using KeeperData.Core.Domain.Sites.Formatters;
 
-namespace KeeperData.Core.Tests.Unit.Sites;
+namespace KeeperData.Core.Tests.Unit.Domain.Sites;
 
 public class HoldingIdentifierFormattersTests
 {

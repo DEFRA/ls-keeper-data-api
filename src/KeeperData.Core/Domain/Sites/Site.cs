@@ -127,15 +127,6 @@ public class Site : IAggregateRoot
         }
     }
 
-    public void Delete()
-    {
-        if (Deleted) return;
-
-        Deleted = true;
-        State = "Inactive";
-        LastUpdatedDate = DateTime.UtcNow;
-    }
-
     public void SetPremisesType(PremisesType? type, DateTime lastUpdatedDate)
     {
         if (Type == null && type == null) return;
@@ -174,29 +165,30 @@ public class Site : IAggregateRoot
     }
 
     public void SetSiteIdentifier(
-        DateTime lastUpdatedDate,
+        DateTime identifierLastUpdatedDate,
         string identifier,
         SiteIdentifierType type,
-        string? id = null)
+        string? id,
+        DateTime siteLastUpdatedDate)
     {
         var existing = _identifiers.FirstOrDefault(i => i.Type.Id == type.Id);
 
         if (existing is not null)
         {
-            var changed = existing.ApplyChanges(lastUpdatedDate, identifier, type);
+            var changed = existing.ApplyChanges(identifierLastUpdatedDate, identifier, type);
             if (changed)
             {
-                UpdateLastUpdatedDate(DateTime.UtcNow);
+                UpdateLastUpdatedDate(siteLastUpdatedDate);
             }
             return;
         }
 
         var siteIdentifier = id is null
             ? SiteIdentifier.Create(identifier, type)
-            : new SiteIdentifier(id, lastUpdatedDate, identifier, type);
+            : new SiteIdentifier(id, identifierLastUpdatedDate, identifier, type);
 
         _identifiers.Add(siteIdentifier);
-        UpdateLastUpdatedDate(DateTime.UtcNow);
+        UpdateLastUpdatedDate(siteLastUpdatedDate);
     }
 
     public void SetSpecies(IEnumerable<Species> incomingSpecies, DateTime lastUpdatedDate)

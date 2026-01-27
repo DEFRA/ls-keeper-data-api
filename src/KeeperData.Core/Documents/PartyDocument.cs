@@ -131,34 +131,6 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
         return party;
     }
 
-    public static PartyDocument FromDomain(SiteParty siteParty)
-    {
-        var addressDoc = siteParty.CorrespondanceAddress is not null
-            ? AddressDocument.FromDomain(siteParty.CorrespondanceAddress)
-            : null;
-
-        var communications = siteParty.Communication?.Select(CommunicationDocument.FromDomain).ToList() ?? [];
-        var roles = siteParty.PartyRoles?.Select(PartyRoleWithSiteDocument.FromDomain).ToList() ?? [];
-
-        return new PartyDocument
-        {
-            Id = siteParty.Id,
-            CreatedDate = siteParty.CreatedDate,
-            LastUpdatedDate = siteParty.LastUpdatedDate,
-            Title = siteParty.Title,
-            FirstName = siteParty.FirstName,
-            LastName = siteParty.LastName,
-            Name = siteParty.Name,
-            CustomerNumber = siteParty.CustomerNumber,
-            PartyType = siteParty.PartyType,
-            State = siteParty.State,
-            Deleted = false,
-            CorrespondanceAddress = addressDoc,
-            Communication = communications,
-            PartyRoles = roles
-        };
-    }
-
     public SiteParty ToSitePartyDomain(DateTime lastUpdatedDate)
     {
         return new SiteParty(

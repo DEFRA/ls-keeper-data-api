@@ -63,12 +63,7 @@ public class Location : ValueObject
 
         if (newAddress is not null)
         {
-            var updated = BuildOrUpdateAddress(Address, lastUpdatedDate, newAddress);
-            if (!ReferenceEquals(updated, Address))
-            {
-                Address = updated;
-                changed = true;
-            }
+            changed |= ChangeAddress(Address, lastUpdatedDate, newAddress);
         }
 
         if (newCommunication is not null)
@@ -89,14 +84,17 @@ public class Location : ValueObject
         return changed;
     }
 
-    private static Address BuildOrUpdateAddress(Address? existing, DateTime currentDateTime, Address incoming)
+    private bool ChangeAddress(Address? existing, DateTime currentDateTime, Address incoming)
     {
         if (existing is null)
-            return incoming;
+        {
+            Address = incoming;
+            return true;
+        }
 
         if (!existing.GetEqualityComponents().SequenceEqual(incoming.GetEqualityComponents()))
         {
-            existing.ApplyChanges(
+            return existing.ApplyChanges(
                 lastUpdatedDate: currentDateTime,
                 uprn: incoming.Uprn,
                 addressLine1: incoming.AddressLine1,
@@ -105,11 +103,9 @@ public class Location : ValueObject
                 county: incoming.County,
                 postCode: incoming.PostCode,
                 country: incoming.Country);
-
-            return existing;
         }
 
-        return existing;
+        return false;
     }
 
     private bool Change<T>(T currentValue, T newValue, Action<T> setter, DateTime lastUpdatedAt)
