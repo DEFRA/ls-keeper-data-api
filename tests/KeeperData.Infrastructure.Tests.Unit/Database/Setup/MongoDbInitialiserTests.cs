@@ -29,7 +29,7 @@ public class MongoDbInitialiserTests
         _mockDb.MockCollection<BsonDocument>().Setup(x => x.Indexes).Returns(_mockMongoIndexHandler.Object);
 
         _mockLogger = new();
-        
+
         _sut = new MongoDbInitialiser(_mockDb.Client, _mockDb.Config, _mockLogger.Object);
     }
 
