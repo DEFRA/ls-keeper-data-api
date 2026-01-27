@@ -503,6 +503,38 @@ public class SamHoldingMapperToGoldTests
 
         result!.Marks.Single().IdentifierId.ShouldBeANonEmptyGuid();
     }
+    
+    [Fact]
+    public void SiteToDomain_ShouldPreserveLastUpdatedDate()
+    {
+        var siteLastUpdatedDate = new DateTime(2001,3,1);
+        var existingSite = new SiteDocument()
+        {
+            Id = GoldSiteId,
+            Name = "",
+            Source = "SAM",
+            Identifiers = new List<SiteIdentifierDocument>()
+            {
+                new SiteIdentifierDocument
+                {
+                    Identifier = "", 
+                    IdentifierId = "b30c2455-592c-4917-a5f7-58fdd38ed1f4", 
+                    LastUpdatedDate = DateTime.MinValue, 
+                    Type = new SiteIdentifierSummaryDocument
+                    {
+                        Code = "CPHN", 
+                        Description = "CPH Number", 
+                        IdentifierId = "cphn-sit-id", 
+                        LastUpdatedDate = null
+                    }
+                }
+            },
+            LastUpdatedDate = siteLastUpdatedDate,
+        };
+        
+        var domSite = existingSite.ToDomain();
+        domSite.LastUpdatedDate.Should().Be(siteLastUpdatedDate);
+    }
 
     private static SiteGroupMarkRelationshipDocument CreateGroupMarkRelationshipDocument(string? id = "group-mark-id", string herdmark = "H1000001")
     {
