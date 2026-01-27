@@ -16,7 +16,7 @@ public class SamHoldingMapperToGoldTests
     private Func<string?, CancellationToken, Task<(string? speciesTypeId, string? speciesTypeName)>> _getSpeciesByCode;
     private Func<string?, CancellationToken, Task<PremisesActivityTypeDocument?>> _getPremiseActivityTypeByCode;
 
-    const string GoldSiteId = "gold-site-id";
+    private const string GoldSiteId = "gold-site-id";
 
     private List<CountryDocument> _countryData =
     [
@@ -51,14 +51,15 @@ public class SamHoldingMapperToGoldTests
 
     public SamHoldingMapperToGoldTests()
     {
-        _getCountryById = (string? key, CancellationToken token) =>
+        _getCountryById = (key, token) =>
             Task.FromResult(_countryData.SingleOrDefault(x => x.IdentifierId == key));
-        _getSpeciesByCode = (string? key, CancellationToken token) =>
+
+        _getSpeciesByCode = (key, token) =>
         {
             var match = _speciesData.SingleOrDefault(x => x.Code == key);
             return Task.FromResult<(string? speciesTypeId, string? speciesTypeName)>((match?.IdentifierId, match?.Name));
         };
-        ;
+
         _getPremiseTypeById = (key, token) => Task.FromResult<PremisesTypeDocument?>(_premiseTypeData.SingleOrDefault(x => x.IdentifierId == key));
         var sit = new SiteIdentifierTypeDocument() { IdentifierId = "cphn-sit-id", Code = "CPHN", Name = "CPH Number" };
         _getSiteIdentifierTypeByCode = (s, token) => Task.FromResult(s == "CPHN" ? sit : null);
@@ -452,13 +453,16 @@ public class SamHoldingMapperToGoldTests
             StartDate = startDate,
             IdentifierId = groupMarkId,
             Mark = herdmark,
-            Species = new SpeciesSummaryDocument()
-            {
-                Code = "CTT",
-                IdentifierId = "spec-type-id",
-                LastModifiedDate = lastUpdatedDateForGoldMark,  // TODO is this SpeciesSummaryDocument supposed to be a representation of the global Species; in which case the date is not correct
-                Name = "Cattle"
-            }
+            Species =
+            [
+                new SpeciesSummaryDocument()
+                {
+                    Code = "CTT",
+                    IdentifierId = "spec-type-id",
+                    LastModifiedDate = lastUpdatedDateForGoldMark,
+                    Name = "Cattle"
+                }
+            ]
         };
 
         var result = await WhenIMapSilverSiteToGold(inputParty, null, groupMarks);
@@ -486,7 +490,7 @@ public class SamHoldingMapperToGoldTests
         groupMarks[0].SpeciesTypeId = null;
 
         var expectedMark = CreateBaseLineExpectedGroupMarkDocument();
-        expectedMark.Species = null;
+        expectedMark.Species = [];
 
         var result = await WhenIMapSilverSiteToGold(inputParty, null, groupMarks);
 
@@ -627,13 +631,16 @@ public class SamHoldingMapperToGoldTests
             StartDate = new DateTime(2010, 1, 1),
             IdentifierId = identifierId,
             Mark = "H1000001",
-            Species = new SpeciesSummaryDocument()
-            {
-                Code = "CTT",
-                IdentifierId = "spec-type-id",
-                LastModifiedDate = new DateTime(2013, 12, 13),
-                Name = "Cattle"
-            }
+            Species =
+            [
+                new SpeciesSummaryDocument()
+                {
+                    Code = "CTT",
+                    IdentifierId = "spec-type-id",
+                    LastModifiedDate = new DateTime(2013, 12, 13),
+                    Name = "Cattle"
+                }
+            ]
         };
     }
 
@@ -699,7 +706,7 @@ public class SamHoldingMapperToGoldTests
         );
     }
 
-    private void WipeIdsAndLastUpdatedDates(SiteDocument record)
+    private static void WipeIdsAndLastUpdatedDates(SiteDocument record)
     {
         record.LastUpdatedDate = DateTime.MinValue;
 
@@ -739,8 +746,7 @@ public static class GuidAssertionExtensions
     public static void ShouldBeANonEmptyGuid(this string? guid)
     {
         guid.Should().NotBeNullOrEmpty();
-        Guid val;
-        Guid.TryParse(guid, out val).Should().BeTrue();
+        Guid.TryParse(guid, out var val).Should().BeTrue();
         val.Should().NotBe(Guid.Empty);
     }
 }

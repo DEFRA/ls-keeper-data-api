@@ -7,6 +7,7 @@ using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Extensions;
 using MongoDB.Driver;
+using System.Linq;
 
 namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 
@@ -419,23 +420,28 @@ public static class SamHoldingMapper
     {
         return [.. relationships
             .Where(m => !string.IsNullOrWhiteSpace(m.Herdmark))
-            .Select(m =>
+            .GroupBy(m => m.Herdmark)
+            .Select(group =>
             {
-                var species = m.SpeciesTypeId is not null
-                    ? Species.Create(
-                        id: m.SpeciesTypeId,
+                var herdmarkGroup = group.First();
+
+                var speciesList = group
+                    .Where(m => m.SpeciesTypeId is not null)
+                    .Select(m => Species.Create(
+                        id: m.SpeciesTypeId!,
                         lastUpdatedDate: m.LastUpdatedDate,
                         code: m.SpeciesTypeCode ?? string.Empty,
-                        name: m.SpeciesTypeName ?? string.Empty)
-                    : null;
+                        name: m.SpeciesTypeName ?? string.Empty))
+                    .DistinctBy(s => s.Code)
+                    .ToList();
 
                 return new GroupMark(
-                    id: m.Id ?? Guid.NewGuid().ToString(),
-                    lastUpdatedDate: m.LastUpdatedDate,
-                    mark: m.Herdmark,
-                    startDate: m.GroupMarkStartDate,
-                    endDate: m.GroupMarkEndDate,
-                    species: species);
+                    id: herdmarkGroup.Id ?? Guid.NewGuid().ToString(),
+                    lastUpdatedDate: herdmarkGroup.LastUpdatedDate,
+                    mark: group.Key,
+                    startDate: herdmarkGroup.GroupMarkStartDate,
+                    endDate: herdmarkGroup.GroupMarkEndDate,
+                    species: speciesList);
             })];
     }
 }

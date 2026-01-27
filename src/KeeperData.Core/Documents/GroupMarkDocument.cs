@@ -25,7 +25,7 @@ public class GroupMarkDocument : INestedEntity
 
     [BsonElement("species")]
     [JsonPropertyName("species")]
-    public SpeciesSummaryDocument? Species { get; set; }
+    public List<SpeciesSummaryDocument> Species { get; set; } = [];
 
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
@@ -37,7 +37,7 @@ public class GroupMarkDocument : INestedEntity
         Mark = m.Mark,
         StartDate = m.StartDate,
         EndDate = m.EndDate,
-        Species = m.Species is not null ? SpeciesSummaryDocument.FromDomain(m.Species) : null,
+        Species = m.Species.Select(SpeciesSummaryDocument.FromDomain).ToList(),
         LastUpdatedDate = m.LastUpdatedDate
     };
 
@@ -47,5 +47,5 @@ public class GroupMarkDocument : INestedEntity
         Mark,
         StartDate,
         EndDate,
-        Species?.ToDomain());
+        Species.Select(s => s.ToDomain()));
 }

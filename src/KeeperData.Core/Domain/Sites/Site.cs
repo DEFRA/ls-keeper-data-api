@@ -284,10 +284,7 @@ public class Site : IAggregateRoot
 
         foreach (var incoming in incomingList)
         {
-            var existing = _marks.FirstOrDefault(m =>
-                m.Mark == incoming.Mark &&
-                m.Species?.Id == incoming.Species?.Id);
-
+            var existing = _marks.FirstOrDefault(m => m.Mark == incoming.Mark);
             if (existing is not null)
             {
                 changed |= existing.ApplyChanges(
@@ -311,9 +308,7 @@ public class Site : IAggregateRoot
         }
 
         var orphaned = _marks
-            .Where(existing => incomingList.All(i =>
-                i.Mark != existing.Mark ||
-                i.Species?.Id != existing.Species?.Id))
+            .Where(existing => incomingList.All(i => i.Mark != existing.Mark))
             .ToList();
 
         if (orphaned.Count != 0)

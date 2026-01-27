@@ -157,6 +157,15 @@ public static class ExpectedGoldSite
                                     StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
                                     EndDate = null,
                                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                },
+                                new()
+                                {
+                                    IdentifierId = Guid.NewGuid().ToString(),
+                                    Code = "SHP",
+                                    Name = SpeciesData.Find("SHP").name!,
+                                    StartDate = new DateTime(2015, 10, 10, 0, 0, 0),
+                                    EndDate = null,
+                                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                                 }
                             ]
                         },
@@ -188,6 +197,15 @@ public static class ExpectedGoldSite
                                     Code = "SHP",
                                     Name = SpeciesData.Find("SHP").name!,
                                     StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
+                                    EndDate = null,
+                                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                },
+                                new()
+                                {
+                                    IdentifierId = Guid.NewGuid().ToString(),
+                                    Code = "SHP",
+                                    Name = SpeciesData.Find("SHP").name!,
+                                    StartDate = new DateTime(2015, 10, 10, 0, 0, 0),
                                     EndDate = null,
                                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                                 }
@@ -279,6 +297,15 @@ public static class ExpectedGoldSite
                                     StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
                                     EndDate = null,
                                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                },
+                                new()
+                                {
+                                    IdentifierId = Guid.NewGuid().ToString(),
+                                    Code = "SHP",
+                                    Name = SpeciesData.Find("SHP").name!,
+                                    StartDate = new DateTime(2015, 10, 10, 0, 0, 0),
+                                    EndDate = null,
+                                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                                 }
                             ]
                         }
@@ -312,28 +339,41 @@ public static class ExpectedGoldSite
                     Mark = "H1000001",
                     StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
                     EndDate = null,
-                    Species = new()
-                    {
-                        IdentifierId = Guid.NewGuid().ToString(),
-                        Code = "CTT",
-                        Name = SpeciesData.Find("CTT").name!,
-                        LastModifiedDate = new DateTime(2025, 2, 2, 0, 0, 0)
-                    },
+                    Species =
+                    [
+                        new()
+                        {
+                            IdentifierId = Guid.NewGuid().ToString(),
+                            Code = "CTT",
+                            Name = SpeciesData.Find("CTT").name!,
+                            LastModifiedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                        },
+                        new()
+                        {
+                            IdentifierId = Guid.NewGuid().ToString(),
+                            Code = "SHP",
+                            Name = SpeciesData.Find("SHP").name!,
+                            LastModifiedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                        }
+                    ],
                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
                 },
                 new()
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
                     Mark = "H1000002",
-                    StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
+                    StartDate = new DateTime(2015, 10, 10, 0, 0, 0),
                     EndDate = null,
-                    Species = new()
-                    {
-                        IdentifierId = Guid.NewGuid().ToString(),
-                        Code = "SHP",
-                        Name = SpeciesData.Find("SHP").name!,
-                        LastModifiedDate = new DateTime(2025, 2, 2, 0, 0, 0)
-                    },
+                    Species =
+                    [
+                        new()
+                        {
+                            IdentifierId = Guid.NewGuid().ToString(),
+                            Code = "SHP",
+                            Name = SpeciesData.Find("SHP").name!,
+                            LastModifiedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                        }
+                    ],
                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
                 }
             ],
@@ -462,6 +502,15 @@ public static class ExpectedGoldSite
                                     StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
                                     EndDate = null,
                                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                },
+                                new()
+                                {
+                                    IdentifierId = Guid.NewGuid().ToString(),
+                                    Code = "SHP",
+                                    Name = SpeciesData.Find("SHP").name!,
+                                    StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
+                                    EndDate = null,
+                                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                                 }
                             ]
                         }
@@ -542,6 +591,15 @@ public static class ExpectedGoldSite
                                     StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
                                     EndDate = null,
                                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                },
+                                new()
+                                {
+                                    IdentifierId = Guid.NewGuid().ToString(),
+                                    Code = "SHP",
+                                    Name = SpeciesData.Find("SHP").name!,
+                                    StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
+                                    EndDate = null,
+                                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                                 }
                             ]
                         }
@@ -550,7 +608,7 @@ public static class ExpectedGoldSite
             ],
 
             Species = [.. DefaultExpectedSite.Species.Where(x => x.Code == "CTT")],
-            Marks = [.. DefaultExpectedSite.Marks.Where(x => x.Species!.Code == "CTT")],
+            Marks = [.. DefaultExpectedSite.Marks.Where(x => x.Species.Any(s => s.Code == "CTT"))],
             // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
             // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
             Activities = []
