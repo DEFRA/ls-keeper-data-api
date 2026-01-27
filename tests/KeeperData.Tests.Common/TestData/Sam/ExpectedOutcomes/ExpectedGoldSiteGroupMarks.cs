@@ -101,7 +101,7 @@ public static class ExpectedGoldSiteGroupMarks
             DiseaseType = null,
             Interval = 12,
             IntervalUnitOfTime = "Months",
-            GroupMarkStartDate = new DateTime(2005, 1, 1, 0, 0, 0),
+            GroupMarkStartDate = new DateTime(2015, 10, 10, 0, 0, 0),
             GroupMarkEndDate = null
         },
         new()
@@ -125,7 +125,7 @@ public static class ExpectedGoldSiteGroupMarks
             DiseaseType = null,
             Interval = 12,
             IntervalUnitOfTime = "Months",
-            GroupMarkStartDate = new DateTime(2005, 1, 1, 0, 0, 0),
+            GroupMarkStartDate = new DateTime(2015, 10, 10, 0, 0, 0),
             GroupMarkEndDate = null
         },
         new()
@@ -149,7 +149,7 @@ public static class ExpectedGoldSiteGroupMarks
             DiseaseType = null,
             Interval = 12,
             IntervalUnitOfTime = "Months",
-            GroupMarkStartDate = new DateTime(2005, 1, 1, 0, 0, 0),
+            GroupMarkStartDate = new DateTime(2015, 10, 10, 0, 0, 0),
             GroupMarkEndDate = null
         },
         new()
@@ -197,7 +197,7 @@ public static class ExpectedGoldSiteGroupMarks
             DiseaseType = null,
             Interval = 12,
             IntervalUnitOfTime = "Months",
-            GroupMarkStartDate = new DateTime(2005, 1, 1, 0, 0, 0),
+            GroupMarkStartDate = new DateTime(2015, 10, 10, 0, 0, 0),
             GroupMarkEndDate = null
         },
         new()

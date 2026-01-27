@@ -154,6 +154,15 @@ public static class ExpectedGoldSite
                                     StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
                                     EndDate = null,
                                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                },
+                                new()
+                                {
+                                    IdentifierId = Guid.NewGuid().ToString(),
+                                    Code = "SHP",
+                                    Name = SpeciesData.Find("SHP").name!,
+                                    StartDate = new DateTime(2015, 10, 10, 0, 0, 0),
+                                    EndDate = null,
+                                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                                 }
                             ]
                         },
@@ -185,6 +194,15 @@ public static class ExpectedGoldSite
                                     Code = "SHP",
                                     Name = SpeciesData.Find("SHP").name!,
                                     StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
+                                    EndDate = null,
+                                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                },
+                                new()
+                                {
+                                    IdentifierId = Guid.NewGuid().ToString(),
+                                    Code = "SHP",
+                                    Name = SpeciesData.Find("SHP").name!,
+                                    StartDate = new DateTime(2015, 10, 10, 0, 0, 0),
                                     EndDate = null,
                                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                                 }
@@ -276,6 +294,15 @@ public static class ExpectedGoldSite
                                     StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
                                     EndDate = null,
                                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                                },
+                                new()
+                                {
+                                    IdentifierId = Guid.NewGuid().ToString(),
+                                    Code = "SHP",
+                                    Name = SpeciesData.Find("SHP").name!,
+                                    StartDate = new DateTime(2015, 10, 10, 0, 0, 0),
+                                    EndDate = null,
+                                    LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                                 }
                             ]
                         }
@@ -303,7 +330,6 @@ public static class ExpectedGoldSite
 
             Marks =
             [
-                // Mark H1000001 now has BOTH Cattle and Sheep
                 new()
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
@@ -312,7 +338,6 @@ public static class ExpectedGoldSite
                     EndDate = null,
                     Species =
                     [
-                        // Species 1: Cattle
                         new()
                         {
                             IdentifierId = Guid.NewGuid().ToString(),
@@ -320,7 +345,6 @@ public static class ExpectedGoldSite
                             Name = SpeciesData.Find("CTT").name!,
                             LastModifiedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                         },
-                        // Species 2: Sheep (Added)
                         new()
                         {
                             IdentifierId = Guid.NewGuid().ToString(),
@@ -331,12 +355,11 @@ public static class ExpectedGoldSite
                     ],
                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0),
                 },
-                // Mark H1000002 remains Sheep only
                 new()
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
                     Mark = "H1000002",
-                    StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
+                    StartDate = new DateTime(2015, 10, 10, 0, 0, 0),
                     EndDate = null,
                     Species =
                     [
