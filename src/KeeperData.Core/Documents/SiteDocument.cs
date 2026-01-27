@@ -131,7 +131,8 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
                 si.LastUpdatedDate,
                 si.Identifier,
                 si.Type.ToDomain(),
-                si.IdentifierId);
+                si.IdentifierId,
+                LastUpdatedDate);
         }
 
         if (Species is not null && Species.Count > 0)
