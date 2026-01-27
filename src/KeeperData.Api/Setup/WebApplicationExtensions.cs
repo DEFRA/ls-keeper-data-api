@@ -69,12 +69,6 @@ public static class WebApplicationExtensions
             RegisterScanEndpoint<ISamDailyScanTask>(app, "/api/import/startSamDailyScan", "SAM daily scan");
         }
 
-        var mongoPreprodConfig = configuration.GetSection(MongoDbPreproductionServiceConfig.SectionName).Get<MongoDbPreproductionServiceConfig>();
-        if (mongoPreprodConfig?.Enabled ?? false)
-        {
-            app.MapPost("/api/dbdropcollection/{collection}", async ([FromRoute] string collection, [FromServices] IMongoDbPreproductionService mongoPreprodService) => { return await mongoPreprodService.DropCollection(collection); });
-        }
-
         app.MapControllers();
     }
 
