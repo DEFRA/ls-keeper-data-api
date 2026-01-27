@@ -515,7 +515,7 @@ public class SamHoldingMapperToGoldTests
             {
                 IdentifierId = "loc-id",
                 Address = new Core.Documents.Silver.AddressDocument()
-                    { IdentifierId = "addr-id", AddressLine = "NEW ADDRESS", AddressPostCode = "NEW POSTCODE" }
+                { IdentifierId = "addr-id", AddressLine = "NEW ADDRESS", AddressPostCode = "NEW POSTCODE" }
             }
         };
         var existingSite = new SiteDocument()
@@ -535,11 +535,11 @@ public class SamHoldingMapperToGoldTests
                 },
                 Communication = [new KeeperData.Core.Documents.CommunicationDocument
                 {
-                    Email = null, 
-                    IdentifierId = "cbe22952-30d3-4fd7-b4c5-0cb5405b912c", 
-                    Landline = null, 
-                    LastUpdatedDate = DateTime.MinValue, 
-                    Mobile = null, 
+                    Email = null,
+                    IdentifierId = "cbe22952-30d3-4fd7-b4c5-0cb5405b912c",
+                    Landline = null,
+                    LastUpdatedDate = DateTime.MinValue,
+                    Mobile = null,
                     PrimaryContactFlag = false
                 }]
             },
@@ -547,20 +547,20 @@ public class SamHoldingMapperToGoldTests
             {
                 new SiteIdentifierDocument
                 {
-                    Identifier = "", 
-                    IdentifierId = "b30c2455-592c-4917-a5f7-58fdd38ed1f4", 
-                    LastUpdatedDate = DateTime.MinValue, 
+                    Identifier = "",
+                    IdentifierId = "b30c2455-592c-4917-a5f7-58fdd38ed1f4",
+                    LastUpdatedDate = DateTime.MinValue,
                     Type = new SiteIdentifierSummaryDocument
                     {
-                        Code = "CPHN", 
-                        Description = "CPH Number", 
-                        IdentifierId = "cphn-sit-id", 
+                        Code = "CPHN",
+                        Description = "CPH Number",
+                        IdentifierId = "cphn-sit-id",
                         LastUpdatedDate = null
                     }
                 }
             }
         };
-        
+
         var result = await WhenIMapSilverSiteToGold(inputParty, existingSite);
 
         result!.Location!.Address!.AddressLine1.Should().Be("NEW ADDRESS");
@@ -569,11 +569,11 @@ public class SamHoldingMapperToGoldTests
         result.Location.LastUpdatedDate.Should().Be(updatedDate);
         result.Location.LastUpdatedDate.Should().Be(updatedDate);
     }
-    
+
     [Fact]
     public void SiteToDomain_ShouldPreserveLastUpdatedDate()
     {
-        var siteLastUpdatedDate = new DateTime(2001,3,1);
+        var siteLastUpdatedDate = new DateTime(2001, 3, 1);
         var existingSite = new SiteDocument()
         {
             Id = GoldSiteId,
@@ -583,21 +583,21 @@ public class SamHoldingMapperToGoldTests
             {
                 new SiteIdentifierDocument
                 {
-                    Identifier = "", 
-                    IdentifierId = "b30c2455-592c-4917-a5f7-58fdd38ed1f4", 
-                    LastUpdatedDate = DateTime.MinValue, 
+                    Identifier = "",
+                    IdentifierId = "b30c2455-592c-4917-a5f7-58fdd38ed1f4",
+                    LastUpdatedDate = DateTime.MinValue,
                     Type = new SiteIdentifierSummaryDocument
                     {
-                        Code = "CPHN", 
-                        Description = "CPH Number", 
-                        IdentifierId = "cphn-sit-id", 
+                        Code = "CPHN",
+                        Description = "CPH Number",
+                        IdentifierId = "cphn-sit-id",
                         LastUpdatedDate = null
                     }
                 }
             },
             LastUpdatedDate = siteLastUpdatedDate,
         };
-        
+
         var domSite = existingSite.ToDomain();
         domSite.LastUpdatedDate.Should().Be(siteLastUpdatedDate);
     }
