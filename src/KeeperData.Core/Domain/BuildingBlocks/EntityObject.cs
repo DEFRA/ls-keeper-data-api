@@ -1,12 +1,12 @@
 namespace KeeperData.Core.Domain.BuildingBlocks;
 
-public abstract class ValueObject
+public abstract class EntityObject
 {
     public abstract IEnumerable<object> GetEqualityComponents();
 
     public override bool Equals(object? obj)
     {
-        if (obj is not ValueObject other) return false;
+        if (obj is not EntityObject other) return false;
         return GetEqualityComponents().SequenceEqual(other.GetEqualityComponents());
     }
 

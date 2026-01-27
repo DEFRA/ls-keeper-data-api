@@ -6,7 +6,7 @@ public class SiteIdentifier(
     string id,
     DateTime lastUpdatedDate,
     string identifier,
-    SiteIdentifierType type) : ValueObject
+    SiteIdentifierType type) : EntityObject
 {
     public string Id { get; private set; } = id;
     public DateTime LastUpdatedDate { get; private set; } = lastUpdatedDate;

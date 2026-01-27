@@ -2,7 +2,7 @@ using KeeperData.Core.Domain.BuildingBlocks;
 
 namespace KeeperData.Core.Domain.Shared;
 
-public class PartyRoleRole : ValueObject
+public class PartyRoleRole : EntityObject
 {
     private const string CphHolderRoleId = "5053be9f-685a-4779-a663-ce85df6e02e8";
 

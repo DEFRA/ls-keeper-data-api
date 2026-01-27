@@ -2,7 +2,7 @@ using KeeperData.Core.Domain.BuildingBlocks;
 
 namespace KeeperData.Core.Domain.Shared;
 
-public class PartyRole : ValueObject
+public class PartyRole : EntityObject
 {
     public string Id { get; private set; }
     public PartyRoleSite? Site { get; private set; }
