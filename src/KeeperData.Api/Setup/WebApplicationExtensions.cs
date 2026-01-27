@@ -3,12 +3,9 @@ using KeeperData.Api.Controllers.ResponseDtos.Scans;
 using KeeperData.Api.Middleware;
 using KeeperData.Api.Worker.Tasks;
 using KeeperData.Infrastructure.Authentication.Handlers;
-using KeeperData.Infrastructure.Config;
-using KeeperData.Infrastructure.Services;
 using KeeperData.Infrastructure.Telemetry;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Diagnostics.CodeAnalysis;
 
@@ -86,16 +83,6 @@ public static class WebApplicationExtensions
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
                 });
             RegisterScanEndpoint<ISamDailyScanTask>(app, "/api/import/startSamDailyScan", "SAM daily scan")
-                .RequireAuthorization(new AuthorizeAttribute
-                {
-                    AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
-                });
-        }
-
-        var mongoPreprodConfig = configuration.GetSection(MongoDbPreproductionServiceConfig.SectionName).Get<MongoDbPreproductionServiceConfig>();
-        if (mongoPreprodConfig?.Enabled ?? false)
-        {
-            app.MapPost("/api/dbdropcollection/{collection}", async ([FromRoute] string collection, [FromServices] IMongoDbPreproductionService mongoPreprodService) => { return await mongoPreprodService.DropCollection(collection); })
                 .RequireAuthorization(new AuthorizeAttribute
                 {
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName

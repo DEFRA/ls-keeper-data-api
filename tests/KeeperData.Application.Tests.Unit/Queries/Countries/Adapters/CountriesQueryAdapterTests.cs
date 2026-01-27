@@ -4,7 +4,6 @@ using KeeperData.Application.Queries.Countries.Adapters;
 using KeeperData.Core.Documents;
 using KeeperData.Core.DTOs;
 using KeeperData.Core.Repositories;
-using MongoDB.Driver;
 using Moq;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -40,12 +39,13 @@ public class CountriesQueryAdapterTests
     public async Task WhenHandlingQueryWithNoFilters_AllCountriesShouldBeReturned()
     {
         GivenTheseCountries(_testCountries);
-        var result = await WhenSearchingForCountries();
+        var (items, totalCount) = await WhenSearchingForCountries();
         var expected = s_countryGBAsDTO;
 
-        result.Count.Should().Be(3);
-        result.Should().Contain(x => x.Code == "GB");
-        var gb = result.Single(x => x.Code == "GB");
+        items.Count.Should().Be(3);
+        totalCount.Should().Be(3);
+        items.Should().Contain(x => x.Code == "GB");
+        var gb = items.Single(x => x.Code == "GB");
         gb.Should().BeEquivalentTo(expected);
     }
 
@@ -66,13 +66,14 @@ public class CountriesQueryAdapterTests
         Debug.WriteLine(scenario);
         GivenTheseCountries(_testCountries);
 
-        var result = await WhenSearchingForCountries(name, codesCsv, euTradeMember, devolvedAuthority, year.HasValue ? new DateTime(year.Value, month ?? 1, 1) : null);
+        var (items, totalCount) = await WhenSearchingForCountries(name, codesCsv, euTradeMember, devolvedAuthority, year.HasValue ? new DateTime(year.Value, month ?? 1, 1) : null);
 
         var codes = expectedCodes?.Split(",") ?? [];
-        result.Count.Should().Be(codes.Length);
+        items.Count.Should().Be(codes.Length);
+        totalCount.Should().Be(codes.Length); // Check filtered count for bug fix
 
         if (codes.Length != 0)
-            result.Select(c => c.Code).Should().BeEquivalentTo(codes);
+            items.Select(c => c.Code).Should().BeEquivalentTo(codes);
     }
 
     [Theory]
@@ -87,12 +88,14 @@ public class CountriesQueryAdapterTests
         Debug.WriteLine(scenario);
         GivenTheseCountries(_testCountries);
 
-        var result = await WhenSearchingForCountries(sortBy: sortBy, ascDesc: ascDesc, page: page, pageSize: pageSize);
+        var (items, totalCount) = await WhenSearchingForCountries(sortBy: sortBy, ascDesc: ascDesc, page: page, pageSize: pageSize);
 
         var codes = expectedOrder?.Split(",") ?? [];
-        result.Count.Should().Be(codes.Length);
+        items.Count.Should().Be(codes.Length);
+        totalCount.Should().Be(3);
+
         if (codes.Length != 0)
-            result.Select(c => c.Code).Should().BeEquivalentTo(codes, options => options.WithStrictOrdering());
+            items.Select(c => c.Code).Should().BeEquivalentTo(codes, options => options.WithStrictOrdering());
     }
 
     public static IEnumerable<object[]> CountriesByIdTestData()
@@ -111,11 +114,11 @@ public class CountriesQueryAdapterTests
         }
     }
 
-    private async Task<List<CountryDTO>> WhenSearchingForCountries(string? name = null, string? codeCsv = null, bool? euTradeMember = null, bool? devolvedAuthority = null, DateTime? lastUpdated = null, string? sortBy = null, string? ascDesc = null, int? page = null, int? pageSize = null)
+    private async Task<(List<CountryDTO> Items, int TotalCount)> WhenSearchingForCountries(string? name = null, string? codeCsv = null, bool? euTradeMember = null, bool? devolvedAuthority = null, DateTime? lastUpdated = null, string? sortBy = null, string? ascDesc = null, int? page = null, int? pageSize = null)
     {
         var query = new GetCountriesQuery()
         {
-            Code = codeCsv?.Split(',').ToList(),
+            Code = !string.IsNullOrWhiteSpace(codeCsv) ? codeCsv.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList() : null,
             Name = name,
             EuTradeMember = euTradeMember,
             DevolvedAuthority = devolvedAuthority,
@@ -126,6 +129,6 @@ public class CountriesQueryAdapterTests
             PageSize = pageSize ?? 10
         };
 
-        return (await _sut.GetCountriesAsync(query, CancellationToken.None)).Items;
+        return await _sut.GetCountriesAsync(query, CancellationToken.None);
     }
 }

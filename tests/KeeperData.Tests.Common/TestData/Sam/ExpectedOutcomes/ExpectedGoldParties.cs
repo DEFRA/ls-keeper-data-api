@@ -60,12 +60,15 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                            Type = new PremisesTypeSummaryDocument
-                            {
-                                IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
-                                Code = "AH",
-                                Description = "Agricultural Holding"
-                            },
+                            // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
+                            // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+                            Type = null,
+                            //Type = new PremisesTypeSummaryDocument
+                            //{
+                            //    IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
+                            //    Code = "AH",
+                            //    Description = "Agricultural Holding"
+                            //},
                             State = HoldingStatusType.Active.GetDescription(),
                             Identifiers =
                             [
@@ -112,6 +115,15 @@ public static class ExpectedGoldParties
                                 StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
                                 EndDate = null,
                                 LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                            },
+                            new()
+                            {
+                                IdentifierId = Guid.NewGuid().ToString(),
+                                Code = "SHP",
+                                Name = SpeciesData.Find("SHP").name!,
+                                StartDate = new DateTime(2015, 10, 10, 0, 0, 0),
+                                EndDate = null,
+                                LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                             }
                         ]
                     },
@@ -122,12 +134,15 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                            Type = new PremisesTypeSummaryDocument
-                            {
-                                IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
-                                Code = "AH",
-                                Description = "Agricultural Holding"
-                            },
+                             // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
+                            // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+                            Type = null,
+                            //Type = new PremisesTypeSummaryDocument
+                            //{
+                            //    IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
+                            //    Code = "AH",
+                            //    Description = "Agricultural Holding"
+                            //},
                             State = HoldingStatusType.Active.GetDescription(),
                             Identifiers =
                             [
@@ -174,6 +189,15 @@ public static class ExpectedGoldParties
                                 StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
                                 EndDate = null,
                                 LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                            },
+                            new()
+                            {
+                                IdentifierId = Guid.NewGuid().ToString(),
+                                Code = "SHP",
+                                Name = SpeciesData.Find("SHP").name!,
+                                StartDate = new DateTime(2015, 10, 10, 0, 0, 0),
+                                EndDate = null,
+                                LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                             }
                         ]
                     },
@@ -184,12 +208,15 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                            Type = new PremisesTypeSummaryDocument
-                            {
-                                IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
-                                Code = "AH",
-                                Description = "Agricultural Holding"
-                            },
+                             // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
+                            // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+                            Type = null,
+                            //Type = new PremisesTypeSummaryDocument
+                            //{
+                            //    IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
+                            //    Code = "AH",
+                            //    Description = "Agricultural Holding"
+                            //},
                             State = HoldingStatusType.Active.GetDescription(),
                             Identifiers =
                             [
@@ -270,12 +297,15 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                            Type = new PremisesTypeSummaryDocument
-                            {
-                                IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
-                                Code = "AH",
-                                Description = "Agricultural Holding"
-                            },
+                             // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
+                            // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+                            Type = null,
+                            //Type = new PremisesTypeSummaryDocument
+                            //{
+                            //    IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
+                            //    Code = "AH",
+                            //    Description = "Agricultural Holding"
+                            //},
                             State = HoldingStatusType.Active.GetDescription(),
                             Identifiers =
                             [
@@ -320,6 +350,15 @@ public static class ExpectedGoldParties
                                 Code = "SHP",
                                 Name = SpeciesData.Find("SHP").name!,
                                 StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
+                                EndDate = null,
+                                LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                            },
+                            new()
+                            {
+                                IdentifierId = Guid.NewGuid().ToString(),
+                                Code = "SHP",
+                                Name = SpeciesData.Find("SHP").name!,
+                                StartDate = new DateTime(2015, 10, 10, 0, 0, 0),
                                 EndDate = null,
                                 LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                             }
@@ -380,12 +419,15 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                            Type = new PremisesTypeSummaryDocument
-                            {
-                                IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
-                                Code = "AH",
-                                Description = "Agricultural Holding"
-                            },
+                             // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
+                            // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+                            Type = null,
+                            //Type = new PremisesTypeSummaryDocument
+                            //{
+                            //    IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
+                            //    Code = "AH",
+                            //    Description = "Agricultural Holding"
+                            //},
                             State = HoldingStatusType.Active.GetDescription(),
                             Identifiers =
                             [
@@ -420,6 +462,15 @@ public static class ExpectedGoldParties
                                 IdentifierId = Guid.NewGuid().ToString(),
                                 Code = "CTT",
                                 Name = SpeciesData.Find("CTT").name!,
+                                StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
+                                EndDate = null,
+                                LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                            },
+                            new()
+                            {
+                                IdentifierId = Guid.NewGuid().ToString(),
+                                Code = "SHP",
+                                Name = SpeciesData.Find("SHP").name!,
                                 StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
                                 EndDate = null,
                                 LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
@@ -477,12 +528,15 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                            Type = new PremisesTypeSummaryDocument
-                            {
-                                IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
-                                Code = "AH",
-                                Description = "Agricultural Holding"
-                            },
+                             // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
+                            // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+                            Type = null,
+                            //Type = new PremisesTypeSummaryDocument
+                            //{
+                            //    IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
+                            //    Code = "AH",
+                            //    Description = "Agricultural Holding"
+                            //},
                             State = HoldingStatusType.Active.GetDescription(),
                             Identifiers =
                             [
@@ -519,12 +573,15 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                            Type = new PremisesTypeSummaryDocument
-                            {
-                                IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
-                                Code = "AH",
-                                Description = "Agricultural Holding"
-                            },
+                             // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
+                            // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+                            Type = null,
+                            //Type = new PremisesTypeSummaryDocument
+                            //{
+                            //    IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
+                            //    Code = "AH",
+                            //    Description = "Agricultural Holding"
+                            //},
                             State = HoldingStatusType.Active.GetDescription(),
                             Identifiers =
                             [
@@ -559,6 +616,15 @@ public static class ExpectedGoldParties
                                 IdentifierId = Guid.NewGuid().ToString(),
                                 Code = "CTT",
                                 Name = SpeciesData.Find("CTT").name!,
+                                StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
+                                EndDate = null,
+                                LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
+                            },
+                            new()
+                            {
+                                IdentifierId = Guid.NewGuid().ToString(),
+                                Code = "SHP",
+                                Name = SpeciesData.Find("SHP").name!,
                                 StartDate = new DateTime(2005, 1, 1, 0, 0, 0),
                                 EndDate = null,
                                 LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)

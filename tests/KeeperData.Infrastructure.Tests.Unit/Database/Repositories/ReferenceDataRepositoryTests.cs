@@ -60,27 +60,20 @@ public class ReferenceDataRepositoryTests
 
         _fixture.SetUpDocuments(listDocument);
 
-        var findCallCount = 0;
-        _fixture._collectionMock
-            .Setup(c => c.FindAsync(
-                It.IsAny<FilterDefinition<TestReferenceListDocument>>(),
-                It.IsAny<FindOptions<TestReferenceListDocument, TestReferenceListDocument>>(),
-                It.IsAny<CancellationToken>()))
-            .Callback(() => findCallCount++)
-            .ReturnsAsync(_fixture._asyncCursorMock.Object);
-
         await _sut.GetAllAsync(CancellationToken.None);
         await _sut.GetAllAsync(CancellationToken.None);
 
-        findCallCount.Should().Be(1);
+        _fixture.CollectionMock
+            .Verify(c =>
+            c.FindAsync(It.IsAny<FilterDefinition<TestReferenceListDocument>>(),
+            It.IsAny<FindOptions<TestReferenceListDocument, TestReferenceListDocument>>(),
+            It.IsAny<CancellationToken>()), Times.Exactly(1));
     }
 
     [Fact]
     public async Task GetAllAsync_ReturnsEmptyCollection_WhenNoDocumentFound()
     {
-        _fixture._asyncCursorMock
-            .SetupSequence(c => c.MoveNextAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
+        _fixture.SetUpNoDocuments();
 
         var result = await _sut.GetAllAsync(CancellationToken.None);
 

@@ -29,8 +29,9 @@ public static class SamTestScenarios
             SamCphHolding_Sheep_1
         ],
         RawHerds = [
-            SamHerd_Cattle_1,
-            SamHerd_Sheep_1
+            SamHerd_H1000001_Cattle_1,
+            SamHerd_H1000001_Sheep_1,
+            SamHerd_H1000002_Sheep_1
         ],
         RawHolders = [
             SamCphHolder_C1000001
@@ -50,6 +51,10 @@ public static class SamTestScenarios
         var p1_updated = SamParty_C1000001;
         p1_updated.ROLES = "LIVESTOCKKEEPER";
 
+        var sheepCloneForScenario = SamHerd_H1000001_Sheep_1;
+        sheepCloneForScenario.OWNER_PARTY_IDS = "C1000005";
+        sheepCloneForScenario.KEEPER_PARTY_IDS = "C1000001";
+
         return new()
         {
             Cph = s_cphNumber,
@@ -57,7 +62,8 @@ public static class SamTestScenarios
                 SamCphHolding_Cattle_1
             ],
             RawHerds = [
-                SamHerd_Cattle_2
+                SamHerd_H1000001_Cattle_2,
+                sheepCloneForScenario
             ],
             RawHolders = [
                 SamCphHolder_C1000005
@@ -204,7 +210,7 @@ public static class SamTestScenarios
         MOVEMENT_RSTRCTN_RSN_CODE = null
     };
 
-    private static SamHerd SamHerd_Cattle_1 => new()
+    private static SamHerd SamHerd_H1000001_Cattle_1 => new()
     {
         BATCH_ID = 1,
         CHANGE_TYPE = "I",
@@ -232,7 +238,7 @@ public static class SamTestScenarios
         MOVEMENT_RSTRCTN_RSN_CODE = null
     };
 
-    private static SamHerd SamHerd_Cattle_2 => new()
+    private static SamHerd SamHerd_H1000001_Cattle_2 => new()
     {
         BATCH_ID = 1,
         CHANGE_TYPE = "I",
@@ -260,7 +266,36 @@ public static class SamTestScenarios
         MOVEMENT_RSTRCTN_RSN_CODE = null
     };
 
-    private static SamHerd SamHerd_Sheep_1 => new()
+    private static SamHerd SamHerd_H1000001_Sheep_1 => new()
+    {
+        BATCH_ID = 1,
+        CHANGE_TYPE = "I",
+        CreatedAtUtc = new DateTime(2025, 1, 1, 0, 0, 0),
+        UpdatedAtUtc = new DateTime(2025, 2, 2, 0, 0, 0),
+        IsDeleted = false,
+
+        // SAME Herdmark as Cattle_1
+        HERDMARK = "H1000001",
+        CPHH = $"{s_cphNumber}/01",
+
+        // DIFFERENT Species
+        ANIMAL_SPECIES_CODE = "SHP",
+        ANIMAL_PURPOSE_CODE = "SHP-MEAT-DLR",
+
+        OWNER_PARTY_IDS = "C1000001",
+        KEEPER_PARTY_IDS = "C1000001,C1000002",
+
+        ANIMAL_GROUP_ID_MCH_FRM_DAT = new DateTime(2005, 1, 1, 0, 0, 0),
+        ANIMAL_GROUP_ID_MCH_TO_DAT = null,
+
+        INTERVALS = 6,
+        INTERVAL_UNIT_OF_TIME = "Months",
+
+        DISEASE_TYPE = null,
+        MOVEMENT_RSTRCTN_RSN_CODE = null
+    };
+
+    private static SamHerd SamHerd_H1000002_Sheep_1 => new()
     {
         BATCH_ID = 1,
         CHANGE_TYPE = "I",
@@ -277,7 +312,7 @@ public static class SamTestScenarios
         OWNER_PARTY_IDS = "C1000001",
         KEEPER_PARTY_IDS = "C1000001,C1000002",
 
-        ANIMAL_GROUP_ID_MCH_FRM_DAT = new DateTime(2005, 1, 1, 0, 0, 0),
+        ANIMAL_GROUP_ID_MCH_FRM_DAT = new DateTime(2015, 10, 10, 0, 0, 0),
         ANIMAL_GROUP_ID_MCH_TO_DAT = null,
 
         INTERVALS = 12,

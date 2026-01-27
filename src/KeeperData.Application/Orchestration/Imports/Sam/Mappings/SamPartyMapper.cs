@@ -11,6 +11,8 @@ using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Extensions;
 using KeeperData.Core.Repositories;
 using MongoDB.Driver;
+using PartyRoleDocument = KeeperData.Core.Documents.Silver.PartyRoleDocument;
+
 namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 
 public static class SamPartyMapper
@@ -152,21 +154,16 @@ public static class SamPartyMapper
         string goldSiteId,
         List<SamPartyDocument> silverParties,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
-        IGenericRepository<PartyDocument> goldPartyRepository,
+        IPartiesRepository goldPartyRepository,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
         Func<string?, CancellationToken, Task<SpeciesDocument?>> getSpeciesTypeById,
         CancellationToken cancellationToken)
     {
-        if (silverParties?.Count == 0)
-            return [];
-
         var result = new List<PartyDocument>();
 
-        foreach (var silverParty in silverParties ?? [])
+        foreach (var silverParty in silverParties)
         {
-            var existingPartyFilter = Builders<PartyDocument>.Filter.Eq(x => x.CustomerNumber, silverParty.PartyId);
-
-            var existingParty = await goldPartyRepository.FindOneByFilterAsync(existingPartyFilter, cancellationToken);
+            var existingParty = await goldPartyRepository.FindPartyByCustomerNumber(silverParty.PartyId, cancellationToken);
 
             if (existingParty is not null)
                 existingGoldPartyIds.Add(existingParty.Id);
@@ -194,11 +191,10 @@ public static class SamPartyMapper
         return result;
     }
 
-    // TODO - Add tests for RemoveSitePartyOrphans
     public static async Task<List<PartyDocument>> RemoveSitePartyOrphans(
         string goldSiteId,
         List<SitePartyRoleRelationship> orphansToClean,
-        IGenericRepository<PartyDocument> goldPartyRepository,
+        IPartiesRepository goldPartyRepository,
         CancellationToken cancellationToken)
     {
         var result = new List<PartyDocument>();
@@ -208,8 +204,7 @@ public static class SamPartyMapper
 
         foreach (var orphanGroup in groupedOrphans)
         {
-            var existingPartyFilter = Builders<PartyDocument>.Filter.Eq(x => x.CustomerNumber, orphanGroup.Key);
-            var existingParty = await goldPartyRepository.FindOneByFilterAsync(existingPartyFilter, cancellationToken);
+            var existingParty = await goldPartyRepository.FindPartyByCustomerNumber(orphanGroup.Key, cancellationToken);
 
             if (existingParty is null) continue;
 
@@ -237,7 +232,7 @@ public static class SamPartyMapper
 
         foreach (var holder in rawHolders)
         {
-            if (holder.PARTY_ID != null && partyMap.TryGetValue(holder.PARTY_ID, out var party))
+            if (partyMap.TryGetValue(holder.PARTY_ID, out var party))
             {
                 party.ROLES ??= string.Empty;
 
@@ -260,88 +255,48 @@ public static class SamPartyMapper
         return [.. partyMap.Values];
     }
 
+    private static string? MergeStrings(string? original, string? newValue)
+    {
+        //TODO JIRA ULITP-3998 - refine to
+        // return string.IsNullOrEmpty(original) ? newValue : original;
+        // or to return string.IsNullOrEmpty(original) ? (string.IsNullOrEmpty(newValue) ? null : newValue) : original;
+        return string.IsNullOrEmpty(original) && !string.IsNullOrEmpty(newValue) ? newValue : original;
+    }
+
     private static void MergeSamPartyFromHolder(SamParty party, SamCphHolder holder)
     {
-        if (string.IsNullOrEmpty(party.PERSON_TITLE) && !string.IsNullOrEmpty(holder.PERSON_TITLE))
-            party.PERSON_TITLE = holder.PERSON_TITLE;
+        party.PERSON_TITLE = MergeStrings(party.PERSON_TITLE, holder.PERSON_TITLE);
+        party.PERSON_GIVEN_NAME = MergeStrings(party.PERSON_GIVEN_NAME, holder.PERSON_GIVEN_NAME);
+        party.PERSON_GIVEN_NAME2 = MergeStrings(party.PERSON_GIVEN_NAME2, holder.PERSON_GIVEN_NAME2);
+        party.PERSON_INITIALS = MergeStrings(party.PERSON_INITIALS, holder.PERSON_INITIALS);
+        party.PERSON_FAMILY_NAME = MergeStrings(party.PERSON_FAMILY_NAME, holder.PERSON_FAMILY_NAME);
+        party.ORGANISATION_NAME = MergeStrings(party.ORGANISATION_NAME, holder.ORGANISATION_NAME);
+        party.TELEPHONE_NUMBER = MergeStrings(party.TELEPHONE_NUMBER, holder.TELEPHONE_NUMBER);
+        party.MOBILE_NUMBER = MergeStrings(party.MOBILE_NUMBER, holder.MOBILE_NUMBER);
+        party.INTERNET_EMAIL_ADDRESS = MergeStrings(party.INTERNET_EMAIL_ADDRESS, holder.INTERNET_EMAIL_ADDRESS);
 
-        if (string.IsNullOrEmpty(party.PERSON_GIVEN_NAME) && !string.IsNullOrEmpty(holder.PERSON_GIVEN_NAME))
-            party.PERSON_GIVEN_NAME = holder.PERSON_GIVEN_NAME;
+        party.SAON_START_NUMBER ??= holder.SAON_START_NUMBER;
+        party.SAON_START_NUMBER_SUFFIX ??= holder.SAON_START_NUMBER_SUFFIX;
+        party.SAON_END_NUMBER ??= holder.SAON_END_NUMBER;
+        party.SAON_END_NUMBER_SUFFIX ??= holder.SAON_END_NUMBER_SUFFIX;
 
-        if (string.IsNullOrEmpty(party.PERSON_GIVEN_NAME2) && !string.IsNullOrEmpty(holder.PERSON_GIVEN_NAME2))
-            party.PERSON_GIVEN_NAME2 = holder.PERSON_GIVEN_NAME2;
+        party.SAON_DESCRIPTION = MergeStrings(party.SAON_DESCRIPTION, holder.SAON_DESCRIPTION);
 
-        if (string.IsNullOrEmpty(party.PERSON_INITIALS) && !string.IsNullOrEmpty(holder.PERSON_INITIALS))
-            party.PERSON_INITIALS = holder.PERSON_INITIALS;
+        party.PAON_START_NUMBER ??= holder.PAON_START_NUMBER;
+        party.PAON_START_NUMBER_SUFFIX ??= holder.PAON_START_NUMBER_SUFFIX;
+        party.PAON_END_NUMBER ??= holder.PAON_END_NUMBER;
+        party.PAON_END_NUMBER_SUFFIX ??= holder.PAON_END_NUMBER_SUFFIX;
 
-        if (string.IsNullOrEmpty(party.PERSON_FAMILY_NAME) && !string.IsNullOrEmpty(holder.PERSON_FAMILY_NAME))
-            party.PERSON_FAMILY_NAME = holder.PERSON_FAMILY_NAME;
+        party.PAON_DESCRIPTION = MergeStrings(party.PAON_DESCRIPTION, holder.PAON_DESCRIPTION);
+        party.STREET = MergeStrings(party.STREET, holder.STREET);
+        party.TOWN = MergeStrings(party.TOWN, holder.TOWN);
+        party.LOCALITY = MergeStrings(party.LOCALITY, holder.LOCALITY);
+        party.UK_INTERNAL_CODE = MergeStrings(party.UK_INTERNAL_CODE, holder.UK_INTERNAL_CODE);
+        party.POSTCODE = MergeStrings(party.POSTCODE, holder.POSTCODE);
+        party.COUNTRY_CODE = MergeStrings(party.COUNTRY_CODE, holder.COUNTRY_CODE);
+        party.UDPRN = MergeStrings(party.UDPRN, holder.UDPRN);
 
-        if (string.IsNullOrEmpty(party.ORGANISATION_NAME) && !string.IsNullOrEmpty(holder.ORGANISATION_NAME))
-            party.ORGANISATION_NAME = holder.ORGANISATION_NAME;
-
-        if (string.IsNullOrEmpty(party.TELEPHONE_NUMBER) && !string.IsNullOrEmpty(holder.TELEPHONE_NUMBER))
-            party.TELEPHONE_NUMBER = holder.TELEPHONE_NUMBER;
-
-        if (string.IsNullOrEmpty(party.MOBILE_NUMBER) && !string.IsNullOrEmpty(holder.MOBILE_NUMBER))
-            party.MOBILE_NUMBER = holder.MOBILE_NUMBER;
-
-        if (string.IsNullOrEmpty(party.INTERNET_EMAIL_ADDRESS) && !string.IsNullOrEmpty(holder.INTERNET_EMAIL_ADDRESS))
-            party.INTERNET_EMAIL_ADDRESS = holder.INTERNET_EMAIL_ADDRESS;
-
-        if (party.SAON_START_NUMBER == null && holder.SAON_START_NUMBER != null)
-            party.SAON_START_NUMBER = holder.SAON_START_NUMBER;
-
-        if (party.SAON_START_NUMBER_SUFFIX == null && holder.SAON_START_NUMBER_SUFFIX != null)
-            party.SAON_START_NUMBER_SUFFIX = holder.SAON_START_NUMBER_SUFFIX;
-
-        if (party.SAON_END_NUMBER == null && holder.SAON_END_NUMBER != null)
-            party.SAON_END_NUMBER = holder.SAON_END_NUMBER;
-
-        if (party.SAON_END_NUMBER_SUFFIX == null && holder.SAON_END_NUMBER_SUFFIX != null)
-            party.SAON_END_NUMBER_SUFFIX = holder.SAON_END_NUMBER_SUFFIX;
-
-        if (string.IsNullOrEmpty(party.SAON_DESCRIPTION) && !string.IsNullOrEmpty(holder.SAON_DESCRIPTION))
-            party.SAON_DESCRIPTION = holder.SAON_DESCRIPTION;
-
-        if (party.PAON_START_NUMBER == null && holder.PAON_START_NUMBER != null)
-            party.PAON_START_NUMBER = holder.PAON_START_NUMBER;
-
-        if (party.PAON_START_NUMBER_SUFFIX == null && holder.PAON_START_NUMBER_SUFFIX != null)
-            party.PAON_START_NUMBER_SUFFIX = holder.PAON_START_NUMBER_SUFFIX;
-
-        if (party.PAON_END_NUMBER == null && holder.PAON_END_NUMBER != null)
-            party.PAON_END_NUMBER = holder.PAON_END_NUMBER;
-
-        if (party.PAON_END_NUMBER_SUFFIX == null && holder.PAON_END_NUMBER_SUFFIX != null)
-            party.PAON_END_NUMBER_SUFFIX = holder.PAON_END_NUMBER_SUFFIX;
-
-        if (string.IsNullOrEmpty(party.PAON_DESCRIPTION) && !string.IsNullOrEmpty(holder.PAON_DESCRIPTION))
-            party.PAON_DESCRIPTION = holder.PAON_DESCRIPTION;
-
-        if (string.IsNullOrEmpty(party.STREET) && !string.IsNullOrEmpty(holder.STREET))
-            party.STREET = holder.STREET;
-
-        if (string.IsNullOrEmpty(party.TOWN) && !string.IsNullOrEmpty(holder.TOWN))
-            party.TOWN = holder.TOWN;
-
-        if (string.IsNullOrEmpty(party.LOCALITY) && !string.IsNullOrEmpty(holder.LOCALITY))
-            party.LOCALITY = holder.LOCALITY;
-
-        if (string.IsNullOrEmpty(party.UK_INTERNAL_CODE) && !string.IsNullOrEmpty(holder.UK_INTERNAL_CODE))
-            party.UK_INTERNAL_CODE = holder.UK_INTERNAL_CODE;
-
-        if (string.IsNullOrEmpty(party.POSTCODE) && !string.IsNullOrEmpty(holder.POSTCODE))
-            party.POSTCODE = holder.POSTCODE;
-
-        if (string.IsNullOrEmpty(party.COUNTRY_CODE) && !string.IsNullOrEmpty(holder.COUNTRY_CODE))
-            party.COUNTRY_CODE = holder.COUNTRY_CODE;
-
-        if (string.IsNullOrEmpty(party.UDPRN) && !string.IsNullOrEmpty(holder.UDPRN))
-            party.UDPRN = holder.UDPRN;
-
-        if (party.PREFERRED_CONTACT_METHOD_IND == null && holder.PREFERRED_CONTACT_METHOD_IND != null)
-            party.PREFERRED_CONTACT_METHOD_IND = holder.PREFERRED_CONTACT_METHOD_IND;
+        party.PREFERRED_CONTACT_METHOD_IND ??= holder.PREFERRED_CONTACT_METHOD_IND;
 
         party.CPHS = holder.CPHS;
     }
@@ -405,27 +360,8 @@ public static class SamPartyMapper
         Func<string?, CancellationToken, Task<SpeciesDocument?>> getSpeciesTypeById,
         CancellationToken cancellationToken)
     {
-        int? uprn = int.TryParse(incoming.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
-
-        var country = await GetCountryAsync(
-            incoming.Address?.CountryIdentifier,
-            getCountryById,
-            cancellationToken);
-
-        var address = Address.Create(
-            uprn,
-            incoming.Address?.AddressLine ?? string.Empty,
-            incoming.Address?.AddressStreet,
-            incoming.Address?.AddressTown,
-            incoming.Address?.AddressLocality,
-            incoming.Address?.AddressPostCode ?? string.Empty,
-            country);
-
-        var communication = Communication.Create(
-            incoming.Communication?.Email,
-            incoming.Communication?.Mobile,
-            incoming.Communication?.Landline,
-            false);
+        var address = await LocationMapper.AddressToGold(incoming.Address, getCountryById, cancellationToken);
+        var communication = LocationMapper.CommunicationToGold(incoming.Communication);
 
         var party = Party.Create(
             incoming.CreatedDate,
@@ -448,61 +384,15 @@ public static class SamPartyMapper
             .Where(x => !string.IsNullOrWhiteSpace(x.RoleTypeId))
             .ToList();
 
-        if (roleList?.Count > 0)
+        var partyRoles = new List<PartyRole>();
+
+        foreach (var r in roleList ?? [])
         {
-            var partyRoles = new List<PartyRole>();
-
-            foreach (var r in roleList)
-            {
-                var partyRoleSite = PartyRoleSite.Create(
-                    siteId: goldSiteId,
-                    name: null,
-                    type: null,
-                    state: null);
-
-                var partyRoleRole = PartyRoleRole.Create(
-                    r.RoleTypeId ?? string.Empty,
-                    r.RoleTypeCode ?? string.Empty,
-                    r.RoleTypeName ?? string.Empty
-                );
-
-                var matchingMarks = goldSiteGroupMarks
-                    .Where(m =>
-                        m.CustomerNumber == incoming.PartyId
-                        && m.RoleTypeId == r.RoleTypeId
-                        && !string.IsNullOrWhiteSpace(m.SpeciesTypeId))
-                    .ToList();
-
-                var speciesManaged = new List<ManagedSpecies>();
-
-                if (!partyRoleRole.IsCphHolderRole)
-                {
-                    foreach (var mark in matchingMarks)
-                    {
-                        var speciesDoc = await getSpeciesTypeById(mark.SpeciesTypeId, cancellationToken);
-                        if (speciesDoc is null)
-                            continue;
-
-                        var managedSpecies = ManagedSpecies.Create(
-                            code: speciesDoc.Code,
-                            name: speciesDoc.Name,
-                            startDate: mark.GroupMarkStartDate,
-                            endDate: mark.GroupMarkEndDate);
-
-                        speciesManaged.Add(managedSpecies);
-                    }
-                }
-
-                var partyRole = PartyRole.Create(
-                    partyRoleSite,
-                    partyRoleRole,
-                    speciesManaged);
-
-                partyRoles.Add(partyRole);
-            }
-
-            party.SetRoles(partyRoles);
+            var partyRole = await CreatePartyRole(goldSiteId, incoming, goldSiteGroupMarks, getSpeciesTypeById, cancellationToken, r);
+            partyRoles.Add(partyRole);
         }
+
+        party.SetRoles(partyRoles);
 
         return await Task.FromResult(party);
     }
@@ -518,27 +408,8 @@ public static class SamPartyMapper
     {
         var party = existing.ToDomain();
 
-        int? uprn = int.TryParse(incoming.Address?.UniquePropertyReferenceNumber, out var value) ? value : null;
-
-        var country = await GetCountryAsync(
-            incoming.Address?.CountryIdentifier,
-            getCountryById,
-            cancellationToken);
-
-        var updatedAddress = Address.Create(
-            uprn,
-            incoming.Address?.AddressLine ?? string.Empty,
-            incoming.Address?.AddressStreet,
-            incoming.Address?.AddressTown,
-            incoming.Address?.AddressLocality,
-            incoming.Address?.AddressPostCode ?? string.Empty,
-            country);
-
-        var updatedCommunication = Communication.Create(
-            incoming.Communication?.Email,
-            incoming.Communication?.Mobile,
-            incoming.Communication?.Landline,
-            false);
+        var updatedAddress = await LocationMapper.AddressToGold(incoming.Address, getCountryById, cancellationToken);
+        var updatedCommunication = LocationMapper.CommunicationToGold(incoming.Communication);
 
         party.Update(
             incoming.LastUpdatedDate,
@@ -563,60 +434,15 @@ public static class SamPartyMapper
             .Where(r => !string.IsNullOrWhiteSpace(r.RoleTypeId))
             .ToList();
 
-        if (roleList?.Count > 0)
+        foreach (var r in roleList ?? [])
         {
-            foreach (var r in roleList)
-            {
-                var partyRoleSite = PartyRoleSite.Create(
-                    siteId: goldSiteId,
-                    name: null,
-                    type: null,
-                    state: null);
-
-                var partyRoleRole = PartyRoleRole.Create(
-                    r.RoleTypeId ?? string.Empty,
-                    r.RoleTypeCode ?? string.Empty,
-                    r.RoleTypeName ?? string.Empty
-                );
-
-                var matchingMarks = goldSiteGroupMarks
-                    .Where(m =>
-                        m.CustomerNumber == incoming.PartyId
-                        && m.RoleTypeId == r.RoleTypeId
-                        && !string.IsNullOrWhiteSpace(m.SpeciesTypeId))
-                    .ToList();
-
-                var speciesManaged = new List<ManagedSpecies>();
-
-                if (!partyRoleRole.IsCphHolderRole)
-                {
-                    foreach (var mark in matchingMarks)
-                    {
-                        var speciesDoc = await getSpeciesTypeById(mark.SpeciesTypeId, cancellationToken);
-                        if (speciesDoc is null)
-                            continue;
-
-                        var managedSpecies = ManagedSpecies.Create(
-                            code: speciesDoc.Code,
-                            name: speciesDoc.Name,
-                            startDate: mark.GroupMarkStartDate,
-                            endDate: mark.GroupMarkEndDate);
-
-                        speciesManaged.Add(managedSpecies);
-                    }
-                }
-
-                var partyRole = PartyRole.Create(
-                    partyRoleSite,
-                    partyRoleRole,
-                    speciesManaged);
-
-                party.AddOrUpdateRole(party.LastUpdatedDate, partyRole);
-            }
+            var partyRole = await CreatePartyRole(goldSiteId, incoming, goldSiteGroupMarks, getSpeciesTypeById, cancellationToken, r);
+            party.AddOrUpdateRole(party.LastUpdatedDate, partyRole);
         }
 
         return party;
     }
+
 
     public static void EnrichPartyRoleWithSiteInformation(
         List<PartyDocument> goldParties,
@@ -625,16 +451,9 @@ public static class SamPartyMapper
         if (goldSite == null)
             return;
 
-        if (goldParties?.Count == 0)
-            return;
-
-        foreach (var goldParty in goldParties ?? [])
+        foreach (var goldParty in goldParties)
         {
-            if (goldParty == null)
-                continue;
-
             var party = goldParty.ToDomain();
-            if (party.Roles == null) continue;
 
             foreach (var partyRole in party.Roles.Where(x => x.Site?.Id == goldSite.Id))
             {
@@ -644,7 +463,7 @@ public static class SamPartyMapper
                     goldSite.Type.Description,
                     goldSite.Type.LastUpdatedDate) : null;
 
-                partyRole.Site?.ApplyChanges(
+                partyRole.Site!.ApplyChanges(
                     goldSite.Name,
                     premiseType,
                     goldSite.State,
@@ -653,7 +472,7 @@ public static class SamPartyMapper
                 if (goldSite.Identifiers != null && goldSite.Identifiers.Count > 0)
                 {
                     var identifiers = goldSite.Identifiers.Select(i => i.ToDomain()).ToList();
-                    partyRole.Site?.SetIdentifiers(identifiers);
+                    partyRole.Site!.SetIdentifiers(identifiers);
                 }
             }
 
@@ -661,18 +480,57 @@ public static class SamPartyMapper
         }
     }
 
-    private static async Task<Country?> GetCountryAsync(
-        string? countryIdentifier,
-        Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
-        CancellationToken cancellationToken)
+
+    private static async Task<PartyRole> CreatePartyRole(
+        string goldSiteId,
+        SamPartyDocument incoming,
+        List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
+        Func<string?, CancellationToken, Task<SpeciesDocument?>> getSpeciesTypeById,
+        CancellationToken cancellationToken,
+        PartyRoleDocument partyRoleDocument)
     {
-        if (countryIdentifier == null) return null;
+        var partyRoleSite = PartyRoleSite.Create(
+            siteId: goldSiteId,
+            name: null,
+            type: null,
+            state: null);
 
-        var countryDocument = await getCountryById(countryIdentifier, cancellationToken);
+        var partyRoleRole = PartyRoleRole.Create(
+            partyRoleDocument.RoleTypeId ?? string.Empty,
+            partyRoleDocument.RoleTypeCode ?? string.Empty,
+            partyRoleDocument.RoleTypeName ?? string.Empty
+        );
 
-        if (countryDocument == null)
-            return null;
+        var matchingMarks = goldSiteGroupMarks
+            .Where(m =>
+                m.CustomerNumber == incoming.PartyId
+                && m.RoleTypeId == partyRoleDocument.RoleTypeId
+                && !string.IsNullOrWhiteSpace(m.SpeciesTypeId))
+            .ToList();
 
-        return countryDocument.ToDomain();
+        var speciesManaged = new List<ManagedSpecies>();
+
+        if (!partyRoleRole.IsCphHolderRole)
+        {
+            foreach (var mark in matchingMarks)
+            {
+                var speciesDoc = await getSpeciesTypeById(mark.SpeciesTypeId, cancellationToken);
+                if (speciesDoc is null)
+                    continue;
+
+                var managedSpecies = ManagedSpecies.Create(
+                    code: speciesDoc.Code,
+                    name: speciesDoc.Name,
+                    startDate: mark.GroupMarkStartDate,
+                    endDate: mark.GroupMarkEndDate);
+
+                speciesManaged.Add(managedSpecies);
+            }
+        }
+
+        return PartyRole.Create(
+            partyRoleSite,
+            partyRoleRole,
+            speciesManaged);
     }
 }

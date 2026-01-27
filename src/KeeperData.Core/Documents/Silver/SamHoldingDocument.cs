@@ -56,10 +56,6 @@ public class SamHoldingDocument : BaseHoldingDocument, IEntity, IDeletableEntity
     [BsonElement("intervalUnitOfTime")]
     public string? IntervalUnitOfTime { get; set; }
 
-    [JsonPropertyName("premiseSubActivityTypeCode")]
-    [BsonElement("premiseSubActivityTypeCode")]
-    public string? PremiseSubActivityTypeCode { get; set; }
-
     [JsonPropertyName("movementRestrictionReasonCode")]
     [BsonElement("movementRestrictionReasonCode")]
     public string? MovementRestrictionReasonCode { get; set; }
@@ -72,6 +68,18 @@ public class SamHoldingDocument : BaseHoldingDocument, IEntity, IDeletableEntity
     [JsonPropertyName("productionUsageCodeList")]
     [BsonElement("productionUsageCodeList")]
     public List<string> ProductionUsageCodeList { get; set; } = [];
+
+    [JsonPropertyName("sourceFacilityTypeCode")]
+    [BsonElement("sourceFacilityTypeCode")]
+    public string? SourceFacilityTypeCode { get; set; }
+
+    [JsonPropertyName("sourceFacilityBusinessActivityCode")]
+    [BsonElement("sourceFacilityBusinessActivityCode")]
+    public string? SourceFacilityBusinessActivityCode { get; set; }
+
+    [JsonPropertyName("sourceFacilitySubBusinessActivityCode")]
+    [BsonElement("sourceFacilitySubBusinessActivityCode")]
+    public string? SourceFacilitySubBusinessActivityCode { get; set; }
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
