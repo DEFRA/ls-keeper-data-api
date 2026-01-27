@@ -272,9 +272,11 @@ public static class SamHoldingMapper
         if (siteIdentifierType != null)
         {
             site.SetSiteIdentifier(
-                lastUpdatedDate: representative.LastUpdatedDate,
+                identifierLastUpdatedDate: representative.LastUpdatedDate,
                 identifier: representative.CountyParishHoldingNumber,
-                type: siteIdentifierType);
+                type: siteIdentifierType,
+                id: null,
+                siteLastUpdatedDate: representative.LastUpdatedDate);
         }
 
         site.SetSpecies(species, representative.LastUpdatedDate);
@@ -346,9 +348,11 @@ public static class SamHoldingMapper
         if (siteIdentifierType != null)
         {
             site.SetSiteIdentifier(
-                lastUpdatedDate: representative.LastUpdatedDate,
+                identifierLastUpdatedDate: representative.LastUpdatedDate,
                 identifier: representative.CountyParishHoldingNumber,
-                type: siteIdentifierType);
+                type: siteIdentifierType,
+                id: null,
+                siteLastUpdatedDate: representative.LastUpdatedDate);
         }
 
         site.SetSpecies(species, representative.LastUpdatedDate);
