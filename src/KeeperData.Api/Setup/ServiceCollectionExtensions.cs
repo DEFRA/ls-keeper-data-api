@@ -83,6 +83,7 @@ public static class ServiceCollectionExtensions
             {
                 options.Authority = authConfig.Authority;
                 options.TokenValidationParameters.ValidateAudience = false;
+                options.TokenValidationParameters.ValidateIssuer = false;
             });
         }
 
