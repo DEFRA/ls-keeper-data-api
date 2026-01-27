@@ -700,5 +700,57 @@
     "createdDate": "2025-10-30T15:26:16.637531Z",
     "lastModifiedBy": "System",
     "lastModifiedDate": "2025-10-30T15:26:16.6375313Z"
+  },
+  {
+    "id": "6cb0040c-39d2-4519-94ce-d72b05a51868",
+    "code": "ZO",
+    "name": "Zoo",
+    "isActive": true,
+    "sortOrder": 0,
+    "effectiveStartDate": "2026-01-26T12:44:10.114115Z",
+    "effectiveEndDate": null,
+    "createdBy": "System",
+    "createdDate": "2026-01-26T12:44:10.1141149Z",
+    "lastModifiedBy": "System",
+    "lastModifiedDate": "2026-01-26T12:44:10.1141151Z"
+  },
+  {
+    "id": "0ff90a1d-8c40-4b5a-8896-ff923bc1cee7",
+    "code": "CL",
+    "name": "Common Land",
+    "isActive": true,
+    "sortOrder": 0,
+    "effectiveStartDate": "2026-01-26T12:44:10.1141159Z",
+    "effectiveEndDate": null,
+    "createdBy": "System",
+    "createdDate": "2026-01-26T12:44:10.1141158Z",
+    "lastModifiedBy": "System",
+    "lastModifiedDate": "2026-01-26T12:44:10.114116Z"
+  },
+  {
+    "id": "1a2423e4-db3f-4f19-b3d2-fa9da190735c",
+    "code": "LK",
+    "name": "Landless Keeper",
+    "isActive": false,
+    "sortOrder": 0,
+    "effectiveStartDate": "2026-01-26T12:44:10.1140836Z",
+    "effectiveEndDate": null,
+    "createdBy": "System",
+    "createdDate": "2026-01-26T12:44:10.1140835Z",
+    "lastModifiedBy": "System",
+    "lastModifiedDate": "2026-01-26T12:44:10.1140837Z"
+  },
+  {
+    "id": "b3c50836-5575-4c88-8848-444c11380350",
+    "code": "TH",
+    "name": "Temporary Holding",
+    "isActive": false,
+    "sortOrder": 0,
+    "effectiveStartDate": "2026-01-26T12:44:10.114106Z",
+    "effectiveEndDate": null,
+    "createdBy": "System",
+    "createdDate": "2026-01-26T12:44:10.1141059Z",
+    "lastModifiedBy": "System",
+    "lastModifiedDate": "2026-01-26T12:44:10.1141062Z"
   }
 ]
