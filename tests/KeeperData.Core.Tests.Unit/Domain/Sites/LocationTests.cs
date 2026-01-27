@@ -123,10 +123,8 @@ public class LocationTests
         Assert.NotEqual(Left, Right);
     }
 
-    // using referenceequals - so LEFT != RIGHT but when LEFT updated to RIGHT, return no change.
-    // TODO fix - ULITP-4006 - should return a change if the address is updated.
     [Fact]
-    public void LocationsWithDifferentAddressesReturnNoChange()
+    public void WhenApplyChangesToLocationWithUpdatedAddresses_ShouldReturnChanged()
     {
         var originalAddress = EqualityTestAddressHelper.AddressWith(id: "id", postcode: "code1");
         var original = new Location("", DateTime.MinValue, "", 0.0, 0.0, originalAddress, null);
@@ -134,7 +132,7 @@ public class LocationTests
         var differentAddress = EqualityTestAddressHelper.AddressWith(id: "id", postcode: "NEW POSTCODE");
         var result = original.ApplyChanges(DateTime.MinValue, "", 0.0, 0.0, differentAddress, null);
 
-        result.Should().BeFalse();
+        result.Should().BeTrue();
     }
 
     [Theory]
