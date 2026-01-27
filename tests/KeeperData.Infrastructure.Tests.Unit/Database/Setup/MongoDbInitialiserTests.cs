@@ -2,6 +2,7 @@ using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;
 using KeeperData.Infrastructure.Services;
 using KeeperData.Infrastructure.Tests.Unit.Database.Repositories;
+using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Moq;
@@ -12,6 +13,7 @@ public class MongoDbInitialiserTests
 {
     private readonly MongoDbInitialiser _sut;
     private readonly Mock<IMongoIndexManager<BsonDocument>> _mockMongoIndexHandler;
+    private readonly Mock<ILogger<MongoDbInitialiser>> _mockLogger;
     private readonly List<BsonDocument> _collectionIndexList = [];
     private readonly MockMongoDatabase _mockDb = new();
     private static readonly IEnumerable<CreateIndexModel<BsonDocument>> _typeIndexList = [];
@@ -26,7 +28,9 @@ public class MongoDbInitialiserTests
         _mockDb.SetupCollection<BsonDocument>(CollectionName);
         _mockDb.MockCollection<BsonDocument>().Setup(x => x.Indexes).Returns(_mockMongoIndexHandler.Object);
 
-        _sut = new MongoDbInitialiser(_mockDb.Client, _mockDb.Config);
+        _mockLogger = new();
+
+        _sut = new MongoDbInitialiser(_mockDb.Client, _mockDb.Config, _mockLogger.Object);
     }
 
     private class DocumentWithoutIndexes
