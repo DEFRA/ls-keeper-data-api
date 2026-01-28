@@ -26,6 +26,10 @@ services:
       - BulkScanEndpointsEnabled=true
       - DailyScanEndpointsEnabled=true
       - DataImportThrottlingSettings__MessageCompletionDelayMs=1000
+      - AuthenticationConfiguration__EnableApiKey=true
+      - AuthenticationConfiguration__ApiGatewayExists=false
+      - AuthenticationConfiguration__Authority=
+
     ports:
       - "5555"
     volumes:
