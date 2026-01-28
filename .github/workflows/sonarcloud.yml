@@ -65,6 +65,6 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           ./.sonar/scanner/dotnet-sonarscanner begin /k:"DEFRA_ls-keeper-data-api" /o:"defra" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
-          dotnet build --no-incremental
-          ./.sonar/coverage/dotnet-coverage collect "dotnet test" -f xml -o "coverage.xml"
+          dotnet build KeeperData.Api.sln --no-incremental
+          ./.sonar/coverage/dotnet-coverage collect "dotnet test KeeperData.Api.sln" -f xml -o "coverage.xml"
           ./.sonar/scanner/dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
