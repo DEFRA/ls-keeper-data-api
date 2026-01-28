@@ -123,9 +123,7 @@ public static class SamHoldingMapper
                 Email = null,
                 Mobile = null,
                 Landline = null
-            },
-
-            GroupMarks = []
+            }
         };
 
         return result;

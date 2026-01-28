@@ -43,9 +43,5 @@ public class SamHoldingImportSilverMappingStep(
             productionUsageLookupService.FindAsync,
             speciesTypeLookupService.FindAsync,
             cancellationToken);
-
-        context.SilverHoldings = SamHoldingGroupMarkMapper.EnrichHoldingsWithGroupMarks(
-            context.SilverHoldings,
-            context.SilverHerds);
     }
 }

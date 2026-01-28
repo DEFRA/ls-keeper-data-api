@@ -60,8 +60,4 @@ public class BaseHoldingDocument
     [JsonPropertyName("communication")]
     [BsonElement("communication")]
     public CommunicationDocument? Communication { get; set; }
-
-    [JsonPropertyName("groupMarks")]
-    [BsonElement("groupMarks")]
-    public List<GroupMarkDocument>? GroupMarks { get; set; } = [];
 }
