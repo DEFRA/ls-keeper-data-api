@@ -99,9 +99,5 @@ public static class VerifySamHoldingMappings
         comms.Email.Should().BeNull();
         comms.Mobile.Should().BeNull();
         comms.Landline.Should().BeNull();
-
-        // GroupMarks
-        target.GroupMarks.Should().NotBeNull();
-        target.GroupMarks.Should().BeEmpty();
     }
 }

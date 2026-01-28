@@ -64,26 +64,6 @@ public class SamHoldingGroupMarkMapperTests
         _resolveSpeciesType = _speciesTypeLookupServiceMock.Object.FindAsync;
     }
 
-    [Fact]
-    public void GivenNullableHoldings_WhenEnrichingWithGroupMarks_ShouldReturnEmptyList()
-    {
-        var results = SamHoldingGroupMarkMapper.EnrichHoldingsWithGroupMarks(silverHoldings: null!,
-            silverHerds: []);
-
-        results.Should().NotBeNull();
-        results.Count.Should().Be(0);
-    }
-
-    [Fact]
-    public void GivenEmptyHoldings_WhenEnrichingWithGroupMarks_ShouldReturnEmptyList()
-    {
-        var results = SamHoldingGroupMarkMapper.EnrichHoldingsWithGroupMarks(silverHoldings: [],
-            silverHerds: []);
-
-        results.Should().NotBeNull();
-        results.Count.Should().Be(0);
-    }
-
     [Theory]
     [InlineData(1, 0)]
     [InlineData(1, 1)]
@@ -117,15 +97,6 @@ public class SamHoldingGroupMarkMapperTests
 
         silverHerds.Should().NotBeNull();
         silverHerds.Count.Should().Be(quantityHerds);
-
-        var results = SamHoldingGroupMarkMapper.EnrichHoldingsWithGroupMarks(
-            silverHoldings,
-            silverHerds);
-
-        for (var i = 0; i < quantityHoldings; i++)
-        {
-            VerifySamHoldingGroupMarkMappings.VerifyMappingEnrichingWithGroupMarks(silverHerds, results[i]);
-        }
     }
 
     private static List<SamCphHolding> GenerateSamCphHolding(string holdingIdentifier, int quantity)

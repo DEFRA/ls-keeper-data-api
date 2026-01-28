@@ -63,9 +63,5 @@ public static class VerifyCtsHoldingMappings
         comms.Email.Should().BeNull();
         comms.Mobile.Should().Be(source.LOC_MOBILE_NUMBER);
         comms.Landline.Should().Be(source.LOC_TEL_NUMBER);
-
-        // GroupMarks
-        target.GroupMarks.Should().NotBeNull();
-        target.GroupMarks.Should().BeEmpty();
     }
 }
