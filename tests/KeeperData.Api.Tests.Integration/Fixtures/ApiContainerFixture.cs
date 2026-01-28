@@ -3,6 +3,7 @@ using KeeperData.Api.Tests.Integration.Helpers;
 namespace KeeperData.Api.Tests.Integration.Fixtures;
 
 using DotNet.Testcontainers.Builders;
+using KeeperData.Tests.Common.Utilities;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -15,6 +16,8 @@ public class ApiContainerFixture : IAsyncLifetime
     public HttpClient HttpClient { get; private set; } = null!;
 
     public string NetworkName { get; } = "integration-test-network";
+    private const string BasicApiKey = "ApiKey";
+    private const string BasicSecret = "integration-test-secret";
 
     public async Task InitializeAsync()
     {
@@ -47,7 +50,6 @@ public class ApiContainerFixture : IAsyncLifetime
           .WithEnvironment("AWS_DEFAULT_REGION", "eu-west-2")
           .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
           .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
-          .WithEnvironment("MongoDbPreproductionService__Enabled", "true")
           .WithNetwork(NetworkName)
           .WithNetworkAliases("keeperdata_api")
           .WithWaitStrategy(Wait.ForUnixContainer()
@@ -57,6 +59,7 @@ public class ApiContainerFixture : IAsyncLifetime
         await ApiContainer.StartAsync();
 
         HttpClient = new HttpClient { BaseAddress = new Uri($"http://localhost:{ApiContainer.GetMappedPublicPort(5555)}") };
+        HttpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
     }
 
     public async Task DisposeAsync()

@@ -1,10 +1,12 @@
 using KeeperData.Api.Controllers.RequestDtos.Sites;
 using KeeperData.Application;
 using KeeperData.Application.Queries.Sites;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KeeperData.Api.Controllers
 {
+    [Authorize(Policy = "BasicOrBearer")]
     [ApiController]
     [Route("api/[controller]")]
     public class SitesController(IRequestExecutor executor) : ControllerBase

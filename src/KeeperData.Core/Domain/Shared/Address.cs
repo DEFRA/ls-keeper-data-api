@@ -2,7 +2,7 @@ using KeeperData.Core.Domain.BuildingBlocks;
 
 namespace KeeperData.Core.Domain.Shared;
 
-public class Address : ValueObject
+public class Address : EntityObject
 {
     public string Id { get; private set; }
     public int? Uprn { get; private set; }

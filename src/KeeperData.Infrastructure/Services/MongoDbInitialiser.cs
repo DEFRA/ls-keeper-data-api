@@ -1,11 +1,11 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;
 using KeeperData.Infrastructure.Database.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Reflection;
-using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Infrastructure.Services
 {

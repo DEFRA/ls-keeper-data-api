@@ -1,10 +1,12 @@
 using KeeperData.Api.Controllers.RequestDtos.Countries;
 using KeeperData.Application;
 using KeeperData.Application.Queries.Countries;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KeeperData.Api.Controllers
 {
+    [Authorize(Policy = "BasicOrBearer")]
     [ApiController]
     [Route("api/[controller]")]
     public class CountriesController(IRequestExecutor executor) : ControllerBase

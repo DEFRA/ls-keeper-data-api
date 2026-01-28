@@ -2,7 +2,7 @@ using KeeperData.Core.Domain.BuildingBlocks;
 
 namespace KeeperData.Core.Domain.Shared;
 
-public class Species : ValueObject
+public class Species : EntityObject
 {
     public string Id { get; private set; }
     public string Code { get; private set; }

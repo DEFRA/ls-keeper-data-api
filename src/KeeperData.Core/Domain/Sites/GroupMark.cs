@@ -3,7 +3,7 @@ using KeeperData.Core.Domain.Shared;
 
 namespace KeeperData.Core.Domain.Sites;
 
-public class GroupMark : ValueObject
+public class GroupMark : EntityObject
 {
     public string Id { get; private set; }
     public string Mark { get; private set; }

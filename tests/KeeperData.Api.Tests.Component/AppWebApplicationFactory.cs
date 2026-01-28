@@ -6,6 +6,7 @@ using Amazon.SimpleNotificationService;
 using Amazon.SimpleNotificationService.Model;
 using Amazon.SQS;
 using Amazon.SQS.Model;
+using KeeperData.Api.Tests.Component.Authentication.Fakes;
 using KeeperData.Api.Tests.Component.Consumers.Helpers;
 using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Core.Documents;
@@ -21,6 +22,8 @@ using KeeperData.Infrastructure.Storage.Clients;
 using KeeperData.Infrastructure.Storage.Factories;
 using KeeperData.Infrastructure.Storage.Factories.Implementations;
 using MediatR;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -29,6 +32,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Moq;
@@ -36,7 +40,9 @@ using System.Net;
 
 namespace KeeperData.Api.Tests.Component;
 
-public class AppWebApplicationFactory : WebApplicationFactory<Program>
+public class AppWebApplicationFactory(
+    IDictionary<string, string?>? configurationOverrides = null,
+    bool useFakeAuth = false) : WebApplicationFactory<Program>
 {
     public Mock<IAmazonS3>? AmazonS3Mock;
     public Mock<IAmazonSQS>? AmazonSQSMock;
@@ -69,25 +75,21 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
     public readonly Mock<IRequestHandler<ProcessSamImportHoldingMessageCommand, MessageType>> _samImportHoldingMessageHandlerMock = new();
 
     private readonly List<Action<IServiceCollection>> _overrideServices = [];
-    private readonly IDictionary<string, string?> _configurationOverrides;
+    private readonly IDictionary<string, string?> _configurationOverrides = configurationOverrides ?? new Dictionary<string, string?>();
+    private readonly bool _useFakeAuth = useFakeAuth;
 
     private const string ComparisonReportsStorageBucket = "test-comparison-reports-bucket";
 
-    public AppWebApplicationFactory(IDictionary<string, string?>? configurationOverrides = null)
-    {
-        _configurationOverrides = configurationOverrides ?? new Dictionary<string, string?>();
-    }
-
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseSetting(WebHostDefaults.ApplicationKey, typeof(Program).Assembly.FullName);
+
         SetTestEnvironmentVariables();
 
-        builder.ConfigureAppConfiguration(config =>
+        builder.ConfigureAppConfiguration((context, configBuilder) =>
         {
             if (_configurationOverrides.Count > 0)
-            {
-                config.AddInMemoryCollection(_configurationOverrides);
-            }
+                configBuilder.AddInMemoryCollection(_configurationOverrides);
         });
 
         builder.ConfigureTestServices(services =>
@@ -109,6 +111,11 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
             services.AddHttpClient("DataBridgeApi")
                 .ConfigurePrimaryHttpMessageHandler(() => DataBridgeApiClientHttpMessageHandlerMock.Object);
 
+            if (_useFakeAuth)
+            {
+                ConfigureFakeAuthorization(services);
+            }
+
             foreach (var applyOverride in _overrideServices)
             {
                 applyOverride(services);
@@ -116,6 +123,19 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
 
             services.RemoveAll<IHostedService>();
         });
+    }
+
+    protected override IHost CreateHost(IHostBuilder builder)
+    {
+        if (_configurationOverrides.Count > 0)
+        {
+            builder.ConfigureAppConfiguration(config =>
+            {
+                config.AddInMemoryCollection(_configurationOverrides);
+            });
+        }
+
+        return base.CreateHost(builder);
     }
 
     protected T GetService<T>() where T : notnull
@@ -185,9 +205,33 @@ public class AppWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("DailyScanEndpointsEnabled", "false");
         Environment.SetEnvironmentVariable("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicName", "ls_keeper_data_import_complete");
         Environment.SetEnvironmentVariable("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicArn", "http://localhost:4566/000000000000/ls_keeper_data_import_complete");
+        Environment.SetEnvironmentVariable("AuthenticationConfiguration__EnableApiKey", "true");
+        Environment.SetEnvironmentVariable("AuthenticationConfiguration__ApiGatewayExists", "true");
+        Environment.SetEnvironmentVariable("AuthenticationConfiguration__Authority", "https://fake-authority/");
     }
 
-    private void ConfigureMessageConsumers(IServiceCollection services)
+    private static void ConfigureFakeAuthorization(IServiceCollection services)
+    {
+        services.RemoveAll<IConfigureNamedOptions<JwtBearerOptions>>();
+
+        services.RemoveAll<IAuthenticationSchemeProvider>();
+
+        services.AddSingleton<IAuthenticationSchemeProvider>(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<AuthenticationOptions>>();
+            var provider = new AuthenticationSchemeProvider(options);
+
+            provider.RemoveScheme("Bearer");
+            provider.AddScheme(new AuthenticationScheme(
+                FakeJwtHandler.SchemeName,
+                FakeJwtHandler.SchemeName,
+                typeof(FakeJwtHandler)));
+
+            return provider;
+        });
+    }
+
+    private static void ConfigureMessageConsumers(IServiceCollection services)
     {
         services.RemoveAll<QueueListener>();
         services.RemoveAll<TestQueuePollerObserver<MessageType>>();

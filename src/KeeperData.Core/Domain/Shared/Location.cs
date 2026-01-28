@@ -2,7 +2,7 @@ using KeeperData.Core.Domain.BuildingBlocks;
 
 namespace KeeperData.Core.Domain.Shared;
 
-public class Location : ValueObject
+public class Location : EntityObject
 {
     public string Id { get; private set; }
     public DateTime LastUpdatedDate { get; private set; }

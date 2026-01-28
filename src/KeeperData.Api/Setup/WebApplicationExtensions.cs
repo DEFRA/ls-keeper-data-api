@@ -2,11 +2,10 @@ using Amazon.Runtime.Internal;
 using KeeperData.Api.Controllers.ResponseDtos.Scans;
 using KeeperData.Api.Middleware;
 using KeeperData.Api.Worker.Tasks;
-using KeeperData.Infrastructure.Config;
-using KeeperData.Infrastructure.Services;
+using KeeperData.Infrastructure.Authentication.Handlers;
 using KeeperData.Infrastructure.Telemetry;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Diagnostics.CodeAnalysis;
 
@@ -39,6 +38,11 @@ public static class WebApplicationExtensions
         app.UseHeaderPropagation();
         app.UseRouting();
 
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.MapControllers();
+
         app.MapHealthChecks("/health", new HealthCheckOptions()
         {
             Predicate = _ => true,
@@ -59,26 +63,40 @@ public static class WebApplicationExtensions
 
         if (bulkScanEndpointsEnabled)
         {
-            RegisterScanEndpoint<ICtsBulkScanTask>(app, "/api/import/startCtsBulkScan", "CTS bulk scan");
-            RegisterScanEndpoint<ISamBulkScanTask>(app, "/api/import/startSamBulkScan", "SAM bulk scan");
+            RegisterScanEndpoint<ICtsBulkScanTask>(app, "/api/import/startCtsBulkScan", "CTS bulk scan")
+                .RequireAuthorization(new AuthorizeAttribute
+                {
+                    AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
+                });
+            RegisterScanEndpoint<ISamBulkScanTask>(app, "/api/import/startSamBulkScan", "SAM bulk scan")
+                .RequireAuthorization(new AuthorizeAttribute
+                {
+                    AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
+                });
         }
 
         if (dailyScanEndpointsEnabled)
         {
-            RegisterScanEndpoint<ICtsDailyScanTask>(app, "/api/import/startCtsDailyScan", "CTS daily scan");
-            RegisterScanEndpoint<ISamDailyScanTask>(app, "/api/import/startSamDailyScan", "SAM daily scan");
+            RegisterScanEndpoint<ICtsDailyScanTask>(app, "/api/import/startCtsDailyScan", "CTS daily scan")
+                .RequireAuthorization(new AuthorizeAttribute
+                {
+                    AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
+                });
+            RegisterScanEndpoint<ISamDailyScanTask>(app, "/api/import/startSamDailyScan", "SAM daily scan")
+                .RequireAuthorization(new AuthorizeAttribute
+                {
+                    AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
+                });
         }
-
-        app.MapControllers();
     }
 
-    private static void RegisterScanEndpoint<TTask>(
+    private static RouteHandlerBuilder RegisterScanEndpoint<TTask>(
         WebApplication app,
         string route,
         string scanName)
         where TTask : IScanTask
     {
-        app.MapPost(route, async (
+        var builder = app.MapPost(route, async (
             TTask scanTask,
             ILogger<IScanTask> logger,
             CancellationToken cancellationToken) =>
@@ -116,5 +134,7 @@ public static class WebApplicationExtensions
                 );
             }
         });
+
+        return builder;
     }
 }

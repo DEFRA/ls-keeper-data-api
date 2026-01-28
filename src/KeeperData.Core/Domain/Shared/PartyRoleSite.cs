@@ -3,7 +3,7 @@ using KeeperData.Core.Domain.Sites;
 
 namespace KeeperData.Core.Domain.Shared;
 
-public class PartyRoleSite : ValueObject
+public class PartyRoleSite : EntityObject
 {
     public string Id { get; private set; }
     public string? Name { get; private set; }
