@@ -97,7 +97,6 @@ public class SamCphHoldingBuilder(
                 FACILITY_TYPE_CODE = facilityTypeCode,
                 FCLTY_SUB_BSNSS_ACTVTY_CODE = businessSubActivityCode,
 
-                FEATURE_STATUS_CODE = statusCode,
                 MOVEMENT_RSTRCTN_RSN_CODE = movementRestrictionCode,
 
                 ANIMAL_SPECIES_CODE = animalSpeciesCode,
