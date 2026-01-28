@@ -1,3 +1,4 @@
+using KeeperData.Api.Utils;
 using KeeperData.Api.Worker.Setup;
 using KeeperData.Application.Setup;
 using KeeperData.Infrastructure.ApiClients.Setup;
@@ -10,7 +11,6 @@ using KeeperData.Infrastructure.Messaging.Setup;
 using KeeperData.Infrastructure.Storage.Setup;
 using KeeperData.Infrastructure.Telemetry;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using System.Text.Json.Serialization;
@@ -67,7 +67,7 @@ public static class ServiceCollectionExtensions
             configuration.GetSection("AuthenticationConfiguration"));
 
         services.AddSingleton<IConfigureOptions<AuthenticationOptions>, AuthenticationOptionsConfigurator>();
-        services.AddSingleton<IConfigureNamedOptions<JwtBearerOptions>, JwtBearerOptionsConfigurator>();
+        services.AddSingleton<IConfigureNamedOptions<Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions>, JwtBearerOptionsConfigurator>();
 
         var authBuilder = services.AddAuthentication();
 
@@ -79,11 +79,11 @@ public static class ServiceCollectionExtensions
 
         if (authConfig.ApiGatewayExists)
         {
-            authBuilder.AddJwtBearer("Bearer", options =>
+            authBuilder.AddJwtBearer("Bearer", (options) =>
             {
                 options.Authority = authConfig.Authority;
                 options.TokenValidationParameters.ValidateAudience = false;
-                options.TokenValidationParameters.ValidateIssuer = false;
+                options.BackchannelHttpHandler = new ProxyHttpMessageHandler();
             });
         }
 
