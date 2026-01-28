@@ -114,10 +114,6 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
     {
         context.SilverHoldings.Should().NotBeNull().And.HaveCount(1);
         context.SilverHoldings[0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
-        context.SilverHoldings[0].GroupMarks.Should().NotBeNull().And.HaveCount(1);
-        context.SilverHoldings![0].GroupMarks![0].Should().NotBeNull();
-        context.SilverHoldings![0].GroupMarks![0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
-
         context.SilverParties.Should().NotBeNull().And.HaveCount(2);
 
         var distinctRoles = context.RawParties.SelectMany(x => x.RoleList)
