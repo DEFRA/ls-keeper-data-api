@@ -2,6 +2,10 @@ name: Run SonarCloud coverage scan
 
 on:
   workflow_call:
+    secrets:
+      SONAR_TOKEN:
+        description: "SonarCloud token used for authentication"
+        required: true
 
 permissions:
   id-token: write
