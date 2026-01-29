@@ -54,6 +54,8 @@ This project provides an API that:
 ├── docs/
 │   ├── api-specs/                             # api documentation yaml files
 │   └── data-maps/                             
+|   |__ diagrams/
+|   |__ runbooks/
 ├── src/
 │   ├── KeeperData.Api/                        # Main ASP.NET Core web application
 │   ├── KeeperData.Api.Worker/                 # Background worker service
@@ -171,20 +173,6 @@ You can use the CDP Terminal to access MongoDB in remote environments.
 
 ## Testing
 
-### Run All Tests
-
-```bash
-dotnet test
-```
-
-### Run Specific Test Project
-```bash
-dotnet test tests/KeeperData.Application.Tests.Unit
-dotnet test tests/KeeperData.Core.Tests.Unit
-dotnet test tests/KeeperData.Infrastructure.Tests.Unit
-#...etc...
-```
-
 ### Unit Tests
 
 The unit test projects test individual units of single classes or small groups of related classes and use mocking.
@@ -197,6 +185,47 @@ The component test projects use the ASP.NET Core in-memory `TestServer` to simul
 
 Tests in the `KeeperData.Api.Tests.Integration` project run using docker containers to create a temporary local simulated environment. These containers run under the same names and on the same ports as the local docker instance you will use when running the environment locally, so you will need to ensure the environment is not running before triggering these tests. To do so you can use `docker compose down`.
 
+### Running Tests
+
+#### Running Unit and Component Tests
+
+```bash
+dotnet test KeeperData.Api.sln --collect:"XPlat Code Coverage" --filter Dependence!=testcontainers
+```
+
+#### Running Integration Tests
+
+```bash
+dotnet test KeeperData.Api.sln --collect:"XPlat Code Coverage" --filter Dependence=testcontainers
+```
+
+Note. Ensure you have built the latest image prior to running integration tests using:
+
+```
+docker build --no-cache --tag keeperdata_api .
+```
+
+### Run Specific Test Project
+```bash
+dotnet test tests/KeeperData.Application.Tests.Unit
+dotnet test tests/KeeperData.Core.Tests.Unit
+dotnet test tests/KeeperData.Infrastructure.Tests.Unit
+#...etc...
+```
+
+## Test Code Coverage Reports
+
+First, you must install the report generator globally.
+```
+dotnet tool install --global dotnet-reportgenerator-globaltool
+```
+
+Once completed, you can run the tests and generate the report.
+```
+dotnet test KeeperData.Api.sln --collect:"XPlat Code Coverage" --filter Dependence!=testcontainers
+reportgenerator -reports:"**/TestResults/**/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:"Cobertura;Html;MarkdownSummary" -filefilters:"-*.g.cs" -assemblyfilters:"-*.Tests.*"
+```
+
 ## Development
 
 ### Building
@@ -204,9 +233,6 @@ Tests in the `KeeperData.Api.Tests.Integration` project run using docker contain
 ```bash
 # Build solution
 dotnet build
-
-# Build specific project
-dotnet build src/KeeperData.Application
 
 # Build with specific configuration
 dotnet build -c Release
@@ -249,7 +275,7 @@ the [.github/example.dependabot.yml](.github/example.dependabot.yml) to `.github
 * sites endpoint: `/api/sites`
 * parties endpoint: `/api/parties`
 
-For detailed API documentation, refer to controller files in `src/KeeperData.Api/Controllers/`.
+For detailed API documentation, refer to the Open API definitions which can be found in the `docs/api-specs` folder.
 
 ## Deployment
 
@@ -281,7 +307,7 @@ Infrastructure Layer (Data access, external services)
 - **Services** - Application business logic
 - **Repository Pattern** - Data access abstraction
 - **Middleware** - Cross-cutting concerns (authentication, exception handling)
-- **Authentication** - API Key and No-Auth handlers
+- **Authentication** - Basic and Bearer Auth handlers
 
 ## Licence
 

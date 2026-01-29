@@ -13,33 +13,13 @@ Key business functions:
 
 ### High-level Architecture
 
-```
-    ┌───────────────────────┐                           ┌──────────────────────────────────┐
-    │   Keeper Data Bridge  │──────────────────────────▶│  ls_keeper_data_intake_queue     │
-    └───────────────────────┘                           │  (SQS)                           │
-                                                        └──────────────────────────────────┘
-                                                                          │
-                                                                          ▼
-    ┌───────────────────────┐                           ┌──────────────────────────────────┐              ┌─────────────────┐
-    │ Keeper Data Bridge    │◀──────────────────────────│    Keeper Data API               │◀────────────▶│    MongoDB      │
-    │ API (External)        │                           │   • Queue Consumer               │              └─────────────────┘
-    └───────────────────────┘                           │   • Data Ingestion               │      ┌─────────────────────────────────┐             
-                 ▲                                      │   • Completeion notification     │─────▶│ ls_keeper_data_import_complete  │              
-                 │                                      │                                  │      │       (SNS Topic)               │
-                 │                                      │                                  │      └─────────────────────────────────┘
-                 │                                      └──────────────────────────────────┘   
-                 └─────────────────── API Calls ─────────────────────┘    │
-                                                                          │
-                                                                          │
-                                                                          ▼
-                                                         ┌──────────────────────────────────┐              ┌─────────────────┐
-                                                         │    Keeper Data API (External)    │─────────────▶│   Consumers     │
-                                                         │       • REST Endpoints           │              │  (Downstream    │
-                                                         │       • Data Query Services      │              │   Services)     │
-                                                         └──────────────────────────────────┘              └─────────────────┘
+#### System Context Diagram
 
+![KRDS System Context Diagram](../diagrams/krds-system-context-diagram.png)
 
-```
+#### Container Diagram
+
+![KRDS Container Diagram](../diagrams/krds-container-diagram.png)
 
 ### Dependencies
 
@@ -52,13 +32,11 @@ Key business functions:
   - **System Data**: Distributed locks, working collections
 - **AWS SQS**: Message queue for processing intake events (`ls_keeper_data_intake_queue`)
 - **AWS SNS**: Notification topics for event publishing (`ls_keeper_data_import_complete`)
-- **AWS S3**: Storage for comparison reports (configured but limited usage)
 - **Data Bridge API**: External service for CTS/SAM data integration
 
 **Infrastructure Dependencies:**
 - **Localstack**: AWS services emulation for local development
 - **Container Runtime**: Docker for containerized deployment
-- **Redis**: Caching layer (configured for future use, not currently active)
 
 ## Ownership & Contacts
 
@@ -169,19 +147,23 @@ All dashboards are linked in the CDP portal.
 ### Local Development
 ```bash
 # Start full environment
-docker compose up --build -d
+docker-compose -f docker-compose.yml -f docker-compose.override.yml up --build -d
 
 # View logs
 docker compose logs -f keeperdata_api
 
 # Stop environment
-docker compose down
+docker-compose down -v
 
 # Run tests
-dotnet test
+## Excluding integration tests
+dotnet test KeeperData.Api.sln --collect:"XPlat Code Coverage" --filter Dependence!=testcontainers
+
+## Integration tests
+dotnet test KeeperData.Api.sln --collect:"XPlat Code Coverage" --filter Dependence=testcontainers
 
 # Format code
-dotnet format KeeperData.Api.sln
+dotnet format ./KeeperData.Api.sln --verbosity diagnostic
 ```
 
 ### Health Checks
@@ -252,7 +234,6 @@ curl http://localhost:8085/
 **Production environments:**
 - Make a request to the CDP team on the #cdp-support Slack channel
 
-
 ### Database Operations
 
 **Note:** Mongo procedures TBD
@@ -310,9 +291,13 @@ Rollbacks are handled be redeploying the previous version through the CDP Portal
 ## Security & Compliance
 
 ### Authentication/Authorization
-- **Internal Service**: No authentication implemented locally
+- **Internal Service**: Basic and Bearer token handlers. Bearer tokens issued by AWS Cognito
 - **Health Endpoints**: Anonymous access allowed
 - **AWS Services**: Cognito based identity management, owned by CDP team
+
+### API Gateway Client Credentials
+ - **Recycling client secrets**: The team can request for the client secret to be recycled by the CDP team. The CDP team can rotate the credentials by creating a new one and then expiring the old one after confirmationo that the new one is in use. CDP do not enforce any fixed rotation period.
+ - **Federated identity**: CDP do not support federated authorization/authentication with the API Gateway currently. The way identity providers work with API Gateway make client id the standard (for now at least).
 
 ### Data Classification
 - **PII**: Contains personal information of livestock keepers
