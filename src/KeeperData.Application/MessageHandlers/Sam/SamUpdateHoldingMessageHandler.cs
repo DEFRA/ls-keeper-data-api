@@ -35,7 +35,7 @@ public class SamUpdateHoldingMessageHandler(
             CurrentDateTime = DateTime.UtcNow
         };
 
-        string FormaExceptiont(string msg) => 
+        string FormaExceptiont(string msg) =>
             $"Exception Message: {msg}, Message Identifier: {messagePayload.Identifier}";
 
         try
