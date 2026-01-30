@@ -170,7 +170,7 @@ public class Party : IAggregateRoot
                 communication.Landline,
                 communication.PrimaryContactFlag);
             _communications.Add(newCommunication);
-            UpdateLastUpdatedDate(DateTime.UtcNow);
+            UpdateLastUpdatedDate(lastUpdatedDate);
             return;
         }
 
