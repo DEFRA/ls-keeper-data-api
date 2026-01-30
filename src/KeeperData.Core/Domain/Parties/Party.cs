@@ -199,8 +199,7 @@ public class Party : IAggregateRoot
 
         if (existing is null)
         {
-            var newRole = PartyRole.Create(incoming.Site, incoming.Role, incoming.SpeciesManagedByRole);
-            _roles.Add(newRole);
+            _roles.Add(incoming);
             UpdateLastUpdatedDate(lastUpdatedDate);
             return;
         }
@@ -211,7 +210,7 @@ public class Party : IAggregateRoot
         }
     }
 
-    public void DeleteRole(string roleId, string siteId)
+    public void DeleteRole(DateTime lastUpdatedDate, string roleId, string? siteId)
     {
         var existing = _roles.FirstOrDefault(r =>
             r.Role.Id == roleId &&
@@ -220,7 +219,7 @@ public class Party : IAggregateRoot
         if (existing is not null)
         {
             _roles.Remove(existing);
-            UpdateLastUpdatedDate(DateTime.UtcNow);
+            UpdateLastUpdatedDate(lastUpdatedDate);
         }
     }
 
