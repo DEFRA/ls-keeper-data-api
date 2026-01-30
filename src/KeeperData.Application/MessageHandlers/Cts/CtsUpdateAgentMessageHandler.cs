@@ -17,7 +17,7 @@ public class CtsUpdateAgentMessageHandler(
     private readonly IUnwrappedMessageSerializer<CtsUpdateAgentMessage> _serializer = serializer;
     private readonly CtsUpdateAgentOrchestrator _orchestrator = orchestrator;
 
-    public async Task<MessageType> Handle(ProcessCtsUpdateAgentMessageCommand request, CancellationToken cancellationToken = default)
+    public async Task<MessageType> Handle(ProcessCtsUpdateAgentMessageCommand request, CancellationToken cancellationToken)
     {
         var message = request.Message;
 

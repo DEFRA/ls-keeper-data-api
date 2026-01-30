@@ -18,7 +18,7 @@ public class CtsDailyScanMessageHandler(CtsDailyScanOrchestrator orchestrator,
     private readonly CtsDailyScanOrchestrator _orchestrator = orchestrator;
     private readonly DataBridgeScanConfiguration _dataBridgeScanConfiguration = dataBridgeScanConfiguration;
 
-    public async Task<MessageType> Handle(ProcessCtsDailyScanMessageCommand request, CancellationToken cancellationToken = default)
+    public async Task<MessageType> Handle(ProcessCtsDailyScanMessageCommand request, CancellationToken cancellationToken)
     {
         var message = request.Message;
 

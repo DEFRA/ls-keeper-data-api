@@ -18,7 +18,7 @@ public class SamBulkScanMessageHandler(SamBulkScanOrchestrator orchestrator,
     private readonly SamBulkScanOrchestrator _orchestrator = orchestrator;
     private readonly DataBridgeScanConfiguration _dataBridgeScanConfiguration = dataBridgeScanConfiguration;
 
-    public async Task<MessageType> Handle(ProcessSamBulkScanMessageCommand request, CancellationToken cancellationToken = default)
+    public async Task<MessageType> Handle(ProcessSamBulkScanMessageCommand request, CancellationToken cancellationToken)
     {
         var message = request.Message;
 
