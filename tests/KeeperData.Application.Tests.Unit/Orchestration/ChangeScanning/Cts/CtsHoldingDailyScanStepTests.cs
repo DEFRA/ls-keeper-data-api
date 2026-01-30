@@ -3,6 +3,7 @@ using KeeperData.Application.Orchestration.ChangeScanning.Cts.Daily.Steps;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
@@ -10,6 +11,7 @@ using KeeperData.Core.Providers;
 using KeeperData.Tests.Common.Factories.UseCases;
 using Microsoft.Extensions.Logging;
 using Moq;
+using FluentAssertions;
 
 namespace KeeperData.Application.Tests.Unit.Orchestration.ChangeScanning.Cts;
 
@@ -71,5 +73,35 @@ public class CtsHoldingDailyScanStepTests
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
 
         _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<CtsUpdateHoldingMessage>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_ShouldBubbleException_WhenApiThrowsRetryableException()
+    {
+        // Arrange
+        _dataBridgeClientMock
+            .Setup(x => x.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new RetryableException("Something went wrong"));
+
+        // Act
+        Func<Task> act = () => _scanStep.ExecuteAsync(_context, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<RetryableException>();
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_ShouldBubbleException_WhenApiThrowsNonRetryableException()
+    {
+        // Arrange
+        _dataBridgeClientMock
+            .Setup(x => x.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new NonRetryableException("Something went wrong"));
+
+        // Act
+        Func<Task> act = () => _scanStep.ExecuteAsync(_context, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<NonRetryableException>();
     }
 }

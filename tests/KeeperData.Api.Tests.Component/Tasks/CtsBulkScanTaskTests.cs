@@ -1,3 +1,7 @@
+using FluentAssertions;
+using KeeperData.Application.Orchestration.ChangeScanning;
+using KeeperData.Core.Exceptions;
+
 namespace KeeperData.Api.Tests.Component.Tasks;
 
 using KeeperData.Api.Worker.Tasks.Implementations;
@@ -23,8 +27,6 @@ public class CtsBulkScanTaskTests
         DailyScanIncludeChangesWithinTotalHours = 24
     };
 
-    private readonly CtsBulkScanOrchestrator _orchestrator = new([]);
-
     [Fact]
     public async Task RunAsync_Should_Execute_When_Lock_Acquired()
     {
@@ -33,14 +35,15 @@ public class CtsBulkScanTaskTests
         var lockHandleMock = new Mock<IDistributedLockHandle>();
         var distributedLockMock = new Mock<IDistributedLock>();
         var delayProviderMock = new Mock<IDelayProvider>();
-
+        var orchestrator = new CtsBulkScanOrchestrator([]);
+        
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(lockHandleMock.Object);
 
         var appLifetimeMock = new Mock<IHostApplicationLifetime>();
         var task = new CtsBulkScanTask(
-            _orchestrator,
+            orchestrator,
             _dataBridgeScanConfiguration,
             distributedLockMock.Object,
             appLifetimeMock.Object,
@@ -62,6 +65,7 @@ public class CtsBulkScanTaskTests
         var loggerMock = new Mock<ILogger<CtsBulkScanTask>>();
         var distributedLockMock = new Mock<IDistributedLock>();
         var delayProviderMock = new Mock<IDelayProvider>();
+        var orchestrator = new CtsBulkScanOrchestrator([]);
 
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
@@ -69,7 +73,7 @@ public class CtsBulkScanTaskTests
 
         var appLifetimeMock = new Mock<IHostApplicationLifetime>();
         var task = new CtsBulkScanTask(
-            _orchestrator,
+            orchestrator,
             _dataBridgeScanConfiguration,
             distributedLockMock.Object,
             appLifetimeMock.Object,
@@ -89,5 +93,75 @@ public class CtsBulkScanTaskTests
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()
         ), Times.Once);
+    }
+
+    [Fact]
+    public async Task RunAsync_ShouldBubbleException_WhenStepThrowsNonRetryableException()
+    {
+        // Arrange
+        var loggerMock = new Mock<ILogger<CtsBulkScanTask>>();
+        var lockHandleMock = new Mock<IDistributedLockHandle>();
+        var distributedLockMock = new Mock<IDistributedLock>();
+        var delayProviderMock = new Mock<IDelayProvider>();
+        var stepMock = new Mock<IScanStep<CtsBulkScanContext>>();
+        var orchestrator = new CtsBulkScanOrchestrator([stepMock.Object]);
+        
+        distributedLockMock
+            .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lockHandleMock.Object);
+        
+        stepMock
+            .Setup(s => s.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new NonRetryableException("Something went wrong"));
+
+        var appLifetimeMock = new Mock<IHostApplicationLifetime>();
+        var task = new CtsBulkScanTask(
+            orchestrator,
+            _dataBridgeScanConfiguration,
+            distributedLockMock.Object,
+            appLifetimeMock.Object,
+            delayProviderMock.Object,
+            loggerMock.Object);
+
+        // Act
+        Func<Task> act =  () => task.RunAsync(CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<NonRetryableException>();
+    }
+    
+    [Fact]
+    public async Task RunAsync_ShouldBubbleException_WhenStepThrowsRetryableException()
+    {
+        // Arrange
+        var loggerMock = new Mock<ILogger<CtsBulkScanTask>>();
+        var lockHandleMock = new Mock<IDistributedLockHandle>();
+        var distributedLockMock = new Mock<IDistributedLock>();
+        var delayProviderMock = new Mock<IDelayProvider>();
+        var stepMock = new Mock<IScanStep<CtsBulkScanContext>>();
+        var orchestrator = new CtsBulkScanOrchestrator([stepMock.Object]);
+        
+        distributedLockMock
+            .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lockHandleMock.Object);
+        
+        stepMock
+            .Setup(s => s.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new RetryableException("Something went wrong"));
+
+        var appLifetimeMock = new Mock<IHostApplicationLifetime>();
+        var task = new CtsBulkScanTask(
+            orchestrator,
+            _dataBridgeScanConfiguration,
+            distributedLockMock.Object,
+            appLifetimeMock.Object,
+            delayProviderMock.Object,
+            loggerMock.Object);
+
+        // Act
+        Func<Task> act =  () => task.RunAsync(CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<RetryableException>();
     }
 }
