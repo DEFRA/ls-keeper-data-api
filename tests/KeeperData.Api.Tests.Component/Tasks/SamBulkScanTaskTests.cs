@@ -109,7 +109,7 @@ public class SamBulkScanTaskTests
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(lockHandleMock.Object);
-        
+
         stepMock
             .Setup(s => s.ExecuteAsync(It.IsAny<SamBulkScanContext>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new NonRetryableException("Something went wrong"));
@@ -124,7 +124,7 @@ public class SamBulkScanTaskTests
             loggerMock.Object);
 
         // Act
-        Func<Task> act =  () => task.RunAsync(CancellationToken.None);
+        Func<Task> act = () => task.RunAsync(CancellationToken.None);
 
         // Assert
         await act.Should().ThrowAsync<NonRetryableException>();
@@ -144,7 +144,7 @@ public class SamBulkScanTaskTests
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(lockHandleMock.Object);
-        
+
         stepMock
             .Setup(s => s.ExecuteAsync(It.IsAny<SamBulkScanContext>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new RetryableException("Something went wrong"));
@@ -159,7 +159,7 @@ public class SamBulkScanTaskTests
             loggerMock.Object);
 
         // Act
-        Func<Task> act =  () => task.RunAsync(CancellationToken.None);
+        Func<Task> act = () => task.RunAsync(CancellationToken.None);
 
         // Assert
         await act.Should().ThrowAsync<RetryableException>();

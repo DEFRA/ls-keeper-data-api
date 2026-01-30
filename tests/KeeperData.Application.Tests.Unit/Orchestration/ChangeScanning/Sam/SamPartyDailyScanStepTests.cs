@@ -209,7 +209,7 @@ public class SamPartyDailyScanStepTests
             .Build();
 
         var context = new SamDailyScanContext { CurrentDateTime = DateTime.UtcNow, UpdatedSinceDateTime = DateTime.UtcNow.AddHours(-24), Parties = new() };
-        
+
         var partiesResponseMock = MockSamData.GetSamPartiesScanIdentifierDataBridgeResponse(1, 1, 1);
         _dataBridgeClientMock
             .Setup(c => c.GetSamPartiesAsync<SamScanPartyIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -243,7 +243,7 @@ public class SamPartyDailyScanStepTests
             .Build();
 
         var context = new SamDailyScanContext { CurrentDateTime = DateTime.UtcNow, UpdatedSinceDateTime = DateTime.UtcNow.AddHours(-24), Parties = new() };
-        
+
         var partiesResponseMock = MockSamData.GetSamPartiesScanIdentifierDataBridgeResponse(1, 1, 1);
         _dataBridgeClientMock
             .Setup(c => c.GetSamPartiesAsync<SamScanPartyIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))

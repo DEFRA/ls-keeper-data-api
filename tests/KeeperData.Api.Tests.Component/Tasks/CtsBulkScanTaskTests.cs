@@ -36,7 +36,7 @@ public class CtsBulkScanTaskTests
         var distributedLockMock = new Mock<IDistributedLock>();
         var delayProviderMock = new Mock<IDelayProvider>();
         var orchestrator = new CtsBulkScanOrchestrator([]);
-        
+
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(lockHandleMock.Object);
@@ -105,11 +105,11 @@ public class CtsBulkScanTaskTests
         var delayProviderMock = new Mock<IDelayProvider>();
         var stepMock = new Mock<IScanStep<CtsBulkScanContext>>();
         var orchestrator = new CtsBulkScanOrchestrator([stepMock.Object]);
-        
+
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(lockHandleMock.Object);
-        
+
         stepMock
             .Setup(s => s.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new NonRetryableException("Something went wrong"));
@@ -124,12 +124,12 @@ public class CtsBulkScanTaskTests
             loggerMock.Object);
 
         // Act
-        Func<Task> act =  () => task.RunAsync(CancellationToken.None);
+        Func<Task> act = () => task.RunAsync(CancellationToken.None);
 
         // Assert
         await act.Should().ThrowAsync<NonRetryableException>();
     }
-    
+
     [Fact]
     public async Task RunAsync_ShouldBubbleException_WhenStepThrowsRetryableException()
     {
@@ -140,11 +140,11 @@ public class CtsBulkScanTaskTests
         var delayProviderMock = new Mock<IDelayProvider>();
         var stepMock = new Mock<IScanStep<CtsBulkScanContext>>();
         var orchestrator = new CtsBulkScanOrchestrator([stepMock.Object]);
-        
+
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(lockHandleMock.Object);
-        
+
         stepMock
             .Setup(s => s.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new RetryableException("Something went wrong"));
@@ -159,7 +159,7 @@ public class CtsBulkScanTaskTests
             loggerMock.Object);
 
         // Act
-        Func<Task> act =  () => task.RunAsync(CancellationToken.None);
+        Func<Task> act = () => task.RunAsync(CancellationToken.None);
 
         // Assert
         await act.Should().ThrowAsync<RetryableException>();

@@ -94,7 +94,7 @@ public class CtsDailyScanTaskTests
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()
         ), Times.Once);
     }
-    
+
     [Fact]
     public async Task RunAsync_ShouldBubbleException_WhenStepThrowsNonRetryableException()
     {
@@ -109,7 +109,7 @@ public class CtsDailyScanTaskTests
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(lockHandleMock.Object);
-        
+
         stepMock
             .Setup(s => s.ExecuteAsync(It.IsAny<CtsDailyScanContext>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new NonRetryableException("Something went wrong"));
@@ -124,12 +124,12 @@ public class CtsDailyScanTaskTests
             loggerMock.Object);
 
         // Act
-        Func<Task> act =  () => task.RunAsync(CancellationToken.None);
+        Func<Task> act = () => task.RunAsync(CancellationToken.None);
 
         // Assert
         await act.Should().ThrowAsync<NonRetryableException>();
     }
-    
+
     [Fact]
     public async Task RunAsync_ShouldBubbleException_WhenStepThrowsRetryableException()
     {
@@ -144,7 +144,7 @@ public class CtsDailyScanTaskTests
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(lockHandleMock.Object);
-        
+
         stepMock
             .Setup(s => s.ExecuteAsync(It.IsAny<CtsDailyScanContext>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new RetryableException("Something went wrong"));
@@ -159,7 +159,7 @@ public class CtsDailyScanTaskTests
             loggerMock.Object);
 
         // Act
-        Func<Task> act =  () => task.RunAsync(CancellationToken.None);
+        Func<Task> act = () => task.RunAsync(CancellationToken.None);
 
         // Assert
         await act.Should().ThrowAsync<RetryableException>();
