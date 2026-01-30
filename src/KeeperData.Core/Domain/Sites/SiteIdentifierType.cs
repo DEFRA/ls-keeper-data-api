@@ -21,6 +21,19 @@ public class SiteIdentifierType : EntityObject
         LastUpdatedDate = lastUpdatedDate;
     }
 
+    public static SiteIdentifierType Create(
+        string siteIdentifierId,
+        string code,
+        string name,
+        DateTime? lastUpdatedDate)
+    {
+        return new SiteIdentifierType(
+            siteIdentifierId,
+            code,
+            name,
+            lastUpdatedDate);
+    }
+
     public override IEnumerable<object> GetEqualityComponents()
     {
         yield return Id;

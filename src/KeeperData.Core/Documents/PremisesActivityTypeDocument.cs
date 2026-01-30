@@ -51,6 +51,21 @@ public class PremisesActivityTypeDocument : INestedEntity
     [JsonPropertyName("lastModifiedDate")]
     public DateTime? LastModifiedDate { get; set; }
 
+    public static PremisesActivityTypeDocument FromDomain(SiteActivityType m) => new()
+    {
+        IdentifierId = m.Id,
+        Code = m.Code,
+        Name = m.Name,
+        LastModifiedDate = m.LastUpdatedDate,
+
+        IsActive = true,
+        EffectiveStartDate = new DateTime(1900, 1, 1),
+        EffectiveEndDate = null,
+        CreatedBy = "System_FromDomain",
+        CreatedDate = DateTime.UtcNow,
+        LastModifiedBy = null
+    };
+
     public SiteActivityType ToDomain() => new(
         id: IdentifierId,
         code: Code,
