@@ -317,7 +317,7 @@ public class SamPartyMapperToGoldTests
     {
         return new PartyRoleDocument()
         {
-            IdentifierId = valuePrefix+"id",
+            IdentifierId = valuePrefix + "id",
             RoleTypeId = roleTypeId,
             RoleTypeCode = valuePrefix + "typecode",
             RoleTypeName = valuePrefix + "typename",
