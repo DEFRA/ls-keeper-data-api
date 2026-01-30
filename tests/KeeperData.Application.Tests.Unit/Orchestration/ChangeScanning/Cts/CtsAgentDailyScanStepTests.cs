@@ -3,6 +3,7 @@ using KeeperData.Application.Orchestration.ChangeScanning.Cts.Daily.Steps;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
@@ -11,6 +12,7 @@ using KeeperData.Tests.Common.Factories.UseCases;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
+using FluentAssertions;
 
 namespace KeeperData.Application.Tests.Unit.Orchestration.ChangeScanning.Cts;
 
@@ -101,5 +103,63 @@ public class CtsAgentDailyScanStepTests
             It.Is<DateTime?>(d => d.HasValue && d.Value.Subtract(context.UpdatedSinceDateTime!.Value).TotalSeconds < 1),
             It.IsAny<string>(),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_ShouldBubbleException_WhenApiThrowsRetryableException()
+    {
+        // Arrange
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { { "DataBridgeCollectionFlags:CtsAgentsEnabled", "true" } })
+            .Build();
+
+        var context = new CtsDailyScanContext { CurrentDateTime = DateTime.UtcNow, UpdatedSinceDateTime = DateTime.UtcNow.AddHours(-24), Agents = new() };
+
+        _dataBridgeClientMock
+            .Setup(x => x.GetCtsAgentsAsync<CtsScanAgentOrKeeperIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new RetryableException("Something went wrong"));
+
+        var scanStep = new CtsAgentDailyScanStep(
+            _dataBridgeClientMock.Object,
+            _messagePublisherMock.Object,
+            _config,
+            _delayProviderMock.Object,
+            config,
+            _loggerMock.Object);
+
+        // Act
+        Func<Task> act = () => scanStep.ExecuteAsync(context, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<RetryableException>();
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_ShouldBubbleException_WhenApiThrowsNonRetryableException()
+    {
+        // Arrange
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { { "DataBridgeCollectionFlags:CtsAgentsEnabled", "true" } })
+            .Build();
+
+        var context = new CtsDailyScanContext { CurrentDateTime = DateTime.UtcNow, UpdatedSinceDateTime = DateTime.UtcNow.AddHours(-24), Agents = new() };
+
+        _dataBridgeClientMock
+            .Setup(x => x.GetCtsAgentsAsync<CtsScanAgentOrKeeperIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new NonRetryableException("Something went wrong"));
+
+        var scanStep = new CtsAgentDailyScanStep(
+            _dataBridgeClientMock.Object,
+            _messagePublisherMock.Object,
+            _config,
+            _delayProviderMock.Object,
+            config,
+            _loggerMock.Object);
+
+        // Act
+        Func<Task> act = () => scanStep.ExecuteAsync(context, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<NonRetryableException>();
     }
 }
