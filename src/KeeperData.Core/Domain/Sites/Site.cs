@@ -138,11 +138,6 @@ public class Site : IAggregateRoot
         }
     }
 
-    public void SetLocation(Location location)
-    {
-        _location = location;
-    }
-
     public void SetLocation(
         DateTime lastUpdatedDate,
         string? osMapReference,

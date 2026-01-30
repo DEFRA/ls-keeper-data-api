@@ -63,17 +63,6 @@ public class CountryDocument : INestedEntity
     [JsonPropertyName("lastModifiedDate")]
     public DateTime? LastModifiedDate { get; set; }
 
-    public static CountryDocument FromDomain(Country country) => new()
-    {
-        IdentifierId = country.Id,
-        Code = country.Code,
-        Name = country.Name,
-        LongName = country.LongName,
-        EuTradeMember = country.EuTradeMemberFlag,
-        DevolvedAuthority = country.DevolvedAuthorityFlag,
-        LastModifiedDate = country.LastUpdatedDate
-    };
-
     public Country ToDomain() => new(
         IdentifierId,
         Code,

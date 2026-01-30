@@ -37,21 +37,6 @@ public class PartyRoleRole : EntityObject
             DateTime.UtcNow);
     }
 
-    public bool ApplyChanges(string? code, string? name, DateTime lastUpdatedDate)
-    {
-        var changed = false;
-
-        changed |= Change(Code, code, v => Code = v);
-        changed |= Change(Name, name, v => Name = v);
-
-        if (changed)
-        {
-            LastUpdatedDate = lastUpdatedDate;
-        }
-
-        return changed;
-    }
-
     private static bool Change<T>(T currentValue, T newValue, Action<T> setter)
     {
         if (EqualityComparer<T>.Default.Equals(currentValue, newValue)) return false;

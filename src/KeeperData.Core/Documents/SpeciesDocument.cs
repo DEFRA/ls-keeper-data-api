@@ -50,27 +50,4 @@ public class SpeciesDocument : INestedEntity
     [BsonElement("lastModifiedDate")]
     [JsonPropertyName("lastModifiedDate")]
     public DateTime? LastModifiedDate { get; set; }
-
-    public static SpeciesDocument FromDomain(Species m) => new()
-    {
-        IdentifierId = m.Id,
-        Code = m.Code,
-        Name = m.Name,
-        LastModifiedDate = m.LastUpdatedDate,
-
-        IsActive = true,
-        SortOrder = 0,
-        EffectiveStartDate = new DateTime(1900, 1, 1),
-        EffectiveEndDate = null,
-        CreatedBy = "System_FromDomain",
-        CreatedDate = DateTime.UtcNow,
-        LastModifiedBy = null
-    };
-
-    public Species ToDomain() => new(
-        id: IdentifierId,
-        code: Code,
-        name: Name,
-        lastUpdatedDate: LastModifiedDate
-    );
 }

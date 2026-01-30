@@ -119,11 +119,6 @@ public class Party : IAggregateRoot
         }
     }
 
-    public void SetAddress(Address address)
-    {
-        _address = address;
-    }
-
     public void SetAddress(
         DateTime lastUpdatedDate,
         Address address)

@@ -28,22 +28,6 @@ public class GroupMark : EntityObject
         LastUpdatedDate = lastUpdatedDate;
     }
 
-    public static GroupMark Create(
-        string mark,
-        DateTime startDate,
-        DateTime? endDate = null,
-        IEnumerable<Species>? species = null)
-    {
-        return new GroupMark(
-            Guid.NewGuid().ToString(),
-            DateTime.UtcNow,
-            mark,
-            startDate,
-            endDate,
-            species
-        );
-    }
-
     public bool ApplyChanges(
         DateTime lastUpdatedDate,
         string mark,
