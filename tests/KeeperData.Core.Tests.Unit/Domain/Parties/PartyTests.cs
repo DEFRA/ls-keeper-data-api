@@ -1,7 +1,6 @@
 using FluentAssertions;
 using KeeperData.Core.Domain.Parties;
 using KeeperData.Core.Domain.Shared;
-using Microsoft.IdentityModel.Tokens;
 
 namespace KeeperData.Core.Tests.Unit.Domain.Parties;
 
@@ -10,8 +9,8 @@ public class PartyTests
     [Fact]
     public void UpdateAddressFromNull_ShouldUpdateLastUpdatedDate()
     {
-        DateTime lastUpdatedDate = new DateTime(2020, 1, 1);
-        DateTime addressLastUpdatedDate = new DateTime(2025, 1, 1);
+        var lastUpdatedDate = new DateTime(2020, 1, 1);
+        var addressLastUpdatedDate = new DateTime(2025, 1, 1);
         var sut = CreateParty(lastUpdatedDate, address: null);
 
         sut.SetAddress(addressLastUpdatedDate, CreateAddress("line-1"));
@@ -23,8 +22,8 @@ public class PartyTests
     [Fact]
     public void UpdateAddress_ShouldUpdateLastUpdatedDate()
     {
-        DateTime lastUpdatedDate = new DateTime(2020, 1, 1);
-        DateTime addressLastUpdatedDate = new DateTime(2025, 1, 1);
+        var lastUpdatedDate = new DateTime(2020, 1, 1);
+        var addressLastUpdatedDate = new DateTime(2025, 1, 1);
         var sut = CreateParty(lastUpdatedDate, address: CreateAddress("line-1"));
 
         sut.SetAddress(addressLastUpdatedDate, CreateAddress("new-line-1"));
@@ -36,8 +35,8 @@ public class PartyTests
     [Fact]
     public void UpdateCommsFromNull_ShouldUpdateLastUpdatedDate()
     {
-        DateTime lastUpdatedDate = new DateTime(2020, 1, 1);
-        DateTime newLastUpdatedDate = new DateTime(2025, 1, 1);
+        var lastUpdatedDate = new DateTime(2020, 1, 1);
+        var newLastUpdatedDate = new DateTime(2025, 1, 1);
         var sut = CreateParty(lastUpdatedDate);
 
         sut.AddOrUpdatePrimaryCommunication(newLastUpdatedDate, CreateComms("email"));
@@ -49,8 +48,8 @@ public class PartyTests
     [Fact]
     public void UpdateComms_ShouldUpdateLastUpdatedDate()
     {
-        DateTime oldLastUpdatedDate = new DateTime(2020, 1, 1);
-        DateTime newLastUpdatedDate = new DateTime(2025, 1, 1);
+        var oldLastUpdatedDate = new DateTime(2020, 1, 1);
+        var newLastUpdatedDate = new DateTime(2025, 1, 1);
         var sut = CreateParty(oldLastUpdatedDate);
         sut.AddOrUpdatePrimaryCommunication(oldLastUpdatedDate, CreateComms("old-email"));
 
@@ -63,8 +62,8 @@ public class PartyTests
     [Fact]
     public void UpdateRolesFromNull_ShouldUpdateLastUpdatedDate()
     {
-        DateTime lastUpdatedDate = new DateTime(2020, 1, 1);
-        DateTime newLastUpdatedDate = new DateTime(2025, 1, 1);
+        var lastUpdatedDate = new DateTime(2020, 1, 1);
+        var newLastUpdatedDate = new DateTime(2025, 1, 1);
         var sut = CreateParty(lastUpdatedDate);
 
         sut.AddOrUpdateRole(newLastUpdatedDate, CreateRole("prr-Code", null));
@@ -76,8 +75,8 @@ public class PartyTests
     [Fact]
     public void UpdateRolesWhenRoleAlreadyExists_ShouldUpdateLastUpdatedDate()
     {
-        DateTime oldLastUpdatedDate = new DateTime(2020, 1, 1);
-        DateTime newLastUpdatedDate = new DateTime(2025, 1, 1);
+        var oldLastUpdatedDate = new DateTime(2020, 1, 1);
+        var newLastUpdatedDate = new DateTime(2025, 1, 1);
         var sut = CreateParty(oldLastUpdatedDate);
         sut.AddOrUpdateRole(oldLastUpdatedDate, CreateRole("pr-id", null));
 
@@ -104,6 +103,6 @@ public class PartyTests
 
     private static Party CreateParty(DateTime? lastUpdatedDate = null, Address? address = null)
     {
-        return new Party("id", DateTime.MinValue, lastUpdatedDate ?? DateTime.MinValue, null, null, null, null, null, null, null, false, address);
+        return new Party("id", DateTime.MinValue, lastUpdatedDate ?? DateTime.MinValue, null, null, null, null, "c100001", null, null, false, address);
     }
 }

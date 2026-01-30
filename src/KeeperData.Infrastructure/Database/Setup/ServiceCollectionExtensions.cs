@@ -3,7 +3,6 @@ using KeeperData.Core.Locking;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Behaviors;
-using KeeperData.Infrastructure.Config;
 using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Infrastructure.Database.Factories;
 using KeeperData.Infrastructure.Database.Factories.Implementations;

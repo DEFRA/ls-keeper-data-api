@@ -1,6 +1,5 @@
 using FluentAssertions;
 using KeeperData.Application.Orchestration.ChangeScanning;
-using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
 using KeeperData.Core.Exceptions;
 
 namespace KeeperData.Api.Tests.Component.Tasks;
