@@ -92,12 +92,12 @@ public class PartyTests
         return new Address("address-id", null, addressLine1, null, null, null, "", null, DateTime.MinValue);
     }
 
-    private Communication CreateComms(string email)
+    private static Communication CreateComms(string email)
     {
         return new Communication("comm-id", DateTime.MinValue, email, null, null, null);
     }
 
-    private PartyRole CreateRole(string? prrCode = null, IEnumerable<ManagedSpecies>? speciesManagedByRole = null)
+    private static PartyRole CreateRole(string? prrCode = null, IEnumerable<ManagedSpecies>? speciesManagedByRole = null)
     {
         return new PartyRole("prId", null, new PartyRoleRole("prr-id", prrCode, null, null), speciesManagedByRole ?? [], DateTime.MinValue);
     }
