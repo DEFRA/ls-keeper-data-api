@@ -17,7 +17,7 @@ public class BatchCompletionMessageHandler(
     ILogger<BatchCompletionMessageHandler> logger)
     : ICommandHandler<ProcessBatchCompletionMessageCommand, MessageType>
 {
-    public async Task<MessageType> Handle(ProcessBatchCompletionMessageCommand request, CancellationToken cancellationToken = default)
+    public async Task<MessageType> Handle(ProcessBatchCompletionMessageCommand request, CancellationToken cancellationToken)
     {
         var message = request.Message;
 

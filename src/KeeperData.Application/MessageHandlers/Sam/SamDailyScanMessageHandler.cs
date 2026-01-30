@@ -18,7 +18,7 @@ public class SamDailyScanMessageHandler(SamDailyScanOrchestrator orchestrator,
     private readonly SamDailyScanOrchestrator _orchestrator = orchestrator;
     private readonly DataBridgeScanConfiguration _dataBridgeScanConfiguration = dataBridgeScanConfiguration;
 
-    public async Task<MessageType> Handle(ProcessSamDailyScanMessageCommand request, CancellationToken cancellationToken = default)
+    public async Task<MessageType> Handle(ProcessSamDailyScanMessageCommand request, CancellationToken cancellationToken)
     {
         var message = request.Message;
 

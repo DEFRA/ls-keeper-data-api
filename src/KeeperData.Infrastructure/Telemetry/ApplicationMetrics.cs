@@ -6,7 +6,7 @@ using System.Diagnostics.Metrics;
 namespace KeeperData.Infrastructure.Telemetry;
 
 [ExcludeFromCodeCoverage]
-public class ApplicationMetrics : IApplicationMetrics
+public class ApplicationMetrics : IApplicationMetrics, IDisposable
 {
     private readonly Meter _meter;
     private readonly Counter<int> _requestCounter;

@@ -16,7 +16,7 @@ public class SamImportHoldingMessageHandler(SamHoldingImportOrchestrator orchest
     private readonly IUnwrappedMessageSerializer<SamImportHoldingMessage> _serializer = serializer;
     private readonly SamHoldingImportOrchestrator _orchestrator = orchestrator;
 
-    public async Task<MessageType> Handle(ProcessSamImportHoldingMessageCommand request, CancellationToken cancellationToken = default)
+    public async Task<MessageType> Handle(ProcessSamImportHoldingMessageCommand request, CancellationToken cancellationToken)
     {
         var message = request.Message;
 

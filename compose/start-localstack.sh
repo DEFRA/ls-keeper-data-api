@@ -17,7 +17,7 @@ existing_bucket=$(awslocal s3api list-buckets \
   --query "Buckets[?Name=='test-comparison-reports-bucket'].Name" \
   --output text)
 
-if [ "$existing_bucket" == "test-comparison-reports-bucket" ]; then
+if [[ "$existing_bucket" == "test-comparison-reports-bucket" ]]; then
   echo "S3 bucket already exists: test-comparison-reports-bucket"
 else
   awslocal s3api create-bucket --bucket test-comparison-reports-bucket --region eu-west-2 \
