@@ -34,6 +34,19 @@ public class PartyTests
     }
     
     [Fact]
+    public void UpdateCommsFromNull_ShouldUpdateLastUpdatedDate()
+    {
+        DateTime lastUpdatedDate = new DateTime(2020,1,1);
+        DateTime newLastUpdatedDate = new DateTime(2025,1,1);
+        var sut = CreateParty(lastUpdatedDate);
+        
+        sut.AddOrUpdatePrimaryCommunication(newLastUpdatedDate, CreateComms("email"));
+        
+        sut.Communications.First().Email.Should().Be("email");
+        sut.LastUpdatedDate.Should().Be(newLastUpdatedDate);
+    }
+    
+    [Fact]
     public void UpdateComms_ShouldUpdateLastUpdatedDate()
     {
         DateTime oldLastUpdatedDate = new DateTime(2020,1,1);
