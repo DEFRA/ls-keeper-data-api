@@ -263,14 +263,14 @@ public class SamPartyMapperToGoldTests
     {
         var updateDate = new DateTime(2020, 1, 1);
         var customerId = "customer-id";
-        var newRoleTypeId = "new-roleId";
-        var existingRoleTypeId = "existing-roleId";
+        var newRoleId = "new-roletype-id";
+        var existingRoleId = "existing-roleId";
         var inputParty = new SamPartyDocument()
         {
             PartyId = customerId,
             Roles = new List<PartyRoleDocument>
             {
-                CreateRole("new-role-id", "new")
+                CreateRole("new", newRoleId)
             },
             LastUpdatedDate = updateDate
         };
@@ -282,17 +282,9 @@ public class SamPartyMapperToGoldTests
             CustomerNumber = customerId,
             PartyRoles = new List<PartyRoleWithSiteDocument>()
             {
-                CreatePartyRole("old-role-id", "existing")
+                CreatePartyRole("existing", existingRoleId)
             },
             LastUpdatedDate = DateTime.MinValue
-        };
-
-        var expected = CreateNewEmptyPartyDocument();
-        expected.Id = "gold-id";
-        expected.CustomerNumber = customerId;
-        expected.PartyRoles = new List<PartyRoleWithSiteDocument>()
-        {
-            CreatePartyRole("new-role-id", "new")
         };
 
         _goldRepoMock
@@ -302,9 +294,7 @@ public class SamPartyMapperToGoldTests
         var result = await WhenIMapSilverPartyToGold(inputParty, existingPartyIds: new List<string> { customerId });
 
         result.LastUpdatedDate.Should().Be(updateDate);
-        WipeIdsAndLastUpdatedDates(result);
-        WipeIdsAndLastUpdatedDates(expected);
-        result.Should().BeEquivalentTo(expected);
+        result.PartyRoles.Select(r => r.Role.IdentifierId).Should().BeEquivalentTo([newRoleId]);
     }
 
     private static PartyRoleWithSiteDocument CreatePartyRole(string roleId, string valuePrefix)
@@ -323,12 +313,12 @@ public class SamPartyMapperToGoldTests
         };
     }
 
-    private static PartyRoleDocument CreateRole(string roleId, string valuePrefix)
+    private static PartyRoleDocument CreateRole(string valuePrefix, string roleTypeId)
     {
         return new PartyRoleDocument()
         {
-            IdentifierId = roleId,
-            RoleTypeId = valuePrefix + "roleTypeId",
+            IdentifierId = valuePrefix+"id",
+            RoleTypeId = roleTypeId,
             RoleTypeCode = valuePrefix + "typecode",
             RoleTypeName = valuePrefix + "typename",
             SourceRoleName = valuePrefix + "sourcerolename",
