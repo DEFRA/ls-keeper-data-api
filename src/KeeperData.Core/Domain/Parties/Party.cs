@@ -14,7 +14,7 @@ public class Party : IAggregateRoot
     public string? FirstName { get; private set; }
     public string? LastName { get; private set; }
     public string? Name { get; private set; }
-    public string? CustomerNumber { get; private set; }
+    public string CustomerNumber { get; private set; }
     public string? PartyType { get; private set; }
     public string? State { get; private set; }
     public bool Deleted { get; private set; }
@@ -40,7 +40,7 @@ public class Party : IAggregateRoot
         string? firstName,
         string? lastName,
         string? name,
-        string? customerNumber,
+        string customerNumber,
         string? partyType,
         string? state,
         bool deleted,
@@ -67,7 +67,7 @@ public class Party : IAggregateRoot
         string? firstName,
         string? lastName,
         string? name,
-        string? customerNumber,
+        string customerNumber,
         string? partyType,
         string? state,
         bool deleted,
@@ -97,7 +97,7 @@ public class Party : IAggregateRoot
         string? firstName,
         string? lastName,
         string? name,
-        string? customerNumber,
+        string customerNumber,
         string? partyType,
         string? state,
         bool deleted)

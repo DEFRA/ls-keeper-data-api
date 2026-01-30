@@ -39,7 +39,7 @@ public static class SitePartyRoleMapper
                         {
                             // Id left unset for upsert
 
-                            CustomerNumber = party.CustomerNumber ?? string.Empty,
+                            CustomerNumber = party.CustomerNumber,
                             PartyTypeId = party.PartyType ?? string.Empty,
                             HoldingIdentifier = holdingIdentifier,
 

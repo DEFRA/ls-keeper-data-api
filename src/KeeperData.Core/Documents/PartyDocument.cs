@@ -48,7 +48,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
     [BsonElement("customerNumber")]
     [JsonPropertyName("customerNumber")]
     [AutoIndexed]
-    public string? CustomerNumber { get; set; }
+    public string CustomerNumber { get; set; } = string.Empty;
 
     [BsonElement("partyType")]
     [JsonPropertyName("partyType")]
@@ -137,7 +137,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
             id: Id,
             createdDate: CreatedDate,
             lastUpdatedDate: lastUpdatedDate,
-            customerNumber: CustomerNumber ?? string.Empty,
+            customerNumber: CustomerNumber,
             title: Title,
             firstName: FirstName,
             lastName: LastName,
@@ -189,6 +189,16 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("communication.email"),
                 new CreateIndexOptions { Name = "idxv2_communication_email", Collation = IndexDefaults.CollationCaseInsensitive, Sparse = true }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("customerNumber"),
+                new CreateIndexOptions
+                {
+                    Name = "uidx_customerNumber",
+                    Unique = true,
+                    Collation = IndexDefaults.CollationCaseInsensitive,
+                    Sparse = true
+                })
         ],
         AutoIndexedAttribute.GetIndexModels<PartyDocument>());
     }

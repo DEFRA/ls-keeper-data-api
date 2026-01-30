@@ -34,13 +34,32 @@ public class SamImportHoldingMessageHandler(SamHoldingImportOrchestrator orchest
             CurrentDateTime = DateTime.UtcNow
         };
 
+        string FormaExceptiont(string msg) =>
+            $"Exception Message: {msg}, Message Identifier: {messagePayload.Identifier}";
+
         try
         {
             await _orchestrator.ExecuteAsync(context, cancellationToken);
         }
+        catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
+        {
+            throw new RetryableException(
+                FormaExceptiont(ex.Message), ex);
+        }
+        catch (MongoBulkWriteException ex) when (ex.WriteErrors.Any(e => e.Category == ServerErrorCategory.DuplicateKey))
+        {
+            throw new RetryableException(
+                FormaExceptiont(ex.Message), ex);
+        }
         catch (MongoBulkWriteException ex)
         {
-            throw new NonRetryableException($"Exception Message: {ex.Message}, Message Identifier: {messagePayload.Identifier}", ex);
+            throw new NonRetryableException(
+                FormaExceptiont(ex.Message), ex);
+        }
+        catch (MongoWriteException ex)
+        {
+            throw new NonRetryableException(
+                FormaExceptiont(ex.Message), ex);
         }
         catch (Exception ex)
         {
