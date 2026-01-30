@@ -258,30 +258,21 @@ public class SamPartyMapperToGoldTests
         result.Should().BeEquivalentTo(expected);
     }
 
-    // TODO - a party can CHANGE roles.  however this test indicates that old roles won't be removed by the import
-    // this test seems to suggest that
-    // if a role is no longer in the source, it isn't removed
-    // TODO JIRA ULITP-4001
     [Fact]
-    public async Task ToGoldShouldAddNewRoleAlongsideExistingRoles()
+    public async Task WhenOldRoleNotInListOfNewRoles_ShouldRemoveOrphanedRoles()
     {
+        var updateDate = new DateTime(2020, 1, 1);
         var customerId = "customer-id";
-        var newRoleTypeId = "new-roleId";
-        var existingRoleTypeId = "existing-roleId";
+        var newRoleId = "new-roletype-id";
+        var existingRoleId = "existing-roleId";
         var inputParty = new SamPartyDocument()
         {
             PartyId = customerId,
             Roles = new List<PartyRoleDocument>
             {
-                new PartyRoleDocument()
-                {
-                    IdentifierId = "new-role-id",
-                    RoleTypeId = newRoleTypeId,
-                    RoleTypeCode = "newtypecode",
-                    RoleTypeName = "newtypename",
-                    SourceRoleName = "newsourcerolename",
-                }
-            }
+                CreateRole("new", newRoleId)
+            },
+            LastUpdatedDate = updateDate
         };
 
         inputParty.PartyId = customerId;
@@ -291,56 +282,9 @@ public class SamPartyMapperToGoldTests
             CustomerNumber = customerId,
             PartyRoles = new List<PartyRoleWithSiteDocument>()
             {
-                new()
-                {
-                    IdentifierId = "old-role-id",
-                    Role = new PartyRoleRoleDocument() { IdentifierId = existingRoleTypeId, Code = "oldcode", Name = "oldname",},
-                    Site = new PartyRoleSiteDocument() {
-                        IdentifierId = GoldSiteId,
-                        Name = "oldsitename",
-                        State = "oldstate",
-                        Type = new PremisesTypeSummaryDocument { IdentifierId = "any-ptsd-id", Code = "ptsdcode", Description = "ptsd-desc" }
-                    }
-                }
-            }
-        };
-
-        var expected = CreateNewEmptyPartyDocument();
-        expected.Id = "gold-id";
-        expected.CustomerNumber = customerId;
-        expected.PartyRoles = new List<PartyRoleWithSiteDocument>()
-        {
-            new ()
-                { IdentifierId = "old-role-id",
-                    Role = new PartyRoleRoleDocument()
-                    {
-                        IdentifierId = existingRoleTypeId,
-                        Name = "oldname",
-                        Code = "oldcode",
-                    },
-                    Site = new PartyRoleSiteDocument()
-                    {
-                        IdentifierId = GoldSiteId,Name = "oldsitename", State = "oldstate"
-                        , Type = new PremisesTypeSummaryDocument { IdentifierId = "any-ptsd-id", Code = "ptsdcode", Description = "ptsd-desc" }
-                    }
-                },
-            new ()
-            {
-                IdentifierId = "new-role-id",
-                Role = new PartyRoleRoleDocument()
-                {
-                    IdentifierId = newRoleTypeId,
-                    Name = "newtypename",
-                    Code = "newtypecode",
-                },
-                Site = new PartyRoleSiteDocument()
-                {
-                    IdentifierId = GoldSiteId,
-                    Name = null,
-                    State = null,
-                    Type = null
-                }
-            }
+                CreatePartyRole("existing", existingRoleId)
+            },
+            LastUpdatedDate = DateTime.MinValue
         };
 
         _goldRepoMock
@@ -349,9 +293,36 @@ public class SamPartyMapperToGoldTests
 
         var result = await WhenIMapSilverPartyToGold(inputParty, existingPartyIds: new List<string> { customerId });
 
-        WipeIdsAndLastUpdatedDates(result);
-        WipeIdsAndLastUpdatedDates(expected);
-        result.Should().BeEquivalentTo(expected);
+        result.LastUpdatedDate.Should().Be(updateDate);
+        result.PartyRoles.Select(r => r.Role.IdentifierId).Should().BeEquivalentTo([newRoleId]);
+    }
+
+    private static PartyRoleWithSiteDocument CreatePartyRole(string roleId, string valuePrefix)
+    {
+        return new()
+        {
+            IdentifierId = roleId,
+            Role = new PartyRoleRoleDocument() { IdentifierId = valuePrefix + "roleTypeId", Code = valuePrefix + "typecode", Name = valuePrefix + "typename", },
+            Site = new PartyRoleSiteDocument()
+            {
+                IdentifierId = GoldSiteId,
+                Name = null,
+                State = null,
+                Type = null
+            }
+        };
+    }
+
+    private static PartyRoleDocument CreateRole(string valuePrefix, string roleTypeId)
+    {
+        return new PartyRoleDocument()
+        {
+            IdentifierId = valuePrefix + "id",
+            RoleTypeId = roleTypeId,
+            RoleTypeCode = valuePrefix + "typecode",
+            RoleTypeName = valuePrefix + "typename",
+            SourceRoleName = valuePrefix + "sourcerolename",
+        };
     }
 
     private static PartyDocument CreateNewEmptyPartyDocument()
