@@ -16,7 +16,7 @@ public class CtsImportHoldingMessageHandler(CtsHoldingImportOrchestrator orchest
     private readonly IUnwrappedMessageSerializer<CtsImportHoldingMessage> _serializer = serializer;
     private readonly CtsHoldingImportOrchestrator _orchestrator = orchestrator;
 
-    public async Task<MessageType> Handle(ProcessCtsImportHoldingMessageCommand request, CancellationToken cancellationToken = default)
+    public async Task<MessageType> Handle(ProcessCtsImportHoldingMessageCommand request, CancellationToken cancellationToken)
     {
         var message = request.Message;
 
