@@ -3,6 +3,7 @@ using KeeperData.Application.Orchestration.Imports.Sam.Holdings;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings.Steps;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using KeeperData.Core.Exceptions;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -58,5 +59,67 @@ public class SamHoldingImportAggregationStepTests
 
         _clientMock.Verify(x => x.GetSamPartiesAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()), Times.Never);
         context.RawParties.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_WhenClientThrowsRetryableException_PropagatesException()
+    {
+        // Arrange
+        var context = new SamHoldingImportContext { Cph = "12/345/6789" };
+        var exception = new RetryableException("Transient error");
+
+        _clientMock.Setup(x => x.GetSamHoldingsAsync(context.Cph, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(exception);
+
+        _clientMock.Setup(x => x.GetSamHoldersByCphAsync(context.Cph, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        _clientMock.Setup(x => x.GetSamHerdsAsync(context.Cph, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        // Act
+        var act = () => _sut.ExecuteAsync(context, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<RetryableException>().WithMessage("Transient error");
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_WhenClientThrowsNonRetryableException_PropagatesException()
+    {
+        // Arrange
+        var context = new SamHoldingImportContext { Cph = "12/345/6789" };
+        var exception = new NonRetryableException("Permanent error");
+
+        _clientMock.Setup(x => x.GetSamHoldingsAsync(context.Cph, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        _clientMock.Setup(x => x.GetSamHoldersByCphAsync(context.Cph, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(exception);
+
+        _clientMock.Setup(x => x.GetSamHerdsAsync(context.Cph, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        // Act
+        var act = () => _sut.ExecuteAsync(context, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<NonRetryableException>().WithMessage("Permanent error");
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_WhenUnexpectedExceptionOccurs_PropagatesException()
+    {
+        // Arrange
+        var context = new SamHoldingImportContext { Cph = "12/345/6789" };
+        var exception = new Exception("Unexpected system failure");
+
+        _clientMock.Setup(x => x.GetSamHoldingsAsync(context.Cph, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(exception);
+
+        // Act
+        var act = () => _sut.ExecuteAsync(context, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<Exception>().WithMessage("Unexpected system failure");
     }
 }
