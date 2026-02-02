@@ -1,6 +1,6 @@
 using FluentAssertions;
-using KeeperData.Application.Orchestration.Updates.Cts.Holdings;
-using KeeperData.Application.Orchestration.Updates.Cts.Holdings.Steps;
+using KeeperData.Application.Orchestration.Imports.Cts.Holdings;
+using KeeperData.Application.Orchestration.Imports.Cts.Holdings.Steps;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.Exceptions;
 using KeeperData.Tests.Common.Factories;
@@ -8,17 +8,17 @@ using KeeperData.Tests.Common.Generators;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace KeeperData.Application.Tests.Unit.Orchestration.Updates.Cts.Holdings.Steps;
+namespace KeeperData.Application.Tests.Unit.Orchestration.Imports.Cts.Holdings.Steps;
 
-public class CtsUpdateHoldingRawAggregationStepTests
+public class CtsHoldingImportRawAggregationStepTests
 {
     private readonly Mock<IDataBridgeClient> _dataBridgeClientMock = new();
-    private readonly Mock<ILogger<CtsUpdateHoldingRawAggregationStep>> _loggerMock = new();
-    private readonly CtsUpdateHoldingRawAggregationStep _sut;
+    private readonly Mock<ILogger<CtsHoldingImportRawAggregationStep>> _loggerMock = new();
+    private readonly CtsHoldingImportRawAggregationStep _sut;
 
-    public CtsUpdateHoldingRawAggregationStepTests()
+    public CtsHoldingImportRawAggregationStepTests()
     {
-        _sut = new CtsUpdateHoldingRawAggregationStep(_dataBridgeClientMock.Object, _loggerMock.Object);
+        _sut = new CtsHoldingImportRawAggregationStep(_dataBridgeClientMock.Object, _loggerMock.Object);
     }
 
     [Fact]
@@ -44,14 +44,14 @@ public class CtsUpdateHoldingRawAggregationStepTests
             .Setup(x => x.GetCtsKeepersAsync(cph, It.IsAny<CancellationToken>()))
             .ReturnsAsync([keeper]);
 
-        var context = new CtsUpdateHoldingContext { Cph = cph };
+        var context = new CtsHoldingImportContext { Cph = cph };
 
         // Act
         await _sut.ExecuteAsync(context, CancellationToken.None);
 
         // Assert
-        context.RawHolding.Should().NotBeNull();
-        context.RawHolding!.LID_FULL_IDENTIFIER.Should().Be(cph);
+        context.RawHoldings.Should().ContainSingle();
+        context.RawHoldings[0].LID_FULL_IDENTIFIER.Should().Be(cph);
 
         context.RawAgents.Should().ContainSingle();
         context.RawKeepers.Should().ContainSingle();
@@ -67,13 +67,13 @@ public class CtsUpdateHoldingRawAggregationStepTests
         _dataBridgeClientMock.Setup(x => x.GetCtsAgentsAsync(cph, It.IsAny<CancellationToken>())).ReturnsAsync([]);
         _dataBridgeClientMock.Setup(x => x.GetCtsKeepersAsync(cph, It.IsAny<CancellationToken>())).ReturnsAsync([]);
 
-        var context = new CtsUpdateHoldingContext { Cph = cph };
+        var context = new CtsHoldingImportContext { Cph = cph };
 
         // Act
         await _sut.ExecuteAsync(context, CancellationToken.None);
 
         // Assert
-        context.RawHolding.Should().BeNull();
+        context.RawHoldings.Should().BeEmpty();
         context.RawAgents.Should().BeEmpty();
         context.RawKeepers.Should().BeEmpty();
     }
@@ -82,13 +82,12 @@ public class CtsUpdateHoldingRawAggregationStepTests
     public async Task ExecuteCoreAsync_WhenClientThrowsRetryableException_PropagatesException()
     {
         // Arrange
-        var context = new CtsUpdateHoldingContext { Cph = "AH-123456789" };
+        var context = new CtsHoldingImportContext { Cph = "AH-123456789" };
         var exception = new RetryableException("Transient error");
 
         _dataBridgeClientMock.Setup(x => x.GetCtsHoldingsAsync(context.Cph, It.IsAny<CancellationToken>()))
             .ThrowsAsync(exception);
 
-        // return empty
         _dataBridgeClientMock.Setup(x => x.GetCtsAgentsAsync(context.Cph, It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
         _dataBridgeClientMock.Setup(x => x.GetCtsKeepersAsync(context.Cph, It.IsAny<CancellationToken>()))
@@ -105,7 +104,7 @@ public class CtsUpdateHoldingRawAggregationStepTests
     public async Task ExecuteCoreAsync_WhenClientThrowsNonRetryableException_PropagatesException()
     {
         // Arrange
-        var context = new CtsUpdateHoldingContext { Cph = "AH-123456789" };
+        var context = new CtsHoldingImportContext { Cph = "AH-123456789" };
         var exception = new NonRetryableException("Permanent error");
 
         _dataBridgeClientMock.Setup(x => x.GetCtsHoldingsAsync(context.Cph, It.IsAny<CancellationToken>()))
@@ -128,23 +127,16 @@ public class CtsUpdateHoldingRawAggregationStepTests
     public async Task ExecuteCoreAsync_WhenUnexpectedExceptionOccurs_PropagatesException()
     {
         // Arrange
-        var context = new CtsUpdateHoldingContext { Cph = "AH-123456789" };
-        var exception = new InvalidOperationException("Something went wrong mapping data");
+        var context = new CtsHoldingImportContext { Cph = "AH-123456789" };
+        var exception = new ArgumentNullException("Validation failed inside client");
 
-        // first calls succeed
         _dataBridgeClientMock.Setup(x => x.GetCtsHoldingsAsync(context.Cph, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
-        _dataBridgeClientMock.Setup(x => x.GetCtsAgentsAsync(context.Cph, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
-
-        // then fail
-        _dataBridgeClientMock.Setup(x => x.GetCtsKeepersAsync(context.Cph, It.IsAny<CancellationToken>()))
             .ThrowsAsync(exception);
 
         // Act
         var act = () => _sut.ExecuteAsync(context, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Something went wrong mapping data");
+        await act.Should().ThrowAsync<ArgumentNullException>().WithMessage("Value cannot be null. (Parameter 'Validation failed inside client')");
     }
 }
