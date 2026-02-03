@@ -1,4 +1,3 @@
-using System.Reflection;
 using FluentAssertions;
 using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Application.MessageHandlers.Sam;
@@ -14,6 +13,7 @@ using KeeperData.Tests.Common.Factories;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Moq;
+using System.Reflection;
 
 namespace KeeperData.Application.Tests.Unit.MessageHandlers.Sam;
 
