@@ -82,7 +82,7 @@ public static class ServiceCollectionExtensions
     {
         if (!s_mongoSerializersRegistered)
         {
-            lock (typeof(ServiceCollectionExtensions))
+            lock (s_mongoSerializersLock)
             {
                 if (!s_mongoSerializersRegistered)
                 {
