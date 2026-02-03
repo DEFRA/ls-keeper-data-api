@@ -146,7 +146,10 @@ public class SamDailyScanTask(
             {
                 await renewalTask;
             }
-            catch (OperationCanceledException) {}
+            catch (OperationCanceledException)
+            {
+
+            }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unexpected error in lock renewal task for {LockName} scanCorrelationId: {scanCorrelationId}", LockName, scanCorrelationId);
