@@ -11,8 +11,8 @@ namespace KeeperData.Infrastructure.Services
 {
     public class MongoDbInitialiser : IMongoDbInitialiser
     {
-        private IMongoClient _mongoClient;
-        private IOptions<MongoConfig> _mongoConfig;
+        private readonly IMongoClient _mongoClient;
+        private readonly IOptions<MongoConfig> _mongoConfig;
         private readonly ILogger<MongoDbInitialiser> _logger;
 
         public MongoDbInitialiser(

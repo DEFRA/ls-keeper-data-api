@@ -41,6 +41,6 @@ public static class SiteFilterBuilder
             filters.Add(builder.ElemMatch(x => x.Parties, p => p.CustomerNumber == partyIdString));
         }
 
-        return filters.Count > 0 ? builder.And(filters) : builder.Empty;
+        return builder.And(filters);
     }
 }

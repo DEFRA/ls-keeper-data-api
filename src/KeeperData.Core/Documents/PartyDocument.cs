@@ -160,13 +160,8 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
         {
             if (partyRole == null) continue;
 
-            if (domainRolesById.TryGetValue(partyRole.IdentifierId, out var domainRole))
-            {
-                if (domainRole.Site != null)
-                {
-                    partyRole.Site = PartyRoleSiteDocument.FromDomain(domainRole.Site);
-                }
-            }
+            if (domainRolesById.TryGetValue(partyRole.IdentifierId, out var domainRole) && domainRole.Site != null)
+                partyRole.Site = PartyRoleSiteDocument.FromDomain(domainRole.Site);
         }
     }
 

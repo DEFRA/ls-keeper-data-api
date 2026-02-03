@@ -44,7 +44,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
     private Task? _pollingTask;
     private CancellationTokenSource _cts = new();
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    public Task StartAsync(CancellationToken token)
     {
         _logger.LogInformation("QueuePoller start requested.");
 
@@ -55,18 +55,18 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
             return Task.CompletedTask;
         }
 
-        _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        _cts = CancellationTokenSource.CreateLinkedTokenSource(token);
 
-        _pollingTask = Task.Run(() => PollMessagesAsync(_cts.Token), cancellationToken);
+        _pollingTask = Task.Run(() => PollMessagesAsync(_cts.Token), token);
 
         return Task.CompletedTask;
     }
 
-    public async Task StopAsync(CancellationToken cancellationToken)
+    public async Task StopAsync(CancellationToken token)
     {
         _logger.LogInformation("QueuePoller stop requested.");
 
-        _cts.Cancel();
+        await _cts.CancelAsync();
 
         if (_pollingTask is { IsCompletedSuccessfully: false })
         {
@@ -85,7 +85,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
     {
         if (_cts is not null)
         {
-            _cts.Cancel();
+            await _cts.CancelAsync();
             _cts.Dispose();
         }
 
@@ -135,6 +135,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
             }
             catch (OperationCanceledException)
             {
+                _logger.LogInformation("Poll operation cancelled for queue {queueUrl}", _queueConsumerOptions.QueueUrl);
             }
             catch (Exception ex)
             {

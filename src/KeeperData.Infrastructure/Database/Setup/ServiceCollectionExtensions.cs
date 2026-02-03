@@ -27,6 +27,7 @@ namespace KeeperData.Infrastructure.Database.Setup;
 public static class ServiceCollectionExtensions
 {
     private static bool s_mongoSerializersRegistered;
+    private static readonly object s_mongoSerializersLock = new();
 
     public static void AddDatabaseDependencies(this IServiceCollection services, IConfiguration configuration)
     {

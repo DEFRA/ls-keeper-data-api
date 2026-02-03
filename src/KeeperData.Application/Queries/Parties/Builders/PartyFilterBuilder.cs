@@ -31,6 +31,6 @@ public static class PartyFilterBuilder
             filters.Add(builder.ElemMatch(x => x.Communication, c => c.Email == query.Email));
         }
 
-        return filters.Count > 0 ? builder.And(filters) : builder.Empty;
+        return builder.And(filters);
     }
 }
