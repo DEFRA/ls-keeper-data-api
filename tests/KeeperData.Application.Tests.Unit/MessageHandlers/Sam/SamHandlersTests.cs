@@ -200,4 +200,24 @@ public class SamHandlersTests
 
         await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
+
+    [Theory]
+    [MemberData(nameof(MongoExceptions))]
+    public async Task SamUpdateHoldingMessageHandler_Handle_MongoExceptions(Exception thrown, Type expectedExceptionType)
+    {
+        var orchestrator = new Mock<SamHoldingImportOrchestrator>(Enumerable.Empty<Application.Orchestration.Imports.IImportStep<SamHoldingImportContext>>());
+        var serializer = new Mock<IUnwrappedMessageSerializer<SamUpdateHoldingMessage>>();
+        var message = new UnwrappedMessage { MessageId = "1" };
+        var command = new ProcessSamUpdateHoldingMessageCommand(message);
+        var payload = new SamUpdateHoldingMessage { Identifier = "CPH" };
+        serializer.Setup(x => x.Deserialize(message)).Returns(payload);
+
+        orchestrator.Setup(x => x.ExecuteAsync(It.IsAny<SamHoldingImportContext>(), _ct)).ThrowsAsync(thrown);
+
+        var handler = new SamUpdateHoldingMessageHandler(orchestrator.Object, serializer.Object);
+
+        var actualException = await Assert.ThrowsAnyAsync<Exception>(() => handler.Handle(command, _ct));
+        actualException.GetType().Should().Be(expectedExceptionType);
+    }
+
 }

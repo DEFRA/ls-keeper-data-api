@@ -35,7 +35,7 @@ public class SamUpdateHoldingMessageHandler(
             CurrentDateTime = DateTime.UtcNow
         };
 
-        string FormaExceptiont(string msg) =>
+        string FormatExceptionMessage(string msg) =>
             $"Exception Message: {msg}, Message Identifier: {messagePayload.Identifier}";
 
         try
@@ -44,23 +44,15 @@ public class SamUpdateHoldingMessageHandler(
         }
         catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
         {
-            throw new RetryableException(
-                FormaExceptiont(ex.Message), ex);
+            throw new RetryableException(FormatExceptionMessage(ex.Message), ex);
         }
         catch (MongoBulkWriteException ex) when (ex.WriteErrors.Any(e => e.Category == ServerErrorCategory.DuplicateKey))
         {
-            throw new RetryableException(
-                FormaExceptiont(ex.Message), ex);
+            throw new RetryableException(FormatExceptionMessage(ex.Message), ex);
         }
-        catch (MongoBulkWriteException ex)
+        catch (MongoServerException ex) when (ex is MongoBulkWriteException || ex is MongoWriteException)
         {
-            throw new NonRetryableException(
-                FormaExceptiont(ex.Message), ex);
-        }
-        catch (MongoWriteException ex)
-        {
-            throw new NonRetryableException(
-                FormaExceptiont(ex.Message), ex);
+            throw new NonRetryableException(FormatExceptionMessage(ex.Message), ex);
         }
         catch (Exception ex)
         {
