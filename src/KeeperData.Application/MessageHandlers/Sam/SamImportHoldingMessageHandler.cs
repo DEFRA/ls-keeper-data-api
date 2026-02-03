@@ -34,29 +34,7 @@ public class SamImportHoldingMessageHandler(SamHoldingImportOrchestrator orchest
             CurrentDateTime = DateTime.UtcNow
         };
 
-        string FormatExceptionMessage(string msg) =>
-            $"Exception Message: {msg}, Message Identifier: {messagePayload.Identifier}";
-
-        try
-        {
-            await _orchestrator.ExecuteAsync(context, cancellationToken);
-        }
-        catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
-        {
-            throw new RetryableException(FormatExceptionMessage(ex.Message), ex);
-        }
-        catch (MongoBulkWriteException ex) when (ex.WriteErrors.Any(e => e.Category == ServerErrorCategory.DuplicateKey))
-        {
-            throw new RetryableException(FormatExceptionMessage(ex.Message), ex);
-        }
-        catch (MongoServerException ex) when (ex is MongoBulkWriteException || ex is MongoWriteException)
-        {
-            throw new NonRetryableException(FormatExceptionMessage(ex.Message), ex);
-        }
-        catch (Exception ex)
-        {
-            throw new NonRetryableException(ex.Message, ex);
-        }
+        await _orchestrator.TryExecuteAndThrowRetryable(context, cancellationToken);
 
         return messagePayload;
     }
