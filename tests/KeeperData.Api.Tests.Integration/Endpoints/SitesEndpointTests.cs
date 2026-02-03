@@ -107,6 +107,7 @@ public class SitesEndpointTests(
     [InlineData("WhenSearchingByIdentifier", null, SiteBIdentifier1, null, null, 1, SiteBId)]
     [InlineData("WhenSearchingByIdentifier", null, SiteBIdentifier2, null, null, 1, SiteBId)]
     [InlineData("WhenSearchingByMultipleIdentifiers", null, null, SiteBIdentifier1 + "," + SiteCIdentifier1, null, 2, SiteBId + "," + SiteCId)]
+    [InlineData("WhenSearchingByMultipleIdentifiersWithSpaces", null, null, " " + SiteBIdentifier1 + " , , " + SiteCIdentifier1 + " ", null, 2, SiteBId + "," + SiteCId)]
     [InlineData("WhenSearchingForRecordsThatDoNotExist", null, "00000000-0000-0000-0000-000000000000", null, null, 0, "")]
     [InlineData("WhenSearchingByDate", null, null, null, "2011-01-01", 2, SiteBId + "," + SiteCId)]
     [InlineData("WhenSearchingByDateAndType", "Other", null, null, "2011-01-01", 1, SiteBId)]
