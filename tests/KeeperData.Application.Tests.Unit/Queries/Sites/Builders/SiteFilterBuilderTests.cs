@@ -48,6 +48,22 @@ public class SiteFilterBuilderTests
     }
 
     [Fact]
+    public void Build_ShouldCreateFilterForSiteIdentifiers()
+    {
+        var query = new GetSitesQuery { SiteIdentifiers = ["CPH123", "CPH456"] };
+        var filter = SiteFilterBuilder.Build(query);
+        var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry);
+
+        var expectedBson = BsonDocument.Parse(@"
+            {
+                ""deleted"": false,
+                ""identifiers.identifier"": { ""$in"": [ ""CPH123"", ""CPH456"" ] }
+            }");
+
+        renderedFilter.Should().BeEquivalentTo(expectedBson);
+    }
+
+    [Fact]
     public void Build_ShouldCreateFilterForSiteId()
     {
         var siteId = Guid.NewGuid();
@@ -130,7 +146,7 @@ public class SiteFilterBuilderTests
         {
             ""deleted"": false,
             ""identifiers"" : { ""$elemMatch"" : { ""identifier"" : ""CPH123"" } },
-            ""type"" : { ""$ne"" : null }
+            ""type"" : { ""$ne"" : null },
             ""type.code"" : { ""$in"" : [""type1""] }
         }");
 

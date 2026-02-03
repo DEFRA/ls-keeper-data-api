@@ -23,9 +23,17 @@ namespace KeeperData.Api.Controllers
                     .ToList()
                 : null;
 
+            var siteIdentifiersList = !string.IsNullOrWhiteSpace(request.SiteIdentifiers)
+                ? request.SiteIdentifiers.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(t => t.Trim())
+                    .Where(t => !string.IsNullOrWhiteSpace(t))
+                    .ToList()
+                : null;
+
             var query = new GetSitesQuery
             {
                 SiteIdentifier = request.SiteIdentifier,
+                SiteIdentifiers = siteIdentifiersList,
                 Type = typeList,
                 SiteId = request.SiteId,
                 KeeperPartyId = request.KeeperPartyId,
