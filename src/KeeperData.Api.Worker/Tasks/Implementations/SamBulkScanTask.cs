@@ -144,10 +144,7 @@ public class SamBulkScanTask(
             {
                 await renewalTask;
             }
-            catch (OperationCanceledException)
-            {
-                logger.LogInformation("Renewal task was cancelled at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
-            }
+            catch (OperationCanceledException){}
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unexpected error in lock renewal task for {LockName} scanCorrelationId: {scanCorrelationId}", LockName, scanCorrelationId);
