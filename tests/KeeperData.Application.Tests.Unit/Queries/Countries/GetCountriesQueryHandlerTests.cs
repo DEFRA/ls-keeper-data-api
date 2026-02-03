@@ -16,10 +16,10 @@ public class GetCountriesQueryHandlerTests
     {
         var repoMock = new Mock<ICountryRepository>();
         var lastUpdated = new DateTime(2001, 01, 01, 12, 13, 14);
-        var request = new GetCountriesQuery(){ Code = ["DE"]};
+        var request = new GetCountriesQuery() { Code = ["DE"] };
         var countryDoc = new CountryDocument { IdentifierId = "DE-123", Code = "DE", Name = "Germany", LongName = "longname", IsActive = true, DevolvedAuthority = false, EuTradeMember = true, SortOrder = 20, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.UtcNow, LastModifiedDate = lastUpdated };
 
-        repoMock.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new List<CountryDocument>{countryDoc});
+        repoMock.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new List<CountryDocument> { countryDoc });
         var sut = new GetCountriesQueryHandler(new CountriesQueryAdapter(repoMock.Object));
         var result = await sut.Handle(request, CancellationToken.None);
 
