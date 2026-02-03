@@ -377,9 +377,8 @@ public class SamPartyMapperTests
         result.Single().PERSON_TITLE.Should().Be("Ms");
     }
 
-    //TODO JIRA ULITP-3998
     [Fact]
-    public void AggregatePartyAndHolder_WhenPartyFieldIsEmptyAndHolderFieldIsNull_ShouldPreserveEmpty()
+    public void AggregatePartyAndHolder_WhenPartyFieldIsEmptyAndHolderFieldIsNull_ShouldSetToNull()
     {
         var party = new SamParty
         {
@@ -395,7 +394,27 @@ public class SamPartyMapperTests
 
         var result = SamPartyMapper.AggregatePartyAndHolder([party], [holder]);
 
-        result.Single().PERSON_FAMILY_NAME.Should().Be("");
+        result.Single().PERSON_FAMILY_NAME.Should().BeNull();
+    }
+
+    [Fact]
+    public void AggregatePartyAndHolder_WhenPartyFieldIsEmptyAndHolderFieldIsEmpty_ShouldSetToNull()
+    {
+        var party = new SamParty
+        {
+            PARTY_ID = "P1",
+            PERSON_FAMILY_NAME = ""
+        };
+
+        var holder = new SamCphHolder
+        {
+            PARTY_ID = "P1",
+            PERSON_FAMILY_NAME = ""
+        };
+
+        var result = SamPartyMapper.AggregatePartyAndHolder([party], [holder]);
+
+        result.Single().PERSON_FAMILY_NAME.Should().BeNull();
     }
 
     private static List<SamParty> GenerateSamParty(int quantity)

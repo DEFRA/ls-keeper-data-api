@@ -258,10 +258,7 @@ public static class SamPartyMapper
 
     private static string? MergeStrings(string? original, string? newValue)
     {
-        //TODO JIRA ULITP-3998 - refine to
-        // return string.IsNullOrEmpty(original) ? newValue : original;
-        // or to return string.IsNullOrEmpty(original) ? (string.IsNullOrEmpty(newValue) ? null : newValue) : original;
-        return string.IsNullOrEmpty(original) && !string.IsNullOrEmpty(newValue) ? newValue : original;
+        return string.IsNullOrEmpty(original) ? (string.IsNullOrEmpty(newValue) ? null : newValue) : original;
     }
 
     private static void MergeSamPartyFromHolder(SamParty party, SamCphHolder holder)
