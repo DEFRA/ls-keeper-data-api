@@ -10,13 +10,13 @@ namespace KeeperData.Tests.Common.Factories;
 
 public static class MongoExceptionFactory
 {
-    public static MongoBulkWriteException<object> CreateMongoBulkWriteException()
+    public static MongoBulkWriteException<object> CreateMongoBulkWriteException(IEnumerable<BulkWriteError>? errors = null)
     {
         // Use the shared FakeBulkWriteResult
         var bulkWriteResult = new FakeBulkWriteResult<object>();
 
         var connectionId = new ConnectionId(new ServerId(new ClusterId(), new DnsEndPoint("localhost", 27017)), 1);
-        var writeErrors = new List<BulkWriteError>();
+        var writeErrors = errors ?? [];
 
         // Use Reflection to access the internal constructor of WriteConcernError
         var writeConcernErrorCtor = typeof(WriteConcernError)

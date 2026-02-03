@@ -30,7 +30,8 @@ public class PartiesEndpointTests(
                 FirstName = "John",
                 LastName = "Smith",
                 State = PartyStatusType.Active.GetDescription(),
-                LastUpdatedDate = new DateTime(2010,01,01)
+                LastUpdatedDate = new DateTime(2010,01,01),
+                CustomerNumber = "C100001"
             },
             new PartyDocument
             {
@@ -38,7 +39,8 @@ public class PartiesEndpointTests(
                 FirstName = "Mark",
                 LastName = "Smith",
                 State = PartyStatusType.Active.GetDescription(),
-                LastUpdatedDate = new DateTime(2011,01,01)
+                LastUpdatedDate = new DateTime(2011,01,01),
+                CustomerNumber = "C100002"
             },
             new PartyDocument
             {
@@ -46,7 +48,8 @@ public class PartiesEndpointTests(
                 FirstName = "Huey",
                 LastName = "News",
                 State = PartyStatusType.Active.GetDescription(),
-                LastUpdatedDate = new DateTime(2012,01,01)
+                LastUpdatedDate = new DateTime(2012,01,01),
+                CustomerNumber = "C100003"
             },
         ];
 

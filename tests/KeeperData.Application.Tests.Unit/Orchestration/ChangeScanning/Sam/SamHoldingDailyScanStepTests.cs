@@ -1,3 +1,4 @@
+using FluentAssertions;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily.Steps;
 using KeeperData.Core.ApiClients.DataBridgeApi;
@@ -12,7 +13,6 @@ using KeeperData.Tests.Common.Factories.UseCases;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using FluentAssertions;
 
 namespace KeeperData.Application.Tests.Unit.Orchestration.ChangeScanning.Sam;
 

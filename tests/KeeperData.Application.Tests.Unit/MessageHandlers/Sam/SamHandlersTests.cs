@@ -1,3 +1,4 @@
+using FluentAssertions;
 using KeeperData.Application.Commands.MessageProcessing;
 using KeeperData.Application.MessageHandlers.Sam;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
@@ -9,7 +10,10 @@ using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.Serializers;
 using KeeperData.Tests.Common.Factories;
+using MongoDB.Bson;
+using MongoDB.Driver;
 using Moq;
+using System.Reflection;
 
 namespace KeeperData.Application.Tests.Unit.MessageHandlers.Sam;
 
@@ -118,24 +122,50 @@ public class SamHandlersTests
         await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
 
-    [Fact]
-    public async Task SamImportHoldingMessageHandler_Handle_MongoException_Throws()
+    public static IEnumerable<object[]> MongoExceptions
+    {
+        get
+        {
+            yield return [MongoExceptionFactory.CreateMongoBulkWriteException([GetBulkWriteError(ServerErrorCategory.DuplicateKey)]), typeof(RetryableException)];
+            yield return [MongoExceptionFactory.CreateMongoBulkWriteException(), typeof(NonRetryableException)];
+            yield return [GetMongoWriteException(ServerErrorCategory.DuplicateKey), typeof(RetryableException)];
+            yield return [GetMongoWriteException(ServerErrorCategory.Uncategorized), typeof(NonRetryableException)];
+            yield return [new Exception(), typeof(NonRetryableException)];
+        }
+    }
+
+    public static BulkWriteError GetBulkWriteError(ServerErrorCategory category)
+    {
+        var ctor = typeof(BulkWriteError).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, [typeof(int), typeof(ServerErrorCategory), typeof(int), typeof(string), typeof(BsonDocument)]);
+        var bwe = ctor!.Invoke(new object[] { 0, category, 1, "", new BsonDocument() });
+        return (BulkWriteError)bwe;
+    }
+
+    public static MongoWriteException GetMongoWriteException(ServerErrorCategory category)
+    {
+        var t = typeof(MongoWriteException);
+        var fromBulk = t.GetMethod("FromBulkWriteException", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+        var we = fromBulk!.Invoke(null, new object[] { MongoExceptionFactory.CreateMongoBulkWriteException([GetBulkWriteError(category)]) });
+        return (MongoWriteException)we!;
+    }
+
+    [Theory]
+    [MemberData(nameof(MongoExceptions))]
+    public async Task SamImportHoldingMessageHandler_Handle_MongoExceptions(Exception thrown, Type expectedExceptionType)
     {
         var orchestrator = new Mock<SamHoldingImportOrchestrator>(Enumerable.Empty<Application.Orchestration.Imports.IImportStep<SamHoldingImportContext>>());
         var serializer = new Mock<IUnwrappedMessageSerializer<SamImportHoldingMessage>>();
-
         var message = new UnwrappedMessage { MessageId = "1" };
         var command = new ProcessSamImportHoldingMessageCommand(message);
         var payload = new SamImportHoldingMessage { Identifier = "CPH" };
-
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
 
-        var mongoException = MongoExceptionFactory.CreateMongoBulkWriteException();
-        orchestrator.Setup(x => x.ExecuteAsync(It.IsAny<SamHoldingImportContext>(), _ct)).ThrowsAsync(mongoException);
+        orchestrator.Setup(x => x.ExecuteAsync(It.IsAny<SamHoldingImportContext>(), _ct)).ThrowsAsync(thrown);
 
         var handler = new SamImportHoldingMessageHandler(orchestrator.Object, serializer.Object);
 
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
+        var actualException = await Assert.ThrowsAnyAsync<Exception>(() => handler.Handle(command, _ct));
+        actualException.GetType().Should().Be(expectedExceptionType);
     }
 
     [Fact]
@@ -171,41 +201,23 @@ public class SamHandlersTests
         await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
 
-    [Fact]
-    public async Task SamUpdateHoldingMessageHandler_Handle_GenericException_ThrowsNonRetryable()
+    [Theory]
+    [MemberData(nameof(MongoExceptions))]
+    public async Task SamUpdateHoldingMessageHandler_Handle_MongoExceptions(Exception thrown, Type expectedExceptionType)
     {
         var orchestrator = new Mock<SamHoldingImportOrchestrator>(Enumerable.Empty<Application.Orchestration.Imports.IImportStep<SamHoldingImportContext>>());
         var serializer = new Mock<IUnwrappedMessageSerializer<SamUpdateHoldingMessage>>();
-
         var message = new UnwrappedMessage { MessageId = "1" };
         var command = new ProcessSamUpdateHoldingMessageCommand(message);
         var payload = new SamUpdateHoldingMessage { Identifier = "CPH" };
-
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
-        orchestrator.Setup(x => x.ExecuteAsync(It.IsAny<SamHoldingImportContext>(), _ct)).ThrowsAsync(new Exception("Generic"));
+
+        orchestrator.Setup(x => x.ExecuteAsync(It.IsAny<SamHoldingImportContext>(), _ct)).ThrowsAsync(thrown);
 
         var handler = new SamUpdateHoldingMessageHandler(orchestrator.Object, serializer.Object);
 
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
+        var actualException = await Assert.ThrowsAnyAsync<Exception>(() => handler.Handle(command, _ct));
+        actualException.GetType().Should().Be(expectedExceptionType);
     }
 
-    [Fact]
-    public async Task SamUpdateHoldingMessageHandler_Handle_MongoException_ThrowsNonRetryable()
-    {
-        var orchestrator = new Mock<SamHoldingImportOrchestrator>(Enumerable.Empty<Application.Orchestration.Imports.IImportStep<SamHoldingImportContext>>());
-        var serializer = new Mock<IUnwrappedMessageSerializer<SamUpdateHoldingMessage>>();
-
-        var message = new UnwrappedMessage { MessageId = "1" };
-        var command = new ProcessSamUpdateHoldingMessageCommand(message);
-        var payload = new SamUpdateHoldingMessage { Identifier = "CPH" };
-
-        serializer.Setup(x => x.Deserialize(message)).Returns(payload);
-
-        var mongoException = MongoExceptionFactory.CreateMongoBulkWriteException();
-        orchestrator.Setup(x => x.ExecuteAsync(It.IsAny<SamHoldingImportContext>(), _ct)).ThrowsAsync(mongoException);
-
-        var handler = new SamUpdateHoldingMessageHandler(orchestrator.Object, serializer.Object);
-
-        await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
-    }
 }
