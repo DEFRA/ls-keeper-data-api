@@ -256,9 +256,11 @@ public static class SamPartyMapper
         return [.. partyMap.Values];
     }
 
-    private static string? MergeStrings(string? original, string? newValue)
+    private static string? MergeStrings(string? preferredValue, string? alternateValue)
     {
-        return string.IsNullOrEmpty(original) ? (string.IsNullOrEmpty(newValue) ? null : newValue) : original;
+        var altValueOrNullIfEmpty = string.IsNullOrEmpty(alternateValue) ? null : alternateValue;
+        var preferredValueOrNullIfEmpty = string.IsNullOrEmpty(preferredValue) ? null : preferredValue;
+        return preferredValueOrNullIfEmpty ?? altValueOrNullIfEmpty;
     }
 
     private static void MergeSamPartyFromHolder(SamParty party, SamCphHolder holder)
