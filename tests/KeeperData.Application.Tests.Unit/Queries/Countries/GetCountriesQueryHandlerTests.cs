@@ -15,7 +15,6 @@ public class GetCountriesQueryHandlerTests
     public async Task QueryHandlerShouldReturnRecordinCorrectMapping()
     {
         var repoMock = new Mock<ICountryRepository>();
-        var id = "abc-123";
         var lastUpdated = new DateTime(2001, 01, 01, 12, 13, 14);
         var request = new GetCountriesQuery(){ Code = ["DE"]};
         var countryDoc = new CountryDocument { IdentifierId = "DE-123", Code = "DE", Name = "Germany", LongName = "longname", IsActive = true, DevolvedAuthority = false, EuTradeMember = true, SortOrder = 20, EffectiveStartDate = DateTime.UtcNow, CreatedBy = "System", CreatedDate = DateTime.UtcNow, LastModifiedDate = lastUpdated };
