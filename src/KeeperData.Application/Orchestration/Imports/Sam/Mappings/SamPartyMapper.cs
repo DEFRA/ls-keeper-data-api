@@ -443,7 +443,7 @@ public static class SamPartyMapper
             party.AddOrUpdateRole(incoming.LastUpdatedDate, partyRole);
         }
 
-        var orphanedRoles = party.Roles.Where(r => !newRoles.Any(i => i.Role.Id == r.Role.Id && i.Site?.Id == r.Site?.Id)).ToList();
+        var orphanedRoles = party.Roles.Where(r => r.Site?.Id == goldSiteId && !newRoles.Any(i => i.Role.Id == r.Role.Id && i.Site?.Id == r.Site?.Id)).ToList();
         foreach (var role in orphanedRoles)
         {
             party.DeleteRole(incoming.LastUpdatedDate, role.Role.Id, role.Site?.Id);
