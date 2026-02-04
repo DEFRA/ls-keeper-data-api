@@ -14,9 +14,6 @@ public class CtsHoldingImportPersistenceStep(
     ILogger<CtsHoldingImportPersistenceStep> logger)
     : ImportStepBase<CtsHoldingImportContext>(logger)
 {
-    private readonly IGenericRepository<CtsHoldingDocument> _silverHoldingRepository = silverHoldingRepository;
-    private readonly IGenericRepository<CtsPartyDocument> _silverPartyRepository = silverPartyRepository;
-
     protected override async Task ExecuteCoreAsync(CtsHoldingImportContext context, CancellationToken cancellationToken)
     {
         if (context.SilverHoldings?.Count > 0)
@@ -30,19 +27,19 @@ public class CtsHoldingImportPersistenceStep(
 
     private async Task UpsertSilverHoldingAsync(CtsHoldingDocument incomingHolding, CancellationToken cancellationToken)
     {
-        var existingHolding = await _silverHoldingRepository.FindOneAsync(
+        var existingHolding = await silverHoldingRepository.FindOneAsync(
             x => x.CountyParishHoldingNumber == incomingHolding.CountyParishHoldingNumber,
             cancellationToken);
 
         if (existingHolding is null)
         {
             incomingHolding.Id = Guid.NewGuid().ToString();
-            await _silverHoldingRepository.AddAsync(incomingHolding, cancellationToken);
+            await silverHoldingRepository.AddAsync(incomingHolding, cancellationToken);
         }
         else
         {
             incomingHolding.Id = existingHolding.Id;
-            await _silverHoldingRepository.UpdateAsync(incomingHolding, cancellationToken);
+            await silverHoldingRepository.UpdateAsync(incomingHolding, cancellationToken);
         }
     }
 
@@ -84,23 +81,23 @@ public class CtsHoldingImportPersistenceStep(
         }
 
         if (newItems.Count > 0)
-            await _silverPartyRepository.AddManyAsync(newItems, cancellationToken);
+            await silverPartyRepository.AddManyAsync(newItems, cancellationToken);
 
         if (updateItems.Count > 0)
-            await _silverPartyRepository.BulkUpdateWithCustomFilterAsync(updateItems, cancellationToken);
+            await silverPartyRepository.BulkUpdateWithCustomFilterAsync(updateItems, cancellationToken);
 
         var orphanedParties = existingParties?
             .Where(e => !incomingKeys.Contains($"{e.PartyId}::{e.CountyParishHoldingNumber}"))
             .ToList() ?? [];
 
-        if (orphanedParties?.Count > 0)
+        if (orphanedParties.Count > 0)
         {
             var deleteFilter = Builders<CtsPartyDocument>.Filter.In(
                 x => x.Id,
                 orphanedParties.Select(d => d.Id)
             );
 
-            await _silverPartyRepository.DeleteManyAsync(deleteFilter, cancellationToken);
+            await silverPartyRepository.DeleteManyAsync(deleteFilter, cancellationToken);
         }
     }
 
@@ -108,7 +105,7 @@ public class CtsHoldingImportPersistenceStep(
         string holdingIdentifier,
         CancellationToken cancellationToken)
     {
-        return await _silverPartyRepository.FindAsync(
+        return await silverPartyRepository.FindAsync(
             x => x.CountyParishHoldingNumber == holdingIdentifier,
             cancellationToken) ?? [];
     }

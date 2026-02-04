@@ -2,7 +2,7 @@
 set -e  # Exit immediately on error
 
 # Check if the correct number of arguments are provided
-if [ "$#" -lt 3 ]; then
+if [[ "$#" -lt 3 ]]; then
     echo "Usage: $0 <container_name_or_id> <search_text> <timeout_in_seconds>"
     exit 1
 fi
@@ -43,7 +43,7 @@ while IFS= read -r line; do
     # Check for timeout
     CURRENT_TIME=$(date +%s)
     ELAPSED=$((CURRENT_TIME - START_TIME))
-    if [ "$ELAPSED" -ge "$TIMEOUT" ]; then
+    if [[ "$ELAPSED" -ge "$TIMEOUT" ]]; then
         echo "Timeout reached ($TIMEOUT seconds). Exiting..."
         cleanup
         exit 1

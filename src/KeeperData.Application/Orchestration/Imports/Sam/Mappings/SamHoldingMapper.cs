@@ -148,7 +148,7 @@ public static class SamHoldingMapper
             ? silverHoldings.Where(x => x.HoldingStatus == HoldingStatusType.Active.GetDescription()).OrderByDescending(h => h.LastUpdatedDate).First()
             : silverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
 
-        var distinctSpecies = await GetDistinctReferenceDataAsync<SpeciesDocument>(
+        var distinctSpecies = await GetDistinctReferenceDataAsync(
             silverHoldings.Select(h => h.SpeciesTypeCode),
             findSpecies,
             cancellationToken);
@@ -371,7 +371,7 @@ public static class SamHoldingMapper
         return await getPremiseTypeById(premiseTypeIdentifier, cancellationToken);
     }
 
-    private static async Task<List<(string searchValue, string? typeId, string? typeName)>> GetDistinctReferenceDataAsync<T>(
+    private static async Task<List<(string searchValue, string? typeId, string? typeName)>> GetDistinctReferenceDataAsync(
         IEnumerable<string?> rawCodes,
         Func<string?, CancellationToken, Task<(string? typeId, string? typeName)>> findAsync,
         CancellationToken cancellationToken)

@@ -1,6 +1,6 @@
 namespace KeeperData.Core.Domain.Sites.Formatters;
 
-public class ProductionUsageCodeFormatters
+public static class ProductionUsageCodeFormatters
 {
     public static string TrimProductionUsageCodeHolding(string? rawCode)
     {
