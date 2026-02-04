@@ -47,7 +47,7 @@ public class BatchCompletionMessageHandlerTests
             .Returns(batchCompletionMessage);
 
         // Act
-        var result = await _sut.Handle(command);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
         result.Should().Be(batchCompletionMessage);
@@ -65,7 +65,7 @@ public class BatchCompletionMessageHandlerTests
         var command = new ProcessBatchCompletionMessageCommand(nullMessage!);
 
         // Act & Assert
-        var act = () => _sut.Handle(command);
+        var act = () => _sut.Handle(command, CancellationToken.None);
         await act.Should().ThrowAsync<ArgumentNullException>();
     }
 
@@ -85,7 +85,7 @@ public class BatchCompletionMessageHandlerTests
             .Returns((BatchCompletionMessage?)null);
 
         // Act & Assert
-        var act = () => _sut.Handle(command);
+        var act = () => _sut.Handle(command, CancellationToken.None);
         await act.Should().ThrowAsync<NonRetryableException>();
     }
 
@@ -113,7 +113,7 @@ public class BatchCompletionMessageHandlerTests
             .ThrowsAsync(new InvalidOperationException("SNS publish failed"));
 
         // Act
-        var result = await _sut.Handle(command);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
         result.Should().Be(batchCompletionMessage);

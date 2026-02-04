@@ -2,7 +2,7 @@ using KeeperData.Core.Domain.BuildingBlocks;
 
 namespace KeeperData.Core.Domain.Sites;
 
-public class SiteActivity : ValueObject
+public class SiteActivity : EntityObject
 {
     public string Id { get; private set; }
     public SiteActivityType Type { get; private set; }

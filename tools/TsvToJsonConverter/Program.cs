@@ -5,7 +5,7 @@ using TsvToJsonConverter.DataConverter;
 namespace TsvToJsonConverter;
 
 [ExcludeFromCodeCoverage]
-public class Program
+public static class Program
 {
     public static async Task Main(string[] args)
     {
@@ -15,7 +15,6 @@ public class Program
             return;
         }
 
-        var converter = new GenericTsvConverter();
         var dataType = args[0].ToLower();
         string jsonString;
         var inputPath = "";

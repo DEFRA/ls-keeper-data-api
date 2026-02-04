@@ -9,8 +9,8 @@ public class GetPartiesQueryHandler(PartiesQueryAdapter adapter)
 {
     private readonly PartiesQueryAdapter _adapter = adapter;
 
-    protected override async Task<(List<PartyDocument> Items, int TotalCount)> FetchAsync(GetPartiesQuery query, CancellationToken cancellationToken)
+    protected override async Task<(List<PartyDocument> Items, int TotalCount)> FetchAsync(GetPartiesQuery request, CancellationToken cancellationToken)
     {
-        return await _adapter.GetPartiesAsync(query, cancellationToken);
+        return await _adapter.GetPartiesAsync(request, cancellationToken);
     }
 }

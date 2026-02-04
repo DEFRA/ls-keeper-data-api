@@ -6,7 +6,7 @@ public abstract class PagedQueryHandler<TQuery, TDocument>
     : IRequestHandler<TQuery, PaginatedResult<TDocument>>
     where TQuery : IPagedQuery<TDocument>
 {
-    protected abstract Task<(List<TDocument> Items, int TotalCount)> FetchAsync(TQuery query, CancellationToken cancellationToken);
+    protected abstract Task<(List<TDocument> Items, int TotalCount)> FetchAsync(TQuery request, CancellationToken cancellationToken);
 
     public async Task<PaginatedResult<TDocument>> Handle(TQuery query, CancellationToken cancellationToken)
     {

@@ -14,7 +14,7 @@ public class Party : IAggregateRoot
     public string? FirstName { get; private set; }
     public string? LastName { get; private set; }
     public string? Name { get; private set; }
-    public string? CustomerNumber { get; private set; }
+    public string CustomerNumber { get; private set; }
     public string? PartyType { get; private set; }
     public string? State { get; private set; }
     public bool Deleted { get; private set; }
@@ -40,7 +40,7 @@ public class Party : IAggregateRoot
         string? firstName,
         string? lastName,
         string? name,
-        string? customerNumber,
+        string customerNumber,
         string? partyType,
         string? state,
         bool deleted,
@@ -67,7 +67,7 @@ public class Party : IAggregateRoot
         string? firstName,
         string? lastName,
         string? name,
-        string? customerNumber,
+        string customerNumber,
         string? partyType,
         string? state,
         bool deleted,
@@ -97,7 +97,7 @@ public class Party : IAggregateRoot
         string? firstName,
         string? lastName,
         string? name,
-        string? customerNumber,
+        string customerNumber,
         string? partyType,
         string? state,
         bool deleted)
@@ -117,15 +117,6 @@ public class Party : IAggregateRoot
         {
             _domainEvents.Add(new PartyUpdatedDomainEvent(Id));
         }
-    }
-
-    public void Delete()
-    {
-        if (Deleted) return;
-
-        Deleted = true;
-        State = "Inactive";
-        LastUpdatedDate = DateTime.UtcNow;
     }
 
     public void SetAddress(Address address)
@@ -165,12 +156,6 @@ public class Party : IAggregateRoot
         }
     }
 
-    public void SetCommunications(Communication communication)
-    {
-        _communications.Clear();
-        _communications.Add(communication);
-    }
-
     public void AddOrUpdatePrimaryCommunication(
         DateTime lastUpdatedDate,
         Communication communication)
@@ -185,7 +170,7 @@ public class Party : IAggregateRoot
                 communication.Landline,
                 communication.PrimaryContactFlag);
             _communications.Add(newCommunication);
-            UpdateLastUpdatedDate(DateTime.UtcNow);
+            UpdateLastUpdatedDate(lastUpdatedDate);
             return;
         }
 
@@ -214,8 +199,7 @@ public class Party : IAggregateRoot
 
         if (existing is null)
         {
-            var newRole = PartyRole.Create(incoming.Site, incoming.Role, incoming.SpeciesManagedByRole);
-            _roles.Add(newRole);
+            _roles.Add(incoming);
             UpdateLastUpdatedDate(lastUpdatedDate);
             return;
         }
@@ -226,7 +210,7 @@ public class Party : IAggregateRoot
         }
     }
 
-    public void DeleteRole(string roleId, string siteId)
+    public void DeleteRole(DateTime lastUpdatedDate, string roleId, string? siteId)
     {
         var existing = _roles.FirstOrDefault(r =>
             r.Role.Id == roleId &&
@@ -235,7 +219,7 @@ public class Party : IAggregateRoot
         if (existing is not null)
         {
             _roles.Remove(existing);
-            UpdateLastUpdatedDate(DateTime.UtcNow);
+            UpdateLastUpdatedDate(lastUpdatedDate);
         }
     }
 

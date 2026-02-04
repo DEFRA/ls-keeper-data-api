@@ -48,7 +48,7 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
     [BsonElement("customerNumber")]
     [JsonPropertyName("customerNumber")]
     [AutoIndexed]
-    public string? CustomerNumber { get; set; }
+    public string CustomerNumber { get; set; } = string.Empty;
 
     [BsonElement("partyType")]
     [JsonPropertyName("partyType")]
@@ -131,41 +131,13 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
         return party;
     }
 
-    public static PartyDocument FromDomain(SiteParty siteParty)
-    {
-        var addressDoc = siteParty.CorrespondanceAddress is not null
-            ? AddressDocument.FromDomain(siteParty.CorrespondanceAddress)
-            : null;
-
-        var communications = siteParty.Communication?.Select(CommunicationDocument.FromDomain).ToList() ?? [];
-        var roles = siteParty.PartyRoles?.Select(PartyRoleWithSiteDocument.FromDomain).ToList() ?? [];
-
-        return new PartyDocument
-        {
-            Id = siteParty.Id,
-            CreatedDate = siteParty.CreatedDate,
-            LastUpdatedDate = siteParty.LastUpdatedDate,
-            Title = siteParty.Title,
-            FirstName = siteParty.FirstName,
-            LastName = siteParty.LastName,
-            Name = siteParty.Name,
-            CustomerNumber = siteParty.CustomerNumber,
-            PartyType = siteParty.PartyType,
-            State = siteParty.State,
-            Deleted = false,
-            CorrespondanceAddress = addressDoc,
-            Communication = communications,
-            PartyRoles = roles
-        };
-    }
-
     public SiteParty ToSitePartyDomain(DateTime lastUpdatedDate)
     {
         return new SiteParty(
             id: Id,
             createdDate: CreatedDate,
             lastUpdatedDate: lastUpdatedDate,
-            customerNumber: CustomerNumber ?? string.Empty,
+            customerNumber: CustomerNumber,
             title: Title,
             firstName: FirstName,
             lastName: LastName,
@@ -188,13 +160,8 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
         {
             if (partyRole == null) continue;
 
-            if (domainRolesById.TryGetValue(partyRole.IdentifierId, out var domainRole))
-            {
-                if (domainRole.Site != null)
-                {
-                    partyRole.Site = PartyRoleSiteDocument.FromDomain(domainRole.Site);
-                }
-            }
+            if (domainRolesById.TryGetValue(partyRole.IdentifierId, out var domainRole) && domainRole.Site != null)
+                partyRole.Site = PartyRoleSiteDocument.FromDomain(domainRole.Site);
         }
     }
 
@@ -217,6 +184,16 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("communication.email"),
                 new CreateIndexOptions { Name = "idxv2_communication_email", Collation = IndexDefaults.CollationCaseInsensitive, Sparse = true }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("customerNumber"),
+                new CreateIndexOptions
+                {
+                    Name = "uidx_customerNumber",
+                    Unique = true,
+                    Collation = IndexDefaults.CollationCaseInsensitive,
+                    Sparse = true
+                })
         ],
         AutoIndexedAttribute.GetIndexModels<PartyDocument>());
     }

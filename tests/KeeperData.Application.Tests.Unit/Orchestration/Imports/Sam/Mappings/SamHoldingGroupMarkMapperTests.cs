@@ -5,7 +5,6 @@ using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Services;
 using KeeperData.Tests.Common.Factories;
 using KeeperData.Tests.Common.Generators;
-using KeeperData.Tests.Common.Mappings;
 using Moq;
 
 namespace KeeperData.Application.Tests.Unit.Orchestration.Imports.Sam.Mappings;
@@ -30,7 +29,6 @@ public class SamHoldingGroupMarkMapperTests
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveProductionUsage;
     // private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveProductionType;
     private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveSpeciesType;
-    private readonly Func<string?, CancellationToken, Task<(string? premiseTypeCode, string? premiseActivityTypeCode)>> _resolveCodes;
 
     public SamHoldingGroupMarkMapperTests()
     {
@@ -50,7 +48,6 @@ public class SamHoldingGroupMarkMapperTests
         _resolvePremiseActivityType = _premiseActivityTypeLookupServiceMock.Object.FindAsync;
         _resolvePremiseType = _premiseTypeLookupServiceMock.Object.FindAsync;
         _resolveCountry = _countryIdentifierLookupServiceMock.Object.FindAsync;
-        _resolveCodes = _activityCodeLookupService.Object.FindByActivityCodeAsync;
 
         // Herds
         _productionUsageLookupServiceMock
@@ -64,26 +61,6 @@ public class SamHoldingGroupMarkMapperTests
         _resolveProductionUsage = _productionUsageLookupServiceMock.Object.FindAsync;
         // _resolveProductionType = _productionTypeLookupServiceMock.Object.FindAsync;
         _resolveSpeciesType = _speciesTypeLookupServiceMock.Object.FindAsync;
-    }
-
-    [Fact]
-    public void GivenNullableHoldings_WhenEnrichingWithGroupMarks_ShouldReturnEmptyList()
-    {
-        var results = SamHoldingGroupMarkMapper.EnrichHoldingsWithGroupMarks(silverHoldings: null!,
-            silverHerds: []);
-
-        results.Should().NotBeNull();
-        results.Count.Should().Be(0);
-    }
-
-    [Fact]
-    public void GivenEmptyHoldings_WhenEnrichingWithGroupMarks_ShouldReturnEmptyList()
-    {
-        var results = SamHoldingGroupMarkMapper.EnrichHoldingsWithGroupMarks(silverHoldings: [],
-            silverHerds: []);
-
-        results.Should().NotBeNull();
-        results.Count.Should().Be(0);
     }
 
     [Theory]
@@ -106,7 +83,6 @@ public class SamHoldingGroupMarkMapperTests
             _resolvePremiseActivityType,
             _resolvePremiseType,
             _resolveCountry,
-            _resolveCodes,
             CancellationToken.None);
 
         silverHoldings.Should().NotBeNull();
@@ -120,15 +96,6 @@ public class SamHoldingGroupMarkMapperTests
 
         silverHerds.Should().NotBeNull();
         silverHerds.Count.Should().Be(quantityHerds);
-
-        var results = SamHoldingGroupMarkMapper.EnrichHoldingsWithGroupMarks(
-            silverHoldings,
-            silverHerds);
-
-        for (var i = 0; i < quantityHoldings; i++)
-        {
-            VerifySamHoldingGroupMarkMappings.VerifyMappingEnrichingWithGroupMarks(silverHerds, results[i]);
-        }
     }
 
     private static List<SamCphHolding> GenerateSamCphHolding(string holdingIdentifier, int quantity)

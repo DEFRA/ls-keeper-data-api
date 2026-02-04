@@ -3,7 +3,6 @@ using KeeperData.Core.Locking;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Behaviors;
-using KeeperData.Infrastructure.Config;
 using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Infrastructure.Database.Factories;
 using KeeperData.Infrastructure.Database.Factories.Implementations;
@@ -27,6 +26,7 @@ namespace KeeperData.Infrastructure.Database.Setup;
 public static class ServiceCollectionExtensions
 {
     private static bool s_mongoSerializersRegistered;
+    private static readonly object s_mongoSerializersLock = new();
 
     public static void AddDatabaseDependencies(this IServiceCollection services, IConfiguration configuration)
     {
@@ -61,13 +61,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped(sp => (ITransactionManager)sp.GetRequiredService<IUnitOfWork>());
         services.AddScoped<IAggregateTracker, AggregateTracker>();
 
-        var mongoPreprodConfig = configuration.GetSection(MongoDbPreproductionServiceConfig.SectionName).Get<MongoDbPreproductionServiceConfig>();
-        services.Configure<MongoDbPreproductionServiceConfig>(configuration.GetSection(MongoDbPreproductionServiceConfig.SectionName));
-        if (mongoPreprodConfig?.Enabled ?? false)
-        {
-            services.AddScoped<IMongoDbPreproductionService, MongoDbPreproductionService>();
-        }
-
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(UnitOfWorkTransactionBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(DomainEventDispatchingBehavior<,>));
@@ -88,7 +81,7 @@ public static class ServiceCollectionExtensions
     {
         if (!s_mongoSerializersRegistered)
         {
-            lock (typeof(ServiceCollectionExtensions))
+            lock (s_mongoSerializersLock)
             {
                 if (!s_mongoSerializersRegistered)
                 {

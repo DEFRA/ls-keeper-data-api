@@ -100,7 +100,7 @@ public class SamHoldingImportPersistenceStep(
             .Where(e => !incomingKeys.Contains($"{e.CountyParishHoldingNumber}::{e.LocationName}::{e.SecondaryCph}::{e.SpeciesTypeCode}"))
             .ToList() ?? [];
 
-        if (orphanedHoldings?.Count > 0)
+        if (orphanedHoldings.Count > 0)
         {
             var deleteFilter = Builders<SamHoldingDocument>.Filter.In(
                 x => x.Id,
@@ -210,7 +210,7 @@ public class SamHoldingImportPersistenceStep(
             .Where(e => !incomingKeys.Contains($"{e.CountyParishHoldingHerd}::{e.ProductionUsageCode}::{e.Herdmark}"))
             .ToList() ?? [];
 
-        if (orphanedHerds?.Count > 0)
+        if (orphanedHerds.Count > 0)
         {
             var deleteFilter = Builders<SamHerdDocument>.Filter.In(
                 x => x.Id,

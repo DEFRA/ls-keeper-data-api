@@ -131,7 +131,8 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
                 si.LastUpdatedDate,
                 si.Identifier,
                 si.Type.ToDomain(),
-                si.IdentifierId);
+                si.IdentifierId,
+                LastUpdatedDate);
         }
 
         if (Species is not null && Species.Count > 0)
@@ -170,13 +171,12 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
                     mark: m.Mark,
                     startDate: m.StartDate,
                     endDate: m.EndDate,
-                    species: m.Species is not null
-                        ? Domain.Shared.Species.Create(
-                            id: m.Species.IdentifierId,
-                            lastUpdatedDate: m.Species.LastModifiedDate,
-                            code: m.Species.Code,
-                            name: m.Species.Name)
-                        : null))
+                    species: m.Species.Select(s => Domain.Shared.Species.Create(
+                            id: s.IdentifierId,
+                            lastUpdatedDate: s.LastModifiedDate,
+                            code: s.Code,
+                            name: s.Name))
+                        ))
                 .ToList();
 
             site.SetGroupMarks(groupMarks, LastUpdatedDate);

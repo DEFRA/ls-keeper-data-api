@@ -6,13 +6,14 @@ using System.Diagnostics.Metrics;
 namespace KeeperData.Infrastructure.Telemetry;
 
 [ExcludeFromCodeCoverage]
-public class ApplicationMetrics : IApplicationMetrics
+public sealed class ApplicationMetrics : IApplicationMetrics, IDisposable
 {
     private readonly Meter _meter;
     private readonly Counter<int> _requestCounter;
     private readonly Histogram<double> _durationHistogram;
     private readonly Counter<int> _generalCounter;
     private readonly Histogram<double> _generalHistogram;
+    private bool _disposed;
 
     public ApplicationMetrics(IOptions<AwsConfig> awsConfig)
     {
@@ -84,8 +85,24 @@ public class ApplicationMetrics : IApplicationMetrics
         _generalHistogram.Record(value, kvps.ToArray());
     }
 
+    private void Dispose(bool disposing)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        if (disposing)
+        {
+            _meter?.Dispose();
+        }
+
+        _disposed = true;
+    }
+
     public void Dispose()
     {
-        _meter?.Dispose();
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }

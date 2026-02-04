@@ -1,6 +1,5 @@
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.Attributes;
-using KeeperData.Core.Documents;
 using KeeperData.Core.Repositories;
 using Microsoft.Extensions.Logging;
 
@@ -9,7 +8,7 @@ namespace KeeperData.Application.Orchestration.Imports.Sam.Holdings.Steps;
 [StepOrder(4)]
 public class SamHoldingImportCheckForOrphansStep(
     IGoldSitePartyRoleRelationshipRepository goldSitePartyRoleRelationshipRepository,
-    IGenericRepository<PartyDocument> goldPartyRepository,
+    IPartiesRepository goldPartyRepository,
     ILogger<SamHoldingImportCheckForOrphansStep> logger)
     : ImportStepBase<SamHoldingImportContext>(logger)
 {
@@ -26,8 +25,7 @@ public class SamHoldingImportCheckForOrphansStep(
             cancellationToken);
 
         var orphans = existingRelationships
-            .Where(er => !incomingPartyIds.Any(ir =>
-                ir == er.CustomerNumber))
+            .Where(er => !incomingPartyIds.Any(ir => ir == er.CustomerNumber))
             .ToList();
 
         context.PartiesWithNoRelationshipToSiteToClean = orphans;
@@ -38,6 +36,7 @@ public class SamHoldingImportCheckForOrphansStep(
                 context.GoldSiteId,
                 context.PartiesWithNoRelationshipToSiteToClean,
                 goldPartyRepository,
+                DateTime.UtcNow,
                 cancellationToken);
 
             context.GoldParties ??= [];

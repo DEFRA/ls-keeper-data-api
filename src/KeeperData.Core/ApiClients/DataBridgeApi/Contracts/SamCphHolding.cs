@@ -117,9 +117,6 @@ public class SamCphHolding : BronzeBase
     [JsonPropertyName("FCLTY_SUB_BSNSS_ACTVTY_CODE")]
     public string? FCLTY_SUB_BSNSS_ACTVTY_CODE { get; set; }
 
-    [JsonPropertyName("FEATURE_STATUS_CODE")]
-    public string? FEATURE_STATUS_CODE { get; set; }
-
     [JsonPropertyName("MOVEMENT_RSTRCTN_RSN_CODE")]
     public string? MOVEMENT_RSTRCTN_RSN_CODE { get; set; }
 

@@ -1,0 +1,40 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+' Boundaries
+System_Boundary(cdp, "CDP") {
+  System(keeperApiGw, "API Gateway", "Exposes Keeper Data API")
+  System(keeperApi, "Keeper Data API", "Transforms raw data, forms business domain models, exposes data")
+  System(keeperBridge, "Keeper Data Bridge", "Loads data from External S3, decrypts and stores on Internal S3, generates reports, surfaces data via OData")
+  System(internalS3Load, "Internal S3 (Ingress)", "Stores decrypted imported files")
+  System(messageBus, "Message Bus (SQS)", "Internal message queue used to process changes")
+  SystemDb(databaseA, "Database (MongoDb)", "Original import structure")
+  SystemDb(databaseB, "Database (MongoDb)", "Domain models")
+}
+
+System_Boundary(defra, "External DEFRA") {
+  System_Ext(externalS3, "External S3", "Stores raw encrypted data files")
+}
+
+System_Boundary(liLtd, "LI Ltd") {
+  System_Ext(externalApps, "Applications", "Consumer of Keeper Reference Data")
+}
+
+System_Boundary(dataCleanse, "Data Cleanse") {
+  Person_Ext(externalUsers, "Users", "Consumer of Keeper Reference Data comparison reports")
+}
+
+' Relationships
+Rel(externalApps, keeperApiGw, "Queries business domain models")
+Rel(keeperApiGw, keeperApi, "Access Token from AWS Cognito")
+Rel(keeperApi, keeperBridge, "Scans for changes & imports data")
+Rel(keeperApi, databaseB, "Stores transformed data")
+Rel(keeperBridge, externalS3, "Loads encrypted data")
+Rel(keeperBridge, internalS3Load, "Stores decrypted files")
+Rel(internalS3Load, keeperBridge, "Read decrypted files to ingest into database")
+Rel(keeperBridge, databaseA, "Stores imported data")
+Rel(keeperApi, messageBus, "Publishes messages")
+Rel(messageBus, keeperApi, "Processes messages")
+Rel(externalUsers, keeperBridge, "Reviews comparison reports")
+
+@enduml

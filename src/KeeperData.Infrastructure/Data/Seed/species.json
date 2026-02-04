@@ -107,7 +107,7 @@
     "id": "fe2aba31-8503-426b-a38b-12b58d94a811",
     "code": "OTHBVN",
     "name": "Other Bovine",
-    "isActive": true,
+    "isActive": false,
     "sortOrder": 275,
     "effectiveStartDate": "2025-10-28T19:50:04.8236283Z",
     "effectiveEndDate": null,
@@ -249,7 +249,7 @@
   {
     "id": "c3aa865b-ad9e-4707-a371-410ce62f9a1f",
     "code": "GNF",
-    "name": "Gunea Fowl",
+    "name": "Guinea Fowl",
     "isActive": true,
     "sortOrder": 386,
     "effectiveStartDate": "2025-10-28T19:50:04.8236416Z",
@@ -340,7 +340,7 @@
   {
     "id": "e6745d2b-59e1-4a22-94b5-b3c4555ff29e",
     "code": "PGN",
-    "name": "Pegion",
+    "name": "Pigeon",
     "isActive": true,
     "sortOrder": 393,
     "effectiveStartDate": "2025-10-28T19:50:04.8236544Z",

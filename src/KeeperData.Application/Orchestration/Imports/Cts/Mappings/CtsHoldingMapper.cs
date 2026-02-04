@@ -72,9 +72,7 @@ public static class CtsHoldingMapper
                 Email = null,
                 Mobile = h.LOC_MOBILE_NUMBER,
                 Landline = h.LOC_TEL_NUMBER
-            },
-
-            GroupMarks = []
+            }
         };
 
         return result;

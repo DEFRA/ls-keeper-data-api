@@ -3,6 +3,7 @@ using FluentAssertions;
 using KeeperData.Api.Tests.Component.Orchestration.Imports.Sam.Mocks;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
@@ -14,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using Moq;
 using Moq.Contrib.HttpClient;
+using System.Linq.Expressions;
 using System.Net;
 
 namespace KeeperData.Api.Tests.Component.Orchestration.Imports.Sam.Holdings;
@@ -62,6 +64,65 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         VerifyRawDataTypes(result, holdingIdentifier, holders[0].PARTY_ID, parties[0].PARTY_ID);
         VerifySilverDataTypes(result, holdingIdentifier);
         VerifyGoldDataTypes(result, holdingIdentifier);
+    }
+
+    [Fact]
+    public async Task GivenExistingRelationship_WhenHolderRemovesCph_ThenRelationshipIsDeleted()
+    {
+        // Arrange
+        var cph = "12/345/6002";
+        var partyId = "C123456";
+        var existingRelationshipId = Guid.NewGuid().ToString();
+
+        // Create fake gold relationship that would exist prior to the import
+        var existingRelationships = new List<Core.Documents.SitePartyRoleRelationshipDocument>
+        {
+            new()
+            {
+                Id = existingRelationshipId,
+                HoldingIdentifier = cph,
+                CustomerNumber = partyId,
+                RoleTypeId = "role-id-for-holder",
+                SpeciesTypeId = "species-id-1"
+            }
+        };
+
+        SetupRepositoryMocks();
+        SetupLookupServiceMocks();
+
+        // SamHoldingImportPersistenceStep calls FindAsync to detect orphans
+        _appTestFixture.AppWebApplicationFactory._goldSitePartyRoleRelationshipRepositoryMock
+            .Setup(r => r.FindAsync(
+                It.IsAny<Expression<Func<Core.Documents.SitePartyRoleRelationshipDocument, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingRelationships);
+
+        // Holding is returned if it still exists
+        var holdings = new List<SamCphHolding> { new MockSamRawDataFactory().CreateMockHolding("U", 1, cph) };
+
+        // Simulating the holder dropping the CPH
+        var holders = new List<SamCphHolder>();
+
+        var herds = new List<SamHerd>();
+        var parties = new List<SamParty>();
+
+        var (holdingsUri, herdsUri, holdersUri, partiesUri) = GetAllQueryUris(cph, []);
+
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holdings));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, herdsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(herds));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, holdersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holders));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, partiesUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(parties));
+
+        // Act
+        await ExecuteTestAsync(_appTestFixture.AppWebApplicationFactory, cph);
+
+        // Assert
+        // Verify that DeleteManyAsync was called on the relationship repository. 
+        _appTestFixture.AppWebApplicationFactory._goldSitePartyRoleRelationshipRepositoryMock.Verify(r =>
+            r.DeleteManyAsync(
+                It.IsAny<FilterDefinition<Core.Documents.SitePartyRoleRelationshipDocument>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     private static async Task<SamHoldingImportContext> ExecuteTestAsync(AppWebApplicationFactory factory, string holdingIdentifier)
@@ -114,10 +175,6 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
     {
         context.SilverHoldings.Should().NotBeNull().And.HaveCount(1);
         context.SilverHoldings[0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
-        context.SilverHoldings[0].GroupMarks.Should().NotBeNull().And.HaveCount(1);
-        context.SilverHoldings![0].GroupMarks![0].Should().NotBeNull();
-        context.SilverHoldings![0].GroupMarks![0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
-
         context.SilverParties.Should().NotBeNull().And.HaveCount(2);
 
         var distinctRoles = context.RawParties.SelectMany(x => x.RoleList)

@@ -19,7 +19,7 @@ public class ActivityCodeLookupServiceTests
         repo.Setup(x => x.FindByActivityCodeAsync(key, It.IsAny<CancellationToken>())).ReturnsAsync(returnedDocument);
         var sut = new ActivityCodeLookupService(repo.Object);
 
-        var returned = await sut.FindByActivityCodeAsync(key);
+        var returned = await sut.FindByActivityCodeAsync(key, CancellationToken.None);
 
         returned.premiseActivityType.Should().Be(activityCode);
         returned.premiseType.Should().Be(premiseTypeCode);
@@ -33,7 +33,7 @@ public class ActivityCodeLookupServiceTests
         var repo = new Mock<IFacilityBusinessActivityMapRepository>();
         var sut = new ActivityCodeLookupService(repo.Object);
 
-        var returned = await sut.FindByActivityCodeAsync(key);
+        var returned = await sut.FindByActivityCodeAsync(key, CancellationToken.None);
 
         returned.premiseActivityType.Should().BeNull();
         returned.premiseType.Should().BeNull();

@@ -1,11 +1,11 @@
 using KeeperData.Application.Commands;
 using KeeperData.Application.Commands.MessageProcessing;
+using KeeperData.Application.Orchestration.Extentions;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.Serializers;
-using MongoDB.Driver;
 
 namespace KeeperData.Application.MessageHandlers.Sam;
 
@@ -17,7 +17,7 @@ public class SamUpdateHoldingMessageHandler(
     private readonly IUnwrappedMessageSerializer<SamUpdateHoldingMessage> _serializer = serializer;
     private readonly SamHoldingImportOrchestrator _orchestrator = orchestrator;
 
-    public async Task<MessageType> Handle(ProcessSamUpdateHoldingMessageCommand request, CancellationToken cancellationToken = default)
+    public async Task<MessageType> Handle(ProcessSamUpdateHoldingMessageCommand request, CancellationToken cancellationToken)
     {
         var message = request.Message;
 
@@ -35,18 +35,7 @@ public class SamUpdateHoldingMessageHandler(
             CurrentDateTime = DateTime.UtcNow
         };
 
-        try
-        {
-            await _orchestrator.ExecuteAsync(context, cancellationToken);
-        }
-        catch (MongoBulkWriteException ex)
-        {
-            throw new NonRetryableException($"Exception Message: {ex.Message}, Message Identifier: {messagePayload.Identifier}", ex);
-        }
-        catch (Exception ex)
-        {
-            throw new NonRetryableException(ex.Message, ex);
-        }
+        await _orchestrator.TryExecuteAndThrowRetryable(context, cancellationToken);
 
         return await Task.FromResult(messagePayload!);
     }

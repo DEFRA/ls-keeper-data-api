@@ -2,7 +2,7 @@ using KeeperData.Core.Domain.BuildingBlocks;
 
 namespace KeeperData.Core.Domain.Shared;
 
-public class PartyRoleRole : ValueObject
+public class PartyRoleRole : EntityObject
 {
     private const string CphHolderRoleId = "5053be9f-685a-4779-a663-ce85df6e02e8";
 
@@ -11,7 +11,7 @@ public class PartyRoleRole : ValueObject
     public string? Name { get; private set; }
     public DateTime? LastUpdatedDate { get; private set; }
 
-    public bool IsCphHolderRole => Id != null && Id == CphHolderRoleId;
+    public bool IsCphHolderRole => Id == CphHolderRoleId;
 
     public PartyRoleRole(
         string id,

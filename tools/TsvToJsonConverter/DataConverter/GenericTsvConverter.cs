@@ -5,7 +5,7 @@ using System.Text.Json;
 namespace TsvToJsonConverter.DataConverter;
 
 [ExcludeFromCodeCoverage]
-public class GenericTsvConverter
+public static class GenericTsvConverter
 {
     public static async Task<string> Convert<T>(string tsvInputPath, Func<string[], T> mapFunction)
     {

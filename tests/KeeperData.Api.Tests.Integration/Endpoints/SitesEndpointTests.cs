@@ -34,7 +34,7 @@ public class SitesEndpointTests(
                 new()
                 {
                     Id = SiteAId,
-                    Type = new PremisesTypeSummaryDocument { IdentifierId = "t1", Code = "Business", Description = "Business Premise" },
+                    Type = new PremisesTypeSummaryDocument { IdentifierId = "t1", Code = "Business", Name = "Business Premise" },
                     State = HoldingStatusType.Active.GetDescription(),
                     Name = "Site A",
                     CreatedDate = new DateTime(2010,01,01),
@@ -43,7 +43,7 @@ public class SitesEndpointTests(
                 new()
                 {
                     Id = SiteBId,
-                    Type = new PremisesTypeSummaryDocument { IdentifierId = "t2", Code = "Other", Description = "Other Premise" },
+                    Type = new PremisesTypeSummaryDocument { IdentifierId = "t2", Code = "Other", Name = "Other Premise" },
                     State = HoldingStatusType.Active.GetDescription(),
                     Name = "Site B",
                     LastUpdatedDate = new DateTime(2011,01,01)
@@ -51,7 +51,7 @@ public class SitesEndpointTests(
                 new()
                 {
                     Id = SiteCId,
-                    Type = new PremisesTypeSummaryDocument { IdentifierId = "t1", Code = "Business", Description = "Business Premise" },
+                    Type = new PremisesTypeSummaryDocument { IdentifierId = "t1", Code = "Business", Name = "Business Premise" },
                     State = HoldingStatusType.Active.GetDescription(),
                     Name = "Site C",
                     LastUpdatedDate = new DateTime(2012,01,01)
@@ -67,7 +67,7 @@ public class SitesEndpointTests(
                     {
                         IdentifierId = Guid.NewGuid().ToString(),
                         Code = HoldingIdentifierType.CPHN.ToString(),
-                        Description = HoldingIdentifierType.CPHN.GetDescription()!
+                        Name = HoldingIdentifierType.CPHN.GetDescription()!
                     }
                 },
                 new SiteIdentifierDocument
@@ -78,7 +78,7 @@ public class SitesEndpointTests(
                     {
                         IdentifierId = Guid.NewGuid().ToString(),
                         Code = HoldingIdentifierType.CPHN.ToString(),
-                        Description = HoldingIdentifierType.CPHN.GetDescription()!
+                        Name = HoldingIdentifierType.CPHN.GetDescription()!
                     }
                 }
             ]);
@@ -92,7 +92,7 @@ public class SitesEndpointTests(
                     {
                         IdentifierId = Guid.NewGuid().ToString(),
                         Code = HoldingIdentifierType.CPHN.ToString(),
-                        Description = HoldingIdentifierType.CPHN.GetDescription()!
+                        Name = HoldingIdentifierType.CPHN.GetDescription()!
                     }
                 }
             ]);

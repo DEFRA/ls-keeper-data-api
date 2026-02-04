@@ -3,13 +3,13 @@ using KeeperData.Core.Domain.Shared;
 
 namespace KeeperData.Core.Domain.Sites;
 
-public class GroupMark : ValueObject
+public class GroupMark : EntityObject
 {
     public string Id { get; private set; }
     public string Mark { get; private set; }
     public DateTime StartDate { get; private set; }
     public DateTime? EndDate { get; private set; }
-    public Species? Species { get; private set; }
+    public List<Species> Species { get; private set; } = [];
     public DateTime LastUpdatedDate { get; private set; }
 
     public GroupMark(
@@ -18,13 +18,13 @@ public class GroupMark : ValueObject
         string mark,
         DateTime startDate,
         DateTime? endDate,
-        Species? species)
+        IEnumerable<Species>? species)
     {
         Id = id;
         Mark = mark;
         StartDate = startDate;
         EndDate = endDate;
-        Species = species;
+        Species = species?.ToList() ?? [];
         LastUpdatedDate = lastUpdatedDate;
     }
 
@@ -32,7 +32,7 @@ public class GroupMark : ValueObject
         string mark,
         DateTime startDate,
         DateTime? endDate = null,
-        Species? species = null)
+        IEnumerable<Species>? species = null)
     {
         return new GroupMark(
             Guid.NewGuid().ToString(),
@@ -49,14 +49,22 @@ public class GroupMark : ValueObject
         string mark,
         DateTime startDate,
         DateTime? endDate,
-        Species? species)
+        IEnumerable<Species>? species)
     {
         var changed = false;
 
         changed |= Change(Mark, mark, v => Mark = v, lastUpdatedDate);
         changed |= Change(StartDate, startDate, v => StartDate = v, lastUpdatedDate);
         changed |= Change(EndDate, endDate, v => EndDate = v, lastUpdatedDate);
-        changed |= Change(Species, species, v => Species = v, lastUpdatedDate);
+
+        var newSpeciesList = species?.ToList() ?? [];
+
+        if (Species.Count != newSpeciesList.Count || !Species.SequenceEqual(newSpeciesList))
+        {
+            Species = newSpeciesList;
+            LastUpdatedDate = lastUpdatedDate;
+            changed = true;
+        }
 
         return changed;
     }
@@ -72,18 +80,15 @@ public class GroupMark : ValueObject
     public override IEnumerable<object> GetEqualityComponents()
     {
         yield return Mark;
-
-        if (Species is not null)
-        {
-            foreach (var component in Species.GetEqualityComponents())
-                yield return component;
-        }
-        else
-        {
-            yield return string.Empty;
-        }
-
         yield return StartDate;
         yield return EndDate ?? default;
+
+        yield return Species.Count;
+
+        foreach (var s in Species.OrderBy(x => x.Code))
+        {
+            foreach (var component in s.GetEqualityComponents())
+                yield return component;
+        }
     }
 }

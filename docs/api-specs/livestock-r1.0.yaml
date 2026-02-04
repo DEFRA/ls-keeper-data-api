@@ -421,15 +421,15 @@ components:
           description: "The timestamp of the last time the Role record was updated" 
 
     RoleList:
-          type: object
-          properties:
-            count:
-              type: integer
-              example: 1
-            values:
-              type: array
-              items:
-                $ref: '#/components/schemas/Role'
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 1
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
 
     RolesToParty:
       type: object
@@ -765,7 +765,7 @@ components:
           type: string
           description: "The business key/code values for a siteType"
           example: "AH"
-        description:
+        name:
           type: string
           description: The type of site an animal may reside at.
           example: "Agricultural Holding"
@@ -800,7 +800,7 @@ components:
           type: string
           description: "The business key/code values for a Site Identiier Type"
           example: "CPHN"
-        description:
+        name:
           type: string
           description: The type which identifies the site identifier.
           example: "CPH Number"

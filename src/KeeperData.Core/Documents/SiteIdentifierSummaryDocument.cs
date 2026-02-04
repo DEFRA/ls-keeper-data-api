@@ -14,9 +14,9 @@ public class SiteIdentifierSummaryDocument
     [JsonPropertyName("code")]
     public required string Code { get; set; }
 
-    [BsonElement("description")]
-    [JsonPropertyName("description")]
-    public required string Description { get; set; }
+    [BsonElement("name")]
+    [JsonPropertyName("name")]
+    public required string Name { get; set; }
 
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
@@ -26,13 +26,13 @@ public class SiteIdentifierSummaryDocument
     {
         IdentifierId = m.Id,
         Code = m.Code ?? string.Empty,
-        Description = m.Name ?? string.Empty,
+        Name = m.Name ?? string.Empty,
         LastUpdatedDate = m.LastUpdatedDate
     };
 
     public SiteIdentifierType ToDomain() => new(
         id: IdentifierId,
         code: Code,
-        name: Description,
+        name: Name,
         lastUpdatedDate: LastUpdatedDate);
 }

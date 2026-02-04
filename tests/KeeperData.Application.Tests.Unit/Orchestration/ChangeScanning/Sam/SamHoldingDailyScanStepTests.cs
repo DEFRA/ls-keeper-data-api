@@ -1,8 +1,10 @@
+using FluentAssertions;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily.Steps;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
@@ -114,5 +116,63 @@ public class SamHoldingDailyScanStepTests
         await _scanStep.ExecuteAsync(_context, CancellationToken.None);
 
         _messagePublisherMock.Verify(p => p.PublishAsync(It.IsAny<SamUpdateHoldingMessage>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_ShouldBubbleException_WhenApiThrowsRetryableException()
+    {
+        // Arrange
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { { "DataBridgeCollectionFlags:SamHoldingsEnabled", "true" } })
+            .Build();
+
+        var context = new SamDailyScanContext { CurrentDateTime = DateTime.UtcNow, UpdatedSinceDateTime = DateTime.UtcNow.AddHours(-24), Holdings = new() };
+
+        _dataBridgeClientMock
+            .Setup(x => x.GetSamHoldingsAsync<SamScanHoldingIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new RetryableException("Something went wrong"));
+
+        var scanStep = new SamHoldingDailyScanStep(
+            _dataBridgeClientMock.Object,
+            _messagePublisherMock.Object,
+            _config,
+            _delayProviderMock.Object,
+            config,
+            _loggerMock.Object);
+
+        // Act
+        Func<Task> act = () => scanStep.ExecuteAsync(context, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<RetryableException>();
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_ShouldBubbleException_WhenApiThrowsNonRetryableException()
+    {
+        // Arrange
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { { "DataBridgeCollectionFlags:SamHoldingsEnabled", "true" } })
+            .Build();
+
+        var context = new SamDailyScanContext { CurrentDateTime = DateTime.UtcNow, UpdatedSinceDateTime = DateTime.UtcNow.AddHours(-24), Holdings = new() };
+
+        _dataBridgeClientMock
+            .Setup(x => x.GetSamHoldingsAsync<SamScanHoldingIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new NonRetryableException("Something went wrong"));
+
+        var scanStep = new SamHoldingDailyScanStep(
+            _dataBridgeClientMock.Object,
+            _messagePublisherMock.Object,
+            _config,
+            _delayProviderMock.Object,
+            config,
+            _loggerMock.Object);
+
+        // Act
+        Func<Task> act = () => scanStep.ExecuteAsync(context, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<NonRetryableException>();
     }
 }

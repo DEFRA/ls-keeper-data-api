@@ -4,7 +4,6 @@ using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Extensions;
-using KeeperData.Tests.Common.TestData.Sam;
 
 namespace KeeperData.Tests.Common.Mappings;
 
@@ -49,12 +48,14 @@ public static class VerifySamHoldingMappings
             : HoldingStatusType.Active.GetDescription();
         target.HoldingStatus.Should().Be(expectedStatus);
 
-        target.PremiseActivityTypeCode.Should().Be(SamTestScenarios.LookupCodes(source.FCLTY_SUB_BSNSS_ACTVTY_CODE).associatedPremiseActivityCode);
-        target.PremiseSubActivityTypeCode.Should().Be(source.FCLTY_SUB_BSNSS_ACTVTY_CODE);
-
         target.MovementRestrictionReasonCode.Should().Be(source.MOVEMENT_RSTRCTN_RSN_CODE);
 
-        target.PremiseTypeCode.Should().Be(SamTestScenarios.LookupCodes(source.FCLTY_SUB_BSNSS_ACTVTY_CODE).associatedPremiseTypeCode);
+        // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
+        // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+        target.PremiseActivityTypeCode.Should().BeNull();
+        target.PremiseTypeCode.Should().BeNull();
+        // target.PremiseActivityTypeCode.Should().Be(SamTestScenarios.LookupCodes(source.FCLTY_SUB_BSNSS_ACTVTY_CODE).associatedPremiseActivityCode);
+        // target.PremiseTypeCode.Should().Be(SamTestScenarios.LookupCodes(source.FCLTY_SUB_BSNSS_ACTVTY_CODE).associatedPremiseTypeCode);
 
         target.SpeciesTypeCode.Should().Be(source.AnimalSpeciesCodeUnwrapped);
 
@@ -98,9 +99,5 @@ public static class VerifySamHoldingMappings
         comms.Email.Should().BeNull();
         comms.Mobile.Should().BeNull();
         comms.Landline.Should().BeNull();
-
-        // GroupMarks
-        target.GroupMarks.Should().NotBeNull();
-        target.GroupMarks.Should().BeEmpty();
     }
 }

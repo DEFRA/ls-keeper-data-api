@@ -19,9 +19,8 @@ public class CtsDailyScanJob(
 
             logger.LogInformation("CtsDailyScanJob completed at {endTime}", DateTime.UtcNow);
         }
-        catch (Exception ex)
+        catch
         {
-            logger.LogError(ex, "CtsDailyScanJob failed.");
             throw;
         }
     }

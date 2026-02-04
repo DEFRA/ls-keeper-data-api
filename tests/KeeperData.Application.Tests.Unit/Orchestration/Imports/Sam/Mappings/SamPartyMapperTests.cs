@@ -377,6 +377,46 @@ public class SamPartyMapperTests
         result.Single().PERSON_TITLE.Should().Be("Ms");
     }
 
+    [Fact]
+    public void AggregatePartyAndHolder_WhenPartyFieldIsEmptyAndHolderFieldIsNull_ShouldSetToNull()
+    {
+        var party = new SamParty
+        {
+            PARTY_ID = "P1",
+            PERSON_FAMILY_NAME = ""
+        };
+
+        var holder = new SamCphHolder
+        {
+            PARTY_ID = "P1",
+            PERSON_FAMILY_NAME = null
+        };
+
+        var result = SamPartyMapper.AggregatePartyAndHolder([party], [holder]);
+
+        result.Single().PERSON_FAMILY_NAME.Should().BeNull();
+    }
+
+    [Fact]
+    public void AggregatePartyAndHolder_WhenPartyFieldIsEmptyAndHolderFieldIsEmpty_ShouldSetToNull()
+    {
+        var party = new SamParty
+        {
+            PARTY_ID = "P1",
+            PERSON_FAMILY_NAME = ""
+        };
+
+        var holder = new SamCphHolder
+        {
+            PARTY_ID = "P1",
+            PERSON_FAMILY_NAME = ""
+        };
+
+        var result = SamPartyMapper.AggregatePartyAndHolder([party], [holder]);
+
+        result.Single().PERSON_FAMILY_NAME.Should().BeNull();
+    }
+
     private static List<SamParty> GenerateSamParty(int quantity)
     {
         var factory = new MockSamRawDataFactory();

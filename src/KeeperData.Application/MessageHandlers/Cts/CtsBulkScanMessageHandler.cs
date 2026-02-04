@@ -18,7 +18,7 @@ public class CtsBulkScanMessageHandler(CtsBulkScanOrchestrator orchestrator,
     private readonly CtsBulkScanOrchestrator _orchestrator = orchestrator;
     private readonly DataBridgeScanConfiguration _dataBridgeScanConfiguration = dataBridgeScanConfiguration;
 
-    public async Task<MessageType> Handle(ProcessCtsBulkScanMessageCommand request, CancellationToken cancellationToken = default)
+    public async Task<MessageType> Handle(ProcessCtsBulkScanMessageCommand request, CancellationToken cancellationToken)
     {
         var message = request.Message;
 

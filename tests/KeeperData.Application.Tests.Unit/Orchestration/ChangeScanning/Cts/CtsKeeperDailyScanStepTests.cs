@@ -1,8 +1,10 @@
+using FluentAssertions;
 using KeeperData.Application.Orchestration.ChangeScanning.Cts.Daily;
 using KeeperData.Application.Orchestration.ChangeScanning.Cts.Daily.Steps;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
@@ -70,5 +72,35 @@ public class CtsKeeperDailyScanStepTests
             It.Is<DateTime?>(d => d.HasValue && d.Value.Subtract(_context.UpdatedSinceDateTime!.Value).TotalSeconds < 1),
             It.IsAny<string>(),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_ShouldBubbleException_WhenApiThrowsRetryableException()
+    {
+        // Arrange
+        _dataBridgeClientMock
+            .Setup(x => x.GetCtsKeepersAsync<CtsScanAgentOrKeeperIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new RetryableException("Something went wrong"));
+
+        // Act
+        Func<Task> act = () => _scanStep.ExecuteAsync(_context, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<RetryableException>();
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_ShouldBubbleException_WhenApiThrowsNonRetryableException()
+    {
+        // Arrange
+        _dataBridgeClientMock
+            .Setup(x => x.GetCtsKeepersAsync<CtsScanAgentOrKeeperIdentifier>(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new NonRetryableException("Something went wrong"));
+
+        // Act
+        Func<Task> act = () => _scanStep.ExecuteAsync(_context, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<NonRetryableException>();
     }
 }

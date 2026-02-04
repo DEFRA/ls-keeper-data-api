@@ -2,6 +2,7 @@ using FluentAssertions;
 using KeeperData.Application.Orchestration.Updates.Cts.Holdings;
 using KeeperData.Application.Orchestration.Updates.Cts.Holdings.Steps;
 using KeeperData.Core.ApiClients.DataBridgeApi;
+using KeeperData.Core.Exceptions;
 using KeeperData.Tests.Common.Factories;
 using KeeperData.Tests.Common.Generators;
 using Microsoft.Extensions.Logging;
@@ -75,5 +76,75 @@ public class CtsUpdateHoldingRawAggregationStepTests
         context.RawHolding.Should().BeNull();
         context.RawAgents.Should().BeEmpty();
         context.RawKeepers.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_WhenClientThrowsRetryableException_PropagatesException()
+    {
+        // Arrange
+        var context = new CtsUpdateHoldingContext { Cph = "AH-123456789" };
+        var exception = new RetryableException("Transient error");
+
+        _dataBridgeClientMock.Setup(x => x.GetCtsHoldingsAsync(context.Cph, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(exception);
+
+        // return empty
+        _dataBridgeClientMock.Setup(x => x.GetCtsAgentsAsync(context.Cph, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        _dataBridgeClientMock.Setup(x => x.GetCtsKeepersAsync(context.Cph, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        // Act
+        var act = () => _sut.ExecuteAsync(context, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<RetryableException>().WithMessage("Transient error");
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_WhenClientThrowsNonRetryableException_PropagatesException()
+    {
+        // Arrange
+        var context = new CtsUpdateHoldingContext { Cph = "AH-123456789" };
+        var exception = new NonRetryableException("Permanent error");
+
+        _dataBridgeClientMock.Setup(x => x.GetCtsHoldingsAsync(context.Cph, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        _dataBridgeClientMock.Setup(x => x.GetCtsAgentsAsync(context.Cph, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(exception);
+
+        _dataBridgeClientMock.Setup(x => x.GetCtsKeepersAsync(context.Cph, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        // Act
+        var act = () => _sut.ExecuteAsync(context, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<NonRetryableException>().WithMessage("Permanent error");
+    }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_WhenUnexpectedExceptionOccurs_PropagatesException()
+    {
+        // Arrange
+        var context = new CtsUpdateHoldingContext { Cph = "AH-123456789" };
+        var exception = new InvalidOperationException("Something went wrong mapping data");
+
+        // first calls succeed
+        _dataBridgeClientMock.Setup(x => x.GetCtsHoldingsAsync(context.Cph, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        _dataBridgeClientMock.Setup(x => x.GetCtsAgentsAsync(context.Cph, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        // then fail
+        _dataBridgeClientMock.Setup(x => x.GetCtsKeepersAsync(context.Cph, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(exception);
+
+        // Act
+        var act = () => _sut.ExecuteAsync(context, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Something went wrong mapping data");
     }
 }
