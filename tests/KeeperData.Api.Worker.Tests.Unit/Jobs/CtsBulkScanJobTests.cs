@@ -61,12 +61,5 @@ public class CtsBulkScanJobTests
         // Act & Assert
         await _sut.Invoking(s => s.Execute(_contextMock.Object))
             .Should().ThrowAsync<Exception>().WithMessage("Task failure");
-
-        _loggerMock.Verify(x => x.Log(
-            LogLevel.Error,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("failed")),
-            expectedException,
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 }

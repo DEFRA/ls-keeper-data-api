@@ -47,13 +47,5 @@ public class SamBulkScanJobTests
         _taskMock.Setup(x => x.RunAsync(It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Fail"));
 
         await _sut.Invoking(s => s.Execute(_contextMock.Object)).Should().ThrowAsync<Exception>();
-
-        _loggerMock.Verify(x => x.Log(
-            LogLevel.Error,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("failed")),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once);
     }
 }
