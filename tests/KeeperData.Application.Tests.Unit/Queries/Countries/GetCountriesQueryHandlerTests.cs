@@ -12,7 +12,7 @@ namespace KeeperData.Application.Tests.Unit.Queries.Countries;
 public class GetCountriesQueryHandlerTests
 {
     [Fact]
-    public async Task QueryHandlerShouldReturnRecordinCorrectMapping()
+    public async Task QueryHandlerShouldReturnRecordinCorrectPaginatedResult()
     {
         var repoMock = new Mock<ICountryRepository>();
         var lastUpdated = new DateTime(2001, 01, 01, 12, 13, 14);
@@ -47,7 +47,7 @@ public class GetCountriesQueryHandlerTests
     }
 
     [Fact]
-    public async Task WhenCountryDoesNotExistThenQueryHandlerShouldThrow()
+    public async Task WhenCountryDoesNotExistThenQueryHandlerShouldReturnEmpty()
     {
         var repoMock = new Mock<ICountryRepository>();
         repoMock.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new List<CountryDocument>());
