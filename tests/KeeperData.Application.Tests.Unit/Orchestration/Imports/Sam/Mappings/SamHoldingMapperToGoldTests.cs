@@ -95,7 +95,7 @@ public class SamHoldingMapperToGoldTests
                 {
                     d.Type = new PremisesTypeSummaryDocument()
                     {
-                        Code = "prem1code", Description = "prem1name", IdentifierId = "prem-1-id"
+                        Code = "prem1code", Name = "prem1name", IdentifierId = "prem-1-id"
                     };
                 }];
             yield return
@@ -554,7 +554,7 @@ public class SamHoldingMapperToGoldTests
                     Type = new SiteIdentifierSummaryDocument
                     {
                         Code = "CPHN",
-                        Description = "CPH Number",
+                        Name = "CPH Number",
                         IdentifierId = "cphn-sit-id",
                         LastUpdatedDate = null
                     }
@@ -590,7 +590,7 @@ public class SamHoldingMapperToGoldTests
                     Type = new SiteIdentifierSummaryDocument
                     {
                         Code = "CPHN",
-                        Description = "CPH Number",
+                        Name = "CPH Number",
                         IdentifierId = "cphn-sit-id",
                         LastUpdatedDate = null
                     }
@@ -614,7 +614,7 @@ public class SamHoldingMapperToGoldTests
             Type = new PremisesTypeSummaryDocument()
             {
                 Code = "prem1code",
-                Description = "prem1name",
+                Name = "prem1name",
                 IdentifierId = "prem-1-id",
                 LastUpdatedDate = DateTime.MinValue
             }
@@ -626,7 +626,7 @@ public class SamHoldingMapperToGoldTests
 
         result!.Type!.IdentifierId.Should().Be("prem-2-id");
         result.Type.Code.Should().Be("prem2code");
-        result.Type.Description.Should().Be("prem2name");
+        result.Type.Name.Should().Be("prem2name");
     }
 
     private static SiteGroupMarkRelationshipDocument CreateGroupMarkRelationshipDocument(string? id = "group-mark-id", string herdmark = "H1000001")
@@ -695,11 +695,11 @@ public class SamHoldingMapperToGoldTests
                 new SiteIdentifierDocument()
                 {
                     IdentifierId = "any-guid",
-                    Identifier = "", // TODO confirm - should we create Site identifiers if the id incoming (here CPHN) is null or empty???
+                    Identifier = "",
                     Type = new SiteIdentifierSummaryDocument()
                     {
                         Code = "CPHN",
-                        Description = "CPH Number",
+                        Name = "CPH Number",
                         IdentifierId = "cphn-sit-id"
                     }
                 }

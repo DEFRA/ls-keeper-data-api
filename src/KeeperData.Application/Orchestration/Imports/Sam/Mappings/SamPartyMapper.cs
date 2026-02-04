@@ -195,8 +195,8 @@ public static class SamPartyMapper
         string goldSiteId,
         List<SitePartyRoleRelationship> orphansToClean,
         IPartiesRepository goldPartyRepository,
-        CancellationToken cancellationToken,
-        DateTime updateDate)
+        DateTime updateDate,
+        CancellationToken cancellationToken)
     {
         var result = new List<PartyDocument>();
 
@@ -380,7 +380,7 @@ public static class SamPartyMapper
             party.LastUpdatedDate,
             communication);
 
-        await UpdateRoles(goldSiteId, incoming, goldSiteGroupMarks, getSpeciesTypeById, cancellationToken, party);
+        await UpdateRoles(goldSiteId, incoming, goldSiteGroupMarks, getSpeciesTypeById, party, cancellationToken);
 
         return await Task.FromResult(party);
     }
@@ -418,7 +418,7 @@ public static class SamPartyMapper
             incoming.LastUpdatedDate,
             updatedCommunication);
 
-        await UpdateRoles(goldSiteId, incoming, goldSiteGroupMarks, getSpeciesTypeById, cancellationToken, party);
+        await UpdateRoles(goldSiteId, incoming, goldSiteGroupMarks, getSpeciesTypeById, party, cancellationToken);
 
         return party;
     }
@@ -428,17 +428,17 @@ public static class SamPartyMapper
         SamPartyDocument incoming,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         Func<string?, CancellationToken, Task<SpeciesDocument?>> getSpeciesTypeById,
-        CancellationToken cancellationToken,
-        Party party)
+        Party party,
+        CancellationToken cancellationToken)
     {
         var roleList = incoming.Roles?
             .Where(r => !string.IsNullOrWhiteSpace(r.RoleTypeId))
             .ToList();
 
         var newRoles = new List<PartyRole>();
-        foreach (var r in roleList ?? [])
+        foreach (var role in roleList ?? [])
         {
-            var partyRole = await CreatePartyRole(goldSiteId, incoming, goldSiteGroupMarks, getSpeciesTypeById, cancellationToken, r);
+            var partyRole = await CreatePartyRole(goldSiteId, incoming, goldSiteGroupMarks, getSpeciesTypeById, role, cancellationToken);
             newRoles.Add(partyRole);
             party.AddOrUpdateRole(incoming.LastUpdatedDate, partyRole);
         }
@@ -449,7 +449,6 @@ public static class SamPartyMapper
             party.DeleteRole(incoming.LastUpdatedDate, role.Role.Id, role.Site?.Id);
         }
     }
-
 
     public static void EnrichPartyRoleWithSiteInformation(
         List<PartyDocument> goldParties,
@@ -467,7 +466,7 @@ public static class SamPartyMapper
                 var premiseType = goldSite.Type != null ? PremisesType.Create(
                     goldSite.Type.IdentifierId,
                     goldSite.Type.Code,
-                    goldSite.Type.Description,
+                    goldSite.Type.Name,
                     goldSite.Type.LastUpdatedDate) : null;
 
                 partyRole.Site!.ApplyChanges(
@@ -493,8 +492,8 @@ public static class SamPartyMapper
         SamPartyDocument incoming,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         Func<string?, CancellationToken, Task<SpeciesDocument?>> getSpeciesTypeById,
-        CancellationToken cancellationToken,
-        PartyRoleDocument partyRoleDocument)
+        PartyRoleDocument partyRoleDocument,
+        CancellationToken cancellationToken)
     {
         var partyRoleSite = PartyRoleSite.Create(
             siteId: goldSiteId,

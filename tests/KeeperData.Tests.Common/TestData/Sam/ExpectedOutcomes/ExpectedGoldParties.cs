@@ -80,7 +80,7 @@ public static class ExpectedGoldParties
                                     {
                                         IdentifierId = Guid.NewGuid().ToString(),
                                         Code = HoldingIdentifierType.CPHN.ToString(),
-                                        Description = HoldingIdentifierType.CPHN.GetDescription()!,
+                                        Name = HoldingIdentifierType.CPHN.GetDescription()!,
                                         LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                                     },
                                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
@@ -154,7 +154,7 @@ public static class ExpectedGoldParties
                                     {
                                         IdentifierId = Guid.NewGuid().ToString(),
                                         Code = HoldingIdentifierType.CPHN.ToString(),
-                                        Description = HoldingIdentifierType.CPHN.GetDescription()!,
+                                        Name = HoldingIdentifierType.CPHN.GetDescription()!,
                                         LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                                     },
                                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
@@ -228,7 +228,7 @@ public static class ExpectedGoldParties
                                     {
                                         IdentifierId = Guid.NewGuid().ToString(),
                                         Code = HoldingIdentifierType.CPHN.ToString(),
-                                        Description = HoldingIdentifierType.CPHN.GetDescription()!,
+                                        Name = HoldingIdentifierType.CPHN.GetDescription()!,
                                         LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                                     },
                                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
@@ -317,7 +317,7 @@ public static class ExpectedGoldParties
                                     {
                                         IdentifierId = Guid.NewGuid().ToString(),
                                         Code = HoldingIdentifierType.CPHN.ToString(),
-                                        Description = HoldingIdentifierType.CPHN.GetDescription()!,
+                                        Name = HoldingIdentifierType.CPHN.GetDescription()!,
                                         LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                                     },
                                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
@@ -439,7 +439,7 @@ public static class ExpectedGoldParties
                                     {
                                         IdentifierId = Guid.NewGuid().ToString(),
                                         Code = HoldingIdentifierType.CPHN.ToString(),
-                                        Description = HoldingIdentifierType.CPHN.GetDescription()!,
+                                        Name = HoldingIdentifierType.CPHN.GetDescription()!,
                                         LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                                     },
                                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
@@ -548,7 +548,7 @@ public static class ExpectedGoldParties
                                     {
                                         IdentifierId = Guid.NewGuid().ToString(),
                                         Code = HoldingIdentifierType.CPHN.ToString(),
-                                        Description = HoldingIdentifierType.CPHN.GetDescription()!,
+                                        Name = HoldingIdentifierType.CPHN.GetDescription()!,
                                         LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                                     },
                                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
@@ -593,7 +593,7 @@ public static class ExpectedGoldParties
                                     {
                                         IdentifierId = Guid.NewGuid().ToString(),
                                         Code = HoldingIdentifierType.CPHN.ToString(),
-                                        Description = HoldingIdentifierType.CPHN.GetDescription()!,
+                                        Name = HoldingIdentifierType.CPHN.GetDescription()!,
                                         LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)
                                     },
                                     LastUpdatedDate = new DateTime(2025, 2, 2, 0, 0, 0)

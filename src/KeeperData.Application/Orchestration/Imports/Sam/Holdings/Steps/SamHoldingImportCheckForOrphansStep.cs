@@ -36,8 +36,8 @@ public class SamHoldingImportCheckForOrphansStep(
                 context.GoldSiteId,
                 context.PartiesWithNoRelationshipToSiteToClean,
                 goldPartyRepository,
-                cancellationToken,
-                DateTime.UtcNow);
+                DateTime.UtcNow,
+                cancellationToken);
 
             context.GoldParties ??= [];
             context.GoldParties.AddRange(cleanedParties);

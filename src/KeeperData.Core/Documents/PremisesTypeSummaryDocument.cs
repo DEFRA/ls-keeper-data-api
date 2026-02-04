@@ -15,9 +15,9 @@ public class PremisesTypeSummaryDocument : INestedEntity
     [JsonPropertyName("code")]
     public string Code { get; set; } = string.Empty;
 
-    [BsonElement("description")]
-    [JsonPropertyName("description")]
-    public string Description { get; set; } = string.Empty;
+    [BsonElement("name")]
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
 
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
@@ -27,14 +27,14 @@ public class PremisesTypeSummaryDocument : INestedEntity
     {
         IdentifierId = domain.Id,
         Code = domain.Code,
-        Description = domain.Description,
+        Name = domain.Description,
         LastUpdatedDate = domain.LastUpdatedDate
     };
 
     public PremisesType ToDomain() => new(
         IdentifierId,
         Code,
-        Description,
+        Name,
         LastUpdatedDate
     );
 }
