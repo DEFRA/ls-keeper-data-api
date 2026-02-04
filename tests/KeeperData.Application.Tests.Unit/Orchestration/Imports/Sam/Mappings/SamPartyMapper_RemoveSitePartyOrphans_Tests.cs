@@ -135,7 +135,7 @@ public class SamPartyMapper_RemoveSitePartyOrphans_Tests
 
     private async Task<List<PartyDocument>> WhenIRemoveSitePartyOrphans(List<SitePartyRoleRelationship> orphansToClean)
     {
-        return await SamPartyMapper.RemoveSitePartyOrphans(GoldSiteId, orphansToClean, _mockGoldPartyRepo.Object, CancellationToken.None, DateTime.MinValue);
+        return await SamPartyMapper.RemoveSitePartyOrphans(GoldSiteId, orphansToClean, _mockGoldPartyRepo.Object, DateTime.MinValue, CancellationToken.None);
     }
 }
 

@@ -80,7 +80,7 @@ public class SitesEndpointTests(AppTestFixture appTestFixture) : IClassFixture<A
             {
                 IdentifierId = Guid.NewGuid().ToString(),
                 Code = typeCode,
-                Description = $"{typeCode} Description"
+                Name = $"{typeCode} Description"
             },
             State = HoldingStatusType.Active.GetDescription()
         };
@@ -93,7 +93,7 @@ public class SitesEndpointTests(AppTestFixture appTestFixture) : IClassFixture<A
             {
                 IdentifierId = Guid.NewGuid().ToString(),
                 Code = HoldingIdentifierType.CPHN.ToString(),
-                Description = HoldingIdentifierType.CPHN.GetDescription()!
+                Name = HoldingIdentifierType.CPHN.GetDescription()!
             },
             LastUpdatedDate = DateTime.UtcNow
         });
