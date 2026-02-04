@@ -19,9 +19,8 @@ public class CtsBulkScanJob(
 
             logger.LogInformation("CtsBulkScanJob completed at {endTime}", DateTime.UtcNow);
         }
-        catch (Exception ex)
+        catch
         {
-            logger.LogError(ex, "CtsBulkScanJob failed.");
             throw;
         }
     }

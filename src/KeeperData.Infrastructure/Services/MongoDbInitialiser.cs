@@ -60,7 +60,7 @@ namespace KeeperData.Infrastructure.Services
             if (indexName.StartsWith("idx_"))
             {
                 await collection.Indexes.DropOneAsync(indexName);
-                logger.LogInformation($"Dropped index: {indexName}");
+                logger.LogInformation("Dropped index: {IndexName}", indexName);
             }
         }
     }

@@ -19,9 +19,8 @@ public class SamDailyScanJob(
 
             logger.LogInformation("SamDailyScanJob completed at {endTime}", DateTime.UtcNow);
         }
-        catch (Exception ex)
+        catch
         {
-            logger.LogError(ex, "SamDailyScanJob failed.");
             throw;
         }
     }
