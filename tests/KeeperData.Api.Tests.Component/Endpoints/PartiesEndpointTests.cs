@@ -50,7 +50,7 @@ public class PartiesEndpointTests(AppTestFixture appTestFixture) : IClassFixture
     {
         // Arrange
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
-        
+
         var parties = new List<PartyDocument>
         {
             CreateParty("Loafus", "Cramwell"),
@@ -74,7 +74,7 @@ public class PartiesEndpointTests(AppTestFixture appTestFixture) : IClassFixture
     {
         // Arrange
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
-        
+
         var parties = new List<PartyDocument>
         {
             CreateParty("Mikasa", "Akerman"),
@@ -151,13 +151,13 @@ public class PartiesEndpointTests(AppTestFixture appTestFixture) : IClassFixture
     private static List<PartyDocument> ApplyFiltersAndSorting(List<PartyDocument> allParties, int expectedFilteredCount)
     {
         var baseFiltered = allParties.Where(p => !p.Deleted).OrderBy(p => p.Name).ToList();
-        
+
         if (expectedFilteredCount < baseFiltered.Count)
         {
             var filtered = baseFiltered.Where(p => p.LastName == "Akerman").ToList();
             return filtered.Count == expectedFilteredCount ? filtered : baseFiltered.Take(expectedFilteredCount).ToList();
         }
-        
+
         return baseFiltered;
     }
 
