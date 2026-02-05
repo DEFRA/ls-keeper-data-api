@@ -18,8 +18,9 @@ public class SamHoldingDailyScanStep(
     DataBridgeScanConfiguration dataBridgeScanConfiguration,
     IDelayProvider delayProvider,
     IConfiguration configuration,
-    ILogger<SamHoldingDailyScanStep> logger) 
-    : DailyScanStepBase<SamScanHoldingIdentifier>(dataBridgeClient, intakeMessagePublisher, dataBridgeScanConfiguration, delayProvider, configuration, logger)
+    ILogger<SamHoldingDailyScanStep> logger)
+    : DailyScanStepBase<SamScanHoldingIdentifier>(dataBridgeClient, intakeMessagePublisher, dataBridgeScanConfiguration,
+        delayProvider, configuration, logger)
 {
     private const string SelectFields = "CPH";
     private const string OrderBy = "CPH asc";
@@ -53,11 +54,7 @@ public class SamHoldingDailyScanStep(
 
         foreach (var id in identifiers)
         {
-            var message = new SamUpdateHoldingMessage
-            {
-                Id = Guid.NewGuid(),
-                Identifier = id
-            };
+            var message = new SamUpdateHoldingMessage { Id = Guid.NewGuid(), Identifier = id };
 
             await IntakeMessagePublisher.PublishAsync(message, cancellationToken);
         }
