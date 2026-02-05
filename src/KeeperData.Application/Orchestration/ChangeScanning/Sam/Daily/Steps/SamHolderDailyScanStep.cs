@@ -18,83 +18,52 @@ public class SamHolderDailyScanStep(
     DataBridgeScanConfiguration dataBridgeScanConfiguration,
     IDelayProvider delayProvider,
     IConfiguration configuration,
-    ILogger<SamHolderDailyScanStep> logger) : ScanStepBase<SamDailyScanContext>(logger)
+    ILogger<SamHolderDailyScanStep> logger)
+    : DailyScanStepBase<SamScanHolderIdentifier>(dataBridgeClient, intakeMessagePublisher, dataBridgeScanConfiguration, delayProvider, configuration, logger)
 {
-    private readonly IDataBridgeClient _dataBridgeClient = dataBridgeClient;
-    private readonly IMessagePublisher<IntakeEventsQueueClient> _intakeMessagePublisher = intakeMessagePublisher;
-    private readonly DataBridgeScanConfiguration _dataBridgeScanConfiguration = dataBridgeScanConfiguration;
-    private readonly IDelayProvider _delayProvider = delayProvider;
-    private readonly bool _samHoldersEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamHoldersEnabled");
-
     private const string SelectFields = "PARTY_ID,CPHS";
     private const string OrderBy = "PARTY_ID asc";
 
-    protected override async Task ExecuteCoreAsync(SamDailyScanContext context, CancellationToken cancellationToken)
+    protected override bool IsEntityEnabled()
+        => Configuration.GetValue<bool>("DataBridgeCollectionFlags:SamHoldersEnabled");
+
+    protected override EntityScanContext GetScanContext(SamDailyScanContext context)
+        => context.Holders;
+
+    protected override async Task<DataBridgeResponse<SamScanHolderIdentifier>?> QueryDataAsync(
+        SamDailyScanContext context,
+        CancellationToken cancellationToken)
+        => await DataBridgeClient.GetSamHoldersAsync<SamScanHolderIdentifier>(
+            context.Holders.CurrentTop,
+            context.Holders.CurrentSkip,
+            SelectFields,
+            context.UpdatedSinceDateTime,
+            OrderBy,
+            cancellationToken);
+
+    protected override async Task PublishMessagesAsync(
+        DataBridgeResponse<SamScanHolderIdentifier> queryResponse,
+        CancellationToken cancellationToken)
     {
-        if (!_samHoldersEnabled)
+        var groupedByParty = queryResponse.Data
+            .Where(x => !string.IsNullOrWhiteSpace(x.CPHS))
+            .GroupBy(x => x.PARTY_ID);
+
+        foreach (var partyGroup in groupedByParty)
         {
-            return;
-        }
+            var cphs = partyGroup
+                .SelectMany(x => x.CphList)
+                .Distinct();
 
-        context.Holders.CurrentTop = context.Holders.CurrentTop > 0
-            ? context.Holders.CurrentTop
-            : _dataBridgeScanConfiguration.QueryPageSize;
-
-        while (!context.Holders.ScanCompleted && !cancellationToken.IsCancellationRequested)
-        {
-            var queryResponse = await _dataBridgeClient.GetSamHoldersAsync<SamScanHolderIdentifier>(
-                context.Holders.CurrentTop,
-                context.Holders.CurrentSkip,
-                SelectFields,
-                context.UpdatedSinceDateTime,
-                OrderBy,
-                cancellationToken);
-
-            if (queryResponse == null || queryResponse.Data.Count == 0)
+            foreach (var cph in cphs)
             {
-                context.Holders.ScanCompleted = true;
-                break;
-            }
-
-            var groupedByParty = queryResponse.Data
-                .Where(x => !string.IsNullOrWhiteSpace(x.CPHS))
-                .GroupBy(x => x.PARTY_ID);
-
-            foreach (var partyGroup in groupedByParty)
-            {
-                var partyId = partyGroup.Key;
-
-                var cphs = partyGroup
-                    .SelectMany(x => x.CphList)
-                    .Distinct();
-
-                foreach (var cph in cphs)
+                var message = new SamUpdateHoldingMessage
                 {
-                    var message = new SamUpdateHoldingMessage
-                    {
-                        Id = Guid.NewGuid(),
-                        Identifier = cph,
-                    };
+                    Id = Guid.NewGuid(),
+                    Identifier = cph,
+                };
 
-                    await _intakeMessagePublisher.PublishAsync(message, cancellationToken);
-                }
-            }
-
-            context.Holders.TotalCount = queryResponse.TotalCount;
-            context.Holders.CurrentCount = queryResponse.Count;
-            context.Holders.CurrentSkip += queryResponse.Count;
-
-            var hasReachedLimit = _dataBridgeScanConfiguration.LimitScanTotalBatchSize > 0
-                && context.Holders.CurrentSkip >= _dataBridgeScanConfiguration.LimitScanTotalBatchSize;
-
-            context.Holders.ScanCompleted = queryResponse.Count < context.Holders.CurrentTop || hasReachedLimit;
-
-            if (!context.Holders.ScanCompleted
-                && _dataBridgeScanConfiguration.DelayBetweenQueriesSeconds > 0)
-            {
-                await _delayProvider.DelayAsync(
-                    TimeSpan.FromSeconds(_dataBridgeScanConfiguration.DelayBetweenQueriesSeconds),
-                    cancellationToken);
+                await IntakeMessagePublisher.PublishAsync(message, cancellationToken);
             }
         }
     }

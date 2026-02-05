@@ -19,99 +19,69 @@ public class SamPartyDailyScanStep(
     DataBridgeScanConfiguration dataBridgeScanConfiguration,
     IDelayProvider delayProvider,
     IConfiguration configuration,
-    ILogger<SamPartyDailyScanStep> logger) : ScanStepBase<SamDailyScanContext>(logger)
+    ILogger<SamPartyDailyScanStep> logger)
+    : DailyScanStepBase<SamScanPartyIdentifier>(dataBridgeClient, intakeMessagePublisher, dataBridgeScanConfiguration, delayProvider, configuration, logger)
 {
-    private readonly IDataBridgeClient _dataBridgeClient = dataBridgeClient;
-    private readonly IMessagePublisher<IntakeEventsQueueClient> _intakeMessagePublisher = intakeMessagePublisher;
-    private readonly DataBridgeScanConfiguration _dataBridgeScanConfiguration = dataBridgeScanConfiguration;
-    private readonly IDelayProvider _delayProvider = delayProvider;
-    private readonly bool _samPartiesEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamPartiesEnabled");
-
     private const string SelectFields = "PARTY_ID";
     private const string OrderBy = "PARTY_ID asc";
-
     private const string HerdSelectFields = "CPHH";
     private const string HerdOrderBy = "CPHH asc";
 
-    protected override async Task ExecuteCoreAsync(SamDailyScanContext context, CancellationToken cancellationToken)
+    protected override bool IsEntityEnabled()
+        => Configuration.GetValue<bool>("DataBridgeCollectionFlags:SamPartiesEnabled");
+
+    protected override EntityScanContext GetScanContext(SamDailyScanContext context)
+        => context.Parties;
+
+    protected override async Task<DataBridgeResponse<SamScanPartyIdentifier>?> QueryDataAsync(
+        SamDailyScanContext context,
+        CancellationToken cancellationToken)
+        => await DataBridgeClient.GetSamPartiesAsync<SamScanPartyIdentifier>(
+            context.Parties.CurrentTop,
+            context.Parties.CurrentSkip,
+            SelectFields,
+            context.UpdatedSinceDateTime,
+            OrderBy,
+            cancellationToken);
+
+    protected override async Task PublishMessagesAsync(
+        DataBridgeResponse<SamScanPartyIdentifier> queryResponse,
+        CancellationToken cancellationToken)
     {
-        if (!_samPartiesEnabled)
-        {
-            return;
-        }
+        var identifiers = queryResponse.Data
+                .Select(x => x.PARTY_ID)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct()
+            .ToList();
 
-        context.Parties.CurrentTop = context.Parties.CurrentTop > 0
-            ? context.Parties.CurrentTop
-            : _dataBridgeScanConfiguration.QueryPageSize;
-
-        while (!context.Parties.ScanCompleted && !cancellationToken.IsCancellationRequested)
+        foreach (var id in identifiers)
         {
-            var queryResponse = await _dataBridgeClient.GetSamPartiesAsync<SamScanPartyIdentifier>(
-                context.Parties.CurrentTop,
-                context.Parties.CurrentSkip,
-                SelectFields,
-                context.UpdatedSinceDateTime,
-                OrderBy,
+            var relatedHerdsResponse = await DataBridgeClient.GetSamHerdsByPartyIdAsync<SamScanHerdIdentifier>(
+                id,
+                HerdSelectFields,
+                HerdOrderBy,
                 cancellationToken);
 
-            if (queryResponse == null || queryResponse.Data.Count == 0)
+            if (relatedHerdsResponse == null || relatedHerdsResponse.Data.Count == 0)
             {
-                context.Parties.ScanCompleted = true;
-                break;
+                continue;
             }
 
-            var identifiers = queryResponse.Data
-                .Select(x => x.PARTY_ID)
+            var herdIdentifiers = relatedHerdsResponse.Data
+                .Select(x => x.CPHH.CphhToCph())
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Distinct()
                 .ToList();
 
-            foreach (var id in identifiers)
+            foreach (var hid in herdIdentifiers)
             {
-                var relatedHerdsResponse = await _dataBridgeClient.GetSamHerdsByPartyIdAsync<SamScanHerdIdentifier>(
-                    id,
-                    HerdSelectFields,
-                    HerdOrderBy,
-                    cancellationToken);
-
-                if (relatedHerdsResponse == null || relatedHerdsResponse.Data.Count == 0)
+                var message = new SamUpdateHoldingMessage
                 {
-                    continue;
-                }
+                    Id = Guid.NewGuid(),
+                    Identifier = hid
+                };
 
-                var herdIdentifiers = relatedHerdsResponse.Data
-                    .Select(x => x.CPHH.CphhToCph())
-                    .Where(x => !string.IsNullOrWhiteSpace(x))
-                    .Distinct()
-                    .ToList();
-
-                foreach (var hid in herdIdentifiers)
-                {
-                    var message = new SamUpdateHoldingMessage
-                    {
-                        Id = Guid.NewGuid(),
-                        Identifier = hid
-                    };
-
-                    await _intakeMessagePublisher.PublishAsync(message, cancellationToken);
-                }
-            }
-
-            context.Parties.TotalCount = queryResponse.TotalCount;
-            context.Parties.CurrentCount = queryResponse.Count;
-            context.Parties.CurrentSkip += queryResponse.Count;
-
-            var hasReachedLimit = _dataBridgeScanConfiguration.LimitScanTotalBatchSize > 0
-                && context.Parties.CurrentSkip >= _dataBridgeScanConfiguration.LimitScanTotalBatchSize;
-
-            context.Parties.ScanCompleted = queryResponse.Count < context.Parties.CurrentTop || hasReachedLimit;
-
-            if (!context.Parties.ScanCompleted
-                && _dataBridgeScanConfiguration.DelayBetweenQueriesSeconds > 0)
-            {
-                await _delayProvider.DelayAsync(
-                    TimeSpan.FromSeconds(_dataBridgeScanConfiguration.DelayBetweenQueriesSeconds),
-                    cancellationToken);
+                await IntakeMessagePublisher.PublishAsync(message, cancellationToken);
             }
         }
     }
