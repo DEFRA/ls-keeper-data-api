@@ -6,6 +6,7 @@ using KeeperData.Core.Extensions;
 using Moq;
 using System.Net;
 using System.Net.Http.Json;
+using System.Web;
 
 namespace KeeperData.Api.Tests.Component.Endpoints;
 
@@ -68,6 +69,52 @@ public class SitesEndpointTests(AppTestFixture appTestFixture) : IClassFixture<A
 
         // Assert
         await AssertPaginatedResponse(response, expectedCount: 2, expectedNames: ["Site A", "Site B"]);
+    }
+
+    [Fact]
+    public async Task GetSites_WithCommaSeparatedAndMessySiteIdentifiers_ParsesAndReturnsFilteredResult()
+    {
+        // Arrange
+        var sites = new List<SiteDocument>
+        {
+            CreateSite("Site A", "Type1", "ID1"),
+            CreateSite("Site B", "Type1", "ID2")
+        };
+
+        SetupRepository(sites, totalCount: 2);
+
+        // Input contains spaces and an empty entry to force the parsing logic to work
+        var messyIdentifiers = " ID1 , , ID2 ";
+        var encodedIdentifiers = HttpUtility.UrlEncode(messyIdentifiers);
+
+        // Act
+        var response = await _appTestFixture.HttpClient.GetAsync($"/api/sites?siteIdentifiers={encodedIdentifiers}");
+
+        // Assert
+        await AssertPaginatedResponse(response, expectedCount: 2, expectedNames: ["Site A", "Site B"]);
+    }
+
+    [Fact]
+    public async Task GetSiteById_WithValidId_ReturnsOkResult()
+    {
+        // Arrange
+        var siteId = Guid.NewGuid().ToString();
+        var site = CreateSite("Site By ID", "Type1", "ID1");
+        site.Id = siteId;
+
+        _appTestFixture.AppWebApplicationFactory._goldSiteRepositoryMock
+            .Setup(r => r.GetByIdAsync(siteId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(site);
+
+        // Act
+        var response = await _appTestFixture.HttpClient.GetAsync($"/api/sites/{siteId}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<SiteDocument>();
+        result.Should().NotBeNull();
+        result!.Id.Should().Be(siteId);
+        result.Name.Should().Be("Site By ID");
     }
 
     private static SiteDocument CreateSite(string name, string typeCode, string identifier)
