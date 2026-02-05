@@ -21,6 +21,11 @@ public static class SiteFilterBuilder
             filters.Add(builder.ElemMatch(x => x.Identifiers, identifierDoc => identifierDoc.Identifier == query.SiteIdentifier));
         }
 
+        if (query.SiteIdentifiers is { Count: > 0 })
+        {
+            filters.Add(builder.In("identifiers.identifier", query.SiteIdentifiers));
+        }
+
         if (query.Type is { Count: > 0 })
         {
             filters.Add(builder.And(

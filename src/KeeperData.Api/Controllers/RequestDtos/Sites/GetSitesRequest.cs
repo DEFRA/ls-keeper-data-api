@@ -5,6 +5,7 @@ namespace KeeperData.Api.Controllers.RequestDtos.Sites;
 public class GetSitesRequest
 {
     [FromQuery] public string? SiteIdentifier { get; set; }
+    [FromQuery] public string? SiteIdentifiers { get; set; }
     [FromQuery] public string? Type { get; set; }
     [FromQuery] public Guid? SiteId { get; set; }
     [FromQuery] public Guid? KeeperPartyId { get; set; }
