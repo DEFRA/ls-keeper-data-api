@@ -19,13 +19,7 @@ public class SamHolderDailyScanStep(
     IDelayProvider delayProvider,
     IConfiguration configuration,
     ILogger<SamHolderDailyScanStep> logger)
-    : DailyScanStepBase<SamScanHolderIdentifier>(
-        dataBridgeClient,
-        intakeMessagePublisher,
-        dataBridgeScanConfiguration,
-        delayProvider,
-        configuration,
-        logger)
+    : DailyScanStepBase<SamScanHolderIdentifier>(dataBridgeClient, intakeMessagePublisher, dataBridgeScanConfiguration, delayProvider, configuration, logger)
 {
     private const string SelectFields = "PARTY_ID,CPHS";
     private const string OrderBy = "PARTY_ID asc";

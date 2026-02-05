@@ -20,13 +20,7 @@ public class SamPartyDailyScanStep(
     IDelayProvider delayProvider,
     IConfiguration configuration,
     ILogger<SamPartyDailyScanStep> logger)
-    : DailyScanStepBase<SamScanPartyIdentifier>(
-        dataBridgeClient,
-        intakeMessagePublisher,
-        dataBridgeScanConfiguration,
-        delayProvider,
-        configuration,
-        logger)
+    : DailyScanStepBase<SamScanPartyIdentifier>(dataBridgeClient, intakeMessagePublisher, dataBridgeScanConfiguration, delayProvider, configuration, logger)
 {
     private const string SelectFields = "PARTY_ID";
     private const string OrderBy = "PARTY_ID asc";
@@ -55,7 +49,7 @@ public class SamPartyDailyScanStep(
         CancellationToken cancellationToken)
     {
         var identifiers = queryResponse.Data
-            .Select(x => x.PARTY_ID)
+                .Select(x => x.PARTY_ID)
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Distinct()
             .ToList();

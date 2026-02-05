@@ -20,13 +20,7 @@ public class SamHerdDailyScanStep(
     IDelayProvider delayProvider,
     IConfiguration configuration,
     ILogger<SamHerdDailyScanStep> logger)
-    : DailyScanStepBase<SamScanHerdIdentifier>(
-        dataBridgeClient,
-        intakeMessagePublisher,
-        dataBridgeScanConfiguration,
-        delayProvider,
-        configuration,
-        logger)
+    : DailyScanStepBase<SamScanHerdIdentifier>(dataBridgeClient, intakeMessagePublisher, dataBridgeScanConfiguration, delayProvider, configuration, logger)
 {
     private const string SelectFields = "CPHH";
     private const string OrderBy = "CPHH asc";

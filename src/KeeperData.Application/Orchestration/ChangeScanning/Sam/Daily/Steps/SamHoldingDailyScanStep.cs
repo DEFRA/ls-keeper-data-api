@@ -19,13 +19,7 @@ public class SamHoldingDailyScanStep(
     IDelayProvider delayProvider,
     IConfiguration configuration,
     ILogger<SamHoldingDailyScanStep> logger) 
-    : DailyScanStepBase<SamScanHoldingIdentifier>(
-        dataBridgeClient, 
-        intakeMessagePublisher, 
-        dataBridgeScanConfiguration, 
-        delayProvider, 
-        configuration, 
-        logger)
+    : DailyScanStepBase<SamScanHoldingIdentifier>(dataBridgeClient, intakeMessagePublisher, dataBridgeScanConfiguration, delayProvider, configuration, logger)
 {
     private const string SelectFields = "CPH";
     private const string OrderBy = "CPH asc";
@@ -37,7 +31,7 @@ public class SamHoldingDailyScanStep(
         => context.Holdings;
 
     protected override async Task<DataBridgeResponse<SamScanHoldingIdentifier>?> QueryDataAsync(
-        SamDailyScanContext context, 
+        SamDailyScanContext context,
         CancellationToken cancellationToken)
         => await DataBridgeClient.GetSamHoldingsAsync<SamScanHoldingIdentifier>(
             context.Holdings.CurrentTop,
@@ -48,7 +42,7 @@ public class SamHoldingDailyScanStep(
             cancellationToken);
 
     protected override async Task PublishMessagesAsync(
-        DataBridgeResponse<SamScanHoldingIdentifier> queryResponse, 
+        DataBridgeResponse<SamScanHoldingIdentifier> queryResponse,
         CancellationToken cancellationToken)
     {
         var identifiers = queryResponse.Data

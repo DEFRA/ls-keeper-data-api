@@ -26,12 +26,9 @@ public abstract class DailyScanStepBase<TIdentifier>(
     protected override async Task ExecuteCoreAsync(SamDailyScanContext context, CancellationToken cancellationToken)
     {
         if (!IsEntityEnabled())
-        {
             return;
-        }
 
         var scanState = GetScanContext(context);
-        
         scanState.CurrentTop = scanState.CurrentTop > 0
             ? scanState.CurrentTop
             : DataBridgeScanConfiguration.QueryPageSize;
@@ -68,14 +65,7 @@ public abstract class DailyScanStepBase<TIdentifier>(
     }
 
     protected abstract bool IsEntityEnabled();
-    
     protected abstract EntityScanContext GetScanContext(SamDailyScanContext context);
-    
-    protected abstract Task<DataBridgeResponse<TIdentifier>?> QueryDataAsync(
-        SamDailyScanContext context, 
-        CancellationToken cancellationToken);
-    
-    protected abstract Task PublishMessagesAsync(
-        DataBridgeResponse<TIdentifier> queryResponse, 
-        CancellationToken cancellationToken);
+    protected abstract Task<DataBridgeResponse<TIdentifier>?> QueryDataAsync(SamDailyScanContext context, CancellationToken cancellationToken);
+    protected abstract Task PublishMessagesAsync(DataBridgeResponse<TIdentifier> queryResponse, CancellationToken cancellationToken);
 }
