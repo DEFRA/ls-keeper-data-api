@@ -30,12 +30,21 @@ namespace KeeperData.Api.Controllers
                     .ToList()
                 : null;
 
+            var siteIdsList = !string.IsNullOrWhiteSpace(request.SiteIds)
+                ? request.SiteIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(t => t.Trim())
+                    .Where(t => Guid.TryParse(t, out _))
+                    .Select(Guid.Parse)
+                    .ToList()
+                : null;
+
             var query = new GetSitesQuery
             {
                 SiteIdentifier = request.SiteIdentifier,
                 SiteIdentifiers = siteIdentifiersList,
                 Type = typeList,
                 SiteId = request.SiteId,
+                SiteIds = siteIdsList,
                 KeeperPartyId = request.KeeperPartyId,
                 LastUpdatedDate = request.LastUpdatedDate,
                 Page = request.Page ?? 1,

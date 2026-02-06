@@ -39,6 +39,12 @@ public static class SiteFilterBuilder
             filters.Add(builder.Eq(x => x.Id, query.SiteId.Value.ToString()));
         }
 
+        if (query.SiteIds is { Count: > 0 })
+        {
+            var ids = query.SiteIds.Select(g => g.ToString()).ToList();
+            filters.Add(builder.In(x => x.Id, ids));
+        }
+
         if (query.KeeperPartyId.HasValue)
         {
             var partyIdString = query.KeeperPartyId.Value.ToString();
@@ -46,6 +52,6 @@ public static class SiteFilterBuilder
             filters.Add(builder.ElemMatch(x => x.Parties, p => p.CustomerNumber == partyIdString));
         }
 
-        return builder.And(filters);
+        return filters.Count > 0 ? builder.And(filters) : builder.Empty;
     }
 }
