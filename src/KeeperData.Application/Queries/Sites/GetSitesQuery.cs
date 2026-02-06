@@ -10,6 +10,7 @@ public class GetSitesQuery : IPagedQuery<SiteDocument>
     public List<string>? SiteIdentifiers { get; set; }
     public List<string>? Type { get; set; }
     public Guid? SiteId { get; set; }
+    public List<Guid>? SiteIds { get; set; }
     public Guid? KeeperPartyId { get; set; }
     public DateTime? LastUpdatedDate { get; set; }
     public int Page { get; set; } = 1;
@@ -33,6 +34,9 @@ public class GetSitesQueryValidator : AbstractValidator<GetSitesQuery>
         RuleForEach(x => x.SiteIdentifiers).NotEmpty().When(x => x.SiteIdentifiers is not null);
         RuleFor(x => x.SiteIdentifiers).Must(x => x == null || x.Count <= config.MaxQueryableTypes)
             .WithMessage($"SiteIdentifiers count must be between 0 and {config.MaxQueryableTypes}");
+
+        RuleFor(x => x.SiteIds).Must(x => x == null || x.Count <= config.MaxQueryableTypes)
+            .WithMessage($"SiteIds count must be between 0 and {config.MaxQueryableTypes}");
 
         RuleFor(x => x.Sort).Must(s => s == "asc" || s == "desc").When(x => !string.IsNullOrEmpty(x.Sort));
         RuleFor(x => x.Order).NotEmpty().When(x => !string.IsNullOrEmpty(x.Sort));
