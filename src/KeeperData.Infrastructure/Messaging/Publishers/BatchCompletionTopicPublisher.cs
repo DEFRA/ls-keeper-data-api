@@ -17,6 +17,7 @@ public class BatchCompletionTopicPublisher(
     public string? QueueUrl => null;
 
     public async Task PublishAsync<TMessage>(TMessage? message, CancellationToken cancellationToken = default)
+        where TMessage : class
     {
         if (message == null)
         {

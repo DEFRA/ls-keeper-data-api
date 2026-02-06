@@ -98,14 +98,12 @@ public static class ServiceCollectionExtensions
     private static void RegisterAllDocumentsFromAssembly(Assembly assembly)
     {
         var documentTypes = assembly.GetTypes()
-            .Where(t => t.IsClass && !t.IsAbstract && typeof(INestedEntity).IsAssignableFrom(t));
+            .Where(t => t.IsClass && !t.IsAbstract && typeof(INestedEntity).IsAssignableFrom(t))
+            .Where(t => !BsonClassMap.IsClassMapRegistered(t));
 
         foreach (var type in documentTypes)
         {
-            if (!BsonClassMap.IsClassMapRegistered(type))
-            {
-                BsonClassMap.LookupClassMap(type);
-            }
+            BsonClassMap.LookupClassMap(type);
         }
     }
 }
