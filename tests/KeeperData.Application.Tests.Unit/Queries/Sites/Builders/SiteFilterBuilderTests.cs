@@ -152,4 +152,19 @@ public class SiteFilterBuilderTests
 
         renderedFilter.Should().BeEquivalentTo(expectedBson);
     }
+
+    [Fact]
+    public void Build_ShouldCreateFilterForSiteIds()
+    {
+        var siteId1 = Guid.NewGuid();
+        var siteId2 = Guid.NewGuid();
+        var query = new GetSitesQuery { SiteIds = [siteId1, siteId2] };
+        var filter = SiteFilterBuilder.Build(query);
+        var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry);
+
+        var expectedIds = new[] { siteId1.ToString(), siteId2.ToString() };
+
+        renderedFilter["_id"]["$in"].AsBsonArray.Select(x => x.AsString)
+            .Should().BeEquivalentTo(expectedIds);
+    }
 }

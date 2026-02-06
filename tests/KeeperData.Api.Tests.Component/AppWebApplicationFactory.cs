@@ -21,6 +21,7 @@ using KeeperData.Infrastructure.Messaging.Services;
 using KeeperData.Infrastructure.Storage.Clients;
 using KeeperData.Infrastructure.Storage.Factories;
 using KeeperData.Infrastructure.Storage.Factories.Implementations;
+using KeeperData.Core.Locking;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -36,6 +37,7 @@ using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Moq;
+using Moq.Protected;
 using System.Net;
 
 namespace KeeperData.Api.Tests.Component;
@@ -50,6 +52,10 @@ public class AppWebApplicationFactory(
     public Mock<IMongoClient>? MongoClientMock;
     public readonly Mock<HttpMessageHandler> DataBridgeApiClientHttpMessageHandlerMock = new();
 
+    public readonly Mock<IDistributedLock> DistributedLockMock = new();
+    private readonly HashSet<string> _activeLocks = new();
+    private readonly Dictionary<string, Mock<IDistributedLockHandle>> _lockHandles = new();
+
     public readonly Mock<ISitesRepository> _sitesRepositoryMock = new();
     public readonly Mock<IPartiesRepository> _partiesRepositoryMock = new();
     public readonly Mock<IGenericRepository<CtsHoldingDocument>> _silverCtsHoldingRepositoryMock = new();
@@ -61,6 +67,7 @@ public class AppWebApplicationFactory(
     public readonly Mock<IGenericRepository<PartyDocument>> _goldPartyRepositoryMock = new();
     public readonly Mock<IGoldSitePartyRoleRelationshipRepository> _goldSitePartyRoleRelationshipRepositoryMock = new();
     public readonly Mock<IRoleRepository> _roleRepositoryMock = new();
+    public readonly Mock<ICountryRepository> _countryRepositoryMock = new();
 
     public readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
     public readonly Mock<IPremiseActivityTypeLookupService> _premiseActivityTypeLookupServiceMock = new();
@@ -80,6 +87,29 @@ public class AppWebApplicationFactory(
 
     private const string ComparisonReportsStorageBucket = "test-comparison-reports-bucket";
 
+    private void ConfigureDistributedLockMock()
+    {
+        DistributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+                          .ReturnsAsync((string lockName, TimeSpan duration, CancellationToken ct) =>
+                          {
+                              if (_activeLocks.Contains(lockName))
+                              {
+                                  return null;
+                              }
+
+                              _activeLocks.Add(lockName);
+                              var handleMock = new Mock<IDistributedLockHandle>();
+
+                              // Set up DisposeAsync to release the lock
+                              handleMock.Setup(h => h.DisposeAsync())
+                                       .Callback(() => _activeLocks.Remove(lockName))
+                                       .Returns(ValueTask.CompletedTask);
+
+                              _lockHandles[lockName] = handleMock;
+                              return handleMock.Object;
+                          });
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting(WebHostDefaults.ApplicationKey, typeof(Program).Assembly.FullName);
@@ -95,6 +125,8 @@ public class AppWebApplicationFactory(
         builder.ConfigureTestServices(services =>
         {
             RemoveService<IHealthCheckPublisher>(services);
+
+            ConfigureDistributedLockMock();
 
             ConfigureRepositories();
             ConfigureTransientServices();
@@ -138,7 +170,7 @@ public class AppWebApplicationFactory(
         return base.CreateHost(builder);
     }
 
-    protected T GetService<T>() where T : notnull
+    public T GetService<T>() where T : notnull
     {
         return Services.GetRequiredService<T>();
     }
@@ -188,12 +220,22 @@ public class AppWebApplicationFactory(
         ResetRepositoryMocks();
         ResetTransientServiceMocks();
         ResetTestMessageHandlerMocks();
+        ResetDistributedLockMock();
+    }
+
+    private void ResetDistributedLockMock()
+    {
+        _activeLocks.Clear();
+        _lockHandles.Clear();
+        DistributedLockMock.Reset();
+        ConfigureDistributedLockMock();
     }
 
     private static void SetTestEnvironmentVariables()
     {
         Environment.SetEnvironmentVariable("AWS__ServiceURL", "http://localhost:4566");
         Environment.SetEnvironmentVariable("Mongo__DatabaseUri", "mongodb://localhost:27017");
+        Environment.SetEnvironmentVariable("Mongo__DatabaseName", "test-keeper-data-api");
         Environment.SetEnvironmentVariable("StorageConfiguration__ComparisonReportsStorage__BucketName", ComparisonReportsStorageBucket);
         Environment.SetEnvironmentVariable("QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl", "http://localhost:4566/000000000000/test-queue");
         Environment.SetEnvironmentVariable("ApiClients__DataBridgeApi__HealthcheckEnabled", "true");
@@ -262,6 +304,27 @@ public class AppWebApplicationFactory(
         OverrideServiceAsScoped(_goldSitePartyRoleRelationshipRepositoryMock.Object);
 
         OverrideServiceAsScoped(_roleRepositoryMock.Object);
+        OverrideServiceAsScoped(_countryRepositoryMock.Object);
+
+        ConfigureDefaultRepositoryBehavior();
+    }
+
+    private void ConfigureDefaultRepositoryBehavior()
+    {
+        _partiesRepositoryMock
+            .Setup(x => x.FindAsync(
+                It.IsAny<MongoDB.Driver.FilterDefinition<PartyDocument>>(),
+                It.IsAny<MongoDB.Driver.SortDefinition<PartyDocument>>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<PartyDocument>());
+
+        _partiesRepositoryMock
+            .Setup(x => x.CountAsync(
+                It.IsAny<MongoDB.Driver.FilterDefinition<PartyDocument>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
     }
 
     private void ResetRepositoryMocks()
@@ -281,6 +344,7 @@ public class AppWebApplicationFactory(
         _goldSitePartyRoleRelationshipRepositoryMock.Reset();
 
         _roleRepositoryMock.Reset();
+        _countryRepositoryMock.Reset();
     }
 
     private void ConfigureTransientServices()
@@ -333,6 +397,32 @@ public class AppWebApplicationFactory(
         AmazonSNSMock!.Reset();
         MongoClientMock!.Reset();
         DataBridgeApiClientHttpMessageHandlerMock.Reset();
+
+        DataBridgeApiClientHttpMessageHandlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage request, CancellationToken cancellationToken) =>
+            {
+                var dataBridgeResponse = new
+                {
+                    collectionName = "test-collection",
+                    count = 0,
+                    totalCount = 0,
+                    skip = 0,
+                    top = 100,
+                    filter = (string?)null,
+                    orderBy = (string?)null,
+                    executedAtUtc = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                    data = new object[0]
+                };
+
+                var jsonResponse = System.Text.Json.JsonSerializer.Serialize(dataBridgeResponse);
+                var response = new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(jsonResponse, System.Text.Encoding.UTF8, "application/json")
+                };
+                return response;
+            });
     }
 
     private void ConfigureS3ClientFactory(IServiceCollection services)
@@ -419,6 +509,8 @@ public class AppWebApplicationFactory(
             .Returns(mongoDatabaseMock.Object);
 
         services.Replace(new ServiceDescriptor(typeof(IMongoClient), MongoClientMock.Object));
+
+        services.Replace(new ServiceDescriptor(typeof(IDistributedLock), DistributedLockMock.Object));
     }
 
     private static IAsyncCursor<BsonDocument> CreateEmptyCursor()

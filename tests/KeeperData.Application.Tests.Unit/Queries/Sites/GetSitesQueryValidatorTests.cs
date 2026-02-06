@@ -74,4 +74,15 @@ public class GetSitesQueryValidatorTests
         validator.Validate(new GetSiteByIdQuery("123")).IsValid.Should().BeTrue();
         validator.Validate(new GetSiteByIdQuery("")).IsValid.Should().BeFalse();
     }
+
+    [Theory]
+    [InlineData(4, 3, 1)]
+    [InlineData(5, 5, 0)]
+    public void WhenQueryingWithReducedMaxSiteIds_ShouldFailOnlyIfMaxExceeded(int numberInQuery, int maxAllowed, int expectedNumberOfErrors)
+    {
+        var query = new GetSitesQuery() { SiteIds = Enumerable.Range(1, numberInQuery).Select(_ => Guid.NewGuid()).ToList() };
+        var sut = new GetSitesQueryValidator(new QueryValidationConfig<GetSitesQueryValidator>() { MaxQueryableTypes = maxAllowed });
+        var result = sut.Validate(query);
+        result.Errors.Count.Should().Be(expectedNumberOfErrors);
+    }
 }
