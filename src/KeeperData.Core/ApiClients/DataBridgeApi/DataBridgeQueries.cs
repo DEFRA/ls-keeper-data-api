@@ -2,6 +2,8 @@ namespace KeeperData.Core.ApiClients.DataBridgeApi;
 
 public static class DataBridgeQueries
 {
+    private const string FilterKey = "$filter";
+
     public static Dictionary<string, string> PagedRecords(
         int top,
         int skip,
@@ -23,7 +25,7 @@ public static class DataBridgeQueries
         if (updatedSinceDateTime.HasValue)
         {
             var formattedDate = updatedSinceDateTime.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
-            query["$filter"] = $"UpdatedAtUtc ge {formattedDate} or CreatedAtUtc ge {formattedDate}"; //if updated date is null use created date
+            query[FilterKey] = $"UpdatedAtUtc ge {formattedDate} or CreatedAtUtc ge {formattedDate}"; //if updated date is null use created date
         }
 
         if (!string.IsNullOrWhiteSpace(orderBy))
@@ -38,7 +40,7 @@ public static class DataBridgeQueries
     {
         return new Dictionary<string, string>
         {
-            ["$filter"] = $"LID_FULL_IDENTIFIER eq '{id}'"
+            [FilterKey] = $"LID_FULL_IDENTIFIER eq '{id}'"
         };
     }
 
@@ -46,7 +48,7 @@ public static class DataBridgeQueries
     {
         return new Dictionary<string, string>
         {
-            ["$filter"] = $"LID_FULL_IDENTIFIER eq '{id}'"
+            [FilterKey] = $"LID_FULL_IDENTIFIER eq '{id}'"
         };
     }
 
@@ -54,7 +56,7 @@ public static class DataBridgeQueries
     {
         return new Dictionary<string, string>
         {
-            ["$filter"] = $"PAR_ID eq '{id}'"
+            [FilterKey] = $"PAR_ID eq '{id}'"
         };
     }
 
@@ -62,7 +64,7 @@ public static class DataBridgeQueries
     {
         return new Dictionary<string, string>
         {
-            ["$filter"] = $"LID_FULL_IDENTIFIER eq '{id}'"
+            [FilterKey] = $"LID_FULL_IDENTIFIER eq '{id}'"
         };
     }
 
@@ -70,7 +72,7 @@ public static class DataBridgeQueries
     {
         return new Dictionary<string, string>
         {
-            ["$filter"] = $"PAR_ID eq '{id}'"
+            [FilterKey] = $"PAR_ID eq '{id}'"
         };
     }
 
@@ -78,7 +80,7 @@ public static class DataBridgeQueries
     {
         return new Dictionary<string, string>
         {
-            ["$filter"] = $"CPH eq '{id}'"
+            [FilterKey] = $"CPH eq '{id}'"
         };
     }
 
@@ -86,7 +88,7 @@ public static class DataBridgeQueries
     {
         return new Dictionary<string, string>
         {
-            ["$filter"] = $"PARTY_ID eq '{id}'"
+            [FilterKey] = $"PARTY_ID eq '{id}'"
         };
     }
 
@@ -94,7 +96,7 @@ public static class DataBridgeQueries
     {
         return new Dictionary<string, string>
         {
-            ["$filter"] = $"contains(CPHS, '{id}')"
+            [FilterKey] = $"contains(CPHS, '{id}')"
         };
     }
 
@@ -102,7 +104,7 @@ public static class DataBridgeQueries
     {
         return new Dictionary<string, string>
         {
-            ["$filter"] = $"startswith(CPHH,'{id}')"
+            [FilterKey] = $"startswith(CPHH,'{id}')"
         };
     }
 
@@ -118,7 +120,7 @@ public static class DataBridgeQueries
             query["$orderby"] = orderBy;
         }
 
-        query["$filter"] = $"contains(KEEPER_PARTY_IDS, '{id}') or contains(OWNER_PARTY_IDS, '{id}')";
+        query[FilterKey] = $"contains(KEEPER_PARTY_IDS, '{id}') or contains(OWNER_PARTY_IDS, '{id}')";
 
         return query;
     }
@@ -127,7 +129,7 @@ public static class DataBridgeQueries
     {
         return new Dictionary<string, string>
         {
-            ["$filter"] = $"PARTY_ID eq '{id}'"
+            [FilterKey] = $"PARTY_ID eq '{id}'"
         };
     }
 
@@ -139,7 +141,7 @@ public static class DataBridgeQueries
 
         return new Dictionary<string, string>
         {
-            ["$filter"] = filter
+            [FilterKey] = filter
         };
     }
 }

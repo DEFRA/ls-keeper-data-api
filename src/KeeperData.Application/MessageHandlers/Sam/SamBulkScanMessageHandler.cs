@@ -22,7 +22,7 @@ public class SamBulkScanMessageHandler(SamBulkScanOrchestrator orchestrator,
     {
         var message = request.Message;
 
-        ArgumentNullException.ThrowIfNull(message, nameof(message));
+        ArgumentNullException.ThrowIfNull(message);
 
         var messagePayload = _serializer.Deserialize(message)
             ?? throw new NonRetryableException($"Deserialisation failed or the message payload was null for " +

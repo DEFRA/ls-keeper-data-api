@@ -22,11 +22,11 @@ public class SamDailyScanMessageHandler(SamDailyScanOrchestrator orchestrator,
     {
         var message = request.Message;
 
-        ArgumentNullException.ThrowIfNull(message, nameof(message));
+        ArgumentNullException.ThrowIfNull(message);
 
         var messagePayload = _serializer.Deserialize(message)
             ?? throw new NonRetryableException($"Deserialisation failed or the message payload was null for " +
-            $"messageType: {typeof(SamDailyScanMessage).Name}," +
+            $"messageType: {nameof(SamDailyScanMessage)}," +
             $"messageId: {message.MessageId}," +
             $"correlationId: {message.CorrelationId}");
 

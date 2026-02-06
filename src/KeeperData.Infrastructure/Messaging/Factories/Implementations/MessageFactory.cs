@@ -9,6 +9,7 @@ namespace KeeperData.Infrastructure.Messaging.Factories.Implementations;
 public class MessageFactory : IMessageFactory
 {
     private const string EventTimeUtc = "EventTimeUtc";
+    private const string StringDataType = "String";
 
     public PublishRequest CreateSnsMessage<TBody>(
         string topicArn,
@@ -56,17 +57,17 @@ public class MessageFactory : IMessageFactory
         {
             [EventTimeUtc] = new Amazon.SimpleNotificationService.Model.MessageAttributeValue
             {
-                DataType = "String",
+                DataType = StringDataType,
                 StringValue = DateTime.UtcNow.ToString("O")
             },
             ["Subject"] = new Amazon.SimpleNotificationService.Model.MessageAttributeValue
             {
-                DataType = "String",
+                DataType = StringDataType,
                 StringValue = subject.ReplaceSuffix()
             },
             ["CorrelationId"] = new Amazon.SimpleNotificationService.Model.MessageAttributeValue
             {
-                DataType = "String",
+                DataType = StringDataType,
                 StringValue = CorrelationIdContext.Value ?? Guid.NewGuid().ToString()
             }
         };
@@ -75,7 +76,7 @@ public class MessageFactory : IMessageFactory
         {
             attributes[key] = new Amazon.SimpleNotificationService.Model.MessageAttributeValue
             {
-                DataType = "String",
+                DataType = StringDataType,
                 StringValue = value
             };
         }
@@ -91,17 +92,17 @@ public class MessageFactory : IMessageFactory
         {
             [EventTimeUtc] = new Amazon.SQS.Model.MessageAttributeValue
             {
-                DataType = "String",
+                DataType = StringDataType,
                 StringValue = DateTime.UtcNow.ToString("O")
             },
             ["Subject"] = new Amazon.SQS.Model.MessageAttributeValue
             {
-                DataType = "String",
+                DataType = StringDataType,
                 StringValue = subject.ReplaceSuffix()
             },
             ["CorrelationId"] = new Amazon.SQS.Model.MessageAttributeValue
             {
-                DataType = "String",
+                DataType = StringDataType,
                 StringValue = CorrelationIdContext.Value ?? Guid.NewGuid().ToString()
             }
         };
@@ -110,7 +111,7 @@ public class MessageFactory : IMessageFactory
         {
             attributes[key] = new Amazon.SQS.Model.MessageAttributeValue
             {
-                DataType = "String",
+                DataType = StringDataType,
                 StringValue = value
             };
         }

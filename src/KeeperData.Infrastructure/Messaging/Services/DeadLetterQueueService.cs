@@ -13,6 +13,8 @@ namespace KeeperData.Infrastructure.Messaging.Services
         private readonly ILogger<DeadLetterQueueService> _logger;
         private readonly IntakeEventQueueOptions _queueConsumerOptions;
 
+        private const string StringDataType = "String";
+
         public DeadLetterQueueService(
             IAmazonSQS amazonSQS,
             IOptions<IntakeEventQueueOptions> options,
@@ -47,10 +49,10 @@ namespace KeeperData.Infrastructure.Messaging.Services
                 // Message loses it's meta data when moved to DLQ, so we need to add info back in
                 var attributes = new Dictionary<string, MessageAttributeValue>(message.MessageAttributes ?? new Dictionary<string, MessageAttributeValue>());
 
-                attributes["DLQ_FailureReason"] = new MessageAttributeValue { StringValue = ex.GetType().Name, DataType = "String" };
-                attributes["DLQ_FailureMessage"] = new MessageAttributeValue { StringValue = ex.Message.Substring(0, Math.Min(256, ex.Message.Length)), DataType = "String" };
-                attributes["DLQ_FailureTimestamp"] = new MessageAttributeValue { StringValue = DateTime.UtcNow.ToString("O"), DataType = "String" };
-                attributes["DLQ_OriginalMessageId"] = new MessageAttributeValue { StringValue = message.MessageId, DataType = "String" };
+                attributes["DLQ_FailureReason"] = new MessageAttributeValue { StringValue = ex.GetType().Name, DataType = StringDataType };
+                attributes["DLQ_FailureMessage"] = new MessageAttributeValue { StringValue = ex.Message.Substring(0, Math.Min(256, ex.Message.Length)), DataType = StringDataType };
+                attributes["DLQ_FailureTimestamp"] = new MessageAttributeValue { StringValue = DateTime.UtcNow.ToString("O"), DataType = StringDataType };
+                attributes["DLQ_OriginalMessageId"] = new MessageAttributeValue { StringValue = message.MessageId, DataType = StringDataType };
                 attributes["DLQ_ReceiveCount"] = new MessageAttributeValue
                 {
                     StringValue = (message.Attributes ?? []).GetValueOrDefault("ApproximateReceiveCount", "0"),
@@ -60,7 +62,7 @@ namespace KeeperData.Infrastructure.Messaging.Services
                 {
                     attributes["CorrelationId"] = new MessageAttributeValue
                     {
-                        DataType = "String",
+                        DataType = StringDataType,
                         StringValue = CorrelationIdContext.Value
                     };
                 }

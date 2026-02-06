@@ -21,7 +21,7 @@ public class BatchCompletionMessageHandler(
     {
         var message = request.Message;
 
-        ArgumentNullException.ThrowIfNull(message, nameof(message));
+        ArgumentNullException.ThrowIfNull(message);
 
         logger.LogInformation("Batch completion notification received. MessageId: {MessageId}, CorrelationId: {CorrelationId}",
             message.MessageId, CorrelationIdContext.Value);
