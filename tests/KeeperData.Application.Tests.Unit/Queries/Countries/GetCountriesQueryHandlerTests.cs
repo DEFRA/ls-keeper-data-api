@@ -28,6 +28,7 @@ public class GetCountriesQueryHandlerTests
             Page = 1,
             PageSize = 10,
             Count = 1,
+            TotalCount = 1,
             Values =
             [
                 new CountryDTO

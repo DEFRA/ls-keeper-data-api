@@ -14,7 +14,8 @@ public abstract class PagedQueryHandler<TQuery, TDocument>
 
         return new PaginatedResult<TDocument>
         {
-            Count = totalCount,
+            Count = items.Count,
+            TotalCount = totalCount,
             Values = items,
             Page = query.Page,
             PageSize = query.PageSize
