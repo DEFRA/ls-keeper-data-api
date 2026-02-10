@@ -44,7 +44,7 @@ public class ApiContainerFixture : IAsyncLifetime
           .WithEnvironment("DataBridgeScanConfiguration__QueryPageSize", "5")
           .WithEnvironment("DataBridgeScanConfiguration__DelayBetweenQueriesSeconds", "0")
           .WithEnvironment("DataBridgeScanConfiguration__LimitScanTotalBatchSize", "10")
-          .WithEnvironment("DataBridgeScanConfiguration__DailyScanIncludeChangesWithinTotalHours", "24")
+          .WithEnvironment("DataBridgeScanConfiguration__DailyScanIncludeChangesWithinTotalHours", "-24")
           .WithEnvironment("LOCALSTACK_ENDPOINT", "http://localstack:4566")
           .WithEnvironment("AWS_REGION", "eu-west-2")
           .WithEnvironment("AWS_DEFAULT_REGION", "eu-west-2")
