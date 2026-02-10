@@ -309,4 +309,57 @@ public class SamDailyScanTaskTests
             expectedEx,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
+
+    [Fact]
+    public async Task RunAsync_ShouldCalculateCorrectLookbackDate()
+    {
+        // Arrange
+        _config.DailyScanIncludeChangesWithinTotalHours = 24;
+
+        SamDailyScanContext? capturedContext = null;
+
+        _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
+            .Callback<SamDailyScanContext, CancellationToken>((ctx, ct) => capturedContext = ctx)
+            .Returns(Task.CompletedTask);
+
+        _distributedLockMock.Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_lockHandleMock.Object);
+
+        // Act
+        await _sut.RunAsync(CancellationToken.None);
+
+        // Assert
+        capturedContext.Should().NotBeNull();
+
+        // To prove the logic is wrong for a "Daily Scan", we actually want it to be in the past:
+        capturedContext!.UpdatedSinceDateTime.Should().BeBefore(DateTime.UtcNow);
+    }
+
+    [Fact]
+    public async Task RunAsync_ShouldUseConfiguredHours_ToCalculateLookbackDate()
+    {
+        // Arrange
+        int hoursFromConfig = 48;
+        _config.DailyScanIncludeChangesWithinTotalHours = hoursFromConfig;
+
+        SamDailyScanContext? capturedContext = null;
+
+        _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
+            .Callback<SamDailyScanContext, CancellationToken>((ctx, ct) => capturedContext = ctx)
+            .Returns(Task.CompletedTask);
+
+        _distributedLockMock.Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_lockHandleMock.Object);
+
+        // Act
+        await _sut.RunAsync(CancellationToken.None);
+
+        // Assert
+        capturedContext.Should().NotBeNull();
+
+        // Verify it's minus 48 hours
+        var expectedDate = DateTime.UtcNow.AddHours(-hoursFromConfig);
+
+        capturedContext!.UpdatedSinceDateTime.Should().BeCloseTo(expectedDate, TimeSpan.FromSeconds(1));
+    }
 }
