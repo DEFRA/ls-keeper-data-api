@@ -24,7 +24,7 @@ public class CtsDailyScanTaskTests
         QueryPageSize = 100,
         DelayBetweenQueriesSeconds = 0,
         LimitScanTotalBatchSize = 0,
-        DailyScanIncludeChangesWithinTotalHours = -24
+        DailyScanIncludeChangesWithinTotalHours = 24
     };
 
     [Fact]
