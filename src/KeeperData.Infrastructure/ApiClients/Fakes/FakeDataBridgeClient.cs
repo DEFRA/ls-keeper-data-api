@@ -11,20 +11,14 @@ public class FakeDataBridgeClient : IDataBridgeClient
     private readonly Random _random = new();
 
     public Task<DataBridgeResponse<T>?> GetSamHoldingsAsync<T>(
-            int top,
-            int skip,
-            string? selectFields = null,
-            DateTime? updatedSinceDateTime = null,
-            string? orderBy = null,
-            CancellationToken cancellationToken = default)
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
+        CancellationToken cancellationToken = default)
     {
         var data = Enumerable.Range(0, top).Select(_ => GetSamCphHolding()).SelectMany(x => x).ToList();
-
-        if (updatedSinceDateTime.HasValue)
-        {
-            data = data.Where(x => (x.UpdatedAtUtc >= updatedSinceDateTime) || (x.CreatedAtUtc >= updatedSinceDateTime)).ToList();
-        }
-
         var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
         var response = GetDataBridgeResponse(objects!, top, skip);
         return Task.FromResult<DataBridgeResponse<T>?>(response);
@@ -36,20 +30,14 @@ public class FakeDataBridgeClient : IDataBridgeClient
     }
 
     public Task<DataBridgeResponse<T>?> GetSamHoldersAsync<T>(
-            int top,
-            int skip,
-            string? selectFields = null,
-            DateTime? updatedSinceDateTime = null,
-            string? orderBy = null,
-            CancellationToken cancellationToken = default)
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
+        CancellationToken cancellationToken = default)
     {
         var data = Enumerable.Range(0, top).Select(_ => GetSamCphHoldersByCphOrPartyId()).SelectMany(x => x).ToList();
-
-        if (updatedSinceDateTime.HasValue)
-        {
-            data = data.Where(x => (x.UpdatedAtUtc >= updatedSinceDateTime) || (x.CreatedAtUtc >= updatedSinceDateTime)).ToList();
-        }
-
         var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
         var response = GetDataBridgeResponse(objects!, top, skip);
         return Task.FromResult<DataBridgeResponse<T>?>(response);
@@ -66,20 +54,14 @@ public class FakeDataBridgeClient : IDataBridgeClient
     }
 
     public Task<DataBridgeResponse<T>?> GetSamHerdsAsync<T>(
-            int top,
-            int skip,
-            string? selectFields = null,
-            DateTime? updatedSinceDateTime = null,
-            string? orderBy = null,
-            CancellationToken cancellationToken = default)
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
+        CancellationToken cancellationToken = default)
     {
         var data = Enumerable.Range(0, top).Select(_ => GetSamHerd()).SelectMany(x => x).ToList();
-
-        if (updatedSinceDateTime.HasValue)
-        {
-            data = data.Where(x => (x.UpdatedAtUtc >= updatedSinceDateTime) || (x.CreatedAtUtc >= updatedSinceDateTime)).ToList();
-        }
-
         var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
         var response = GetDataBridgeResponse(objects!, top, skip);
         return Task.FromResult<DataBridgeResponse<T>?>(response);
@@ -108,20 +90,14 @@ public class FakeDataBridgeClient : IDataBridgeClient
     }
 
     public Task<DataBridgeResponse<T>?> GetSamPartiesAsync<T>(
-            int top,
-            int skip,
-            string? selectFields = null,
-            DateTime? updatedSinceDateTime = null,
-            string? orderBy = null,
-            CancellationToken cancellationToken = default)
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
+        CancellationToken cancellationToken = default)
     {
         var data = Enumerable.Range(0, top).Select(_ => GetSamParties()).SelectMany(x => x).ToList();
-
-        if (updatedSinceDateTime.HasValue)
-        {
-            data = data.Where(x => (x.UpdatedAtUtc >= updatedSinceDateTime) || (x.CreatedAtUtc >= updatedSinceDateTime)).ToList();
-        }
-
         var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
         var response = GetDataBridgeResponse(objects!, top, skip);
         return Task.FromResult<DataBridgeResponse<T>?>(response);
@@ -235,8 +211,6 @@ public class FakeDataBridgeClient : IDataBridgeClient
                 BATCH_ID = 1,
                 CHANGE_TYPE = "I",
                 IsDeleted = false,
-                UpdatedAtUtc = DateTime.UtcNow,
-                CreatedAtUtc = DateTime.UtcNow,
                 CPH = id ?? $"{_random.Next(10, 99)}{_random.Next(100, 999)}{_random.Next(1000, 9999)}",
                 FEATURE_NAME = Guid.NewGuid().ToString(),
                 CPH_TYPE = "PERMANENT",
@@ -252,8 +226,6 @@ public class FakeDataBridgeClient : IDataBridgeClient
                 BATCH_ID = 1,
                 CHANGE_TYPE = "I",
                 IsDeleted = false,
-                UpdatedAtUtc = DateTime.UtcNow,
-                CreatedAtUtc = DateTime.UtcNow,
                 CPHS = string.Join(",", [holdingIdentifier ?? Guid.NewGuid().ToString()]),
                 PARTY_ID = partyId ?? $"C{Guid.NewGuid().ToString("N")[..8]}",
                 ORGANISATION_NAME = Guid.NewGuid().ToString()
@@ -267,8 +239,6 @@ public class FakeDataBridgeClient : IDataBridgeClient
                 BATCH_ID = 1,
                 CHANGE_TYPE = "I",
                 IsDeleted = false,
-                UpdatedAtUtc = DateTime.UtcNow,
-                CreatedAtUtc = DateTime.UtcNow,
                 HERDMARK = Guid.NewGuid().ToString(),
                 CPHH = !string.IsNullOrWhiteSpace(id) ? $"{id}/01" : $"{_random.Next(10, 99)}{_random.Next(100, 999)}{_random.Next(1000, 9999)}/01",
                 ANIMAL_SPECIES_CODE = "CTT",
@@ -301,8 +271,6 @@ public class FakeDataBridgeClient : IDataBridgeClient
                 BATCH_ID = 1,
                 CHANGE_TYPE = "I",
                 IsDeleted = false,
-                UpdatedAtUtc = DateTime.UtcNow,
-                CreatedAtUtc = DateTime.UtcNow,
                 PARTY_ID = id ?? $"C{Guid.NewGuid().ToString("N")[..8]}",
                 ORGANISATION_NAME = Guid.NewGuid().ToString(),
                 PARTY_ROLE_FROM_DATE = DateTime.Today.AddDays(-1),
