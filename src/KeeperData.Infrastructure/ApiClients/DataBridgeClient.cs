@@ -2,8 +2,10 @@ using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Exceptions;
 using KeeperData.Infrastructure.ApiClients.Extensions;
+using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
 
@@ -12,10 +14,12 @@ namespace KeeperData.Infrastructure.ApiClients;
 public class DataBridgeClient(
     IHttpClientFactory factory,
     IConfiguration configuration,
-    ILogger<DataBridgeClient> logger) : IDataBridgeClient
+    ILogger<DataBridgeClient> logger,
+    IApplicationMetrics metrics) : IDataBridgeClient
 {
     private readonly HttpClient _httpClient = factory.CreateClient(ClientName);
     private readonly ILogger<DataBridgeClient> _logger = logger;
+    private readonly IApplicationMetrics _metrics = metrics;
 
     private readonly string? _serviceName = configuration.GetValue<string>("ApiClients:DataBridgeApi:ServiceName");
     private readonly bool _serviceNameExists = !string.IsNullOrWhiteSpace(configuration.GetValue<string>("ApiClients:DataBridgeApi:ServiceName"));
@@ -43,15 +47,43 @@ public class DataBridgeClient(
     {
         if (!_samHoldingsEnabled) return null;
 
-        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
-        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHoldings, new { }, query);
+        var requestStopwatch = Stopwatch.StartNew();
+        
+        _metrics.RecordCount(MetricNames.DataBridge, 1,
+            (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestStarted),
+            (MetricNames.CommonTags.Collection, "sam_holdings"),
+            (MetricNames.CommonTags.BatchSize, top.ToString()));
 
-        var result = await GetFromApiAsync<T>(
-            uri,
-            $"Sam paged holdings for top '{top}', skip '{skip}'",
-            cancellationToken);
+        try
+        {
+            var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
+            var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHoldings, new { }, query);
 
-        return result;
+            var result = await GetFromApiAsync<T>(
+                uri,
+                $"Sam paged holdings for top '{top}', skip '{skip}'",
+                cancellationToken);
+
+            requestStopwatch.Stop();
+            
+            _metrics.RecordValue(MetricNames.DataBridge, requestStopwatch.ElapsedMilliseconds,
+                (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestDuration));
+                
+            _metrics.RecordCount(MetricNames.DataBridge, result?.Count ?? 0,
+                (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestRecords));
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            requestStopwatch.Stop();
+            
+            _metrics.RecordCount(MetricNames.DataBridge, 1,
+                (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestFailed),
+                (MetricNames.CommonTags.ErrorType, ex.GetType().Name));
+                
+            throw;
+        }
     }
 
     public async Task<List<SamCphHolding>> GetSamHoldingsAsync(string id, CancellationToken cancellationToken)
@@ -79,15 +111,43 @@ public class DataBridgeClient(
     {
         if (!_samHoldersEnabled) return null;
 
-        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
-        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHolders, new { }, query);
+        var requestStopwatch = Stopwatch.StartNew();
+        
+        _metrics.RecordCount(MetricNames.DataBridge, 1,
+            (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestStarted),
+            (MetricNames.CommonTags.Collection, "sam_holders"),
+            (MetricNames.CommonTags.BatchSize, top.ToString()));
 
-        var result = await GetFromApiAsync<T>(
-            uri,
-            $"Sam paged holders for top '{top}', skip '{skip}'",
-            cancellationToken);
+        try
+        {
+            var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
+            var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHolders, new { }, query);
 
-        return result;
+            var result = await GetFromApiAsync<T>(
+                uri,
+                $"Sam paged holders for top '{top}', skip '{skip}'",
+                cancellationToken);
+
+            requestStopwatch.Stop();
+            
+            _metrics.RecordValue(MetricNames.DataBridge, requestStopwatch.ElapsedMilliseconds,
+                (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestDuration));
+                
+            _metrics.RecordCount(MetricNames.DataBridge, result?.Count ?? 0,
+                (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestRecords));
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            requestStopwatch.Stop();
+            
+            _metrics.RecordCount(MetricNames.DataBridge, 1,
+                (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestFailed),
+                (MetricNames.CommonTags.ErrorType, ex.GetType().Name));
+                
+            throw;
+        }
     }
 
     public async Task<List<SamCphHolder>> GetSamHoldersByCphAsync(string id, CancellationToken cancellationToken)

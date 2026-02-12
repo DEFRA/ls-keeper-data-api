@@ -1,4 +1,5 @@
 using KeeperData.Infrastructure.Config;
+using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Options;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
