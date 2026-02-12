@@ -20,7 +20,7 @@ public static class MetricNames
         public const string BatchSize = "batch_size";
         public const string UpdateType = "update_type";
     }
-    
+
     public static class Operations
     {
         // Batch operations
@@ -29,7 +29,7 @@ public static class MetricNames
         public const string BatchRecordsPerSecond = "records_per_second";
         public const string BatchProcessed = "processed";
         public const string BatchFailed = "failed";
-        
+
         // Repository operations
         public const string BulkCreateStarted = "bulk_create_started";
         public const string BulkCreateDuration = "bulk_create_duration";
@@ -39,19 +39,19 @@ public static class MetricNames
         public const string BulkUpdateDuration = "bulk_update_duration";
         public const string BulkUpdateSuccess = "bulk_update_success";
         public const string BulkUpdateFailed = "bulk_update_failed";
-        
+
         // Queue operations
         public const string QueueBatchProcessed = "queue_batch_processed";
         public const string QueueBatchFailed = "queue_batch_failed";
         public const string QueueMessageProcessed = "message_processed";
         public const string QueueMessageFailed = "message_failed";
-        
+
         // DataBridge operations
         public const string PagedRequestStarted = "paged_request_started";
         public const string PagedRequestDuration = "paged_request_duration";
         public const string PagedRequestRecords = "paged_request_records";
         public const string PagedRequestFailed = "paged_request_failed";
-        
+
         // Orchestrator operations
         public const string OrchestrationStarted = "orchestration_started";
         public const string OrchestrationDuration = "orchestration_duration";

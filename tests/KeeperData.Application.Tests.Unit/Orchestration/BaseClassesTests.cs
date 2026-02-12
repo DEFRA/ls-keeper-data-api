@@ -1,6 +1,8 @@
 using FluentAssertions;
 using KeeperData.Application.Orchestration.ChangeScanning;
 using KeeperData.Application.Orchestration.Imports;
+using KeeperData.Core.Orchestration;
+using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -91,14 +93,14 @@ public class BaseClassesTests
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.AtLeast(2));
     }
 
-    public class TestScanOrchestrator(IEnumerable<IScanStep<TestContext>> steps) : ScanOrchestrator<TestContext>(steps) { }
+    public class TestScanOrchestrator(IEnumerable<IScanStep<TestContext>> steps, IApplicationMetrics metrics) : ScanOrchestrator<TestContext>(steps, metrics) { }
 
     [Fact]
     public async Task ScanOrchestrator_ExecuteAsync_RunsAllSteps()
     {
         var step1 = new Mock<IScanStep<TestContext>>();
         var step2 = new Mock<IScanStep<TestContext>>();
-        var orchestrator = new TestScanOrchestrator([step1.Object, step2.Object]);
+        var orchestrator = new TestScanOrchestrator([step1.Object, step2.Object], Mock.Of<IApplicationMetrics>());
         var context = new TestContext();
 
         await orchestrator.ExecuteAsync(context, CancellationToken.None);

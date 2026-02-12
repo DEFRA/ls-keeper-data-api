@@ -13,7 +13,7 @@ public abstract class ScanOrchestrator<TContext>(IEnumerable<IScanStep<TContext>
     {
         var orchestrationStopwatch = Stopwatch.StartNew();
         var contextType = typeof(TContext).Name;
-        
+
         _metrics.RecordCount(MetricNames.Orchestrator, 1,
             (MetricNames.CommonTags.Operation, MetricNames.Operations.OrchestrationStarted),
             (MetricNames.CommonTags.UpdateType, contextType));
@@ -31,11 +31,11 @@ public abstract class ScanOrchestrator<TContext>(IEnumerable<IScanStep<TContext>
             }
 
             orchestrationStopwatch.Stop();
-            
+
             _metrics.RecordValue(MetricNames.Orchestrator, orchestrationStopwatch.ElapsedMilliseconds,
                 (MetricNames.CommonTags.Operation, MetricNames.Operations.OrchestrationDuration),
                 (MetricNames.CommonTags.UpdateType, contextType));
-                
+
             _metrics.RecordCount(MetricNames.Orchestrator, 1,
                 (MetricNames.CommonTags.Operation, MetricNames.Operations.OrchestrationSuccess),
                 (MetricNames.CommonTags.UpdateType, contextType),
@@ -45,12 +45,12 @@ public abstract class ScanOrchestrator<TContext>(IEnumerable<IScanStep<TContext>
         catch (Exception ex)
         {
             orchestrationStopwatch.Stop();
-            
+
             _metrics.RecordCount(MetricNames.Orchestrator, 1,
                 (MetricNames.CommonTags.Operation, MetricNames.Operations.OrchestrationFailed),
                 (MetricNames.CommonTags.ErrorType, ex.GetType().Name),
                 (MetricNames.CommonTags.UpdateType, contextType));
-                
+
             throw;
         }
     }
