@@ -44,7 +44,7 @@ public class ApiContainerFixture : IAsyncLifetime
           .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
           .WithEnvironment("ASPNETCORE_HTTP_PORTS", _containerPort.ToString())
           .WithEnvironment("AWS__ServiceURL", _enableAnonymization ? "http://localstack_anon:4566" : "http://localstack:4566")
-          .WithEnvironment("Mongo__DatabaseUri", 
+          .WithEnvironment("Mongo__DatabaseUri",
               $"mongodb://testuser:testpass@{(_enableAnonymization ? "mongo_anon" : "mongo")}:27017/ls-keeper-data-api?authSource=admin")
           .WithEnvironment("StorageConfiguration__ComparisonReportsStorage__BucketName", "test-comparison-reports-bucket")
           .WithEnvironment("QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue")
