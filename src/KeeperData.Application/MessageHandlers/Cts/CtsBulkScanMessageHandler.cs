@@ -52,10 +52,10 @@ public class CtsBulkScanMessageHandler(CtsBulkScanOrchestrator orchestrator,
             await _orchestrator.ExecuteAsync(context, cancellationToken);
 
             processingStopwatch.Stop();
-            
+
             _metrics.RecordValue(MetricNames.Queue, processingStopwatch.ElapsedMilliseconds,
                 (MetricNames.CommonTags.Operation, MetricNames.Operations.BatchDuration));
-                
+
             _metrics.RecordCount(MetricNames.Queue, 1,
                 (MetricNames.CommonTags.Operation, MetricNames.Operations.BatchProcessed));
 
@@ -64,11 +64,11 @@ public class CtsBulkScanMessageHandler(CtsBulkScanOrchestrator orchestrator,
         catch (Exception ex)
         {
             processingStopwatch.Stop();
-            
+
             _metrics.RecordCount(MetricNames.Queue, 1,
                 (MetricNames.CommonTags.Operation, MetricNames.Operations.BatchFailed),
                 (MetricNames.CommonTags.ErrorType, ex.GetType().Name));
-                
+
             throw;
         }
     }

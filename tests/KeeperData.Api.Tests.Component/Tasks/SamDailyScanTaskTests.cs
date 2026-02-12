@@ -1,6 +1,7 @@
 using FluentAssertions;
 using KeeperData.Application.Orchestration.ChangeScanning;
 using KeeperData.Core.Exceptions;
+using KeeperData.Core.Telemetry;
 
 namespace KeeperData.Api.Tests.Component.Tasks;
 
@@ -35,7 +36,7 @@ public class SamDailyScanTaskTests
         var lockHandleMock = new Mock<IDistributedLockHandle>();
         var distributedLockMock = new Mock<IDistributedLock>();
         var delayProviderMock = new Mock<IDelayProvider>();
-        var orchestrator = new SamDailyScanOrchestrator([]);
+        var orchestrator = new SamDailyScanOrchestrator([], new Mock<IApplicationMetrics>().Object);
 
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
@@ -65,7 +66,7 @@ public class SamDailyScanTaskTests
         var loggerMock = new Mock<ILogger<SamDailyScanTask>>();
         var distributedLockMock = new Mock<IDistributedLock>();
         var delayProviderMock = new Mock<IDelayProvider>();
-        var orchestrator = new SamDailyScanOrchestrator([]);
+        var orchestrator = new SamDailyScanOrchestrator([], new Mock<IApplicationMetrics>().Object);
 
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
@@ -104,7 +105,7 @@ public class SamDailyScanTaskTests
         var distributedLockMock = new Mock<IDistributedLock>();
         var delayProviderMock = new Mock<IDelayProvider>();
         var stepMock = new Mock<IScanStep<SamDailyScanContext>>();
-        var orchestrator = new SamDailyScanOrchestrator([stepMock.Object]);
+        var orchestrator = new SamDailyScanOrchestrator([stepMock.Object], new Mock<IApplicationMetrics>().Object);
 
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
@@ -139,7 +140,7 @@ public class SamDailyScanTaskTests
         var distributedLockMock = new Mock<IDistributedLock>();
         var delayProviderMock = new Mock<IDelayProvider>();
         var stepMock = new Mock<IScanStep<SamDailyScanContext>>();
-        var orchestrator = new SamDailyScanOrchestrator([stepMock.Object]);
+        var orchestrator = new SamDailyScanOrchestrator([stepMock.Object], new Mock<IApplicationMetrics>().Object);
 
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))

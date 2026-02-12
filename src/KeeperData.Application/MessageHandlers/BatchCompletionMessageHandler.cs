@@ -59,10 +59,10 @@ public class BatchCompletionMessageHandler(
         logger.LogInformation("Batch completion notification processed successfully");
 
         processingStopwatch.Stop();
-        
+
         _metrics.RecordValue(MetricNames.Queue, processingStopwatch.ElapsedMilliseconds,
             (MetricNames.CommonTags.Operation, MetricNames.Operations.BatchDuration));
-            
+
         _metrics.RecordCount(MetricNames.Queue, 1,
             (MetricNames.CommonTags.Operation, MetricNames.Operations.BatchProcessed));
 

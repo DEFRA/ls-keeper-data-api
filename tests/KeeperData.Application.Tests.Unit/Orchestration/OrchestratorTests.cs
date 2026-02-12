@@ -10,17 +10,20 @@ using KeeperData.Application.Orchestration.Updates;
 using KeeperData.Application.Orchestration.Updates.Cts.Agents;
 using KeeperData.Application.Orchestration.Updates.Cts.Holdings;
 using KeeperData.Application.Orchestration.Updates.Cts.Keepers;
+using KeeperData.Core.Telemetry;
 using Moq;
 
 namespace KeeperData.Application.Tests.Unit.Orchestration;
 
 public class OrchestratorTests
 {
+    private readonly Mock<IApplicationMetrics> _mockMetrics = new();
+
     [Fact]
     public async Task CtsBulkScanOrchestrator_ExecuteAsync_CallsSteps()
     {
         var step = new Mock<IScanStep<CtsBulkScanContext>>();
-        var orchestrator = new CtsBulkScanOrchestrator([step.Object]);
+        var orchestrator = new CtsBulkScanOrchestrator([step.Object], _mockMetrics.Object);
         var context = new CtsBulkScanContext();
 
         await orchestrator.ExecuteAsync(context, CancellationToken.None);
@@ -32,7 +35,7 @@ public class OrchestratorTests
     public async Task CtsDailyScanOrchestrator_ExecuteAsync_CallsSteps()
     {
         var step = new Mock<IScanStep<CtsDailyScanContext>>();
-        var orchestrator = new CtsDailyScanOrchestrator([step.Object]);
+        var orchestrator = new CtsDailyScanOrchestrator([step.Object], _mockMetrics.Object);
         var context = new CtsDailyScanContext();
 
         await orchestrator.ExecuteAsync(context, CancellationToken.None);
@@ -44,7 +47,7 @@ public class OrchestratorTests
     public async Task SamBulkScanOrchestrator_ExecuteAsync_CallsSteps()
     {
         var step = new Mock<IScanStep<SamBulkScanContext>>();
-        var orchestrator = new SamBulkScanOrchestrator([step.Object]);
+        var orchestrator = new SamBulkScanOrchestrator([step.Object], _mockMetrics.Object);
         var context = new SamBulkScanContext();
 
         await orchestrator.ExecuteAsync(context, CancellationToken.None);
@@ -56,7 +59,7 @@ public class OrchestratorTests
     public async Task SamDailyScanOrchestrator_ExecuteAsync_CallsSteps()
     {
         var step = new Mock<IScanStep<SamDailyScanContext>>();
-        var orchestrator = new SamDailyScanOrchestrator([step.Object]);
+        var orchestrator = new SamDailyScanOrchestrator([step.Object], _mockMetrics.Object);
         var context = new SamDailyScanContext();
 
         await orchestrator.ExecuteAsync(context, CancellationToken.None);

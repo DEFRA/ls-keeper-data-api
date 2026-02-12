@@ -48,7 +48,7 @@ public class DataBridgeClient(
         if (!_samHoldingsEnabled) return null;
 
         var requestStopwatch = Stopwatch.StartNew();
-        
+
         _metrics.RecordCount(MetricNames.DataBridge, 1,
             (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestStarted),
             (MetricNames.CommonTags.Collection, "sam_holdings"),
@@ -65,10 +65,10 @@ public class DataBridgeClient(
                 cancellationToken);
 
             requestStopwatch.Stop();
-            
+
             _metrics.RecordValue(MetricNames.DataBridge, requestStopwatch.ElapsedMilliseconds,
                 (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestDuration));
-                
+
             _metrics.RecordCount(MetricNames.DataBridge, result?.Count ?? 0,
                 (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestRecords));
 
@@ -77,11 +77,11 @@ public class DataBridgeClient(
         catch (Exception ex)
         {
             requestStopwatch.Stop();
-            
+
             _metrics.RecordCount(MetricNames.DataBridge, 1,
                 (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestFailed),
                 (MetricNames.CommonTags.ErrorType, ex.GetType().Name));
-                
+
             throw;
         }
     }
@@ -112,7 +112,7 @@ public class DataBridgeClient(
         if (!_samHoldersEnabled) return null;
 
         var requestStopwatch = Stopwatch.StartNew();
-        
+
         _metrics.RecordCount(MetricNames.DataBridge, 1,
             (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestStarted),
             (MetricNames.CommonTags.Collection, "sam_holders"),
@@ -129,10 +129,10 @@ public class DataBridgeClient(
                 cancellationToken);
 
             requestStopwatch.Stop();
-            
+
             _metrics.RecordValue(MetricNames.DataBridge, requestStopwatch.ElapsedMilliseconds,
                 (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestDuration));
-                
+
             _metrics.RecordCount(MetricNames.DataBridge, result?.Count ?? 0,
                 (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestRecords));
 
@@ -141,11 +141,11 @@ public class DataBridgeClient(
         catch (Exception ex)
         {
             requestStopwatch.Stop();
-            
+
             _metrics.RecordCount(MetricNames.DataBridge, 1,
                 (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestFailed),
                 (MetricNames.CommonTags.ErrorType, ex.GetType().Name));
-                
+
             throw;
         }
     }
