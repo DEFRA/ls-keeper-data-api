@@ -79,7 +79,7 @@ public static class ServiceCollectionExtensions
         if (options?.Enabled != true)
             return;
 
-        var isAnonymizedEnvironment = options.AnonymizedEnvironments
+        var isAnonymizedEnvironment = options.AnonymizedEnvironments != null && options.AnonymizedEnvironments
             .Contains(environment.EnvironmentName, StringComparer.OrdinalIgnoreCase);
 
         if (!isAnonymizedEnvironment)

@@ -376,7 +376,7 @@ public class DataBridgeClientAnonymizerTests
         var result = await _sut.GetSamPartyAsync("P001", CancellationToken.None);
         var result2 = await _sut.GetSamPartyAsync("P001", CancellationToken.None);
 
-        result!.INTERNET_EMAIL_ADDRESS.Should().Be(result2.INTERNET_EMAIL_ADDRESS);
+        result!.INTERNET_EMAIL_ADDRESS.Should().Be(result2?.INTERNET_EMAIL_ADDRESS);
     }
 
     [Fact]
