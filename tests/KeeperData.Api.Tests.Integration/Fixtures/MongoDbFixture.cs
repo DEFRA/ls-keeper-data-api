@@ -18,18 +18,31 @@ public class MongoDbFixture : IAsyncLifetime
     public string NetworkName { get; } = "integration-test-network";
     public const string KrdsDatabaseName = "ls-keeper-data-api";
 
+    private readonly string _containerName;
+    private readonly string _networkAlias;
+
+    public MongoDbFixture() : this(isAnonymization: false)
+    {
+    }
+
+    protected MongoDbFixture(bool isAnonymization)
+    {
+        _containerName = isAnonymization ? "mongo_anon" : "mongo";
+        _networkAlias = isAnonymization ? "mongo_anon" : "mongo";
+    }
+
     public async Task InitializeAsync()
     {
         DockerNetworkHelper.EnsureNetworkExists(NetworkName);
 
         Container = new MongoDbBuilder("mongo:6.0.13")
-            .WithName("mongo")
+            .WithName(_containerName)
             .WithPortBinding(0, 27017)
             .WithEnvironment("MONGO_INITDB_ROOT_USERNAME", "testuser")
             .WithEnvironment("MONGO_INITDB_ROOT_PASSWORD", "testpass")
             .WithEnvironment("MONGO_INITDB_DATABASE", "ls-keeper-data-api")
             .WithNetwork(NetworkName)
-            .WithNetworkAliases("mongo")
+            .WithNetworkAliases(_networkAlias)
             .Build();
 
         await Container.StartAsync();

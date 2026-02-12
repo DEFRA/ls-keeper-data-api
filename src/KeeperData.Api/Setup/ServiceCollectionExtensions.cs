@@ -1,6 +1,10 @@
 using KeeperData.Api.Utils;
 using KeeperData.Api.Worker.Setup;
+using KeeperData.Application.Configuration;
 using KeeperData.Application.Setup;
+using KeeperData.Core.ApiClients.DataBridgeApi;
+using KeeperData.Infrastructure.ApiClients;
+using KeeperData.Infrastructure.ApiClients.Decorators;
 using KeeperData.Infrastructure.ApiClients.Setup;
 using KeeperData.Infrastructure.Authentication.Configuration;
 using KeeperData.Infrastructure.Authentication.Handlers;
@@ -14,12 +18,13 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using System.Text.Json.Serialization;
+using Scrutor;
 
 namespace KeeperData.Api.Setup;
 
 public static class ServiceCollectionExtensions
 {
-    public static void ConfigureApi(this IServiceCollection services, IConfiguration configuration)
+    public static void ConfigureApi(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
         services.ConfigureAuthentication(configuration);
 
@@ -54,6 +59,29 @@ public static class ServiceCollectionExtensions
             {
                 metrics.AddMeter(MetricNames.MeterName);
             });
+
+        services.ConfigurePiiAnonymization(configuration, environment);
+    }
+
+    private static void ConfigurePiiAnonymization(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment environment)
+    {
+        var options = configuration
+            .GetSection(PiiAnonymizationOptions.SectionName)
+            .Get<PiiAnonymizationOptions>();
+
+        if (options?.Enabled != true)
+            return;
+
+        var isAnonymizedEnvironment = options.AnonymizedEnvironments
+            .Contains(environment.EnvironmentName, StringComparer.OrdinalIgnoreCase);
+
+        if (!isAnonymizedEnvironment)
+            return;
+
+        services.Decorate<IDataBridgeClient, DataBridgeClientAnonymizer>();
     }
 
     public static void ConfigureAuthentication(this IServiceCollection services, IConfiguration configuration)

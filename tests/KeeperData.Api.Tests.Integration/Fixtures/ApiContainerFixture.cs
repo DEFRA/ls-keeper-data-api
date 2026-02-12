@@ -19,17 +19,33 @@ public class ApiContainerFixture : IAsyncLifetime
     private const string BasicApiKey = "ApiKey";
     private const string BasicSecret = "integration-test-secret";
 
+    private readonly bool _enableAnonymization;
+    private readonly int _hostPort;
+    private readonly int _containerPort;
+
+    public ApiContainerFixture() : this(enableAnonymization: false)
+    {
+    }
+
+    protected ApiContainerFixture(bool enableAnonymization)
+    {
+        _enableAnonymization = enableAnonymization;
+        _hostPort = enableAnonymization ? 5556 : 5555;
+        _containerPort = 5555; // Internal container port stays the same
+    }
+
     public async Task InitializeAsync()
     {
         DockerNetworkHelper.EnsureNetworkExists(NetworkName);
 
-        ApiContainer = new ContainerBuilder("keeperdata_api:latest")
-          .WithName("keeperdata_api")
-          .WithPortBinding(5555, 5555)
+        var containerBuilder = new ContainerBuilder("keeperdata_api:latest")
+          .WithName(_enableAnonymization ? "keeperdata_api_anon" : "keeperdata_api")
+          .WithPortBinding(_hostPort, _containerPort)
           .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
-          .WithEnvironment("ASPNETCORE_HTTP_PORTS", "5555")
-          .WithEnvironment("AWS__ServiceURL", "http://localstack:4566")
-          .WithEnvironment("Mongo__DatabaseUri", "mongodb://testuser:testpass@mongo:27017/ls-keeper-data-api?authSource=admin")
+          .WithEnvironment("ASPNETCORE_HTTP_PORTS", _containerPort.ToString())
+          .WithEnvironment("AWS__ServiceURL", _enableAnonymization ? "http://localstack_anon:4566" : "http://localstack:4566")
+          .WithEnvironment("Mongo__DatabaseUri", 
+              $"mongodb://testuser:testpass@{(_enableAnonymization ? "mongo_anon" : "mongo")}:27017/ls-keeper-data-api?authSource=admin")
           .WithEnvironment("StorageConfiguration__ComparisonReportsStorage__BucketName", "test-comparison-reports-bucket")
           .WithEnvironment("QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue")
           .WithEnvironment("QueueConsumerOptions__IntakeEventQueueOptions__DeadLetterQueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue-deadletter")
@@ -45,20 +61,39 @@ public class ApiContainerFixture : IAsyncLifetime
           .WithEnvironment("DataBridgeScanConfiguration__DelayBetweenQueriesSeconds", "0")
           .WithEnvironment("DataBridgeScanConfiguration__LimitScanTotalBatchSize", "10")
           .WithEnvironment("DataBridgeScanConfiguration__DailyScanIncludeChangesWithinTotalHours", "24")
-          .WithEnvironment("LOCALSTACK_ENDPOINT", "http://localstack:4566")
+          .WithEnvironment("LOCALSTACK_ENDPOINT", _enableAnonymization ? "http://localstack_anon:4566" : "http://localstack:4566")
           .WithEnvironment("AWS_REGION", "eu-west-2")
           .WithEnvironment("AWS_DEFAULT_REGION", "eu-west-2")
           .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
-          .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
-          .WithNetwork(NetworkName)
-          .WithNetworkAliases("keeperdata_api")
-          .WithWaitStrategy(Wait.ForUnixContainer()
-              .UntilHttpRequestIsSucceeded(req => req.ForPort(5555).ForPath("/health"), o => o.WithTimeout(TimeSpan.FromSeconds(25))))
-          .Build();
+          .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test");
+
+        if (_enableAnonymization)
+        {
+            containerBuilder = containerBuilder
+                .WithEnvironment("PiiAnonymization__Enabled", "true")
+                .WithEnvironment("PiiAnonymization__AnonymizedEnvironments__0", "Development")
+                .WithEnvironment("PiiAnonymization__AnonymizedEnvironments__1", "dev")
+                .WithEnvironment("PiiAnonymization__AnonymizedEnvironments__2", "ext-test")
+                .WithEnvironment("PiiAnonymization__AnonymizedEnvironments__3", "infra-dev")
+                .WithEnvironment("PiiAnonymization__AnonymizedEnvironments__4", "perf-test")
+                .WithEnvironment("PiiAnonymization__AnonymizedEnvironments__5", "test");
+        }
+        else
+        {
+            containerBuilder = containerBuilder
+                .WithEnvironment("PiiAnonymization__Enabled", "false");
+        }
+
+        ApiContainer = containerBuilder
+              .WithNetwork(NetworkName)
+              .WithNetworkAliases(_enableAnonymization ? "keeperdata_api_anon" : "keeperdata_api")
+              .WithWaitStrategy(Wait.ForUnixContainer()
+                  .UntilHttpRequestIsSucceeded(req => req.ForPort((ushort)_containerPort).ForPath("/health"), o => o.WithTimeout(TimeSpan.FromSeconds(25))))
+              .Build();
 
         await ApiContainer.StartAsync();
 
-        HttpClient = new HttpClient { BaseAddress = new Uri($"http://localhost:{ApiContainer.GetMappedPublicPort(5555)}") };
+        HttpClient = new HttpClient { BaseAddress = new Uri($"http://localhost:{ApiContainer.GetMappedPublicPort(_containerPort)}") };
         HttpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
     }
 

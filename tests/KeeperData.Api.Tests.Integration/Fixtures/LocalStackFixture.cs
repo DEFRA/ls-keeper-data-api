@@ -35,21 +35,36 @@ public class LocalStackFixture : IAsyncLifetime
     public const string SNS_DataBridgeEventsTopic = "ls-keeper-data-bridge-events";
     public const string SNS_KrdsImportCompleteTopic = "ls_keeper_data_import_complete";
 
+    private readonly string _containerName;
+    private readonly string _networkAlias;
+    private readonly int _hostPort;
+
+    public LocalStackFixture() : this(isAnonymization: false)
+    {
+    }
+
+    protected LocalStackFixture(bool isAnonymization)
+    {
+        _containerName = isAnonymization ? "localstack_anon" : "localstack";
+        _networkAlias = isAnonymization ? "localstack_anon" : "localstack";
+        _hostPort = isAnonymization ? 4567 : 4566;
+    }
+
     public async Task InitializeAsync()
     {
         DockerNetworkHelper.EnsureNetworkExists(NetworkName);
 
         LocalStackContainer = new LocalStackBuilder("localstack/localstack:3.0.2")
-            .WithName("localstack")
+            .WithName(_containerName)
             .WithEnvironment("SERVICES", "s3,sqs,sns")
             .WithEnvironment("DEBUG", "1")
             .WithEnvironment("AWS_DEFAULT_REGION", "eu-west-2")
             .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
             .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
             .WithEnvironment("EDGE_PORT", "4566")
-            .WithPortBinding(4566, 4566)
+            .WithPortBinding(_hostPort, 4566)
             .WithNetwork(NetworkName)
-            .WithNetworkAliases("localstack")
+            .WithNetworkAliases(_networkAlias)
             .Build();
 
         await LocalStackContainer.StartAsync();
@@ -89,17 +104,19 @@ public class LocalStackFixture : IAsyncLifetime
 
     private void InitialiseClients()
     {
+        var serviceUrl = $"http://localhost:{_hostPort}";
+
         // S3
         S3Client = new AmazonS3Client("test", "test", new AmazonS3Config
         {
-            ServiceURL = ServiceURL,
+            ServiceURL = serviceUrl,
             ForcePathStyle = true
         });
 
         // SQS
         SqsClient = new AmazonSQSClient(GetBasicAWSCredentials, new AmazonSQSConfig
         {
-            ServiceURL = ServiceURL,
+            ServiceURL = serviceUrl,
             AuthenticationRegion = AuthenticationRegion,
             UseHttp = true
         });
@@ -109,7 +126,7 @@ public class LocalStackFixture : IAsyncLifetime
         // SNS
         SnsClient = new AmazonSimpleNotificationServiceClient(GetBasicAWSCredentials, new AmazonSimpleNotificationServiceConfig
         {
-            ServiceURL = ServiceURL,
+            ServiceURL = serviceUrl,
             AuthenticationRegion = AuthenticationRegion,
             UseHttp = true
         });

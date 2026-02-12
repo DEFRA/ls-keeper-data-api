@@ -2,7 +2,7 @@ services:
   keeperdata_api:
     build:
       args:
-        TARGETARCH: x64
+        TARGETARCH: arm64
     labels:
       com.microsoft.visual-studio.project-name: "KeeperData.Api"
     environment:
@@ -34,14 +34,14 @@ services:
       - AuthenticationConfiguration__Authority=
       - PiiAnonymization__Enabled=false
       - PiiAnonymization__AnonymizedEnvironments__0=Development
+
     ports:
       - "5555"
     volumes:
-      # Mac-specific paths for user secrets and HTTPS certificates
-      - ~/.microsoft/usersecrets:/home/app/.microsoft/usersecrets:ro
-      - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
-      - ~/.aspnet/https:/home/app/.aspnet/https:ro
-      - ~/.aspnet/https:/root/.aspnet/https:ro
+      - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
       # Mount seed files directly for Rider Fast Mode
       - ./src/KeeperData.Infrastructure/Data/Seed:/app/Data/Seed:ro
 

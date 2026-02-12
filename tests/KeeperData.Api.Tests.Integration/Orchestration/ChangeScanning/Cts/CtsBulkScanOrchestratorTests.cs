@@ -2,7 +2,9 @@ using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
 using KeeperData.Api.Tests.Integration.Fixtures;
 using KeeperData.Api.Tests.Integration.Helpers;
+using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
+using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.ChangeScanning.Cts;
 
@@ -90,6 +92,14 @@ public class CtsBulkScanOrchestratorTests(
 
         matchingLogCount.Should().BeGreaterThanOrEqualTo(expectedEntries,
             $"Expected {expectedEntries} import step completions after {testExecutedOn:o} within {timeout.TotalSeconds} seconds.");
+
+        var ctsHoldings = await mongoDbFixture.MongoVerifier.FindDocumentsAsync("ctsHoldings", FilterDefinition<CtsHoldingDocument>.Empty);
+        foreach (var ctsHoldingDocument in ctsHoldings)
+        {
+            ctsHoldingDocument.LocationName.Should().NotBeNullOrEmpty();
+            Guid.TryParse(ctsHoldingDocument.LocationName, out _).Should().BeTrue(
+                "LocationName should be a GUID and not anonymized data");
+        }
     }
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
