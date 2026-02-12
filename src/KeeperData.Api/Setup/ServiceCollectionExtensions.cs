@@ -17,6 +17,8 @@ using KeeperData.Infrastructure.Telemetry;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 using Scrutor;
 
@@ -37,6 +39,8 @@ public static class ServiceCollectionExtensions
 
         services.AddDefaultAWSOptions(configuration.GetAWSOptions());
         services.Configure<AwsConfig>(configuration.GetSection(AwsConfig.SectionName));
+
+        services.ConfigureSwagger(); // Add this line
 
         services.ConfigureHealthChecks();
 
@@ -82,6 +86,65 @@ public static class ServiceCollectionExtensions
             return;
 
         services.Decorate<IDataBridgeClient, DataBridgeClientAnonymizer>();
+    }
+
+    private static void ConfigureSwagger(this IServiceCollection services)
+    {
+        services.AddEndpointsApiExplorer();
+
+        services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Title = "Keeper Data API",
+                Version = "v1",
+                Description = "API for managing and accessing Keeper Data services. This API provides endpoints for data management, authentication, and integration with various backend services."
+            });
+
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = "Bearer"
+            });
+
+            options.AddSecurityDefinition("Basic", new OpenApiSecurityScheme
+            {
+                Description = "Basic Authentication header. Example: \"Authorization: Basic {base64(username:password)}\"",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Scheme = "Basic"
+            });
+
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                },
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Basic"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            });
+        });
     }
 
     public static void ConfigureAuthentication(this IServiceCollection services, IConfiguration configuration)
