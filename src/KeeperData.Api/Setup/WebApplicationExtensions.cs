@@ -33,6 +33,14 @@ public static class WebApplicationExtensions
 
         app.UseEmfExporter();
 
+        app.UseSwagger();
+        app.UseSwaggerUI(options =>
+        {
+            options.SwaggerEndpoint("/swagger/public/swagger.json", "Public API");
+            options.SwaggerEndpoint("/swagger/internal/swagger.json", "Internal API");
+            options.RoutePrefix = "swagger";
+        });
+
         app.UseMiddleware<ExceptionHandlingMiddleware>();
 
         app.UseHeaderPropagation();
@@ -64,11 +72,13 @@ public static class WebApplicationExtensions
         if (bulkScanEndpointsEnabled)
         {
             RegisterScanEndpoint<ICtsBulkScanTask>(app, "/api/import/startCtsBulkScan", "CTS bulk scan")
+                .WithGroupName("internal")
                 .RequireAuthorization(new AuthorizeAttribute
                 {
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
                 });
             RegisterScanEndpoint<ISamBulkScanTask>(app, "/api/import/startSamBulkScan", "SAM bulk scan")
+                .WithGroupName("internal")
                 .RequireAuthorization(new AuthorizeAttribute
                 {
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
@@ -78,11 +88,13 @@ public static class WebApplicationExtensions
         if (dailyScanEndpointsEnabled)
         {
             RegisterScanEndpoint<ICtsDailyScanTask>(app, "/api/import/startCtsDailyScan", "CTS daily scan")
+                .WithGroupName("internal")
                 .RequireAuthorization(new AuthorizeAttribute
                 {
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
                 });
             RegisterScanEndpoint<ISamDailyScanTask>(app, "/api/import/startSamDailyScan", "SAM daily scan")
+                .WithGroupName("internal")
                 .RequireAuthorization(new AuthorizeAttribute
                 {
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
