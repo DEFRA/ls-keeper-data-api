@@ -66,11 +66,18 @@ public static class ServiceCollectionExtensions
 
         services.AddSwaggerGen(options =>
         {
-            options.SwaggerDoc("v1", new OpenApiInfo
+            options.SwaggerDoc("public", new OpenApiInfo
             {
-                Title = "Keeper Data API",
+                Title = "Keeper Data API (Public)",
                 Version = "v1",
-                Description = "API for managing and accessing Keeper Data services. This API provides endpoints for data management, authentication, and integration with various backend services."
+                Description = "Publicly exposed endpoints for querying Parties and Sites."
+            });
+
+            options.SwaggerDoc("internal", new OpenApiInfo
+            {
+                Title = "Keeper Data API (Internal)",
+                Version = "v1",
+                Description = "Internal endpoints for data ingestion, scanning, and administration."
             });
 
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
