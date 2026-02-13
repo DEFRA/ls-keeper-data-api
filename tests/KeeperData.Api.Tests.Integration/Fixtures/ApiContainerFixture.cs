@@ -67,22 +67,7 @@ public class ApiContainerFixture : IAsyncLifetime
           .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
           .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test");
 
-        if (_enableAnonymization)
-        {
-            containerBuilder = containerBuilder
-                .WithEnvironment("PiiAnonymization__Enabled", "true")
-                .WithEnvironment("PiiAnonymization__AnonymizedEnvironments__0", "Development")
-                .WithEnvironment("PiiAnonymization__AnonymizedEnvironments__1", "dev")
-                .WithEnvironment("PiiAnonymization__AnonymizedEnvironments__2", "ext-test")
-                .WithEnvironment("PiiAnonymization__AnonymizedEnvironments__3", "infra-dev")
-                .WithEnvironment("PiiAnonymization__AnonymizedEnvironments__4", "perf-test")
-                .WithEnvironment("PiiAnonymization__AnonymizedEnvironments__5", "test");
-        }
-        else
-        {
-            containerBuilder = containerBuilder
-                .WithEnvironment("PiiAnonymization__Enabled", "false");
-        }
+        containerBuilder = containerBuilder.WithEnvironment("PiiAnonymization__Enabled", _enableAnonymization ? "true" : "false");
 
         ApiContainer = containerBuilder
               .WithNetwork(NetworkName)

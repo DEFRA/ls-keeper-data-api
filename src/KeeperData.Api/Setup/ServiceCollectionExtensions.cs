@@ -76,14 +76,7 @@ public static class ServiceCollectionExtensions
             .GetSection(PiiAnonymizationOptions.SectionName)
             .Get<PiiAnonymizationOptions>();
 
-        if (options?.Enabled != true)
-            return;
-
-        var isAnonymizedEnvironment = options.AnonymizedEnvironments != null && options.AnonymizedEnvironments
-            .Contains(environment.EnvironmentName, StringComparer.OrdinalIgnoreCase);
-
-        if (!isAnonymizedEnvironment)
-            return;
+        if (options?.Enabled != true) return;
 
         services.Decorate<IDataBridgeClient, DataBridgeClientAnonymizer>();
     }

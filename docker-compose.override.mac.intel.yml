@@ -33,7 +33,6 @@ services:
       - AuthenticationConfiguration__ApiGatewayExists=false
       - AuthenticationConfiguration__Authority=
       - PiiAnonymization__Enabled=false
-      - PiiAnonymization__AnonymizedEnvironments__0=Development
     ports:
       - "5555"
     volumes:
