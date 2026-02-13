@@ -305,15 +305,4 @@ public static class PiiAnonymizerHelper
         var hash = MD5.HashData(Encoding.UTF8.GetBytes(identifier));
         return BitConverter.ToInt32(hash, 0);
     }
-
-    private static string HashEmail(string email)
-    {
-        if (string.IsNullOrWhiteSpace(email))
-            return email;
-
-        var hashBytes = MD5.HashData(Encoding.UTF8.GetBytes(email));
-        var hash = Convert.ToHexString(hashBytes).ToLowerInvariant();
-
-        return $"{hash[..13]}@{hash[13..]}.com";
-    }
 }
