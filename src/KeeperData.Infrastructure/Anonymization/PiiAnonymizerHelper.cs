@@ -8,6 +8,11 @@ namespace KeeperData.Infrastructure.Anonymization;
 
 public static class PiiAnonymizerHelper
 {
+    private const string MobileNumberFormat = "07#########";
+    private const string TelephoneNumberFormat = "01### ######";
+    private const string PostcodeFormat = "??# #??";
+    private const string MapReferenceFormat = "??########";
+
     /// <summary>
     /// Anonymizes personally identifiable information (PII) in the data contained within the specified response, if
     /// applicable for the data type.
@@ -85,7 +90,7 @@ public static class PiiAnonymizerHelper
         var faker = CreateFaker(seed);
 
         if (holding.OS_MAP_REFERENCE is not null)
-            holding.OS_MAP_REFERENCE = faker.Random.Replace("??########").ToUpperInvariant();
+            holding.OS_MAP_REFERENCE = faker.Random.Replace(MapReferenceFormat).ToUpperInvariant();
 
         if (holding.EASTING.HasValue)
             holding.EASTING = faker.Random.Int(100000, 999999);
@@ -103,7 +108,7 @@ public static class PiiAnonymizerHelper
             holding.TOWN = faker.Address.City();
 
         if (holding.POSTCODE is not null)
-            holding.POSTCODE = faker.Address.ZipCode("??# #??");
+            holding.POSTCODE = faker.Address.ZipCode(PostcodeFormat);
 
         if (holding.PAON_DESCRIPTION is not null)
             holding.PAON_DESCRIPTION = faker.Address.BuildingNumber();
@@ -139,10 +144,10 @@ public static class PiiAnonymizerHelper
             holder.INTERNET_EMAIL_ADDRESS = faker.Internet.Email();
 
         if (holder.MOBILE_NUMBER is not null)
-            holder.MOBILE_NUMBER = faker.Phone.PhoneNumber("07#########");
+            holder.MOBILE_NUMBER = faker.Phone.PhoneNumber(MobileNumberFormat);
 
         if (holder.TELEPHONE_NUMBER is not null)
-            holder.TELEPHONE_NUMBER = faker.Phone.PhoneNumber("01### ######");
+            holder.TELEPHONE_NUMBER = faker.Phone.PhoneNumber(TelephoneNumberFormat);
 
         if (holder.STREET is not null)
             holder.STREET = faker.Address.StreetAddress();
@@ -154,7 +159,7 @@ public static class PiiAnonymizerHelper
             holder.TOWN = faker.Address.City();
 
         if (holder.POSTCODE is not null)
-            holder.POSTCODE = faker.Address.ZipCode("??# #??");
+            holder.POSTCODE = faker.Address.ZipCode(PostcodeFormat);
 
         if (holder.PAON_DESCRIPTION is not null)
             holder.PAON_DESCRIPTION = faker.Address.BuildingNumber();
@@ -190,10 +195,10 @@ public static class PiiAnonymizerHelper
             party.INTERNET_EMAIL_ADDRESS = faker.Internet.Email();
 
         if (party.MOBILE_NUMBER is not null)
-            party.MOBILE_NUMBER = faker.Phone.PhoneNumber("07#########");
+            party.MOBILE_NUMBER = faker.Phone.PhoneNumber(MobileNumberFormat);
 
         if (party.TELEPHONE_NUMBER is not null)
-            party.TELEPHONE_NUMBER = faker.Phone.PhoneNumber("01### ######");
+            party.TELEPHONE_NUMBER = faker.Phone.PhoneNumber(TelephoneNumberFormat);
 
         if (party.STREET is not null)
             party.STREET = faker.Address.StreetAddress();
@@ -205,7 +210,7 @@ public static class PiiAnonymizerHelper
             party.TOWN = faker.Address.City();
 
         if (party.POSTCODE is not null)
-            party.POSTCODE = faker.Address.ZipCode("??# #??");
+            party.POSTCODE = faker.Address.ZipCode(PostcodeFormat);
 
         if (party.PAON_DESCRIPTION is not null)
             party.PAON_DESCRIPTION = faker.Address.BuildingNumber();
@@ -220,7 +225,7 @@ public static class PiiAnonymizerHelper
         var faker = CreateFaker(seed);
 
         if (holding.LOC_MAP_REFERENCE is not null)
-            holding.LOC_MAP_REFERENCE = faker.Random.Replace("??########").ToUpperInvariant();
+            holding.LOC_MAP_REFERENCE = faker.Random.Replace(MapReferenceFormat).ToUpperInvariant();
 
         if (holding.ADR_NAME is not null)
             holding.ADR_NAME = faker.Address.StreetAddress();
@@ -238,13 +243,13 @@ public static class PiiAnonymizerHelper
             holding.ADR_ADDRESS_5 = faker.Address.County();
 
         if (holding.ADR_POST_CODE is not null)
-            holding.ADR_POST_CODE = faker.Address.ZipCode("??# #??");
+            holding.ADR_POST_CODE = faker.Address.ZipCode(PostcodeFormat);
 
         if (holding.LOC_TEL_NUMBER is not null)
-            holding.LOC_TEL_NUMBER = faker.Phone.PhoneNumber("01### ######");
+            holding.LOC_TEL_NUMBER = faker.Phone.PhoneNumber(TelephoneNumberFormat);
 
         if (holding.LOC_MOBILE_NUMBER is not null)
-            holding.LOC_MOBILE_NUMBER = faker.Phone.PhoneNumber("07#########");
+            holding.LOC_MOBILE_NUMBER = faker.Phone.PhoneNumber(MobileNumberFormat);
     }
 
     public static void AnonymizeCtsAgentOrKeeper(CtsAgentOrKeeper party)
@@ -265,16 +270,16 @@ public static class PiiAnonymizerHelper
             party.PAR_EMAIL_ADDRESS = faker.Internet.Email();
 
         if (party.PAR_TEL_NUMBER is not null)
-            party.PAR_TEL_NUMBER = faker.Phone.PhoneNumber("01### ######");
+            party.PAR_TEL_NUMBER = faker.Phone.PhoneNumber(TelephoneNumberFormat);
 
         if (party.PAR_MOBILE_NUMBER is not null)
-            party.PAR_MOBILE_NUMBER = faker.Phone.PhoneNumber("07#########");
+            party.PAR_MOBILE_NUMBER = faker.Phone.PhoneNumber(MobileNumberFormat);
 
         if (party.LOC_TEL_NUMBER is not null)
-            party.LOC_TEL_NUMBER = faker.Phone.PhoneNumber("01### ######");
+            party.LOC_TEL_NUMBER = faker.Phone.PhoneNumber(TelephoneNumberFormat);
 
         if (party.LOC_MOBILE_NUMBER is not null)
-            party.LOC_MOBILE_NUMBER = faker.Phone.PhoneNumber("07#########");
+            party.LOC_MOBILE_NUMBER = faker.Phone.PhoneNumber(MobileNumberFormat);
 
         if (party.ADR_NAME is not null)
             party.ADR_NAME = faker.Address.StreetAddress();
@@ -292,7 +297,7 @@ public static class PiiAnonymizerHelper
             party.ADR_ADDRESS_5 = faker.Address.County();
 
         if (party.ADR_POST_CODE is not null)
-            party.ADR_POST_CODE = faker.Address.ZipCode("??# #??");
+            party.ADR_POST_CODE = faker.Address.ZipCode(PostcodeFormat);
     }
 
     public static Faker CreateFaker(int seed) => new("en_GB") { Random = new Randomizer(seed) };
