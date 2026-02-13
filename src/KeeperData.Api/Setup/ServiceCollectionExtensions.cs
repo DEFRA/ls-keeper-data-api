@@ -1,6 +1,7 @@
 using KeeperData.Api.Utils;
 using KeeperData.Api.Worker.Setup;
 using KeeperData.Application.Setup;
+using KeeperData.Core.Telemetry;
 using KeeperData.Infrastructure.ApiClients.Setup;
 using KeeperData.Infrastructure.Authentication.Configuration;
 using KeeperData.Infrastructure.Authentication.Handlers;
