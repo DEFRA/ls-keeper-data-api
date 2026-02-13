@@ -7,21 +7,30 @@ using KeeperData.Core.Messaging.Contracts.V1;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
 using KeeperData.Core.Messaging.Serializers;
+using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace KeeperData.Application.MessageHandlers;
 
 public class BatchCompletionMessageHandler(
     IUnwrappedMessageSerializer<BatchCompletionMessage> serializer,
     IMessagePublisher<BatchCompletionTopicClient> topicPublisher,
-    ILogger<BatchCompletionMessageHandler> logger)
+    ILogger<BatchCompletionMessageHandler> logger,
+    IApplicationMetrics metrics)
     : ICommandHandler<ProcessBatchCompletionMessageCommand, MessageType>
 {
+    private readonly IApplicationMetrics _metrics = metrics;
     public async Task<MessageType> Handle(ProcessBatchCompletionMessageCommand request, CancellationToken cancellationToken)
     {
+        var processingStopwatch = Stopwatch.StartNew();
         var message = request.Message;
 
         ArgumentNullException.ThrowIfNull(message);
+
+        _metrics.RecordCount(MetricNames.Queue, 1,
+            (MetricNames.CommonTags.Operation, MetricNames.Operations.BatchStarted),
+            (MetricNames.CommonTags.UpdateType, "batch_completion"));
 
         logger.LogInformation("Batch completion notification received. MessageId: {MessageId}, CorrelationId: {CorrelationId}",
             message.MessageId, CorrelationIdContext.Value);
@@ -48,6 +57,14 @@ public class BatchCompletionMessageHandler(
         }
 
         logger.LogInformation("Batch completion notification processed successfully");
+
+        processingStopwatch.Stop();
+
+        _metrics.RecordValue(MetricNames.Queue, processingStopwatch.ElapsedMilliseconds,
+            (MetricNames.CommonTags.Operation, MetricNames.Operations.BatchDuration));
+
+        _metrics.RecordCount(MetricNames.Queue, 1,
+            (MetricNames.CommonTags.Operation, MetricNames.Operations.BatchProcessed));
 
         return await Task.FromResult(batchCompletionMessage);
     }
