@@ -57,7 +57,7 @@ namespace KeeperData.Infrastructure.Services
         private static async Task DropIndexIfItIsV1<TDocument>(IMongoCollection<TDocument> collection, BsonDocument index, ILogger logger)
         {
             var indexName = index["name"].AsString;
-            if (indexName.StartsWith("idx_"))
+            if (indexName.StartsWith("idx_") || indexName == "idxv2_customerNumber")
             {
                 await collection.Indexes.DropOneAsync(indexName);
                 logger.LogInformation("Dropped index: {IndexName}", indexName);
