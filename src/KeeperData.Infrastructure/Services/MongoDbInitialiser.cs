@@ -34,6 +34,9 @@ namespace KeeperData.Infrastructure.Services
             var collectionName = type.GetCustomAttribute<CollectionNameAttribute>()?.Name ?? type.Name;
             var collection = _database.GetCollection<BsonDocument>(collectionName);
 
+            // Explicitly drop the conflicting index before general cleanup
+            try { await collection.Indexes.DropOneAsync("idxv2_customerNumber"); } catch { }
+
             await DropV1IndexesIfPresentAsync(collection, _logger);
 
             var getIndexesMethod = type.GetMethod("GetIndexModels", BindingFlags.Public | BindingFlags.Static);
