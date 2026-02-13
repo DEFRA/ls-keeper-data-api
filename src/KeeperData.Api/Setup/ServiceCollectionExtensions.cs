@@ -1,6 +1,10 @@
 using KeeperData.Api.Utils;
 using KeeperData.Api.Worker.Setup;
+using KeeperData.Application.Configuration;
 using KeeperData.Application.Setup;
+using KeeperData.Core.ApiClients.DataBridgeApi;
+using KeeperData.Infrastructure.ApiClients;
+using KeeperData.Infrastructure.ApiClients.Decorators;
 using KeeperData.Infrastructure.ApiClients.Setup;
 using KeeperData.Infrastructure.Authentication.Configuration;
 using KeeperData.Infrastructure.Authentication.Handlers;
@@ -16,12 +20,13 @@ using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
+using Scrutor;
 
 namespace KeeperData.Api.Setup;
 
 public static class ServiceCollectionExtensions
 {
-    public static void ConfigureApi(this IServiceCollection services, IConfiguration configuration)
+    public static void ConfigureApi(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
         services.ConfigureAuthentication(configuration);
 
@@ -58,6 +63,21 @@ public static class ServiceCollectionExtensions
             {
                 metrics.AddMeter(MetricNames.MeterName);
             });
+
+        services.ConfigurePiiAnonymization(configuration);
+    }
+
+    private static void ConfigurePiiAnonymization(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        var options = configuration
+            .GetSection(PiiAnonymizationOptions.SectionName)
+            .Get<PiiAnonymizationOptions>();
+
+        if (options?.Enabled != true) return;
+
+        services.Decorate<IDataBridgeClient, DataBridgeClientAnonymizer>();
     }
 
     private static void ConfigureSwagger(this IServiceCollection services)

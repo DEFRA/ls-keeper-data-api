@@ -3,16 +3,16 @@ using KeeperData.Api.Tests.Integration.Consumers.Helpers;
 using KeeperData.Api.Tests.Integration.Fixtures;
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Documents.Silver;
-using KeeperData.Core.Messaging.Contracts.V1.Sam;
+using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using MongoDB.Driver;
 
-namespace KeeperData.Api.Tests.Integration.Orchestration.ChangeScanning.Sam;
+namespace KeeperData.Api.Tests.Integration.Orchestration.ChangeScanning.Cts;
 
-[Collection("Integration"), Trait("Dependence", "testcontainers")]
-public class SamBulkScanOrchestratorTests(
-    MongoDbFixture mongoDbFixture,
-    LocalStackFixture localStackFixture,
-    ApiContainerFixture apiContainerFixture) : IAsyncLifetime
+[Collection("IntegrationAnonymization"), Trait("Dependence", "testcontainers")]
+public class CtsBulkScanAnonOrchestratorTests(
+    MongoDbAnonymousFixture mongoDbFixture,
+    LocalStackAnonymousFixture localStackFixture,
+    ApiAnonymousContainerFixture apiContainerFixture) : IAsyncLifetime
 {
 
     private const int ProcessingTimeCircuitBreakerSeconds = 30;
@@ -23,11 +23,11 @@ public class SamBulkScanOrchestratorTests(
     /// </summary>
     /// <returns></returns>
     [Fact]
-    public async Task GivenSamBulkScanMessagePublishedToQueue_WhenReceivedOnTheQueue_ShouldScanForDocumentsAndComplete()
+    public async Task GivenCtsBulkScanMessagePublishedToQueue_WhenReceivedOnTheQueue_ShouldScanForDocumentsAndComplete_WithAnon()
     {
         var correlationId = Guid.NewGuid().ToString();
         var identifier = Guid.NewGuid().ToString();
-        var message = GetSamBulkScanMessage(identifier);
+        var message = GetCtsBulkScanMessage(identifier);
         var testExecutedOn = DateTime.UtcNow;
 
         await ExecuteQueueTest(correlationId, message);
@@ -35,11 +35,12 @@ public class SamBulkScanOrchestratorTests(
         var timeout = TimeSpan.FromSeconds(ProcessingTimeCircuitBreakerSeconds);
         var pollInterval = TimeSpan.FromSeconds(2);
 
-        await VerifySamBulkScanMessageCompleted(correlationId, timeout, pollInterval);
-        await VerifySamHoldingImportPersistenceStepsCompleted(correlationId, testExecutedOn, timeout, pollInterval, expectedEntries: LimitScanTotalBatchSize);
+        await VerifyCtsBulkScanMessageCompleted(correlationId, timeout, pollInterval);
+
+        await VerifyCtsHoldingImportPersistenceStepsCompleted(correlationId, testExecutedOn, timeout, pollInterval, expectedEntries: LimitScanTotalBatchSize);
     }
 
-    private async Task VerifySamBulkScanMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
+    private async Task VerifyCtsBulkScanMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
     {
         var startTime = DateTime.UtcNow;
         var foundLogEntry = false;
@@ -59,10 +60,10 @@ public class SamBulkScanOrchestratorTests(
         foundLogEntry.Should().BeTrue($"Expected log entry within {ProcessingTimeCircuitBreakerSeconds} seconds but none was found.");
     }
 
-    private async Task VerifySamHoldingImportPersistenceStepsCompleted(string correlationId, DateTime testExecutedOn, TimeSpan timeout, TimeSpan pollInterval, int expectedEntries)
+    private async Task VerifyCtsHoldingImportPersistenceStepsCompleted(string correlationId, DateTime testExecutedOn, TimeSpan timeout, TimeSpan pollInterval, int expectedEntries)
     {
         var startTime = DateTime.UtcNow;
-        var logFragment = $"Completed import step: \"SamHoldingImportPersistenceStep\" correlationId: \"{correlationId}\"";
+        var logFragment = $"Completed import step: \"CtsHoldingImportPersistenceStep\" correlationId: \"{correlationId}\"";
         var matchingLogCount = 0;
 
         while (DateTime.UtcNow - startTime < timeout)
@@ -86,15 +87,15 @@ public class SamBulkScanOrchestratorTests(
             await Task.Delay(pollInterval);
         }
 
-        matchingLogCount.Should().Be(expectedEntries,
+        matchingLogCount.Should().BeGreaterThanOrEqualTo(expectedEntries,
             $"Expected {expectedEntries} import step completions after {testExecutedOn:o} within {timeout.TotalSeconds} seconds.");
 
-        var samParties = await mongoDbFixture.MongoVerifier.FindDocumentsAsync("samParties", FilterDefinition<SamPartyDocument>.Empty);
-        foreach (var samPartyDocument in samParties)
+        var ctsHoldings = await mongoDbFixture.MongoVerifier.FindDocumentsAsync("ctsHoldings", FilterDefinition<CtsHoldingDocument>.Empty);
+        foreach (var ctsHoldingDocument in ctsHoldings)
         {
-            samPartyDocument.PartyFullName.Should().NotBeNullOrEmpty();
-            Guid.TryParse(samPartyDocument.PartyFullName, out _).Should().BeTrue(
-                "PartyFullName should be a GUID and not anonymized data");
+            ctsHoldingDocument.LocationName.Should().NotBeNullOrEmpty();
+            Guid.TryParse(ctsHoldingDocument.LocationName, out _).Should().BeFalse(
+                "LocationName should be anonymized data and not GUID");
         }
     }
 
@@ -110,7 +111,7 @@ public class SamBulkScanOrchestratorTests(
         await localStackFixture.SqsClient.SendMessageAsync(request, cts.Token);
     }
 
-    private static SamBulkScanMessage GetSamBulkScanMessage(string identifier) => new()
+    private static CtsBulkScanMessage GetCtsBulkScanMessage(string identifier) => new()
     {
         Identifier = identifier
     };

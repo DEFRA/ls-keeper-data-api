@@ -8,11 +8,11 @@ using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.ChangeScanning.Sam;
 
-[Collection("Integration"), Trait("Dependence", "testcontainers")]
-public class SamBulkScanOrchestratorTests(
-    MongoDbFixture mongoDbFixture,
-    LocalStackFixture localStackFixture,
-    ApiContainerFixture apiContainerFixture) : IAsyncLifetime
+[Collection("IntegrationAnonymization"), Trait("Dependence", "testcontainers")]
+public class SamBulkScanAnonOrchestratorTests(
+    MongoDbAnonymousFixture mongoDbFixture,
+    LocalStackAnonymousFixture localStackFixture,
+    ApiAnonymousContainerFixture apiContainerFixture) : IAsyncLifetime
 {
 
     private const int ProcessingTimeCircuitBreakerSeconds = 30;
@@ -93,8 +93,8 @@ public class SamBulkScanOrchestratorTests(
         foreach (var samPartyDocument in samParties)
         {
             samPartyDocument.PartyFullName.Should().NotBeNullOrEmpty();
-            Guid.TryParse(samPartyDocument.PartyFullName, out _).Should().BeTrue(
-                "PartyFullName should be a GUID and not anonymized data");
+            Guid.TryParse(samPartyDocument.PartyFullName, out _).Should().BeFalse(
+                "PartyFullName should be anonymized data and not a GUID");
         }
     }
 

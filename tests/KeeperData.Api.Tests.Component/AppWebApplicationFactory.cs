@@ -9,19 +9,22 @@ using Amazon.SQS.Model;
 using KeeperData.Api.Tests.Component.Authentication.Fakes;
 using KeeperData.Api.Tests.Component.Consumers.Helpers;
 using KeeperData.Application.Commands.MessageProcessing;
+using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Locking;
 using KeeperData.Core.Messaging.Consumers;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Observers;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
+using KeeperData.Infrastructure.ApiClients;
+using KeeperData.Infrastructure.ApiClients.Decorators;
 using KeeperData.Infrastructure.Messaging.Consumers;
 using KeeperData.Infrastructure.Messaging.Services;
 using KeeperData.Infrastructure.Storage.Clients;
 using KeeperData.Infrastructure.Storage.Factories;
 using KeeperData.Infrastructure.Storage.Factories.Implementations;
-using KeeperData.Core.Locking;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -44,7 +47,7 @@ namespace KeeperData.Api.Tests.Component;
 
 public class AppWebApplicationFactory(
     IDictionary<string, string?>? configurationOverrides = null,
-    bool useFakeAuth = false) : WebApplicationFactory<Program>
+    bool useFakeAuth = false, bool useAnon = false) : WebApplicationFactory<Program>
 {
     public Mock<IAmazonS3>? AmazonS3Mock;
     public Mock<IAmazonSQS>? AmazonSQSMock;
@@ -142,6 +145,9 @@ public class AppWebApplicationFactory(
 
             services.AddHttpClient("DataBridgeApi")
                 .ConfigurePrimaryHttpMessageHandler(() => DataBridgeApiClientHttpMessageHandlerMock.Object);
+
+            services.AddScoped<IDataBridgeClient, DataBridgeClient>();
+            if (useAnon) services.Decorate<IDataBridgeClient, DataBridgeClientAnonymizer>();
 
             if (_useFakeAuth)
             {

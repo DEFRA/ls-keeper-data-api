@@ -32,6 +32,7 @@ services:
       - AuthenticationConfiguration__EnableApiKey=true
       - AuthenticationConfiguration__ApiGatewayExists=false
       - AuthenticationConfiguration__Authority=
+      - PiiAnonymization__Enabled=false
     ports:
       - "5555"
     volumes:
