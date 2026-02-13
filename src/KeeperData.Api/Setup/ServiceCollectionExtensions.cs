@@ -64,13 +64,12 @@ public static class ServiceCollectionExtensions
                 metrics.AddMeter(MetricNames.MeterName);
             });
 
-        services.ConfigurePiiAnonymization(configuration, environment);
+        services.ConfigurePiiAnonymization(configuration);
     }
 
     private static void ConfigurePiiAnonymization(
         this IServiceCollection services,
-        IConfiguration configuration,
-        IHostEnvironment environment)
+        IConfiguration configuration)
     {
         var options = configuration
             .GetSection(PiiAnonymizationOptions.SectionName)
