@@ -48,8 +48,4 @@
       <ProjectReference Include="..\KeeperData.Tests.Common\KeeperData.Tests.Common.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Anonymization\" />
-    </ItemGroup>
-
 </Project>

@@ -115,6 +115,9 @@ public static class PiiAnonymizerHelper
 
         if (holding.SAON_DESCRIPTION is not null)
             holding.SAON_DESCRIPTION = faker.Address.SecondaryAddress();
+
+        if (holding.UDPRN is not null)
+            holding.UDPRN = faker.Random.Int(10_000_000, 99_999_999).ToString();
     }
 
     public static void AnonymizeSamHolder(SamCphHolder holder)
@@ -166,6 +169,9 @@ public static class PiiAnonymizerHelper
 
         if (holder.SAON_DESCRIPTION is not null)
             holder.SAON_DESCRIPTION = faker.Address.SecondaryAddress();
+
+        if (holder.UDPRN is not null)
+            holder.UDPRN = faker.Random.Int(10_000_000, 99_999_999).ToString();
     }
 
     public static void AnonymizeSamParty(SamParty party)
@@ -217,6 +223,9 @@ public static class PiiAnonymizerHelper
 
         if (party.SAON_DESCRIPTION is not null)
             party.SAON_DESCRIPTION = faker.Address.SecondaryAddress();
+
+        if (party.UDPRN is not null)
+            party.UDPRN = faker.Random.Int(10_000_000, 99_999_999).ToString();
     }
 
     public static void AnonymizeCtsHolding(CtsCphHolding holding)
