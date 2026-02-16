@@ -67,7 +67,7 @@ public static class WebApplicationExtensions
             }
         });
 
-        app.MapGet("/", () => "Alive!");
+        app.MapGet("/", () => "Alive!").ExcludeFromDescription();
 
         if (bulkScanEndpointsEnabled)
         {
