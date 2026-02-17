@@ -145,7 +145,7 @@ public static class PiiAnonymizerHelper
         return BitConverter.ToInt32(hash, 0);
     }
 
-    private static void AnonymizePersonalInfo<T>(T holder, Faker faker) where T: ISamCommonPiiData
+    private static void AnonymizePersonalInfo<T>(T holder, Faker faker) where T : ISamCommonPiiData
     {
         if (holder.PERSON_TITLE is not null)
             holder.PERSON_TITLE = faker.Name.Prefix();
@@ -166,7 +166,7 @@ public static class PiiAnonymizerHelper
             holder.ORGANISATION_NAME = faker.Company.CompanyName();
     }
 
-    private static void AnonymizeContactInfo<T>(T entity, Faker faker) where T: ISamCommonPiiData
+    private static void AnonymizeContactInfo<T>(T entity, Faker faker) where T : ISamCommonPiiData
     {
         if (entity.INTERNET_EMAIL_ADDRESS is not null)
             entity.INTERNET_EMAIL_ADDRESS = faker.Internet.Email();
@@ -220,7 +220,7 @@ public static class PiiAnonymizerHelper
             holding.LOC_MAP_REFERENCE = faker.Random.Replace(MapReferenceFormat).ToUpperInvariant();
     }
 
-    private static void AnonymizeCtsAddressInfo<T>(T entity, Faker faker) where T: ICphCommonPiiData
+    private static void AnonymizeCtsAddressInfo<T>(T entity, Faker faker) where T : ICphCommonPiiData
     {
         if (entity.ADR_NAME is not null)
             entity.ADR_NAME = faker.Address.StreetAddress();
