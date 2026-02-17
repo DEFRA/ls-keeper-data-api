@@ -39,6 +39,12 @@ public class CtsAgentOrKeeper : BronzeBase, ICphCommonPiiData
     [JsonPropertyName("ADR_NAME")]
     public string ADR_NAME { get; set; } = string.Empty;
 
+    string? ICphCommonPiiData.ADR_NAME
+    {
+        get => ADR_NAME;
+        set => ADR_NAME = value ?? string.Empty;
+    }
+
     [JsonPropertyName("ADR_ADDRESS_2")]
     public string? ADR_ADDRESS_2 { get; set; }
 
