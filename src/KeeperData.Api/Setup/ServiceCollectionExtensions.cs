@@ -5,6 +5,7 @@ using KeeperData.Application.Setup;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Infrastructure.ApiClients;
 using KeeperData.Infrastructure.ApiClients.Decorators;
+using KeeperData.Core.Telemetry;
 using KeeperData.Infrastructure.ApiClients.Setup;
 using KeeperData.Infrastructure.Authentication.Configuration;
 using KeeperData.Infrastructure.Authentication.Handlers;

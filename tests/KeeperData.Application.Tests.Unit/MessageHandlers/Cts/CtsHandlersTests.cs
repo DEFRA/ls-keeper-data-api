@@ -11,6 +11,7 @@ using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
 using KeeperData.Core.Messaging.Serializers;
+using KeeperData.Core.Telemetry;
 using KeeperData.Tests.Common.Factories;
 using Moq;
 
@@ -24,7 +25,7 @@ public class CtsHandlersTests
     [Fact]
     public async Task CtsBulkScanMessageHandler_Handle_Success()
     {
-        var orchestrator = new Mock<CtsBulkScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<CtsBulkScanContext>>());
+        var orchestrator = new Mock<CtsBulkScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<CtsBulkScanContext>>(), new Mock<IApplicationMetrics>().Object);
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsBulkScanMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1", CorrelationId = "2" };
@@ -33,7 +34,7 @@ public class CtsHandlersTests
 
         serializer.Setup(x => x.Deserialize(message)).Returns(payload);
 
-        var handler = new CtsBulkScanMessageHandler(orchestrator.Object, serializer.Object, _config);
+        var handler = new CtsBulkScanMessageHandler(orchestrator.Object, serializer.Object, _config, Mock.Of<IApplicationMetrics>());
 
         await handler.Handle(command, _ct);
 
@@ -43,14 +44,14 @@ public class CtsHandlersTests
     [Fact]
     public async Task CtsBulkScanMessageHandler_Handle_DeserializationReturnsNull_ThrowsNonRetryable()
     {
-        var orchestrator = new Mock<CtsBulkScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<CtsBulkScanContext>>());
+        var orchestrator = new Mock<CtsBulkScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<CtsBulkScanContext>>(), new Mock<IApplicationMetrics>().Object);
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsBulkScanMessage>>();
         var message = new UnwrappedMessage { MessageId = "1" };
         var command = new ProcessCtsBulkScanMessageCommand(message);
 
         serializer.Setup(x => x.Deserialize(message)).Returns((CtsBulkScanMessage?)null);
 
-        var handler = new CtsBulkScanMessageHandler(orchestrator.Object, serializer.Object, _config);
+        var handler = new CtsBulkScanMessageHandler(orchestrator.Object, serializer.Object, _config, Mock.Of<IApplicationMetrics>());
 
         await Assert.ThrowsAsync<NonRetryableException>(() => handler.Handle(command, _ct));
     }
@@ -58,7 +59,7 @@ public class CtsHandlersTests
     [Fact]
     public async Task CtsDailyScanMessageHandler_Handle_Success()
     {
-        var orchestrator = new Mock<CtsDailyScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<CtsDailyScanContext>>());
+        var orchestrator = new Mock<CtsDailyScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<CtsDailyScanContext>>(), new Mock<IApplicationMetrics>().Object);
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsDailyScanMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1", CorrelationId = "2" };
@@ -77,7 +78,7 @@ public class CtsHandlersTests
     [Fact]
     public async Task CtsDailyScanMessageHandler_Handle_DeserializationReturnsNull_ThrowsNonRetryable()
     {
-        var orchestrator = new Mock<CtsDailyScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<CtsDailyScanContext>>());
+        var orchestrator = new Mock<CtsDailyScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<CtsDailyScanContext>>(), new Mock<IApplicationMetrics>().Object);
         var serializer = new Mock<IUnwrappedMessageSerializer<CtsDailyScanMessage>>();
         var message = new UnwrappedMessage { MessageId = "1" };
         var command = new ProcessCtsDailyScanMessageCommand(message);

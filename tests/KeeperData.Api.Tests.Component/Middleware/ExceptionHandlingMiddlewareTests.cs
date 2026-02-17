@@ -3,7 +3,7 @@ using FluentValidation.Results;
 using KeeperData.Api.Middleware;
 using KeeperData.Core.Exceptions;
 using KeeperData.Infrastructure;
-using KeeperData.Infrastructure.Telemetry;
+using KeeperData.Core.Telemetry;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;

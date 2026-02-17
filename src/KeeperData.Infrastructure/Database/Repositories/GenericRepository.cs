@@ -2,8 +2,10 @@ using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
+using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
 
