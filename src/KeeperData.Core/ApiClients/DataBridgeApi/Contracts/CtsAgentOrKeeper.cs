@@ -1,9 +1,10 @@
 using KeeperData.Core.ApiClients.DataBridgeApi.Converters;
 using System.Text.Json.Serialization;
+using KeeperData.Core.Anonymization;
 
 namespace KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 
-public class CtsAgentOrKeeper : BronzeBase
+public class CtsAgentOrKeeper : BronzeBase, ICphCommonPiiData
 {
     [JsonPropertyName("PAR_ID")]
     public string PAR_ID { get; set; } = string.Empty;
