@@ -1,6 +1,6 @@
 namespace KeeperData.Core.Anonymization;
 
-public interface ICphCommonPiiData
+public interface ICphCommonPiiAddressData
 {
     string? ADR_NAME { get; set; }
     string? ADR_ADDRESS_2 { get; set; }

@@ -220,7 +220,7 @@ public static class PiiAnonymizerHelper
             holding.LOC_MAP_REFERENCE = faker.Random.Replace(MapReferenceFormat).ToUpperInvariant();
     }
 
-    private static void AnonymizeCtsAddressInfo<T>(T entity, Faker faker) where T : ICphCommonPiiData
+    private static void AnonymizeCtsAddressInfo<T>(T entity, Faker faker) where T : ICphCommonPiiAddressData
     {
         if (entity.ADR_NAME is not null)
             entity.ADR_NAME = faker.Address.StreetAddress();

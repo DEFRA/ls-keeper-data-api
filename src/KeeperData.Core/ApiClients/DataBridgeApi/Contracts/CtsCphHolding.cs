@@ -4,7 +4,7 @@ using KeeperData.Core.Anonymization;
 
 namespace KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 
-public class CtsCphHolding : BronzeBase, ICphCommonPiiData
+public class CtsCphHolding : BronzeBase, ICphCommonPiiAddressData
 {
     [JsonPropertyName("LID_FULL_IDENTIFIER")]
     public string LID_FULL_IDENTIFIER { get; set; } = string.Empty;
