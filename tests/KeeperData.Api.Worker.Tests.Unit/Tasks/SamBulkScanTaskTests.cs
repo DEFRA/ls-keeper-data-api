@@ -4,6 +4,7 @@ using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Providers;
+using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -25,7 +26,7 @@ public class SamBulkScanTaskTests
 
     public SamBulkScanTaskTests()
     {
-        _orchestratorMock = new Mock<SamBulkScanOrchestrator>(new List<Application.Orchestration.ChangeScanning.IScanStep<SamBulkScanContext>>());
+        _orchestratorMock = new Mock<SamBulkScanOrchestrator>(new List<Application.Orchestration.ChangeScanning.IScanStep<SamBulkScanContext>>(), new Mock<IApplicationMetrics>().Object);
         _config = new DataBridgeScanConfiguration { QueryPageSize = 100 };
         _distributedLockMock = new Mock<IDistributedLock>();
         _lifetimeMock = new Mock<IHostApplicationLifetime>();

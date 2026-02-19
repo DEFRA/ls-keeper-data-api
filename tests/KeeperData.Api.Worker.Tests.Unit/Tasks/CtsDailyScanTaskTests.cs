@@ -4,6 +4,7 @@ using KeeperData.Application.Orchestration.ChangeScanning.Cts.Daily;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Providers;
+using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -25,7 +26,7 @@ public class CtsDailyScanTaskTests
 
     public CtsDailyScanTaskTests()
     {
-        _orchestratorMock = new Mock<CtsDailyScanOrchestrator>(new List<Application.Orchestration.ChangeScanning.IScanStep<CtsDailyScanContext>>());
+        _orchestratorMock = new Mock<CtsDailyScanOrchestrator>(new List<Application.Orchestration.ChangeScanning.IScanStep<CtsDailyScanContext>>(), new Mock<IApplicationMetrics>().Object);
         _config = new DataBridgeScanConfiguration { QueryPageSize = 100, DailyScanIncludeChangesWithinTotalHours = 24 };
         _distributedLockMock = new Mock<IDistributedLock>();
         _lifetimeMock = new Mock<IHostApplicationLifetime>();

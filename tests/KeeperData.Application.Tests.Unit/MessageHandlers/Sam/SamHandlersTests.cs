@@ -9,6 +9,7 @@ using KeeperData.Core.Exceptions;
 using KeeperData.Core.Messaging.Contracts;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
 using KeeperData.Core.Messaging.Serializers;
+using KeeperData.Core.Telemetry;
 using KeeperData.Tests.Common.Factories;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -25,7 +26,7 @@ public class SamHandlersTests
     [Fact]
     public async Task SamBulkScanMessageHandler_Handle_Success()
     {
-        var orchestrator = new Mock<SamBulkScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<SamBulkScanContext>>());
+        var orchestrator = new Mock<SamBulkScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<SamBulkScanContext>>(), new Mock<IApplicationMetrics>().Object);
         var serializer = new Mock<IUnwrappedMessageSerializer<SamBulkScanMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1" };
@@ -43,7 +44,7 @@ public class SamHandlersTests
     [Fact]
     public async Task SamBulkScanMessageHandler_Handle_DeserializationReturnsNull_ThrowsNonRetryable()
     {
-        var orchestrator = new Mock<SamBulkScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<SamBulkScanContext>>());
+        var orchestrator = new Mock<SamBulkScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<SamBulkScanContext>>(), new Mock<IApplicationMetrics>().Object);
         var serializer = new Mock<IUnwrappedMessageSerializer<SamBulkScanMessage>>();
         var message = new UnwrappedMessage { MessageId = "1" };
         var command = new ProcessSamBulkScanMessageCommand(message);
@@ -58,7 +59,7 @@ public class SamHandlersTests
     [Fact]
     public async Task SamDailyScanMessageHandler_Handle_Success()
     {
-        var orchestrator = new Mock<SamDailyScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<SamDailyScanContext>>());
+        var orchestrator = new Mock<SamDailyScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<SamDailyScanContext>>(), new Mock<IApplicationMetrics>().Object);
         var serializer = new Mock<IUnwrappedMessageSerializer<SamDailyScanMessage>>();
 
         var message = new UnwrappedMessage { MessageId = "1" };
@@ -76,7 +77,7 @@ public class SamHandlersTests
     [Fact]
     public async Task SamDailyScanMessageHandler_Handle_DeserializationReturnsNull_ThrowsNonRetryable()
     {
-        var orchestrator = new Mock<SamDailyScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<SamDailyScanContext>>());
+        var orchestrator = new Mock<SamDailyScanOrchestrator>(Enumerable.Empty<Application.Orchestration.ChangeScanning.IScanStep<SamDailyScanContext>>(), new Mock<IApplicationMetrics>().Object);
         var serializer = new Mock<IUnwrappedMessageSerializer<SamDailyScanMessage>>();
         var message = new UnwrappedMessage { MessageId = "1" };
         var command = new ProcessSamDailyScanMessageCommand(message);

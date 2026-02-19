@@ -7,6 +7,7 @@ using KeeperData.Core.Messaging.Contracts.V1;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
 using KeeperData.Core.Messaging.Serializers;
+using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -17,11 +18,12 @@ public class BatchCompletionMessageHandlerTests
     private readonly Mock<IUnwrappedMessageSerializer<BatchCompletionMessage>> _mockSerializer = new();
     private readonly Mock<IMessagePublisher<BatchCompletionTopicClient>> _mockTopicPublisher = new();
     private readonly Mock<ILogger<BatchCompletionMessageHandler>> _mockLogger = new();
+    private readonly Mock<IApplicationMetrics> _mockMetrics = new();
     private readonly BatchCompletionMessageHandler _sut;
 
     public BatchCompletionMessageHandlerTests()
     {
-        _sut = new BatchCompletionMessageHandler(_mockSerializer.Object, _mockTopicPublisher.Object, _mockLogger.Object);
+        _sut = new BatchCompletionMessageHandler(_mockSerializer.Object, _mockTopicPublisher.Object, _mockLogger.Object, _mockMetrics.Object);
     }
 
     [Fact]

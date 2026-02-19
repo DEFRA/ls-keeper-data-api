@@ -33,7 +33,7 @@ public class CtsDailyScanMessageHandler(CtsDailyScanOrchestrator orchestrator,
         var context = new CtsDailyScanContext
         {
             CurrentDateTime = DateTime.UtcNow,
-            UpdatedSinceDateTime = DateTime.UtcNow.AddHours(-24),
+            UpdatedSinceDateTime = DateTime.UtcNow.AddHours(-Math.Abs(_dataBridgeScanConfiguration.DailyScanIncludeChangesWithinTotalHours)),
             PageSize = _dataBridgeScanConfiguration.QueryPageSize,
         };
 

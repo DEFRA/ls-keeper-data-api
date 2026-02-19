@@ -103,7 +103,7 @@ public class SamDailyScanTask(
             {
                 ScanCorrelationId = scanCorrelationId,
                 CurrentDateTime = DateTime.UtcNow,
-                UpdatedSinceDateTime = DateTime.UtcNow.AddHours(dataBridgeScanConfiguration.DailyScanIncludeChangesWithinTotalHours),
+                UpdatedSinceDateTime = DateTime.UtcNow.AddHours(-Math.Abs(dataBridgeScanConfiguration.DailyScanIncludeChangesWithinTotalHours)),
                 PageSize = dataBridgeScanConfiguration.QueryPageSize,
                 Holdings = new(),
                 Holders = new(),

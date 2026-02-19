@@ -1,4 +1,5 @@
 using FluentAssertions;
+using KeeperData.Core.Telemetry;
 using KeeperData.Infrastructure.Telemetry;
 using Microsoft.Extensions.Logging;
 using Moq;

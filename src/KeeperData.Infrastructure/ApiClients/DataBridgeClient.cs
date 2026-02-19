@@ -2,8 +2,10 @@ using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Exceptions;
 using KeeperData.Infrastructure.ApiClients.Extensions;
+using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
 
@@ -12,10 +14,10 @@ namespace KeeperData.Infrastructure.ApiClients;
 public class DataBridgeClient(
     IHttpClientFactory factory,
     IConfiguration configuration,
-    ILogger<DataBridgeClient> logger) : IDataBridgeClient
+    ILogger<DataBridgeClient> logger,
+    IApplicationMetrics metrics) : IDataBridgeClient
 {
     private readonly HttpClient _httpClient = factory.CreateClient(ClientName);
-    private readonly ILogger<DataBridgeClient> _logger = logger;
 
     private readonly string? _serviceName = configuration.GetValue<string>("ApiClients:DataBridgeApi:ServiceName");
     private readonly bool _serviceNameExists = !string.IsNullOrWhiteSpace(configuration.GetValue<string>("ApiClients:DataBridgeApi:ServiceName"));
@@ -43,15 +45,19 @@ public class DataBridgeClient(
     {
         if (!_samHoldingsEnabled) return null;
 
-        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
-        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHoldings, new { }, query);
+        return await ExecutePagedRequestWithMetricsAsync<T>(
+            "sam_holdings",
+            top,
+            async () =>
+            {
+                var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
+                var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHoldings, new { }, query);
 
-        var result = await GetFromApiAsync<T>(
-            uri,
-            $"Sam paged holdings for top '{top}', skip '{skip}'",
-            cancellationToken);
-
-        return result;
+                return await GetFromApiAsync<T>(
+                    uri,
+                    $"Sam paged holdings for top '{top}', skip '{skip}'",
+                    cancellationToken);
+            });
     }
 
     public async Task<List<SamCphHolding>> GetSamHoldingsAsync(string id, CancellationToken cancellationToken)
@@ -79,15 +85,19 @@ public class DataBridgeClient(
     {
         if (!_samHoldersEnabled) return null;
 
-        var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
-        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHolders, new { }, query);
+        return await ExecutePagedRequestWithMetricsAsync<T>(
+            "sam_holders",
+            top,
+            async () =>
+            {
+                var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
+                var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamHolders, new { }, query);
 
-        var result = await GetFromApiAsync<T>(
-            uri,
-            $"Sam paged holders for top '{top}', skip '{skip}'",
-            cancellationToken);
-
-        return result;
+                return await GetFromApiAsync<T>(
+                    uri,
+                    $"Sam paged holders for top '{top}', skip '{skip}'",
+                    cancellationToken);
+            });
     }
 
     public async Task<List<SamCphHolder>> GetSamHoldersByCphAsync(string id, CancellationToken cancellationToken)
@@ -362,9 +372,47 @@ public class DataBridgeClient(
         return result.Data.FirstOrDefault();
     }
 
+    private async Task<DataBridgeResponse<T>?> ExecutePagedRequestWithMetricsAsync<T>(
+        string collectionName,
+        int batchSize,
+        Func<Task<DataBridgeResponse<T>?>> apiCallFunc)
+    {
+        var requestStopwatch = Stopwatch.StartNew();
+
+        metrics.RecordCount(MetricNames.DataBridge, 1,
+            (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestStarted),
+            (MetricNames.CommonTags.Collection, collectionName),
+            (MetricNames.CommonTags.BatchSize, batchSize.ToString()));
+
+        try
+        {
+            var result = await apiCallFunc();
+
+            requestStopwatch.Stop();
+
+            metrics.RecordValue(MetricNames.DataBridge, requestStopwatch.ElapsedMilliseconds,
+                (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestDuration));
+
+            metrics.RecordCount(MetricNames.DataBridge, result?.Count ?? 0,
+                (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestRecords));
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            requestStopwatch.Stop();
+
+            metrics.RecordCount(MetricNames.DataBridge, 1,
+                (MetricNames.CommonTags.Operation, MetricNames.Operations.PagedRequestFailed),
+                (MetricNames.CommonTags.ErrorType, ex.GetType().Name));
+
+            throw;
+        }
+    }
+
     private async Task<DataBridgeResponse<T>> GetFromApiAsync<T>(string requestUri, string context, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Initiating API call: {context}, URI: {uri}", context, requestUri);
+        logger.LogDebug("Initiating API call: {context}, URI: {uri}", context, requestUri);
 
         try
         {
@@ -374,7 +422,7 @@ public class DataBridgeClient(
             {
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
-                _logger.LogWarning("API call failed: {context}, Status: {status}, Response: {response}",
+                logger.LogWarning("API call failed: {context}, Status: {status}, Response: {response}",
                     context, response.StatusCode, content);
 
                 if ((int)response.StatusCode >= 500 || response.StatusCode == HttpStatusCode.RequestTimeout)
@@ -397,26 +445,26 @@ public class DataBridgeClient(
 
             if (result == null)
             {
-                _logger.LogError("Deserialization returned null: {context}", context);
+                logger.LogError("Deserialization returned null: {context}", context);
                 throw new NonRetryableException($"Deserialization returned null for {context}.");
             }
 
-            _logger.LogInformation("API call succeeded: {context}", context);
+            logger.LogInformation("API call succeeded: {context}", context);
             return result;
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "Network failure during API call: {context}", context);
+            logger.LogError(ex, "Network failure during API call: {context}", context);
             throw new RetryableException($"Network failure when calling {context}.", ex);
         }
         catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
-            _logger.LogError(ex, "Timeout during API call: {context}", context);
+            logger.LogError(ex, "Timeout during API call: {context}", context);
             throw new RetryableException($"Timeout when calling {context}.", ex);
         }
         catch (JsonException ex)
         {
-            _logger.LogError(ex, "Deserialization error: {context}", context);
+            logger.LogError(ex, "Deserialization error: {context}", context);
             throw new NonRetryableException($"Deserialization error for {context}.", ex);
         }
     }
