@@ -37,15 +37,7 @@ namespace KeeperData.Infrastructure.Services
             var getIndexesMethod = type.GetMethod("GetIndexModels", BindingFlags.Public | BindingFlags.Static);
             if (getIndexesMethod?.Invoke(null, null) is IEnumerable<CreateIndexModel<BsonDocument>> indexModels)
             {
-                try
-                {
-                    await collection.Indexes.CreateManyAsync(indexModels);
-                }
-                catch (MongoCommandException ex)
-                {
-                    // Swallow duplicate key errors (E11000) to allow the service to start, but log it as an error.
-                    _logger.LogError(ex, "Failed to create indexes for collection '{CollectionName}'. Existing data may violate unique constraints.", collectionName);
-                }
+                await collection.Indexes.CreateManyAsync(indexModels);
             }
         }
     }
