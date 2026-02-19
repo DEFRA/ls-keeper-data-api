@@ -9,21 +9,14 @@ using System.Reflection;
 
 namespace KeeperData.Infrastructure.Services
 {
-    public class MongoDbInitialiser : IMongoDbInitialiser
+    public class MongoDbInitialiser(
+        IMongoClient mongoClient,
+        IOptions<MongoConfig> mongoConfig,
+        ILogger<MongoDbInitialiser> logger) : IMongoDbInitialiser
     {
-        private readonly IMongoClient _mongoClient;
-        private readonly IOptions<MongoConfig> _mongoConfig;
-        private readonly ILogger<MongoDbInitialiser> _logger;
-
-        public MongoDbInitialiser(
-            IMongoClient mongoClient,
-            IOptions<MongoConfig> mongoConfig,
-            ILogger<MongoDbInitialiser> logger)
-        {
-            _mongoClient = mongoClient;
-            _mongoConfig = mongoConfig;
-            _logger = logger;
-        }
+        private readonly IMongoClient _mongoClient = mongoClient;
+        private readonly IOptions<MongoConfig> _mongoConfig = mongoConfig;
+        private readonly ILogger<MongoDbInitialiser> _logger = logger;
 
         public async Task Initialise(Type type)
         {
