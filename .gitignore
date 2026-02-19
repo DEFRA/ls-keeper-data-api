@@ -274,5 +274,3 @@ library.db
 /localstack_data/cache
 /coverage
 /coverage-report
-
-global.json
