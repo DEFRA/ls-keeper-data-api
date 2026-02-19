@@ -47,7 +47,6 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
 
     [BsonElement("customerNumber")]
     [JsonPropertyName("customerNumber")]
-    [AutoIndexed]
     public string CustomerNumber { get; set; } = string.Empty;
 
     [BsonElement("partyType")]
