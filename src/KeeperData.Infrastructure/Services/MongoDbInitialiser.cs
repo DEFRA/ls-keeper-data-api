@@ -34,12 +34,6 @@ namespace KeeperData.Infrastructure.Services
             var collectionName = type.GetCustomAttribute<CollectionNameAttribute>()?.Name ?? type.Name;
             var collection = _database.GetCollection<BsonDocument>(collectionName);
 
-            // Explicitly drop the conflicting index before general cleanup
-            //This code ran on deployement 0.566.0 on test
-            //try { await collection.Indexes.DropOneAsync("idxv2_customerNumber"); } catch { }
-
-            await DropV1IndexesIfPresentAsync(collection, _logger);
-
             var getIndexesMethod = type.GetMethod("GetIndexModels", BindingFlags.Public | BindingFlags.Static);
             if (getIndexesMethod?.Invoke(null, null) is IEnumerable<CreateIndexModel<BsonDocument>> indexModels)
             {
@@ -52,27 +46,6 @@ namespace KeeperData.Infrastructure.Services
                     // Swallow duplicate key errors (E11000) to allow the service to start, but log it as an error.
                     _logger.LogError(ex, "Failed to create indexes for collection '{CollectionName}'. Existing data may violate unique constraints.", collectionName);
                 }
-            }
-        }
-
-        private static async Task DropV1IndexesIfPresentAsync(IMongoCollection<BsonDocument> collection, ILogger logger)
-        {
-            using var cursor = await collection.Indexes.ListAsync();
-            var indexes = await cursor.ToListAsync();
-
-            foreach (var index in indexes)
-            {
-                await DropIndexIfItIsV1(collection, index, logger);
-            }
-        }
-
-        private static async Task DropIndexIfItIsV1<TDocument>(IMongoCollection<TDocument> collection, BsonDocument index, ILogger logger)
-        {
-            var indexName = index["name"].AsString;
-            if (indexName.StartsWith("idx_") || indexName == "idxv2_customerNumber")
-            {
-                await collection.Indexes.DropOneAsync(indexName);
-                logger.LogInformation("Dropped index: {IndexName}", indexName);
             }
         }
     }
