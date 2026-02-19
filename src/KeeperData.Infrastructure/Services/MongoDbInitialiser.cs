@@ -1,7 +1,6 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;
 using KeeperData.Infrastructure.Database.Configuration;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -11,12 +10,10 @@ namespace KeeperData.Infrastructure.Services
 {
     public class MongoDbInitialiser(
         IMongoClient mongoClient,
-        IOptions<MongoConfig> mongoConfig,
-        ILogger<MongoDbInitialiser> logger) : IMongoDbInitialiser
+        IOptions<MongoConfig> mongoConfig) : IMongoDbInitialiser
     {
         private readonly IMongoClient _mongoClient = mongoClient;
         private readonly IOptions<MongoConfig> _mongoConfig = mongoConfig;
-        private readonly ILogger<MongoDbInitialiser> _logger = logger;
 
         public async Task Initialise(Type type)
         {
