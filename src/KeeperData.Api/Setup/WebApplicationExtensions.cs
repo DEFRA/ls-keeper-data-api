@@ -67,6 +67,7 @@ public static class WebApplicationExtensions
             }
         });
 
+        //Hide Alive endpoint from swagger
         app.MapGet("/", () => "Alive!").ExcludeFromDescription();
 
         if (bulkScanEndpointsEnabled)
