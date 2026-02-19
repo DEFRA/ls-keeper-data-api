@@ -26,7 +26,7 @@ public class DataBridgeClientAnonymizer(
     public async Task<List<SamCphHolding>> GetSamHoldingsAsync(string id, CancellationToken cancellationToken)
     {
         var result = await inner.GetSamHoldingsAsync(id, cancellationToken);
-        PiiAnonymizerHelper.AnonymizeAll(result, PiiAnonymizerHelper.AnonymizeSamHolding);
+        PiiAnonymizerHelper.AnonymizeAll(result, PiiAnonymizerHelper.AnonymizeSamHolding, logger);
         return result;
     }
 
@@ -39,21 +39,21 @@ public class DataBridgeClientAnonymizer(
         CancellationToken cancellationToken = default)
     {
         var result = await inner.GetSamHoldersAsync<T>(top, skip, selectFields, updatedSinceDateTime, orderBy, cancellationToken);
-        PiiAnonymizerHelper.AnonymizeResponse(result);
+        PiiAnonymizerHelper.AnonymizeResponse(result, logger);
         return result;
     }
 
     public async Task<List<SamCphHolder>> GetSamHoldersByCphAsync(string id, CancellationToken cancellationToken)
     {
         var result = await inner.GetSamHoldersByCphAsync(id, cancellationToken);
-        PiiAnonymizerHelper.AnonymizeAll(result, PiiAnonymizerHelper.AnonymizeSamHolder);
+        PiiAnonymizerHelper.AnonymizeAll(result, PiiAnonymizerHelper.AnonymizeSamHolder, logger);
         return result;
     }
 
     public async Task<List<SamCphHolder>> GetSamHoldersByPartyIdAsync(string id, CancellationToken cancellationToken)
     {
         var result = await inner.GetSamHoldersByPartyIdAsync(id, cancellationToken);
-        PiiAnonymizerHelper.AnonymizeAll(result, PiiAnonymizerHelper.AnonymizeSamHolder);
+        PiiAnonymizerHelper.AnonymizeAll(result, PiiAnonymizerHelper.AnonymizeSamHolder, logger);
         return result;
     }
 
@@ -66,7 +66,7 @@ public class DataBridgeClientAnonymizer(
         CancellationToken cancellationToken = default)
     {
         var result = await inner.GetSamHerdsAsync<T>(top, skip, selectFields, updatedSinceDateTime, orderBy, cancellationToken);
-        PiiAnonymizerHelper.AnonymizeResponse(result);
+        PiiAnonymizerHelper.AnonymizeResponse(result, logger);
         return result;
     }
 
@@ -80,7 +80,7 @@ public class DataBridgeClientAnonymizer(
         CancellationToken cancellationToken = default)
     {
         var result = await inner.GetSamHerdsByPartyIdAsync<T>(partyId, selectFields, orderBy, cancellationToken);
-        PiiAnonymizerHelper.AnonymizeResponse(result);
+        PiiAnonymizerHelper.AnonymizeResponse(result, logger);
         return result;
     }
 
@@ -101,14 +101,14 @@ public class DataBridgeClientAnonymizer(
         CancellationToken cancellationToken = default)
     {
         var result = await inner.GetSamPartiesAsync<T>(top, skip, selectFields, updatedSinceDateTime, orderBy, cancellationToken);
-        PiiAnonymizerHelper.AnonymizeResponse(result);
+        PiiAnonymizerHelper.AnonymizeResponse(result, logger);
         return result;
     }
 
     public async Task<List<SamParty>> GetSamPartiesAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
     {
         var result = await inner.GetSamPartiesAsync(ids, cancellationToken);
-        PiiAnonymizerHelper.AnonymizeAll(result, PiiAnonymizerHelper.AnonymizeSamParty);
+        PiiAnonymizerHelper.AnonymizeAll(result, PiiAnonymizerHelper.AnonymizeSamParty, logger);
         return result;
     }
 
@@ -121,14 +121,14 @@ public class DataBridgeClientAnonymizer(
         CancellationToken cancellationToken = default)
     {
         var result = await inner.GetCtsHoldingsAsync<T>(top, skip, selectFields, updatedSinceDateTime, orderBy, cancellationToken);
-        PiiAnonymizerHelper.AnonymizeResponse(result);
+        PiiAnonymizerHelper.AnonymizeResponse(result, logger);
         return result;
     }
 
     public async Task<List<CtsCphHolding>> GetCtsHoldingsAsync(string id, CancellationToken cancellationToken)
     {
         var result = await inner.GetCtsHoldingsAsync(id, cancellationToken);
-        PiiAnonymizerHelper.AnonymizeAll(result, PiiAnonymizerHelper.AnonymizeCtsHolding);
+        PiiAnonymizerHelper.AnonymizeAll(result, PiiAnonymizerHelper.AnonymizeCtsHolding, logger);
         return result;
     }
 
@@ -141,14 +141,14 @@ public class DataBridgeClientAnonymizer(
         CancellationToken cancellationToken = default)
     {
         var result = await inner.GetCtsAgentsAsync<T>(top, skip, selectFields, updatedSinceDateTime, orderBy, cancellationToken);
-        PiiAnonymizerHelper.AnonymizeResponse(result);
+        PiiAnonymizerHelper.AnonymizeResponse(result, logger);
         return result;
     }
 
     public async Task<List<CtsAgentOrKeeper>> GetCtsAgentsAsync(string id, CancellationToken cancellationToken)
     {
         var result = await inner.GetCtsAgentsAsync(id, cancellationToken);
-        PiiAnonymizerHelper.AnonymizeAll(result, PiiAnonymizerHelper.AnonymizeCtsAgentOrKeeper);
+        PiiAnonymizerHelper.AnonymizeAll(result, PiiAnonymizerHelper.AnonymizeCtsAgentOrKeeper, logger);
         return result;
     }
 
@@ -169,14 +169,14 @@ public class DataBridgeClientAnonymizer(
         CancellationToken cancellationToken = default)
     {
         var result = await inner.GetCtsKeepersAsync<T>(top, skip, selectFields, updatedSinceDateTime, orderBy, cancellationToken);
-        PiiAnonymizerHelper.AnonymizeResponse(result);
+        PiiAnonymizerHelper.AnonymizeResponse(result, logger);
         return result;
     }
 
     public async Task<List<CtsAgentOrKeeper>> GetCtsKeepersAsync(string id, CancellationToken cancellationToken)
     {
         var result = await inner.GetCtsKeepersAsync(id, cancellationToken);
-        PiiAnonymizerHelper.AnonymizeAll(result, PiiAnonymizerHelper.AnonymizeCtsAgentOrKeeper);
+        PiiAnonymizerHelper.AnonymizeAll(result, PiiAnonymizerHelper.AnonymizeCtsAgentOrKeeper, logger);
         return result;
     }
 
