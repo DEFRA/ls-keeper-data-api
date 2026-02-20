@@ -25,10 +25,8 @@ public class MongoIndexInitializer(IServiceProvider serviceProvider) : IHostedSe
 
         foreach (var type in indexableTypes)
         {
-            // await dbInitialiser.Initialise(type);
+            await dbInitialiser.Initialise(type);
         }
-
-        await dbInitialiser.DropAllCollectionsAsync();
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
