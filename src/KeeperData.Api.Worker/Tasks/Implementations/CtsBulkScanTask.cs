@@ -131,10 +131,9 @@ public class CtsBulkScanTask(
         {
             throw;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            throw new Exception(
-                $"Error occurred during import execution scanCorrelationId: {scanCorrelationId}", ex);
+            throw;
         }
         finally
         {
