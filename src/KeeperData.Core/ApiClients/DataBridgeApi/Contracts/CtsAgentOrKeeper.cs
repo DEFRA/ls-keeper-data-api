@@ -1,9 +1,10 @@
 using KeeperData.Core.ApiClients.DataBridgeApi.Converters;
 using System.Text.Json.Serialization;
+using KeeperData.Core.Anonymization;
 
 namespace KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 
-public class CtsAgentOrKeeper : BronzeBase
+public class CtsAgentOrKeeper : BronzeBase, ICphCommonPiiAddressData
 {
     [JsonPropertyName("PAR_ID")]
     public string PAR_ID { get; set; } = string.Empty;
@@ -37,6 +38,12 @@ public class CtsAgentOrKeeper : BronzeBase
 
     [JsonPropertyName("ADR_NAME")]
     public string ADR_NAME { get; set; } = string.Empty;
+
+    string? ICphCommonPiiAddressData.ADR_NAME
+    {
+        get => ADR_NAME;
+        set => ADR_NAME = value ?? string.Empty;
+    }
 
     [JsonPropertyName("ADR_ADDRESS_2")]
     public string? ADR_ADDRESS_2 { get; set; }

@@ -1,9 +1,10 @@
 using KeeperData.Core.ApiClients.DataBridgeApi.Converters;
 using System.Text.Json.Serialization;
+using KeeperData.Core.Anonymization;
 
 namespace KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 
-public class SamCphHolding : BronzeBase
+public class SamCphHolding : BronzeBase, ISamCommonPiiAddressData
 {
     [JsonPropertyName("CPH")]
     public string CPH { get; set; } = string.Empty;

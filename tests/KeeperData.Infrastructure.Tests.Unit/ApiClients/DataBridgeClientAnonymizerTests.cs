@@ -32,7 +32,8 @@ public class DataBridgeClientAnonymizerTests
             TOWN = "London",
             POSTCODE = "SW1A 2AA",
             PAON_DESCRIPTION = "Number 10",
-            SAON_DESCRIPTION = "Flat A"
+            SAON_DESCRIPTION = "Flat A",
+            UDPRN = "12345678"
         };
 
         _innerClient.GetSamHoldingsAsync("1234567", Arg.Any<CancellationToken>())
@@ -51,6 +52,7 @@ public class DataBridgeClientAnonymizerTests
         h.POSTCODE.Should().NotBe("SW1A 2AA").And.NotBeNullOrWhiteSpace();
         h.PAON_DESCRIPTION.Should().NotBe("Number 10").And.NotBeNullOrWhiteSpace();
         h.SAON_DESCRIPTION.Should().NotBe("Flat A").And.NotBeNullOrWhiteSpace();
+        h.UDPRN.Should().NotBe("12345678");
     }
 
     [Fact]
@@ -64,7 +66,8 @@ public class DataBridgeClientAnonymizerTests
             NORTHING = null,
             STREET = null,
             TOWN = null,
-            POSTCODE = null
+            POSTCODE = null,
+            UDPRN = null
         };
 
         _innerClient.GetSamHoldingsAsync("1234567", Arg.Any<CancellationToken>())
@@ -79,6 +82,7 @@ public class DataBridgeClientAnonymizerTests
         h.STREET.Should().BeNull();
         h.TOWN.Should().BeNull();
         h.POSTCODE.Should().BeNull();
+        h.UDPRN.Should().BeNull();
     }
 
     [Fact]
@@ -127,7 +131,8 @@ public class DataBridgeClientAnonymizerTests
             STREET = "10 Downing Street",
             LOCALITY = "Westminster",
             TOWN = "London",
-            POSTCODE = "SW1A 2AA"
+            POSTCODE = "SW1A 2AA",
+            UDPRN = "12345678"
         };
 
         _innerClient.GetSamPartyAsync("P001", Arg.Any<CancellationToken>())
@@ -147,6 +152,7 @@ public class DataBridgeClientAnonymizerTests
         result.STREET.Should().NotBe("10 Downing Street").And.NotBeNullOrWhiteSpace();
         result.TOWN.Should().NotBe("London").And.NotBeNullOrWhiteSpace();
         result.POSTCODE.Should().NotBe("SW1A 2AA").And.NotBeNullOrWhiteSpace();
+        result.UDPRN.Should().NotBe("12345678").And.NotBeNullOrWhiteSpace();
     }
 
     [Fact]
@@ -165,8 +171,8 @@ public class DataBridgeClientAnonymizerTests
     {
         var parties = new List<SamParty>
         {
-            new() { PARTY_ID = "P001", PERSON_GIVEN_NAME = "John", PERSON_FAMILY_NAME = "Smith" },
-            new() { PARTY_ID = "P002", PERSON_GIVEN_NAME = "Jane", PERSON_FAMILY_NAME = "Doe" }
+            new() { PARTY_ID = "P001", PERSON_GIVEN_NAME = "John", PERSON_FAMILY_NAME = "Smith", UDPRN = "12345678"},
+            new() { PARTY_ID = "P002", PERSON_GIVEN_NAME = "Jane", PERSON_FAMILY_NAME = "Doe",UDPRN = "12345678"}
         };
 
         _innerClient.GetSamPartiesAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
@@ -177,8 +183,10 @@ public class DataBridgeClientAnonymizerTests
         result.Should().HaveCount(2);
         result[0].PERSON_GIVEN_NAME.Should().NotBe("John");
         result[0].PERSON_FAMILY_NAME.Should().NotBe("Smith");
+        result[0].UDPRN.Should().NotBe("12345678");
         result[1].PERSON_GIVEN_NAME.Should().NotBe("Jane");
         result[1].PERSON_FAMILY_NAME.Should().NotBe("Doe");
+        result[1].UDPRN.Should().NotBe("12345678");
     }
 
     [Fact]
@@ -456,7 +464,8 @@ public class DataBridgeClientAnonymizerTests
         STREET = "10 Downing Street",
         LOCALITY = "Westminster",
         TOWN = "London",
-        POSTCODE = "SW1A 2AA"
+        POSTCODE = "SW1A 2AA",
+        UDPRN = "12345678"
     };
 
     private static CtsAgentOrKeeper CreateCtsAgentOrKeeper() => new()
@@ -493,6 +502,7 @@ public class DataBridgeClientAnonymizerTests
         holder.LOCALITY.Should().NotBe("Westminster").And.NotBeNullOrWhiteSpace();
         holder.TOWN.Should().NotBe("London").And.NotBeNullOrWhiteSpace();
         holder.POSTCODE.Should().NotBe("SW1A 2AA").And.NotBeNullOrWhiteSpace();
+        holder.UDPRN.Should().NotBe("12345678").And.NotBeNullOrWhiteSpace();
     }
 
     private static void AssertCtsPartyFieldsAnonymized(CtsAgentOrKeeper party)
