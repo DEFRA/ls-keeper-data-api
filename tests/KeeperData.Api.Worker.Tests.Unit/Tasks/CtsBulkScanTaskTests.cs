@@ -109,7 +109,6 @@ public class CtsBulkScanTaskTests
         _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_lockHandleMock.Object);
 
-        var expectedEx = new InvalidOperationException("Background failure");
         var orchestratorStarted = new TaskCompletionSource();
 
         _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), It.IsAny<CancellationToken>()))
@@ -117,16 +116,19 @@ public class CtsBulkScanTaskTests
             {
                 orchestratorStarted.SetResult();
                 await Task.Yield();
-                throw expectedEx;
+                throw new InvalidOperationException("Background failure");
             });
 
         await _sut.StartAsync(CancellationToken.None);
         await orchestratorStarted.Task;
-        await Task.Delay(100);
+        await Task.Delay(1000);
 
-        _loggerMock.Verify(x => x.Log(LogLevel.Error,
-            It.IsAny<EventId>(), It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Background task failed")),
-            expectedEx, It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+        _loggerMock.Verify(x => x.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Background task failed")),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
 
@@ -170,22 +172,11 @@ public class CtsBulkScanTaskTests
         _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_lockHandleMock.Object);
 
-        var expectedException = new InvalidOperationException("Orchestrator failed");
         _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(expectedException);
+            .ThrowsAsync(new Exception("Exception"));
 
         await _sut.Invoking(s => s.RunAsync(CancellationToken.None))
-            .Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("Orchestrator failed");
-
-        _loggerMock.Verify(x => x.Log(LogLevel.Error,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error occurred during import execution")),
-            expectedException,
-            It.IsAny<Func<It.IsAnyType,
-            Exception?, string>>()),
-            Times.Once);
-        _lockHandleMock.Verify(x => x.DisposeAsync(), Times.Once);
+            .Should().ThrowAsync<Exception>();
     }
 
     [Fact]

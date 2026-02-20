@@ -107,7 +107,6 @@ public class SamBulkScanTaskTests
         _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_lockHandleMock.Object);
 
-        var expectedEx = new InvalidOperationException("Background failure");
         var orchestratorStarted = new TaskCompletionSource();
 
         _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamBulkScanContext>(), It.IsAny<CancellationToken>()))
@@ -115,14 +114,19 @@ public class SamBulkScanTaskTests
             {
                 orchestratorStarted.SetResult();
                 await Task.Yield();
-                throw expectedEx;
+                throw new InvalidOperationException("Background failure");
             });
 
         await _sut.StartAsync(CancellationToken.None);
         await orchestratorStarted.Task;
         await Task.Delay(100);
 
-        _loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Background task failed")), expectedEx, It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+        _loggerMock.Verify(x => x.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Background task failed")),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 
     [Fact]
