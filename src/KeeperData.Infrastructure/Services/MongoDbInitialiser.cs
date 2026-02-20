@@ -30,5 +30,21 @@ namespace KeeperData.Infrastructure.Services
                 await collection.Indexes.CreateManyAsync(indexModels);
             }
         }
+
+        public async Task DropAllCollectionsAsync()
+        {
+            var database = _mongoClient.GetDatabase(_mongoConfig.Value.DatabaseName);
+
+            using var cursor = await database.ListCollectionNamesAsync();
+            var collectionNames = await cursor.ToListAsync();
+
+            foreach (var name in collectionNames)
+            {
+                if (name.StartsWith("system.", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                await database.DropCollectionAsync(name);
+            }
+        }
     }
 }
