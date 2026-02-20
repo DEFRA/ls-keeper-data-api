@@ -2,6 +2,7 @@ using Bogus;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using System.Security.Cryptography;
 using System.Text;
+using KeeperData.Core.Anonymization;
 using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Infrastructure.Anonymization;
@@ -89,32 +90,8 @@ public static class PiiAnonymizerHelper
         var seed = GetStableSeed(holding.CPH);
         var faker = CreateFaker(seed);
 
-        if (holding.OS_MAP_REFERENCE is not null)
-            holding.OS_MAP_REFERENCE = faker.Random.Replace(MapReferenceFormat).ToUpperInvariant();
-
-        if (holding.EASTING.HasValue)
-            holding.EASTING = faker.Random.Int(100000, 999999);
-
-        if (holding.NORTHING.HasValue)
-            holding.NORTHING = faker.Random.Int(200000, 999999);
-
-        if (holding.STREET is not null)
-            holding.STREET = faker.Address.StreetAddress();
-
-        if (holding.LOCALITY is not null)
-            holding.LOCALITY = faker.Address.SecondaryAddress();
-
-        if (holding.TOWN is not null)
-            holding.TOWN = faker.Address.City();
-
-        if (holding.POSTCODE is not null)
-            holding.POSTCODE = faker.Address.ZipCode(PostcodeFormat);
-
-        if (holding.PAON_DESCRIPTION is not null)
-            holding.PAON_DESCRIPTION = faker.Address.BuildingNumber();
-
-        if (holding.SAON_DESCRIPTION is not null)
-            holding.SAON_DESCRIPTION = faker.Address.SecondaryAddress();
+        AnonymizeLocationInfo(holding, faker);
+        AnonymizeAddressInfo(holding, faker);
     }
 
     public static void AnonymizeSamHolder(SamCphHolder holder)
@@ -122,6 +99,54 @@ public static class PiiAnonymizerHelper
         var seed = GetStableSeed(holder.PARTY_ID);
         var faker = CreateFaker(seed);
 
+        AnonymizePersonalInfo(holder, faker);
+        AnonymizeContactInfo(holder, faker);
+        AnonymizeAddressInfo(holder, faker);
+    }
+
+    public static void AnonymizeSamParty(SamParty party)
+    {
+        var seed = GetStableSeed(party.PARTY_ID);
+        var faker = CreateFaker(seed);
+
+        AnonymizePersonalInfo(party, faker);
+        AnonymizeContactInfo(party, faker);
+        AnonymizeAddressInfo(party, faker);
+    }
+
+    public static void AnonymizeCtsHolding(CtsCphHolding holding)
+    {
+        var seed = GetStableSeed(holding.LID_FULL_IDENTIFIER);
+        var faker = CreateFaker(seed);
+
+        AnonymizeLocationInfo(holding, faker);
+        AnonymizeCtsAddressInfo(holding, faker);
+        AnonymizeCtsContactInfo(holding, faker);
+    }
+
+    public static void AnonymizeCtsAgentOrKeeper(CtsAgentOrKeeper party)
+    {
+        var seed = GetStableSeed(party.PAR_ID);
+        var faker = CreateFaker(seed);
+
+        AnonymizeCtsPersonalInfo(party, faker);
+        AnonymizeCtsContactInfo(party, faker);
+        AnonymizeCtsAddressInfo(party, faker);
+    }
+
+    public static Faker CreateFaker(int seed) => new("en_GB") { Random = new Randomizer(seed) };
+
+    private static int GetStableSeed(string identifier)
+    {
+        if (string.IsNullOrEmpty(identifier))
+            return 0;
+
+        var hash = MD5.HashData(Encoding.UTF8.GetBytes(identifier));
+        return BitConverter.ToInt32(hash, 0);
+    }
+
+    private static void AnonymizePersonalInfo<T>(T holder, Faker faker) where T : ISamCommonPiiData
+    {
         if (holder.PERSON_TITLE is not null)
             holder.PERSON_TITLE = faker.Name.Prefix();
 
@@ -139,124 +164,85 @@ public static class PiiAnonymizerHelper
 
         if (holder.ORGANISATION_NAME is not null)
             holder.ORGANISATION_NAME = faker.Company.CompanyName();
-
-        if (holder.INTERNET_EMAIL_ADDRESS is not null)
-            holder.INTERNET_EMAIL_ADDRESS = faker.Internet.Email();
-
-        if (holder.MOBILE_NUMBER is not null)
-            holder.MOBILE_NUMBER = faker.Phone.PhoneNumber(MobileNumberFormat);
-
-        if (holder.TELEPHONE_NUMBER is not null)
-            holder.TELEPHONE_NUMBER = faker.Phone.PhoneNumber(TelephoneNumberFormat);
-
-        if (holder.STREET is not null)
-            holder.STREET = faker.Address.StreetAddress();
-
-        if (holder.LOCALITY is not null)
-            holder.LOCALITY = faker.Address.SecondaryAddress();
-
-        if (holder.TOWN is not null)
-            holder.TOWN = faker.Address.City();
-
-        if (holder.POSTCODE is not null)
-            holder.POSTCODE = faker.Address.ZipCode(PostcodeFormat);
-
-        if (holder.PAON_DESCRIPTION is not null)
-            holder.PAON_DESCRIPTION = faker.Address.BuildingNumber();
-
-        if (holder.SAON_DESCRIPTION is not null)
-            holder.SAON_DESCRIPTION = faker.Address.SecondaryAddress();
     }
 
-    public static void AnonymizeSamParty(SamParty party)
+    private static void AnonymizeContactInfo<T>(T entity, Faker faker) where T : ISamCommonPiiData
     {
-        var seed = GetStableSeed(party.PARTY_ID);
-        var faker = CreateFaker(seed);
+        if (entity.INTERNET_EMAIL_ADDRESS is not null)
+            entity.INTERNET_EMAIL_ADDRESS = faker.Internet.Email();
 
-        if (party.PERSON_TITLE is not null)
-            party.PERSON_TITLE = faker.Name.Prefix();
+        if (entity.MOBILE_NUMBER is not null)
+            entity.MOBILE_NUMBER = faker.Phone.PhoneNumber(MobileNumberFormat);
 
-        if (party.PERSON_GIVEN_NAME is not null)
-            party.PERSON_GIVEN_NAME = faker.Name.FirstName();
-
-        if (party.PERSON_GIVEN_NAME2 is not null)
-            party.PERSON_GIVEN_NAME2 = faker.Name.FirstName();
-
-        if (party.PERSON_INITIALS is not null)
-            party.PERSON_INITIALS = party.PERSON_GIVEN_NAME?[..1];
-
-        if (party.PERSON_FAMILY_NAME is not null)
-            party.PERSON_FAMILY_NAME = faker.Name.LastName();
-
-        if (party.ORGANISATION_NAME is not null)
-            party.ORGANISATION_NAME = faker.Company.CompanyName();
-
-        if (party.INTERNET_EMAIL_ADDRESS is not null)
-            party.INTERNET_EMAIL_ADDRESS = faker.Internet.Email();
-
-        if (party.MOBILE_NUMBER is not null)
-            party.MOBILE_NUMBER = faker.Phone.PhoneNumber(MobileNumberFormat);
-
-        if (party.TELEPHONE_NUMBER is not null)
-            party.TELEPHONE_NUMBER = faker.Phone.PhoneNumber(TelephoneNumberFormat);
-
-        if (party.STREET is not null)
-            party.STREET = faker.Address.StreetAddress();
-
-        if (party.LOCALITY is not null)
-            party.LOCALITY = faker.Address.SecondaryAddress();
-
-        if (party.TOWN is not null)
-            party.TOWN = faker.Address.City();
-
-        if (party.POSTCODE is not null)
-            party.POSTCODE = faker.Address.ZipCode(PostcodeFormat);
-
-        if (party.PAON_DESCRIPTION is not null)
-            party.PAON_DESCRIPTION = faker.Address.BuildingNumber();
-
-        if (party.SAON_DESCRIPTION is not null)
-            party.SAON_DESCRIPTION = faker.Address.SecondaryAddress();
+        if (entity.TELEPHONE_NUMBER is not null)
+            entity.TELEPHONE_NUMBER = faker.Phone.PhoneNumber(TelephoneNumberFormat);
     }
 
-    public static void AnonymizeCtsHolding(CtsCphHolding holding)
+    private static void AnonymizeAddressInfo<T>(T entity, Faker faker) where T : ISamCommonPiiAddressData
     {
-        var seed = GetStableSeed(holding.LID_FULL_IDENTIFIER);
-        var faker = CreateFaker(seed);
+        if (entity.STREET is not null)
+            entity.STREET = faker.Address.StreetAddress();
 
+        if (entity.LOCALITY is not null)
+            entity.LOCALITY = faker.Address.SecondaryAddress();
+
+        if (entity.TOWN is not null)
+            entity.TOWN = faker.Address.City();
+
+        if (entity.POSTCODE is not null)
+            entity.POSTCODE = faker.Address.ZipCode(PostcodeFormat);
+
+        if (entity.PAON_DESCRIPTION is not null)
+            entity.PAON_DESCRIPTION = faker.Address.BuildingNumber();
+
+        if (entity.SAON_DESCRIPTION is not null)
+            entity.SAON_DESCRIPTION = faker.Address.SecondaryAddress();
+
+        if (entity.UDPRN is not null)
+            entity.UDPRN = faker.Random.Int(10_000_000, 99_999_999).ToString();
+    }
+
+    private static void AnonymizeLocationInfo(SamCphHolding holding, Faker faker)
+    {
+        if (holding.OS_MAP_REFERENCE is not null)
+            holding.OS_MAP_REFERENCE = faker.Random.Replace(MapReferenceFormat).ToUpperInvariant();
+
+        if (holding.EASTING.HasValue)
+            holding.EASTING = faker.Random.Int(100000, 999999);
+
+        if (holding.NORTHING.HasValue)
+            holding.NORTHING = faker.Random.Int(200000, 999999);
+    }
+
+    private static void AnonymizeLocationInfo(CtsCphHolding holding, Faker faker)
+    {
         if (holding.LOC_MAP_REFERENCE is not null)
             holding.LOC_MAP_REFERENCE = faker.Random.Replace(MapReferenceFormat).ToUpperInvariant();
-
-        if (holding.ADR_NAME is not null)
-            holding.ADR_NAME = faker.Address.StreetAddress();
-
-        if (holding.ADR_ADDRESS_2 is not null)
-            holding.ADR_ADDRESS_2 = faker.Address.SecondaryAddress();
-
-        if (holding.ADR_ADDRESS_3 is not null)
-            holding.ADR_ADDRESS_3 = faker.Address.City();
-
-        if (holding.ADR_ADDRESS_4 is not null)
-            holding.ADR_ADDRESS_4 = faker.Address.County();
-
-        if (holding.ADR_ADDRESS_5 is not null)
-            holding.ADR_ADDRESS_5 = faker.Address.County();
-
-        if (holding.ADR_POST_CODE is not null)
-            holding.ADR_POST_CODE = faker.Address.ZipCode(PostcodeFormat);
-
-        if (holding.LOC_TEL_NUMBER is not null)
-            holding.LOC_TEL_NUMBER = faker.Phone.PhoneNumber(TelephoneNumberFormat);
-
-        if (holding.LOC_MOBILE_NUMBER is not null)
-            holding.LOC_MOBILE_NUMBER = faker.Phone.PhoneNumber(MobileNumberFormat);
     }
 
-    public static void AnonymizeCtsAgentOrKeeper(CtsAgentOrKeeper party)
+    private static void AnonymizeCtsAddressInfo<T>(T entity, Faker faker) where T : ICphCommonPiiAddressData
     {
-        var seed = GetStableSeed(party.PAR_ID);
-        var faker = CreateFaker(seed);
+        if (entity.ADR_NAME is not null)
+            entity.ADR_NAME = faker.Address.StreetAddress();
 
+        if (entity.ADR_ADDRESS_2 is not null)
+            entity.ADR_ADDRESS_2 = faker.Address.SecondaryAddress();
+
+        if (entity.ADR_ADDRESS_3 is not null)
+            entity.ADR_ADDRESS_3 = faker.Address.City();
+
+        if (entity.ADR_ADDRESS_4 is not null)
+            entity.ADR_ADDRESS_4 = faker.Address.County();
+
+        if (entity.ADR_ADDRESS_5 is not null)
+            entity.ADR_ADDRESS_5 = faker.Address.County();
+
+        if (entity.ADR_POST_CODE is not null)
+            entity.ADR_POST_CODE = faker.Address.ZipCode(PostcodeFormat);
+    }
+
+    private static void AnonymizeCtsPersonalInfo(CtsAgentOrKeeper party, Faker faker)
+    {
         if (party.PAR_TITLE is not null)
             party.PAR_TITLE = faker.Name.Prefix();
 
@@ -265,7 +251,10 @@ public static class PiiAnonymizerHelper
 
         if (party.PAR_SURNAME is not null)
             party.PAR_SURNAME = faker.Name.LastName();
+    }
 
+    private static void AnonymizeCtsContactInfo(CtsAgentOrKeeper party, Faker faker)
+    {
         if (party.PAR_EMAIL_ADDRESS is not null)
             party.PAR_EMAIL_ADDRESS = faker.Internet.Email();
 
@@ -280,34 +269,14 @@ public static class PiiAnonymizerHelper
 
         if (party.LOC_MOBILE_NUMBER is not null)
             party.LOC_MOBILE_NUMBER = faker.Phone.PhoneNumber(MobileNumberFormat);
-
-        if (party.ADR_NAME is not null)
-            party.ADR_NAME = faker.Address.StreetAddress();
-
-        if (party.ADR_ADDRESS_2 is not null)
-            party.ADR_ADDRESS_2 = faker.Address.SecondaryAddress();
-
-        if (party.ADR_ADDRESS_3 is not null)
-            party.ADR_ADDRESS_3 = faker.Address.City();
-
-        if (party.ADR_ADDRESS_4 is not null)
-            party.ADR_ADDRESS_4 = faker.Address.County();
-
-        if (party.ADR_ADDRESS_5 is not null)
-            party.ADR_ADDRESS_5 = faker.Address.County();
-
-        if (party.ADR_POST_CODE is not null)
-            party.ADR_POST_CODE = faker.Address.ZipCode(PostcodeFormat);
     }
 
-    public static Faker CreateFaker(int seed) => new("en_GB") { Random = new Randomizer(seed) };
-
-    private static int GetStableSeed(string identifier)
+    private static void AnonymizeCtsContactInfo(CtsCphHolding holding, Faker faker)
     {
-        if (string.IsNullOrEmpty(identifier))
-            return 0;
+        if (holding.LOC_TEL_NUMBER is not null)
+            holding.LOC_TEL_NUMBER = faker.Phone.PhoneNumber(TelephoneNumberFormat);
 
-        var hash = MD5.HashData(Encoding.UTF8.GetBytes(identifier));
-        return BitConverter.ToInt32(hash, 0);
+        if (holding.LOC_MOBILE_NUMBER is not null)
+            holding.LOC_MOBILE_NUMBER = faker.Phone.PhoneNumber(MobileNumberFormat);
     }
 }

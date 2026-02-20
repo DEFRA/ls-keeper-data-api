@@ -32,7 +32,8 @@ public class AnonymizationEndpointTests(AppTestFixtureWithAnonymization appTestF
                 TOWN = "Real Town",
                 POSTCODE = "AB1 2CD",
                 PAON_DESCRIPTION = "Real Building",
-                SAON_DESCRIPTION = "Real Apartment"
+                SAON_DESCRIPTION = "Real Apartment",
+                UDPRN = "12345678"
             }
         };
 
@@ -66,6 +67,7 @@ public class AnonymizationEndpointTests(AppTestFixtureWithAnonymization appTestF
         anonymized.POSTCODE.Should().NotBe("AB1 2CD");
         anonymized.PAON_DESCRIPTION.Should().NotBe("Real Building");
         anonymized.SAON_DESCRIPTION.Should().NotBe("Real Apartment");
+        anonymized.UDPRN.Should().NotBe("12345678");
 
         // Anonymized fields should not be null or empty
         anonymized.OS_MAP_REFERENCE.Should().NotBeNullOrEmpty();
@@ -94,7 +96,8 @@ public class AnonymizationEndpointTests(AppTestFixtureWithAnonymization appTestF
                 TELEPHONE_NUMBER = "01234567890",
                 STREET = "123 Farm Lane",
                 TOWN = "Farmville",
-                POSTCODE = "FA1 2RM"
+                POSTCODE = "FA1 2RM",
+                UDPRN = "12345678"
             }
         };
 
@@ -129,6 +132,7 @@ public class AnonymizationEndpointTests(AppTestFixtureWithAnonymization appTestF
         anonymized.STREET.Should().NotBe("123 Farm Lane");
         anonymized.TOWN.Should().NotBe("Farmville");
         anonymized.POSTCODE.Should().NotBe("FA1 2RM");
+        anonymized.UDPRN.Should().NotBe("12345678");
 
         // Anonymized fields should be valid data
         anonymized.PERSON_GIVEN_NAME.Should().NotBeNullOrEmpty();
@@ -154,7 +158,8 @@ public class AnonymizationEndpointTests(AppTestFixtureWithAnonymization appTestF
                 MOBILE_NUMBER = "07700900999",
                 STREET = "456 Another Street",
                 TOWN = "Test City",
-                POSTCODE = "TS1 2TC"
+                POSTCODE = "TS1 2TC",
+                UDPRN = "12345678"
             }
         };
 
@@ -183,6 +188,7 @@ public class AnonymizationEndpointTests(AppTestFixtureWithAnonymization appTestF
         anonymized.STREET.Should().NotBe("456 Another Street");
         anonymized.TOWN.Should().NotBe("Test City");
         anonymized.POSTCODE.Should().NotBe("TS1 2TC");
+        anonymized.UDPRN.Should().NotBe("12345678");
     }
 
     [Fact]
