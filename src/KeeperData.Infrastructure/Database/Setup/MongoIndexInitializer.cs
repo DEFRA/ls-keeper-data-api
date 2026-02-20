@@ -16,7 +16,7 @@ public class MongoIndexInitializer(IServiceProvider serviceProvider) : IHostedSe
 
     public async Task EnsureMongoIndexesAsync()
     {
-        var dbInitialiser = _serviceProvider.GetService<IMongoDbInitialiser>();
+        var dbInitialiser = _serviceProvider.GetRequiredService<IMongoDbInitialiser>();
 
         var indexableTypes = AppDomain.CurrentDomain.GetAssemblies()
             .Where(a => !a.IsDynamic)
@@ -25,7 +25,7 @@ public class MongoIndexInitializer(IServiceProvider serviceProvider) : IHostedSe
 
         foreach (var type in indexableTypes)
         {
-            await dbInitialiser!.Initialise(type);
+            await dbInitialiser.Initialise(type);
         }
     }
 
