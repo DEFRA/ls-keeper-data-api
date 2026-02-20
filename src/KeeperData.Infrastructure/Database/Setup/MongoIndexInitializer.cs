@@ -27,8 +27,6 @@ public class MongoIndexInitializer(IServiceProvider serviceProvider) : IHostedSe
         {
             await dbInitialiser.Initialise(type);
         }
-
-        await dbInitialiser.DropAllCollectionsAsync();
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
