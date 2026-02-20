@@ -1,5 +1,6 @@
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Providers;
 using Microsoft.Extensions.Hosting;
@@ -123,6 +124,14 @@ public class SamDailyScanTask(
         catch (OperationCanceledException) when (externalToken.IsCancellationRequested)
         {
             logger.LogInformation("Import was cancelled at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
+            throw;
+        }
+        catch (RetryableException)
+        {
+            throw;
+        }
+        catch (NonRetryableException)
+        {
             throw;
         }
         catch (Exception ex)
