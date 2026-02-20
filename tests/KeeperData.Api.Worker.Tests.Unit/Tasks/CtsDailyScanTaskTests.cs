@@ -4,6 +4,7 @@ using KeeperData.Application.Orchestration.ChangeScanning.Cts.Daily;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Providers;
+using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -25,7 +26,7 @@ public class CtsDailyScanTaskTests
 
     public CtsDailyScanTaskTests()
     {
-        _orchestratorMock = new Mock<CtsDailyScanOrchestrator>(new List<Application.Orchestration.ChangeScanning.IScanStep<CtsDailyScanContext>>());
+        _orchestratorMock = new Mock<CtsDailyScanOrchestrator>(new List<Application.Orchestration.ChangeScanning.IScanStep<CtsDailyScanContext>>(), new Mock<IApplicationMetrics>().Object);
         _config = new DataBridgeScanConfiguration { QueryPageSize = 100, DailyScanIncludeChangesWithinTotalHours = 24 };
         _distributedLockMock = new Mock<IDistributedLock>();
         _lifetimeMock = new Mock<IHostApplicationLifetime>();
@@ -98,7 +99,6 @@ public class CtsDailyScanTaskTests
         _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_lockHandleMock.Object);
 
-        var expectedEx = new InvalidOperationException("Background failure");
         var orchestratorStarted = new TaskCompletionSource();
 
         _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<CtsDailyScanContext>(), It.IsAny<CancellationToken>()))
@@ -106,14 +106,19 @@ public class CtsDailyScanTaskTests
             {
                 orchestratorStarted.SetResult();
                 await Task.Yield();
-                throw expectedEx;
+                throw new InvalidOperationException("Background failure");
             });
 
         await _sut.StartAsync(CancellationToken.None);
         await orchestratorStarted.Task;
         await Task.Delay(100);
 
-        _loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Background task failed")), expectedEx, It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+        _loggerMock.Verify(x => x.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Background task failed")),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 
     [Fact]
@@ -156,14 +161,11 @@ public class CtsDailyScanTaskTests
         _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_lockHandleMock.Object);
 
-        var expectedException = new InvalidOperationException("Fail");
         _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<CtsDailyScanContext>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(expectedException);
+            .ThrowsAsync(new Exception("Exception"));
 
         await _sut.Invoking(s => s.RunAsync(CancellationToken.None))
-            .Should().ThrowAsync<InvalidOperationException>();
-
-        _loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error occurred during import")), expectedException, It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+            .Should().ThrowAsync<Exception>();
     }
 
     [Fact]

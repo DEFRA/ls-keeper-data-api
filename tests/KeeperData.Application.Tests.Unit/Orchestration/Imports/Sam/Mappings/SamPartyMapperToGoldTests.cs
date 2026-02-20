@@ -264,7 +264,6 @@ public class SamPartyMapperToGoldTests
         var updateDate = new DateTime(2020, 1, 1);
         var customerId = "customer-id";
         var newRoleId = "new-roletype-id";
-        var existingRoleId = "existing-roleId";
         var inputParty = new SamPartyDocument()
         {
             PartyId = customerId,
@@ -282,7 +281,7 @@ public class SamPartyMapperToGoldTests
             CustomerNumber = customerId,
             PartyRoles = new List<PartyRoleWithSiteDocument>()
             {
-                CreatePartyRole("existing", existingRoleId)
+                CreatePartyRole("existing-id", "existing", GoldSiteId)
             },
             LastUpdatedDate = DateTime.MinValue
         };
@@ -297,15 +296,54 @@ public class SamPartyMapperToGoldTests
         result.PartyRoles.Select(r => r.Role.IdentifierId).Should().BeEquivalentTo([newRoleId]);
     }
 
-    private static PartyRoleWithSiteDocument CreatePartyRole(string roleId, string valuePrefix)
+    [Fact]
+    public async Task WhenOldRoleForOtherSiteNotInListOfNewRoles_ShouldLeaveOldRoleAlone()
+    {
+        var updateDate = new DateTime(2020, 1, 1);
+        var customerId = "customer-id";
+        var newRoleId = "new-roletype-id";
+        var existingRoleId = "existing-id";
+        var inputParty = new SamPartyDocument()
+        {
+            PartyId = customerId,
+            Roles = new List<PartyRoleDocument>
+            {
+                CreateRole("new", newRoleId)
+            },
+            LastUpdatedDate = updateDate
+        };
+
+        inputParty.PartyId = customerId;
+        var existingParty = new PartyDocument()
+        {
+            Id = "gold-id",
+            CustomerNumber = customerId,
+            PartyRoles = new List<PartyRoleWithSiteDocument>()
+            {
+                CreatePartyRole(existingRoleId, "existing", "other-site-id")
+            },
+            LastUpdatedDate = DateTime.MinValue
+        };
+
+        _goldRepoMock
+            .Setup(r => r.FindPartyByCustomerNumber(customerId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingParty);
+
+        var result = await WhenIMapSilverPartyToGold(inputParty, existingPartyIds: new List<string> { customerId });
+
+        result.LastUpdatedDate.Should().Be(updateDate);
+        result.PartyRoles.Select(r => r.Role.IdentifierId).Should().BeEquivalentTo([newRoleId, existingRoleId]);
+    }
+
+    private static PartyRoleWithSiteDocument CreatePartyRole(string roletypeid, string valuePrefix, string siteId)
     {
         return new()
         {
-            IdentifierId = roleId,
-            Role = new PartyRoleRoleDocument() { IdentifierId = valuePrefix + "roleTypeId", Code = valuePrefix + "typecode", Name = valuePrefix + "typename", },
+            IdentifierId = valuePrefix + "-roleid",
+            Role = new PartyRoleRoleDocument() { IdentifierId = roletypeid, Code = valuePrefix + "typecode", Name = valuePrefix + "typename", },
             Site = new PartyRoleSiteDocument()
             {
-                IdentifierId = GoldSiteId,
+                IdentifierId = siteId,
                 Name = null,
                 State = null,
                 Type = null

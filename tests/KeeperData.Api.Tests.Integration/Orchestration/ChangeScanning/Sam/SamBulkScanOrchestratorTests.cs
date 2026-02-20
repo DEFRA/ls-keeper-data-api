@@ -2,7 +2,9 @@ using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
 using KeeperData.Api.Tests.Integration.Fixtures;
 using KeeperData.Api.Tests.Integration.Helpers;
+using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Messaging.Contracts.V1.Sam;
+using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.ChangeScanning.Sam;
 
@@ -12,9 +14,6 @@ public class SamBulkScanOrchestratorTests(
     LocalStackFixture localStackFixture,
     ApiContainerFixture apiContainerFixture) : IAsyncLifetime
 {
-    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
-    private readonly LocalStackFixture _localStackFixture = localStackFixture;
-    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
 
     private const int ProcessingTimeCircuitBreakerSeconds = 30;
     private const int LimitScanTotalBatchSize = 10;
@@ -48,7 +47,7 @@ public class SamBulkScanOrchestratorTests(
         while (DateTime.UtcNow - startTime < timeout)
         {
             foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
-                _apiContainerFixture.ApiContainer,
+                apiContainerFixture.ApiContainer,
                 $"Handled message with correlationId: \"{correlationId}\"");
 
             if (foundLogEntry)
@@ -69,7 +68,7 @@ public class SamBulkScanOrchestratorTests(
         while (DateTime.UtcNow - startTime < timeout)
         {
             var logs = await ContainerLoggingUtility.FindContainerLogEntriesAsync(
-                _apiContainerFixture.ApiContainer,
+                apiContainerFixture.ApiContainer,
                 logFragment);
 
             matchingLogCount = logs
@@ -89,6 +88,14 @@ public class SamBulkScanOrchestratorTests(
 
         matchingLogCount.Should().Be(expectedEntries,
             $"Expected {expectedEntries} import step completions after {testExecutedOn:o} within {timeout.TotalSeconds} seconds.");
+
+        var samParties = await mongoDbFixture.MongoVerifier.FindDocumentsAsync("samParties", FilterDefinition<SamPartyDocument>.Empty);
+        foreach (var samPartyDocument in samParties)
+        {
+            samPartyDocument.PartyFullName.Should().NotBeNullOrEmpty();
+            Guid.TryParse(samPartyDocument.PartyFullName, out _).Should().BeTrue(
+                "PartyFullName should be a GUID and not anonymized data");
+        }
     }
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
@@ -97,10 +104,10 @@ public class SamBulkScanOrchestratorTests(
         {
             ["CorrelationId"] = correlationId
         };
-        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var cts = new CancellationTokenSource();
-        await _localStackFixture.SqsClient.SendMessageAsync(request, cts.Token);
+        await localStackFixture.SqsClient.SendMessageAsync(request, cts.Token);
     }
 
     private static SamBulkScanMessage GetSamBulkScanMessage(string identifier) => new()
@@ -115,6 +122,6 @@ public class SamBulkScanOrchestratorTests(
 
     public async Task DisposeAsync()
     {
-        await _mongoDbFixture.PurgeDataTables();
+        await mongoDbFixture.PurgeDataTables();
     }
 }

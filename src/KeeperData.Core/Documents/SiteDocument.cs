@@ -225,7 +225,11 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 
             new CreateIndexModel<BsonDocument>(
                 Builders<BsonDocument>.IndexKeys.Ascending("parties.customerNumber"),
-                new CreateIndexOptions { Name = "idxv2_parties_customerNumber", Sparse = true })
+                new CreateIndexOptions { Name = "idxv2_parties_customerNumber", Sparse = true }),
+
+            new CreateIndexModel<BsonDocument>(
+                Builders<BsonDocument>.IndexKeys.Ascending("parties.communication.email"),
+                new CreateIndexOptions { Name = "idxv2_parties_communication_email", Collation = IndexDefaults.CollationCaseInsensitive, Sparse = true }),
         ]);
     }
 }

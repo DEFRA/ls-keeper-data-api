@@ -4,6 +4,7 @@ using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Providers;
+using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -25,7 +26,7 @@ public class SamBulkScanTaskTests
 
     public SamBulkScanTaskTests()
     {
-        _orchestratorMock = new Mock<SamBulkScanOrchestrator>(new List<Application.Orchestration.ChangeScanning.IScanStep<SamBulkScanContext>>());
+        _orchestratorMock = new Mock<SamBulkScanOrchestrator>(new List<Application.Orchestration.ChangeScanning.IScanStep<SamBulkScanContext>>(), new Mock<IApplicationMetrics>().Object);
         _config = new DataBridgeScanConfiguration { QueryPageSize = 100 };
         _distributedLockMock = new Mock<IDistributedLock>();
         _lifetimeMock = new Mock<IHostApplicationLifetime>();
@@ -106,7 +107,6 @@ public class SamBulkScanTaskTests
         _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_lockHandleMock.Object);
 
-        var expectedEx = new InvalidOperationException("Background failure");
         var orchestratorStarted = new TaskCompletionSource();
 
         _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamBulkScanContext>(), It.IsAny<CancellationToken>()))
@@ -114,14 +114,19 @@ public class SamBulkScanTaskTests
             {
                 orchestratorStarted.SetResult();
                 await Task.Yield();
-                throw expectedEx;
+                throw new InvalidOperationException("Background failure");
             });
 
         await _sut.StartAsync(CancellationToken.None);
         await orchestratorStarted.Task;
         await Task.Delay(100);
 
-        _loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Background task failed")), expectedEx, It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+        _loggerMock.Verify(x => x.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Background task failed")),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 
     [Fact]

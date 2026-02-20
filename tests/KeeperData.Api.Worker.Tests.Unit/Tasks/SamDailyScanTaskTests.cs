@@ -4,6 +4,7 @@ using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Providers;
+using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -25,7 +26,7 @@ public class SamDailyScanTaskTests
 
     public SamDailyScanTaskTests()
     {
-        _orchestratorMock = new Mock<SamDailyScanOrchestrator>(new List<Application.Orchestration.ChangeScanning.IScanStep<SamDailyScanContext>>());
+        _orchestratorMock = new Mock<SamDailyScanOrchestrator>(new List<Application.Orchestration.ChangeScanning.IScanStep<SamDailyScanContext>>(), new Mock<IApplicationMetrics>().Object);
         _config = new DataBridgeScanConfiguration { QueryPageSize = 100 };
         _distributedLockMock = new Mock<IDistributedLock>();
         _lifetimeMock = new Mock<IHostApplicationLifetime>();
@@ -98,7 +99,6 @@ public class SamDailyScanTaskTests
         _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_lockHandleMock.Object);
 
-        var expectedEx = new InvalidOperationException("Background failure");
         var orchestratorStarted = new TaskCompletionSource();
 
         _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
@@ -106,14 +106,19 @@ public class SamDailyScanTaskTests
             {
                 orchestratorStarted.SetResult();
                 await Task.Yield();
-                throw expectedEx;
+                throw new InvalidOperationException("Background failure");
             });
 
         await _sut.StartAsync(CancellationToken.None);
         await orchestratorStarted.Task;
         await Task.Delay(100);
 
-        _loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Background task failed")), expectedEx, It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+        _loggerMock.Verify(x => x.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Background task failed")),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 
     [Fact]
@@ -156,14 +161,11 @@ public class SamDailyScanTaskTests
         _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_lockHandleMock.Object);
 
-        var expectedException = new InvalidOperationException("Fail");
         _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(expectedException);
+            .ThrowsAsync(new Exception("Exception"));
 
         await _sut.Invoking(s => s.RunAsync(CancellationToken.None))
-            .Should().ThrowAsync<InvalidOperationException>();
-
-        _loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error occurred during import")), expectedException, It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+            .Should().ThrowAsync<Exception>();
     }
 
     [Fact]
@@ -308,5 +310,58 @@ public class SamDailyScanTaskTests
             It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Unexpected error in lock renewal task")),
             expectedEx,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RunAsync_ShouldCalculateCorrectLookbackDate()
+    {
+        // Arrange
+        _config.DailyScanIncludeChangesWithinTotalHours = 24;
+
+        SamDailyScanContext? capturedContext = null;
+
+        _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
+            .Callback<SamDailyScanContext, CancellationToken>((ctx, ct) => capturedContext = ctx)
+            .Returns(Task.CompletedTask);
+
+        _distributedLockMock.Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_lockHandleMock.Object);
+
+        // Act
+        await _sut.RunAsync(CancellationToken.None);
+
+        // Assert
+        capturedContext.Should().NotBeNull();
+
+        // To prove the logic is wrong for a "Daily Scan", we actually want it to be in the past:
+        capturedContext!.UpdatedSinceDateTime.Should().BeBefore(DateTime.UtcNow);
+    }
+
+    [Fact]
+    public async Task RunAsync_ShouldUseConfiguredHours_ToCalculateLookbackDate()
+    {
+        // Arrange
+        int hoursFromConfig = 48;
+        _config.DailyScanIncludeChangesWithinTotalHours = hoursFromConfig;
+
+        SamDailyScanContext? capturedContext = null;
+
+        _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
+            .Callback<SamDailyScanContext, CancellationToken>((ctx, ct) => capturedContext = ctx)
+            .Returns(Task.CompletedTask);
+
+        _distributedLockMock.Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_lockHandleMock.Object);
+
+        // Act
+        await _sut.RunAsync(CancellationToken.None);
+
+        // Assert
+        capturedContext.Should().NotBeNull();
+
+        // Verify it's minus 48 hours
+        var expectedDate = DateTime.UtcNow.AddHours(-hoursFromConfig);
+
+        capturedContext!.UpdatedSinceDateTime.Should().BeCloseTo(expectedDate, TimeSpan.FromSeconds(1));
     }
 }

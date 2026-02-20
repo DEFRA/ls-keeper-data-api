@@ -2,7 +2,6 @@ using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;
 using KeeperData.Infrastructure.Services;
 using KeeperData.Infrastructure.Tests.Unit.Database.Repositories;
-using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Moq;
@@ -13,7 +12,6 @@ public class MongoDbInitialiserTests
 {
     private readonly MongoDbInitialiser _sut;
     private readonly Mock<IMongoIndexManager<BsonDocument>> _mockMongoIndexHandler;
-    private readonly Mock<ILogger<MongoDbInitialiser>> _mockLogger;
     private readonly List<BsonDocument> _collectionIndexList = [];
     private readonly MockMongoDatabase _mockDb = new();
     private static readonly IEnumerable<CreateIndexModel<BsonDocument>> _typeIndexList = [];
@@ -28,9 +26,7 @@ public class MongoDbInitialiserTests
         _mockDb.SetupCollection<BsonDocument>(CollectionName);
         _mockDb.MockCollection<BsonDocument>().Setup(x => x.Indexes).Returns(_mockMongoIndexHandler.Object);
 
-        _mockLogger = new();
-
-        _sut = new MongoDbInitialiser(_mockDb.Client, _mockDb.Config, _mockLogger.Object);
+        _sut = new MongoDbInitialiser(_mockDb.Client, _mockDb.Config);
     }
 
     private class DocumentWithoutIndexes
@@ -54,14 +50,6 @@ public class MongoDbInitialiserTests
         {
             await _sut.Initialise(typeof(DocumentWithoutIndexes));
         });
-    }
-
-    [Fact]
-    public async Task WhenIInitialiseItShouldDropV1Index()
-    {
-        _collectionIndexList.Add(BsonDocument.Parse("{\"name\":\"idx_thisisav1index\"}"));
-        await _sut.Initialise(typeof(DocumentWithIndexes));
-        _mockMongoIndexHandler.Verify(x => x.DropOneAsync("idx_thisisav1index", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

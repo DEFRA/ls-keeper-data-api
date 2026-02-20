@@ -22,18 +22,18 @@ public class SamDailyScanMessageHandler(SamDailyScanOrchestrator orchestrator,
     {
         var message = request.Message;
 
-        ArgumentNullException.ThrowIfNull(message, nameof(message));
+        ArgumentNullException.ThrowIfNull(message);
 
         var messagePayload = _serializer.Deserialize(message)
             ?? throw new NonRetryableException($"Deserialisation failed or the message payload was null for " +
-            $"messageType: {typeof(SamDailyScanMessage).Name}," +
+            $"messageType: {nameof(SamDailyScanMessage)}," +
             $"messageId: {message.MessageId}," +
             $"correlationId: {message.CorrelationId}");
 
         var context = new SamDailyScanContext
         {
             CurrentDateTime = DateTime.UtcNow,
-            UpdatedSinceDateTime = DateTime.UtcNow.AddHours(-24),
+            UpdatedSinceDateTime = DateTime.UtcNow.AddHours(-Math.Abs(_dataBridgeScanConfiguration.DailyScanIncludeChangesWithinTotalHours)),
             PageSize = _dataBridgeScanConfiguration.QueryPageSize,
             Holdings = new(),
             Holders = new(),

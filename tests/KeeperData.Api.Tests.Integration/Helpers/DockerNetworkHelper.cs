@@ -1,48 +1,56 @@
-namespace KeeperData.Api.Tests.Integration.Helpers;
+using Docker.DotNet;
+using Docker.DotNet.Models;
 
-using System.Diagnostics;
+namespace KeeperData.Api.Tests.Integration.Helpers;
 
 public static class DockerNetworkHelper
 {
+    private static readonly object s_lock = new();
+    private static readonly HashSet<string> s_createdNetworks = [];
+
     public static void EnsureNetworkExists(string networkName)
     {
-        var inspectProcess = new Process
+        lock (s_lock)
         {
-            StartInfo = new ProcessStartInfo
+            if (s_createdNetworks.Contains(networkName))
             {
-                FileName = "docker",
-                Arguments = $"network inspect {networkName}",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
+                return;
             }
-        };
 
-        inspectProcess.Start();
-        inspectProcess.WaitForExit();
-
-        if (inspectProcess.ExitCode != 0)
-        {
-            var createProcess = new Process
+            try
             {
-                StartInfo = new ProcessStartInfo
+                using var dockerClient = new DockerClientConfiguration().CreateClient();
+
+                var networks = dockerClient.Networks.ListNetworksAsync(new NetworksListParameters
                 {
-                    FileName = "docker",
-                    Arguments = $"network create {networkName}",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
-            };
-            createProcess.Start();
-            createProcess.WaitForExit();
+                    Filters = new Dictionary<string, IDictionary<string, bool>>
+                    {
+                        ["name"] = new Dictionary<string, bool> { [networkName] = true }
+                    }
+                }).GetAwaiter().GetResult();
 
-            if (createProcess.ExitCode != 0)
+                if (networks.Any(n => n.Name == networkName))
+                {
+                    s_createdNetworks.Add(networkName);
+                    return;
+                }
+
+                dockerClient.Networks.CreateNetworkAsync(new NetworksCreateParameters
+                {
+                    Name = networkName,
+                    Driver = "bridge"
+                }).GetAwaiter().GetResult();
+
+                s_createdNetworks.Add(networkName);
+            }
+            catch (DockerApiException ex) when (ex.Message.Contains("already exists"))
             {
-                throw new InvalidOperationException(
-                    $"Failed to create Docker network '{networkName}'. Error: {createProcess.StandardError.ReadToEnd()}");
+                // Network already exists, which is fine
+                s_createdNetworks.Add(networkName);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to create Docker network '{networkName}'. Error: {ex.Message}", ex);
             }
         }
     }

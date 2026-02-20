@@ -2,7 +2,9 @@ using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Consumers.Helpers;
 using KeeperData.Api.Tests.Integration.Fixtures;
 using KeeperData.Api.Tests.Integration.Helpers;
+using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Messaging.Contracts.V1.Cts;
+using MongoDB.Driver;
 
 namespace KeeperData.Api.Tests.Integration.Orchestration.ChangeScanning.Cts;
 
@@ -12,9 +14,6 @@ public class CtsBulkScanOrchestratorTests(
     LocalStackFixture localStackFixture,
     ApiContainerFixture apiContainerFixture) : IAsyncLifetime
 {
-    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
-    private readonly LocalStackFixture _localStackFixture = localStackFixture;
-    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
 
     private const int ProcessingTimeCircuitBreakerSeconds = 30;
     private const int LimitScanTotalBatchSize = 10;
@@ -49,7 +48,7 @@ public class CtsBulkScanOrchestratorTests(
         while (DateTime.UtcNow - startTime < timeout)
         {
             foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
-                _apiContainerFixture.ApiContainer,
+                apiContainerFixture.ApiContainer,
                 $"Handled message with correlationId: \"{correlationId}\"");
 
             if (foundLogEntry)
@@ -70,7 +69,7 @@ public class CtsBulkScanOrchestratorTests(
         while (DateTime.UtcNow - startTime < timeout)
         {
             var logs = await ContainerLoggingUtility.FindContainerLogEntriesAsync(
-                _apiContainerFixture.ApiContainer,
+                apiContainerFixture.ApiContainer,
                 logFragment);
 
             matchingLogCount = logs
@@ -90,6 +89,14 @@ public class CtsBulkScanOrchestratorTests(
 
         matchingLogCount.Should().BeGreaterThanOrEqualTo(expectedEntries,
             $"Expected {expectedEntries} import step completions after {testExecutedOn:o} within {timeout.TotalSeconds} seconds.");
+
+        var ctsHoldings = await mongoDbFixture.MongoVerifier.FindDocumentsAsync("ctsHoldings", FilterDefinition<CtsHoldingDocument>.Empty);
+        foreach (var ctsHoldingDocument in ctsHoldings)
+        {
+            ctsHoldingDocument.LocationName.Should().NotBeNullOrEmpty();
+            Guid.TryParse(ctsHoldingDocument.LocationName, out _).Should().BeTrue(
+                "LocationName should be a GUID and not anonymized data");
+        }
     }
 
     private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
@@ -98,10 +105,10 @@ public class CtsBulkScanOrchestratorTests(
         {
             ["CorrelationId"] = correlationId
         };
-        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var cts = new CancellationTokenSource();
-        await _localStackFixture.SqsClient.SendMessageAsync(request, cts.Token);
+        await localStackFixture.SqsClient.SendMessageAsync(request, cts.Token);
     }
 
     private static CtsBulkScanMessage GetCtsBulkScanMessage(string identifier) => new()
@@ -116,6 +123,6 @@ public class CtsBulkScanOrchestratorTests(
 
     public async Task DisposeAsync()
     {
-        await _mongoDbFixture.PurgeDataTables();
+        await mongoDbFixture.PurgeDataTables();
     }
 }

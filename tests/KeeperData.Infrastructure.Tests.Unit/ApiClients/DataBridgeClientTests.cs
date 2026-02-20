@@ -2,6 +2,7 @@ using FluentAssertions;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Exceptions;
+using KeeperData.Core.Telemetry;
 using KeeperData.Infrastructure.ApiClients;
 using KeeperData.Tests.Common.Factories.UseCases;
 using KeeperData.Tests.Common.Generators;
@@ -18,6 +19,7 @@ public class DataBridgeClientTests
 {
     private readonly Mock<IHttpClientFactory> _httpClientFactoryMock = new();
     private readonly Mock<ILogger<DataBridgeClient>> _loggerMock = new();
+    private readonly Mock<IApplicationMetrics> _metricsMock = new();
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock = new();
     private readonly HttpClient _httpClient;
     private readonly DataBridgeClient _client;
@@ -52,7 +54,8 @@ public class DataBridgeClientTests
         _client = new DataBridgeClient(
             _httpClientFactoryMock.Object,
             config,
-            _loggerMock.Object);
+            _loggerMock.Object,
+            _metricsMock.Object);
     }
 
     [Fact]

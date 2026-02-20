@@ -1,5 +1,6 @@
 using KeeperData.Application.Orchestration.ChangeScanning.Cts.Daily;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Providers;
 using Microsoft.Extensions.Hosting;
@@ -103,7 +104,7 @@ public class CtsDailyScanTask(
             {
                 ScanCorrelationId = scanCorrelationId,
                 CurrentDateTime = DateTime.UtcNow,
-                UpdatedSinceDateTime = DateTime.UtcNow.AddHours(dataBridgeScanConfiguration.DailyScanIncludeChangesWithinTotalHours),
+                UpdatedSinceDateTime = DateTime.UtcNow.AddHours(-Math.Abs(dataBridgeScanConfiguration.DailyScanIncludeChangesWithinTotalHours)),
                 PageSize = dataBridgeScanConfiguration.QueryPageSize,
                 Holdings = new(),
                 Agents = new(),
@@ -114,24 +115,26 @@ public class CtsDailyScanTask(
 
             logger.LogInformation("Import completed successfully at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (renewalTask.IsFaulted || (renewalTask.IsCompleted && !externalToken.IsCancellationRequested))
         {
-            if (renewalTask.IsFaulted || (renewalTask.IsCompleted && !externalToken.IsCancellationRequested))
-            {
-                logger.LogError("Import was stopped due to lock renewal failure at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
-                throw new InvalidOperationException("Task was cancelled due to lock renewal failure");
-            }
-
-            if (externalToken.IsCancellationRequested)
-            {
-                logger.LogInformation("Import was cancelled at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
-                throw;
-            }
+            logger.LogError("Import was stopped due to lock renewal failure at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
+            throw new InvalidOperationException("Task was cancelled due to lock renewal failure");
+        }
+        catch (OperationCanceledException) when (externalToken.IsCancellationRequested)
+        {
+            logger.LogInformation("Import was cancelled at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
             throw;
         }
-        catch (Exception ex)
+        catch (RetryableException)
         {
-            logger.LogError(ex, "Error occurred during import execution scanCorrelationId: {scanCorrelationId}", scanCorrelationId);
+            throw;
+        }
+        catch (NonRetryableException)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
             throw;
         }
         finally

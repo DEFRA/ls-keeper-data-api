@@ -20,6 +20,7 @@ public class IntakeEventQueuePublisher(IAmazonSQS amazonSQS,
     public string TopicArn => string.Empty;
 
     public async Task PublishAsync<TMessage>(TMessage? message, CancellationToken cancellationToken = default)
+        where TMessage : class
     {
         if (message == null) throw new ArgumentException("Message payload was null", nameof(message));
 

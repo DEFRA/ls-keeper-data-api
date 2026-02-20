@@ -1,0 +1,134 @@
+using FluentAssertions;
+using KeeperData.Api.Tests.Integration.Consumers.Helpers;
+using KeeperData.Api.Tests.Integration.Fixtures;
+using KeeperData.Api.Tests.Integration.Helpers;
+using KeeperData.Core.Documents;
+using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Messaging.Contracts.V1.Sam;
+using KeeperData.Tests.Common.Generators;
+using MongoDB.Driver;
+
+namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Sam;
+
+[Collection("IntegrationAnonymization"), Trait("Dependence", "testcontainers")]
+public class SamImportHoldingAnonMessageTests(
+    MongoDbAnonymousFixture mongoDbFixture,
+    LocalStackAnonymousFixture localStackFixture,
+    ApiAnonymousContainerFixture apiContainerFixture) : IAsyncLifetime
+{
+    private const int ProcessingTimeCircuitBreakerSeconds = 30;
+
+    [Fact]
+    public async Task GivenSamImportHoldingMessage_WhenReceivedOnTheQueue_ShouldCompleteWithAnonData()
+    {
+        var correlationId = Guid.NewGuid().ToString();
+        var holdingIdentifier = CphGenerator.GenerateFormattedCph();
+        var message = GetSamImportHoldingMessage(holdingIdentifier);
+
+        await ExecuteQueueTest(correlationId, message);
+
+        var timeout = TimeSpan.FromSeconds(ProcessingTimeCircuitBreakerSeconds);
+        var pollInterval = TimeSpan.FromSeconds(2);
+
+        await VerifySamImportHoldingMessageCompleted(correlationId, timeout, pollInterval);
+
+        await VerifySilverDataTypesAsync(holdingIdentifier);
+
+        await VerifyGoldDataTypesAsync(holdingIdentifier);
+    }
+
+    private async Task VerifySamImportHoldingMessageCompleted(string correlationId, TimeSpan timeout, TimeSpan pollInterval)
+    {
+        var startTime = DateTime.UtcNow;
+        var foundLogEntry = false;
+
+        while (DateTime.UtcNow - startTime < timeout)
+        {
+            foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
+                apiContainerFixture.ApiContainer,
+                $"Handled message with correlationId: \"{correlationId}\"");
+
+            if (foundLogEntry)
+                break;
+
+            await Task.Delay(pollInterval);
+        }
+
+        foundLogEntry.Should().BeTrue($"Expected log entry within {ProcessingTimeCircuitBreakerSeconds} seconds but none was found.");
+    }
+
+    private async Task VerifySilverDataTypesAsync(string holdingIdentifier)
+    {
+        var silverSamHoldingFilter = Builders<SamHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
+        var silverSamHoldings = await mongoDbFixture.MongoVerifier.FindDocumentsAsync("samHoldings", silverSamHoldingFilter);
+
+        var silverSamPartyFilter = Builders<SamPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
+        var silverSamParties = await mongoDbFixture.MongoVerifier.FindDocumentsAsync("samParties", silverSamPartyFilter);
+
+        silverSamHoldings.Should().NotBeNull().And.HaveCount(1);
+        silverSamParties.Should().NotBeNull().And.HaveCountGreaterThanOrEqualTo(1);
+        foreach (var party in silverSamParties)
+        {
+            party.PartyFullName.Should().NotBeNullOrEmpty();
+            Guid.TryParse(party.PartyFullName, out _).Should().BeFalse(
+                $"PartyFullName for party {party.PartyId} should be anonymized with fake data, not a GUID");
+        }
+
+        var silverSamHerdFilter = Builders<SamHerdDocument>.Filter.Eq(x => x.CountyParishHoldingHerd, $"{holdingIdentifier}/01");
+        var silverSamHerds = await mongoDbFixture.MongoVerifier.FindDocumentsAsync("samHerds", silverSamHerdFilter);
+        silverSamHerds.Should().NotBeNull().And.HaveCount(1);
+    }
+
+    private async Task VerifyGoldDataTypesAsync(string holdingIdentifier)
+    {
+        var siteFilter = Builders<SiteDocument>.Filter.ElemMatch(
+            x => x.Identifiers,
+            i => i.Identifier == holdingIdentifier);
+        var sites = await mongoDbFixture.MongoVerifier.FindDocumentsAsync("sites", siteFilter);
+
+        var partyRoleRelationshipFilter = Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
+        var partyRoleRelationships = await mongoDbFixture.MongoVerifier.FindDocumentsAsync("sitePartyRoleRelationships", partyRoleRelationshipFilter);
+        var partyRolePartyIds = partyRoleRelationships.Select(r => r.CustomerNumber).Distinct().ToList();
+
+        var partyFilter = Builders<PartyDocument>.Filter.In(x => x.CustomerNumber, partyRolePartyIds);
+        var parties = await mongoDbFixture.MongoVerifier.FindDocumentsAsync("parties", partyFilter);
+        var partyIds = parties.Select(x => x.CustomerNumber).Distinct().ToHashSet();
+
+        sites.Should().NotBeNull().And.HaveCount(1);
+        parties.Should().NotBeNull().And.HaveCountGreaterThanOrEqualTo(1);
+        partyRoleRelationships.Should().NotBeNull().And.HaveCount(parties.Count);
+        partyIds.SetEquals(partyRolePartyIds).Should().BeTrue();
+
+        for (var i = 0; i < parties[0].PartyRoles.Count; i++)
+        {
+            parties[0].PartyRoles[i].Site!.IdentifierId.Should().Be(sites[0].Id);
+        }
+    }
+
+    private async Task ExecuteQueueTest<TMessage>(string correlationId, TMessage message)
+    {
+        var additionalUserProperties = new Dictionary<string, string>
+        {
+            ["CorrelationId"] = correlationId
+        };
+        var request = SQSMessageUtility.CreateMessage(localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
+
+        using var sam = new CancellationTokenSource();
+        await localStackFixture.SqsClient.SendMessageAsync(request, sam.Token);
+    }
+
+    private static SamImportHoldingMessage GetSamImportHoldingMessage(string holdingIdentifier) => new()
+    {
+        Identifier = holdingIdentifier
+    };
+
+    public async Task InitializeAsync()
+    {
+        await Task.CompletedTask;
+    }
+
+    public async Task DisposeAsync()
+    {
+        await mongoDbFixture.PurgeDataTables();
+    }
+}

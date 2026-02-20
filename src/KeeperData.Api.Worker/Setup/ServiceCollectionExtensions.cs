@@ -42,7 +42,7 @@ public static class ServiceCollectionExtensions
             var samBulkScanJobConfig = scheduledJobConfiguration.FirstOrDefault(x => x.JobType == nameof(SamBulkScanJob));
             if (samBulkScanJobConfig?.Enabled == true && samBulkScanJobConfig?.CronSchedule != null)
             {
-                q.AddJob<CtsBulkScanJob>(opts => opts.WithIdentity(samBulkScanJobConfig.JobType));
+                q.AddJob<SamBulkScanJob>(opts => opts.WithIdentity(samBulkScanJobConfig.JobType));
 
                 q.AddTrigger(opts => opts
                     .ForJob(samBulkScanJobConfig.JobType)

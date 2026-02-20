@@ -1,6 +1,11 @@
 using KeeperData.Api.Utils;
 using KeeperData.Api.Worker.Setup;
+using KeeperData.Application.Configuration;
 using KeeperData.Application.Setup;
+using KeeperData.Core.ApiClients.DataBridgeApi;
+using KeeperData.Infrastructure.ApiClients;
+using KeeperData.Infrastructure.ApiClients.Decorators;
+using KeeperData.Core.Telemetry;
 using KeeperData.Infrastructure.ApiClients.Setup;
 using KeeperData.Infrastructure.Authentication.Configuration;
 using KeeperData.Infrastructure.Authentication.Handlers;
@@ -13,13 +18,16 @@ using KeeperData.Infrastructure.Telemetry;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
+using Scrutor;
 
 namespace KeeperData.Api.Setup;
 
 public static class ServiceCollectionExtensions
 {
-    public static void ConfigureApi(this IServiceCollection services, IConfiguration configuration)
+    public static void ConfigureApi(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
         services.ConfigureAuthentication(configuration);
 
@@ -32,6 +40,8 @@ public static class ServiceCollectionExtensions
 
         services.AddDefaultAWSOptions(configuration.GetAWSOptions());
         services.Configure<AwsConfig>(configuration.GetSection(AwsConfig.SectionName));
+
+        services.ConfigureSwagger(); // Add this line
 
         services.ConfigureHealthChecks();
 
@@ -54,6 +64,87 @@ public static class ServiceCollectionExtensions
             {
                 metrics.AddMeter(MetricNames.MeterName);
             });
+
+        services.ConfigurePiiAnonymization(configuration);
+    }
+
+    private static void ConfigurePiiAnonymization(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        var options = configuration
+            .GetSection(PiiAnonymizationOptions.SectionName)
+            .Get<PiiAnonymizationOptions>();
+
+        if (options?.Enabled != true) return;
+
+        services.Decorate<IDataBridgeClient, DataBridgeClientAnonymizer>();
+    }
+
+    private static void ConfigureSwagger(this IServiceCollection services)
+    {
+        services.AddEndpointsApiExplorer();
+
+        services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("public", new OpenApiInfo
+            {
+                Title = "Keeper Data API (Public)",
+                Version = "v1",
+                Description = "Publicly exposed endpoints for querying Parties and Sites."
+            });
+
+            options.SwaggerDoc("internal", new OpenApiInfo
+            {
+                Title = "Keeper Data API (Internal)",
+                Version = "v1",
+                Description = "Internal endpoints for data ingestion, scanning, and administration."
+            });
+
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = "Bearer"
+            });
+
+            options.AddSecurityDefinition("Basic", new OpenApiSecurityScheme
+            {
+                Description = "Basic Authentication header. Example: \"Authorization: Basic {base64(username:password)}\"",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Scheme = "Basic"
+            });
+
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                },
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Basic"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            });
+        });
     }
 
     public static void ConfigureAuthentication(this IServiceCollection services, IConfiguration configuration)

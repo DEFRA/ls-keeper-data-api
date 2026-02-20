@@ -56,7 +56,7 @@ static void ConfigureBuilder(WebApplicationBuilder builder)
 
     builder.Services.AddHostedService<KeeperData.Infrastructure.Services.MongoDataSeeder>();
 
-    builder.Services.ConfigureApi(builder.Configuration);
+    builder.Services.ConfigureApi(builder.Configuration, builder.Environment);
 }
 
 public partial class Program { }

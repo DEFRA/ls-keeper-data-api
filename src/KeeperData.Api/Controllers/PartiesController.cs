@@ -9,6 +9,7 @@ namespace KeeperData.Api.Controllers
     [Authorize(Policy = "BasicOrBearer")]
     [ApiController]
     [Route("api/[controller]")]
+    [ApiExplorerSettings(GroupName = "public")]
     public class PartiesController(IRequestExecutor executor) : ControllerBase
     {
         private readonly IRequestExecutor _executor = executor;

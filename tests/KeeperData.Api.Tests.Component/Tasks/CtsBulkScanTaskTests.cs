@@ -1,6 +1,7 @@
 using FluentAssertions;
 using KeeperData.Application.Orchestration.ChangeScanning;
 using KeeperData.Core.Exceptions;
+using KeeperData.Core.Telemetry;
 
 namespace KeeperData.Api.Tests.Component.Tasks;
 
@@ -35,7 +36,7 @@ public class CtsBulkScanTaskTests
         var lockHandleMock = new Mock<IDistributedLockHandle>();
         var distributedLockMock = new Mock<IDistributedLock>();
         var delayProviderMock = new Mock<IDelayProvider>();
-        var orchestrator = new CtsBulkScanOrchestrator([]);
+        var orchestrator = new CtsBulkScanOrchestrator([], new Mock<IApplicationMetrics>().Object);
 
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
@@ -65,7 +66,7 @@ public class CtsBulkScanTaskTests
         var loggerMock = new Mock<ILogger<CtsBulkScanTask>>();
         var distributedLockMock = new Mock<IDistributedLock>();
         var delayProviderMock = new Mock<IDelayProvider>();
-        var orchestrator = new CtsBulkScanOrchestrator([]);
+        var orchestrator = new CtsBulkScanOrchestrator([], new Mock<IApplicationMetrics>().Object);
 
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
@@ -104,7 +105,7 @@ public class CtsBulkScanTaskTests
         var distributedLockMock = new Mock<IDistributedLock>();
         var delayProviderMock = new Mock<IDelayProvider>();
         var stepMock = new Mock<IScanStep<CtsBulkScanContext>>();
-        var orchestrator = new CtsBulkScanOrchestrator([stepMock.Object]);
+        var orchestrator = new CtsBulkScanOrchestrator([stepMock.Object], new Mock<IApplicationMetrics>().Object);
 
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
@@ -139,7 +140,7 @@ public class CtsBulkScanTaskTests
         var distributedLockMock = new Mock<IDistributedLock>();
         var delayProviderMock = new Mock<IDelayProvider>();
         var stepMock = new Mock<IScanStep<CtsBulkScanContext>>();
-        var orchestrator = new CtsBulkScanOrchestrator([stepMock.Object]);
+        var orchestrator = new CtsBulkScanOrchestrator([stepMock.Object], new Mock<IApplicationMetrics>().Object);
 
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
