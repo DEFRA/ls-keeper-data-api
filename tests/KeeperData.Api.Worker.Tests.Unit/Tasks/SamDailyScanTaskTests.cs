@@ -23,7 +23,8 @@ public class SamDailyScanTaskTests
     private readonly SamDailyScanTask _sut;
     private readonly Mock<IDistributedLockHandle> _lockHandleMock;
     private readonly CancellationTokenSource _appStoppingCts;
-
+    private readonly Mock<IApplicationMetrics> _metricsMock;
+    
     public SamDailyScanTaskTests()
     {
         _orchestratorMock = new Mock<SamDailyScanOrchestrator>(new List<Application.Orchestration.ChangeScanning.IScanStep<SamDailyScanContext>>(), new Mock<IApplicationMetrics>().Object);
@@ -34,6 +35,7 @@ public class SamDailyScanTaskTests
         _delayProviderMock = new Mock<IDelayProvider>();
         _lockHandleMock = new Mock<IDistributedLockHandle>();
         _appStoppingCts = new CancellationTokenSource();
+        _metricsMock = new Mock<IApplicationMetrics>();
 
         _lifetimeMock.Setup(x => x.ApplicationStopping).Returns(_appStoppingCts.Token);
 
@@ -49,6 +51,7 @@ public class SamDailyScanTaskTests
             _distributedLockMock.Object,
             _lifetimeMock.Object,
             _delayProviderMock.Object,
+            _metricsMock.Object,
             _loggerMock.Object);
     }
 

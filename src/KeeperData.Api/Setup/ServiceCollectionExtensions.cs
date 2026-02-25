@@ -41,7 +41,7 @@ public static class ServiceCollectionExtensions
         services.AddDefaultAWSOptions(configuration.GetAWSOptions());
         services.Configure<AwsConfig>(configuration.GetSection(AwsConfig.SectionName));
 
-        services.ConfigureSwagger(); // Add this line
+        services.ConfigureSwagger();
 
         services.ConfigureHealthChecks();
 
@@ -57,7 +57,7 @@ public static class ServiceCollectionExtensions
 
         services.AddBackgroundJobDependencies(configuration);
 
-        services.AddKeeperDataMetrics();
+        services.AddKeeperDataMetrics(configuration);
 
         services.AddOpenTelemetry()
             .WithMetrics(metrics =>
