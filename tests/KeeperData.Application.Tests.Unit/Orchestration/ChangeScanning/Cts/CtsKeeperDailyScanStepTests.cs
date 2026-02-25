@@ -10,6 +10,7 @@ using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
 using KeeperData.Core.Providers;
 using KeeperData.Tests.Common.Factories.UseCases;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -24,6 +25,7 @@ public class CtsKeeperDailyScanStepTests
     private readonly Mock<IDelayProvider> _delayProviderMock = new();
     private readonly CtsDailyScanContext _context;
     private readonly CtsKeeperDailyScanStep _scanStep;
+    private readonly IConfiguration _configuration;
 
     public CtsKeeperDailyScanStepTests()
     {
@@ -32,6 +34,7 @@ public class CtsKeeperDailyScanStepTests
             _messagePublisherMock.Object,
             _config,
             _delayProviderMock.Object,
+            _configuration,
             _loggerMock.Object);
 
         _context = new CtsDailyScanContext
