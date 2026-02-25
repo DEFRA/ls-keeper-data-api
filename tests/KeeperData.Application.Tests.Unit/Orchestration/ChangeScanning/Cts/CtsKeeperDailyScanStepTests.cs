@@ -25,7 +25,7 @@ public class CtsKeeperDailyScanStepTests
     private readonly Mock<IDelayProvider> _delayProviderMock = new();
     private readonly CtsDailyScanContext _context;
     private readonly CtsKeeperDailyScanStep _scanStep;
-    private readonly IConfiguration _configuration;
+    private readonly IConfiguration _configuration = new ConfigurationManager();
 
     public CtsKeeperDailyScanStepTests()
     {

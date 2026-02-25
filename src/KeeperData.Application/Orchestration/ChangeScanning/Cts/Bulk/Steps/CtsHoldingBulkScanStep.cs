@@ -36,13 +36,15 @@ public class CtsHoldingBulkScanStep(
         string orderBy,
         CancellationToken cancellationToken)
     {
-        return await dataBridgeClient.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(
+        var result = await dataBridgeClient.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(
             top,
             skip,
             selectFields,
             updatedSince,
             orderBy,
             cancellationToken);
+
+        return result ?? new DataBridgeResponse<CtsScanHoldingIdentifier>{ CollectionName = "CtsHoldings" };
     }
 
     protected override string ExtractIdentifier(CtsScanHoldingIdentifier holdingIdentifier)

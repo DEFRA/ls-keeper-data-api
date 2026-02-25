@@ -35,13 +35,15 @@ public class SamHoldingBulkScanStep(
         string orderBy,
         CancellationToken cancellationToken)
     {
-        return await dataBridgeClient.GetSamHoldingsAsync<SamScanHoldingIdentifier>(
+        var result = await dataBridgeClient.GetSamHoldingsAsync<SamScanHoldingIdentifier>(
             top,
             skip,
             selectFields,
             updatedSince,
             orderBy,
             cancellationToken);
+
+        return result ?? new DataBridgeResponse<SamScanHoldingIdentifier>{ CollectionName = "SamHoldings" };
     }
 
     protected override string ExtractIdentifier(SamScanHoldingIdentifier holdingIdentifier)
