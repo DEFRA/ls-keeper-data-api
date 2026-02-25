@@ -1,6 +1,6 @@
 namespace KeeperData.Application.Orchestration.ChangeScanning.Cts.Daily;
 
-public class CtsDailyScanContext: ScanContext
+public class CtsDailyScanContext : ScanContext
 {
     public DateTime CurrentDateTime { get; init; } = DateTime.UtcNow;
     public DateTime? UpdatedSinceDateTime { get; init; }

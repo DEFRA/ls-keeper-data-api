@@ -43,7 +43,7 @@ public class SamHoldingBulkScanStep(
             orderBy,
             cancellationToken);
 
-        return result ?? new DataBridgeResponse<SamScanHoldingIdentifier>{ CollectionName = "SamHoldings" };
+        return result ?? new DataBridgeResponse<SamScanHoldingIdentifier> { CollectionName = "SamHoldings" };
     }
 
     protected override string ExtractIdentifier(SamScanHoldingIdentifier holdingIdentifier)

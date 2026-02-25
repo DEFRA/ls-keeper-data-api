@@ -44,7 +44,7 @@ public class CtsHoldingBulkScanStep(
             orderBy,
             cancellationToken);
 
-        return result ?? new DataBridgeResponse<CtsScanHoldingIdentifier>{ CollectionName = "CtsHoldings" };
+        return result ?? new DataBridgeResponse<CtsScanHoldingIdentifier> { CollectionName = "CtsHoldings" };
     }
 
     protected override string ExtractIdentifier(CtsScanHoldingIdentifier holdingIdentifier)
