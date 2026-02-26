@@ -25,7 +25,7 @@ public abstract class BulkScanStepBase<TContext, THoldingIdentifier, TImportHold
 
     protected abstract string SelectFields { get; }
     protected abstract string OrderBy { get; }
-    
+
     protected readonly IDataBridgeClient DataBridgeClient = dataBridgeClient;
 
     protected override bool IsEntityEnabled() => true;
