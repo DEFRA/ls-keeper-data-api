@@ -1,8 +1,8 @@
+using System.Diagnostics;
 using KeeperData.Core.Messaging;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 
-namespace KeeperData.Application.Orchestration.ChangeScanning;
+namespace KeeperData.Application.Orchestration.ChangeScanning.BaseClasses;
 
 public abstract class ScanStepBase<TContext>(ILogger logger) : IScanStep<TContext>
 {

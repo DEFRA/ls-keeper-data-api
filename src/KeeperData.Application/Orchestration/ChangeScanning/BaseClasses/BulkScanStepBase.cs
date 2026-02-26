@@ -1,4 +1,5 @@
 using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
+using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Messaging.MessagePublishers;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.Logging;
 namespace KeeperData.Application.Orchestration.ChangeScanning.BaseClasses;
 
 public abstract class BulkScanStepBase<TContext, THoldingIdentifier, TImportHoldingMessage>(
+    IDataBridgeClient dataBridgeClient,
     IMessagePublisher<IntakeEventsQueueClient> intakeMessagePublisher,
     DataBridgeScanConfiguration dataBridgeScanConfiguration,
     IDelayProvider delayProvider,
@@ -23,6 +25,8 @@ public abstract class BulkScanStepBase<TContext, THoldingIdentifier, TImportHold
 
     protected abstract string SelectFields { get; }
     protected abstract string OrderBy { get; }
+    
+    protected readonly IDataBridgeClient DataBridgeClient = dataBridgeClient;
 
     protected override bool IsEntityEnabled() => true;
 

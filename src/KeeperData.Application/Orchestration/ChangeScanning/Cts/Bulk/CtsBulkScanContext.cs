@@ -1,3 +1,5 @@
+using KeeperData.Application.Orchestration.ChangeScanning.BaseClasses;
+
 namespace KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
 
 public class CtsBulkScanContext : ScanContext, IBulkScanContext

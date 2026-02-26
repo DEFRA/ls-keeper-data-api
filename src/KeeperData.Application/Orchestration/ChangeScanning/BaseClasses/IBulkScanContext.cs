@@ -1,4 +1,4 @@
-namespace KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk
+namespace KeeperData.Application.Orchestration.ChangeScanning.BaseClasses
 {
     public interface IBulkScanContext
     {

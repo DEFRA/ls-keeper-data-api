@@ -1,3 +1,4 @@
+using KeeperData.Application.Orchestration.ChangeScanning.BaseClasses;
 using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
 
 namespace KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;

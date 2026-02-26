@@ -18,7 +18,9 @@ public class SamHoldingBulkScanStep(
     DataBridgeScanConfiguration dataBridgeScanConfiguration,
     IDelayProvider delayProvider,
     ILogger<SamHoldingBulkScanStep> logger)
-    : BulkScanStepBase<SamBulkScanContext, SamScanHoldingIdentifier, SamImportHoldingMessage>(intakeMessagePublisher,
+    : BulkScanStepBase<SamBulkScanContext, SamScanHoldingIdentifier, SamImportHoldingMessage>(
+        dataBridgeClient,
+        intakeMessagePublisher,
         dataBridgeScanConfiguration,
         delayProvider,
         logger)
@@ -35,7 +37,7 @@ public class SamHoldingBulkScanStep(
         string orderBy,
         CancellationToken cancellationToken)
     {
-        var result = await dataBridgeClient.GetSamHoldingsAsync<SamScanHoldingIdentifier>(
+        var result = await DataBridgeClient.GetSamHoldingsAsync<SamScanHoldingIdentifier>(
             top,
             skip,
             selectFields,

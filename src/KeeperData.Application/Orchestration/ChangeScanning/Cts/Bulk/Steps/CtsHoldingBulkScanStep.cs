@@ -19,6 +19,7 @@ public class CtsHoldingBulkScanStep(
     IDelayProvider delayProvider,
     ILogger<CtsHoldingBulkScanStep> logger)
     : BulkScanStepBase<CtsBulkScanContext, CtsScanHoldingIdentifier, CtsImportHoldingMessage>(
+        dataBridgeClient,
         intakeMessagePublisher,
         dataBridgeScanConfiguration,
         delayProvider,
@@ -36,7 +37,7 @@ public class CtsHoldingBulkScanStep(
         string orderBy,
         CancellationToken cancellationToken)
     {
-        var result = await dataBridgeClient.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(
+        var result = await DataBridgeClient.GetCtsHoldingsAsync<CtsScanHoldingIdentifier>(
             top,
             skip,
             selectFields,
