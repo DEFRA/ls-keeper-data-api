@@ -1,8 +1,7 @@
 namespace KeeperData.Application.Orchestration.ChangeScanning.Cts.Daily;
 
-public class CtsDailyScanContext
+public class CtsDailyScanContext : ScanContext
 {
-    public Guid ScanCorrelationId { get; init; } = Guid.NewGuid();
     public DateTime CurrentDateTime { get; init; } = DateTime.UtcNow;
     public DateTime? UpdatedSinceDateTime { get; init; }
     public int PageSize { get; init; } = 100;

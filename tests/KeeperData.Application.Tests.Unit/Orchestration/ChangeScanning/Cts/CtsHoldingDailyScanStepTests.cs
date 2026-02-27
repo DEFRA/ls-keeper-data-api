@@ -10,6 +10,7 @@ using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
 using KeeperData.Core.Providers;
 using KeeperData.Tests.Common.Factories.UseCases;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -26,13 +27,18 @@ public class CtsHoldingDailyScanStepTests
     private readonly CtsHoldingDailyScanStep _scanStep;
     private readonly CtsDailyScanContext _context;
 
+    private readonly IConfiguration _configuration;
+
     public CtsHoldingDailyScanStepTests()
     {
+        _configuration = new ConfigurationBuilder().Build();
+
         _scanStep = new CtsHoldingDailyScanStep(
             _dataBridgeClientMock.Object,
             _messagePublisherMock.Object,
             _config,
             _delayProviderMock.Object,
+            _configuration,
             _loggerMock.Object);
 
         _context = new CtsDailyScanContext

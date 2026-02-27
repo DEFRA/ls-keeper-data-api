@@ -1,3 +1,4 @@
+using KeeperData.Application.Orchestration.ChangeScanning.BaseClasses;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
@@ -19,7 +20,7 @@ public class SamHoldingDailyScanStep(
     IDelayProvider delayProvider,
     IConfiguration configuration,
     ILogger<SamHoldingDailyScanStep> logger)
-    : DailyScanStepBase<SamScanHoldingIdentifier>(dataBridgeClient, intakeMessagePublisher, dataBridgeScanConfiguration,
+    : DailyScanStepBase<SamDailyScanContext, SamScanHoldingIdentifier>(dataBridgeClient, intakeMessagePublisher, dataBridgeScanConfiguration,
         delayProvider, configuration, logger)
 {
     private const string SelectFields = "CPH";
