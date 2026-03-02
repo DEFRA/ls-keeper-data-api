@@ -114,8 +114,8 @@ public class SamBulkScanTask(
 
             await orchestrator.ExecuteAsync(context, linkedCts.Token);
 
-            metrics.RecordCount("bulk_scan_items_found", context.Holdings.TotalCount, ("scan_type", "SAM"), ("entity", "Holdings"));
-            metrics.RecordCount("bulk_scan_items_found", context.Holders.TotalCount, ("scan_type", "SAM"), ("entity", "Holders"));
+            metrics.RecordCount("bulk_scan_items_found", context.Holdings.CurrentSkip, ("scan_type", "SAM"), ("entity", "Holdings"));
+            metrics.RecordCount("bulk_scan_items_found", context.Holders.CurrentSkip, ("scan_type", "SAM"), ("entity", "Holders"));
             metrics.RecordCount("bulk_scan_completed", 1, ("scan_type", "SAM"));
 
             logger.LogInformation("Import completed successfully at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);

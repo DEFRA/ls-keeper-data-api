@@ -115,9 +115,9 @@ public class CtsDailyScanTask(
 
             await orchestrator.ExecuteAsync(context, linkedCts.Token);
 
-            metrics.RecordCount("daily_scan_items_found", context.Holdings.TotalCount, ("scan_type", "CTS"), ("entity", "Holdings"));
-            metrics.RecordCount("daily_scan_items_found", context.Agents.TotalCount, ("scan_type", "CTS"), ("entity", "Agents"));
-            metrics.RecordCount("daily_scan_items_found", context.Keepers.TotalCount, ("scan_type", "CTS"), ("entity", "Keepers"));
+            metrics.RecordCount("daily_scan_items_found", context.Holdings.CurrentSkip, ("scan_type", "CTS"), ("entity", "Holdings"));
+            metrics.RecordCount("daily_scan_items_found", context.Agents.CurrentSkip, ("scan_type", "CTS"), ("entity", "Agents"));
+            metrics.RecordCount("daily_scan_items_found", context.Keepers.CurrentSkip, ("scan_type", "CTS"), ("entity", "Keepers"));
             metrics.RecordCount("daily_scan_completed", 1, ("scan_type", "CTS"));
 
             logger.LogInformation("Import completed successfully at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);

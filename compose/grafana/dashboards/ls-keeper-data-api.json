@@ -106,16 +106,161 @@
       "targets": [
         {
           "dimensions": {
+            "entity": "Holdings",
             "metric_name": "daily_scan_items_found",
             "scan_type": "SAM"
           },
-          "label": "",
+          "label": "Daily SAM Holdings",
           "metricEditorMode": 0,
           "metricName": "countTotal",
           "metricQueryType": 0,
           "namespace": "ls-keeper-data-api",
           "queryMode": "Metrics",
           "refId": "A",
+          "region": "default",
+          "statistic": "Sum"
+        },
+        {
+          "dimensions": {
+            "entity": "Holders",
+            "metric_name": "daily_scan_items_found",
+            "scan_type": "SAM"
+          },
+          "label": "Daily SAM Holders",
+          "metricEditorMode": 0,
+          "metricName": "countTotal",
+          "metricQueryType": 0,
+          "namespace": "ls-keeper-data-api",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "statistic": "Sum"
+        },
+        {
+          "dimensions": {
+            "entity": "Herds",
+            "metric_name": "daily_scan_items_found",
+            "scan_type": "SAM"
+          },
+          "label": "Daily SAM Herds",
+          "metricEditorMode": 0,
+          "metricName": "countTotal",
+          "metricQueryType": 0,
+          "namespace": "ls-keeper-data-api",
+          "queryMode": "Metrics",
+          "refId": "C",
+          "region": "default",
+          "statistic": "Sum"
+        },
+        {
+          "dimensions": {
+            "entity": "Parties",
+            "metric_name": "daily_scan_items_found",
+            "scan_type": "SAM"
+          },
+          "label": "Daily SAM Parties",
+          "metricEditorMode": 0,
+          "metricName": "countTotal",
+          "metricQueryType": 0,
+          "namespace": "ls-keeper-data-api",
+          "queryMode": "Metrics",
+          "refId": "D",
+          "region": "default",
+          "statistic": "Sum"
+        },
+        {
+          "dimensions": {
+            "entity": "Holdings",
+            "metric_name": "daily_scan_items_found",
+            "scan_type": "CTS"
+          },
+          "label": "Daily CTS Holdings",
+          "metricEditorMode": 0,
+          "metricName": "countTotal",
+          "metricQueryType": 0,
+          "namespace": "ls-keeper-data-api",
+          "queryMode": "Metrics",
+          "refId": "E",
+          "region": "default",
+          "statistic": "Sum"
+        },
+        {
+          "dimensions": {
+            "entity": "Agents",
+            "metric_name": "daily_scan_items_found",
+            "scan_type": "CTS"
+          },
+          "label": "Daily CTS Agents",
+          "metricEditorMode": 0,
+          "metricName": "countTotal",
+          "metricQueryType": 0,
+          "namespace": "ls-keeper-data-api",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "statistic": "Sum"
+        },
+        {
+          "dimensions": {
+            "entity": "Keepers",
+            "metric_name": "daily_scan_items_found",
+            "scan_type": "CTS"
+          },
+          "label": "Daily CTS Keepers",
+          "metricEditorMode": 0,
+          "metricName": "countTotal",
+          "metricQueryType": 0,
+          "namespace": "ls-keeper-data-api",
+          "queryMode": "Metrics",
+          "refId": "G",
+          "region": "default",
+          "statistic": "Sum"
+        },
+        {
+          "dimensions": {
+            "entity": "Holdings",
+            "metric_name": "bulk_scan_items_found",
+            "scan_type": "SAM"
+          },
+          "label": "Bulk SAM Holdings",
+          "metricEditorMode": 0,
+          "metricName": "countTotal",
+          "metricQueryType": 0,
+          "namespace": "ls-keeper-data-api",
+          "queryMode": "Metrics",
+          "refId": "H",
+          "region": "default",
+          "statistic": "Sum"
+        },
+        {
+          "dimensions": {
+            "entity": "Holders",
+            "metric_name": "bulk_scan_items_found",
+            "scan_type": "SAM"
+          },
+          "label": "Bulk SAM Holders",
+          "metricEditorMode": 0,
+          "metricName": "countTotal",
+          "metricQueryType": 0,
+          "namespace": "ls-keeper-data-api",
+          "queryMode": "Metrics",
+          "refId": "I",
+          "region": "default",
+          "statistic": "Sum"
+        },
+        {
+          "dimensions": {
+            "entity": "Holdings",
+            "metric_name": "bulk_scan_items_found",
+            "scan_type": "CTS"
+          },
+          "label": "Bulk CTS Holdings",
+          "metricEditorMode": 0,
+          "metricName": "countTotal",
+          "metricQueryType": 0,
+          "namespace": "ls-keeper-data-api",
+          "queryMode": "Metrics",
+          "refId": "J",
           "region": "default",
           "statistic": "Sum"
         }

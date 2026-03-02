@@ -113,7 +113,7 @@ public class CtsBulkScanTask(
 
             await orchestrator.ExecuteAsync(context, linkedCts.Token);
 
-            metrics.RecordCount("bulk_scan_items_found", context.Holdings.TotalCount, ("scan_type", "CTS"), ("entity", "Holdings"));
+            metrics.RecordCount("bulk_scan_items_found", context.Holdings.CurrentSkip, ("scan_type", "CTS"), ("entity", "Holdings"));
             metrics.RecordCount("bulk_scan_completed", 1, ("scan_type", "CTS"));
 
             logger.LogInformation("Import completed successfully at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
