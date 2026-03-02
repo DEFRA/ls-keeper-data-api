@@ -222,9 +222,9 @@ public class FakeDataBridgeClient : IDataBridgeClient
         {
             CollectionName = "collection",
             Count = data.Count,
-            
+
             TotalCount = data.Count + skip + 10, // fake more data existing
-            
+
             Data = data,
             Top = top,
             Skip = skip

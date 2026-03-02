@@ -70,7 +70,7 @@ public class SamDailyScanTaskTests
         var delayProviderMock = new Mock<IDelayProvider>();
         var orchestrator = new SamDailyScanOrchestrator([], new Mock<IApplicationMetrics>().Object);
         var metricsMock = new Mock<IApplicationMetrics>();
-        
+
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((IDistributedLockHandle?)null);
@@ -111,7 +111,7 @@ public class SamDailyScanTaskTests
         var stepMock = new Mock<IScanStep<SamDailyScanContext>>();
         var orchestrator = new SamDailyScanOrchestrator([stepMock.Object], new Mock<IApplicationMetrics>().Object);
         var metricsMock = new Mock<IApplicationMetrics>();
-        
+
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(lockHandleMock.Object);
@@ -148,7 +148,7 @@ public class SamDailyScanTaskTests
         var stepMock = new Mock<IScanStep<SamDailyScanContext>>();
         var orchestrator = new SamDailyScanOrchestrator([stepMock.Object], new Mock<IApplicationMetrics>().Object);
         var metricsMock = new Mock<IApplicationMetrics>();
-        
+
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(lockHandleMock.Object);

@@ -115,7 +115,7 @@ public class SamDailyScanTask(
             };
 
             await orchestrator.ExecuteAsync(context, linkedCts.Token);
-            
+
             // Daily scan progress metrics for grafana 
             metrics.RecordCount("daily_scan_items_found", context.Holdings.TotalCount, ("scan_type", "SAM"), ("entity", "Holdings"));
             metrics.RecordCount("daily_scan_items_found", context.Holders.TotalCount, ("scan_type", "SAM"), ("entity", "Holders"));

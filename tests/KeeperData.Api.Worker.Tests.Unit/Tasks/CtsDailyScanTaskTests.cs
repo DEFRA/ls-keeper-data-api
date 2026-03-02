@@ -23,6 +23,7 @@ public class CtsDailyScanTaskTests
     private readonly CtsDailyScanTask _sut;
     private readonly Mock<IDistributedLockHandle> _lockHandleMock;
     private readonly CancellationTokenSource _appStoppingCts;
+    private readonly Mock<IApplicationMetrics> _metricsMock;
 
     public CtsDailyScanTaskTests()
     {
@@ -34,6 +35,7 @@ public class CtsDailyScanTaskTests
         _delayProviderMock = new Mock<IDelayProvider>();
         _lockHandleMock = new Mock<IDistributedLockHandle>();
         _appStoppingCts = new CancellationTokenSource();
+        _metricsMock = new Mock<IApplicationMetrics>();
 
         _lifetimeMock.Setup(x => x.ApplicationStopping).Returns(_appStoppingCts.Token);
 
@@ -49,6 +51,7 @@ public class CtsDailyScanTaskTests
             _distributedLockMock.Object,
             _lifetimeMock.Object,
             _delayProviderMock.Object,
+            _metricsMock.Object,
             _loggerMock.Object);
     }
 

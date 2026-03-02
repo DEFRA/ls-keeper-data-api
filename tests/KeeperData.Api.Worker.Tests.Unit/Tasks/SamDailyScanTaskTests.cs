@@ -24,7 +24,7 @@ public class SamDailyScanTaskTests
     private readonly Mock<IDistributedLockHandle> _lockHandleMock;
     private readonly CancellationTokenSource _appStoppingCts;
     private readonly Mock<IApplicationMetrics> _metricsMock;
-    
+
     public SamDailyScanTaskTests()
     {
         _orchestratorMock = new Mock<SamDailyScanOrchestrator>(new List<Application.Orchestration.ChangeScanning.IScanStep<SamDailyScanContext>>(), new Mock<IApplicationMetrics>().Object);

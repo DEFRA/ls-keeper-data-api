@@ -3,6 +3,7 @@ using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Providers;
+using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -14,6 +15,7 @@ public class CtsDailyScanTask(
     IDistributedLock distributedLock,
     IHostApplicationLifetime applicationLifetime,
     IDelayProvider delayProvider,
+    IApplicationMetrics metrics,
     ILogger<CtsDailyScanTask> logger) : ICtsDailyScanTask
 {
     private const string LockName = nameof(CtsDailyScanTask);
@@ -112,6 +114,11 @@ public class CtsDailyScanTask(
             };
 
             await orchestrator.ExecuteAsync(context, linkedCts.Token);
+
+            metrics.RecordCount("daily_scan_items_found", context.Holdings.TotalCount, ("scan_type", "CTS"), ("entity", "Holdings"));
+            metrics.RecordCount("daily_scan_items_found", context.Agents.TotalCount, ("scan_type", "CTS"), ("entity", "Agents"));
+            metrics.RecordCount("daily_scan_items_found", context.Keepers.TotalCount, ("scan_type", "CTS"), ("entity", "Keepers"));
+            metrics.RecordCount("daily_scan_completed", 1, ("scan_type", "CTS"));
 
             logger.LogInformation("Import completed successfully at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
         }
