@@ -3,6 +3,7 @@ using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Providers;
+using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -14,6 +15,7 @@ public class CtsBulkScanTask(
     IDistributedLock distributedLock,
     IHostApplicationLifetime applicationLifetime,
     IDelayProvider delayProvider,
+    IApplicationMetrics metrics,
     ILogger<CtsBulkScanTask> logger) : ICtsBulkScanTask
 {
     private const string LockName = nameof(CtsBulkScanTask);
@@ -110,6 +112,9 @@ public class CtsBulkScanTask(
             };
 
             await orchestrator.ExecuteAsync(context, linkedCts.Token);
+
+            metrics.RecordCount("bulk_scan_items_found", context.Holdings.CurrentSkip, ("scan_type", "CTS"), ("entity", "Holdings"));
+            metrics.RecordCount("bulk_scan_completed", 1, ("scan_type", "CTS"));
 
             logger.LogInformation("Import completed successfully at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
         }
