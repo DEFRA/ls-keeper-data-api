@@ -1,35 +1,34 @@
-    using KeeperData.Core.Documents;
-    using KeeperData.Core.Documents.Reference;
-    using KeeperData.Core.Repositories;
-    using KeeperData.Core.Services;
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Hosting;
-    using Microsoft.Extensions.Logging;
+using KeeperData.Core.Documents;
+using KeeperData.Core.Documents.Reference;
+using KeeperData.Core.Repositories;
+using KeeperData.Core.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-    namespace KeeperData.Infrastructure.Services;
+namespace KeeperData.Infrastructure.Services;
 
-    public class ReferenceDataCache(IServiceScopeFactory scopeFactory, ILogger<ReferenceDataCache> logger)
-        : IReferenceDataCache, IHostedService
-    {
-        private readonly SemaphoreSlim _initializationLock = new(1, 1);
+public class ReferenceDataCache(IServiceScopeFactory scopeFactory, ILogger<ReferenceDataCache> logger)
+    : IReferenceDataCache, IHostedService
+{
+    private readonly SemaphoreSlim _initializationLock = new(1, 1);
+    private volatile IReadOnlyCollection<CountryDocument> _countries = [];
+    private volatile IReadOnlyCollection<SpeciesDocument> _species = [];
+    private volatile IReadOnlyCollection<RoleDocument> _roles = [];
+    private volatile IReadOnlyCollection<PremisesTypeDocument> _premisesTypes = [];
+    private volatile IReadOnlyCollection<PremisesActivityTypeDocument> _premisesActivityTypes = [];
+    private volatile IReadOnlyCollection<SiteIdentifierTypeDocument> _siteIdentifierTypes = [];
+    private volatile IReadOnlyCollection<ProductionUsageDocument> _productionUsages = [];
+    private volatile IReadOnlyCollection<FacilityBusinessActivityMapDocument> _activityMaps = [];
 
-        private volatile IReadOnlyCollection<CountryDocument> _countries = [];
-        private volatile IReadOnlyCollection<SpeciesDocument> _species = [];
-        private volatile IReadOnlyCollection<RoleDocument> _roles = [];
-        private volatile IReadOnlyCollection<PremisesTypeDocument> _premisesTypes = [];
-        private volatile IReadOnlyCollection<PremisesActivityTypeDocument> _premisesActivityTypes = [];
-        private volatile IReadOnlyCollection<SiteIdentifierTypeDocument> _siteIdentifierTypes = [];
-        private volatile IReadOnlyCollection<ProductionUsageDocument> _productionUsages = [];
-        private volatile IReadOnlyCollection<FacilityBusinessActivityMapDocument> _activityMaps = [];
-
-        public IReadOnlyCollection<CountryDocument> Countries => _countries;
-        public IReadOnlyCollection<SpeciesDocument> Species => _species;
-        public IReadOnlyCollection<RoleDocument> Roles => _roles;
-        public IReadOnlyCollection<PremisesTypeDocument> PremisesTypes => _premisesTypes;
-        public IReadOnlyCollection<PremisesActivityTypeDocument> PremisesActivityTypes => _premisesActivityTypes;
-        public IReadOnlyCollection<SiteIdentifierTypeDocument> SiteIdentifierTypes => _siteIdentifierTypes;
-        public IReadOnlyCollection<ProductionUsageDocument> ProductionUsages => _productionUsages;
-        public IReadOnlyCollection<FacilityBusinessActivityMapDocument> ActivityMaps => _activityMaps;
+    public IReadOnlyCollection<CountryDocument> Countries => _countries;
+    public IReadOnlyCollection<SpeciesDocument> Species => _species;
+    public IReadOnlyCollection<RoleDocument> Roles => _roles;
+    public IReadOnlyCollection<PremisesTypeDocument> PremisesTypes => _premisesTypes;
+    public IReadOnlyCollection<PremisesActivityTypeDocument> PremisesActivityTypes => _premisesActivityTypes;
+    public IReadOnlyCollection<SiteIdentifierTypeDocument> SiteIdentifierTypes => _siteIdentifierTypes;
+    public IReadOnlyCollection<ProductionUsageDocument> ProductionUsages => _productionUsages;
+    public IReadOnlyCollection<FacilityBusinessActivityMapDocument> ActivityMaps => _activityMaps;
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
@@ -107,9 +106,9 @@
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
-        {
-            await InitializeAsync(cancellationToken);
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    {
+        await InitializeAsync(cancellationToken);
     }
+
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+}
