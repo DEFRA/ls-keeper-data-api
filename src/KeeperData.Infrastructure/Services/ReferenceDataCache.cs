@@ -8,6 +8,24 @@ using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Infrastructure.Services;
 
+/// <summary>
+/// In-memory cache for reference data loaded at application startup.
+/// Implements a thread-safe "write rarely, read frequently" pattern where data is loaded once
+/// during initialization and read continuously throughout the application lifecycle.
+/// </summary>
+/// <remarks>
+/// Thread Safety:
+/// - Write operations are protected by a SemaphoreSlim to ensure only one initialization at a time.
+/// - Read operations require no locking - fields are marked as volatile to ensure visibility
+///   across threads. The volatile keyword guarantees that reads always get the latest value from
+///   memory and writes are immediately visible to all threads, preventing compiler/CPU caching optimizations.
+/// - This approach is safe because reference assignments are atomic and collections are immutable once assigned.
+///
+/// Lifecycle:
+/// - Registered as both a singleton IReferenceDataCache and an IHostedService.
+/// - StartAsync is called on application startup to populate the cache.
+/// - Data can be manually reloaded by calling InitializeAsync.
+/// </remarks>
 public class ReferenceDataCache(IServiceScopeFactory scopeFactory, ILogger<ReferenceDataCache> logger)
     : IReferenceDataCache, IHostedService
 {
