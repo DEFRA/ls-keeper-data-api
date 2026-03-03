@@ -2,7 +2,7 @@ using KeeperData.Core.Documents;
 
 namespace KeeperData.Core.Services;
 
-public interface IReferenceDataCache 
+public interface IReferenceDataCache
 {
     IReadOnlyCollection<CountryDocument> Countries { get; }
 
