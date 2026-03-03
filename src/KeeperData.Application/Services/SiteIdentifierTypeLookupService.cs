@@ -1,26 +1,49 @@
 using KeeperData.Core.Documents;
-using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
 
 namespace KeeperData.Application.Services;
 
-public class SiteIdentifierTypeLookupService(ISiteIdentifierTypeRepository siteIdentifierTypeRepository)
+public class SiteIdentifierTypeLookupService(IReferenceDataCache cache)
     : ISiteIdentifierTypeLookupService
 {
-    public async Task<SiteIdentifierTypeDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
+    public Task<SiteIdentifierTypeDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
     {
-        return await siteIdentifierTypeRepository.GetByIdAsync(id, cancellationToken);
+        if (string.IsNullOrWhiteSpace(id))
+            return Task.FromResult<SiteIdentifierTypeDocument?>(null);
+
+        var match = cache.SiteIdentifierTypes.FirstOrDefault(s =>
+            s.IdentifierId.Equals(id, StringComparison.OrdinalIgnoreCase));
+
+        return Task.FromResult(match);
     }
 
-    public async Task<SiteIdentifierTypeDocument?> GetByCodeAsync(string? code, CancellationToken cancellationToken)
+    public Task<SiteIdentifierTypeDocument?> GetByCodeAsync(string? code, CancellationToken cancellationToken)
     {
-        var (siteIdentifierTypeId, _) = await siteIdentifierTypeRepository.FindAsync(code, cancellationToken);
-        if (string.IsNullOrWhiteSpace(siteIdentifierTypeId)) return null;
-        return await GetByIdAsync(siteIdentifierTypeId, cancellationToken);
+        if (string.IsNullOrWhiteSpace(code))
+            return Task.FromResult<SiteIdentifierTypeDocument?>(null);
+
+        var match = cache.SiteIdentifierTypes.FirstOrDefault(s =>
+            s.Code.Equals(code, StringComparison.OrdinalIgnoreCase));
+
+        match ??= cache.SiteIdentifierTypes.FirstOrDefault(s =>
+            s.Name.Equals(code, StringComparison.OrdinalIgnoreCase));
+
+        return Task.FromResult(match);
     }
 
-    public async Task<(string? siteIdentifierId, string? siteIdentifierName)> FindAsync(string? lookupValue, CancellationToken cancellationToken)
+    public Task<(string? siteIdentifierId, string? siteIdentifierName)> FindAsync(string? lookupValue, CancellationToken cancellationToken)
     {
-        return await siteIdentifierTypeRepository.FindAsync(lookupValue, cancellationToken);
+        if (string.IsNullOrWhiteSpace(lookupValue))
+            return Task.FromResult<(string?, string?)>((null, null));
+
+        var match = cache.SiteIdentifierTypes.FirstOrDefault(s =>
+            s.Code.Equals(lookupValue, StringComparison.OrdinalIgnoreCase));
+
+        match ??= cache.SiteIdentifierTypes.FirstOrDefault(s =>
+            s.Name.Equals(lookupValue, StringComparison.OrdinalIgnoreCase));
+
+        return Task.FromResult(match != null
+            ? (match.IdentifierId, match.Name)
+            : ((string?)null, (string?)null));
     }
 }

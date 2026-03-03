@@ -1,20 +1,21 @@
 using FluentAssertions;
 using KeeperData.Application.Services;
 using KeeperData.Core.Documents;
-using KeeperData.Core.Repositories;
+using KeeperData.Core.Services;
 using Moq;
 
 namespace KeeperData.Application.Tests.Unit.Services;
 
 public class ProductionUsageLookupServiceTests
 {
-    private readonly Mock<IProductionUsageRepository> _mockRepository;
+    private readonly Mock<IReferenceDataCache> _mockCache;
     private readonly ProductionUsageLookupService _sut;
 
     public ProductionUsageLookupServiceTests()
     {
-        _mockRepository = new Mock<IProductionUsageRepository>();
-        _sut = new ProductionUsageLookupService(_mockRepository.Object);
+        _mockCache = new Mock<IReferenceDataCache>();
+        _mockCache.Setup(c => c.ProductionUsages).Returns(Array.Empty<ProductionUsageDocument>());
+        _sut = new ProductionUsageLookupService(_mockCache.Object);
     }
 
     [Fact]
@@ -30,25 +31,20 @@ public class ProductionUsageLookupServiceTests
             EffectiveStartDate = DateTime.UtcNow,
             CreatedDate = DateTime.UtcNow
         };
-        _mockRepository
-            .Setup(x => x.GetByIdAsync("test-id", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedDocument);
+        _mockCache.Setup(c => c.ProductionUsages).Returns(new[] { expectedDocument });
 
         // Act
         var result = await _sut.GetByIdAsync("test-id", CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedDocument);
-        _mockRepository.Verify(x => x.GetByIdAsync("test-id", CancellationToken.None), Times.Once);
     }
 
     [Fact]
     public async Task GetByIdAsync_WhenNotFound_ReturnsNull()
     {
         // Arrange
-        _mockRepository
-            .Setup(x => x.GetByIdAsync("non-existent", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((ProductionUsageDocument?)null);
+        _mockCache.Setup(c => c.ProductionUsages).Returns(Array.Empty<ProductionUsageDocument>());
 
         // Act
         var result = await _sut.GetByIdAsync("non-existent", CancellationToken.None);
@@ -61,9 +57,16 @@ public class ProductionUsageLookupServiceTests
     public async Task FindAsync_WhenCalledWithValidLookupValue_ReturnsMatchingProductionUsage()
     {
         // Arrange
-        _mockRepository
-            .Setup(r => r.FindAsync("APPROVED", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("APPROVED", "Approved Pyramid"));
+        var doc = new ProductionUsageDocument
+        {
+            IdentifierId = "APPROVED",
+            Code = "APPROVED",
+            Description = "Approved Pyramid",
+            IsActive = true,
+            EffectiveStartDate = DateTime.UtcNow,
+            CreatedDate = DateTime.UtcNow
+        };
+        _mockCache.Setup(c => c.ProductionUsages).Returns(new[] { doc });
 
         // Act
         var result = await _sut.FindAsync("APPROVED", CancellationToken.None);
@@ -77,9 +80,16 @@ public class ProductionUsageLookupServiceTests
     public async Task FindAsync_WhenCalledWithDescription_ReturnsMatchingProductionUsage()
     {
         // Arrange
-        _mockRepository
-            .Setup(r => r.FindAsync("Calf Rearer", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("CALFREAR", "Calf Rearer"));
+        var doc = new ProductionUsageDocument
+        {
+            IdentifierId = "CALFREAR",
+            Code = "CALFREAR",
+            Description = "Calf Rearer",
+            IsActive = true,
+            EffectiveStartDate = DateTime.UtcNow,
+            CreatedDate = DateTime.UtcNow
+        };
+        _mockCache.Setup(c => c.ProductionUsages).Returns(new[] { doc });
 
         // Act
         var result = await _sut.FindAsync("Calf Rearer", CancellationToken.None);
@@ -93,9 +103,7 @@ public class ProductionUsageLookupServiceTests
     public async Task FindAsync_WhenNotFound_ReturnsNullTuple()
     {
         // Arrange
-        _mockRepository
-            .Setup(x => x.FindAsync("NONEXISTENT", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(((string?)null, (string?)null));
+        _mockCache.Setup(c => c.ProductionUsages).Returns(Array.Empty<ProductionUsageDocument>());
 
         // Act
         var result = await _sut.FindAsync("NONEXISTENT", CancellationToken.None);

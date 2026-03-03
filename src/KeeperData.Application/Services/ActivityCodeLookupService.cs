@@ -1,18 +1,17 @@
-using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
 
 namespace KeeperData.Application.Services;
 
-public class ActivityCodeLookupService(IFacilityBusinessActivityMapRepository facilityRepository) : IActivityCodeLookupService
+public class ActivityCodeLookupService(IReferenceDataCache cache) : IActivityCodeLookupService
 {
-    private readonly IFacilityBusinessActivityMapRepository _facilityRepository = facilityRepository;
-
-    public async Task<(string? premiseType, string? premiseActivityType)> FindByActivityCodeAsync(string? activityCode, CancellationToken cancellationToken)
+    public Task<(string? premiseType, string? premiseActivityType)> FindByActivityCodeAsync(string? activityCode, CancellationToken cancellationToken)
     {
         if (activityCode == null)
-            return (null, null);
+            return Task.FromResult<(string?, string?)>((null, null));
 
-        var result = await _facilityRepository.FindByActivityCodeAsync(activityCode, cancellationToken);
-        return (result?.AssociatedPremiseTypeCode, result?.AssociatedPremiseActivityCode);
+        var result = cache.ActivityMaps.FirstOrDefault(s =>
+            s.FacilityActivityCode.Equals(activityCode, StringComparison.OrdinalIgnoreCase));
+
+        return Task.FromResult((result?.AssociatedPremiseTypeCode, result?.AssociatedPremiseActivityCode));
     }
 }

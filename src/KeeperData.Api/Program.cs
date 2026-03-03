@@ -3,6 +3,7 @@ using KeeperData.Api.Utils;
 using KeeperData.Infrastructure.Telemetry.Logging;
 using Serilog;
 using System.Diagnostics.CodeAnalysis;
+using KeeperData.Infrastructure.Services;
 
 var app = CreateWebApplication(args);
 await app.RunAsync();
@@ -55,6 +56,9 @@ static void ConfigureBuilder(WebApplicationBuilder builder)
     });
 
     builder.Services.AddHostedService<KeeperData.Infrastructure.Services.MongoDataSeeder>();
+
+    builder.Services.AddSingleton<KeeperData.Core.Services.IReferenceDataCache, ReferenceDataCache>();
+    builder.Services.AddHostedService(sp => (ReferenceDataCache)sp.GetRequiredService<KeeperData.Core.Services.IReferenceDataCache>());
 
     builder.Services.ConfigureApi(builder.Configuration, builder.Environment);
 }

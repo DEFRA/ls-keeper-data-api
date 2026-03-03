@@ -1,20 +1,21 @@
 using FluentAssertions;
 using KeeperData.Application.Services;
 using KeeperData.Core.Documents;
-using KeeperData.Core.Repositories;
+using KeeperData.Core.Services;
 using Moq;
 
 namespace KeeperData.Application.Tests.Unit.Services;
 
 public class RoleIdentifierLookupServiceTests
 {
-    private readonly Mock<IRoleRepository> _mockRoleRepository;
+    private readonly Mock<IReferenceDataCache> _mockCache;
     private readonly RoleTypeLookupService _sut;
 
     public RoleIdentifierLookupServiceTests()
     {
-        _mockRoleRepository = new Mock<IRoleRepository>();
-        _sut = new RoleTypeLookupService(_mockRoleRepository.Object);
+        _mockCache = new Mock<IReferenceDataCache>();
+        _mockCache.Setup(c => c.Roles).Returns(Array.Empty<RoleDocument>());
+        _sut = new RoleTypeLookupService(_mockCache.Object);
     }
 
     [Fact]
@@ -34,9 +35,7 @@ public class RoleIdentifierLookupServiceTests
             CreatedDate = DateTime.UtcNow
         };
 
-        _mockRoleRepository
-            .Setup(x => x.GetByIdAsync(roleId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedRole);
+        _mockCache.Setup(c => c.Roles).Returns(new[] { expectedRole });
 
         // Act
         var result = await _sut.GetByIdAsync(roleId, CancellationToken.None);
@@ -45,7 +44,6 @@ public class RoleIdentifierLookupServiceTests
         result.Should().NotBeNull();
         result!.Code.Should().Be(expectedRole.Code);
         result.Name.Should().Be(expectedRole.Name);
-        _mockRoleRepository.Verify(x => x.GetByIdAsync(roleId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -53,58 +51,53 @@ public class RoleIdentifierLookupServiceTests
     {
         // Arrange
         var roleId = Guid.NewGuid().ToString();
-
-        _mockRoleRepository
-            .Setup(x => x.GetByIdAsync(roleId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((RoleDocument?)null);
+        _mockCache.Setup(c => c.Roles).Returns(Array.Empty<RoleDocument>());
 
         // Act
         var result = await _sut.GetByIdAsync(roleId, CancellationToken.None);
 
         // Assert
         result.Should().BeNull();
-        _mockRoleRepository.Verify(x => x.GetByIdAsync(roleId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task FindAsync_WhenRoleFound_ReturnsRoleIdAndName()
     {
         // Arrange
-        var lookupValue = "LIVESTOCKKEEPER";
-        var expectedResult = (Guid.NewGuid().ToString(), "LIVESTOCKKEEPER", "Livestock Keeper");
-
-        _mockRoleRepository
-            .Setup(x => x.FindAsync(lookupValue, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedResult);
+        var expectedId = Guid.NewGuid().ToString();
+        var role = new RoleDocument
+        {
+            IdentifierId = expectedId,
+            Code = "LIVESTOCKKEEPER",
+            Name = "Livestock Keeper",
+            IsActive = true,
+            SortOrder = 10,
+            EffectiveStartDate = DateTime.UtcNow,
+            CreatedBy = "System",
+            CreatedDate = DateTime.UtcNow
+        };
+        _mockCache.Setup(c => c.Roles).Returns(new[] { role });
 
         // Act
-        var (roleTypeId, roleTypeCode, roleTypeName) = await _sut.FindAsync(lookupValue, CancellationToken.None);
+        var (roleTypeId, roleTypeCode, roleTypeName) = await _sut.FindAsync("LIVESTOCKKEEPER", CancellationToken.None);
 
         // Assert
-        roleTypeId.Should().Be(expectedResult.Item1);
-        roleTypeCode.Should().Be(expectedResult.Item2);
-        roleTypeName.Should().Be(expectedResult.Item3);
-
-        _mockRoleRepository.Verify(x => x.FindAsync(lookupValue, It.IsAny<CancellationToken>()), Times.Once);
+        roleTypeId.Should().Be(expectedId);
+        roleTypeCode.Should().Be("LIVESTOCKKEEPER");
+        roleTypeName.Should().Be("Livestock Keeper");
     }
 
     [Fact]
     public async Task FindAsync_WhenRoleNotFound_ReturnsNulls()
     {
         // Arrange
-        var lookupValue = "Unknown";
-        var expectedResult = ((string?)null, (string?)null, (string?)null);
-
-        _mockRoleRepository
-            .Setup(x => x.FindAsync(lookupValue, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedResult);
+        _mockCache.Setup(c => c.Roles).Returns(Array.Empty<RoleDocument>());
 
         // Act
-        var (roleTypeId, roleTypeCode, roleTypeName) = await _sut.FindAsync(lookupValue, CancellationToken.None);
+        var (roleTypeId, roleTypeCode, roleTypeName) = await _sut.FindAsync("Unknown", CancellationToken.None);
 
         // Assert
         roleTypeId.Should().BeNull();
         roleTypeName.Should().BeNull();
-        _mockRoleRepository.Verify(x => x.FindAsync(lookupValue, It.IsAny<CancellationToken>()), Times.Once);
     }
 }
