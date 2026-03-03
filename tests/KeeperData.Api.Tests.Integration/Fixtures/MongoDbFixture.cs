@@ -1,7 +1,4 @@
 using KeeperData.Api.Tests.Integration.Helpers;
-
-namespace KeeperData.Api.Tests.Integration.Fixtures;
-
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
 using MongoDB.Driver;
@@ -27,7 +24,8 @@ public class MongoDbFixture : IAsyncLifetime
 
     protected MongoDbFixture(bool isAnonymization)
     {
-        _containerName = isAnonymization ? "mongo_anon" : "mongo";
+        var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
+        _containerName = isAnonymization ? $"mongo_anon_{uniqueSuffix}" : $"mongo_{uniqueSuffix}";
         _networkAlias = isAnonymization ? "mongo_anon" : "mongo";
     }
 
@@ -43,6 +41,7 @@ public class MongoDbFixture : IAsyncLifetime
             .WithEnvironment("MONGO_INITDB_DATABASE", "ls-keeper-data-api")
             .WithNetwork(NetworkName)
             .WithNetworkAliases(_networkAlias)
+            .WithCleanUp(true)
             .Build();
 
         await Container.StartAsync();
@@ -61,7 +60,7 @@ public class MongoDbFixture : IAsyncLifetime
             MongoVerifier.DeleteAll<SamHerdDocument>(),
             MongoVerifier.DeleteAll<SamHoldingDocument>(),
             MongoVerifier.DeleteAll<SamPartyDocument>(),
-            MongoVerifier.DeleteAll<Core.Documents.SitePartyRoleRelationshipDocument>(),
+            MongoVerifier.DeleteAll<KeeperData.Core.Documents.SitePartyRoleRelationshipDocument>(),
             MongoVerifier.DeleteAll<SiteDocument>()
         ]);
     }
@@ -78,7 +77,10 @@ public class MongoDbFixture : IAsyncLifetime
         }
         finally
         {
-            await Container!.DisposeAsync();
+            if (Container != null)
+            {
+                await Container.DisposeAsync();
+            }
         }
     }
 

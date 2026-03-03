@@ -4,22 +4,32 @@ using KeeperData.Core.Services;
 
 namespace KeeperData.Application.Services;
 
-public class RoleTypeLookupService : IRoleTypeLookupService
+public class RoleTypeLookupService(IReferenceDataCache cache) : IRoleTypeLookupService
 {
-    private readonly IRoleRepository _roleRepository;
-
-    public RoleTypeLookupService(IRoleRepository roleRepository)
+    public Task<RoleDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
     {
-        _roleRepository = roleRepository;
+        if (string.IsNullOrWhiteSpace(id))
+            return Task.FromResult<RoleDocument?>(null);
+
+        var role = cache.Roles.FirstOrDefault(r =>
+            r.IdentifierId?.Equals(id, StringComparison.OrdinalIgnoreCase) == true);
+
+        return Task.FromResult(role);
     }
 
-    public async Task<RoleDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
+    public Task<(string? roleTypeId, string? roleTypeCode, string? roleTypeName)> FindAsync(string? lookupValue, CancellationToken cancellationToken)
     {
-        return await _roleRepository.GetByIdAsync(id, cancellationToken);
-    }
+        if (string.IsNullOrWhiteSpace(lookupValue))
+            return Task.FromResult<(string?, string?, string?)>((null, null, null));
 
-    public async Task<(string? roleTypeId, string? roleTypeCode, string? roleTypeName)> FindAsync(string? lookupValue, CancellationToken cancellationToken)
-    {
-        return await _roleRepository.FindAsync(lookupValue, cancellationToken);
+        var role = cache.Roles.FirstOrDefault(r =>
+            r.Code?.Equals(lookupValue, StringComparison.OrdinalIgnoreCase) == true);
+
+        role ??= cache.Roles.FirstOrDefault(r =>
+            r.Name?.Equals(lookupValue, StringComparison.OrdinalIgnoreCase) == true);
+
+        return Task.FromResult(role != null
+            ? (role.IdentifierId, role.Code, role.Name)
+            : ((string?)null, (string?)null, (string?)null));
     }
 }

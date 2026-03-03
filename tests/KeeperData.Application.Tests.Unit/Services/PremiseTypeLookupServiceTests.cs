@@ -1,20 +1,21 @@
 using FluentAssertions;
 using KeeperData.Application.Services;
 using KeeperData.Core.Documents;
-using KeeperData.Core.Repositories;
+using KeeperData.Core.Services;
 using Moq;
 
 namespace KeeperData.Application.Tests.Unit.Services;
 
 public class PremiseTypeLookupServiceTests
 {
-    private readonly Mock<IPremisesTypeRepository> _mockRepository;
+    private readonly Mock<IReferenceDataCache> _mockCache;
     private readonly PremiseTypeLookupService _sut;
 
     public PremiseTypeLookupServiceTests()
     {
-        _mockRepository = new Mock<IPremisesTypeRepository>();
-        _sut = new PremiseTypeLookupService(_mockRepository.Object);
+        _mockCache = new Mock<IReferenceDataCache>();
+        _mockCache.Setup(c => c.PremisesTypes).Returns(Array.Empty<PremisesTypeDocument>());
+        _sut = new PremiseTypeLookupService(_mockCache.Object);
     }
 
     [Fact]
@@ -31,25 +32,20 @@ public class PremiseTypeLookupServiceTests
             EffectiveStartDate = DateTime.UtcNow,
             CreatedDate = DateTime.UtcNow
         };
-        _mockRepository
-            .Setup(x => x.GetByIdAsync("test-id", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedDocument);
+        _mockCache.Setup(c => c.PremisesTypes).Returns(new[] { expectedDocument });
 
         // Act
         var result = await _sut.GetByIdAsync("test-id", CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedDocument);
-        _mockRepository.Verify(x => x.GetByIdAsync("test-id", CancellationToken.None), Times.Once);
     }
 
     [Fact]
     public async Task GetByIdAsync_WhenNotFound_ReturnsNull()
     {
         // Arrange
-        _mockRepository
-            .Setup(x => x.GetByIdAsync("non-existent", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((PremisesTypeDocument?)null);
+        _mockCache.Setup(c => c.PremisesTypes).Returns(Array.Empty<PremisesTypeDocument>());
 
         // Act
         var result = await _sut.GetByIdAsync("non-existent", CancellationToken.None);
@@ -62,9 +58,17 @@ public class PremiseTypeLookupServiceTests
     public async Task FindAsync_WhenCalledWithValidLookupValue_ReturnsMatchingPremiseType()
     {
         // Arrange
-        _mockRepository
-            .Setup(r => r.FindAsync("AC", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("AC", "Assembly Centre"));
+        var doc = new PremisesTypeDocument
+        {
+            IdentifierId = "AC",
+            Code = "AC",
+            Name = "Assembly Centre",
+            IsActive = true,
+            SortOrder = 0,
+            EffectiveStartDate = DateTime.UtcNow,
+            CreatedDate = DateTime.UtcNow
+        };
+        _mockCache.Setup(c => c.PremisesTypes).Returns(new[] { doc });
 
         // Act
         var result = await _sut.FindAsync("AC", CancellationToken.None);
@@ -78,9 +82,17 @@ public class PremiseTypeLookupServiceTests
     public async Task FindAsync_WhenCalledWithName_ReturnsMatchingPremiseType()
     {
         // Arrange
-        _mockRepository
-            .Setup(r => r.FindAsync("Market", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("MA", "Market"));
+        var doc = new PremisesTypeDocument
+        {
+            IdentifierId = "MA",
+            Code = "MA",
+            Name = "Market",
+            IsActive = true,
+            SortOrder = 0,
+            EffectiveStartDate = DateTime.UtcNow,
+            CreatedDate = DateTime.UtcNow
+        };
+        _mockCache.Setup(c => c.PremisesTypes).Returns(new[] { doc });
 
         // Act
         var result = await _sut.FindAsync("Market", CancellationToken.None);
@@ -94,9 +106,7 @@ public class PremiseTypeLookupServiceTests
     public async Task FindAsync_WhenNotFound_ReturnsNullTuple()
     {
         // Arrange
-        _mockRepository
-            .Setup(x => x.FindAsync("NONEXISTENT", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(((string?)null, (string?)null));
+        _mockCache.Setup(c => c.PremisesTypes).Returns(Array.Empty<PremisesTypeDocument>());
 
         // Act
         var result = await _sut.FindAsync("NONEXISTENT", CancellationToken.None);

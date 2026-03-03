@@ -1,20 +1,21 @@
 using FluentAssertions;
 using KeeperData.Application.Services;
 using KeeperData.Core.Documents;
-using KeeperData.Core.Repositories;
+using KeeperData.Core.Services;
 using Moq;
 
 namespace KeeperData.Application.Tests.Unit.Services;
 
 public class PremiseActivityTypeLookupServiceTests
 {
-    private readonly Mock<IPremisesActivityTypeRepository> _mockRepository;
+    private readonly Mock<IReferenceDataCache> _mockCache;
     private readonly PremiseActivityTypeLookupService _sut;
 
     public PremiseActivityTypeLookupServiceTests()
     {
-        _mockRepository = new Mock<IPremisesActivityTypeRepository>();
-        _sut = new PremiseActivityTypeLookupService(_mockRepository.Object);
+        _mockCache = new Mock<IReferenceDataCache>();
+        _mockCache.Setup(c => c.PremisesActivityTypes).Returns(Array.Empty<PremisesActivityTypeDocument>());
+        _sut = new PremiseActivityTypeLookupService(_mockCache.Object);
     }
 
     [Fact]
@@ -31,25 +32,20 @@ public class PremiseActivityTypeLookupServiceTests
             EffectiveStartDate = DateTime.UtcNow,
             CreatedDate = DateTime.UtcNow
         };
-        _mockRepository
-            .Setup(x => x.GetByIdAsync("test-id", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedDocument);
+        _mockCache.Setup(c => c.PremisesActivityTypes).Returns(new[] { expectedDocument });
 
         // Act
         var result = await _sut.GetByIdAsync("test-id", CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedDocument);
-        _mockRepository.Verify(x => x.GetByIdAsync("test-id", CancellationToken.None), Times.Once);
     }
 
     [Fact]
     public async Task GetByIdAsync_WhenNotFound_ReturnsNull()
     {
         // Arrange
-        _mockRepository
-            .Setup(x => x.GetByIdAsync("non-existent", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((PremisesActivityTypeDocument?)null);
+        _mockCache.Setup(c => c.PremisesActivityTypes).Returns(Array.Empty<PremisesActivityTypeDocument>());
 
         // Act
         var result = await _sut.GetByIdAsync("non-existent", CancellationToken.None);
@@ -62,9 +58,17 @@ public class PremiseActivityTypeLookupServiceTests
     public async Task FindAsync_WhenCalledWithValidLookupValue_ReturnsMatchingPremiseActivityType()
     {
         // Arrange
-        _mockRepository
-            .Setup(r => r.FindAsync("MARP", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("MARP", "Market on Paved Ground"));
+        var doc = new PremisesActivityTypeDocument
+        {
+            IdentifierId = "MARP",
+            Code = "MARP",
+            Name = "Market on Paved Ground",
+            IsActive = true,
+            PriorityOrder = 10,
+            EffectiveStartDate = DateTime.UtcNow,
+            CreatedDate = DateTime.UtcNow
+        };
+        _mockCache.Setup(c => c.PremisesActivityTypes).Returns(new[] { doc });
 
         // Act
         var result = await _sut.FindAsync("MARP", CancellationToken.None);
@@ -78,9 +82,17 @@ public class PremiseActivityTypeLookupServiceTests
     public async Task FindAsync_WhenCalledWithName_ReturnsMatchingPremiseActivityType()
     {
         // Arrange
-        _mockRepository
-            .Setup(r => r.FindAsync("Collection Centre", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("CC", "Collection Centre"));
+        var doc = new PremisesActivityTypeDocument
+        {
+            IdentifierId = "CC",
+            Code = "CC",
+            Name = "Collection Centre",
+            IsActive = true,
+            PriorityOrder = 10,
+            EffectiveStartDate = DateTime.UtcNow,
+            CreatedDate = DateTime.UtcNow
+        };
+        _mockCache.Setup(c => c.PremisesActivityTypes).Returns(new[] { doc });
 
         // Act
         var result = await _sut.FindAsync("Collection Centre", CancellationToken.None);
@@ -94,9 +106,7 @@ public class PremiseActivityTypeLookupServiceTests
     public async Task FindAsync_WhenNotFound_ReturnsNullTuple()
     {
         // Arrange
-        _mockRepository
-            .Setup(x => x.FindAsync("NONEXISTENT", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(((string?)null, (string?)null));
+        _mockCache.Setup(c => c.PremisesActivityTypes).Returns(Array.Empty<PremisesActivityTypeDocument>());
 
         // Act
         var result = await _sut.FindAsync("NONEXISTENT", CancellationToken.None);
