@@ -368,6 +368,63 @@ public class MongoDataSeederTests : IDisposable
     }
 
     [Fact]
+    public async Task StartingAsync_WhenCalledTwiceWithin3Minutes_SkipsSecondRun()
+    {
+        // Arrange
+        var seeder = CreateSeeder();
+
+        CreateJsonFile("countries.json", new List<CountryDocument> { CreateTestCountry("GB", "United Kingdom") });
+
+        _mockCountryCollection.Setup(x => x.ReplaceOneAsync(
+            It.IsAny<FilterDefinition<CountryListDocument>>(),
+            It.IsAny<CountryListDocument>(),
+            It.IsAny<ReplaceOptions>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Mock.Of<ReplaceOneResult>());
+
+        // Act - First call
+        await seeder.StartingAsync(CancellationToken.None);
+
+        // Act - Second call within 3 minutes (should skip)
+        await seeder.StartingAsync(CancellationToken.None);
+
+        // Assert - Database should only be called once
+        _mockCountryCollection.Verify(x => x.ReplaceOneAsync(
+            It.IsAny<FilterDefinition<CountryListDocument>>(),
+            It.IsAny<CountryListDocument>(),
+            It.IsAny<ReplaceOptions>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once, "Seeding should only occur once when called twice within 3 minutes");
+
+        // Assert - Should log the skip message on second call
+        _mockLogger.Verify(x => x.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Seeding was performed less than 3 minutes ago")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once, "Should log the skip message once");
+
+        // Assert - Should log "running" twice (once for each call)
+        _mockLogger.Verify(x => x.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Mongo DB Generic Seeder Service is running")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Exactly(2), "Should log 'running' for both calls");
+
+        // Assert - Should only log "finished" once (second call returns early)
+        _mockLogger.Verify(x => x.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Mongo DB Generic Seeder Service has finished")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once, "Should only log 'finished' once since second call returns early");
+    }
+
+    [Fact]
     public async Task StartAsync_CompletesSuccessfully()
     {
         // Arrange
