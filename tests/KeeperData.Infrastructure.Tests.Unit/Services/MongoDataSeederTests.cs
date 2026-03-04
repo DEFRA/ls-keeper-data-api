@@ -366,4 +366,69 @@ public class MongoDataSeederTests : IDisposable
 
         _mockLogger.VerifyLog(LogLevel.Error, "A critical error occurred", Times.Once());
     }
+
+    [Fact]
+    public async Task StartAsync_CompletesSuccessfully()
+    {
+        // Arrange
+        var seeder = CreateSeeder();
+
+        // Act
+        await seeder.StartAsync(CancellationToken.None);
+
+        // Assert - Should complete without throwing
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task StartedAsync_CompletesSuccessfully()
+    {
+        // Arrange
+        var seeder = CreateSeeder();
+
+        // Act
+        await seeder.StartedAsync(CancellationToken.None);
+
+        // Assert - Should complete without throwing
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task StoppingAsync_CompletesSuccessfully()
+    {
+        // Arrange
+        var seeder = CreateSeeder();
+
+        // Act
+        await seeder.StoppingAsync(CancellationToken.None);
+
+        // Assert - Should complete without throwing
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task StopAsync_CompletesSuccessfully()
+    {
+        // Arrange
+        var seeder = CreateSeeder();
+
+        // Act
+        await seeder.StopAsync(CancellationToken.None);
+
+        // Assert - Should complete without throwing
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task StoppedAsync_CompletesSuccessfully()
+    {
+        // Arrange
+        var seeder = CreateSeeder();
+
+        // Act
+        await seeder.StoppedAsync(CancellationToken.None);
+
+        // Assert - Should complete without throwing
+        Assert.True(true);
+    }
 }
