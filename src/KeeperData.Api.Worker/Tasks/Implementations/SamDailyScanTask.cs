@@ -25,6 +25,17 @@ public class SamDailyScanTask(
 
     public async Task<Guid?> StartAsync(CancellationToken cancellationToken = default)
     {
+        return await SharedStartAsync(null, cancellationToken);
+    }
+
+    public async Task<Guid?> StartAsync(int? customSinceHours, CancellationToken cancellationToken = default)
+    {
+        return await SharedStartAsync(customSinceHours, cancellationToken);
+    }
+
+    public async Task<Guid?> SharedStartAsync(int? customSinceHours, CancellationToken cancellationToken = default)
+    {
+        int sinceHours = customSinceHours ?? dataBridgeScanConfiguration.DailyScanIncludeChangesWithinTotalHours;
         var scanCorrelationId = Guid.NewGuid();
 
         logger.LogInformation("Attempting to acquire lock for {LockName} with scanCorrelationId: {scanCorrelationId}.", LockName, scanCorrelationId);
@@ -52,7 +63,7 @@ public class SamDailyScanTask(
                             cancellationToken,
                             stoppingToken);
 
-                        await ExecuteTaskAsync(@lock, scanCorrelationId, cts);
+                        await ExecuteTaskAsync(@lock, scanCorrelationId, sinceHours, cts);
                     }
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -74,6 +85,7 @@ public class SamDailyScanTask(
 
     public async Task RunAsync(CancellationToken cancellationToken)
     {
+        int sinceHours = dataBridgeScanConfiguration.DailyScanIncludeChangesWithinTotalHours;
         var scanCorrelationId = Guid.NewGuid();
 
         logger.LogInformation("Attempting to acquire lock for {LockName} scanCorrelationId: {scanCorrelationId}.", LockName, scanCorrelationId);
@@ -89,12 +101,13 @@ public class SamDailyScanTask(
         logger.LogInformation("Lock acquired for {LockName}. Task started at {startTime} scanCorrelationId: {scanCorrelationId}.", LockName, DateTime.UtcNow, scanCorrelationId);
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        await ExecuteTaskAsync(@lock, scanCorrelationId, cts);
+        await ExecuteTaskAsync(@lock, scanCorrelationId, sinceHours, cts);
     }
 
     private async Task ExecuteTaskAsync(
         IDistributedLockHandle lockHandle,
         Guid scanCorrelationId,
+        int sinceHours,
         CancellationTokenSource linkedCts)
     {
         var externalToken = linkedCts.Token;
@@ -106,7 +119,7 @@ public class SamDailyScanTask(
             {
                 ScanCorrelationId = scanCorrelationId,
                 CurrentDateTime = DateTime.UtcNow,
-                UpdatedSinceDateTime = DateTime.UtcNow.AddHours(-Math.Abs(dataBridgeScanConfiguration.DailyScanIncludeChangesWithinTotalHours)),
+                UpdatedSinceDateTime = DateTime.UtcNow.AddHours(-Math.Abs(sinceHours)),
                 PageSize = dataBridgeScanConfiguration.QueryPageSize,
                 Holdings = new(),
                 Holders = new(),
