@@ -12,5 +12,9 @@ public class GetCountriesRequest
     [FromQuery] public string? Code { get; set; }
     [FromQuery] public bool? EuTradeMember { get; set; }
     [FromQuery] public bool? DevolvedAuthority { get; set; }
+
+    /// <summary>
+    /// Returns only records that have been updated since the provided timestamp (greater than or equal to). This is the key parameter for Change Data Capture (CDC).
+    /// </summary>
     [FromQuery] public DateTime? LastUpdatedDate { get; internal set; }
 }
