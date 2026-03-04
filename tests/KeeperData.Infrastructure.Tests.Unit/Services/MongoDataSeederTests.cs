@@ -488,4 +488,63 @@ public class MongoDataSeederTests : IDisposable
         // Assert - Should complete without throwing
         Assert.True(true);
     }
+
+    [Fact]
+    public async Task StartingAsync_WithEmptyJsonArray_LogsWarningAndSkipsSeeding()
+    {
+        // Arrange
+        var seeder = CreateSeeder();
+
+        CreateJsonFile("countries.json", new List<CountryDocument>());
+
+        // Act
+        await seeder.StartingAsync(CancellationToken.None);
+
+        // Assert - Should log warning about no data
+        _mockLogger.Verify(x => x.Log(
+            LogLevel.Warning,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("No data found in 'countries.json'")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once, "Should log warning when JSON array is empty");
+
+        // Assert - Database should not be called
+        _mockCountryCollection.Verify(x => x.ReplaceOneAsync(
+            It.IsAny<FilterDefinition<CountryListDocument>>(),
+            It.IsAny<CountryListDocument>(),
+            It.IsAny<ReplaceOptions>(),
+            It.IsAny<CancellationToken>()),
+            Times.Never, "Should not call database when no data found");
+    }
+
+    [Fact]
+    public async Task StartingAsync_WithNullJsonData_LogsWarningAndSkipsSeeding()
+    {
+        // Arrange
+        var seeder = CreateSeeder();
+
+        var filePath = Path.Combine(_seedDirectory, "countries.json");
+        File.WriteAllText(filePath, "null");
+
+        // Act
+        await seeder.StartingAsync(CancellationToken.None);
+
+        // Assert - Should log warning about no data
+        _mockLogger.Verify(x => x.Log(
+            LogLevel.Warning,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("No data found in 'countries.json'")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once, "Should log warning when JSON is null");
+
+        // Assert - Database should not be called
+        _mockCountryCollection.Verify(x => x.ReplaceOneAsync(
+            It.IsAny<FilterDefinition<CountryListDocument>>(),
+            It.IsAny<CountryListDocument>(),
+            It.IsAny<ReplaceOptions>(),
+            It.IsAny<CancellationToken>()),
+            Times.Never, "Should not call database when data is null");
+    }
 }
