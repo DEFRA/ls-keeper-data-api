@@ -225,10 +225,10 @@ public class MongoDataSeederTests : IDisposable
     }
 
     [Fact]
-    public async Task StartAsync_WhenNoFilesExist_LogsAndSkipsAllDatabaseCalls()
+    public async Task StartingAsync_WhenNoFilesExist_LogsAndSkipsAllDatabaseCalls()
     {
         var seeder = CreateSeeder();
-        await seeder.StartAsync(CancellationToken.None);
+        await seeder.StartingAsync(CancellationToken.None);
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'countries.json' not found", Times.Once());
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'species.json' not found", Times.Once());
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'roles.json' not found", Times.Once());
@@ -249,13 +249,13 @@ public class MongoDataSeederTests : IDisposable
     }
 
     [Fact]
-    public async Task StartAsync_WhenOnlyOneFileExists_SeedsOnlyThatCollection()
+    public async Task StartingAsync_WhenOnlyOneFileExists_SeedsOnlyThatCollection()
     {
         var seeder = CreateSeeder();
 
         CreateJsonFile("countries.json", [CreateTestCountry("GB", "UK")]);
 
-        await seeder.StartAsync(CancellationToken.None);
+        await seeder.StartingAsync(CancellationToken.None);
 
         _mockCountryCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<CountryListDocument>>(), It.IsAny<CountryListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'species.json' not found", Times.Once());
@@ -263,7 +263,7 @@ public class MongoDataSeederTests : IDisposable
     }
 
     [Fact]
-    public async Task StartAsync_WithValidData_ReplacesAllDocuments()
+    public async Task StartingAsync_WithValidData_ReplacesAllDocuments()
     {
         var seeder = CreateSeeder();
 
@@ -317,7 +317,7 @@ public class MongoDataSeederTests : IDisposable
            .Callback<FilterDefinition<FacilityBusinessActivityMapListDocument>, FacilityBusinessActivityMapListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedFacilityBusinessActivityMapDoc = doc)
            .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
 
-        await seeder.StartAsync(CancellationToken.None);
+        await seeder.StartingAsync(CancellationToken.None);
 
         _mockCountryCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<CountryListDocument>>(), It.IsAny<CountryListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockSpeciesCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<SpeciesListDocument>>(), It.IsAny<SpeciesListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -353,7 +353,7 @@ public class MongoDataSeederTests : IDisposable
     }
 
     [Fact]
-    public async Task StartAsync_WhenDbThrowsException_LogsCriticalErrorAndDoesNotThrow()
+    public async Task StartingAsync_WhenDbThrowsException_LogsCriticalErrorAndDoesNotThrow()
     {
         var seeder = CreateSeeder();
 
@@ -362,7 +362,7 @@ public class MongoDataSeederTests : IDisposable
         _mockCountryCollection.Setup(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<CountryListDocument>>(), It.IsAny<CountryListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new MongoException("Database connection failed"));
 
-        await seeder.StartAsync(CancellationToken.None);
+        await seeder.StartingAsync(CancellationToken.None);
 
         _mockLogger.VerifyLog(LogLevel.Error, "A critical error occurred", Times.Once());
     }

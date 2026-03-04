@@ -55,7 +55,7 @@ static void ConfigureBuilder(WebApplicationBuilder builder)
         }
     });
 
-    builder.Services.AddHostedService<KeeperData.Infrastructure.Services.MongoDataSeeder>();
+    builder.Services.AddHostedService<MongoDataSeeder>();
 
     builder.Services.AddSingleton<KeeperData.Core.Services.IReferenceDataCache, ReferenceDataCache>();
     builder.Services.AddHostedService(sp => (ReferenceDataCache)sp.GetRequiredService<KeeperData.Core.Services.IReferenceDataCache>());
