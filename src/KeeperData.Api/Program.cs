@@ -60,6 +60,9 @@ static void ConfigureBuilder(WebApplicationBuilder builder)
     builder.Services.AddSingleton<KeeperData.Core.Services.IReferenceDataCache, ReferenceDataCache>();
     builder.Services.AddHostedService(sp => (ReferenceDataCache)sp.GetRequiredService<KeeperData.Core.Services.IReferenceDataCache>());
 
+    builder.Services.AddSingleton<KeeperData.Core.Services.IReferenceDataCache, ReferenceDataCache>();
+    builder.Services.AddHostedService(sp => (ReferenceDataCache)sp.GetRequiredService<KeeperData.Core.Services.IReferenceDataCache>());
+
     builder.Services.ConfigureApi(builder.Configuration, builder.Environment);
 }
 

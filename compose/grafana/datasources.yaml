@@ -1,0 +1,18 @@
+# compose/grafana/datasources.yaml
+apiVersion: 1
+
+datasources:
+  - name: LocalStack CloudWatch
+    type: cloudwatch
+    uid: local-cloudwatch
+    url: http://localstack:4566
+    isDefault: true
+    jsonData:
+      authType: keys
+      defaultRegion: eu-west-2
+      endpoint: http://localstack:4566
+      customMetricsNamespaces: "ls-keeper-data-api"
+      tlsSkipVerify: true
+    secureJsonData:
+      accessKey: test
+      secretKey: test
