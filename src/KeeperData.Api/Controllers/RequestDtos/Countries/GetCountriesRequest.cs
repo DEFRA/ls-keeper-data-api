@@ -6,7 +6,14 @@ public class GetCountriesRequest
 {
     [FromQuery] public int? Page { get; set; }
     [FromQuery] public int? PageSize { get; set; }
+    /// <summary>
+    /// The field to order the results by. Available fields for sorting: name, code. Defaults to code.
+    /// </summary>
     [FromQuery] public string? Order { get; set; }
+
+    /// <summary>
+    /// The sort direction. Available values: asc, desc. Defaults to asc.
+    /// </summary>
     [FromQuery] public string? Sort { get; set; }
     [FromQuery] public string? Name { get; set; }
     [FromQuery] public string? Code { get; set; }
