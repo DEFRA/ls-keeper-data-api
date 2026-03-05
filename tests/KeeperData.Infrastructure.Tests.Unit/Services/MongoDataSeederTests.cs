@@ -225,10 +225,10 @@ public class MongoDataSeederTests : IDisposable
     }
 
     [Fact]
-    public async Task StartAsync_WhenNoFilesExist_LogsAndSkipsAllDatabaseCalls()
+    public async Task StartingAsync_WhenNoFilesExist_LogsAndSkipsAllDatabaseCalls()
     {
         var seeder = CreateSeeder();
-        await seeder.StartAsync(CancellationToken.None);
+        await seeder.StartingAsync(CancellationToken.None);
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'countries.json' not found", Times.Once());
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'species.json' not found", Times.Once());
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'roles.json' not found", Times.Once());
@@ -249,13 +249,13 @@ public class MongoDataSeederTests : IDisposable
     }
 
     [Fact]
-    public async Task StartAsync_WhenOnlyOneFileExists_SeedsOnlyThatCollection()
+    public async Task StartingAsync_WhenOnlyOneFileExists_SeedsOnlyThatCollection()
     {
         var seeder = CreateSeeder();
 
         CreateJsonFile("countries.json", [CreateTestCountry("GB", "UK")]);
 
-        await seeder.StartAsync(CancellationToken.None);
+        await seeder.StartingAsync(CancellationToken.None);
 
         _mockCountryCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<CountryListDocument>>(), It.IsAny<CountryListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'species.json' not found", Times.Once());
@@ -263,7 +263,7 @@ public class MongoDataSeederTests : IDisposable
     }
 
     [Fact]
-    public async Task StartAsync_WithValidData_ReplacesAllDocuments()
+    public async Task StartingAsync_WithValidData_ReplacesAllDocuments()
     {
         var seeder = CreateSeeder();
 
@@ -317,7 +317,7 @@ public class MongoDataSeederTests : IDisposable
            .Callback<FilterDefinition<FacilityBusinessActivityMapListDocument>, FacilityBusinessActivityMapListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedFacilityBusinessActivityMapDoc = doc)
            .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
 
-        await seeder.StartAsync(CancellationToken.None);
+        await seeder.StartingAsync(CancellationToken.None);
 
         _mockCountryCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<CountryListDocument>>(), It.IsAny<CountryListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockSpeciesCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<SpeciesListDocument>>(), It.IsAny<SpeciesListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -353,7 +353,7 @@ public class MongoDataSeederTests : IDisposable
     }
 
     [Fact]
-    public async Task StartAsync_WhenDbThrowsException_LogsCriticalErrorAndDoesNotThrow()
+    public async Task StartingAsync_WhenDbThrowsException_LogsCriticalErrorAndDoesNotThrow()
     {
         var seeder = CreateSeeder();
 
@@ -362,8 +362,189 @@ public class MongoDataSeederTests : IDisposable
         _mockCountryCollection.Setup(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<CountryListDocument>>(), It.IsAny<CountryListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new MongoException("Database connection failed"));
 
-        await seeder.StartAsync(CancellationToken.None);
+        await seeder.StartingAsync(CancellationToken.None);
 
         _mockLogger.VerifyLog(LogLevel.Error, "A critical error occurred", Times.Once());
+    }
+
+    [Fact]
+    public async Task StartingAsync_WhenCalledTwiceWithin3Minutes_SkipsSecondRun()
+    {
+        // Arrange
+        var seeder = CreateSeeder();
+
+        CreateJsonFile("countries.json", new List<CountryDocument> { CreateTestCountry("GB", "United Kingdom") });
+
+        _mockCountryCollection.Setup(x => x.ReplaceOneAsync(
+            It.IsAny<FilterDefinition<CountryListDocument>>(),
+            It.IsAny<CountryListDocument>(),
+            It.IsAny<ReplaceOptions>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Mock.Of<ReplaceOneResult>());
+
+        // Act - First call
+        await seeder.StartingAsync(CancellationToken.None);
+
+        // Act - Second call within 3 minutes (should skip)
+        await seeder.StartingAsync(CancellationToken.None);
+
+        // Assert - Database should only be called once
+        _mockCountryCollection.Verify(x => x.ReplaceOneAsync(
+            It.IsAny<FilterDefinition<CountryListDocument>>(),
+            It.IsAny<CountryListDocument>(),
+            It.IsAny<ReplaceOptions>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once, "Seeding should only occur once when called twice within 3 minutes");
+
+        // Assert - Should log the skip message on second call
+        _mockLogger.Verify(x => x.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Seeding was performed less than 3 minutes ago")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once, "Should log the skip message once");
+
+        // Assert - Should log "running" twice (once for each call)
+        _mockLogger.Verify(x => x.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Mongo DB Generic Seeder Service is running")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Exactly(2), "Should log 'running' for both calls");
+
+        // Assert - Should only log "finished" once (second call returns early)
+        _mockLogger.Verify(x => x.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Mongo DB Generic Seeder Service has finished")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once, "Should only log 'finished' once since second call returns early");
+    }
+
+    [Fact]
+    public async Task StartAsync_CompletesSuccessfully()
+    {
+        // Arrange
+        var seeder = CreateSeeder();
+
+        // Act
+        await seeder.StartAsync(CancellationToken.None);
+
+        // Assert - Should complete without throwing
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task StartedAsync_CompletesSuccessfully()
+    {
+        // Arrange
+        var seeder = CreateSeeder();
+
+        // Act
+        await seeder.StartedAsync(CancellationToken.None);
+
+        // Assert - Should complete without throwing
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task StoppingAsync_CompletesSuccessfully()
+    {
+        // Arrange
+        var seeder = CreateSeeder();
+
+        // Act
+        await seeder.StoppingAsync(CancellationToken.None);
+
+        // Assert - Should complete without throwing
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task StopAsync_CompletesSuccessfully()
+    {
+        // Arrange
+        var seeder = CreateSeeder();
+
+        // Act
+        await seeder.StopAsync(CancellationToken.None);
+
+        // Assert - Should complete without throwing
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task StoppedAsync_CompletesSuccessfully()
+    {
+        // Arrange
+        var seeder = CreateSeeder();
+
+        // Act
+        await seeder.StoppedAsync(CancellationToken.None);
+
+        // Assert - Should complete without throwing
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task StartingAsync_WithEmptyJsonArray_LogsWarningAndSkipsSeeding()
+    {
+        // Arrange
+        var seeder = CreateSeeder();
+
+        CreateJsonFile("countries.json", new List<CountryDocument>());
+
+        // Act
+        await seeder.StartingAsync(CancellationToken.None);
+
+        // Assert - Should log warning about no data
+        _mockLogger.Verify(x => x.Log(
+            LogLevel.Warning,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("No data found in 'countries.json'")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once, "Should log warning when JSON array is empty");
+
+        // Assert - Database should not be called
+        _mockCountryCollection.Verify(x => x.ReplaceOneAsync(
+            It.IsAny<FilterDefinition<CountryListDocument>>(),
+            It.IsAny<CountryListDocument>(),
+            It.IsAny<ReplaceOptions>(),
+            It.IsAny<CancellationToken>()),
+            Times.Never, "Should not call database when no data found");
+    }
+
+    [Fact]
+    public async Task StartingAsync_WithNullJsonData_LogsWarningAndSkipsSeeding()
+    {
+        // Arrange
+        var seeder = CreateSeeder();
+
+        var filePath = Path.Combine(_seedDirectory, "countries.json");
+        File.WriteAllText(filePath, "null");
+
+        // Act
+        await seeder.StartingAsync(CancellationToken.None);
+
+        // Assert - Should log warning about no data
+        _mockLogger.Verify(x => x.Log(
+            LogLevel.Warning,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("No data found in 'countries.json'")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once, "Should log warning when JSON is null");
+
+        // Assert - Database should not be called
+        _mockCountryCollection.Verify(x => x.ReplaceOneAsync(
+            It.IsAny<FilterDefinition<CountryListDocument>>(),
+            It.IsAny<CountryListDocument>(),
+            It.IsAny<ReplaceOptions>(),
+            It.IsAny<CancellationToken>()),
+            Times.Never, "Should not call database when data is null");
     }
 }

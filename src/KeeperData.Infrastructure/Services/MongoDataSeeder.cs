@@ -11,36 +11,31 @@ using File = System.IO.File;
 
 namespace KeeperData.Infrastructure.Services;
 
-public class MongoDataSeeder : IHostedService
+/// <summary>
+/// Seeds MongoDB with reference data from JSON files during application startup.
+/// Implements IHostedLifecycleService to ensure seeding completes before other hosted services start.
+/// </summary>
+public class MongoDataSeeder(
+    IWebHostEnvironment env,
+    ILogger<MongoDataSeeder> logger,
+    IMongoClient client,
+    IOptions<MongoConfig> config) : IHostedLifecycleService
 {
-    private readonly IWebHostEnvironment _env;
-    private readonly ILogger<MongoDataSeeder> _logger;
-    private readonly IMongoDatabase _database;
+    private readonly IMongoDatabase _database = client.GetDatabase(config.Value.DatabaseName);
 
     private static DateTime s_lastRun = DateTime.MinValue;
     private static readonly object s_lock = new();
     private static readonly JsonSerializerOptions s_jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
 
-    public MongoDataSeeder(
-        IWebHostEnvironment env,
-        ILogger<MongoDataSeeder> logger,
-        IMongoClient client,
-        IOptions<MongoConfig> config)
+    public async Task StartingAsync(CancellationToken cancellationToken)
     {
-        _env = env;
-        _logger = logger;
-        _database = client.GetDatabase(config.Value.DatabaseName);
-    }
-
-    public async Task StartAsync(CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Mongo DB Generic Seeder Service is running...");
+        logger.LogInformation("Mongo DB Generic Seeder Service is running...");
 
         lock (s_lock)
         {
             if (DateTime.UtcNow < s_lastRun.AddMinutes(3))
             {
-                _logger.LogInformation("Seeding was performed less than 3 minutes ago. Skipping this run.");
+                logger.LogInformation("Seeding was performed less than 3 minutes ago. Skipping this run.");
                 return;
             }
             s_lastRun = DateTime.UtcNow;
@@ -61,13 +56,21 @@ public class MongoDataSeeder : IHostedService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "A critical error occurred during the data seeding process.");
+            logger.LogError(ex, "A critical error occurred during the data seeding process.");
         }
 
-        _logger.LogInformation("Mongo DB Generic Seeder Service has finished.");
+        logger.LogInformation("Mongo DB Generic Seeder Service has finished.");
     }
 
+    public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StartedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StoppingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StoppedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     private async Task SeedAsync<TDocument, TItem>(CancellationToken cancellationToken)
         where TDocument : class, IListDocument, new()
@@ -77,10 +80,10 @@ public class MongoDataSeeder : IHostedService
         var dataTypeName = documentId?.Replace("all-", "").ToLower();
         var jsonFileName = $"{dataTypeName}.json";
 
-        var targetJsonPath = Path.Combine(_env.ContentRootPath, "Data", "Seed", jsonFileName);
+        var targetJsonPath = Path.Combine(env.ContentRootPath, "Data", "Seed", jsonFileName);
         if (!File.Exists(targetJsonPath))
         {
-            _logger.LogInformation("Seed file '{FileName}' not found. Skipping seed for '{DocumentName}'.", jsonFileName, typeof(TDocument).Name);
+            logger.LogInformation("Seed file '{FileName}' not found. Skipping seed for '{DocumentName}'.", jsonFileName, typeof(TDocument).Name);
             return;
         }
 
@@ -89,7 +92,7 @@ public class MongoDataSeeder : IHostedService
 
         if (items == null || items.Count == 0)
         {
-            _logger.LogWarning("No data found in '{FileName}'. Skipping.", jsonFileName);
+            logger.LogWarning("No data found in '{FileName}'. Skipping.", jsonFileName);
             return;
         }
 
@@ -98,7 +101,7 @@ public class MongoDataSeeder : IHostedService
         var listProperty = typeof(TDocument).GetProperties().FirstOrDefault(p => p.PropertyType == typeof(List<TItem>));
         if (listProperty == null)
         {
-            _logger.LogError("Could not find a List<{ItemTypeName}> property on the document type {TypeName}.", typeof(TItem).Name, typeof(TDocument).Name);
+            logger.LogError("Could not find a List<{ItemTypeName}> property on the document type {TypeName}.", typeof(TItem).Name, typeof(TDocument).Name);
             return;
         }
 
@@ -108,8 +111,8 @@ public class MongoDataSeeder : IHostedService
         var filter = Builders<TDocument>.Filter.Eq(x => x.Id, documentId);
         var options = new ReplaceOptions { IsUpsert = true };
 
-        _logger.LogInformation("Replacing '{DocumentId}' document in '{CollectionName}' collection...", documentId, collectionName);
+        logger.LogInformation("Replacing '{DocumentId}' document in '{CollectionName}' collection...", documentId, collectionName);
         await collection.ReplaceOneAsync(filter, documentToSeed, options, cancellationToken);
-        _logger.LogInformation("Data replacement complete for '{CollectionName}'.", collectionName);
+        logger.LogInformation("Data replacement complete for '{CollectionName}'.", collectionName);
     }
 }
