@@ -196,6 +196,33 @@ public class SamDailyScanTaskTests
     }
 
     [Fact]
+    public async Task RunAsync_WhenLockSuccessfullyRenewed_ShouldLogDebug()
+    {
+        // Arrange
+        _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_lockHandleMock.Object);
+
+        var callCount = 0;
+        _delayProviderMock.Setup(x => x.DelayAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .Returns((TimeSpan _, CancellationToken token) =>
+                ++callCount == 1 ? Task.CompletedTask : Task.Delay(Timeout.Infinite, token));
+
+        _lockHandleMock.Setup(x => x.TryRenewAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        await _sut.RunAsync(CancellationToken.None);
+
+        // Assert
+        _loggerMock.Verify(x => x.Log(
+            LogLevel.Debug,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Successfully renewed lock")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+    }
+
+    [Fact]
     public async Task RunAsync_WhenRenewalCancelledDuringTryRenew_ShouldLogDebugAndExit()
     {
         _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))

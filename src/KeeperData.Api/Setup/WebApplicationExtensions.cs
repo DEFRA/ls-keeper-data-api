@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.AspNetCore.Mvc;
 
 namespace KeeperData.Api.Setup;
 
@@ -71,13 +72,13 @@ public static class WebApplicationExtensions
 
         if (bulkScanEndpointsEnabled)
         {
-            RegisterScanEndpoint<ICtsBulkScanTask>(app, "/api/import/startCtsBulkScan", "CTS bulk scan")
+            RegisterBulkScanEndpoint<ICtsBulkScanTask>(app, "/api/import/startCtsBulkScan", "CTS bulk scan")
                 .WithGroupName("internal")
                 .RequireAuthorization(new AuthorizeAttribute
                 {
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
                 });
-            RegisterScanEndpoint<ISamBulkScanTask>(app, "/api/import/startSamBulkScan", "SAM bulk scan")
+            RegisterBulkScanEndpoint<ISamBulkScanTask>(app, "/api/import/startSamBulkScan", "SAM bulk scan")
                 .WithGroupName("internal")
                 .RequireAuthorization(new AuthorizeAttribute
                 {
@@ -87,13 +88,13 @@ public static class WebApplicationExtensions
 
         if (dailyScanEndpointsEnabled)
         {
-            RegisterScanEndpoint<ICtsDailyScanTask>(app, "/api/import/startCtsDailyScan", "CTS daily scan")
+            RegisterDailyScanEndpoint<ICtsDailyScanTask>(app, "/api/import/startCtsDailyScan", "CTS daily scan")
                 .WithGroupName("internal")
                 .RequireAuthorization(new AuthorizeAttribute
                 {
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
                 });
-            RegisterScanEndpoint<ISamDailyScanTask>(app, "/api/import/startSamDailyScan", "SAM daily scan")
+            RegisterDailyScanEndpoint<ISamDailyScanTask>(app, "/api/import/startSamDailyScan", "SAM daily scan")
                 .WithGroupName("internal")
                 .RequireAuthorization(new AuthorizeAttribute
                 {
@@ -102,51 +103,71 @@ public static class WebApplicationExtensions
         }
     }
 
-    private static RouteHandlerBuilder RegisterScanEndpoint<TTask>(
+    private static RouteHandlerBuilder RegisterBulkScanEndpoint<TTask>(
         WebApplication app,
         string route,
         string scanName)
         where TTask : IScanTask
     {
-        var builder = app.MapPost(route, async (
+        return app.MapPost(route, async (
             TTask scanTask,
             ILogger<IScanTask> logger,
             CancellationToken cancellationToken) =>
+            await ExecuteScanAsync(route, scanName, logger, ct => scanTask.StartAsync(ct), cancellationToken));
+    }
+
+    private static RouteHandlerBuilder RegisterDailyScanEndpoint<TTask>(
+        WebApplication app,
+        string route,
+        string scanName)
+        where TTask : IDailyScanTask
+    {
+        return app.MapPost(route, async (
+            [FromQuery] int? sinceHours,
+            TTask scanTask,
+            ILogger<IScanTask> logger,
+            CancellationToken cancellationToken) =>
+            await ExecuteScanAsync(route, scanName, logger, ct => scanTask.StartAsync(sinceHours, ct), cancellationToken));
+    }
+
+    private static async Task<IResult> ExecuteScanAsync(
+        string route,
+        string scanName,
+        ILogger logger,
+        Func<CancellationToken, Task<Guid?>> startScan,
+        CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Received request to start {scanName} at {requestTime}", scanName, DateTime.UtcNow);
+
+        try
         {
-            logger.LogInformation("Received request to start {scanName} at {requestTime}", scanName, DateTime.UtcNow);
+            var scanCorrelationId = await startScan(cancellationToken);
 
-            try
+            if (scanCorrelationId == null)
             {
-                var scanCorrelationId = await scanTask.StartAsync(cancellationToken);
-
-                if (scanCorrelationId == null)
+                logger.LogWarning("Failed to start {scanName} - could not acquire lock", scanName);
+                return Results.Conflict(new ErrorResponse
                 {
-                    logger.LogWarning("Failed to start {scanName} - could not acquire lock", scanName);
-                    return Results.Conflict(new ErrorResponse
-                    {
-                        Message = $"{scanName} is already running. Please wait for the current import to complete."
-                    });
-                }
-
-                logger.LogInformation("{scanName} started successfully with scanCorrelationId: {scanCorrelationId}", scanName, scanCorrelationId.Value);
-
-                return Results.Accepted(route, new StartScanResponse
-                {
-                    ScanCorrelationId = scanCorrelationId.Value,
-                    Message = $"{scanName} started successfully and is running in the background.",
-                    StartedAt = DateTime.UtcNow
+                    Message = $"{scanName} is already running. Please wait for the current import to complete."
                 });
             }
-            catch (OperationCanceledException)
-            {
-                logger.LogWarning("{scanName} start request was cancelled", scanName);
-                return Results.Json(
-                    new ErrorResponse { Message = "Request was cancelled." },
-                    statusCode: 499
-                );
-            }
-        });
 
-        return builder;
+            logger.LogInformation("{scanName} started successfully with scanCorrelationId: {scanCorrelationId}", scanName, scanCorrelationId.Value);
+
+            return Results.Accepted(route, new StartScanResponse
+            {
+                ScanCorrelationId = scanCorrelationId.Value,
+                Message = $"{scanName} started successfully and is running in the background.",
+                StartedAt = DateTime.UtcNow
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            logger.LogWarning("{scanName} start request was cancelled", scanName);
+            return Results.Json(
+                new ErrorResponse { Message = "Request was cancelled." },
+                statusCode: 499
+            );
+        }
     }
 }
