@@ -49,7 +49,7 @@ public static class SiteFilterBuilder
         {
             var partyIdString = query.KeeperPartyId.Value.ToString();
 
-            filters.Add(builder.ElemMatch(x => x.Parties, p => p.CustomerNumber == partyIdString));
+            filters.Add(builder.ElemMatch(x => x.Parties, p => p.IdentifierId == partyIdString));
         }
 
         return filters.Count > 0 ? builder.And(filters) : builder.Empty;
