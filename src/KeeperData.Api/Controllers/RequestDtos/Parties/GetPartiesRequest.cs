@@ -14,7 +14,7 @@ public class GetPartiesRequest
     [FromQuery] public int? Page { get; set; }
     [FromQuery] public int? PageSize { get; set; }
     /// <summary>
-    /// The field to order the results by. Available fields for sorting: id (sorts by customerNumber), name. Defaults to name.
+    /// The field to order the results by. Available fields for sorting: id (sorts by id), name. Defaults to name.
     /// </summary>
     [FromQuery] public string? Order { get; set; }
 

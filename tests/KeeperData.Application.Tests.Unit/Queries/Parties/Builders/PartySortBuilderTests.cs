@@ -17,13 +17,13 @@ public class PartySortBuilderTests
     }
 
     [Theory]
-    [InlineData("name", "asc", "{ \"name\" : 1 }")]
-    [InlineData("name", "desc", "{ \"name\" : -1 }")]
-    [InlineData("name", null, "{ \"name\" : 1 }")]
-    [InlineData(null, null, "{ \"name\" : 1 }")]
-    [InlineData("id", "asc", "{ \"customerNumber\" : 1 }")]
-    [InlineData("id", "desc", "{ \"customerNumber\" : -1 }")]
-    [InlineData("id", null, "{ \"customerNumber\" : 1 }")]
+    [InlineData("lastname", "asc", "{ \"lastname\" : 1 }")]
+    [InlineData("lastname", "desc", "{ \"lastname\" : -1 }")]
+    [InlineData("lastname", null, "{ \"lastname\" : 1 }")]
+    [InlineData(null, null, "{ \"lastname\" : 1 }")]
+    [InlineData("id", "asc", "{ \"id\" : 1 }")]
+    [InlineData("id", "desc", "{ \"id\" : -1 }")]
+    [InlineData("id", null, "{ \"id\" : 1 }")]
     public void Build_ShouldReturnCorrectSortDefinition(string? order, string? sort, string expected)
     {
         var query = new GetPartiesQuery { Order = order, Sort = sort };
