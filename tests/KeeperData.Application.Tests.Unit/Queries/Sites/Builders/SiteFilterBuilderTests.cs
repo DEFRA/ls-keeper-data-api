@@ -89,7 +89,7 @@ public class SiteFilterBuilderTests
         // Assert
         var expectedBson = BsonDocument.Parse($@"
             {{
-                ""parties"": {{ ""$elemMatch"": {{ ""customerNumber"": ""{keeperPartyId}"" }} }},
+                ""parties"": {{ ""$elemMatch"": {{ ""id"": ""{keeperPartyId}"" }} }},
                 ""deleted"": false
             }}");
 
@@ -117,7 +117,7 @@ public class SiteFilterBuilderTests
         var expectedBson = BsonDocument.Parse($@"
         {{
             ""identifiers"" : {{ ""$elemMatch"" : {{ ""identifier"" : ""CPH123"" }} }},
-            ""parties"": {{ ""$elemMatch"": {{ ""customerNumber"": ""{keeperPartyId}"" }} }},
+            ""parties"": {{ ""$elemMatch"": {{ ""id"": ""{keeperPartyId}"" }} }},
             ""deleted"": false
         }}");
 
