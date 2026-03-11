@@ -163,7 +163,7 @@ public static class WebApplicationExtensions
             .RequireAuthorization(adminAuth);
     }
 
-    private static async Task<IResult> GetDeadLetterQueueCountHandler(
+    internal static async Task<IResult> GetDeadLetterQueueCountHandler(
         IDeadLetterQueueService dlqService,
         IOptions<IntakeEventQueueOptions> queueOptions,
         ILogger<Program> logger,
@@ -185,7 +185,7 @@ public static class WebApplicationExtensions
         }
     }
 
-    private static async Task<IResult> GetDeadLetterMessagesHandler(
+    internal static async Task<IResult> GetDeadLetterMessagesHandler(
         [FromQuery] int? maxMessages,
         IDeadLetterQueueService dlqService,
         IOptions<IntakeEventQueueOptions> queueOptions,
@@ -209,7 +209,7 @@ public static class WebApplicationExtensions
         }
     }
 
-    private static async Task<IResult> RedriveDeadLetterMessagesHandler(
+    internal static async Task<IResult> RedriveDeadLetterMessagesHandler(
         [FromQuery] int? maxMessages,
         IDeadLetterQueueService dlqService,
         IOptions<IntakeEventQueueOptions> queueOptions,
@@ -233,7 +233,7 @@ public static class WebApplicationExtensions
         }
     }
 
-    private static async Task<IResult> PurgeDeadLetterQueueHandler(
+    internal static async Task<IResult> PurgeDeadLetterQueueHandler(
         IDeadLetterQueueService dlqService,
         IOptions<IntakeEventQueueOptions> queueOptions,
         ILogger<Program> logger,
