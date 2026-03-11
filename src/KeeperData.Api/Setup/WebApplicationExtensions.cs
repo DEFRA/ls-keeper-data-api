@@ -17,6 +17,12 @@ namespace KeeperData.Api.Setup;
 
 public static class WebApplicationExtensions
 {
+    private const string InternalGroupName = "internal";
+    private const string DeadLetterQueueUrlNotConfiguredError = "DeadLetterQueueUrl is not configured.";
+    private const string UnableToReachDeadLetterQueueError = "Unable to reach dead letter queue";
+    private const string PurgeInProgressError = "A purge operation is already in progress. Try again in 60 seconds.";
+    private const string RequestCancelledError = "Request was cancelled.";
+
     [ExcludeFromCodeCoverage]
     public static void ConfigureRequestPipeline(this WebApplication app)
     {
@@ -77,13 +83,13 @@ public static class WebApplicationExtensions
         if (bulkScanEndpointsEnabled)
         {
             RegisterBulkScanEndpoint<ICtsBulkScanTask>(app, "/api/import/startCtsBulkScan", "CTS bulk scan")
-                .WithGroupName("internal")
+                .WithGroupName(InternalGroupName)
                 .RequireAuthorization(new AuthorizeAttribute
                 {
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
                 });
             RegisterBulkScanEndpoint<ISamBulkScanTask>(app, "/api/import/startSamBulkScan", "SAM bulk scan")
-                .WithGroupName("internal")
+                .WithGroupName(InternalGroupName)
                 .RequireAuthorization(new AuthorizeAttribute
                 {
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
@@ -93,13 +99,13 @@ public static class WebApplicationExtensions
         if (dailyScanEndpointsEnabled)
         {
             RegisterDailyScanEndpoint<ICtsDailyScanTask>(app, "/api/import/startCtsDailyScan", "CTS daily scan")
-                .WithGroupName("internal")
+                .WithGroupName(InternalGroupName)
                 .RequireAuthorization(new AuthorizeAttribute
                 {
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
                 });
             RegisterDailyScanEndpoint<ISamDailyScanTask>(app, "/api/import/startSamDailyScan", "SAM daily scan")
-                .WithGroupName("internal")
+                .WithGroupName(InternalGroupName)
                 .RequireAuthorization(new AuthorizeAttribute
                 {
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
@@ -147,19 +153,19 @@ public static class WebApplicationExtensions
         };
 
         app.MapGet("/api/admin/queues/deadletter/count", GetDeadLetterQueueCountHandler)
-            .WithGroupName("internal")
+            .WithGroupName(InternalGroupName)
             .RequireAuthorization(adminAuth);
 
         app.MapGet("/api/admin/queues/deadletter/messages", GetDeadLetterMessagesHandler)
-            .WithGroupName("internal")
+            .WithGroupName(InternalGroupName)
             .RequireAuthorization(adminAuth);
 
         app.MapPost("/api/admin/queues/deadletter/redrive", RedriveDeadLetterMessagesHandler)
-            .WithGroupName("internal")
+            .WithGroupName(InternalGroupName)
             .RequireAuthorization(adminAuth);
 
         app.MapPost("/api/admin/queues/deadletter/purge", PurgeDeadLetterQueueHandler)
-            .WithGroupName("internal")
+            .WithGroupName(InternalGroupName)
             .RequireAuthorization(adminAuth);
     }
 
@@ -171,7 +177,7 @@ public static class WebApplicationExtensions
     {
         var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
         if (string.IsNullOrWhiteSpace(dlqUrl))
-            return Results.BadRequest(new { error = "DeadLetterQueueUrl is not configured." });
+            return Results.BadRequest(new { error = DeadLetterQueueUrlNotConfiguredError });
 
         try
         {
@@ -181,7 +187,7 @@ public static class WebApplicationExtensions
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to get DLQ stats");
-            return Results.Json(new { error = "Unable to reach dead letter queue", detail = ex.Message }, statusCode: 503);
+            return Results.Json(new { error = UnableToReachDeadLetterQueueError, detail = ex.Message }, statusCode: 503);
         }
     }
 
@@ -194,7 +200,7 @@ public static class WebApplicationExtensions
     {
         var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
         if (string.IsNullOrWhiteSpace(dlqUrl))
-            return Results.BadRequest(new { error = "DeadLetterQueueUrl is not configured." });
+            return Results.BadRequest(new { error = DeadLetterQueueUrlNotConfiguredError });
 
         var max = Math.Clamp(maxMessages ?? 5, 1, 10);
         try
@@ -205,7 +211,7 @@ public static class WebApplicationExtensions
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to peek DLQ messages");
-            return Results.Json(new { error = "Unable to reach dead letter queue", detail = ex.Message }, statusCode: 503);
+            return Results.Json(new { error = UnableToReachDeadLetterQueueError, detail = ex.Message }, statusCode: 503);
         }
     }
 
@@ -218,7 +224,7 @@ public static class WebApplicationExtensions
     {
         var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
         if (string.IsNullOrWhiteSpace(dlqUrl))
-            return Results.BadRequest(new { error = "DeadLetterQueueUrl is not configured." });
+            return Results.BadRequest(new { error = DeadLetterQueueUrlNotConfiguredError });
 
         var max = Math.Clamp(maxMessages ?? 10, 1, 100);
         try
@@ -229,7 +235,7 @@ public static class WebApplicationExtensions
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to redrive DLQ messages");
-            return Results.Json(new { error = "Unable to reach dead letter queue", detail = ex.Message }, statusCode: 503);
+            return Results.Json(new { error = UnableToReachDeadLetterQueueError, detail = ex.Message }, statusCode: 503);
         }
     }
 
@@ -241,7 +247,7 @@ public static class WebApplicationExtensions
     {
         var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
         if (string.IsNullOrWhiteSpace(dlqUrl))
-            return Results.BadRequest(new { error = "DeadLetterQueueUrl is not configured." });
+            return Results.BadRequest(new { error = DeadLetterQueueUrlNotConfiguredError });
 
         try
         {
@@ -250,14 +256,12 @@ public static class WebApplicationExtensions
         }
         catch (Amazon.SQS.Model.PurgeQueueInProgressException)
         {
-            return Results.Json(
-                new { error = "A purge operation is already in progress. Try again in 60 seconds." },
-                statusCode: 429);
+            return Results.Json(new { error = PurgeInProgressError }, statusCode: 429);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to purge DLQ");
-            return Results.Json(new { error = "Unable to reach dead letter queue", detail = ex.Message }, statusCode: 503);
+            return Results.Json(new { error = UnableToReachDeadLetterQueueError, detail = ex.Message }, statusCode: 503);
         }
     }
 
@@ -295,10 +299,7 @@ public static class WebApplicationExtensions
         catch (OperationCanceledException)
         {
             logger.LogWarning("{scanName} start request was cancelled", scanName);
-            return Results.Json(
-                new ErrorResponse { Message = "Request was cancelled." },
-                statusCode: 499
-            );
+            return Results.Json(new ErrorResponse { Message = RequestCancelledError }, statusCode: 499);
         }
     }
 }
