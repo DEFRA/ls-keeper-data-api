@@ -3,7 +3,10 @@ using KeeperData.Api.Controllers.ResponseDtos.Scans;
 using KeeperData.Api.Middleware;
 using KeeperData.Api.Worker.Tasks;
 using KeeperData.Infrastructure.Authentication.Handlers;
+using KeeperData.Infrastructure.Messaging.Configuration;
+using KeeperData.Infrastructure.Messaging.Services;
 using KeeperData.Infrastructure.Telemetry;
+using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -24,6 +27,7 @@ public static class WebApplicationExtensions
         var healthcheckMaskingEnabled = configuration.GetValue<bool>("HealthcheckMaskingEnabled");
         var bulkScanEndpointsEnabled = configuration.GetValue<bool>("BulkScanEndpointsEnabled");
         var dailyScanEndpointsEnabled = configuration.GetValue<bool>("DailyScanEndpointsEnabled");
+        var adminEndpointsEnabled = configuration.GetValue<bool>("AdminEndpointsEnabled");
 
         applicationLifetime.ApplicationStarted.Register(() =>
             logger.LogInformation("{applicationName} started", env.ApplicationName));
@@ -101,6 +105,11 @@ public static class WebApplicationExtensions
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
                 });
         }
+
+        if (adminEndpointsEnabled)
+        {
+            RegisterAdminDlqEndpoints(app);
+        }
     }
 
     private static RouteHandlerBuilder RegisterBulkScanEndpoint<TTask>(
@@ -128,6 +137,120 @@ public static class WebApplicationExtensions
             ILogger<IScanTask> logger,
             CancellationToken cancellationToken) =>
             await ExecuteScanAsync(route, scanName, logger, ct => scanTask.StartAsync(sinceHours, ct), cancellationToken));
+    }
+
+    private static void RegisterAdminDlqEndpoints(WebApplication app)
+    {
+        var adminAuth = new AuthorizeAttribute
+        {
+            AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
+        };
+
+        app.MapGet("/api/admin/queues/deadletter/count", async (
+            IDeadLetterQueueService dlqService,
+            IOptions<IntakeEventQueueOptions> queueOptions,
+            ILogger<Program> logger,
+            CancellationToken ct) =>
+        {
+            var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
+            if (string.IsNullOrWhiteSpace(dlqUrl))
+                return Results.BadRequest(new { error = "DeadLetterQueueUrl is not configured." });
+
+            try
+            {
+                var stats = await dlqService.GetQueueStatsAsync(dlqUrl, ct);
+                return Results.Ok(stats);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get DLQ stats");
+                return Results.Json(new { error = "Unable to reach dead letter queue", detail = ex.Message }, statusCode: 503);
+            }
+        })
+        .WithGroupName("internal")
+        .RequireAuthorization(adminAuth);
+
+        app.MapGet("/api/admin/queues/deadletter/messages", async (
+            [FromQuery] int? maxMessages,
+            IDeadLetterQueueService dlqService,
+            IOptions<IntakeEventQueueOptions> queueOptions,
+            ILogger<Program> logger,
+            CancellationToken ct) =>
+        {
+            var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
+            if (string.IsNullOrWhiteSpace(dlqUrl))
+                return Results.BadRequest(new { error = "DeadLetterQueueUrl is not configured." });
+
+            var max = Math.Clamp(maxMessages ?? 5, 1, 10);
+            try
+            {
+                var result = await dlqService.PeekDeadLetterMessagesAsync(max, ct);
+                return Results.Ok(result);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to peek DLQ messages");
+                return Results.Json(new { error = "Unable to reach dead letter queue", detail = ex.Message }, statusCode: 503);
+            }
+        })
+        .WithGroupName("internal")
+        .RequireAuthorization(adminAuth);
+
+        app.MapPost("/api/admin/queues/deadletter/redrive", async (
+            [FromQuery] int? maxMessages,
+            IDeadLetterQueueService dlqService,
+            IOptions<IntakeEventQueueOptions> queueOptions,
+            ILogger<Program> logger,
+            CancellationToken ct) =>
+        {
+            var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
+            if (string.IsNullOrWhiteSpace(dlqUrl))
+                return Results.BadRequest(new { error = "DeadLetterQueueUrl is not configured." });
+
+            var max = Math.Clamp(maxMessages ?? 10, 1, 100);
+            try
+            {
+                var summary = await dlqService.RedriveDeadLetterMessagesAsync(max, ct);
+                return Results.Ok(summary);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to redrive DLQ messages");
+                return Results.Json(new { error = "Unable to reach dead letter queue", detail = ex.Message }, statusCode: 503);
+            }
+        })
+        .WithGroupName("internal")
+        .RequireAuthorization(adminAuth);
+
+        app.MapPost("/api/admin/queues/deadletter/purge", async (
+            IDeadLetterQueueService dlqService,
+            IOptions<IntakeEventQueueOptions> queueOptions,
+            ILogger<Program> logger,
+            CancellationToken ct) =>
+        {
+            var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
+            if (string.IsNullOrWhiteSpace(dlqUrl))
+                return Results.BadRequest(new { error = "DeadLetterQueueUrl is not configured." });
+
+            try
+            {
+                var result = await dlqService.PurgeDeadLetterQueueAsync(ct);
+                return Results.Ok(result);
+            }
+            catch (Amazon.SQS.Model.PurgeQueueInProgressException)
+            {
+                return Results.Json(
+                    new { error = "A purge operation is already in progress. Try again in 60 seconds." },
+                    statusCode: 429);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to purge DLQ");
+                return Results.Json(new { error = "Unable to reach dead letter queue", detail = ex.Message }, statusCode: 503);
+            }
+        })
+        .WithGroupName("internal")
+        .RequireAuthorization(adminAuth);
     }
 
     private static async Task<IResult> ExecuteScanAsync(
