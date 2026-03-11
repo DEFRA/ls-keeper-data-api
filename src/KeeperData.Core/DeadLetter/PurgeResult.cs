@@ -1,4 +1,4 @@
-﻿namespace KeeperData.Core.DeadLetter;
+namespace KeeperData.Core.DeadLetter;
 
 public class PurgeResult
 {
