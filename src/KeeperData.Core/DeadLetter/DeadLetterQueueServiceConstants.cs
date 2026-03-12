@@ -52,5 +52,9 @@ public static class DeadLetterQueueServiceConstants
         public const string FailedToSendToMainQueue = "Failed to send message {MessageId} to main queue during redrive.";
         public const string FailedToDeleteFromDlq = "Failed to delete message {MessageId} from DLQ after successful send. CorrelationId: {CorrelationId}";
         public const string DuplicateDetected = "CRITICAL: DUPLICATE message detected. Message {MessageId} exists in both queues. CorrelationId: {CorrelationId}";
+        public const string DeadLetterQueueUrlNotConfiguredError = "DeadLetterQueueUrl is not configured.";
+        public const string UnableToReachDeadLetterQueueError = "Unable to reach dead letter queue";
+        public const string PurgeInProgressError = "A purge operation is already in progress. Try again in 60 seconds.";
+        public const string RequestCancelledError = "Request was cancelled.";
     }
 }

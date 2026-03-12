@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Diagnostics.CodeAnalysis;
+using KeeperData.Core.DeadLetter;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KeeperData.Api.Setup;
@@ -18,10 +19,6 @@ namespace KeeperData.Api.Setup;
 public static class WebApplicationExtensions
 {
     private const string InternalGroupName = "internal";
-    private const string DeadLetterQueueUrlNotConfiguredError = "DeadLetterQueueUrl is not configured.";
-    private const string UnableToReachDeadLetterQueueError = "Unable to reach dead letter queue";
-    private const string PurgeInProgressError = "A purge operation is already in progress. Try again in 60 seconds.";
-    private const string RequestCancelledError = "Request was cancelled.";
 
     [ExcludeFromCodeCoverage]
     public static void ConfigureRequestPipeline(this WebApplication app)
@@ -177,7 +174,7 @@ public static class WebApplicationExtensions
     {
         var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
         if (string.IsNullOrWhiteSpace(dlqUrl))
-            return Results.BadRequest(new { error = DeadLetterQueueUrlNotConfiguredError });
+            return Results.BadRequest(new { error = DeadLetterQueueServiceConstants.LogMessages.DeadLetterQueueUrlNotConfiguredError });
 
         try
         {
@@ -187,7 +184,7 @@ public static class WebApplicationExtensions
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to get DLQ stats");
-            return Results.Json(new { error = UnableToReachDeadLetterQueueError, detail = ex.Message }, statusCode: 503);
+            return Results.Json(new { error = DeadLetterQueueServiceConstants.LogMessages.UnableToReachDeadLetterQueueError, detail = ex.Message }, statusCode: 503);
         }
     }
 
@@ -200,7 +197,7 @@ public static class WebApplicationExtensions
     {
         var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
         if (string.IsNullOrWhiteSpace(dlqUrl))
-            return Results.BadRequest(new { error = DeadLetterQueueUrlNotConfiguredError });
+            return Results.BadRequest(new { error = DeadLetterQueueServiceConstants.LogMessages.DeadLetterQueueUrlNotConfiguredError });
 
         var max = Math.Clamp(maxMessages ?? 5, 1, 10);
         try
@@ -211,7 +208,7 @@ public static class WebApplicationExtensions
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to peek DLQ messages");
-            return Results.Json(new { error = UnableToReachDeadLetterQueueError, detail = ex.Message }, statusCode: 503);
+            return Results.Json(new { error = DeadLetterQueueServiceConstants.LogMessages.UnableToReachDeadLetterQueueError, detail = ex.Message }, statusCode: 503);
         }
     }
 
@@ -224,7 +221,7 @@ public static class WebApplicationExtensions
     {
         var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
         if (string.IsNullOrWhiteSpace(dlqUrl))
-            return Results.BadRequest(new { error = DeadLetterQueueUrlNotConfiguredError });
+            return Results.BadRequest(new { error = DeadLetterQueueServiceConstants.LogMessages.DeadLetterQueueUrlNotConfiguredError });
 
         var max = Math.Clamp(maxMessages ?? 10, 1, 100);
         try
@@ -235,7 +232,7 @@ public static class WebApplicationExtensions
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to redrive DLQ messages");
-            return Results.Json(new { error = UnableToReachDeadLetterQueueError, detail = ex.Message }, statusCode: 503);
+            return Results.Json(new { error = DeadLetterQueueServiceConstants.LogMessages.UnableToReachDeadLetterQueueError, detail = ex.Message }, statusCode: 503);
         }
     }
 
@@ -247,7 +244,7 @@ public static class WebApplicationExtensions
     {
         var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
         if (string.IsNullOrWhiteSpace(dlqUrl))
-            return Results.BadRequest(new { error = DeadLetterQueueUrlNotConfiguredError });
+            return Results.BadRequest(new { error = DeadLetterQueueServiceConstants.LogMessages.DeadLetterQueueUrlNotConfiguredError });
 
         try
         {
@@ -256,12 +253,12 @@ public static class WebApplicationExtensions
         }
         catch (Amazon.SQS.Model.PurgeQueueInProgressException)
         {
-            return Results.Json(new { error = PurgeInProgressError }, statusCode: 429);
+            return Results.Json(new { error = DeadLetterQueueServiceConstants.LogMessages.PurgeInProgressError }, statusCode: 429);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to purge DLQ");
-            return Results.Json(new { error = UnableToReachDeadLetterQueueError, detail = ex.Message }, statusCode: 503);
+            return Results.Json(new { error = DeadLetterQueueServiceConstants.LogMessages.UnableToReachDeadLetterQueueError, detail = ex.Message }, statusCode: 503);
         }
     }
 
@@ -299,7 +296,7 @@ public static class WebApplicationExtensions
         catch (OperationCanceledException)
         {
             logger.LogWarning("{scanName} start request was cancelled", scanName);
-            return Results.Json(new ErrorResponse { Message = RequestCancelledError }, statusCode: 499);
+            return Results.Json(new ErrorResponse { Message = DeadLetterQueueServiceConstants.LogMessages.RequestCancelledError }, statusCode: 499);
         }
     }
 }
