@@ -1,3 +1,5 @@
+using KeeperData.Core.ApiClients.DataBridgeApi.Converters;
+
 namespace KeeperData.Core.DeadLetter;
 
 public static class DeadLetterQueueServiceConstants
@@ -5,6 +7,11 @@ public static class DeadLetterQueueServiceConstants
     public const string StringDataType = "String";
     public const string NumberDataType = "Number";
     public const string AllAttributes = "All";
+
+    public static class Tags
+    {
+        public const string DeadLetterQueue = "Dead Letter Queue";
+    }
 
     public static class SqsAttributes
     {
