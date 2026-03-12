@@ -6,6 +6,11 @@ public static class DeadLetterQueueServiceConstants
     public const string NumberDataType = "Number";
     public const string AllAttributes = "All";
 
+    public static class Tags
+    {
+        public const string DeadLetterQueue = "Dead Letter Queue";
+    }
+
     public static class SqsAttributes
     {
         public const string ApproximateNumberOfMessages = "ApproximateNumberOfMessages";

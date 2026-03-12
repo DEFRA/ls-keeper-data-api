@@ -151,18 +151,22 @@ public static class WebApplicationExtensions
 
         app.MapGet("/api/admin/queues/deadletter/count", GetDeadLetterQueueCountHandler)
             .WithGroupName(InternalGroupName)
+            .WithTags(DeadLetterQueueServiceConstants.Tags.DeadLetterQueue)
             .RequireAuthorization(adminAuth);
 
         app.MapGet("/api/admin/queues/deadletter/messages", GetDeadLetterMessagesHandler)
             .WithGroupName(InternalGroupName)
+            .WithTags(DeadLetterQueueServiceConstants.Tags.DeadLetterQueue)
             .RequireAuthorization(adminAuth);
 
         app.MapPost("/api/admin/queues/deadletter/redrive", RedriveDeadLetterMessagesHandler)
             .WithGroupName(InternalGroupName)
+            .WithTags(DeadLetterQueueServiceConstants.Tags.DeadLetterQueue)
             .RequireAuthorization(adminAuth);
 
         app.MapPost("/api/admin/queues/deadletter/purge", PurgeDeadLetterQueueHandler)
             .WithGroupName(InternalGroupName)
+            .WithTags(DeadLetterQueueServiceConstants.Tags.DeadLetterQueue)
             .RequireAuthorization(adminAuth);
     }
 
