@@ -18,12 +18,11 @@ public partial class DeadLetterQueueService(
 
     public async Task<QueueStats> GetQueueStatsAsync(string queueUrl, CancellationToken ct = default)
     {
-        var response = await amazonSqs.GetQueueAttributesAsync(queueUrl, new List<string>
-        {
+        var response = await amazonSqs.GetQueueAttributesAsync(queueUrl, [
             DeadLetterQueueServiceConstants.SqsAttributes.ApproximateNumberOfMessages,
             DeadLetterQueueServiceConstants.SqsAttributes.ApproximateNumberOfMessagesNotVisible,
             DeadLetterQueueServiceConstants.SqsAttributes.ApproximateNumberOfMessagesDelayed
-        }, ct);
+        ], ct);
 
         return new QueueStats
         {
@@ -44,14 +43,12 @@ public partial class DeadLetterQueueService(
             QueueUrl = dlqUrl,
             MaxNumberOfMessages = Math.Min(maxMessages, DeadLetterQueueServiceConstants.Limits.MaxSqsReceiveMessages),
             VisibilityTimeout = DeadLetterQueueServiceConstants.Timeouts.PeekVisibilitySeconds,
-            MessageSystemAttributeNames = new List<string> { DeadLetterQueueServiceConstants.AllAttributes },
-            MessageAttributeNames = new List<string> { DeadLetterQueueServiceConstants.AllAttributes }
+            MessageSystemAttributeNames = [DeadLetterQueueServiceConstants.AllAttributes],
+            MessageAttributeNames = [DeadLetterQueueServiceConstants.AllAttributes]
         }, ct);
 
-        var statsResponse = await amazonSqs.GetQueueAttributesAsync(dlqUrl, new List<string>
-        {
-            DeadLetterQueueServiceConstants.SqsAttributes.ApproximateNumberOfMessages
-        }, ct);
+        var statsResponse = await amazonSqs.GetQueueAttributesAsync(dlqUrl,
+            [DeadLetterQueueServiceConstants.SqsAttributes.ApproximateNumberOfMessages], ct);
 
         var messages = receiveResponse.Messages.Select(m => new DeadLetterMessageDto
         {
