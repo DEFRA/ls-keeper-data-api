@@ -236,8 +236,8 @@ public class DeadLetterQueueTests : IAsyncLifetime
         var redrive = JsonSerializer.Deserialize<RedrivePolicy>(mainAttrs.Attributes["RedrivePolicy"]);
 
         redrive.Should().NotBeNull();
-        redrive!.maxReceiveCount.Should().Be("3");
-        redrive.deadLetterTargetArn.Should().Contain(DlqName);
+        redrive!.MaxReceiveCount.Should().Be("3");
+        redrive.DeadLetterTargetArn.Should().Contain(DlqName);
     }
 
     [Fact]
@@ -588,9 +588,9 @@ public class DeadLetterQueueTests : IAsyncLifetime
     private class RedrivePolicy
     {
         [JsonPropertyName("deadLetterTargetArn")]
-        public string deadLetterTargetArn { get; set; } = string.Empty;
+        public string DeadLetterTargetArn { get; init; } = string.Empty;
 
         [JsonPropertyName("maxReceiveCount")]
-        public string maxReceiveCount { get; set; } = string.Empty;
+        public string MaxReceiveCount { get; init; } = string.Empty;
     }
 }

@@ -37,38 +37,124 @@ public partial class DeadLetterQueueService(
     public async Task<DeadLetterMessagesResult> PeekDeadLetterMessagesAsync(int maxMessages, CancellationToken ct = default)
     {
         var dlqUrl = _queueConsumerOptions.DeadLetterQueueUrl!;
-
-        var receiveResponse = await amazonSqs.ReceiveMessageAsync(new ReceiveMessageRequest
+        
+        // If maxMessages is 0 or negative, get all messages from the queue
+        var messagesToRetrieve = maxMessages;
+        if (maxMessages <= 0)
         {
-            QueueUrl = dlqUrl,
-            MaxNumberOfMessages = Math.Min(maxMessages, DeadLetterQueueServiceConstants.Limits.MaxSqsReceiveMessages),
-            VisibilityTimeout = DeadLetterQueueServiceConstants.Timeouts.PeekVisibilitySeconds,
-            MessageSystemAttributeNames = [DeadLetterQueueServiceConstants.AllAttributes],
-            MessageAttributeNames = [DeadLetterQueueServiceConstants.AllAttributes]
-        }, ct);
+            var stats = await amazonSqs.GetQueueAttributesAsync(dlqUrl,
+                [DeadLetterQueueServiceConstants.SqsAttributes.ApproximateNumberOfMessages], ct);
+            messagesToRetrieve = stats.ApproximateNumberOfMessages;
+            
+            logger.LogInformation("Peeking all {Count} messages from DLQ", messagesToRetrieve);
+            
+            if (messagesToRetrieve == 0)
+            {
+                logger.LogInformation("DLQ is empty");
+                return new DeadLetterMessagesResult
+                {
+                    Messages = [],
+                    TotalApproximateCount = 0,
+                    CheckedAt = DateTime.UtcNow
+                };
+            }
+        }
+        
+        var messageMap = new Dictionary<string, DeadLetterMessageDto>();
+        var receiptHandles = new List<string>(); // Track receipt handles to restore visibility
+        var batchSize = DeadLetterQueueServiceConstants.Limits.MaxSqsReceiveMessages;
+        var attemptsWithoutNewMessages = 0;
+        const int maxAttemptsWithoutNewMessages = 3;
+        const int tempVisibilityTimeoutSeconds = 30; // Temporarily hide messages
+
+        try
+        {
+            while (messageMap.Count < messagesToRetrieve && attemptsWithoutNewMessages < maxAttemptsWithoutNewMessages)
+            {
+                var messagesToRequest = Math.Min(messagesToRetrieve - messageMap.Count, batchSize);
+
+                var receiveResponse = await amazonSqs.ReceiveMessageAsync(new ReceiveMessageRequest
+                {
+                    QueueUrl = dlqUrl,
+                    MaxNumberOfMessages = messagesToRequest,
+                    VisibilityTimeout = tempVisibilityTimeoutSeconds, // Changed from 0
+                    MessageSystemAttributeNames = [DeadLetterQueueServiceConstants.AllAttributes],
+                    MessageAttributeNames = [DeadLetterQueueServiceConstants.AllAttributes]
+                }, ct);
+
+                if (receiveResponse.Messages == null || receiveResponse.Messages.Count == 0)
+                    break;
+
+                var newMessagesFound = 0;
+                foreach (var m in receiveResponse.Messages)
+                {
+                    if (!messageMap.ContainsKey(m.MessageId))
+                    {
+                        messageMap[m.MessageId] = new DeadLetterMessageDto
+                        {
+                            MessageId = m.MessageId,
+                            OriginalMessageId = GetMessageAttribute(m, DeadLetterQueueServiceConstants.MessageAttributes.DlqOriginalMessageId),
+                            FailureReason = GetMessageAttribute(m, DeadLetterQueueServiceConstants.MessageAttributes.DlqFailureReason),
+                            FailureMessage = GetMessageAttribute(m, DeadLetterQueueServiceConstants.MessageAttributes.DlqFailureMessage),
+                            FailureTimestamp = GetMessageAttribute(m, DeadLetterQueueServiceConstants.MessageAttributes.DlqFailureTimestamp),
+                            ReceiveCount = GetMessageAttribute(m, DeadLetterQueueServiceConstants.MessageAttributes.DlqReceiveCount),
+                            CorrelationId = GetMessageAttribute(m, DeadLetterQueueServiceConstants.MessageAttributes.CorrelationId),
+                            MessageType = GetMessageAttribute(m, DeadLetterQueueServiceConstants.MessageAttributes.Subject),
+                            Body = m.Body
+                        };
+                        receiptHandles.Add(m.ReceiptHandle); // Track for visibility restoration
+                        newMessagesFound++;
+                    }
+                }
+
+                attemptsWithoutNewMessages = newMessagesFound == 0 ? attemptsWithoutNewMessages + 1 : 0;
+            }
+
+            // Immediately restore visibility for all messages (make them visible again)
+            await RestoreMessageVisibilityAsync(dlqUrl, receiptHandles, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error peeking DLQ messages, attempting to restore visibility");
+            // Attempt to restore visibility even on error
+            await RestoreMessageVisibilityAsync(dlqUrl, receiptHandles, ct);
+            throw;
+        }
 
         var statsResponse = await amazonSqs.GetQueueAttributesAsync(dlqUrl,
             [DeadLetterQueueServiceConstants.SqsAttributes.ApproximateNumberOfMessages], ct);
 
-        var messages = receiveResponse.Messages.Select(m => new DeadLetterMessageDto
-        {
-            MessageId = m.MessageId,
-            OriginalMessageId = GetMessageAttribute(m, DeadLetterQueueServiceConstants.MessageAttributes.DlqOriginalMessageId),
-            FailureReason = GetMessageAttribute(m, DeadLetterQueueServiceConstants.MessageAttributes.DlqFailureReason),
-            FailureMessage = GetMessageAttribute(m, DeadLetterQueueServiceConstants.MessageAttributes.DlqFailureMessage),
-            FailureTimestamp = GetMessageAttribute(m, DeadLetterQueueServiceConstants.MessageAttributes.DlqFailureTimestamp),
-            ReceiveCount = GetMessageAttribute(m, DeadLetterQueueServiceConstants.MessageAttributes.DlqReceiveCount),
-            CorrelationId = GetMessageAttribute(m, DeadLetterQueueServiceConstants.MessageAttributes.CorrelationId),
-            MessageType = GetMessageAttribute(m, DeadLetterQueueServiceConstants.MessageAttributes.Subject),
-            Body = m.Body
-        }).ToList();
-
         return new DeadLetterMessagesResult
         {
-            Messages = messages,
+            Messages = messageMap.Values.ToList(),
             TotalApproximateCount = statsResponse.ApproximateNumberOfMessages,
             CheckedAt = DateTime.UtcNow
         };
+    }
+
+    private async Task RestoreMessageVisibilityAsync(string queueUrl, List<string> receiptHandles, CancellationToken ct)
+    {
+        if (receiptHandles.Count == 0)
+            return;
+
+        // Restore visibility by setting timeout to 0 (make immediately visible)
+        var tasks = receiptHandles.Select(receiptHandle =>
+            amazonSqs.ChangeMessageVisibilityAsync(new ChangeMessageVisibilityRequest
+            {
+                QueueUrl = queueUrl,
+                ReceiptHandle = receiptHandle,
+                VisibilityTimeout = 0
+            }, ct));
+
+        try
+        {
+            await Task.WhenAll(tasks);
+            logger.LogDebug("Restored visibility for {Count} messages", receiptHandles.Count);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to restore visibility for some messages");
+        }
     }
 
     public async Task<RedriveSummary> RedriveDeadLetterMessagesAsync(int maxMessages, CancellationToken ct = default)
@@ -79,7 +165,24 @@ public partial class DeadLetterQueueService(
 
         var summary = new RedriveSummaryBuilder();
 
-        for (var i = 0; i < maxMessages; i++)
+        // If maxMessages is 0 or negative, get the actual count from the queue
+        var messagesToRedrive = maxMessages;
+        if (maxMessages <= 0)
+        {
+            var stats = await amazonSqs.GetQueueAttributesAsync(dlqUrl, 
+                [DeadLetterQueueServiceConstants.SqsAttributes.ApproximateNumberOfMessages], ct);
+            messagesToRedrive = stats.ApproximateNumberOfMessages;
+            
+            logger.LogInformation("Redriving all {Count} messages from DLQ", messagesToRedrive);
+            
+            if (messagesToRedrive == 0)
+            {
+                logger.LogInformation("DLQ is empty, nothing to redrive");
+                return summary.Build(0, startedAt);
+            }
+        }
+
+        for (var i = 0; i < messagesToRedrive; i++)
         {
             var message = await TryReceiveMessageAsync(dlqUrl, ct);
             if (message == null)
@@ -231,7 +334,7 @@ public partial class DeadLetterQueueService(
             MessageAttributeNames = new List<string> { DeadLetterQueueServiceConstants.AllAttributes }
         }, ct);
 
-        return receiveResponse.Messages.Count > 0 ? receiveResponse.Messages[0] : null;
+        return receiveResponse.Messages?.Count > 0 ? receiveResponse.Messages[0] : null;
     }
 
     private async Task<RedriveResult> RedriveMessageAsync(

@@ -473,9 +473,18 @@ public class DeadLetterQueueServiceTests
             It.Is<ReceiveMessageRequest>(r =>
                 r.QueueUrl == _dlqUrl &&
                 r.MaxNumberOfMessages == 2 &&
-                r.VisibilityTimeout == 0),
+                r.VisibilityTimeout == 30),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ReceiveMessageResponse { Messages = messages });
+
+        // Mock the visibility restoration calls
+        _mockSqs.Setup(x => x.ChangeMessageVisibilityAsync(
+            It.Is<ChangeMessageVisibilityRequest>(r =>
+                r.QueueUrl == _dlqUrl &&
+                r.VisibilityTimeout == 0 &&
+                (r.ReceiptHandle == messages[0].ReceiptHandle || r.ReceiptHandle == messages[1].ReceiptHandle)),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ChangeMessageVisibilityResponse());
 
         _mockSqs.Setup(x => x.GetQueueAttributesAsync(
             _dlqUrl,
@@ -497,12 +506,17 @@ public class DeadLetterQueueServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Messages.Should().HaveCount(2);
-        result.Messages[0].MessageId.Should().Be("msg-1");
-        result.Messages[0].CorrelationId.Should().Be("correlation-1");
-        result.Messages[1].MessageId.Should().Be("msg-2");
-        result.Messages[1].CorrelationId.Should().Be("correlation-2");
+        result.Messages.Should().Contain(m => m.MessageId == "msg-1" && m.CorrelationId == "correlation-1");
+        result.Messages.Should().Contain(m => m.MessageId == "msg-2" && m.CorrelationId == "correlation-2");
         result.TotalApproximateCount.Should().Be(10);
         result.CheckedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+
+        // Verify visibility was restored for both messages
+        _mockSqs.Verify(x => x.ChangeMessageVisibilityAsync(
+            It.Is<ChangeMessageVisibilityRequest>(r =>
+                r.QueueUrl == _dlqUrl &&
+                r.VisibilityTimeout == 0),
+            It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 
     [Fact]

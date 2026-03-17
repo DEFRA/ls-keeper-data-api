@@ -160,7 +160,7 @@ public class DeadLetterHandlerTests
             CheckedAt = DateTime.UtcNow
         };
 
-        _dlqServiceMock.Setup(s => s.PeekDeadLetterMessagesAsync(5, _cancellationToken))
+        _dlqServiceMock.Setup(s => s.PeekDeadLetterMessagesAsync(0, _cancellationToken))
             .ReturnsAsync(expectedResult);
 
         // Act
@@ -173,17 +173,17 @@ public class DeadLetterHandlerTests
 
         // Assert
         result.Should().BeOfType<Ok<DeadLetterMessagesResult>>();
-        _dlqServiceMock.Verify(s => s.PeekDeadLetterMessagesAsync(5, _cancellationToken), Times.Once);
+        _dlqServiceMock.Verify(s => s.PeekDeadLetterMessagesAsync(0, _cancellationToken), Times.Once);
     }
 
     [Fact]
-    public async Task GetDeadLetterMessagesHandler_WhenMaxMessagesIsLessThanOne_ClampsToOne()
+    public async Task GetDeadLetterMessagesHandler_WhenMaxMessagesIsLessThanOne_PassesValueToService()
     {
         // Arrange
         SetupQueueOptions();
         var expectedResult = new DeadLetterMessagesResult();
 
-        _dlqServiceMock.Setup(s => s.PeekDeadLetterMessagesAsync(1, _cancellationToken))
+        _dlqServiceMock.Setup(s => s.PeekDeadLetterMessagesAsync(0, _cancellationToken))
             .ReturnsAsync(expectedResult);
 
         // Act
@@ -195,17 +195,17 @@ public class DeadLetterHandlerTests
             _cancellationToken);
 
         // Assert
-        _dlqServiceMock.Verify(s => s.PeekDeadLetterMessagesAsync(1, _cancellationToken), Times.Once);
+        _dlqServiceMock.Verify(s => s.PeekDeadLetterMessagesAsync(0, _cancellationToken), Times.Once);
     }
 
     [Fact]
-    public async Task GetDeadLetterMessagesHandler_WhenMaxMessagesIsGreaterThanTen_ClampsToTen()
+    public async Task GetDeadLetterMessagesHandler_WhenMaxMessagesIsGreaterThanTen_PassesValueToService()
     {
         // Arrange
         SetupQueueOptions();
         var expectedResult = new DeadLetterMessagesResult();
 
-        _dlqServiceMock.Setup(s => s.PeekDeadLetterMessagesAsync(10, _cancellationToken))
+        _dlqServiceMock.Setup(s => s.PeekDeadLetterMessagesAsync(100, _cancellationToken))
             .ReturnsAsync(expectedResult);
 
         // Act
@@ -217,7 +217,7 @@ public class DeadLetterHandlerTests
             _cancellationToken);
 
         // Assert
-        _dlqServiceMock.Verify(s => s.PeekDeadLetterMessagesAsync(10, _cancellationToken), Times.Once);
+        _dlqServiceMock.Verify(s => s.PeekDeadLetterMessagesAsync(100, _cancellationToken), Times.Once);
     }
 
     [Fact]
@@ -296,7 +296,7 @@ public class DeadLetterHandlerTests
         SetupQueueOptions();
         var expectedSummary = new RedriveSummary { MessagesRedriven = 5 };
 
-        _dlqServiceMock.Setup(s => s.RedriveDeadLetterMessagesAsync(10, _cancellationToken))
+        _dlqServiceMock.Setup(s => s.RedriveDeadLetterMessagesAsync(0, _cancellationToken))
             .ReturnsAsync(expectedSummary);
 
         // Act
@@ -308,17 +308,17 @@ public class DeadLetterHandlerTests
             _cancellationToken);
 
         // Assert
-        _dlqServiceMock.Verify(s => s.RedriveDeadLetterMessagesAsync(10, _cancellationToken), Times.Once);
+        _dlqServiceMock.Verify(s => s.RedriveDeadLetterMessagesAsync(0, _cancellationToken), Times.Once);
     }
 
     [Fact]
-    public async Task RedriveDeadLetterMessagesHandler_WhenMaxMessagesIsLessThanOne_ClampsToOne()
+    public async Task RedriveDeadLetterMessagesHandler_WhenMaxMessagesIsLessThanOne_PassesValueToService()
     {
         // Arrange
         SetupQueueOptions();
         var expectedSummary = new RedriveSummary();
 
-        _dlqServiceMock.Setup(s => s.RedriveDeadLetterMessagesAsync(1, _cancellationToken))
+        _dlqServiceMock.Setup(s => s.RedriveDeadLetterMessagesAsync(-5, _cancellationToken))
             .ReturnsAsync(expectedSummary);
 
         // Act
@@ -330,17 +330,17 @@ public class DeadLetterHandlerTests
             _cancellationToken);
 
         // Assert
-        _dlqServiceMock.Verify(s => s.RedriveDeadLetterMessagesAsync(1, _cancellationToken), Times.Once);
+        _dlqServiceMock.Verify(s => s.RedriveDeadLetterMessagesAsync(-5, _cancellationToken), Times.Once);
     }
 
     [Fact]
-    public async Task RedriveDeadLetterMessagesHandler_WhenMaxMessagesIsGreaterThan100_ClampsTo100()
+    public async Task RedriveDeadLetterMessagesHandler_WhenMaxMessagesIsGreaterThan100_PassesValueToService()
     {
         // Arrange
         SetupQueueOptions();
         var expectedSummary = new RedriveSummary();
 
-        _dlqServiceMock.Setup(s => s.RedriveDeadLetterMessagesAsync(100, _cancellationToken))
+        _dlqServiceMock.Setup(s => s.RedriveDeadLetterMessagesAsync(500, _cancellationToken))
             .ReturnsAsync(expectedSummary);
 
         // Act
@@ -352,7 +352,7 @@ public class DeadLetterHandlerTests
             _cancellationToken);
 
         // Assert
-        _dlqServiceMock.Verify(s => s.RedriveDeadLetterMessagesAsync(100, _cancellationToken), Times.Once);
+        _dlqServiceMock.Verify(s => s.RedriveDeadLetterMessagesAsync(500, _cancellationToken), Times.Once);
     }
 
     [Fact]
