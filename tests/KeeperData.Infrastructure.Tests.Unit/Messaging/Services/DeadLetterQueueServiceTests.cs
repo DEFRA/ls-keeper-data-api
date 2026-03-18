@@ -473,9 +473,18 @@ public class DeadLetterQueueServiceTests
             It.Is<ReceiveMessageRequest>(r =>
                 r.QueueUrl == _dlqUrl &&
                 r.MaxNumberOfMessages == 2 &&
-                r.VisibilityTimeout == 0),
+                r.VisibilityTimeout == 30),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ReceiveMessageResponse { Messages = messages });
+
+        // Mock the visibility restoration calls
+        _mockSqs.Setup(x => x.ChangeMessageVisibilityAsync(
+            It.Is<ChangeMessageVisibilityRequest>(r =>
+                r.QueueUrl == _dlqUrl &&
+                r.VisibilityTimeout == 0 &&
+                (r.ReceiptHandle == messages[0].ReceiptHandle || r.ReceiptHandle == messages[1].ReceiptHandle)),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ChangeMessageVisibilityResponse());
 
         _mockSqs.Setup(x => x.GetQueueAttributesAsync(
             _dlqUrl,
@@ -497,12 +506,17 @@ public class DeadLetterQueueServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Messages.Should().HaveCount(2);
-        result.Messages[0].MessageId.Should().Be("msg-1");
-        result.Messages[0].CorrelationId.Should().Be("correlation-1");
-        result.Messages[1].MessageId.Should().Be("msg-2");
-        result.Messages[1].CorrelationId.Should().Be("correlation-2");
+        result.Messages.Should().Contain(m => m.MessageId == "msg-1" && m.CorrelationId == "correlation-1");
+        result.Messages.Should().Contain(m => m.MessageId == "msg-2" && m.CorrelationId == "correlation-2");
         result.TotalApproximateCount.Should().Be(10);
         result.CheckedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+
+        // Verify visibility was restored for both messages
+        _mockSqs.Verify(x => x.ChangeMessageVisibilityAsync(
+            It.Is<ChangeMessageVisibilityRequest>(r =>
+                r.QueueUrl == _dlqUrl &&
+                r.VisibilityTimeout == 0),
+            It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 
     [Fact]
@@ -610,6 +624,462 @@ public class DeadLetterQueueServiceTests
         dto.FailureTimestamp.Should().Be("2024-01-15T10:30:00Z");
         dto.ReceiveCount.Should().Be("3");
         dto.MessageType.Should().Be("OrderCreated");
+    }
+
+    [Fact]
+    public async Task PeekDeadLetterMessagesAsync_WhenMaxMessagesIsZero_RetrievesAllMessagesUpToConfiguredMax()
+    {
+        // Arrange
+        var messages = Enumerable.Range(1, 10)
+            .Select(i => CreateTestMessage($"msg-{i}", $"correlation-{i}"))
+            .ToList();
+
+        // Mock GetQueueAttributesAsync to return 150 messages in queue
+        _mockSqs.Setup(x => x.GetQueueAttributesAsync(
+            _dlqUrl,
+            It.Is<List<string>>(attrs => attrs.Contains("ApproximateNumberOfMessages")),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetQueueAttributesResponse
+            {
+                Attributes = new Dictionary<string, string>
+                {
+                    ["ApproximateNumberOfMessages"] = "150"
+                }
+            });
+
+        // Mock ReceiveMessageAsync to return messages in batches
+        _mockSqs.Setup(x => x.ReceiveMessageAsync(
+            It.IsAny<ReceiveMessageRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ReceiveMessageResponse { Messages = messages });
+
+        _mockSqs.Setup(x => x.ChangeMessageVisibilityAsync(
+            It.IsAny<ChangeMessageVisibilityRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ChangeMessageVisibilityResponse());
+
+        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+
+        // Act
+        var result = await sut.PeekDeadLetterMessagesAsync(0);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.TotalApproximateCount.Should().Be(150);
+        result.Messages.Should().HaveCount(10); // Got messages back
+
+        // Verify it requested at most the configured maximum (100)
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) =>
+                    v.ToString()!.Contains("Peeking all") &&
+                    v.ToString()!.Contains("150") &&
+                    v.ToString()!.Contains("max allowed: 100")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task PeekDeadLetterMessagesAsync_WhenMaxMessagesExceedsConfigured_ClampsToConfiguredMax()
+    {
+        // Arrange
+        _mockSqs.Setup(x => x.ReceiveMessageAsync(
+            It.IsAny<ReceiveMessageRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ReceiveMessageResponse { Messages = new List<Message>() });
+
+        _mockSqs.Setup(x => x.GetQueueAttributesAsync(
+            It.IsAny<string>(),
+            It.IsAny<List<string>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetQueueAttributesResponse
+            {
+                Attributes = new Dictionary<string, string>
+                {
+                    ["ApproximateNumberOfMessages"] = "0"
+                }
+            });
+
+        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+
+        // Act
+        await sut.PeekDeadLetterMessagesAsync(500);
+
+        // Assert - Should be clamped to 100 (default MaxPeekMessages)
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) =>
+                    v.ToString()!.Contains("Requested 500 messages") &&
+                    v.ToString()!.Contains("capped to configured maximum of 100")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task PeekDeadLetterMessagesAsync_WithCustomMaxPeekMessages_RespectsConfiguration()
+    {
+        // Arrange
+        var customOptions = new IntakeEventQueueOptions
+        {
+            QueueUrl = _queueUrl,
+            DeadLetterQueueUrl = _dlqUrl,
+            MaxPeekMessages = 50 // Custom max
+        };
+
+        _mockSqs.Setup(x => x.GetQueueAttributesAsync(
+            _dlqUrl,
+            It.IsAny<List<string>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetQueueAttributesResponse
+            {
+                Attributes = new Dictionary<string, string>
+                {
+                    ["ApproximateNumberOfMessages"] = "200"
+                }
+            });
+
+        _mockSqs.Setup(x => x.ReceiveMessageAsync(
+            It.IsAny<ReceiveMessageRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ReceiveMessageResponse { Messages = new List<Message>() });
+
+        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(customOptions), _mockLogger.Object);
+
+        // Act
+        await sut.PeekDeadLetterMessagesAsync(0);
+
+        // Assert - Should be clamped to 50
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) =>
+                    v.ToString()!.Contains("max allowed: 50")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task PeekDeadLetterMessagesAsync_WhenQueueIsEmpty_ReturnsEmptyResult()
+    {
+        // Arrange
+        _mockSqs.Setup(x => x.GetQueueAttributesAsync(
+            _dlqUrl,
+            It.IsAny<List<string>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetQueueAttributesResponse
+            {
+                Attributes = new Dictionary<string, string>
+                {
+                    ["ApproximateNumberOfMessages"] = "0"
+                }
+            });
+
+        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+
+        // Act
+        var result = await sut.PeekDeadLetterMessagesAsync(0);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Messages.Should().BeEmpty();
+        result.TotalApproximateCount.Should().Be(0);
+        result.CheckedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(2));
+
+        // Should not attempt to receive messages
+        _mockSqs.Verify(x => x.ReceiveMessageAsync(
+            It.IsAny<ReceiveMessageRequest>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task PeekDeadLetterMessagesAsync_WhenReceiveFails_RestoresVisibilityAndThrows()
+    {
+        // Arrange
+        var messages = new List<Message> { CreateTestMessage("msg-1", "correlation-1") };
+
+        _mockSqs.Setup(x => x.ReceiveMessageAsync(
+            It.IsAny<ReceiveMessageRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new AmazonSQSException("SQS timeout"));
+
+        _mockSqs.Setup(x => x.GetQueueAttributesAsync(
+            _dlqUrl,
+            It.IsAny<List<string>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetQueueAttributesResponse
+            {
+                Attributes = new Dictionary<string, string>
+                {
+                    ["ApproximateNumberOfMessages"] = "10"
+                }
+            });
+
+        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<AmazonSQSException>(() => sut.PeekDeadLetterMessagesAsync(5));
+
+        // Verify error was logged
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error peeking DLQ messages")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task PeekDeadLetterMessagesAsync_WithDuplicateMessageIds_OnlyIncludesOnce()
+    {
+        // Arrange - Simulate SQS returning duplicate messageIds (shouldn't happen but defensive)
+        var message1 = CreateTestMessage("msg-duplicate", "correlation-1");
+        var message2 = CreateTestMessage("msg-duplicate", "correlation-2"); // Same messageId
+
+        var receiveCallCount = 0;
+        _mockSqs.Setup(x => x.ReceiveMessageAsync(
+            It.IsAny<ReceiveMessageRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                receiveCallCount++;
+                return receiveCallCount == 1
+                    ? new ReceiveMessageResponse { Messages = new List<Message> { message1, message2 } }
+                    : new ReceiveMessageResponse { Messages = new List<Message>() };
+            });
+
+        _mockSqs.Setup(x => x.ChangeMessageVisibilityAsync(
+            It.IsAny<ChangeMessageVisibilityRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ChangeMessageVisibilityResponse());
+
+        _mockSqs.Setup(x => x.GetQueueAttributesAsync(
+            It.IsAny<string>(),
+            It.IsAny<List<string>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetQueueAttributesResponse
+            {
+                Attributes = new Dictionary<string, string>
+                {
+                    ["ApproximateNumberOfMessages"] = "2"
+                }
+            });
+
+        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+
+        // Act
+        var result = await sut.PeekDeadLetterMessagesAsync(10);
+
+        // Assert
+        result.Messages.Should().HaveCount(1); // Only one unique message
+        result.Messages.First().MessageId.Should().Be("msg-duplicate");
+        result.Messages.First().CorrelationId.Should().Be("correlation-1"); // First one wins
+    }
+
+    [Fact]
+    public async Task PeekDeadLetterMessagesAsync_StopsAfterThreeAttemptsWithoutNewMessages()
+    {
+        // Arrange - Simulate situation where messages keep appearing but are duplicates
+        var message = CreateTestMessage("msg-1", "correlation-1");
+
+        _mockSqs.Setup(x => x.ReceiveMessageAsync(
+            It.IsAny<ReceiveMessageRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ReceiveMessageResponse { Messages = new List<Message> { message } });
+
+        _mockSqs.Setup(x => x.ChangeMessageVisibilityAsync(
+            It.IsAny<ChangeMessageVisibilityRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ChangeMessageVisibilityResponse());
+
+        _mockSqs.Setup(x => x.GetQueueAttributesAsync(
+            It.IsAny<string>(),
+            It.IsAny<List<string>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetQueueAttributesResponse
+            {
+                Attributes = new Dictionary<string, string>
+                {
+                    ["ApproximateNumberOfMessages"] = "10"
+                }
+            });
+
+        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+
+        // Act
+        var result = await sut.PeekDeadLetterMessagesAsync(10);
+
+        // Assert
+        result.Messages.Should().HaveCount(1); // Only unique message
+
+        // Should stop after 3 attempts (1 successful + 3 with no new messages = 4 total)
+        _mockSqs.Verify(x => x.ReceiveMessageAsync(
+            It.IsAny<ReceiveMessageRequest>(),
+            It.IsAny<CancellationToken>()), Times.Exactly(4));
+    }
+
+    [Fact]
+    public async Task PeekDeadLetterMessagesAsync_RestoresVisibilityOnException()
+    {
+        // Arrange
+        var message = CreateTestMessage("msg-1", "correlation-1");
+
+        var receiveCallCount = 0;
+        _mockSqs.Setup(x => x.ReceiveMessageAsync(
+            It.IsAny<ReceiveMessageRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                receiveCallCount++;
+                if (receiveCallCount == 1)
+                    return new ReceiveMessageResponse { Messages = new List<Message> { message } };
+                throw new AmazonSQSException("Network error");
+            });
+
+        _mockSqs.Setup(x => x.ChangeMessageVisibilityAsync(
+            It.IsAny<ChangeMessageVisibilityRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ChangeMessageVisibilityResponse());
+
+        _mockSqs.Setup(x => x.GetQueueAttributesAsync(
+            _dlqUrl,
+            It.IsAny<List<string>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetQueueAttributesResponse
+            {
+                Attributes = new Dictionary<string, string>
+                {
+                    ["ApproximateNumberOfMessages"] = "10"
+                }
+            });
+
+        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<AmazonSQSException>(() => sut.PeekDeadLetterMessagesAsync(10));
+
+        // Verify visibility was restored even though exception occurred
+        _mockSqs.Verify(x => x.ChangeMessageVisibilityAsync(
+            It.Is<ChangeMessageVisibilityRequest>(r =>
+                r.QueueUrl == _dlqUrl &&
+                r.ReceiptHandle == message.ReceiptHandle &&
+                r.VisibilityTimeout == 0),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task PeekDeadLetterMessagesAsync_WhenVisibilityRestorationFails_LogsWarning()
+    {
+        // Arrange
+        var message = CreateTestMessage("msg-1", "correlation-1");
+
+        _mockSqs.Setup(x => x.ReceiveMessageAsync(
+            It.IsAny<ReceiveMessageRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ReceiveMessageResponse { Messages = new List<Message> { message } });
+
+        _mockSqs.Setup(x => x.ChangeMessageVisibilityAsync(
+            It.IsAny<ChangeMessageVisibilityRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new AmazonSQSException("Receipt handle expired"));
+
+        _mockSqs.Setup(x => x.GetQueueAttributesAsync(
+            It.IsAny<string>(),
+            It.IsAny<List<string>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetQueueAttributesResponse
+            {
+                Attributes = new Dictionary<string, string>
+                {
+                    ["ApproximateNumberOfMessages"] = "1"
+                }
+            });
+
+        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+
+        // Act
+        var result = await sut.PeekDeadLetterMessagesAsync(1);
+
+        // Assert
+        result.Should().NotBeNull();
+
+        // Should log warning about visibility restoration failure
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Failed to restore visibility")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task PeekDeadLetterMessagesAsync_ProcessesMessagesInBatches()
+    {
+        // Arrange - Request 25 messages, should make 3 batches (10+10+5)
+        var batch1 = Enumerable.Range(1, 10).Select(i => CreateTestMessage($"msg-{i}", $"correlation-{i}")).ToList();
+        var batch2 = Enumerable.Range(11, 10).Select(i => CreateTestMessage($"msg-{i}", $"correlation-{i}")).ToList();
+        var batch3 = Enumerable.Range(21, 5).Select(i => CreateTestMessage($"msg-{i}", $"correlation-{i}")).ToList();
+
+        var receiveCallCount = 0;
+        _mockSqs.Setup(x => x.ReceiveMessageAsync(
+            It.IsAny<ReceiveMessageRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                receiveCallCount++;
+                return receiveCallCount switch
+                {
+                    1 => new ReceiveMessageResponse { Messages = batch1 },
+                    2 => new ReceiveMessageResponse { Messages = batch2 },
+                    3 => new ReceiveMessageResponse { Messages = batch3 },
+                    _ => new ReceiveMessageResponse { Messages = new List<Message>() }
+                };
+            });
+
+        _mockSqs.Setup(x => x.ChangeMessageVisibilityAsync(
+            It.IsAny<ChangeMessageVisibilityRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ChangeMessageVisibilityResponse());
+
+        _mockSqs.Setup(x => x.GetQueueAttributesAsync(
+            It.IsAny<string>(),
+            It.IsAny<List<string>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetQueueAttributesResponse
+            {
+                Attributes = new Dictionary<string, string>
+                {
+                    ["ApproximateNumberOfMessages"] = "25"
+                }
+            });
+
+        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+
+        // Act
+        var result = await sut.PeekDeadLetterMessagesAsync(25);
+
+        // Assert
+        result.Messages.Should().HaveCount(25);
+
+        // Verify correct batch sizes were requested
+        _mockSqs.Verify(x => x.ReceiveMessageAsync(
+            It.Is<ReceiveMessageRequest>(r => r.MaxNumberOfMessages == 10),
+            It.IsAny<CancellationToken>()), Times.Exactly(2));
+
+        _mockSqs.Verify(x => x.ReceiveMessageAsync(
+            It.Is<ReceiveMessageRequest>(r => r.MaxNumberOfMessages == 5),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -933,6 +1403,150 @@ public class DeadLetterQueueServiceTests
         result.MessagesDuplicated.Should().Be(1);
         result.MessagesRemainingApprox.Should().Be(5);
         result.CorrelationIds.Should().Contain(new[] { "correlation-success", "correlation-fail", "correlation-duplicate" });
+    }
+
+    [Fact]
+    public async Task RedriveDeadLetterMessagesAsync_WhenMaxMessagesIsZero_RedrivesAllUpToConfiguredMax()
+    {
+        // Arrange
+        var messages = Enumerable.Range(1, 5)
+            .Select(i => CreateTestMessage($"msg-{i}", $"correlation-{i}"))
+            .ToList();
+
+        var receiveCallCount = 0;
+        _mockSqs.Setup(x => x.ReceiveMessageAsync(
+            It.Is<ReceiveMessageRequest>(r => r.QueueUrl == _dlqUrl),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                if (receiveCallCount < messages.Count)
+                    return new ReceiveMessageResponse { Messages = new List<Message> { messages[receiveCallCount++] } };
+                return new ReceiveMessageResponse { Messages = new List<Message>() };
+            });
+
+        _mockSqs.Setup(x => x.GetQueueAttributesAsync(
+            _dlqUrl,
+            It.IsAny<List<string>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetQueueAttributesResponse
+            {
+                Attributes = new Dictionary<string, string>
+                {
+                    ["ApproximateNumberOfMessages"] = "500" // Large queue
+                }
+            });
+
+        _mockSqs.Setup(x => x.SendMessageAsync(
+            It.IsAny<SendMessageRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SendMessageResponse());
+
+        _mockSqs.Setup(x => x.DeleteMessageAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeleteMessageResponse());
+
+        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+
+        // Act
+        var result = await sut.RedriveDeadLetterMessagesAsync(0);
+
+        // Assert
+        result.MessagesRedriven.Should().Be(5);
+
+        // Verify it logged the capping
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) =>
+                    v.ToString()!.Contains("Redriving all") &&
+                    v.ToString()!.Contains("500") &&
+                    v.ToString()!.Contains("max allowed: 100")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task RedriveDeadLetterMessagesAsync_WhenMaxMessagesExceedsConfigured_ClampsAndLogsWarning()
+    {
+        // Arrange
+        var customOptions = new IntakeEventQueueOptions
+        {
+            QueueUrl = _queueUrl,
+            DeadLetterQueueUrl = _dlqUrl,
+            MaxRedriveMessages = 50
+        };
+
+        _mockSqs.Setup(x => x.ReceiveMessageAsync(
+            It.IsAny<ReceiveMessageRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ReceiveMessageResponse { Messages = new List<Message>() });
+
+        _mockSqs.Setup(x => x.GetQueueAttributesAsync(
+            It.IsAny<string>(),
+            It.IsAny<List<string>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetQueueAttributesResponse
+            {
+                Attributes = new Dictionary<string, string>
+                {
+                    ["ApproximateNumberOfMessages"] = "0"
+                }
+            });
+
+        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(customOptions), _mockLogger.Object);
+
+        // Act
+        await sut.RedriveDeadLetterMessagesAsync(200);
+
+        // Assert - Should be clamped to 50
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) =>
+                    v.ToString()!.Contains("Requested to redrive 200 messages") &&
+                    v.ToString()!.Contains("capped to configured maximum of 50")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task RedriveDeadLetterMessagesAsync_WhenEmptyQueue_ReturnsEmptySummaryWithoutProcessing()
+    {
+        // Arrange
+        _mockSqs.Setup(x => x.GetQueueAttributesAsync(
+            _dlqUrl,
+            It.IsAny<List<string>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetQueueAttributesResponse
+            {
+                Attributes = new Dictionary<string, string>
+                {
+                    ["ApproximateNumberOfMessages"] = "0"
+                }
+            });
+
+        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+
+        // Act
+        var result = await sut.RedriveDeadLetterMessagesAsync(0);
+
+        // Assert
+        result.MessagesRedriven.Should().Be(0);
+        result.MessagesFailed.Should().Be(0);
+        result.MessagesDuplicated.Should().Be(0);
+        result.MessagesRemainingApprox.Should().Be(0);
+        result.CorrelationIds.Should().BeEmpty();
+
+        // Should not attempt to receive messages
+        _mockSqs.Verify(x => x.ReceiveMessageAsync(
+            It.IsAny<ReceiveMessageRequest>(),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

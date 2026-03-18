@@ -12,7 +12,7 @@ public static class TestConstants
     public const string ImportStartSamDailyScanEndpoint = "api/import/startSamDailyScan";
 
     public const string AdminDlqCountEndpoint = "api/admin/queues/deadletter/count";
-    public const string AdminDlqMessagesEndpoint = "api/admin/queues/deadletter/messages";
+    public const string AdminDlqPeekEndpoint = "api/admin/queues/deadletter/peek";
     public const string AdminDlqRedriveEndpoint = "api/admin/queues/deadletter/redrive";
     public const string AdminDlqPurgeEndpoint = "api/admin/queues/deadletter/purge";
 }

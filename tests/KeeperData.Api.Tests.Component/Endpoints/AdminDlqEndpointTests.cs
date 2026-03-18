@@ -69,7 +69,7 @@ public class AdminDlqEndpointTests
     public async Task GivenAdminEndpointsDisabled_WhenGetDlqMessagesRequested_ShouldReturnNotFound()
     {
         await ExecuteAdminEndpointTest(
-            TestConstants.AdminDlqMessagesEndpoint,
+            TestConstants.AdminDlqPeekEndpoint,  // Changed
             _dlqServiceMock.Object,
             HttpMethod.Get,
             adminEndpointsEnabled: false,
@@ -137,7 +137,7 @@ public class AdminDlqEndpointTests
         var httpClient = factory.CreateClient();
         httpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
 
-        var response = await httpClient.GetAsync($"{TestConstants.AdminDlqMessagesEndpoint}?maxMessages=5");
+        var response = await httpClient.GetAsync($"{TestConstants.AdminDlqPeekEndpoint}?maxMessages=5");  // Changed
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -163,15 +163,16 @@ public class AdminDlqEndpointTests
         var httpClient = factory.CreateClient();
         httpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
 
-        var response = await httpClient.GetAsync(TestConstants.AdminDlqMessagesEndpoint);
+        var response = await httpClient.GetAsync(TestConstants.AdminDlqPeekEndpoint);  // Changed
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        _dlqServiceMock.Verify(x => x.PeekDeadLetterMessagesAsync(5, It.IsAny<CancellationToken>()), Times.Once);
+        // When null, defaults to 0 (service interprets this as "get all messages")
+        _dlqServiceMock.Verify(x => x.PeekDeadLetterMessagesAsync(0, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task GivenAdminEndpointsEnabled_WhenGetDlqMessagesWithExcessiveMaxMessages_ShouldClampTo10()
+    public async Task GivenAdminEndpointsEnabled_WhenGetDlqMessagesWithExcessiveMaxMessages_ShouldPassValueToService()
     {
         var configurationOverrides = new Dictionary<string, string?>
         {
@@ -185,11 +186,12 @@ public class AdminDlqEndpointTests
         var httpClient = factory.CreateClient();
         httpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
 
-        var response = await httpClient.GetAsync($"{TestConstants.AdminDlqMessagesEndpoint}?maxMessages=100");
+        var response = await httpClient.GetAsync($"{TestConstants.AdminDlqPeekEndpoint}?maxMessages=100");  // Changed
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        _dlqServiceMock.Verify(x => x.PeekDeadLetterMessagesAsync(10, It.IsAny<CancellationToken>()), Times.Once);
+        // Value is passed through without clamping
+        _dlqServiceMock.Verify(x => x.PeekDeadLetterMessagesAsync(100, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -238,11 +240,12 @@ public class AdminDlqEndpointTests
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        _dlqServiceMock.Verify(x => x.RedriveDeadLetterMessagesAsync(10, It.IsAny<CancellationToken>()), Times.Once);
+        // When null, defaults to 0 (service interprets this as "redrive all messages")
+        _dlqServiceMock.Verify(x => x.RedriveDeadLetterMessagesAsync(0, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task GivenAdminEndpointsEnabled_WhenRedriveDlqWithExcessiveMaxMessages_ShouldClampTo100()
+    public async Task GivenAdminEndpointsEnabled_WhenRedriveDlqWithExcessiveMaxMessages_ShouldClampTo1000()
     {
         var configurationOverrides = new Dictionary<string, string?>
         {
@@ -260,7 +263,7 @@ public class AdminDlqEndpointTests
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        _dlqServiceMock.Verify(x => x.RedriveDeadLetterMessagesAsync(100, It.IsAny<CancellationToken>()), Times.Once);
+        _dlqServiceMock.Verify(x => x.RedriveDeadLetterMessagesAsync(1000, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -325,7 +328,7 @@ public class AdminDlqEndpointTests
         var httpClient = factory.CreateClient();
         httpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
 
-        var response = await httpClient.GetAsync(TestConstants.AdminDlqMessagesEndpoint);
+        var response = await httpClient.GetAsync(TestConstants.AdminDlqPeekEndpoint);  // Changed
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }

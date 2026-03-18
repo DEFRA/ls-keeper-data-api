@@ -154,7 +154,7 @@ public static class WebApplicationExtensions
             .WithTags(DeadLetterQueueServiceConstants.Tags.DeadLetterQueue)
             .RequireAuthorization(adminAuth);
 
-        app.MapGet("/api/admin/queues/deadletter/messages", GetDeadLetterMessagesHandler)
+        app.MapGet("/api/admin/queues/deadletter/peek", GetDeadLetterMessagesHandler)
             .WithGroupName(InternalGroupName)
             .WithTags(DeadLetterQueueServiceConstants.Tags.DeadLetterQueue)
             .RequireAuthorization(adminAuth);
@@ -202,8 +202,8 @@ public static class WebApplicationExtensions
         var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
         if (string.IsNullOrWhiteSpace(dlqUrl))
             return Results.BadRequest(new { error = DeadLetterQueueServiceConstants.LogMessages.DeadLetterQueueUrlNotConfiguredError });
+        var max = maxMessages ?? 0;
 
-        var max = Math.Clamp(maxMessages ?? 5, 1, 10);
         try
         {
             var result = await dlqService.PeekDeadLetterMessagesAsync(max, ct);
@@ -227,7 +227,7 @@ public static class WebApplicationExtensions
         if (string.IsNullOrWhiteSpace(dlqUrl))
             return Results.BadRequest(new { error = DeadLetterQueueServiceConstants.LogMessages.DeadLetterQueueUrlNotConfiguredError });
 
-        var max = Math.Clamp(maxMessages ?? 10, 1, 100);
+        var max = maxMessages ?? 0;
         try
         {
             var summary = await dlqService.RedriveDeadLetterMessagesAsync(max, ct);
