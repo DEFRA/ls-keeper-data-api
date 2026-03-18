@@ -44,13 +44,13 @@ public partial class DeadLetterQueueService(
             var stats = await amazonSqs.GetQueueAttributesAsync(dlqUrl,
                 [DeadLetterQueueServiceConstants.SqsAttributes.ApproximateNumberOfMessages], ct);
             messagesToRetrieve = stats.ApproximateNumberOfMessages;
-            
-            logger.LogInformation("Peeking all {Count} messages from DLQ (max allowed: {MaxAllowed})", 
+
+            logger.LogInformation("Peeking all {Count} messages from DLQ (max allowed: {MaxAllowed})",
                 messagesToRetrieve, _queueConsumerOptions.MaxPeekMessages);
-            
+
             // Cap to configured maximum
             messagesToRetrieve = Math.Min(messagesToRetrieve, _queueConsumerOptions.MaxPeekMessages);
-            
+
             if (stats.ApproximateNumberOfMessages == 0)
             {
                 logger.LogInformation("DLQ is empty");
@@ -67,10 +67,10 @@ public partial class DeadLetterQueueService(
             // Also cap explicit requests to the configured maximum
             var originalRequest = messagesToRetrieve;
             messagesToRetrieve = Math.Min(maxMessages, _queueConsumerOptions.MaxPeekMessages);
-            
+
             if (messagesToRetrieve < originalRequest)
             {
-                logger.LogWarning("Requested {Requested} messages, capped to configured maximum of {Capped}", 
+                logger.LogWarning("Requested {Requested} messages, capped to configured maximum of {Capped}",
                     originalRequest, messagesToRetrieve);
             }
         }
@@ -185,9 +185,9 @@ public partial class DeadLetterQueueService(
                 [DeadLetterQueueServiceConstants.SqsAttributes.ApproximateNumberOfMessages], ct);
             messagesToRedrive = stats.ApproximateNumberOfMessages;
 
-            logger.LogInformation("Redriving all {Count} messages from DLQ (max allowed: {MaxAllowed})", 
+            logger.LogInformation("Redriving all {Count} messages from DLQ (max allowed: {MaxAllowed})",
                 messagesToRedrive, _queueConsumerOptions.MaxRedriveMessages);
-            
+
             // Cap to configured maximum
             messagesToRedrive = Math.Min(messagesToRedrive, _queueConsumerOptions.MaxRedriveMessages);
 
@@ -202,10 +202,10 @@ public partial class DeadLetterQueueService(
             // Also cap explicit requests to the configured maximum
             var originalRequest = messagesToRedrive;
             messagesToRedrive = Math.Min(maxMessages, _queueConsumerOptions.MaxRedriveMessages);
-            
+
             if (messagesToRedrive < originalRequest)
             {
-                logger.LogWarning("Requested to redrive {Requested} messages, capped to configured maximum of {Capped}", 
+                logger.LogWarning("Requested to redrive {Requested} messages, capped to configured maximum of {Capped}",
                     originalRequest, messagesToRedrive);
             }
         }
