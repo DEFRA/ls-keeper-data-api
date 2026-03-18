@@ -20,8 +20,8 @@ public class ImportEndpointTests
     {
         _ctsBulkScanTaskMock.Setup(x => x.StartAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
         _samBulkScanTaskMock.Setup(x => x.StartAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
-        _ctsDailyScanTaskMock.Setup(x => x.StartAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
-        _samDailyScanTaskMock.Setup(x => x.StartAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
+        _ctsDailyScanTaskMock.Setup(x => x.StartAsync(It.IsAny<int?>(), It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
+        _samDailyScanTaskMock.Setup(x => x.StartAsync(It.IsAny<int?>(), It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
     }
 
     [Fact]
@@ -86,6 +86,56 @@ public class ImportEndpointTests
             _samDailyScanTaskMock.Object,
             dailyScanEnabled: true,
             expectedStatusCode: HttpStatusCode.Accepted);
+    }
+
+    [Fact]
+    public async Task GivenCtsDailyScanEndpointEnabled_WhenSinceHoursProvided_ShouldForwardSinceHoursToTask()
+    {
+        const int sinceHours = 24;
+
+        await ExecuteDailyScanEndpointWithSinceHoursTest(
+            TestConstants.ImportStartCtsDailyScanEndpoint,
+            _ctsDailyScanTaskMock,
+            sinceHours: sinceHours);
+
+        _ctsDailyScanTaskMock.Verify(x => x.StartAsync(sinceHours, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GivenSamDailyScanEndpointEnabled_WhenSinceHoursNotProvided_ShouldForwardNullSinceHoursToTask()
+    {
+        await ExecuteDailyScanEndpointWithSinceHoursTest(
+            TestConstants.ImportStartSamDailyScanEndpoint,
+            _samDailyScanTaskMock,
+            sinceHours: null);
+
+        _samDailyScanTaskMock.Verify(x => x.StartAsync(null, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    private async Task ExecuteDailyScanEndpointWithSinceHoursTest<TService>(
+        string endpoint,
+        Mock<TService> serviceMock,
+        int? sinceHours) where TService : class
+    {
+        var configurationOverrides = new Dictionary<string, string?>
+        {
+            ["BulkScanEndpointsEnabled"] = "false",
+            ["DailyScanEndpointsEnabled"] = "true"
+        };
+
+        var factory = new AppWebApplicationFactory(configurationOverrides);
+        factory.OverrideServiceAsSingleton(serviceMock.Object);
+
+        var httpClient = factory.CreateClient();
+        httpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
+
+        var url = sinceHours.HasValue
+            ? $"{endpoint}?sinceHours={sinceHours.Value}"
+            : endpoint;
+
+        var response = await httpClient.PostAsync(url, null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Accepted);
     }
 
     private static async Task ExecuteScanEndpointTest<TService>(

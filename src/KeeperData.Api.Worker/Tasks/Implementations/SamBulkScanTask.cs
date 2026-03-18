@@ -3,6 +3,7 @@ using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Providers;
+using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -14,6 +15,7 @@ public class SamBulkScanTask(
     IDistributedLock distributedLock,
     IHostApplicationLifetime applicationLifetime,
     IDelayProvider delayProvider,
+    IApplicationMetrics metrics,
     ILogger<SamBulkScanTask> logger) : ISamBulkScanTask
 {
     private const string LockName = nameof(SamBulkScanTask);
@@ -111,6 +113,10 @@ public class SamBulkScanTask(
             };
 
             await orchestrator.ExecuteAsync(context, linkedCts.Token);
+
+            metrics.RecordCount("bulk_scan_items_found", context.Holdings.CurrentSkip, ("scan_type", "SAM"), ("entity", "Holdings"));
+            metrics.RecordCount("bulk_scan_items_found", context.Holders.CurrentSkip, ("scan_type", "SAM"), ("entity", "Holders"));
+            metrics.RecordCount("bulk_scan_completed", 1, ("scan_type", "SAM"));
 
             logger.LogInformation("Import completed successfully at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
         }

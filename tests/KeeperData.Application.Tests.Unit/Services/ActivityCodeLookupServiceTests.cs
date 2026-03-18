@@ -1,7 +1,7 @@
 using FluentAssertions;
 using KeeperData.Application.Services;
 using KeeperData.Core.Documents;
-using KeeperData.Core.Repositories;
+using KeeperData.Core.Services;
 using Moq;
 
 namespace KeeperData.Application.Tests.Unit.Services;
@@ -15,9 +15,9 @@ public class ActivityCodeLookupServiceTests
         var activityCode = "activityCode";
         var premiseTypeCode = "premiseTypeCode";
         var returnedDocument = new FacilityBusinessActivityMapDocument { IdentifierId = "id1", FacilityActivityCode = key, AssociatedPremiseActivityCode = activityCode, AssociatedPremiseTypeCode = premiseTypeCode };
-        var repo = new Mock<IFacilityBusinessActivityMapRepository>();
-        repo.Setup(x => x.FindByActivityCodeAsync(key, It.IsAny<CancellationToken>())).ReturnsAsync(returnedDocument);
-        var sut = new ActivityCodeLookupService(repo.Object);
+        var cache = new Mock<IReferenceDataCache>();
+        cache.Setup(c => c.ActivityMaps).Returns(new[] { returnedDocument });
+        var sut = new ActivityCodeLookupService(cache.Object);
 
         var returned = await sut.FindByActivityCodeAsync(key, CancellationToken.None);
 
@@ -30,8 +30,9 @@ public class ActivityCodeLookupServiceTests
     [InlineData(null)]
     public async Task WhenNotFound_ShouldReturnNull(string? key)
     {
-        var repo = new Mock<IFacilityBusinessActivityMapRepository>();
-        var sut = new ActivityCodeLookupService(repo.Object);
+        var cache = new Mock<IReferenceDataCache>();
+        cache.Setup(c => c.ActivityMaps).Returns(Array.Empty<FacilityBusinessActivityMapDocument>());
+        var sut = new ActivityCodeLookupService(cache.Object);
 
         var returned = await sut.FindByActivityCodeAsync(key, CancellationToken.None);
 

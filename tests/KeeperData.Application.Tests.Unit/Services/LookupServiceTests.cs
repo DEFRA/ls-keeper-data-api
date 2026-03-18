@@ -1,7 +1,7 @@
 using FluentAssertions;
 using KeeperData.Application.Services;
 using KeeperData.Core.Documents;
-using KeeperData.Core.Repositories;
+using KeeperData.Core.Services;
 using Moq;
 
 namespace KeeperData.Application.Tests.Unit.Services;
@@ -11,16 +11,11 @@ public class LookupServiceTests
     [Fact]
     public async Task SiteIdentifierTypeLookupService_GetByCodeAsync_ReturnsDocument()
     {
-        var repo = new Mock<ISiteIdentifierTypeRepository>();
+        var cache = new Mock<IReferenceDataCache>();
         var doc = new SiteIdentifierTypeDocument { IdentifierId = "1", Code = "CPHN", Name = "CPH", IsActive = true };
+        cache.Setup(c => c.SiteIdentifierTypes).Returns(new[] { doc });
 
-        repo.Setup(x => x.FindAsync("CPHN", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("1", "CPH"));
-
-        repo.Setup(x => x.GetByIdAsync("1", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(doc);
-
-        var service = new SiteIdentifierTypeLookupService(repo.Object);
+        var service = new SiteIdentifierTypeLookupService(cache.Object);
         var result = await service.GetByCodeAsync("CPHN", CancellationToken.None);
 
         result.Should().BeEquivalentTo(doc);
@@ -29,11 +24,10 @@ public class LookupServiceTests
     [Fact]
     public async Task SiteIdentifierTypeLookupService_GetByCodeAsync_ReturnsNull_WhenNotFound()
     {
-        var repo = new Mock<ISiteIdentifierTypeRepository>();
-        repo.Setup(x => x.FindAsync("UNKNOWN", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(((string?)null, (string?)null));
+        var cache = new Mock<IReferenceDataCache>();
+        cache.Setup(c => c.SiteIdentifierTypes).Returns(Array.Empty<SiteIdentifierTypeDocument>());
 
-        var service = new SiteIdentifierTypeLookupService(repo.Object);
+        var service = new SiteIdentifierTypeLookupService(cache.Object);
         var result = await service.GetByCodeAsync("UNKNOWN", CancellationToken.None);
 
         result.Should().BeNull();
@@ -42,16 +36,11 @@ public class LookupServiceTests
     [Fact]
     public async Task PremiseActivityTypeLookupService_GetByCodeAsync_ReturnsDocument()
     {
-        var repo = new Mock<IPremisesActivityTypeRepository>();
+        var cache = new Mock<IReferenceDataCache>();
         var doc = new PremisesActivityTypeDocument { IdentifierId = "1", Code = "MKT", Name = "Market", IsActive = true };
+        cache.Setup(c => c.PremisesActivityTypes).Returns(new[] { doc });
 
-        repo.Setup(x => x.FindAsync("MKT", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("1", "Market"));
-
-        repo.Setup(x => x.GetByIdAsync("1", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(doc);
-
-        var service = new PremiseActivityTypeLookupService(repo.Object);
+        var service = new PremiseActivityTypeLookupService(cache.Object);
         var result = await service.GetByCodeAsync("MKT", CancellationToken.None);
 
         result.Should().BeEquivalentTo(doc);
@@ -60,11 +49,11 @@ public class LookupServiceTests
     [Fact]
     public async Task PremiseActivityTypeLookupService_FindAsync_WhenCodeMatches_ReturnsIdAndName()
     {
-        var repo = new Mock<IPremisesActivityTypeRepository>();
-        repo.Setup(r => r.FindAsync("MKT", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("1", "Market"));
+        var cache = new Mock<IReferenceDataCache>();
+        var doc = new PremisesActivityTypeDocument { IdentifierId = "1", Code = "MKT", Name = "Market", IsActive = true };
+        cache.Setup(c => c.PremisesActivityTypes).Returns(new[] { doc });
 
-        var service = new PremiseActivityTypeLookupService(repo.Object);
+        var service = new PremiseActivityTypeLookupService(cache.Object);
         var result = await service.FindAsync("MKT", CancellationToken.None);
 
         result.premiseActivityTypeId.Should().Be("1");
@@ -74,11 +63,10 @@ public class LookupServiceTests
     [Fact]
     public async Task PremiseActivityTypeLookupService_GetByCodeAsync_ReturnsNull_WhenNotFound()
     {
-        var repo = new Mock<IPremisesActivityTypeRepository>();
-        repo.Setup(r => r.FindAsync("UNKNOWN", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(((string?)null, (string?)null));
+        var cache = new Mock<IReferenceDataCache>();
+        cache.Setup(c => c.PremisesActivityTypes).Returns(Array.Empty<PremisesActivityTypeDocument>());
 
-        var service = new PremiseActivityTypeLookupService(repo.Object);
+        var service = new PremiseActivityTypeLookupService(cache.Object);
         var result = await service.GetByCodeAsync("UNKNOWN", CancellationToken.None);
 
         result.Should().BeNull();
@@ -87,8 +75,9 @@ public class LookupServiceTests
     [Fact]
     public async Task ProductionUsageLookupService_FindAsync_NullInput_ReturnsNulls()
     {
-        var repo = new Mock<IProductionUsageRepository>();
-        var service = new ProductionUsageLookupService(repo.Object);
+        var cache = new Mock<IReferenceDataCache>();
+        cache.Setup(c => c.ProductionUsages).Returns(Array.Empty<ProductionUsageDocument>());
+        var service = new ProductionUsageLookupService(cache.Object);
         var result = await service.FindAsync(null, CancellationToken.None);
 
         result.productionUsageId.Should().BeNull();
@@ -97,35 +86,35 @@ public class LookupServiceTests
     [Fact]
     public async Task ProductionUsageLookupService_FindAsync_HyphenInput_ReturnsNulls()
     {
-        var repo = new Mock<IProductionUsageRepository>();
-        var service = new ProductionUsageLookupService(repo.Object);
+        var cache = new Mock<IReferenceDataCache>();
+        cache.Setup(c => c.ProductionUsages).Returns(Array.Empty<ProductionUsageDocument>());
+        var service = new ProductionUsageLookupService(cache.Object);
         var result = await service.FindAsync("-", CancellationToken.None);
 
         result.productionUsageId.Should().BeNull();
     }
 
     [Fact]
-    public async Task ProductionUsageLookupService_FindAsync_DelegatesToRepository()
+    public async Task ProductionUsageLookupService_FindAsync_DelegatesToCache()
     {
-        var repo = new Mock<IProductionUsageRepository>();
-        repo.Setup(r => r.FindAsync("BEEF", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("1", "Beef Production"));
+        var cache = new Mock<IReferenceDataCache>();
+        var doc = new ProductionUsageDocument { IdentifierId = "1", Code = "BEEF", Description = "Beef Production" };
+        cache.Setup(c => c.ProductionUsages).Returns(new[] { doc });
 
-        var service = new ProductionUsageLookupService(repo.Object);
+        var service = new ProductionUsageLookupService(cache.Object);
         var result = await service.FindAsync("BEEF", CancellationToken.None);
 
         result.productionUsageId.Should().Be("1");
     }
 
     [Fact]
-    public async Task ProductionUsageLookupService_GetByIdAsync_DelegatesToRepository()
+    public async Task ProductionUsageLookupService_GetByIdAsync_DelegatesToCache()
     {
-        var repo = new Mock<IProductionUsageRepository>();
+        var cache = new Mock<IReferenceDataCache>();
         var doc = new ProductionUsageDocument { IdentifierId = "1", Code = "C", Description = "D" };
-        repo.Setup(r => r.GetByIdAsync("1", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(doc);
+        cache.Setup(c => c.ProductionUsages).Returns(new[] { doc });
 
-        var service = new ProductionUsageLookupService(repo.Object);
+        var service = new ProductionUsageLookupService(cache.Object);
         var result = await service.GetByIdAsync("1", CancellationToken.None);
 
         result.Should().Be(doc);
@@ -134,8 +123,9 @@ public class LookupServiceTests
     [Fact]
     public async Task SpeciesTypeLookupService_FindAsync_NullInput_ReturnsNulls()
     {
-        var repo = new Mock<ISpeciesRepository>();
-        var service = new SpeciesTypeLookupService(repo.Object);
+        var cache = new Mock<IReferenceDataCache>();
+        cache.Setup(c => c.Species).Returns(Array.Empty<SpeciesDocument>());
+        var service = new SpeciesTypeLookupService(cache.Object);
         var result = await service.FindAsync(null, CancellationToken.None);
 
         result.speciesTypeId.Should().BeNull();
@@ -144,21 +134,32 @@ public class LookupServiceTests
     [Fact]
     public async Task SpeciesTypeLookupService_FindAsync_HyphenInput_ReturnsNulls()
     {
-        var repo = new Mock<ISpeciesRepository>();
-        var service = new SpeciesTypeLookupService(repo.Object);
+        var cache = new Mock<IReferenceDataCache>();
+        cache.Setup(c => c.Species).Returns(Array.Empty<SpeciesDocument>());
+        var service = new SpeciesTypeLookupService(cache.Object);
         var result = await service.FindAsync("-", CancellationToken.None);
 
         result.speciesTypeId.Should().BeNull();
     }
 
     [Fact]
-    public async Task SpeciesTypeLookupService_FindAsync_DelegatesToRepository()
+    public async Task SpeciesTypeLookupService_FindAsync_DelegatesToCache()
     {
-        var repo = new Mock<ISpeciesRepository>();
-        repo.Setup(r => r.FindAsync("BOV", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("1", "Bovine"));
+        var cache = new Mock<IReferenceDataCache>();
+        var doc = new SpeciesDocument
+        {
+            IdentifierId = "1",
+            Code = "BOV",
+            Name = "Bovine",
+            IsActive = true,
+            SortOrder = 10,
+            EffectiveStartDate = DateTime.UtcNow,
+            CreatedBy = "System",
+            CreatedDate = DateTime.UtcNow
+        };
+        cache.Setup(c => c.Species).Returns(new[] { doc });
 
-        var service = new SpeciesTypeLookupService(repo.Object);
+        var service = new SpeciesTypeLookupService(cache.Object);
         var result = await service.FindAsync("BOV", CancellationToken.None);
 
         result.speciesTypeId.Should().Be("1");

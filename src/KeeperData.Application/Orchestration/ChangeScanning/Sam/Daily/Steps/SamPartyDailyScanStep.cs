@@ -1,3 +1,4 @@
+using KeeperData.Application.Orchestration.ChangeScanning.BaseClasses;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
@@ -20,7 +21,7 @@ public class SamPartyDailyScanStep(
     IDelayProvider delayProvider,
     IConfiguration configuration,
     ILogger<SamPartyDailyScanStep> logger)
-    : DailyScanStepBase<SamScanPartyIdentifier>(dataBridgeClient, intakeMessagePublisher, dataBridgeScanConfiguration, delayProvider, configuration, logger)
+    : DailyScanStepBase<SamDailyScanContext, SamScanPartyIdentifier>(dataBridgeClient, intakeMessagePublisher, dataBridgeScanConfiguration, delayProvider, configuration, logger)
 {
     private const string SelectFields = "PARTY_ID";
     private const string OrderBy = "PARTY_ID asc";

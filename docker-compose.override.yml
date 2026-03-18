@@ -5,6 +5,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=5555
+      - AWS_CBOR_DISABLE=true
       - AWS__ServiceURL=http://kda-localstack-emulator:4566
       - Mongo__DatabaseUri=mongodb://kda_mongodb:27017
       - Mongo__EnableTransactions=true
@@ -25,6 +26,7 @@ services:
       - DataBridgeScanConfiguration__DailyScanIncludeChangesWithinTotalHours=24
       - BulkScanEndpointsEnabled=true
       - DailyScanEndpointsEnabled=true
+      - AdminEndpointsEnabled=true
       - DataImportThrottlingSettings__MessageCompletionDelayMs=1000
       - AuthenticationConfiguration__EnableApiKey=true
       - AuthenticationConfiguration__ApiGatewayExists=false
@@ -40,6 +42,11 @@ services:
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
       # Mount seed files directly for Rider Fast Mode
       - ./src/KeeperData.Infrastructure/Data/Seed:/app/Data/Seed:ro
+
+  localstack:
+    image: localstack/localstack:latest
+    environment:
+      - SERVICES=s3,sqs,sns,firehose,cloudwatch,logs,ec2
 
   mongodb:
     command: ["--replSet", "rs0", "--bind_ip_all"]
@@ -77,3 +84,23 @@ services:
             }
           '
     restart: "no"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: kda-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+      # Mount a datasource config so Grafana connects to LocalStack automatically
+      - ./compose/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      # Dashboard provisioning config
+      - ./compose/grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
+      # The dashboard JSON files
+      - ./compose/grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - localstack
+    networks:
+      - cdp-tenant

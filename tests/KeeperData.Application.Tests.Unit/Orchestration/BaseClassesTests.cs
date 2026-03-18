@@ -1,5 +1,6 @@
 using FluentAssertions;
 using KeeperData.Application.Orchestration.ChangeScanning;
+using KeeperData.Application.Orchestration.ChangeScanning.BaseClasses;
 using KeeperData.Application.Orchestration.Imports;
 using KeeperData.Core.Orchestration;
 using KeeperData.Core.Telemetry;

@@ -26,6 +26,8 @@ info:
 
   # Change History
   # 1.0.0 - Initial MVP version, where both Location and Party API specifications have been merged into a single Open API 3.0.3 spec.
+  # - Include a new parameter in api/sites endpoint which accepts an array of site identifiers.
+  # - Include a new parameter in api/sites endpoint which accepts an array of Site Ids.
  
 externalDocs:
   description: Defra website
@@ -431,26 +433,6 @@ components:
           items:
             $ref: '#/components/schemas/Role'
 
-    RolesToParty:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          readOnly: true
-        role:
-           $ref: '#/components/schemas/Role'
-        speciesManagedByRole:
-          type: array
-          readOnly: true
-          description: "This is the list of species managed by the said Role assigned to the said Party. Normally Roles such as Keeper will have species asscociated with them."
-          items:
-                $ref: '#/components/schemas/ManagedSpecies'
-        lastUpdatedDate:
-          type: string
-          format: date-time
-          description: "The timestamp of the last time the Roles To Party record was updated"
-
     Party:
       type: object
       properties:
@@ -491,7 +473,7 @@ components:
             type: array
             readOnly: true
             items:
-                $ref: '#/components/schemas/RolesToParty'        
+                $ref: '#/components/schemas/PartyPartyRoles'        
         state:
           type: string
           enum:
@@ -501,7 +483,100 @@ components:
           type: string
           format: date-time
           description: "The timestamp of the last time the Party record was updated"
-          
+
+    PartyPartyRoles:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        site:
+           $ref: '#/components/schemas/PartyRoleSite'
+        role:
+           $ref: '#/components/schemas/Role'
+        speciesManagedByRole:
+          type: array
+          readOnly: true
+          description: "This is the list of species managed by the said Role assigned to the said Party. Normally Roles such as Keeper will have species asscociated with them."
+          items:
+            $ref: '#/components/schemas/ManagedSpecies'
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Roles To Party record was updated"
+
+    SiteParty:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          example: "Mr"
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        name:
+          type: string
+          example: "John Doe"
+        customerNumber:
+          type: string
+          example: "C77473"
+          description: "This is the L or the C number provided from the SAM system."
+        partyType:
+            type: string
+            example : Person
+            enum:
+            - Person
+            - Organisation
+        communication:
+            type: array
+            readOnly: true
+            items:
+                $ref: '#/components/schemas/Communication'
+        correspondanceAddress:
+          $ref: '#/components/schemas/Address'
+        partyRoles:
+            type: array
+            readOnly: true
+            items:
+                $ref: '#/components/schemas/SitePartyRoles'        
+        state:
+          type: string
+          enum:
+          - active
+          - inactive
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Party record was updated"
+
+    SitePartyRoles:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        role:
+           $ref: '#/components/schemas/Role'
+        speciesManagedByRole:
+          type: array
+          readOnly: true
+          description: "This is the list of species managed by the said Role assigned to the said Party. Normally Roles such as Keeper will have species asscociated with them."
+          items:
+            $ref: '#/components/schemas/ManagedSpecies'
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Roles To Party record was updated"
+
     PartyList:
       type: object
       properties:
@@ -532,8 +607,36 @@ components:
           description: "The timestamp of the last time the SiteIdentifier record was updated"
       required:
         - identifier
-        - type    
+        - type
     
+    PartyRoleSite:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          example: Hansel & Gretel Farm
+        type:
+          $ref: '#/components/schemas/SiteType'        
+        state:
+          type: string
+          enum:
+          - active
+          - inactive
+        identifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SiteIdentifier'        
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Site record was updated"
+        required:
+          - siteType
+  
     Site:
       type: object
       properties:
@@ -590,7 +693,7 @@ components:
             parties:
               type: array
               items:
-                $ref: '#/components/schemas/Party'
+                $ref: '#/components/schemas/SiteParty'
             species:
               type: array
               readOnly: true
@@ -722,7 +825,7 @@ components:
           type: array
           description: The list of site party details
           items:
-             $ref: '#/components/schemas/Party'
+             $ref: '#/components/schemas/SiteParty'
              
     SpeciesList:
       type: object
@@ -1045,7 +1148,19 @@ paths:
           description: This parameter accepts a single site identifier such as CPH Number or FSA No or Port No etc which is associated with different site type such as CPH No for Agricultural Holdings.
           schema:
             type: string
-            example: 57/103/2335               
+            example: 57/103/2335
+        - name: siteIdentifiers
+          in:   query
+          description: This parameter accepts an array of strings which represents site identifiers such as CPH Number, FSA No, Port No etc which are associated with different site type such as CPH No for Agricultural Holdings. A maximum of 50 values are allowed at a time.
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+               type: string
+            minItems: 1 # Optional: ensure at least 1 item if parameter is present.
+            maxItems: 50 # Required: This restricts the array to 50 items.
         - name: name
           in:   query
           required: false
@@ -1090,7 +1205,20 @@ paths:
           description: This parameter accepts the id of the site.
           schema:
             type: string
-            format: uuid                              
+            format: uuid
+        - name: siteIds
+          in:   query
+          description: This parameter accepts an array of strings which represents site id which is a immutable UUID, assigned to a CPH Holding. A maximum of 50 values are allowed at a time.
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+               type: string
+               format: uuid
+            minItems: 1 # Optional: ensure at least 1 item if parameter is present.
+            maxItems: 50 # Required: This restricts the array to 50 items.
         - name: partyId
           in: query
           description: This parameter accepts Party Id (UUID) asscociated with the said site.
@@ -1294,7 +1422,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Party'
+                $ref: '#/components/schemas/SiteParty'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':

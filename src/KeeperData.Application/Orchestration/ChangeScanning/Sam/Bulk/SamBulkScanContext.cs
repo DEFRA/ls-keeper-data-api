@@ -1,6 +1,9 @@
+using KeeperData.Application.Orchestration.ChangeScanning.BaseClasses;
+using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
+
 namespace KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
 
-public class SamBulkScanContext : ScanContext
+public class SamBulkScanContext : ScanContext, IBulkScanContext
 {
     public DateTime CurrentDateTime { get; init; } = DateTime.UtcNow;
     public DateTime? UpdatedSinceDateTime { get; init; }

@@ -1,30 +1,46 @@
 using KeeperData.Core.Documents;
-using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
 
 namespace KeeperData.Application.Services;
 
-public class CountryIdentifierLookupService : ICountryIdentifierLookupService
+public class CountryIdentifierLookupService(IReferenceDataCache cache) : ICountryIdentifierLookupService
 {
-    private readonly ICountryRepository _countryRepository;
-    public CountryIdentifierLookupService(ICountryRepository countryRepository)
+    public Task<CountryDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
     {
-        _countryRepository = countryRepository;
-    }
-    public async Task<CountryDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
-    {
-        return await _countryRepository.GetByIdAsync(id, cancellationToken);
+        if (string.IsNullOrWhiteSpace(id))
+            return Task.FromResult<CountryDocument?>(null);
+
+        var country = cache.Countries.FirstOrDefault(c =>
+            c.IdentifierId?.Equals(id, StringComparison.OrdinalIgnoreCase) == true);
+
+        return Task.FromResult(country);
     }
 
-    public async Task<(string? countryId, string? countryCode, string? countryName)> FindAsync(string? lookupValue, CancellationToken cancellationToken)
+    public Task<(string? countryId, string? countryCode, string? countryName)> FindAsync(string? lookupValue, CancellationToken cancellationToken)
     {
-        return await _countryRepository.FindAsync(lookupValue, cancellationToken);
+        return Task.FromResult(FindInCache(lookupValue));
     }
 
-    public async Task<(string? countryId, string? countryCode, string? countryName)> FindAsync(string? countryCode, string? ukInternalCode, CancellationToken cancellationToken)
+    public Task<(string? countryId, string? countryCode, string? countryName)> FindAsync(string? countryCode, string? ukInternalCode, CancellationToken cancellationToken)
     {
         var searchKey = DetermineSearchKey(countryCode, ukInternalCode);
-        return await _countryRepository.FindAsync(searchKey, cancellationToken);
+        return Task.FromResult(FindInCache(searchKey));
+    }
+
+    private (string? countryId, string? countryCode, string? countryName) FindInCache(string? lookupValue)
+    {
+        if (string.IsNullOrWhiteSpace(lookupValue))
+            return (null, null, null);
+
+        var country = cache.Countries.FirstOrDefault(c =>
+            c.Code?.Equals(lookupValue, StringComparison.OrdinalIgnoreCase) == true);
+
+        country ??= cache.Countries.FirstOrDefault(c =>
+            c.Name?.Equals(lookupValue, StringComparison.OrdinalIgnoreCase) == true);
+
+        return country != null
+            ? (country.IdentifierId, country.Code, country.Name)
+            : (null, null, null);
     }
 
     private static string? DetermineSearchKey(string? countryCode, string? ukInternalCode)

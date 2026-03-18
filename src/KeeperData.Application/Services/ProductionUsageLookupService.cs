@@ -1,25 +1,35 @@
 using KeeperData.Core.Documents;
-using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
 
 namespace KeeperData.Application.Services;
 
-public class ProductionUsageLookupService(IProductionUsageRepository productionUsageRepository)
+public class ProductionUsageLookupService(IReferenceDataCache cache)
     : IProductionUsageLookupService
 {
-    public async Task<ProductionUsageDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
+    public Task<ProductionUsageDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
     {
-        return await productionUsageRepository.GetByIdAsync(id, cancellationToken);
+        if (string.IsNullOrWhiteSpace(id))
+            return Task.FromResult<ProductionUsageDocument?>(null);
+
+        var match = cache.ProductionUsages.FirstOrDefault(s =>
+            s.IdentifierId.Equals(id, StringComparison.OrdinalIgnoreCase));
+
+        return Task.FromResult(match);
     }
 
-    public async Task<(string? productionUsageId, string? productionUsageName)> FindAsync(string? lookupValue, CancellationToken cancellationToken)
+    public Task<(string? productionUsageId, string? productionUsageName)> FindAsync(string? lookupValue, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(lookupValue))
-            return (null, null);
+        if (string.IsNullOrWhiteSpace(lookupValue) || lookupValue == "-")
+            return Task.FromResult<(string?, string?)>((null, null));
 
-        if (lookupValue == "-")
-            return (null, null);
+        var match = cache.ProductionUsages.FirstOrDefault(s =>
+            s.Code.Equals(lookupValue, StringComparison.OrdinalIgnoreCase));
 
-        return await productionUsageRepository.FindAsync(lookupValue, cancellationToken);
+        match ??= cache.ProductionUsages.FirstOrDefault(s =>
+            s.Description.Equals(lookupValue, StringComparison.OrdinalIgnoreCase));
+
+        return Task.FromResult(match != null
+            ? (match.IdentifierId, match.Description)
+            : ((string?)null, (string?)null));
     }
 }

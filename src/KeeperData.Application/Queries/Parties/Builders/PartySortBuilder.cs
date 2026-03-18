@@ -9,7 +9,7 @@ public static class PartySortBuilder
     {
         var sortBuilder = Builders<PartyDocument>.Sort;
 
-        var sortField = query.Order?.ToLowerInvariant() ?? "name";
+        var sortField = query.Order?.ToLowerInvariant() ?? "lastname";
         var sortDirection = query.Sort?.ToLowerInvariant() ?? "asc";
 
         // can't use a strongly-typed expression for nested array fields
@@ -26,9 +26,9 @@ public static class PartySortBuilder
     {
         return field switch
         {
-            "id" => "customerNumber",
-            "name" => "name",
-            _ => "name"
+            "id" => "id",
+            "lastname" => "lastname",
+            _ => "lastname"
         };
     }
 }

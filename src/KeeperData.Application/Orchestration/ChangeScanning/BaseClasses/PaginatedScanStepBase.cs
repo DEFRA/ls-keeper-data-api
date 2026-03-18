@@ -1,29 +1,24 @@
-using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Messaging.MessagePublishers;
 using KeeperData.Core.Messaging.MessagePublishers.Clients;
 using KeeperData.Core.Providers;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily.Steps;
+namespace KeeperData.Application.Orchestration.ChangeScanning.BaseClasses;
 
-public abstract class DailyScanStepBase<TIdentifier>(
-    IDataBridgeClient dataBridgeClient,
+public abstract class PaginatedScanStepBase<TContext, TIdentifier>(
     IMessagePublisher<IntakeEventsQueueClient> intakeMessagePublisher,
     DataBridgeScanConfiguration dataBridgeScanConfiguration,
     IDelayProvider delayProvider,
-    IConfiguration configuration,
-    ILogger logger) : ScanStepBase<SamDailyScanContext>(logger)
+    ILogger logger) : ScanStepBase<TContext>(logger)
+    where TContext : ScanContext
 {
-    protected readonly IDataBridgeClient DataBridgeClient = dataBridgeClient;
     protected readonly IMessagePublisher<IntakeEventsQueueClient> IntakeMessagePublisher = intakeMessagePublisher;
     protected readonly DataBridgeScanConfiguration DataBridgeScanConfiguration = dataBridgeScanConfiguration;
     protected readonly IDelayProvider DelayProvider = delayProvider;
-    protected readonly IConfiguration Configuration = configuration;
 
-    protected override async Task ExecuteCoreAsync(SamDailyScanContext context, CancellationToken cancellationToken)
+    protected override async Task ExecuteCoreAsync(TContext context, CancellationToken cancellationToken)
     {
         if (!IsEntityEnabled())
             return;
@@ -65,7 +60,7 @@ public abstract class DailyScanStepBase<TIdentifier>(
     }
 
     protected abstract bool IsEntityEnabled();
-    protected abstract EntityScanContext GetScanContext(SamDailyScanContext context);
-    protected abstract Task<DataBridgeResponse<TIdentifier>?> QueryDataAsync(SamDailyScanContext context, CancellationToken cancellationToken);
+    protected abstract EntityScanContext GetScanContext(TContext context);
+    protected abstract Task<DataBridgeResponse<TIdentifier>?> QueryDataAsync(TContext context, CancellationToken cancellationToken);
     protected abstract Task PublishMessagesAsync(DataBridgeResponse<TIdentifier> queryResponse, CancellationToken cancellationToken);
 }
