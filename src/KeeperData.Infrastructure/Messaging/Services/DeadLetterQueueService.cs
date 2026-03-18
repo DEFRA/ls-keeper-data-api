@@ -45,7 +45,6 @@ public partial class DeadLetterQueueService(
                 [DeadLetterQueueServiceConstants.SqsAttributes.ApproximateNumberOfMessages], ct);
             messagesToRetrieve = stats.ApproximateNumberOfMessages;
             logger.LogInformation("Peeking all {Count} messages from DLQ", messagesToRetrieve);
-            
             if (messagesToRetrieve == 0)
             {
                 logger.LogInformation("DLQ is empty");
