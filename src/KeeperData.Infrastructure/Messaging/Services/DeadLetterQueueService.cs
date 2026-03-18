@@ -37,9 +37,9 @@ public partial class DeadLetterQueueService(
     public async Task<DeadLetterMessagesResult> PeekDeadLetterMessagesAsync(int maxMessages, CancellationToken ct = default)
     {
         var dlqUrl = _queueConsumerOptions.DeadLetterQueueUrl!;
-        
+
         var messagesToRetrieve = await DetermineMessageCountToRetrieveAsync(dlqUrl, maxMessages, ct);
-        
+
         if (messagesToRetrieve == 0)
         {
             logger.LogInformation("DLQ is empty");
@@ -47,7 +47,7 @@ public partial class DeadLetterQueueService(
         }
 
         var (messages, receiptHandles) = await RetrieveMessagesAsync(dlqUrl, messagesToRetrieve, ct);
-        
+
         var totalCount = await GetApproximateMessageCountAsync(dlqUrl, ct);
 
         return new DeadLetterMessagesResult
