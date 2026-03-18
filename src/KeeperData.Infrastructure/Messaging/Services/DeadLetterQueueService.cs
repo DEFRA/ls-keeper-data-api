@@ -57,7 +57,7 @@ public partial class DeadLetterQueueService(
                 };
             }
         }
-        
+
         var messageMap = new Dictionary<string, DeadLetterMessageDto>();
         var receiptHandles = new List<string>();
         var batchSize = DeadLetterQueueServiceConstants.Limits.MaxSqsReceiveMessages;
