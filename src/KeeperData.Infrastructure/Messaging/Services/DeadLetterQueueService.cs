@@ -44,7 +44,6 @@ public partial class DeadLetterQueueService(
             var stats = await amazonSqs.GetQueueAttributesAsync(dlqUrl,
                 [DeadLetterQueueServiceConstants.SqsAttributes.ApproximateNumberOfMessages], ct);
             messagesToRetrieve = stats.ApproximateNumberOfMessages;
-            
             logger.LogInformation("Peeking all {Count} messages from DLQ", messagesToRetrieve);
             
             if (messagesToRetrieve == 0)
@@ -172,7 +171,7 @@ public partial class DeadLetterQueueService(
             messagesToRedrive = stats.ApproximateNumberOfMessages;
 
             logger.LogInformation("Redriving all {Count} messages from DLQ", messagesToRedrive);
-            
+
             if (messagesToRedrive == 0)
             {
                 logger.LogInformation("DLQ is empty, nothing to redrive");

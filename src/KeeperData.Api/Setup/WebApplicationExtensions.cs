@@ -202,7 +202,6 @@ public static class WebApplicationExtensions
         var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
         if (string.IsNullOrWhiteSpace(dlqUrl))
             return Results.BadRequest(new { error = DeadLetterQueueServiceConstants.LogMessages.DeadLetterQueueUrlNotConfiguredError });
-        
         var max = maxMessages ?? 0;
 
         try
@@ -229,7 +228,6 @@ public static class WebApplicationExtensions
             return Results.BadRequest(new { error = DeadLetterQueueServiceConstants.LogMessages.DeadLetterQueueUrlNotConfiguredError });
 
         var max = maxMessages ?? 0;
-        
         try
         {
             var summary = await dlqService.RedriveDeadLetterMessagesAsync(max, ct);
