@@ -46,7 +46,7 @@ public partial class DeadLetterQueueService(
             return CreateEmptyResult();
         }
 
-        var (messages, receiptHandles) = await RetrieveMessagesAsync(dlqUrl, messagesToRetrieve, ct);
+        var messages = await RetrieveMessagesAsync(dlqUrl, messagesToRetrieve, ct);
 
         var totalCount = await GetApproximateMessageCountAsync(dlqUrl, ct);
 
@@ -88,7 +88,7 @@ public partial class DeadLetterQueueService(
         return messagesToRetrieve;
     }
 
-    private async Task<(List<DeadLetterMessageDto> messages, List<string> receiptHandles)> RetrieveMessagesAsync(
+    private async Task<List<DeadLetterMessageDto>> RetrieveMessagesAsync(
         string dlqUrl,
         int messagesToRetrieve,
         CancellationToken ct)
@@ -131,7 +131,7 @@ public partial class DeadLetterQueueService(
             throw;
         }
 
-        return (messageMap.Values.ToList(), receiptHandles);
+        return messageMap.Values.ToList();
     }
 
     private int ProcessReceivedMessages(

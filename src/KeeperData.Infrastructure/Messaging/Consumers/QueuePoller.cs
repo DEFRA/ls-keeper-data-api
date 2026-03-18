@@ -41,7 +41,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
 
         if (_queueConsumerOptions.Disabled == true)
         {
-            logger.LogInformation("Queue {queueUrl} disabled in config", _queueConsumerOptions.QueueUrl);
+            logger.LogInformation("Queue {QueueUrl} disabled in config", _queueConsumerOptions.QueueUrl);
 
             return Task.CompletedTask;
         }
@@ -97,7 +97,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
 
     private async Task PollMessagesAsync(CancellationToken cancellationToken)
     {
-        logger.LogInformation("Connecting to queue: {queueUrl}", _queueConsumerOptions.QueueUrl);
+        logger.LogInformation("Connecting to queue: {QueueUrl}", _queueConsumerOptions.QueueUrl);
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -116,7 +116,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
 
                 if (messages == null || messages.Count == 0) continue;
 
-                logger.LogTrace("Completed receive for queue: {queueUrl}, Number of messages: {count}",
+                logger.LogTrace("Completed receive for queue: {QueueUrl}, Number of messages: {count}",
                     _queueConsumerOptions.QueueUrl, messages.Count);
 
                 foreach (var message in messages)
@@ -126,11 +126,11 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
             }
             catch (OperationCanceledException)
             {
-                logger.LogInformation("Poll operation cancelled for queue {queueUrl}", _queueConsumerOptions.QueueUrl);
+                logger.LogInformation("Poll operation cancelled for queue {QueueUrl}", _queueConsumerOptions.QueueUrl);
             }
             catch (Exception ex)
             {
-                logger.LogError("Unable to connect to queue: {queueUrl} - Exception: {ex}",
+                logger.LogError("Unable to connect to queue: {QueueUrl} - Exception: {ex}",
                     _queueConsumerOptions.QueueUrl, ex);
 
                 await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
