@@ -154,7 +154,7 @@ public static class WebApplicationExtensions
             .WithTags(DeadLetterQueueServiceConstants.Tags.DeadLetterQueue)
             .RequireAuthorization(adminAuth);
 
-        app.MapGet("/api/admin/queues/deadletter/messages", GetDeadLetterMessagesHandler)
+        app.MapGet("/api/admin/queues/deadletter/peek", GetDeadLetterMessagesHandler)
             .WithGroupName(InternalGroupName)
             .WithTags(DeadLetterQueueServiceConstants.Tags.DeadLetterQueue)
             .RequireAuthorization(adminAuth);

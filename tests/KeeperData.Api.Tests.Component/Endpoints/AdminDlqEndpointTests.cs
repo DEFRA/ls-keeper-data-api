@@ -69,7 +69,7 @@ public class AdminDlqEndpointTests
     public async Task GivenAdminEndpointsDisabled_WhenGetDlqMessagesRequested_ShouldReturnNotFound()
     {
         await ExecuteAdminEndpointTest(
-            TestConstants.AdminDlqMessagesEndpoint,
+            TestConstants.AdminDlqPeekEndpoint,  // Changed
             _dlqServiceMock.Object,
             HttpMethod.Get,
             adminEndpointsEnabled: false,
@@ -137,7 +137,7 @@ public class AdminDlqEndpointTests
         var httpClient = factory.CreateClient();
         httpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
 
-        var response = await httpClient.GetAsync($"{TestConstants.AdminDlqMessagesEndpoint}?maxMessages=5");
+        var response = await httpClient.GetAsync($"{TestConstants.AdminDlqPeekEndpoint}?maxMessages=5");  // Changed
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -163,7 +163,7 @@ public class AdminDlqEndpointTests
         var httpClient = factory.CreateClient();
         httpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
 
-        var response = await httpClient.GetAsync(TestConstants.AdminDlqMessagesEndpoint);
+        var response = await httpClient.GetAsync(TestConstants.AdminDlqPeekEndpoint);  // Changed
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -186,7 +186,7 @@ public class AdminDlqEndpointTests
         var httpClient = factory.CreateClient();
         httpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
 
-        var response = await httpClient.GetAsync($"{TestConstants.AdminDlqMessagesEndpoint}?maxMessages=100");
+        var response = await httpClient.GetAsync($"{TestConstants.AdminDlqPeekEndpoint}?maxMessages=100");  // Changed
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -328,7 +328,7 @@ public class AdminDlqEndpointTests
         var httpClient = factory.CreateClient();
         httpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
 
-        var response = await httpClient.GetAsync(TestConstants.AdminDlqMessagesEndpoint);
+        var response = await httpClient.GetAsync(TestConstants.AdminDlqPeekEndpoint);  // Changed
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }

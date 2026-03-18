@@ -44,8 +44,14 @@ public partial class DeadLetterQueueService(
             var stats = await amazonSqs.GetQueueAttributesAsync(dlqUrl,
                 [DeadLetterQueueServiceConstants.SqsAttributes.ApproximateNumberOfMessages], ct);
             messagesToRetrieve = stats.ApproximateNumberOfMessages;
-            logger.LogInformation("Peeking all {Count} messages from DLQ", messagesToRetrieve);
-            if (messagesToRetrieve == 0)
+            
+            logger.LogInformation("Peeking all {Count} messages from DLQ (max allowed: {MaxAllowed})", 
+                messagesToRetrieve, _queueConsumerOptions.MaxPeekMessages);
+            
+            // Cap to configured maximum
+            messagesToRetrieve = Math.Min(messagesToRetrieve, _queueConsumerOptions.MaxPeekMessages);
+            
+            if (stats.ApproximateNumberOfMessages == 0)
             {
                 logger.LogInformation("DLQ is empty");
                 return new DeadLetterMessagesResult
@@ -56,13 +62,25 @@ public partial class DeadLetterQueueService(
                 };
             }
         }
+        else
+        {
+            // Also cap explicit requests to the configured maximum
+            var originalRequest = messagesToRetrieve;
+            messagesToRetrieve = Math.Min(maxMessages, _queueConsumerOptions.MaxPeekMessages);
+            
+            if (messagesToRetrieve < originalRequest)
+            {
+                logger.LogWarning("Requested {Requested} messages, capped to configured maximum of {Capped}", 
+                    originalRequest, messagesToRetrieve);
+            }
+        }
 
         var messageMap = new Dictionary<string, DeadLetterMessageDto>();
         var receiptHandles = new List<string>();
         var batchSize = DeadLetterQueueServiceConstants.Limits.MaxSqsReceiveMessages;
         var attemptsWithoutNewMessages = 0;
         const int maxAttemptsWithoutNewMessages = 3;
-        const int tempVisibilityTimeoutSeconds = 30; // Temporarily hide messages
+        const int tempVisibilityTimeoutSeconds = 30;
 
         try
         {
@@ -74,7 +92,7 @@ public partial class DeadLetterQueueService(
                 {
                     QueueUrl = dlqUrl,
                     MaxNumberOfMessages = messagesToRequest,
-                    VisibilityTimeout = tempVisibilityTimeoutSeconds, // Changed from 0
+                    VisibilityTimeout = tempVisibilityTimeoutSeconds,
                     MessageSystemAttributeNames = [DeadLetterQueueServiceConstants.AllAttributes],
                     MessageAttributeNames = [DeadLetterQueueServiceConstants.AllAttributes]
                 }, ct);
@@ -99,7 +117,7 @@ public partial class DeadLetterQueueService(
                             MessageType = GetMessageAttribute(m, DeadLetterQueueServiceConstants.MessageAttributes.Subject),
                             Body = m.Body
                         };
-                        receiptHandles.Add(m.ReceiptHandle); // Track for visibility restoration
+                        receiptHandles.Add(m.ReceiptHandle);
                         newMessagesFound++;
                     }
                 }
@@ -107,13 +125,11 @@ public partial class DeadLetterQueueService(
                 attemptsWithoutNewMessages = newMessagesFound == 0 ? attemptsWithoutNewMessages + 1 : 0;
             }
 
-            // Immediately restore visibility for all messages (make them visible again)
             await RestoreMessageVisibilityAsync(dlqUrl, receiptHandles, ct);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error peeking DLQ messages, attempting to restore visibility");
-            // Attempt to restore visibility even on error
             await RestoreMessageVisibilityAsync(dlqUrl, receiptHandles, ct);
             throw;
         }
@@ -169,12 +185,28 @@ public partial class DeadLetterQueueService(
                 [DeadLetterQueueServiceConstants.SqsAttributes.ApproximateNumberOfMessages], ct);
             messagesToRedrive = stats.ApproximateNumberOfMessages;
 
-            logger.LogInformation("Redriving all {Count} messages from DLQ", messagesToRedrive);
+            logger.LogInformation("Redriving all {Count} messages from DLQ (max allowed: {MaxAllowed})", 
+                messagesToRedrive, _queueConsumerOptions.MaxRedriveMessages);
+            
+            // Cap to configured maximum
+            messagesToRedrive = Math.Min(messagesToRedrive, _queueConsumerOptions.MaxRedriveMessages);
 
-            if (messagesToRedrive == 0)
+            if (stats.ApproximateNumberOfMessages == 0)
             {
                 logger.LogInformation("DLQ is empty, nothing to redrive");
                 return summary.Build(0, startedAt);
+            }
+        }
+        else
+        {
+            // Also cap explicit requests to the configured maximum
+            var originalRequest = messagesToRedrive;
+            messagesToRedrive = Math.Min(maxMessages, _queueConsumerOptions.MaxRedriveMessages);
+            
+            if (messagesToRedrive < originalRequest)
+            {
+                logger.LogWarning("Requested to redrive {Requested} messages, capped to configured maximum of {Capped}", 
+                    originalRequest, messagesToRedrive);
             }
         }
 
