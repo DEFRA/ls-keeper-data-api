@@ -37,9 +37,8 @@ public partial class DeadLetterQueueService(
     public async Task<DeadLetterMessagesResult> PeekDeadLetterMessagesAsync(int maxMessages, CancellationToken ct = default)
     {
         var dlqUrl = _queueConsumerOptions.DeadLetterQueueUrl!;
-        
-        // If maxMessages is 0 or negative, get all messages from the queue
         var messagesToRetrieve = maxMessages;
+
         if (maxMessages <= 0)
         {
             var stats = await amazonSqs.GetQueueAttributesAsync(dlqUrl,
@@ -61,7 +60,7 @@ public partial class DeadLetterQueueService(
         }
         
         var messageMap = new Dictionary<string, DeadLetterMessageDto>();
-        var receiptHandles = new List<string>(); // Track receipt handles to restore visibility
+        var receiptHandles = new List<string>();
         var batchSize = DeadLetterQueueServiceConstants.Limits.MaxSqsReceiveMessages;
         var attemptsWithoutNewMessages = 0;
         const int maxAttemptsWithoutNewMessages = 3;
@@ -165,14 +164,13 @@ public partial class DeadLetterQueueService(
 
         var summary = new RedriveSummaryBuilder();
 
-        // If maxMessages is 0 or negative, get the actual count from the queue
         var messagesToRedrive = maxMessages;
         if (maxMessages <= 0)
         {
-            var stats = await amazonSqs.GetQueueAttributesAsync(dlqUrl, 
+            var stats = await amazonSqs.GetQueueAttributesAsync(dlqUrl,
                 [DeadLetterQueueServiceConstants.SqsAttributes.ApproximateNumberOfMessages], ct);
             messagesToRedrive = stats.ApproximateNumberOfMessages;
-            
+
             logger.LogInformation("Redriving all {Count} messages from DLQ", messagesToRedrive);
             
             if (messagesToRedrive == 0)

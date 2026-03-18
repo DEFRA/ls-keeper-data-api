@@ -227,7 +227,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
 
     private static int GetReceiveCount(Message message)
     {
-        if (message.Attributes?.TryGetValue("ApproximateReceiveCount", out var countStr) == true 
+        if (message.Attributes?.TryGetValue("ApproximateReceiveCount", out var countStr) == true
             && int.TryParse(countStr, out var count))
         {
             return count;
