@@ -31,14 +31,14 @@ public class PartiesQueryAdapterTests
             .ReturnsAsync(1);
 
         repositoryMock.Setup(x => x.FindAsync(
-            It.IsAny<FilterDefinition<PartyDocument>>(),
-            It.IsAny<SortDefinition<PartyDocument>>(),
-            10,
-            10,
-            It.IsAny<CancellationToken>()))
+                It.IsAny<FilterDefinition<PartyDocument>>(),
+                It.IsAny<SortDefinition<PartyDocument>>(),
+                10,
+                10,
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedItems);
 
-        var (items, count) = await adapter.GetPartiesAsync(query);
+        var (items, count, nextCursor) = await adapter.GetPartiesAsync(query);
 
         items.Should().BeEquivalentTo(expectedItems);
         count.Should().Be(1);

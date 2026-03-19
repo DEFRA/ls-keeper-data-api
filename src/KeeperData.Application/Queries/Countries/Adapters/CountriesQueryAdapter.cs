@@ -7,7 +7,7 @@ public class CountriesQueryAdapter(ICountryRepository repository)
 {
     private readonly ICountryRepository _repository = repository;
 
-    public async Task<(List<CountryDTO> Items, int TotalCount)> GetCountriesAsync(
+    public async Task<(List<CountryDTO> Items, int TotalCount, string? NextCursor)> GetCountriesAsync(
         GetCountriesQuery query,
         CancellationToken cancellationToken = default)
     {
@@ -44,6 +44,6 @@ public class CountriesQueryAdapter(ICountryRepository repository)
             })
             .ToList();
 
-        return (pagedItems, results.Count);
+        return (pagedItems, results.Count, null);
     }
 }

@@ -29,14 +29,14 @@ public class SitesQueryAdapterTests
             .ReturnsAsync(5);
 
         repositoryMock.Setup(x => x.FindAsync(
-            It.IsAny<FilterDefinition<SiteDocument>>(),
-            It.IsAny<SortDefinition<SiteDocument>>(),
-            0,
-            20,
-            It.IsAny<CancellationToken>()))
+                It.IsAny<FilterDefinition<SiteDocument>>(),
+                It.IsAny<SortDefinition<SiteDocument>>(),
+                0,
+                20,
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedItems);
 
-        var (items, count) = await adapter.GetSitesAsync(query);
+        var (items, count, nextCursor) = await adapter.GetSitesAsync(query);
 
         items.Should().BeEquivalentTo(expectedItems);
         count.Should().Be(5);

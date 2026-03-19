@@ -6,11 +6,11 @@ public abstract class PagedQueryHandler<TQuery, TDocument>
     : IRequestHandler<TQuery, PaginatedResult<TDocument>>
     where TQuery : IPagedQuery<TDocument>
 {
-    protected abstract Task<(List<TDocument> Items, int TotalCount)> FetchAsync(TQuery request, CancellationToken cancellationToken);
+    protected abstract Task<(List<TDocument> Items, int TotalCount, string? NextCursor)> FetchAsync(TQuery request, CancellationToken cancellationToken);
 
     public async Task<PaginatedResult<TDocument>> Handle(TQuery query, CancellationToken cancellationToken)
     {
-        var (items, totalCount) = await FetchAsync(query, cancellationToken);
+        var (items, totalCount, nextCursor) = await FetchAsync(query, cancellationToken);
 
         return new PaginatedResult<TDocument>
         {
@@ -18,7 +18,8 @@ public abstract class PagedQueryHandler<TQuery, TDocument>
             TotalCount = totalCount,
             Values = items,
             Page = query.Page,
-            PageSize = query.PageSize
+            PageSize = query.PageSize,
+            NextCursor = nextCursor
         };
     }
 }
