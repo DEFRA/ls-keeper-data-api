@@ -28,7 +28,7 @@ public class PartiesQueryAdapter(IPartiesRepository repository)
         var sortDefinition = PartySortBuilder.Build(query);
         var totalCount = await _repository.CountAsync(filterDefinition, cancellationToken);
     
-        // Fallback: If no cursor is supplied, we fallback to standard Skip for backward compatibility
+        // Fallback to skip for backward compatibility
         var skip = string.IsNullOrWhiteSpace(query.Cursor) ? (query.Page - 1) * query.PageSize : 0;
 
         var items = await _repository.FindAsync(
@@ -38,7 +38,6 @@ public class PartiesQueryAdapter(IPartiesRepository repository)
             take: query.PageSize,
             cancellationToken: cancellationToken);
 
-        // Extract cursor from the last item
         string? nextCursor = null;
         if (items.Count == query.PageSize)
         {
@@ -61,7 +60,6 @@ public class PartiesQueryAdapter(IPartiesRepository repository)
 
         var builder = Builders<PartyDocument>.Filter;
 
-        // Logic: (Field > SortValue) OR (Field == SortValue AND Id > LastId)
         if (isAscending)
         {
             return builder.Or(
