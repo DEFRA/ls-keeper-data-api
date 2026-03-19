@@ -15,7 +15,7 @@ public class SitesQueryAdapter(ISitesRepository repository)
         CancellationToken cancellationToken = default)
     {
         var filterDefinition = SiteFilterBuilder.Build(query);
-    
+
         if (!string.IsNullOrWhiteSpace(query.Cursor))
         {
             var cursorFilter = BuildCursorFilter(query);
@@ -27,7 +27,7 @@ public class SitesQueryAdapter(ISitesRepository repository)
 
         var sortDefinition = SiteSortBuilder.Build(query);
         var totalCount = await _repository.CountAsync(filterDefinition, cancellationToken);
-    
+
         var skip = string.IsNullOrWhiteSpace(query.Cursor) ? (query.Page - 1) * query.PageSize : 0;
 
         var items = await _repository.FindAsync(
@@ -47,7 +47,7 @@ public class SitesQueryAdapter(ISitesRepository repository)
 
         return (items, totalCount, nextCursor);
     }
-    
+
     private FilterDefinition<SiteDocument>? BuildCursorFilter(GetSitesQuery query)
     {
         var decoded = CursorHelper.Decode(query.Cursor);

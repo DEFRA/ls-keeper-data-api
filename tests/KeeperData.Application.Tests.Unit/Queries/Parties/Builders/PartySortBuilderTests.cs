@@ -25,7 +25,7 @@ public class PartySortBuilderTests
     [InlineData("id", "desc", "{ \"_id\" : -1 }")]
     [InlineData("id", null, "{ \"_id\" : 1 }")]
     public void Build_ShouldReturnCorrectSortDefinition(string? order, string? sort, string expected)
-    { 
+    {
         var query = new GetPartiesQuery { Order = order, Sort = sort };
         var sortDefinition = PartySortBuilder.Build(query);
 

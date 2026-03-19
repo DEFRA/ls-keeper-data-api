@@ -68,7 +68,7 @@ public class CountriesQueryAdapterTests
 
         var (items, totalCount, nextCursor) = await WhenSearchingForCountries(name, codesCsv, euTradeMember, devolvedAuthority, year.HasValue ? new DateTime(year.Value, month ?? 1, 1) : null);
 
-        var codes = expectedCodes?.Split(",") ??[];
+        var codes = expectedCodes?.Split(",") ?? [];
         items.Count.Should().Be(codes.Length);
         totalCount.Should().Be(codes.Length); // Check filtered count for bug fix
 

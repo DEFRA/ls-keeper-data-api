@@ -15,7 +15,7 @@ public class PartiesQueryAdapter(IPartiesRepository repository)
         CancellationToken cancellationToken = default)
     {
         var filterDefinition = PartyFilterBuilder.Build(query);
-    
+
         if (!string.IsNullOrWhiteSpace(query.Cursor))
         {
             var cursorFilter = BuildCursorFilter(query);
@@ -27,7 +27,7 @@ public class PartiesQueryAdapter(IPartiesRepository repository)
 
         var sortDefinition = PartySortBuilder.Build(query);
         var totalCount = await _repository.CountAsync(filterDefinition, cancellationToken);
-    
+
         // Fallback to skip for backward compatibility
         var skip = string.IsNullOrWhiteSpace(query.Cursor) ? (query.Page - 1) * query.PageSize : 0;
 
@@ -48,7 +48,7 @@ public class PartiesQueryAdapter(IPartiesRepository repository)
 
         return (items, totalCount, nextCursor);
     }
-    
+
     private FilterDefinition<PartyDocument>? BuildCursorFilter(GetPartiesQuery query)
     {
         var decoded = CursorHelper.Decode(query.Cursor);
