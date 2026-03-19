@@ -152,21 +152,32 @@ public static class WebApplicationExtensions
         app.MapGet("/api/admin/queues/deadletter/count", GetDeadLetterQueueCountHandler)
             .WithGroupName(InternalGroupName)
             .WithTags(DeadLetterQueueServiceConstants.Tags.DeadLetterQueue)
+            .WithSummary("Get dead letter queue message count")
+            .WithDescription("Returns the approximate number of messages in the dead letter queue")
             .RequireAuthorization(adminAuth);
 
         app.MapGet("/api/admin/queues/deadletter/peek", GetDeadLetterMessagesHandler)
             .WithGroupName(InternalGroupName)
             .WithTags(DeadLetterQueueServiceConstants.Tags.DeadLetterQueue)
+            .WithSummary("Peek at dead letter queue messages")
+            .WithDescription("Retrieves up to 10 messages from the dead letter queue. Maximum allowed: 10 messages per request.")
+            .WithMetadata(new ProducesResponseTypeAttribute(typeof(DeadLetterMessagesResult), StatusCodes.Status200OK))
             .RequireAuthorization(adminAuth);
 
         app.MapPost("/api/admin/queues/deadletter/redrive", RedriveDeadLetterMessagesHandler)
             .WithGroupName(InternalGroupName)
             .WithTags(DeadLetterQueueServiceConstants.Tags.DeadLetterQueue)
+            .WithSummary("Redrive dead letter queue messages")
+            .WithDescription("Moves up to 10 messages from the dead letter queue back to the main queue for reprocessing. Maximum allowed: 10 messages per request.")
+            .WithMetadata(new ProducesResponseTypeAttribute(typeof(RedriveSummary), StatusCodes.Status200OK))
             .RequireAuthorization(adminAuth);
 
         app.MapPost("/api/admin/queues/deadletter/purge", PurgeDeadLetterQueueHandler)
             .WithGroupName(InternalGroupName)
             .WithTags(DeadLetterQueueServiceConstants.Tags.DeadLetterQueue)
+            .WithSummary("Purge dead letter queue")
+            .WithDescription("⚠️ DESTRUCTIVE: Permanently deletes all messages from the dead letter queue. This operation cannot be undone.")
+            .WithMetadata(new ProducesResponseTypeAttribute(typeof(PurgeResult), StatusCodes.Status200OK))
             .RequireAuthorization(adminAuth);
     }
 
@@ -193,7 +204,7 @@ public static class WebApplicationExtensions
     }
 
     internal static async Task<IResult> GetDeadLetterMessagesHandler(
-        [FromQuery] int? maxMessages,
+        [FromQuery(Name = "maxMessages")] int? maxMessages,
         IDeadLetterQueueService dlqService,
         IOptions<IntakeEventQueueOptions> queueOptions,
         ILogger<Program> logger,
@@ -202,11 +213,10 @@ public static class WebApplicationExtensions
         var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
         if (string.IsNullOrWhiteSpace(dlqUrl))
             return Results.BadRequest(new { error = DeadLetterQueueServiceConstants.LogMessages.DeadLetterQueueUrlNotConfiguredError });
-        var max = maxMessages ?? 0;
 
         try
         {
-            var result = await dlqService.PeekDeadLetterMessagesAsync(max, ct);
+            var result = await dlqService.PeekDeadLetterMessagesAsync(maxMessages ?? 10, ct);
             return Results.Ok(result);
         }
         catch (Exception ex)
@@ -217,7 +227,7 @@ public static class WebApplicationExtensions
     }
 
     internal static async Task<IResult> RedriveDeadLetterMessagesHandler(
-        [FromQuery] int? maxMessages,
+        [FromQuery(Name = "maxMessages")] int? maxMessages,
         IDeadLetterQueueService dlqService,
         IOptions<IntakeEventQueueOptions> queueOptions,
         ILogger<Program> logger,
@@ -227,10 +237,9 @@ public static class WebApplicationExtensions
         if (string.IsNullOrWhiteSpace(dlqUrl))
             return Results.BadRequest(new { error = DeadLetterQueueServiceConstants.LogMessages.DeadLetterQueueUrlNotConfiguredError });
 
-        var max = maxMessages ?? 0;
         try
         {
-            var summary = await dlqService.RedriveDeadLetterMessagesAsync(max, ct);
+            var summary = await dlqService.RedriveDeadLetterMessagesAsync(maxMessages ?? 10, ct);
             return Results.Ok(summary);
         }
         catch (Exception ex)

@@ -33,9 +33,7 @@ public static class DeadLetterQueueServiceConstants
 
     public static class Timeouts
     {
-        public const int ExtendedVisibilitySeconds = 300;
         public const int ReceiveMessageVisibilitySeconds = 60;
-        public const int PeekVisibilitySeconds = 0;
     }
 
     public static class Limits

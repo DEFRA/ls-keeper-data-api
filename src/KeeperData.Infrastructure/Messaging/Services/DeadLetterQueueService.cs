@@ -34,10 +34,10 @@ public partial class DeadLetterQueueService(
         };
     }
 
-    public async Task<DeadLetterMessagesResult> PeekDeadLetterMessagesAsync(int maxMessages, CancellationToken ct = default)
+    public async Task<DeadLetterMessagesResult> PeekDeadLetterMessagesAsync(int maxMessages = 10, CancellationToken ct = default)
     {
         var dlqUrl = _queueConsumerOptions.DeadLetterQueueUrl!;
-        var messagesToRetrieve = Math.Max(1, Math.Min(maxMessages, DeadLetterQueueServiceConstants.Limits.MaxSqsReceiveMessages));
+        var messagesToRetrieve = Math.Clamp(maxMessages, 1, DeadLetterQueueServiceConstants.Limits.MaxSqsReceiveMessages);
 
         var receiveResponse = await amazonSqs.ReceiveMessageAsync(new ReceiveMessageRequest
         {
@@ -77,14 +77,14 @@ public partial class DeadLetterQueueService(
         };
     }
 
-    public async Task<RedriveSummary> RedriveDeadLetterMessagesAsync(int maxMessages, CancellationToken ct = default)
+    public async Task<RedriveSummary> RedriveDeadLetterMessagesAsync(int maxMessages = 10, CancellationToken ct = default)
     {
         var dlqUrl = _queueConsumerOptions.DeadLetterQueueUrl!;
         var mainQueueUrl = _queueConsumerOptions.QueueUrl;
         var startedAt = DateTime.UtcNow;
 
         var summary = new RedriveSummaryBuilder();
-        var messagesToRedrive = Math.Max(1, Math.Min(maxMessages, DeadLetterQueueServiceConstants.Limits.MaxSqsReceiveMessages));
+        var messagesToRedrive = Math.Clamp(maxMessages, 1, DeadLetterQueueServiceConstants.Limits.MaxSqsReceiveMessages);
 
         for (var i = 0; i < messagesToRedrive; i++)
         {
