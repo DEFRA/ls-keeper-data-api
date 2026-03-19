@@ -15,6 +15,7 @@ public class SitesQueryAdapter(ISitesRepository repository)
         CancellationToken cancellationToken = default)
     {
         var filterDefinition = SiteFilterBuilder.Build(query);
+        bool hasValidCursor = false;
 
         if (!string.IsNullOrWhiteSpace(query.Cursor))
         {
@@ -22,13 +23,14 @@ public class SitesQueryAdapter(ISitesRepository repository)
             if (cursorFilter != null)
             {
                 filterDefinition = Builders<SiteDocument>.Filter.And(filterDefinition, cursorFilter);
+                hasValidCursor = true;
             }
         }
 
         var sortDefinition = SiteSortBuilder.Build(query);
         var totalCount = await _repository.CountAsync(filterDefinition, cancellationToken);
 
-        var skip = string.IsNullOrWhiteSpace(query.Cursor) ? (query.Page - 1) * query.PageSize : 0;
+        var skip = !hasValidCursor ? (query.Page - 1) * query.PageSize : 0;
 
         var items = await _repository.FindAsync(
             filter: filterDefinition,
@@ -38,14 +40,14 @@ public class SitesQueryAdapter(ISitesRepository repository)
             cancellationToken: cancellationToken);
 
         string? nextCursor = null;
-        if (items.Count == query.PageSize)
+        if (items != null && items.Count == query.PageSize)
         {
             var lastItem = items.Last();
             var sortVal = GetSortValue(lastItem, query.Order);
             nextCursor = CursorHelper.Encode(sortVal, lastItem.Id);
         }
 
-        return (items, totalCount, nextCursor);
+        return (items ?? [], totalCount, nextCursor);
     }
 
     private FilterDefinition<SiteDocument>? BuildCursorFilter(GetSitesQuery query)
