@@ -7,26 +7,45 @@ namespace KeeperData.Core.Documents;
 
 public class GroupMarkDocument : INestedEntity
 {
+    /// <summary>
+    /// This is an immutable field which represents the golden key of the master data object.
+    /// </summary>
     [BsonElement("id")]
     [JsonPropertyName("id")]
     public required string IdentifierId { get; set; }
 
+    /// <summary>
+    /// The herd/flock/group mark identifier.
+    /// </summary>
+    /// <example>564545</example>
     [BsonElement("mark")]
     [JsonPropertyName("mark")]
     public required string Mark { get; set; }
 
+    /// <summary>
+    /// The date the herd/flock/group mark was assigned.
+    /// </summary>
     [BsonElement("startDate")]
     [JsonPropertyName("startDate")]
     public DateTime StartDate { get; set; }
 
+    /// <summary>
+    /// The date the herd/flock/group mark was removed.
+    /// </summary>
     [BsonElement("endDate")]
     [JsonPropertyName("endDate")]
     public DateTime? EndDate { get; set; }
 
+    /// <summary>
+    /// The species associated with this mark.
+    /// </summary>
     [BsonElement("species")]
     [JsonPropertyName("species")]
     public List<SpeciesSummaryDocument> Species { get; set; } = [];
 
+    /// <summary>
+    /// The timestamp of the last time the GroupMark record was updated.
+    /// </summary>
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }

@@ -1,0 +1,1357 @@
+openapi: 3.0.3
+info:
+  title: Livestock Keeper Data API (Public)
+  description: |-
+    The Livestock Keeper Data API is a reference data service that allows developers to build applications that connect with Defra's Livestock - Location and Party Data domain.
+
+    With the Livestock Keeper Data API, you can:
+
+    * **Authenticate** with Defra's identity system using Bearer (JWT) or Basic authentication.
+    * **Retrieve** location-based reference data such as Sites and its related data such as Parties, Species, Marks etc.
+    * **Retrieve** reference data for Parties and related information.
+
+    All list endpoints support **Change Data Capture (CDC)** via the `lastUpdatedDate` query parameter, returning only records updated since the provided timestamp.
+
+    All list endpoints return paginated results with `count`, `totalCount`, `values`, `page`, `pageSize`, `totalPages`, `hasNextPage`, and `hasPreviousPage` fields.
+
+  termsOfService: https://www.defra.gov.uk/legal
+  version: "1.0.0"
+
+  contact:
+    name: Defra Livestock Data Services Support
+    url: https://www.defra.gov.uk/support
+    email: support_cdp_platform@defra.gov.uk
+
+  license:
+    name: Livestock Data Services Agreement
+    url: https://www.defra.gov.uk/services-agreement/
+
+servers:
+  - url: /
+    description: Current environment
+
+externalDocs:
+  description: Defra website
+  url: https://www.defra.gov.uk/
+
+tags:
+  - name: site
+    description: Operations related to sites (premises/holdings)
+  - name: site reference
+    description: Reference data related to sites (countries)
+  - name: party
+    description: Operations related to parties (keepers, organisations)
+  - name: housekeeping
+    description: Health checks and system status
+
+security:
+  - bearerAuth: []
+  - basicAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT authorisation token
+    basicAuth:
+      type: http
+      scheme: basic
+      description: Basic authentication credentials
+
+  schemas:
+    # ─── Country ──────────────────────────────────────────────────────
+    Country:
+      type: object
+      description: An ISO country reference record.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: "This is an immutable field which represents the golden key of the reference object."
+        code:
+          type: string
+          example: GB-ENG
+          description: "This the business code/key of the Country object. This is a mutable field, where this field data could possibly change."
+        name:
+          type: string
+          example: England
+          description: "This the business name of the Country object. This is a mutable field, where this field data could possibly change."
+        longName:
+          type: string
+          example: England - United Kingdom
+        euTradeMemberFlag:
+          type: boolean
+          example: true
+        devolvedAuthorityFlag:
+          type: boolean
+          example: true
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: "The timestamp of the last time the Country record was updated"
+      required:
+        - code
+        - name
+
+    # ─── Country Summary (embedded in Address) ────────────────────────
+    CountrySummary:
+      type: object
+      description: A lightweight country summary embedded within address records.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          example: GB-ENG
+        name:
+          type: string
+          example: England
+        longName:
+          type: string
+          nullable: true
+          example: England - United Kingdom
+        euTradeMemberFlag:
+          type: boolean
+        devolvedAuthorityFlag:
+          type: boolean
+        lastModifiedDate:
+          type: string
+          format: date-time
+          nullable: true
+
+    # ─── Communication ────────────────────────────────────────────────
+    Communication:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: "This is an immutable field which represents the golden key of the master data object."
+        email:
+          type: string
+          example: john.doe@somecompany.co.uk
+        mobile:
+          type: string
+          example: "07123456789"
+        landline:
+          type: string
+          example: "0114 1231234"
+        primaryContactFlag:
+          type: boolean
+          nullable: true
+          example: true
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Communication record was updated"
+
+    # ─── Address ──────────────────────────────────────────────────────
+    Address:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: "This is an immutable field which represents the golden key of the master data object."
+        uprn:
+          type: integer
+          nullable: true
+          example: 671544009
+        addressLine1:
+          type: string
+          nullable: false
+          description: "This single address line is associated with the OS Address Base Fields such as SAO_TEXT, SAO_START_NUMBER, PAO_TEXT, PAO_START_NUMBER and STREET_DESCRIPTION."
+          example: "Hansel & Gretel Farm, Pigs Street"
+        addressLine2:
+          type: string
+          nullable: true
+          example: "Cloverfield"
+          description: "This optional field is associated with the OS Address Base Field of LOCALITY, if applicable."
+        postTown:
+          type: string
+          nullable: true
+          example: "Clover town"
+          description: "This field describes the Town or City of the Address. It is aligned to the OS Address Base Field of POST_TOWN."
+        county:
+          type: string
+          nullable: true
+          example: "Sussex"
+          description: "This optional field is associated with the OS Address Base Field of ADMINISTRATIVE_AREA."
+        postcode:
+          type: string
+          nullable: false
+          example: "S36 2BS"
+        country:
+          $ref: '#/components/schemas/CountrySummary'
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Address record was updated"
+      required:
+        - addressLine1
+        - postcode
+
+    # ─── Location ─────────────────────────────────────────────────────
+    Location:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: "This is an immutable field which represents the golden key of the master data object."
+        osMapReference:
+          type: string
+          example: "SK25979936"
+        easting:
+          type: number
+          format: double
+          nullable: true
+          example: 425978.12
+        northing:
+          type: number
+          format: double
+          nullable: true
+          example: 399361.50
+        address:
+          $ref: '#/components/schemas/Address'
+        communication:
+          type: array
+          items:
+            $ref: '#/components/schemas/Communication'
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Location record was updated"
+
+    # ─── Species Summary (embedded in sites/marks) ────────────────────
+    SpeciesSummary:
+      type: object
+      description: A lightweight species reference embedded within site and mark records.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: "This is an immutable field which represents the golden key of the reference object."
+        code:
+          type: string
+          example: CTT
+        name:
+          type: string
+          example: Cattle
+        lastModifiedDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: "The timestamp of the last time the Species record was updated"
+      required:
+        - code
+        - name
+
+    # ─── Managed Species (embedded in party roles) ────────────────────
+    ManagedSpecies:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          example: CTT
+        name:
+          type: string
+          example: Cattle
+        startDate:
+          type: string
+          format: date-time
+          description: "The date the said species came under the care of the said Role."
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: "The date the said species left the care of the said Role."
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the ManagedSpecies record was updated"
+      required:
+        - code
+        - name
+
+    # ─── Group Mark ───────────────────────────────────────────────────
+    GroupMark:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        mark:
+          type: string
+          example: "564545"
+        startDate:
+          type: string
+          format: date-time
+          description: "The date the herd/flock/group mark was assigned."
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: "The date the herd/flock/group mark was removed."
+        species:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpeciesSummary'
+        lastUpdatedDate:
+          type: string
+          format: date-time
+      required:
+        - mark
+
+    # ─── Site Identifier Type ─────────────────────────────────────────
+    SiteIdentifierType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: "This is an immutable field which represents the golden key of the reference object."
+        code:
+          type: string
+          description: "The business key/code values for a Site Identifier Type"
+          example: "CPHN"
+        name:
+          type: string
+          description: "The type which identifies the site identifier."
+          example: "CPH Number"
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: "The timestamp of the last time the SiteIdentifier Type record was updated"
+
+    # ─── Site Identifier ──────────────────────────────────────────────
+    SiteIdentifier:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        identifier:
+          type: string
+          nullable: false
+          example: "57/103/2335"
+        type:
+          $ref: '#/components/schemas/SiteIdentifierType'
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the SiteIdentifier record was updated"
+      required:
+        - identifier
+        - type
+
+    # ─── Site Type (Premises Type Summary) ────────────────────────────
+    SiteType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: "This is an immutable field which represents the golden key of the reference object."
+        code:
+          type: string
+          description: "The business key/code values for a siteType"
+          example: "AH"
+        name:
+          type: string
+          description: "The type of site an animal may reside at."
+          example: "Agricultural Holding"
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: "The timestamp of the last time the SiteType record was updated"
+
+    # ─── Site Activity Type ───────────────────────────────────────────
+    SiteActivityType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: "This is an immutable field which represents the golden key of the reference object."
+        code:
+          type: string
+          nullable: false
+          example: WP
+        name:
+          type: string
+          example: Wildlife Park
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: "The timestamp of the last time the SiteActivityType record was updated"
+
+    # ─── Site Activity ────────────────────────────────────────────────
+    SiteActivity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        type:
+          $ref: '#/components/schemas/SiteActivityType'
+        startDate:
+          type: string
+          format: date-time
+          nullable: true
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the SiteActivity record was updated"
+
+    # ─── Role (embedded in party roles) ───────────────────────────────
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: "This is an immutable field which represents the golden key of the reference object."
+        code:
+          type: string
+          description: "This is the unique code assigned to the Role entity"
+          example: "LIVESTOCKKEEPER"
+        name:
+          type: string
+          example: "Livestock Keeper"
+          nullable: true
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: "The timestamp of the last time the Role record was updated"
+
+    # ─── Party Role (with site - used in PartyDocument) ───────────────
+    PartyRoleWithSite:
+      type: object
+      description: "A role assigned to a party, with optional site association and species managed under that role."
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        site:
+          $ref: '#/components/schemas/PartyRoleSite'
+        role:
+          $ref: '#/components/schemas/Role'
+        speciesManagedByRole:
+          type: array
+          description: "The list of species managed by the said Role assigned to the said Party."
+          items:
+            $ref: '#/components/schemas/ManagedSpecies'
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: "The timestamp of the last time the Roles To Party record was updated"
+
+    # ─── Party Role Site (lightweight site in party role) ─────────────
+    PartyRoleSite:
+      type: object
+      description: "A lightweight site summary embedded within a party's role."
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          nullable: true
+        type:
+          $ref: '#/components/schemas/SiteType'
+        state:
+          type: string
+          nullable: true
+          enum:
+            - active
+            - inactive
+        identifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SiteIdentifier'
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          nullable: true
+
+    # ─── Party Role (without site - used in SitePartyDocument) ────────
+    PartyRole:
+      type: object
+      description: "A role assigned to a party, with species managed under that role."
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        role:
+          $ref: '#/components/schemas/Role'
+        speciesManagedByRole:
+          type: array
+          description: "The list of species managed by the said Role assigned to the said Party."
+          items:
+            $ref: '#/components/schemas/ManagedSpecies'
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          nullable: true
+
+    # ─── Site Party (embedded within a Site) ──────────────────────────
+    SiteParty:
+      type: object
+      description: "A party associated with a site, containing their contact details, address and roles."
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        customerNumber:
+          type: string
+          example: "C77473"
+          description: "This is the L or the C number provided from the SAM system."
+        title:
+          type: string
+          nullable: true
+          example: "Mr"
+        firstName:
+          type: string
+          nullable: true
+          example: "John"
+        lastName:
+          type: string
+          nullable: true
+          example: "Doe"
+        name:
+          type: string
+          nullable: true
+          example: "John Doe"
+        partyType:
+          type: string
+          nullable: true
+          example: Person
+          enum:
+            - Person
+            - Organisation
+        state:
+          type: string
+          nullable: true
+          enum:
+            - active
+            - inactive
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Site Party record was updated"
+        communication:
+          type: array
+          items:
+            $ref: '#/components/schemas/Communication'
+        correspondanceAddress:
+          $ref: '#/components/schemas/Address'
+        partyRoles:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyRole'
+
+    # ─── Party (top-level document) ───────────────────────────────────
+    Party:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          nullable: true
+          example: "Mr"
+        firstName:
+          type: string
+          nullable: true
+          example: "John"
+        lastName:
+          type: string
+          nullable: true
+          example: "Doe"
+        name:
+          type: string
+          nullable: true
+          example: "John Doe"
+        customerNumber:
+          type: string
+          example: "C77473"
+          description: "This is the L or the C number provided from the SAM system."
+        partyType:
+          type: string
+          nullable: true
+          example: Person
+          enum:
+            - Person
+            - Organisation
+        state:
+          type: string
+          nullable: true
+          enum:
+            - active
+            - inactive
+        communication:
+          type: array
+          items:
+            $ref: '#/components/schemas/Communication'
+        correspondanceAddress:
+          $ref: '#/components/schemas/Address'
+        partyRoles:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyRoleWithSite'
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Party record was updated"
+
+    # ─── Site (top-level document) ────────────────────────────────────
+    Site:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        type:
+          $ref: '#/components/schemas/SiteType'
+        name:
+          type: string
+          example: Hansel & Gretel Farm
+        state:
+          type: string
+          nullable: true
+          enum:
+            - active
+            - inactive
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+        source:
+          type: string
+          nullable: true
+          example: SAM
+        destroyIdentityDocumentsFlag:
+          type: boolean
+          nullable: true
+        location:
+          $ref: '#/components/schemas/Location'
+        identifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SiteIdentifier'
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/SiteParty'
+        species:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpeciesSummary'
+        marks:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupMark'
+        activities:
+          type: array
+          items:
+            $ref: '#/components/schemas/SiteActivity'
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: "The timestamp of the last time the Site record was updated"
+
+    # ─── Error Schemas ────────────────────────────────────────────────
+    ProblemDetails:
+      type: object
+      description: |-
+        The ProblemDetails object provides detailed information about errors that occurred during an API call execution.
+
+        This problem object:
+
+          * **conforms** to the [RFC9457](https://www.rfc-editor.org/info/rfc9457) (formerly [RFC7807](https://tools.ietf.org/html/rfc7807)).
+
+          * is **extended** with the following properties:
+
+          * **errors** - an array of errors providing contextual information on the root cause of the problem.
+
+        The ProblemDetails referenced by this domain utilize the [SmartBear Problems Registry](https://problems-registry.smartbear.com/).
+      properties:
+        type:
+          type: string
+          description: "A URI reference that identifies the problem type."
+          format: uri
+          maxLength: 1024
+        status:
+          type: integer
+          description: "The HTTP status code generated by the origin server for this occurrence of the problem."
+          format: int32
+          minimum: 100
+          maximum: 599
+        title:
+          type: string
+          description: "A short, human-readable summary of the problem type."
+          maxLength: 1024
+        detail:
+          type: string
+          description: "A human-readable explanation specific to this occurrence of the problem."
+          maxLength: 4096
+        instance:
+          type: string
+          description: "A URI reference that identifies the specific occurrence of the problem."
+          format: uri
+        errors:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+      required:
+        - type
+        - title
+
+    ErrorDetail:
+      type: object
+      description: "An object to provide explicit details on a problem towards an API consumer."
+      properties:
+        detail:
+          type: string
+          description: "A granular description on the specific error related to a body property, query parameter, path parameters, and/or header."
+          maxLength: 4096
+        source:
+          type: string
+          description: "The source of the error, e.g. the name of a header, query or path parameter, or a JSON pointer to a specific request body property."
+          maxLength: 1024
+        value:
+          type: string
+          description: "The value that has caused the error, e.g. the value passed in as a header, query or path parameter, or a request body property that lead to the error."
+        code:
+          type: string
+          description: "A string containing additional provider specific codes to identify the error context."
+          maxLength: 50
+      required:
+        - detail
+
+  responses:
+    BadRequest:
+      description: "The request was malformed or could not be processed."
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            invalidRequestSchema:
+              $ref: '#/components/examples/invalid-request-schema'
+    Unauthorized:
+      description: "Access token is not set or invalid."
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            unauthorized:
+              $ref: '#/components/examples/unauthorized'
+    Forbidden:
+      description: "The requestor is not authorized to perform this operation on the resource."
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            forbidden:
+              $ref: '#/components/examples/forbidden'
+    NotFound:
+      description: "The requested resource was not found."
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            notFound:
+              $ref: '#/components/examples/not-found'
+    ServerError:
+      description: "The server encountered an unexpected error"
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            serverError:
+              $ref: '#/components/examples/server-error'
+    ServiceUnavailable:
+      description: "The service requested is unavailable"
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            serviceUnavailable:
+              $ref: '#/components/examples/service-unavailable'
+
+  examples:
+    invalid-request-schema:
+      description: "Representation of a 400 Bad Request response where the request has failed schema validation."
+      value:
+        type: "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.1"
+        status: 400
+        title: "Request Schema Error"
+        detail: "The request failed schema validation."
+        errors:
+          - detail: "The request is missing the required query parameter {id}"
+            code: "S002"
+            source: "id"
+    unauthorized:
+      value:
+        type: "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.2"
+        title: "Unauthorized"
+        detail: "Access token not set or invalid. The requested resource could not be returned"
+        status: 401
+    forbidden:
+      value:
+        type: "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.4"
+        title: "Forbidden"
+        detail: "The resource could not be returned as the requestor is not authorized"
+        status: 403
+    not-found:
+      value:
+        type: "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.5"
+        title: "Not found"
+        detail: "The requested resource was not found"
+        status: 404
+    server-error:
+      value:
+        type: "https://datatracker.ietf.org/doc/html/rfc9110#section-15.6.1"
+        title: "Server Error"
+        detail: "The server encountered an unexpected error"
+        status: 500
+    service-unavailable:
+      value:
+        type: "https://datatracker.ietf.org/doc/html/rfc9110#section-15.6.4"
+        title: "Service Unavailable"
+        detail: "The service is currently unavailable"
+        status: 503
+
+paths:
+  # ═══════════════════════════════════════════════════════════════════
+  # HOUSEKEEPING
+  # ═══════════════════════════════════════════════════════════════════
+  /health:
+    get:
+      security:
+        - {}
+      tags:
+        - housekeeping
+      summary: Execute a health check
+      description: Execute a health check on the API and its dependencies. Returns 200 for healthy/degraded, 503 for unhealthy.
+      operationId: getHealth
+      responses:
+        '200':
+          description: OK - API is healthy or degraded
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Health check response (format defined by ASP.NET Health Checks)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          description: Service Unhealthy
+
+  # ═══════════════════════════════════════════════════════════════════
+  # COUNTRIES
+  # ═══════════════════════════════════════════════════════════════════
+  /api/countries:
+    get:
+      tags:
+        - site reference
+      summary: Retrieve a list of ISO Countries
+      description: Endpoint created to retrieve a list of ISO Countries. Parameters can be set to filter by name, code, EU trade membership, and devolved authority status. Supports Change Data Capture (CDC) via the lastUpdatedDate parameter.
+      operationId: getCountries
+      parameters:
+        - name: name
+          in: query
+          required: false
+          description: Filter countries by name.
+          schema:
+            type: string
+            example: "England"
+        - name: code
+          in: query
+          required: false
+          description: Filter countries by code. Accepts a comma-separated list of country codes.
+          schema:
+            type: string
+            example: "GB-ENG,FR"
+        - name: euTradeMember
+          in: query
+          required: false
+          description: Filter by EU trade membership flag.
+          schema:
+            type: boolean
+            example: true
+        - name: devolvedAuthority
+          in: query
+          required: false
+          description: Filter by devolved authority flag.
+          schema:
+            type: boolean
+            example: true
+        - name: page
+          in: query
+          required: false
+          description: Page number (1-based). Defaults to 1.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          description: Number of records per page. Defaults to 10.
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+        - name: order
+          in: query
+          required: false
+          description: The field to order results by. Defaults to code.
+          schema:
+            type: string
+            enum:
+              - code
+              - name
+        - name: sort
+          in: query
+          required: false
+          description: The sort direction. Defaults to asc.
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+        - name: lastUpdatedDate
+          in: query
+          required: false
+          description: Returns only Countries that have been updated since this timestamp (inclusive). This is the key parameter for Change Data Capture (CDC).
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: OK - Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: Number of items on the current page
+                  totalCount:
+                    type: integer
+                    description: Total number of items across all pages
+                  values:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Country'
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+                  totalPages:
+                    type: integer
+                  hasNextPage:
+                    type: boolean
+                  hasPreviousPage:
+                    type: boolean
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/countries/{id}:
+    get:
+      tags:
+        - site reference
+      summary: Retrieve a country's detailed information.
+      description: The endpoint returns an object containing the requested country detailed information.
+      operationId: getCountry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique identifier (UUID) of the country.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK - Successful request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Country'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # ═══════════════════════════════════════════════════════════════════
+  # SITES
+  # ═══════════════════════════════════════════════════════════════════
+  /api/sites:
+    get:
+      tags:
+        - site
+      summary: Retrieve a list of available sites
+      description: Endpoint created to retrieve a list of sites. Parameters can be set to filter by various elements such as Site Identifiers, Site Type, Site Id, Party Id etc. Supports Change Data Capture (CDC) via the lastUpdatedDate parameter.
+      operationId: getSites
+      parameters:
+        - name: siteIdentifier
+          in: query
+          required: false
+          description: Filter by a single site identifier such as CPH Number, FSA No, Port No etc.
+          schema:
+            type: string
+            example: "57/103/2335"
+        - name: siteIdentifiers
+          in: query
+          required: false
+          description: Filter by multiple site identifiers (comma-separated). A maximum number of values applies.
+          schema:
+            type: string
+            example: "57/103/2335,57/103/2336"
+        - name: type
+          in: query
+          required: false
+          description: |-
+            Filter by site type code (comma-separated). Possible site type codes include:
+            AC (Assembly Centre), AH (Agricultural Holding), AP (Airport), CA (Calf Collection Centre),
+            CC (Collection Centre), CL (Common Land), HA (Haulier), HK (Hunt Kennel),
+            KY (Knacker's Yard), LA (Lairage), LR (Laboratory/Research), MA (Market),
+            QU (Quarantine), SG (Showground), SM (S/H Both MP & Cs), SP (Seaport),
+            SR (Slaughter House Red Meat), ST (Staging Post), SW (Slaughter House White Meat),
+            VE (Veterinary Practice), VI (Veterinary Investigation Centre), WP (Wildlife Park), ZO (Zoo).
+          schema:
+            type: string
+            example: "AH,MA"
+        - name: siteId
+          in: query
+          required: false
+          description: Filter by a single site ID (UUID).
+          schema:
+            type: string
+            format: uuid
+        - name: siteIds
+          in: query
+          required: false
+          description: Filter by multiple site IDs (comma-separated UUIDs). A maximum number of values applies.
+          schema:
+            type: string
+            example: "3fa85f64-5717-4562-b3fc-2c963f66afa6,4fb96e75-6828-5673-c4gd-3d074g77bfb7"
+        - name: keeperPartyId
+          in: query
+          required: false
+          description: Filter sites by a keeper party ID (UUID).
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          required: false
+          description: Page number (1-based). Defaults to 1.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          description: Number of records per page. Defaults to 10.
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+        - name: order
+          in: query
+          required: false
+          description: The field to order results by. Defaults to name.
+          schema:
+            type: string
+            enum:
+              - name
+              - type
+              - siteidentifier
+        - name: sort
+          in: query
+          required: false
+          description: The sort direction. Defaults to asc.
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+        - name: lastUpdatedDate
+          in: query
+          required: false
+          description: Returns only Sites that have been updated since this timestamp (inclusive). This is the key parameter for Change Data Capture (CDC).
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: OK - Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: Number of items on the current page
+                  totalCount:
+                    type: integer
+                    description: Total number of items across all pages
+                  values:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Site'
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+                  totalPages:
+                    type: integer
+                  hasNextPage:
+                    type: boolean
+                  hasPreviousPage:
+                    type: boolean
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/sites/{id}:
+    get:
+      tags:
+        - site
+      summary: Retrieve a site's detailed information.
+      description: The endpoint returns an object containing the requested site's full detailed information, including location, identifiers, parties, species, marks, and activities.
+      operationId: getSiteById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique identifier (UUID) of the site.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK - Successful request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # ═══════════════════════════════════════════════════════════════════
+  # PARTIES
+  # ═══════════════════════════════════════════════════════════════════
+  /api/parties:
+    get:
+      tags:
+        - party
+      summary: Retrieve a list of parties.
+      description: The endpoint allows searching and retrieving a list of parties. Supports filtering by name, email, and Change Data Capture (CDC) via the lastUpdatedDate parameter.
+      operationId: getParties
+      parameters:
+        - name: firstName
+          in: query
+          required: false
+          description: Filter parties by first name.
+          schema:
+            type: string
+            example: Jane
+        - name: lastName
+          in: query
+          required: false
+          description: Filter parties by last name.
+          schema:
+            type: string
+            example: Doe
+        - name: email
+          in: query
+          required: false
+          description: Filter parties by email address.
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          description: Page number (1-based). Defaults to 1.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          description: Number of records per page. Defaults to 10.
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+        - name: order
+          in: query
+          required: false
+          description: The field to order results by. Defaults to name.
+          schema:
+            type: string
+            enum:
+              - id
+              - name
+        - name: sort
+          in: query
+          required: false
+          description: The sort direction. Defaults to asc.
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+        - name: lastUpdatedDate
+          in: query
+          required: false
+          description: Returns only Parties that have been updated since this timestamp (inclusive). This is the key parameter for Change Data Capture (CDC).
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: OK - Successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: Number of items on the current page
+                  totalCount:
+                    type: integer
+                    description: Total number of items across all pages
+                  values:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Party'
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+                  totalPages:
+                    type: integer
+                  hasNextPage:
+                    type: boolean
+                  hasPreviousPage:
+                    type: boolean
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/parties/{id}:
+    get:
+      tags:
+        - party
+      summary: Retrieve details of a party.
+      description: The endpoint allows to retrieve details of a given party, including their communication details, correspondence address, and roles.
+      operationId: getPartiesById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique identifier (UUID) of the party.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK - Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'

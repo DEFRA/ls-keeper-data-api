@@ -22,7 +22,7 @@ public static class PartyTypeRules
     /// <summary>
     /// TBC
     /// </summary>
-    /// <param name="party"></param>
+    /// <param name="holder"></param>
     /// <returns></returns>
     public static PartyType DeterminePartyType(this SamCphHolder holder)
     {
