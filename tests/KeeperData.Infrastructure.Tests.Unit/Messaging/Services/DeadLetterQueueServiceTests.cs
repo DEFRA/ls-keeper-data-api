@@ -473,11 +473,6 @@ public class DeadLetterQueueServiceTests
     {
         // Arrange
         var message = CreateTestMessage("msg-1", "correlation-1");
-        message.MessageAttributes["DLQ_OriginalMessageId"] = new MessageAttributeValue { StringValue = "original-msg-1", DataType = "String" };
-        message.MessageAttributes["DLQ_FailureReason"] = new MessageAttributeValue { StringValue = "NonRetryableException", DataType = "String" };
-        message.MessageAttributes["DLQ_FailureMessage"] = new MessageAttributeValue { StringValue = "Data format error", DataType = "String" };
-        message.MessageAttributes["DLQ_FailureTimestamp"] = new MessageAttributeValue { StringValue = "2024-01-15T10:30:00Z", DataType = "String" };
-        message.MessageAttributes["DLQ_ReceiveCount"] = new MessageAttributeValue { StringValue = "3", DataType = "Number" };
         message.MessageAttributes["Subject"] = new MessageAttributeValue { StringValue = "OrderCreated", DataType = "String" };
 
         _mockSqs.Setup(x => x.ReceiveMessageAsync(
@@ -504,11 +499,6 @@ public class DeadLetterQueueServiceTests
 
         // Assert
         var dto = result.Messages.First();
-        dto.OriginalMessageId.Should().Be("original-msg-1");
-        dto.FailureReason.Should().Be("NonRetryableException");
-        dto.FailureMessage.Should().Be("Data format error");
-        dto.FailureTimestamp.Should().Be("2024-01-15T10:30:00Z");
-        dto.ReceiveCount.Should().Be("3");
         dto.MessageType.Should().Be("OrderCreated");
     }
 

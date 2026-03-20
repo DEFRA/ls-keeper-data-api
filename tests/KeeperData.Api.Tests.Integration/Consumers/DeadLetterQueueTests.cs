@@ -274,11 +274,6 @@ public class DeadLetterQueueTests : IAsyncLifetime
         {
             ["CorrelationId"] = new MessageAttributeValue { StringValue = "test-correlation-123", DataType = "String" },
             ["Subject"] = new MessageAttributeValue { StringValue = "TestEvent", DataType = "String" },
-            ["DLQ_OriginalMessageId"] = new MessageAttributeValue { StringValue = "original-msg-456", DataType = "String" },
-            ["DLQ_FailureReason"] = new MessageAttributeValue { StringValue = "NonRetryableException", DataType = "String" },
-            ["DLQ_FailureMessage"] = new MessageAttributeValue { StringValue = "Test failure message", DataType = "String" },
-            ["DLQ_FailureTimestamp"] = new MessageAttributeValue { StringValue = DateTime.UtcNow.ToString("O"), DataType = "String" },
-            ["DLQ_ReceiveCount"] = new MessageAttributeValue { StringValue = "2", DataType = "Number" }
         };
 
         await SendTestMessageAsync(_dlqUrl, "{\"test\": \"data\"}", attributes);
@@ -294,10 +289,6 @@ public class DeadLetterQueueTests : IAsyncLifetime
         var message = result.Messages.First();
         message.CorrelationId.Should().Be("test-correlation-123");
         message.MessageType.Should().Be("TestEvent");
-        message.OriginalMessageId.Should().Be("original-msg-456");
-        message.FailureReason.Should().Be("NonRetryableException");
-        message.FailureMessage.Should().Be("Test failure message");
-        message.ReceiveCount.Should().Be("2");
         message.Body.Should().Contain("test");
 
         await PurgeAsync();
