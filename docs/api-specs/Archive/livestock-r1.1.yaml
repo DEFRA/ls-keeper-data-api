@@ -11,7 +11,7 @@ info:
     * **Retrieve** reference data for Parties and its related information.
     * **Provide** count of the current sites within the scope of Livestock Information Service.
     
-  termsOfService: http://www.defra.gov.uk/legal
+  termsOfService: https://www.defra.gov.uk/legal
   
   contact:
     name: Defra Livestock Data Services Support
@@ -32,7 +32,7 @@ info:
  
 externalDocs:
   description: Defra website
-  url: http://www.defra.gov.uk/
+  url: https://www.defra.gov.uk/
 tags:
   - name: site
   - name: site reference

@@ -121,7 +121,7 @@ public static class ServiceCollectionExtensions
                 Title = "Livestock Keeper Data API (Public)",
                 Version = "1.0.0",
                 Description = ApiDescription,
-                TermsOfService = new Uri("http://www.defra.gov.uk/legal"),
+                TermsOfService = new Uri("https://www.defra.gov.uk/legal"),
                 Contact = contactInfo,
                 License = licenseInfo
             });

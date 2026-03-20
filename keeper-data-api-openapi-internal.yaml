@@ -11,7 +11,7 @@ info:
 
     All internal endpoints require **Basic authentication** and are protected by feature flags.
 
-  termsOfService: http://www.defra.gov.uk/legal
+  termsOfService: https://www.defra.gov.uk/legal
   version: "1.0.0"
 
   contact:
@@ -29,7 +29,7 @@ servers:
 
 externalDocs:
   description: Defra website
-  url: http://www.defra.gov.uk/
+  url: https://www.defra.gov.uk/
 
 tags:
   - name: import
