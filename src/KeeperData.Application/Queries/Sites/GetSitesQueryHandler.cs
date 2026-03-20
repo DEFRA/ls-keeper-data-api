@@ -9,10 +9,10 @@ public class GetSitesQueryHandler(SitesQueryAdapter adapter)
 {
     private readonly SitesQueryAdapter _adapter = adapter;
 
-    protected override async Task<(List<SiteDocument> Items, int TotalCount)> FetchAsync(GetSitesQuery request, CancellationToken cancellationToken)
+    protected override async Task<(List<SiteDocument> Items, int TotalCount, string? NextCursor)> FetchAsync(GetSitesQuery request, CancellationToken cancellationToken)
     {
-        var (siteDocuments, totalCount) = await _adapter.GetSitesAsync(request, cancellationToken);
+        var (siteDocuments, totalCount, nextCursor) = await _adapter.GetSitesAsync(request, cancellationToken);
 
-        return (siteDocuments, totalCount);
+        return (siteDocuments, totalCount, nextCursor);
     }
 }

@@ -8,23 +8,24 @@ public static class SiteSortBuilder
     public static SortDefinition<SiteDocument> Build(GetSitesQuery query)
     {
         var sortBuilder = Builders<SiteDocument>.Sort;
-
         var sortField = query.Order?.ToLowerInvariant() ?? "name";
         var sortDirection = query.Sort?.ToLowerInvariant() ?? "asc";
 
-        // can't use a strongly-typed expression for nested array fields
         var sortFieldPath = GetSortFieldPath(sortField);
+        var primarySort = sortDirection == "desc"
+            ? sortBuilder.Descending(sortFieldPath)
+            : sortBuilder.Ascending(sortFieldPath);
 
-        return sortDirection switch
-        {
-            "desc" => sortBuilder.Descending(sortFieldPath),
-            _ => sortBuilder.Ascending(sortFieldPath)
-        };
+        if (sortFieldPath == "_id") return primarySort;
+
+        return sortDirection == "desc"
+            ? primarySort.Descending(x => x.Id)
+            : primarySort.Ascending(x => x.Id);
     }
 
-    private static string GetSortFieldPath(string field)
+    public static string GetSortFieldPath(string? field)
     {
-        return field switch
+        return (field?.ToLowerInvariant()) switch
         {
             "name" => "name",
             "type" => "type.code",

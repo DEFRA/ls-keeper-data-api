@@ -11,4 +11,5 @@ public class PaginatedResult<T>
     public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
     public bool HasNextPage => Page < TotalPages;
     public bool HasPreviousPage => Page > 1;
+    public string? NextCursor { get; set; }
 }

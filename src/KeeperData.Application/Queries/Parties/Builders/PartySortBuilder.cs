@@ -8,27 +8,28 @@ public static class PartySortBuilder
     public static SortDefinition<PartyDocument> Build(GetPartiesQuery query)
     {
         var sortBuilder = Builders<PartyDocument>.Sort;
-
-        var sortField = query.Order?.ToLowerInvariant() ?? "lastname";
+        var sortField = query.Order?.ToLowerInvariant() ?? "name";
         var sortDirection = query.Sort?.ToLowerInvariant() ?? "asc";
 
-        // can't use a strongly-typed expression for nested array fields
         var sortFieldPath = GetSortFieldPath(sortField);
+        var primarySort = sortDirection == "desc"
+            ? sortBuilder.Descending(sortFieldPath)
+            : sortBuilder.Ascending(sortFieldPath);
 
-        return sortDirection switch
-        {
-            "desc" => sortBuilder.Descending(sortFieldPath),
-            _ => sortBuilder.Ascending(sortFieldPath)
-        };
+        if (sortFieldPath == "_id") return primarySort;
+
+        return sortDirection == "desc"
+            ? primarySort.Descending(x => x.Id)
+            : primarySort.Ascending(x => x.Id);
     }
 
-    private static string GetSortFieldPath(string field)
+    public static string GetSortFieldPath(string? field)
     {
-        return field switch
+        return (field?.ToLowerInvariant()) switch
         {
-            "id" => "id",
-            "lastname" => "lastname",
-            _ => "lastname"
+            "id" => "_id",
+            "name" => "name",
+            _ => "name"
         };
     }
 }
