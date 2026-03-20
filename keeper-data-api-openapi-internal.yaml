@@ -1,0 +1,440 @@
+openapi: 3.0.3
+info:
+  title: Livestock Keeper Data API (Internal)
+  description: |-
+    The Livestock Keeper Data API Internal specification exposes administrative and operational endpoints used by platform operators and automated pipelines.
+
+    With the Internal API, you can:
+
+    * **Trigger** data import scans from CTS and SAM systems (bulk and daily, feature-gated).
+    * **Manage** dead letter queue messages — inspect, redrive, or purge failed messages.
+
+    All internal endpoints require **Basic authentication** and are protected by feature flags.
+
+  termsOfService: http://www.defra.gov.uk/legal
+  version: "1.0.0"
+
+  contact:
+    name: Defra Livestock Data Services Support
+    url: https://www.defra.gov.uk/support
+    email: support_cdp_platform@defra.gov.uk
+
+  license:
+    name: Livestock Data Services Agreement
+    url: https://www.defra.gov.uk/services-agreement/
+
+servers:
+  - url: /
+    description: Current environment
+
+externalDocs:
+  description: Defra website
+  url: http://www.defra.gov.uk/
+
+tags:
+  - name: import
+    description: Internal data import scan operations (feature-gated, Basic auth only)
+  - name: Dead Letter Queue
+    description: Internal dead letter queue administration (feature-gated, Basic auth only)
+
+security:
+  - basicAuth: []
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: Basic authentication credentials
+
+  schemas:
+    # ─── Scan Schemas ─────────────────────────────────────────────────
+    StartScanResponse:
+      type: object
+      description: Response returned when a scan is successfully started.
+      properties:
+        scanCorrelationId:
+          type: string
+          format: uuid
+          description: A unique correlation ID for tracking the scan operation.
+        message:
+          type: string
+          description: A human-readable message about the scan status.
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: The UTC timestamp when the scan was started.
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    # ─── Dead Letter Queue Schemas ────────────────────────────────────
+    QueueStats:
+      type: object
+      description: Statistics about the dead letter queue.
+      properties:
+        queueUrl:
+          type: string
+        approximateMessageCount:
+          type: integer
+        approximateMessagesNotVisible:
+          type: integer
+        approximateMessagesDelayed:
+          type: integer
+        checkedAt:
+          type: string
+          format: date-time
+
+    DeadLetterMessage:
+      type: object
+      properties:
+        messageId:
+          type: string
+        originalMessageId:
+          type: string
+          nullable: true
+        failureReason:
+          type: string
+          nullable: true
+        failureMessage:
+          type: string
+          nullable: true
+        failureTimestamp:
+          type: string
+          nullable: true
+        receiveCount:
+          type: string
+          nullable: true
+        correlationId:
+          type: string
+          nullable: true
+        messageType:
+          type: string
+          nullable: true
+        body:
+          type: string
+
+    DeadLetterMessagesResult:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeadLetterMessage'
+        totalApproximateCount:
+          type: integer
+        checkedAt:
+          type: string
+          format: date-time
+
+    RedriveSummary:
+      type: object
+      properties:
+        messagesRedriven:
+          type: integer
+        messagesFailed:
+          type: integer
+        messagesDuplicated:
+          type: integer
+        messagesRemainingApprox:
+          type: integer
+        correlationIds:
+          type: array
+          items:
+            type: string
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+
+    PurgeResult:
+      type: object
+      properties:
+        purged:
+          type: boolean
+        approximateMessagesPurged:
+          type: integer
+        purgedAt:
+          type: string
+          format: date-time
+
+paths:
+  # ═══════════════════════════════════════════════════════════════════
+  # IMPORT SCANS (Feature-Gated, Basic Auth Only)
+  # ═══════════════════════════════════════════════════════════════════
+  /api/import/startCtsBulkScan:
+    post:
+      security:
+        - basicAuth: []
+      tags:
+        - import
+      summary: Start a CTS bulk scan
+      description: Triggers a CTS bulk scan import operation. This endpoint is feature-gated and only available when BulkScanEndpointsEnabled is true. Returns 409 if a scan is already running.
+      operationId: startCtsBulkScan
+      responses:
+        '202':
+          description: Accepted - Scan started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartScanResponse'
+        '409':
+          description: Conflict - A scan is already running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/import/startSamBulkScan:
+    post:
+      security:
+        - basicAuth: []
+      tags:
+        - import
+      summary: Start a SAM bulk scan
+      description: Triggers a SAM bulk scan import operation. This endpoint is feature-gated and only available when BulkScanEndpointsEnabled is true. Returns 409 if a scan is already running.
+      operationId: startSamBulkScan
+      responses:
+        '202':
+          description: Accepted - Scan started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartScanResponse'
+        '409':
+          description: Conflict - A scan is already running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/import/startCtsDailyScan:
+    post:
+      security:
+        - basicAuth: []
+      tags:
+        - import
+      summary: Start a CTS daily scan
+      description: Triggers a CTS daily scan import operation. This endpoint is feature-gated and only available when DailyScanEndpointsEnabled is true. Returns 409 if a scan is already running.
+      operationId: startCtsDailyScan
+      parameters:
+        - name: sinceHours
+          in: query
+          required: false
+          description: Number of hours to look back for changes. If not specified, uses the configured default.
+          schema:
+            type: integer
+      responses:
+        '202':
+          description: Accepted - Scan started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartScanResponse'
+        '409':
+          description: Conflict - A scan is already running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/import/startSamDailyScan:
+    post:
+      security:
+        - basicAuth: []
+      tags:
+        - import
+      summary: Start a SAM daily scan
+      description: Triggers a SAM daily scan import operation. This endpoint is feature-gated and only available when DailyScanEndpointsEnabled is true. Returns 409 if a scan is already running.
+      operationId: startSamDailyScan
+      parameters:
+        - name: sinceHours
+          in: query
+          required: false
+          description: Number of hours to look back for changes. If not specified, uses the configured default.
+          schema:
+            type: integer
+      responses:
+        '202':
+          description: Accepted - Scan started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartScanResponse'
+        '409':
+          description: Conflict - A scan is already running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ═══════════════════════════════════════════════════════════════════
+  # DEAD LETTER QUEUE ADMIN (Feature-Gated, Basic Auth Only)
+  # ═══════════════════════════════════════════════════════════════════
+  /api/admin/queues/deadletter/count:
+    get:
+      security:
+        - basicAuth: []
+      tags:
+        - Dead Letter Queue
+      summary: Get dead letter queue statistics
+      description: Returns approximate message counts for the dead letter queue. This endpoint is feature-gated and only available when AdminEndpointsEnabled is true.
+      operationId: getDeadLetterQueueCount
+      responses:
+        '200':
+          description: OK - Queue statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueStats'
+        '400':
+          description: Bad Request - DLQ URL not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service Unavailable - Unable to reach the dead letter queue
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  detail:
+                    type: string
+
+  /api/admin/queues/deadletter/messages:
+    get:
+      security:
+        - basicAuth: []
+      tags:
+        - Dead Letter Queue
+      summary: Peek at dead letter queue messages
+      description: Retrieves messages from the dead letter queue without removing them. This endpoint is feature-gated and only available when AdminEndpointsEnabled is true.
+      operationId: getDeadLetterMessages
+      parameters:
+        - name: maxMessages
+          in: query
+          required: false
+          description: Maximum number of messages to retrieve (1-10). Defaults to 5.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 5
+      responses:
+        '200':
+          description: OK - Messages retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeadLetterMessagesResult'
+        '400':
+          description: Bad Request - DLQ URL not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service Unavailable - Unable to reach the dead letter queue
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  detail:
+                    type: string
+
+  /api/admin/queues/deadletter/redrive:
+    post:
+      security:
+        - basicAuth: []
+      tags:
+        - Dead Letter Queue
+      summary: Redrive dead letter queue messages
+      description: Moves messages from the dead letter queue back to the main processing queue. This endpoint is feature-gated and only available when AdminEndpointsEnabled is true.
+      operationId: redriveDeadLetterMessages
+      parameters:
+        - name: maxMessages
+          in: query
+          required: false
+          description: Maximum number of messages to redrive (1-100). Defaults to 10.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: OK - Redrive summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RedriveSummary'
+        '400':
+          description: Bad Request - DLQ URL not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service Unavailable - Unable to reach the dead letter queue
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  detail:
+                    type: string
+
+  /api/admin/queues/deadletter/purge:
+    post:
+      security:
+        - basicAuth: []
+      tags:
+        - Dead Letter Queue
+      summary: Purge the dead letter queue
+      description: Permanently removes all messages from the dead letter queue. This is a destructive operation. This endpoint is feature-gated and only available when AdminEndpointsEnabled is true.
+      operationId: purgeDeadLetterQueue
+      responses:
+        '200':
+          description: OK - Purge result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurgeResult'
+        '400':
+          description: Bad Request - DLQ URL not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Requests - A purge operation is already in progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service Unavailable - Unable to reach the dead letter queue
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  detail:
+                    type: string

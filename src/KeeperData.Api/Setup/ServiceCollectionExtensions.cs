@@ -81,42 +81,77 @@ public static class ServiceCollectionExtensions
         services.Decorate<IDataBridgeClient, DataBridgeClientAnonymizer>();
     }
 
+    private static readonly string ApiDescription = """
+        The Livestock Keeper Data API is a reference data service that allows developers to build applications that connect with Defra's Livestock - Location and Party Data domain.
+
+        With the Livestock Keeper Data API, you can:
+
+        * **Authenticate** with Defra's identity system using Bearer (JWT) or Basic authentication.
+        * **Retrieve** location-based reference data such as Sites and its related data such as Parties, Species, Marks etc.
+        * **Retrieve** reference data for Parties and related information.
+        * **Trigger** data import scans (internal, feature-gated).
+        * **Manage** dead letter queue messages (internal, feature-gated).
+
+        All list endpoints support **Change Data Capture (CDC)** via the `lastUpdatedDate` query parameter, returning only records updated since the provided timestamp.
+
+        All list endpoints return paginated results with `count`, `totalCount`, `values`, `page`, `pageSize`, `totalPages`, `hasNextPage`, and `hasPreviousPage` fields.
+        """;
+
     private static void ConfigureSwagger(this IServiceCollection services)
     {
         services.AddEndpointsApiExplorer();
 
         services.AddSwaggerGen(options =>
         {
+            var contactInfo = new OpenApiContact
+            {
+                Name = "Defra Livestock Data Services Support",
+                Url = new Uri("https://www.defra.gov.uk/support"),
+                Email = "support_cdp_platform@defra.gov.uk"
+            };
+
+            var licenseInfo = new OpenApiLicense
+            {
+                Name = "Livestock Data Services Agreement",
+                Url = new Uri("https://www.defra.gov.uk/services-agreement/")
+            };
+
             options.SwaggerDoc("public", new OpenApiInfo
             {
-                Title = "Keeper Data API (Public)",
-                Version = "v1",
-                Description = "Publicly exposed endpoints for querying Parties and Sites."
+                Title = "Livestock Keeper Data API (Public)",
+                Version = "1.0.0",
+                Description = ApiDescription,
+                TermsOfService = new Uri("http://www.defra.gov.uk/legal"),
+                Contact = contactInfo,
+                License = licenseInfo
             });
 
             options.SwaggerDoc("internal", new OpenApiInfo
             {
-                Title = "Keeper Data API (Internal)",
-                Version = "v1",
-                Description = "Internal endpoints for data ingestion, scanning, and administration."
+                Title = "Livestock Keeper Data API (Internal)",
+                Version = "1.0.0",
+                Description = "Internal endpoints for data ingestion, scanning, and administration.",
+                Contact = contactInfo,
+                License = licenseInfo
             });
 
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
-                Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                Description = "JWT authorisation token",
                 Name = "Authorization",
                 In = ParameterLocation.Header,
-                Type = SecuritySchemeType.ApiKey,
-                Scheme = "Bearer"
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT"
             });
 
             options.AddSecurityDefinition("Basic", new OpenApiSecurityScheme
             {
-                Description = "Basic Authentication header. Example: \"Authorization: Basic {base64(username:password)}\"",
+                Description = "Basic authentication credentials",
                 Name = "Authorization",
                 In = ParameterLocation.Header,
                 Type = SecuritySchemeType.Http,
-                Scheme = "Basic"
+                Scheme = "basic"
             });
 
             options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -144,11 +179,22 @@ public static class ServiceCollectionExtensions
                     Array.Empty<string>()
                 }
             });
-            var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
-            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-            if (File.Exists(xmlPath))
+
+            // Include XML comments from all relevant assemblies
+            var assemblies = new[]
             {
-                options.IncludeXmlComments(xmlPath);
+                System.Reflection.Assembly.GetExecutingAssembly().GetName().Name,
+                "KeeperData.Core",
+                "KeeperData.Application"
+            };
+
+            foreach (var assemblyName in assemblies)
+            {
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, $"{assemblyName}.xml");
+                if (File.Exists(xmlPath))
+                {
+                    options.IncludeXmlComments(xmlPath);
+                }
             }
         });
     }

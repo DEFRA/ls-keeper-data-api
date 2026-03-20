@@ -1,4 +1,4 @@
-using Amazon.Runtime.Internal;
+using KeeperData.Api.Controllers.ResponseDtos;
 using KeeperData.Api.Controllers.ResponseDtos.Scans;
 using KeeperData.Api.Middleware;
 using KeeperData.Api.Worker.Tasks;
@@ -81,12 +81,22 @@ public static class WebApplicationExtensions
         {
             RegisterBulkScanEndpoint<ICtsBulkScanTask>(app, "/api/import/startCtsBulkScan", "CTS bulk scan")
                 .WithGroupName(InternalGroupName)
+                .WithTags("import")
+                .WithSummary("Start a CTS bulk scan")
+                .WithDescription("Triggers a full bulk scan of CTS data. Only one scan may run at a time.")
+                .Produces<StartScanResponse>(StatusCodes.Status202Accepted)
+                .Produces<ErrorResponse>(StatusCodes.Status409Conflict)
                 .RequireAuthorization(new AuthorizeAttribute
                 {
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
                 });
             RegisterBulkScanEndpoint<ISamBulkScanTask>(app, "/api/import/startSamBulkScan", "SAM bulk scan")
                 .WithGroupName(InternalGroupName)
+                .WithTags("import")
+                .WithSummary("Start a SAM bulk scan")
+                .WithDescription("Triggers a full bulk scan of SAM data. Only one scan may run at a time.")
+                .Produces<StartScanResponse>(StatusCodes.Status202Accepted)
+                .Produces<ErrorResponse>(StatusCodes.Status409Conflict)
                 .RequireAuthorization(new AuthorizeAttribute
                 {
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
@@ -97,12 +107,22 @@ public static class WebApplicationExtensions
         {
             RegisterDailyScanEndpoint<ICtsDailyScanTask>(app, "/api/import/startCtsDailyScan", "CTS daily scan")
                 .WithGroupName(InternalGroupName)
+                .WithTags("import")
+                .WithSummary("Start a CTS daily scan")
+                .WithDescription("Triggers a daily incremental scan of CTS data. The sinceHours parameter controls how far back to scan.")
+                .Produces<StartScanResponse>(StatusCodes.Status202Accepted)
+                .Produces<ErrorResponse>(StatusCodes.Status409Conflict)
                 .RequireAuthorization(new AuthorizeAttribute
                 {
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
                 });
             RegisterDailyScanEndpoint<ISamDailyScanTask>(app, "/api/import/startSamDailyScan", "SAM daily scan")
                 .WithGroupName(InternalGroupName)
+                .WithTags("import")
+                .WithSummary("Start a SAM daily scan")
+                .WithDescription("Triggers a daily incremental scan of SAM data. The sinceHours parameter controls how far back to scan.")
+                .Produces<StartScanResponse>(StatusCodes.Status202Accepted)
+                .Produces<ErrorResponse>(StatusCodes.Status409Conflict)
                 .RequireAuthorization(new AuthorizeAttribute
                 {
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
@@ -154,6 +174,7 @@ public static class WebApplicationExtensions
             .WithTags(DeadLetterQueueServiceConstants.Tags.DeadLetterQueue)
             .WithSummary("Get dead letter queue message count")
             .WithDescription("Returns the approximate number of messages in the dead letter queue")
+            .Produces<QueueStats>(StatusCodes.Status200OK)
             .RequireAuthorization(adminAuth);
 
         app.MapGet("/api/admin/queues/deadletter/peek", GetDeadLetterMessagesHandler)
