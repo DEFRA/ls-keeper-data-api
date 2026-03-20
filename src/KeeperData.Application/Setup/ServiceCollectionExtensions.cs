@@ -165,7 +165,7 @@ public static class ServiceCollectionExtensions
     /// Register strongly-typed config for each query validator.
     /// </summary>
     /// <remarks>Each validator constructor can request a strongly typed config for its own particular defaults
-    /// (e.g. GetSiteQueryValidator constructor takes parameter of type QueryValidationConfig<GetSiteQueryValidator>)</remarks>
+    /// (e.g. GetSiteQueryValidator constructor takes parameter of type QueryValidationConfig&lt;GetSiteQueryValidator&gt;).</remarks>
     private static void RegisterValidationConfig(IConfiguration configuration, IServiceCollection services)
     {
         var queryValidationConfig = configuration.GetSection(QueryValidationConfig.SectionName).Get<List<QueryValidationConfig>>();
