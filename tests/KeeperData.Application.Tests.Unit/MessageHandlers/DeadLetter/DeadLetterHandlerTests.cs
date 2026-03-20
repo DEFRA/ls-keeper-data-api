@@ -149,7 +149,7 @@ public class DeadLetterHandlerTests
     }
 
     [Fact]
-    public async Task GetDeadLetterMessagesHandler_WhenMaxMessagesIsNull_UsesDefaultValue()
+    public async Task GetDeadLetterMessagesHandler_WhenMaxMessagesIszero_UsesDefaultValue()
     {
         // Arrange
         SetupQueueOptions();
@@ -165,7 +165,7 @@ public class DeadLetterHandlerTests
 
         // Act
         var result = await WebApplicationExtensions.GetDeadLetterMessagesHandler(
-            null,
+            0,
             _dlqServiceMock.Object,
             _queueOptionsMock.Object,
             NullLogger<Program>.Instance,
@@ -290,7 +290,7 @@ public class DeadLetterHandlerTests
     }
 
     [Fact]
-    public async Task RedriveDeadLetterMessagesHandler_WhenMaxMessagesIsNull_UsesDefaultValue()
+    public async Task RedriveDeadLetterMessagesHandler_WhenMaxMessagesIsZero_UsesDefaultValue()
     {
         // Arrange
         SetupQueueOptions();
@@ -301,7 +301,7 @@ public class DeadLetterHandlerTests
 
         // Act
         var result = await WebApplicationExtensions.RedriveDeadLetterMessagesHandler(
-            null,
+            0,
             _dlqServiceMock.Object,
             _queueOptionsMock.Object,
             NullLogger<Program>.Instance,
