@@ -43,6 +43,7 @@ public partial class DeadLetterQueueService(
         {
             QueueUrl = dlqUrl,
             MaxNumberOfMessages = messagesToRetrieve,
+            WaitTimeSeconds = 0,
             MessageSystemAttributeNames = [DeadLetterQueueServiceConstants.AllAttributes],
             MessageAttributeNames = [DeadLetterQueueServiceConstants.AllAttributes]
         }, ct);
@@ -224,6 +225,7 @@ public partial class DeadLetterQueueService(
         {
             QueueUrl = queueUrl,
             MaxNumberOfMessages = 1,
+            WaitTimeSeconds = 0,
             VisibilityTimeout = DeadLetterQueueServiceConstants.Timeouts.ReceiveMessageVisibilitySeconds,
             MessageSystemAttributeNames = new List<string> { DeadLetterQueueServiceConstants.AllAttributes },
             MessageAttributeNames = new List<string> { DeadLetterQueueServiceConstants.AllAttributes }
