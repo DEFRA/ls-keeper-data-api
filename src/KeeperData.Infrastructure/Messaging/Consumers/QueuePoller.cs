@@ -169,7 +169,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         }
         catch (RetryableException ex)
         {
-            HandleRetryableException(message, queueUrl, ex, cancellationToken);
+            HandleRetryableException(message, ex);
         }
         catch (NonRetryableException ex)
         {
@@ -177,11 +177,11 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         }
         catch (Exception ex)
         {
-            HandleUnexpectedException(message, queueUrl, ex, cancellationToken);
+            HandleUnexpectedException(message, ex);
         }
     }
 
-    private void HandleRetryableException(Message message, string queueUrl, RetryableException ex, CancellationToken cancellationToken)
+    private void HandleRetryableException(Message message, RetryableException ex)
     {
         var receiveCount = GetReceiveCount(message);
         var maxRetries = _queueConsumerOptions.MaxReceiveCount;
@@ -210,7 +210,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         observer?.OnMessageFailed(message.MessageId, DateTime.UtcNow, ex, message);
     }
 
-    private void HandleUnexpectedException(Message message, string queueUrl, Exception ex, CancellationToken cancellationToken)
+    private void HandleUnexpectedException(Message message, Exception ex)
     {
         logger.LogError("Unhandled Exception in queue: {queue}, correlationId: {correlationId}, messageId: {messageId}, Exception: {ex}",
             _queueConsumerOptions.QueueUrl, CorrelationIdContext.Value, message.MessageId, ex);
