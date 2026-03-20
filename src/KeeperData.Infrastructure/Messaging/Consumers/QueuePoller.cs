@@ -22,7 +22,6 @@ namespace KeeperData.Infrastructure.Messaging.Consumers;
 public class QueuePoller(IServiceScopeFactory scopeFactory,
     IAmazonSQS amazonSQS,
     IMessageSerializer<SnsEnvelope> messageSerializer,
-    IDeadLetterQueueService deadLetterQueueService,
     MessageCommandRegistry messageCommandRegistry,
     IDataImportThrottlingConfiguration dataImportThrottlingConfiguration,
     IOptions<IntakeEventQueueOptions> options,
@@ -170,7 +169,7 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         }
         catch (RetryableException ex)
         {
-            await HandleRetryableException(message, queueUrl, ex, cancellationToken);
+            HandleRetryableException(message, ex);
         }
         catch (NonRetryableException ex)
         {
@@ -178,11 +177,11 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         }
         catch (Exception ex)
         {
-            await HandleUnexpectedException(message, queueUrl, ex, cancellationToken);
+            HandleUnexpectedException(message, ex);
         }
     }
 
-    private async Task HandleRetryableException(Message message, string queueUrl, RetryableException ex, CancellationToken cancellationToken)
+    private void HandleRetryableException(Message message, RetryableException ex)
     {
         var receiveCount = GetReceiveCount(message);
         var maxRetries = _queueConsumerOptions.MaxReceiveCount;
@@ -191,16 +190,14 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         {
             logger.LogError("RetryableException exceeded max retries ({maxRetries}) in queue: {queue}, correlationId: {correlationId}, messageId: {messageId}, Exception: {ex}",
                 maxRetries, _queueConsumerOptions.QueueUrl, CorrelationIdContext.Value, message.MessageId, ex);
-
-            await MoveToDlqAndNotifyObserver(message, queueUrl, ex, cancellationToken);
         }
         else
         {
             logger.LogWarning("RetryableException in queue: {queue}, correlationId: {correlationId}, messageId: {messageId}, receiveCount: {receiveCount}/{maxRetries}, Exception: {ex}",
                 _queueConsumerOptions.QueueUrl, CorrelationIdContext.Value, message.MessageId, receiveCount, maxRetries, ex);
-
-            observer?.OnMessageFailed(message.MessageId, DateTime.UtcNow, ex, message);
         }
+
+        observer?.OnMessageFailed(message.MessageId, DateTime.UtcNow, ex, message);
     }
 
     private async Task HandleNonRetryableException(Message message, string queueUrl, NonRetryableException ex, CancellationToken cancellationToken)
@@ -208,20 +205,16 @@ public class QueuePoller(IServiceScopeFactory scopeFactory,
         logger.LogError("NonRetryableException in queue: {queue}, correlationId: {correlationId}, messageId: {messageId}, Exception: {ex}",
             _queueConsumerOptions.QueueUrl, CorrelationIdContext.Value, message.MessageId, ex);
 
-        await MoveToDlqAndNotifyObserver(message, queueUrl, ex, cancellationToken);
+        await amazonSQS.DeleteMessageAsync(queueUrl, message.ReceiptHandle, cancellationToken);
+
+        observer?.OnMessageFailed(message.MessageId, DateTime.UtcNow, ex, message);
     }
 
-    private async Task HandleUnexpectedException(Message message, string queueUrl, Exception ex, CancellationToken cancellationToken)
+    private void HandleUnexpectedException(Message message, Exception ex)
     {
         logger.LogError("Unhandled Exception in queue: {queue}, correlationId: {correlationId}, messageId: {messageId}, Exception: {ex}",
             _queueConsumerOptions.QueueUrl, CorrelationIdContext.Value, message.MessageId, ex);
 
-        await MoveToDlqAndNotifyObserver(message, queueUrl, ex, cancellationToken);
-    }
-
-    private async Task MoveToDlqAndNotifyObserver(Message message, string queueUrl, Exception ex, CancellationToken cancellationToken)
-    {
-        await deadLetterQueueService.MoveToDeadLetterQueueAsync(message, queueUrl, ex, cancellationToken);
         observer?.OnMessageFailed(message.MessageId, DateTime.UtcNow, ex, message);
     }
 

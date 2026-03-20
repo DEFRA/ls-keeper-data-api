@@ -52,7 +52,6 @@ public class QueuePollerTests
             _scopeFactoryMock.Object,
             _sqsMock.Object,
             _serializerMock.Object,
-            _deadLetterQueueServiceMock.Object,
             _messageCommandRegistry,
             _dataImportThrottlingConfigurationMock.Object,
             Options.Create(_options),
