@@ -66,14 +66,12 @@ public partial class DeadLetterQueueService(
         return new DeadLetterMessageDto
         {
             MessageId = message.MessageId,
-            OriginalMessageId = GetMessageAttribute(message, DeadLetterQueueServiceConstants.MessageAttributes.DlqOriginalMessageId),
-            FailureReason = GetMessageAttribute(message, DeadLetterQueueServiceConstants.MessageAttributes.DlqFailureReason),
-            FailureMessage = GetMessageAttribute(message, DeadLetterQueueServiceConstants.MessageAttributes.DlqFailureMessage),
-            FailureTimestamp = GetMessageAttribute(message, DeadLetterQueueServiceConstants.MessageAttributes.DlqFailureTimestamp),
-            ReceiveCount = GetMessageAttribute(message, DeadLetterQueueServiceConstants.MessageAttributes.DlqReceiveCount),
             CorrelationId = GetMessageAttribute(message, DeadLetterQueueServiceConstants.MessageAttributes.CorrelationId),
             MessageType = GetMessageAttribute(message, DeadLetterQueueServiceConstants.MessageAttributes.Subject),
-            Body = message.Body
+            Body = message.Body,
+            SentTimestamp = GetSystemAttribute(message, "SentTimestamp"),
+            ApproximateFirstReceiveTimestamp = GetSystemAttribute(message, "ApproximateFirstReceiveTimestamp"),
+            Md5OfBody = message.MD5OfBody
         };
     }
 
@@ -317,7 +315,12 @@ public partial class DeadLetterQueueService(
 
     private static string? GetMessageAttribute(Message message, string key)
     {
-        return message.MessageAttributes.TryGetValue(key, out var value) ? value.StringValue : null;
+        return message.MessageAttributes != null && message.MessageAttributes.TryGetValue(key, out var value) ? value.StringValue : null;
+    }
+
+    private static string? GetSystemAttribute(Message message, string key)
+    {
+        return message.Attributes != null && message.Attributes.TryGetValue(key, out var value) ? value : null;
     }
 
     private sealed class RedriveSummaryBuilder
