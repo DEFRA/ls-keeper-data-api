@@ -4,6 +4,7 @@ using KeeperData.Application.Orchestration.ChangeScanning.Cts.Daily;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Providers;
+using KeeperData.Core.Repositories;
 using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -24,6 +25,7 @@ public class CtsDailyScanTaskTests
     private readonly Mock<IDistributedLockHandle> _lockHandleMock;
     private readonly CancellationTokenSource _appStoppingCts;
     private readonly Mock<IApplicationMetrics> _metricsMock;
+    private readonly Mock<IScanStateRepository> _scanStateRepositoryMock;
 
     public CtsDailyScanTaskTests()
     {
@@ -36,6 +38,7 @@ public class CtsDailyScanTaskTests
         _lockHandleMock = new Mock<IDistributedLockHandle>();
         _appStoppingCts = new CancellationTokenSource();
         _metricsMock = new Mock<IApplicationMetrics>();
+        _scanStateRepositoryMock = new Mock<IScanStateRepository>();
 
         _lifetimeMock.Setup(x => x.ApplicationStopping).Returns(_appStoppingCts.Token);
 
@@ -51,6 +54,7 @@ public class CtsDailyScanTaskTests
             _distributedLockMock.Object,
             _lifetimeMock.Object,
             _delayProviderMock.Object,
+            _scanStateRepositoryMock.Object,
             _metricsMock.Object,
             _loggerMock.Object);
     }

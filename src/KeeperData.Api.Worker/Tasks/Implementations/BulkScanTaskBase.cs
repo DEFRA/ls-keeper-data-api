@@ -9,62 +9,34 @@ using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Api.Worker.Tasks.Implementations;
 
-public abstract class DailyScanTaskBase : IDailyScanTask
+public abstract class BulkScanTaskBase(
+    DataBridgeScanConfiguration dataBridgeScanConfiguration,
+    IDistributedLock distributedLock,
+    IHostApplicationLifetime applicationLifetime,
+    IDelayProvider delayProvider,
+    IScanStateRepository scanStateRepository,
+    IApplicationMetrics metrics,
+    ILogger logger)
+    : IScanTask
 {
     private static readonly TimeSpan s_lockDuration = TimeSpan.FromMinutes(4);
     private static readonly TimeSpan s_renewalInterval = TimeSpan.FromMinutes(1);
     private static readonly TimeSpan s_renewalExtension = TimeSpan.FromMinutes(2);
 
-    private readonly IDistributedLock _distributedLock;
-    private readonly IHostApplicationLifetime _applicationLifetime;
-    private readonly IDelayProvider _delayProvider;
-
-    protected DataBridgeScanConfiguration DataBridgeScanConfiguration { get; }
-    protected IScanStateRepository ScanStateRepository { get; }
-    protected IApplicationMetrics Metrics { get; }
-    protected ILogger Logger { get; }
+    protected DataBridgeScanConfiguration DataBridgeScanConfiguration { get; } = dataBridgeScanConfiguration;
+    protected IScanStateRepository ScanStateRepository { get; } = scanStateRepository;
+    protected IApplicationMetrics Metrics { get; } = metrics;
+    protected ILogger Logger { get; } = logger;
     protected abstract string LockName { get; }
     protected abstract string ScanSourceId { get; }
 
-    protected DailyScanTaskBase(
-        DataBridgeScanConfiguration dataBridgeScanConfiguration,
-        IDistributedLock distributedLock,
-        IHostApplicationLifetime applicationLifetime,
-        IDelayProvider delayProvider,
-        IScanStateRepository scanStateRepository,
-        IApplicationMetrics metrics,
-        ILogger logger)
+    public async Task<Guid?> StartAsync(CancellationToken cancellationToken = default)
     {
-        DataBridgeScanConfiguration = dataBridgeScanConfiguration;
-        _distributedLock = distributedLock;
-        _applicationLifetime = applicationLifetime;
-        _delayProvider = delayProvider;
-        ScanStateRepository = scanStateRepository;
-        Metrics = metrics;
-        Logger = logger;
-    }
-
-    public async Task<Guid?> StartAsync(CancellationToken cancellationToken = default) =>
-        await SharedStartAsync(null, cancellationToken);
-
-    public async Task<Guid?> StartAsync(int? customSinceHours, CancellationToken cancellationToken = default) =>
-        await SharedStartAsync(customSinceHours, cancellationToken);
-
-    private async Task<Guid?> SharedStartAsync(int? customSinceHours, CancellationToken cancellationToken = default)
-    {
-        int sinceHours = customSinceHours ?? DataBridgeScanConfiguration.DailyScanIncludeChangesWithinTotalHours;
         var scanCorrelationId = Guid.NewGuid();
-
-        DateTime? updatedSinceDateTime = null;
-        if (customSinceHours == null)
-        {
-            updatedSinceDateTime = await GetUpdatedSinceDateTimeFromScanStateAsync(sinceHours, cancellationToken);
-        }
 
         Logger.LogInformation("Attempting to acquire lock for {LockName} with scanCorrelationId: {scanCorrelationId}.", LockName, scanCorrelationId);
 
-        var @lock = await _distributedLock.TryAcquireAsync(LockName, s_lockDuration, cancellationToken);
-
+        var @lock = await distributedLock.TryAcquireAsync(LockName, s_lockDuration, cancellationToken);
 
         if (@lock == null)
         {
@@ -74,7 +46,7 @@ public abstract class DailyScanTaskBase : IDailyScanTask
 
         Logger.LogInformation("Lock acquired for {LockName}. Task started at {startTime} scanCorrelationId: {scanCorrelationId}.", LockName, DateTime.UtcNow, scanCorrelationId);
 
-        var stoppingToken = _applicationLifetime.ApplicationStopping;
+        var stoppingToken = applicationLifetime.ApplicationStopping;
 
         _ = Task.Factory.StartNew(
             async () =>
@@ -87,7 +59,7 @@ public abstract class DailyScanTaskBase : IDailyScanTask
                             cancellationToken,
                             stoppingToken);
 
-                        await ExecuteTaskAsync(@lock, scanCorrelationId, sinceHours, updatedSinceDateTime, cts);
+                        await ExecuteTaskAsync(@lock, scanCorrelationId, cts);
                     }
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -109,14 +81,11 @@ public abstract class DailyScanTaskBase : IDailyScanTask
 
     public async Task RunAsync(CancellationToken cancellationToken)
     {
-        int sinceHours = DataBridgeScanConfiguration.DailyScanIncludeChangesWithinTotalHours;
         var scanCorrelationId = Guid.NewGuid();
-
-        var updatedSinceDateTime = await GetUpdatedSinceDateTimeFromScanStateAsync(sinceHours, cancellationToken);
 
         Logger.LogInformation("Attempting to acquire lock for {LockName} scanCorrelationId: {scanCorrelationId}.", LockName, scanCorrelationId);
 
-        await using var @lock = await _distributedLock.TryAcquireAsync(LockName, s_lockDuration, cancellationToken);
+        await using var @lock = await distributedLock.TryAcquireAsync(LockName, s_lockDuration, cancellationToken);
 
         if (@lock == null)
         {
@@ -127,20 +96,17 @@ public abstract class DailyScanTaskBase : IDailyScanTask
         Logger.LogInformation("Lock acquired for {LockName}. Task started at {startTime} scanCorrelationId: {scanCorrelationId}.", LockName, DateTime.UtcNow, scanCorrelationId);
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        await ExecuteTaskAsync(@lock, scanCorrelationId, sinceHours, updatedSinceDateTime, cts);
+        await ExecuteTaskAsync(@lock, scanCorrelationId, cts);
     }
 
     protected abstract Task ExecuteTaskAsync(
         IDistributedLockHandle lockHandle,
         Guid scanCorrelationId,
-        int sinceHours,
-        DateTime? updatedSinceDateTime,
         CancellationTokenSource linkedCts);
 
     protected async Task RecordScanStateAsync(
         Guid scanCorrelationId,
         DateTime scanStartedAt,
-        string scanMode,
         int itemCount,
         CancellationToken cancellationToken)
     {
@@ -152,15 +118,15 @@ public abstract class DailyScanTaskBase : IDailyScanTask
                 LastSuccessfulScanStartedAt = scanStartedAt,
                 LastSuccessfulScanCompletedAt = DateTime.UtcNow,
                 LastScanCorrelationId = scanCorrelationId,
-                LastScanMode = scanMode,
+                LastScanMode = "bulk",
                 LastScanItemCount = itemCount
             };
 
             await ScanStateRepository.UpdateAsync(scanState, cancellationToken);
 
             Logger.LogInformation(
-                "Recorded scan state for {ScanSourceId}: mode={ScanMode}, items={ItemCount}, scanCorrelationId: {ScanCorrelationId}",
-                ScanSourceId, scanMode, itemCount, scanCorrelationId);
+                "Recorded scan state for {ScanSourceId}: mode=bulk, items={ItemCount}, scanCorrelationId: {ScanCorrelationId}",
+                ScanSourceId, itemCount, scanCorrelationId);
         }
         catch (Exception ex)
         {
@@ -169,35 +135,6 @@ public abstract class DailyScanTaskBase : IDailyScanTask
                 "Scan completed successfully but state was not persisted.",
                 ScanSourceId, scanCorrelationId);
         }
-    }
-
-    private async Task<DateTime?> GetUpdatedSinceDateTimeFromScanStateAsync(int fallbackSinceHours, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var scanState = await ScanStateRepository.GetByIdAsync(ScanSourceId, cancellationToken);
-            if (scanState != null)
-            {
-                Logger.LogInformation(
-                    "Using scan state for {ScanSourceId}: lastSuccessfulScanStartedAt={LastScanStartedAt}, " +
-                    "lastScanMode={LastScanMode}, lastScanCorrelationId={LastCorrelationId}",
-                    ScanSourceId, scanState.LastSuccessfulScanStartedAt, scanState.LastScanMode, scanState.LastScanCorrelationId);
-
-                return scanState.LastSuccessfulScanStartedAt;
-            }
-
-            Logger.LogInformation(
-                "No scan state found for {ScanSourceId}, falling back to configured window of {SinceHours} hours.",
-                ScanSourceId, fallbackSinceHours);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex,
-                "Failed to read scan state for {ScanSourceId}, falling back to configured window of {SinceHours} hours.",
-                ScanSourceId, fallbackSinceHours);
-        }
-
-        return null;
     }
 
     protected async Task RenewLockPeriodicallyAsync(
@@ -212,7 +149,7 @@ public abstract class DailyScanTaskBase : IDailyScanTask
         {
             try
             {
-                await _delayProvider.DelayAsync(s_renewalInterval, token);
+                await delayProvider.DelayAsync(s_renewalInterval, token);
             }
             catch (OperationCanceledException)
             {
