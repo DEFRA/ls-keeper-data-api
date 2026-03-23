@@ -208,7 +208,7 @@ public class BulkScanTaskBaseTests
 
         public Task TestRecordScanStateAsync(Guid scanCorrelationId, DateTime scanStartedAt, int itemCount, CancellationToken cancellationToken)
         {
-            return RecordScanStateAsync(scanCorrelationId, scanStartedAt, itemCount, cancellationToken);
+            return RecordScanStateAsync(scanCorrelationId, scanStartedAt, "bulk", itemCount, cancellationToken);
         }
     }
 }
