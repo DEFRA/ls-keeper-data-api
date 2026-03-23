@@ -50,17 +50,17 @@ public abstract class ScanTaskBase
     {
         var scanCorrelationId = Guid.NewGuid();
 
-        Logger.LogInformation("Attempting to acquire lock for {LockName} with scanCorrelationId: {scanCorrelationId}.", LockName, scanCorrelationId);
+        Logger.LogInformation("Attempting to acquire lock for {LockName} with scanCorrelationId: {ScanCorrelationId}.", LockName, scanCorrelationId);
 
         var @lock = await _distributedLock.TryAcquireAsync(LockName, s_lockDuration, cancellationToken);
 
         if (@lock == null)
         {
-            Logger.LogInformation("Could not acquire lock for {LockName}, another instance is likely running scanCorrelationId: {scanCorrelationId}.", LockName, scanCorrelationId);
+            Logger.LogInformation("Could not acquire lock for {LockName}, another instance is likely running scanCorrelationId: {ScanCorrelationId}.", LockName, scanCorrelationId);
             return null;
         }
 
-        Logger.LogInformation("Lock acquired for {LockName}. Task started at {startTime} scanCorrelationId: {scanCorrelationId}.", LockName, DateTime.UtcNow, scanCorrelationId);
+        Logger.LogInformation("Lock acquired for {LockName}. Task started at {StartTime} scanCorrelationId: {ScanCorrelationId}.", LockName, DateTime.UtcNow, scanCorrelationId);
 
         var stoppingToken = _applicationLifetime.ApplicationStopping;
 
@@ -80,11 +80,11 @@ public abstract class ScanTaskBase
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                 {
-                    Logger.LogWarning("Application is shutting down, task cancelled scanCorrelationId: {scanCorrelationId}", scanCorrelationId);
+                    Logger.LogWarning("Application is shutting down, task cancelled scanCorrelationId: {ScanCorrelationId}", scanCorrelationId);
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Background task failed scanCorrelationId: {scanCorrelationId}", scanCorrelationId);
+                    Logger.LogError(ex, "Background task failed scanCorrelationId: {ScanCorrelationId}", scanCorrelationId);
                 }
             },
             CancellationToken.None,
@@ -101,17 +101,17 @@ public abstract class ScanTaskBase
     {
         var scanCorrelationId = Guid.NewGuid();
 
-        Logger.LogInformation("Attempting to acquire lock for {LockName} scanCorrelationId: {scanCorrelationId}.", LockName, scanCorrelationId);
+        Logger.LogInformation("Attempting to acquire lock for {LockName} scanCorrelationId: {ScanCorrelationId}.", LockName, scanCorrelationId);
 
         await using var @lock = await _distributedLock.TryAcquireAsync(LockName, s_lockDuration, cancellationToken);
 
         if (@lock == null)
         {
-            Logger.LogInformation("Could not acquire lock for {LockName}, another instance is likely running scanCorrelationId: {scanCorrelationId}.", LockName, scanCorrelationId);
+            Logger.LogInformation("Could not acquire lock for {LockName}, another instance is likely running scanCorrelationId: {ScanCorrelationId}.", LockName, scanCorrelationId);
             return;
         }
 
-        Logger.LogInformation("Lock acquired for {LockName}. Task started at {startTime} scanCorrelationId: {scanCorrelationId}.", LockName, DateTime.UtcNow, scanCorrelationId);
+        Logger.LogInformation("Lock acquired for {LockName}. Task started at {StartTime} scanCorrelationId: {ScanCorrelationId}.", LockName, DateTime.UtcNow, scanCorrelationId);
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         await executeFunc(@lock, scanCorrelationId, cts);
@@ -157,7 +157,7 @@ public abstract class ScanTaskBase
         CancellationTokenSource linkedCts)
     {
         var token = linkedCts.Token;
-        Logger.LogDebug("Starting lock renewal task for {LockName} with interval {RenewalInterval} scanCorrelationId: {scanCorrelationId}", LockName, s_renewalInterval, scanCorrelationId);
+        Logger.LogDebug("Starting lock renewal task for {LockName} with interval {RenewalInterval} scanCorrelationId: {ScanCorrelationId}", LockName, s_renewalInterval, scanCorrelationId);
 
         while (!token.IsCancellationRequested)
         {
@@ -167,13 +167,13 @@ public abstract class ScanTaskBase
             }
             catch (OperationCanceledException)
             {
-                Logger.LogDebug("Lock renewal task cancelled for {LockName} scanCorrelationId: {scanCorrelationId}", LockName, scanCorrelationId);
+                Logger.LogDebug("Lock renewal task cancelled for {LockName} scanCorrelationId: {ScanCorrelationId}", LockName, scanCorrelationId);
                 return;
             }
 
             if (token.IsCancellationRequested) return;
 
-            Logger.LogDebug("Attempting to renew lock for {LockName} scanCorrelationId: {scanCorrelationId}", LockName, scanCorrelationId);
+            Logger.LogDebug("Attempting to renew lock for {LockName} scanCorrelationId: {ScanCorrelationId}", LockName, scanCorrelationId);
 
             bool renewed;
             try
@@ -182,22 +182,22 @@ public abstract class ScanTaskBase
             }
             catch (OperationCanceledException)
             {
-                Logger.LogDebug("Lock renewal cancelled for {LockName} scanCorrelationId: {scanCorrelationId}", LockName, scanCorrelationId);
+                Logger.LogDebug("Lock renewal cancelled for {LockName} scanCorrelationId: {ScanCorrelationId}", LockName, scanCorrelationId);
                 return;
             }
 
             if (renewed)
             {
-                Logger.LogDebug("Successfully renewed lock for {LockName} with extension {RenewalExtension} scanCorrelationId: {scanCorrelationId}", LockName, s_renewalExtension, scanCorrelationId);
+                Logger.LogDebug("Successfully renewed lock for {LockName} with extension {RenewalExtension} scanCorrelationId: {ScanCorrelationId}", LockName, s_renewalExtension, scanCorrelationId);
             }
             else
             {
-                Logger.LogError("Failed to renew lock for {LockName}. Lock may have been lost. Cancelling main task. scanCorrelationId: {scanCorrelationId}", LockName, scanCorrelationId);
+                Logger.LogError("Failed to renew lock for {LockName}. Lock may have been lost. Cancelling main task. scanCorrelationId: {ScanCorrelationId}", LockName, scanCorrelationId);
                 await linkedCts.CancelAsync();
                 throw new InvalidOperationException($"Failed to renew lock for {LockName} scanCorrelationId: {scanCorrelationId}");
             }
         }
 
-        Logger.LogDebug("Lock renewal task completed for {LockName} scanCorrelationId: {scanCorrelationId}", LockName, scanCorrelationId);
+        Logger.LogDebug("Lock renewal task completed for {LockName} scanCorrelationId: {ScanCorrelationId}", LockName, scanCorrelationId);
     }
 }

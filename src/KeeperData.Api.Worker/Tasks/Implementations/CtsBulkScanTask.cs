@@ -58,16 +58,16 @@ public class CtsBulkScanTask(
             await RecordScanStateAsync(scanCorrelationId, context.CurrentDateTime, "bulk",
                 context.Holdings.CurrentSkip, linkedCts.Token);
 
-            Logger.LogInformation("Import completed successfully at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
+            Logger.LogInformation("Import completed successfully at {EndTime}, scanCorrelationId: {ScanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
         }
         catch (OperationCanceledException) when (renewalTask.IsFaulted || (renewalTask.IsCompleted && !externalToken.IsCancellationRequested))
         {
-            Logger.LogError("Import was stopped due to lock renewal failure at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
+            Logger.LogError("Import was stopped due to lock renewal failure at {EndTime}, scanCorrelationId: {ScanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
             throw new InvalidOperationException("Task was cancelled due to lock renewal failure");
         }
         catch (OperationCanceledException) when (externalToken.IsCancellationRequested)
         {
-            Logger.LogInformation("Import was cancelled at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
+            Logger.LogInformation("Import was cancelled at {EndTime}, scanCorrelationId: {ScanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
             throw;
         }
         catch (RetryableException)
@@ -95,7 +95,7 @@ public class CtsBulkScanTask(
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Unexpected error in lock renewal task for {LockName} scanCorrelationId: {scanCorrelationId}", LockName, scanCorrelationId);
+                Logger.LogError(ex, "Unexpected error in lock renewal task for {LockName} scanCorrelationId: {ScanCorrelationId}", LockName, scanCorrelationId);
             }
         }
     }
