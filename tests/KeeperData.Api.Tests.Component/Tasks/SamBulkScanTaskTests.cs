@@ -10,6 +10,7 @@ using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Providers;
+using KeeperData.Core.Repositories;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -38,6 +39,7 @@ public class SamBulkScanTaskTests
         var delayProviderMock = new Mock<IDelayProvider>();
         var orchestrator = new SamBulkScanOrchestrator([], new Mock<IApplicationMetrics>().Object);
         var metricsMock = new Mock<IApplicationMetrics>();
+        var scanStateRepositoryMock = new Mock<IScanStateRepository>();
 
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
@@ -50,6 +52,7 @@ public class SamBulkScanTaskTests
             distributedLockMock.Object,
             appLifetimeMock.Object,
             delayProviderMock.Object,
+            scanStateRepositoryMock.Object,
             metricsMock.Object,
             loggerMock.Object);
 
@@ -70,6 +73,7 @@ public class SamBulkScanTaskTests
         var delayProviderMock = new Mock<IDelayProvider>();
         var orchestrator = new SamBulkScanOrchestrator([], new Mock<IApplicationMetrics>().Object);
         var metricsMock = new Mock<IApplicationMetrics>();
+        var scanStateRepositoryMock = new Mock<IScanStateRepository>();
 
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
@@ -82,6 +86,7 @@ public class SamBulkScanTaskTests
             distributedLockMock.Object,
             appLifetimeMock.Object,
             delayProviderMock.Object,
+            scanStateRepositoryMock.Object,
             metricsMock.Object,
             loggerMock.Object);
 
@@ -111,6 +116,7 @@ public class SamBulkScanTaskTests
         var stepMock = new Mock<IScanStep<SamBulkScanContext>>();
         var orchestrator = new SamBulkScanOrchestrator([stepMock.Object], new Mock<IApplicationMetrics>().Object);
         var metricsMock = new Mock<IApplicationMetrics>();
+        var scanStateRepositoryMock = new Mock<IScanStateRepository>();
 
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
@@ -127,6 +133,7 @@ public class SamBulkScanTaskTests
             distributedLockMock.Object,
             appLifetimeMock.Object,
             delayProviderMock.Object,
+            scanStateRepositoryMock.Object,
             metricsMock.Object,
             loggerMock.Object);
 
@@ -148,6 +155,7 @@ public class SamBulkScanTaskTests
         var stepMock = new Mock<IScanStep<SamBulkScanContext>>();
         var orchestrator = new SamBulkScanOrchestrator([stepMock.Object], new Mock<IApplicationMetrics>().Object);
         var metricsMock = new Mock<IApplicationMetrics>();
+        var scanStateRepositoryMock = new Mock<IScanStateRepository>();
 
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
@@ -164,6 +172,7 @@ public class SamBulkScanTaskTests
             distributedLockMock.Object,
             appLifetimeMock.Object,
             delayProviderMock.Object,
+            scanStateRepositoryMock.Object,
             metricsMock.Object,
             loggerMock.Object);
 

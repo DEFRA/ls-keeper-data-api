@@ -3,6 +3,7 @@ using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Providers;
+using KeeperData.Core.Repositories;
 using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -15,29 +16,35 @@ public class SamDailyScanTask(
     IDistributedLock distributedLock,
     IHostApplicationLifetime applicationLifetime,
     IDelayProvider delayProvider,
+    IScanStateRepository scanStateRepository,
     IApplicationMetrics metrics,
     ILogger<SamDailyScanTask> logger)
-    : DailyScanTaskBase(dataBridgeScanConfiguration, distributedLock, applicationLifetime, delayProvider, metrics, logger),
+    : DailyScanTaskBase(dataBridgeScanConfiguration, distributedLock, applicationLifetime, delayProvider, scanStateRepository, metrics, logger),
         ISamDailyScanTask
 {
     protected override string LockName => nameof(SamDailyScanTask);
+    protected override string ScanSourceId => "sam-scan";
 
     protected override async Task ExecuteTaskAsync(
         IDistributedLockHandle lockHandle,
         Guid scanCorrelationId,
         int sinceHours,
+        DateTime? updatedSinceDateTime,
         CancellationTokenSource linkedCts)
     {
         var externalToken = linkedCts.Token;
         var renewalTask = RenewLockPeriodicallyAsync(lockHandle, scanCorrelationId, linkedCts);
+        var scanStartedAt = DateTime.UtcNow;
 
         try
         {
+            var effectiveUpdatedSince = updatedSinceDateTime ?? DateTime.UtcNow.AddHours(-Math.Abs(sinceHours));
+
             var context = new SamDailyScanContext
             {
                 ScanCorrelationId = scanCorrelationId,
                 CurrentDateTime = DateTime.UtcNow,
-                UpdatedSinceDateTime = DateTime.UtcNow.AddHours(-Math.Abs(sinceHours)),
+                UpdatedSinceDateTime = effectiveUpdatedSince,
                 PageSize = DataBridgeScanConfiguration.QueryPageSize,
                 Holdings = new(),
                 Holders = new(),
@@ -53,6 +60,10 @@ public class SamDailyScanTask(
             Metrics.RecordCount("daily_scan_items_found", context.Herds.CurrentSkip, ("scan_type", "SAM"), ("entity", "Herds"));
             Metrics.RecordCount("daily_scan_items_found", context.Parties.CurrentSkip, ("scan_type", "SAM"), ("entity", "Parties"));
             Metrics.RecordCount("daily_scan_completed", 1, ("scan_type", "SAM"));
+
+            var totalItems = context.Holdings.CurrentSkip + context.Holders.CurrentSkip
+                + context.Herds.CurrentSkip + context.Parties.CurrentSkip;
+            await RecordScanStateAsync(scanCorrelationId, scanStartedAt, "daily", totalItems, linkedCts.Token);
 
             Logger.LogInformation("Import completed successfully at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
         }

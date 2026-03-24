@@ -3,6 +3,7 @@ using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Providers;
+using KeeperData.Core.Repositories;
 using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -15,84 +16,22 @@ public class CtsBulkScanTask(
     IDistributedLock distributedLock,
     IHostApplicationLifetime applicationLifetime,
     IDelayProvider delayProvider,
+    IScanStateRepository scanStateRepository,
     IApplicationMetrics metrics,
-    ILogger<CtsBulkScanTask> logger) : ICtsBulkScanTask
+    ILogger<CtsBulkScanTask> logger)
+    : BulkScanTaskBase(
+        dataBridgeScanConfiguration,
+        distributedLock,
+        applicationLifetime,
+        delayProvider,
+        scanStateRepository,
+        metrics,
+        logger), ICtsBulkScanTask
 {
-    private const string LockName = nameof(CtsBulkScanTask);
-    private static readonly TimeSpan s_lockDuration = TimeSpan.FromMinutes(4);
-    private static readonly TimeSpan s_renewalInterval = TimeSpan.FromMinutes(1);
-    private static readonly TimeSpan s_renewalExtension = TimeSpan.FromMinutes(2);
+    protected override string ScanSourceId => "cts-scan";
+    protected override string LockName => nameof(CtsBulkScanTask);
 
-    public async Task<Guid?> StartAsync(CancellationToken cancellationToken = default)
-    {
-        var scanCorrelationId = Guid.NewGuid();
-
-        logger.LogInformation("Attempting to acquire lock for {LockName} with scanCorrelationId: {scanCorrelationId}.", LockName, scanCorrelationId);
-
-        var @lock = await distributedLock.TryAcquireAsync(LockName, s_lockDuration, cancellationToken);
-
-        if (@lock == null)
-        {
-            logger.LogInformation("Could not acquire lock for {LockName}, another instance is likely running scanCorrelationId: {scanCorrelationId}.", LockName, scanCorrelationId);
-            return null;
-        }
-
-        logger.LogInformation("Lock acquired for {LockName}. Task started at {startTime} scanCorrelationId: {scanCorrelationId}.", LockName, DateTime.UtcNow, scanCorrelationId);
-
-        var stoppingToken = applicationLifetime.ApplicationStopping;
-
-        _ = Task.Factory.StartNew(
-            async () =>
-            {
-                try
-                {
-                    await using (@lock)
-                    {
-                        using var cts = CancellationTokenSource.CreateLinkedTokenSource(
-                            cancellationToken,
-                            stoppingToken);
-
-                        await ExecuteTaskAsync(@lock, scanCorrelationId, cts);
-                    }
-                }
-                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-                {
-                    logger.LogWarning("Application is shutting down, task cancelled scanCorrelationId: {scanCorrelationId}", scanCorrelationId);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Background task failed scanCorrelationId: {scanCorrelationId}", scanCorrelationId);
-                }
-            },
-            CancellationToken.None,
-            TaskCreationOptions.LongRunning,
-            TaskScheduler.Default
-        ).Unwrap();
-
-        return scanCorrelationId;
-    }
-
-    public async Task RunAsync(CancellationToken cancellationToken)
-    {
-        var scanCorrelationId = Guid.NewGuid();
-
-        logger.LogInformation("Attempting to acquire lock for {LockName} scanCorrelationId: {scanCorrelationId}.", LockName, scanCorrelationId);
-
-        await using var @lock = await distributedLock.TryAcquireAsync(LockName, s_lockDuration, cancellationToken);
-
-        if (@lock == null)
-        {
-            logger.LogInformation("Could not acquire lock for {LockName}, another instance is likely running scanCorrelationId: {scanCorrelationId}.", LockName, scanCorrelationId);
-            return;
-        }
-
-        logger.LogInformation("Lock acquired for {LockName}. Task started at {startTime} scanCorrelationId: {scanCorrelationId}.", LockName, DateTime.UtcNow, scanCorrelationId);
-
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        await ExecuteTaskAsync(@lock, scanCorrelationId, cts);
-    }
-
-    private async Task ExecuteTaskAsync(
+    protected override async Task ExecuteTaskAsync(
         IDistributedLockHandle lockHandle,
         Guid scanCorrelationId,
         CancellationTokenSource linkedCts)
@@ -107,25 +46,28 @@ public class CtsBulkScanTask(
                 ScanCorrelationId = scanCorrelationId,
                 CurrentDateTime = DateTime.UtcNow,
                 UpdatedSinceDateTime = null,
-                PageSize = dataBridgeScanConfiguration.QueryPageSize,
+                PageSize = DataBridgeScanConfiguration.QueryPageSize,
                 Holdings = new()
             };
 
             await orchestrator.ExecuteAsync(context, linkedCts.Token);
 
-            metrics.RecordCount("bulk_scan_items_found", context.Holdings.CurrentSkip, ("scan_type", "CTS"), ("entity", "Holdings"));
-            metrics.RecordCount("bulk_scan_completed", 1, ("scan_type", "CTS"));
+            Metrics.RecordCount("bulk_scan_items_found", context.Holdings.CurrentSkip, ("scan_type", "CTS"), ("entity", "Holdings"));
+            Metrics.RecordCount("bulk_scan_completed", 1, ("scan_type", "CTS"));
 
-            logger.LogInformation("Import completed successfully at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
+            await RecordScanStateAsync(scanCorrelationId, context.CurrentDateTime, "bulk",
+                context.Holdings.CurrentSkip, linkedCts.Token);
+
+            Logger.LogInformation("Import completed successfully at {EndTime}, scanCorrelationId: {ScanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
         }
         catch (OperationCanceledException) when (renewalTask.IsFaulted || (renewalTask.IsCompleted && !externalToken.IsCancellationRequested))
         {
-            logger.LogError("Import was stopped due to lock renewal failure at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
+            Logger.LogError("Import was stopped due to lock renewal failure at {EndTime}, scanCorrelationId: {ScanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
             throw new InvalidOperationException("Task was cancelled due to lock renewal failure");
         }
         catch (OperationCanceledException) when (externalToken.IsCancellationRequested)
         {
-            logger.LogInformation("Import was cancelled at {endTime}, scanCorrelationId: {scanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
+            Logger.LogInformation("Import was cancelled at {EndTime}, scanCorrelationId: {ScanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
             throw;
         }
         catch (RetryableException)
@@ -153,55 +95,8 @@ public class CtsBulkScanTask(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unexpected error in lock renewal task for {LockName} scanCorrelationId: {scanCorrelationId}", LockName, scanCorrelationId);
+                Logger.LogError(ex, "Unexpected error in lock renewal task for {LockName} scanCorrelationId: {ScanCorrelationId}", LockName, scanCorrelationId);
             }
         }
-    }
-
-    private async Task RenewLockPeriodicallyAsync(IDistributedLockHandle lockHandle, Guid scanCorrelationId, CancellationTokenSource linkedCts)
-    {
-        var token = linkedCts.Token;
-        logger.LogDebug("Starting lock renewal task for {LockName} with interval {RenewalInterval} scanCorrelationId: {scanCorrelationId}", LockName, s_renewalInterval, scanCorrelationId);
-
-        while (!token.IsCancellationRequested)
-        {
-            try
-            {
-                await delayProvider.DelayAsync(s_renewalInterval, token);
-            }
-            catch (OperationCanceledException)
-            {
-                logger.LogDebug("Lock renewal task cancelled for {LockName} scanCorrelationId: {scanCorrelationId}", LockName, scanCorrelationId);
-                return;
-            }
-
-            if (token.IsCancellationRequested) return;
-
-            logger.LogDebug("Attempting to renew lock for {LockName} scanCorrelationId: {scanCorrelationId}", LockName, scanCorrelationId);
-
-            bool renewed;
-            try
-            {
-                renewed = await lockHandle.TryRenewAsync(s_renewalExtension, token);
-            }
-            catch (OperationCanceledException)
-            {
-                logger.LogDebug("Lock renewal cancelled for {LockName} scanCorrelationId: {scanCorrelationId}", LockName, scanCorrelationId);
-                return;
-            }
-
-            if (renewed)
-            {
-                logger.LogDebug("Successfully renewed lock for {LockName} with extension {RenewalExtension} scanCorrelationId: {scanCorrelationId}", LockName, s_renewalExtension, scanCorrelationId);
-            }
-            else
-            {
-                logger.LogError("Failed to renew lock for {LockName}. Lock may have been lost. Cancelling main task. scanCorrelationId: {scanCorrelationId}", LockName, scanCorrelationId);
-                await linkedCts.CancelAsync();
-                throw new InvalidOperationException($"Failed to renew lock for {LockName} scanCorrelationId: {scanCorrelationId}");
-            }
-        }
-
-        logger.LogDebug("Lock renewal task completed for {LockName} scanCorrelationId: {scanCorrelationId}", LockName, scanCorrelationId);
     }
 }

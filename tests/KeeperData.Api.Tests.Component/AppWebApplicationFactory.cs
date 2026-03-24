@@ -71,6 +71,7 @@ public class AppWebApplicationFactory(
     public readonly Mock<IGoldSitePartyRoleRelationshipRepository> _goldSitePartyRoleRelationshipRepositoryMock = new();
     public readonly Mock<IRoleRepository> _roleRepositoryMock = new();
     public readonly Mock<ICountryRepository> _countryRepositoryMock = new();
+    public readonly Mock<IScanStateRepository> _scanStateRepositoryMock = new();
 
     public readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
     public readonly Mock<IPremiseActivityTypeLookupService> _premiseActivityTypeLookupServiceMock = new();
@@ -312,6 +313,8 @@ public class AppWebApplicationFactory(
         OverrideServiceAsScoped(_roleRepositoryMock.Object);
         OverrideServiceAsScoped(_countryRepositoryMock.Object);
 
+        OverrideServiceAsScoped(_scanStateRepositoryMock.Object);
+
         ConfigureDefaultRepositoryBehavior();
     }
 
@@ -351,6 +354,8 @@ public class AppWebApplicationFactory(
 
         _roleRepositoryMock.Reset();
         _countryRepositoryMock.Reset();
+
+        _scanStateRepositoryMock.Reset();
     }
 
     private void ConfigureTransientServices()
