@@ -11,8 +11,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Diagnostics.CodeAnalysis;
+using KeeperData.Application;
+using KeeperData.Application.Queries.Pagination;
+using KeeperData.Application.Queries.ScanStates;
 using KeeperData.Core.DeadLetter;
+using KeeperData.Core.Documents;
 using Microsoft.AspNetCore.Mvc;
+using KeeperData.Core.Repositories;
 
 namespace KeeperData.Api.Setup;
 
@@ -33,11 +38,11 @@ public static class WebApplicationExtensions
         var adminEndpointsEnabled = configuration.GetValue<bool>("AdminEndpointsEnabled");
 
         applicationLifetime.ApplicationStarted.Register(() =>
-            logger.LogInformation("{applicationName} started", env.ApplicationName));
+            logger.LogInformation("{ApplicationName} started", env.ApplicationName));
         applicationLifetime.ApplicationStopping.Register(() =>
-            logger.LogInformation("{applicationName} stopping", env.ApplicationName));
+            logger.LogInformation("{ApplicationName} stopping", env.ApplicationName));
         applicationLifetime.ApplicationStopped.Register(() =>
-            logger.LogInformation("{applicationName} stopped", env.ApplicationName));
+            logger.LogInformation("{ApplicationName} stopped", env.ApplicationName));
 
         app.UseEmfExporter();
 
@@ -132,6 +137,7 @@ public static class WebApplicationExtensions
         if (adminEndpointsEnabled)
         {
             RegisterAdminDlqEndpoints(app);
+            RegisterAdminScanStateEndpoints(app);
         }
     }
 
@@ -202,6 +208,22 @@ public static class WebApplicationExtensions
             .RequireAuthorization(adminAuth);
     }
 
+    private static void RegisterAdminScanStateEndpoints(WebApplication app)
+    {
+        var adminAuth = new AuthorizeAttribute
+        {
+            AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
+        };
+
+        app.MapGet("/api/admin/scanstates", GetScanStatesHandler)
+            .WithGroupName(InternalGroupName)
+            .WithTags("scan-state")
+            .WithSummary("Get scan states")
+            .WithDescription("Retrieves all scan state records showing the history and status of scans")
+            .WithMetadata(new ProducesResponseTypeAttribute(typeof(IEnumerable<ScanStateDocument>), StatusCodes.Status200OK))
+            .RequireAuthorization(adminAuth);
+    }
+
     internal static async Task<IResult> GetDeadLetterQueueCountHandler(
         IDeadLetterQueueService dlqService,
         IOptions<IntakeEventQueueOptions> queueOptions,
@@ -225,7 +247,7 @@ public static class WebApplicationExtensions
     }
 
     internal static async Task<IResult> GetDeadLetterMessagesHandler(
-        [FromQuery(Name = "maxMessages")] int? maxMessages,
+        int? maxMessages,
         IDeadLetterQueueService dlqService,
         IOptions<IntakeEventQueueOptions> queueOptions,
         ILogger<Program> logger,
@@ -248,7 +270,7 @@ public static class WebApplicationExtensions
     }
 
     internal static async Task<IResult> RedriveDeadLetterMessagesHandler(
-        [FromQuery(Name = "maxMessages")] int? maxMessages,
+        int? maxMessages,
         IDeadLetterQueueService dlqService,
         IOptions<IntakeEventQueueOptions> queueOptions,
         ILogger<Program> logger,
@@ -296,6 +318,25 @@ public static class WebApplicationExtensions
         }
     }
 
+    internal static async Task<IResult> GetScanStatesHandler(
+        IRequestExecutor requestExecutor,
+        ILogger<Program> logger,
+        CancellationToken ct)
+    {
+        try
+        {
+            var query = new GetScanStatesQuery();
+            var result = await requestExecutor.ExecuteQuery(query, ct);
+
+            return Results.Ok(result.ScanStates);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to retrieve scan states");
+            return Results.Json(new { error = "Failed to retrieve scan states", detail = ex.Message }, statusCode: 500);
+        }
+    }
+
     private static async Task<IResult> ExecuteScanAsync(
         string route,
         string scanName,
@@ -303,7 +344,7 @@ public static class WebApplicationExtensions
         Func<CancellationToken, Task<Guid?>> startScan,
         CancellationToken cancellationToken)
     {
-        logger.LogInformation("Received request to start {scanName} at {requestTime}", scanName, DateTime.UtcNow);
+        logger.LogInformation("Received request to start {ScanName} at {RequestTime}", scanName, DateTime.UtcNow);
 
         try
         {
@@ -311,14 +352,14 @@ public static class WebApplicationExtensions
 
             if (scanCorrelationId == null)
             {
-                logger.LogWarning("Failed to start {scanName} - could not acquire lock", scanName);
+                logger.LogWarning("Failed to start {ScanName} - could not acquire lock", scanName);
                 return Results.Conflict(new ErrorResponse
                 {
                     Message = $"{scanName} is already running. Please wait for the current import to complete."
                 });
             }
 
-            logger.LogInformation("{scanName} started successfully with scanCorrelationId: {scanCorrelationId}", scanName, scanCorrelationId.Value);
+            logger.LogInformation("{ScanName} started successfully with scanCorrelationId: {ScanCorrelationId}", scanName, scanCorrelationId.Value);
 
             return Results.Accepted(route, new StartScanResponse
             {
@@ -329,7 +370,7 @@ public static class WebApplicationExtensions
         }
         catch (OperationCanceledException)
         {
-            logger.LogWarning("{scanName} start request was cancelled", scanName);
+            logger.LogWarning("{ScanName} start request was cancelled", scanName);
             return Results.Json(new ErrorResponse { Message = DeadLetterQueueServiceConstants.LogMessages.RequestCancelledError }, statusCode: 499);
         }
     }
