@@ -36,11 +36,18 @@ public class ScanStateRepository : IScanStateRepository
     public async Task<IEnumerable<ScanStateDocument>> GetAllAsync(int skip, int limit, CancellationToken cancellationToken = default)
     {
         var sortDefinition = Builders<ScanStateDocument>.Sort.Descending(x => x.LastSuccessfulScanCompletedAt);
-        var cursor = await _collection.Find(Builders<ScanStateDocument>.Filter.Empty)
-            .Sort(sortDefinition)
-            .Skip(skip)
-            .Limit(limit)
-            .ToCursorAsync(cancellationToken);
+        var findOptions = new FindOptions<ScanStateDocument, ScanStateDocument>
+        {
+            Sort = sortDefinition,
+            Skip = skip,
+            Limit = limit
+        };
+
+        var cursor = await _collection.FindAsync(
+            Builders<ScanStateDocument>.Filter.Empty,
+            findOptions,
+            cancellationToken);
+
         return await cursor.ToListAsync(cancellationToken);
     }
 

@@ -202,6 +202,73 @@ public class ScanStateRepositoryTests
     }
 
     [Fact]
+    public async Task GetAllAsync_WhenCalled_ReturnsResults()
+    {
+        var scanStates = new List<ScanStateDocument>
+        {
+            new()
+            {
+                Id = "scan-1",
+                LastSuccessfulScanStartedAt = DateTime.UtcNow.AddHours(-2),
+                LastSuccessfulScanCompletedAt = DateTime.UtcNow.AddHours(-1),
+                LastScanCorrelationId = Guid.NewGuid(),
+                LastScanMode = "Full",
+                LastScanItemCount = 100
+            },
+            new()
+            {
+                Id = "scan-2",
+                LastSuccessfulScanStartedAt = DateTime.UtcNow.AddHours(-1),
+                LastSuccessfulScanCompletedAt = DateTime.UtcNow,
+                LastScanCorrelationId = Guid.NewGuid(),
+                LastScanMode = "Incremental",
+                LastScanItemCount = 50
+            }
+        };
+
+        _asyncCursorMock
+            .SetupGet(c => c.Current)
+            .Returns(scanStates);
+
+        var result = await _sut.GetAllAsync(0, 10, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.Should().HaveCount(2);
+        result.First().Id.Should().Be("scan-1");
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WhenCalledWithEmptyResults_ReturnsEmptyCollection()
+    {
+        _asyncCursorMock
+            .SetupGet(c => c.Current)
+            .Returns(new List<ScanStateDocument>());
+
+        var result = await _sut.GetAllAsync(0, 10, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WhenCancellationRequested_PassesCancellationToken()
+    {
+        var cancellationToken = new CancellationToken();
+
+        _asyncCursorMock
+            .SetupGet(c => c.Current)
+            .Returns(new List<ScanStateDocument>());
+
+        await _sut.GetAllAsync(0, 10, cancellationToken);
+
+        _mongoCollectionMock
+            .Verify(c => c.FindAsync(
+                It.IsAny<FilterDefinition<ScanStateDocument>>(),
+                It.IsAny<FindOptions<ScanStateDocument, ScanStateDocument>>(),
+                cancellationToken), Times.Once);
+    }
+
+    [Fact]
     public async Task CountAsync_WhenCalled_ReturnsDocumentCount()
     {
         var expectedCount = 42L;
