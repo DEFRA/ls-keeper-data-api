@@ -313,7 +313,7 @@ public class AppWebApplicationFactory(
         OverrideServiceAsScoped(_roleRepositoryMock.Object);
         OverrideServiceAsScoped(_countryRepositoryMock.Object);
 
-        OverrideServiceAsScoped(_scanStateRepositoryMock.Object);
+        OverrideServiceAsSingleton(_scanStateRepositoryMock.Object);
 
         ConfigureDefaultRepositoryBehavior();
     }
