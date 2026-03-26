@@ -6,6 +6,7 @@ using KeeperData.Core.Telemetry;
 namespace KeeperData.Api.Tests.Component.Tasks;
 
 using KeeperData.Api.Worker.Tasks.Implementations;
+using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
 using KeeperData.Core.Locking;
@@ -19,7 +20,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-public class SamDailyScanTaskTests
+public class SamScanTaskTests
 {
     private readonly DataBridgeScanConfiguration _dataBridgeScanConfiguration = new()
     {
@@ -33,21 +34,23 @@ public class SamDailyScanTaskTests
     public async Task RunAsync_Should_Execute_When_Lock_Acquired()
     {
         // Arrange
-        var loggerMock = new Mock<ILogger<SamDailyScanTask>>();
+        var loggerMock = new Mock<ILogger<SamScanTask>>();
         var lockHandleMock = new Mock<IDistributedLockHandle>();
         var distributedLockMock = new Mock<IDistributedLock>();
         var delayProviderMock = new Mock<IDelayProvider>();
+        var bulkOrchestrator = new SamBulkScanOrchestrator([], new Mock<IApplicationMetrics>().Object);
+        var dailyOrchestrator = new SamDailyScanOrchestrator([], new Mock<IApplicationMetrics>().Object);
         var metricsMock = new Mock<IApplicationMetrics>();
         var scanStateRepositoryMock = new Mock<IScanStateRepository>();
-        var orchestrator = new SamDailyScanOrchestrator([], new Mock<IApplicationMetrics>().Object);
 
         distributedLockMock
             .Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(lockHandleMock.Object);
 
         var appLifetimeMock = new Mock<IHostApplicationLifetime>();
-        var task = new SamDailyScanTask(
-            orchestrator,
+        var task = new SamScanTask(
+            bulkOrchestrator,
+            dailyOrchestrator,
             _dataBridgeScanConfiguration,
             distributedLockMock.Object,
             appLifetimeMock.Object,
@@ -68,10 +71,11 @@ public class SamDailyScanTaskTests
     public async Task RunAsync_Should_Not_Execute_When_Lock_Not_Acquired()
     {
         // Arrange
-        var loggerMock = new Mock<ILogger<SamDailyScanTask>>();
+        var loggerMock = new Mock<ILogger<SamScanTask>>();
         var distributedLockMock = new Mock<IDistributedLock>();
         var delayProviderMock = new Mock<IDelayProvider>();
-        var orchestrator = new SamDailyScanOrchestrator([], new Mock<IApplicationMetrics>().Object);
+        var bulkOrchestrator = new SamBulkScanOrchestrator([], new Mock<IApplicationMetrics>().Object);
+        var dailyOrchestrator = new SamDailyScanOrchestrator([], new Mock<IApplicationMetrics>().Object);
         var metricsMock = new Mock<IApplicationMetrics>();
         var scanStateRepositoryMock = new Mock<IScanStateRepository>();
 
@@ -80,8 +84,9 @@ public class SamDailyScanTaskTests
             .ReturnsAsync((IDistributedLockHandle?)null);
 
         var appLifetimeMock = new Mock<IHostApplicationLifetime>();
-        var task = new SamDailyScanTask(
-            orchestrator,
+        var task = new SamScanTask(
+            bulkOrchestrator,
+            dailyOrchestrator,
             _dataBridgeScanConfiguration,
             distributedLockMock.Object,
             appLifetimeMock.Object,
@@ -106,15 +111,16 @@ public class SamDailyScanTaskTests
     }
 
     [Fact]
-    public async Task RunAsync_ShouldBubbleException_WhenStepThrowsNonRetryableException()
+    public async Task RunAsync_ShouldBubbleException_WhenBulkStepThrowsNonRetryableException()
     {
         // Arrange
-        var loggerMock = new Mock<ILogger<SamDailyScanTask>>();
+        var loggerMock = new Mock<ILogger<SamScanTask>>();
         var lockHandleMock = new Mock<IDistributedLockHandle>();
         var distributedLockMock = new Mock<IDistributedLock>();
         var delayProviderMock = new Mock<IDelayProvider>();
-        var stepMock = new Mock<IScanStep<SamDailyScanContext>>();
-        var orchestrator = new SamDailyScanOrchestrator([stepMock.Object], new Mock<IApplicationMetrics>().Object);
+        var stepMock = new Mock<IScanStep<SamBulkScanContext>>();
+        var bulkOrchestrator = new SamBulkScanOrchestrator([stepMock.Object], new Mock<IApplicationMetrics>().Object);
+        var dailyOrchestrator = new SamDailyScanOrchestrator([], new Mock<IApplicationMetrics>().Object);
         var metricsMock = new Mock<IApplicationMetrics>();
         var scanStateRepositoryMock = new Mock<IScanStateRepository>();
 
@@ -123,12 +129,13 @@ public class SamDailyScanTaskTests
             .ReturnsAsync(lockHandleMock.Object);
 
         stepMock
-            .Setup(s => s.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.ExecuteAsync(It.IsAny<SamBulkScanContext>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new NonRetryableException("Something went wrong"));
 
         var appLifetimeMock = new Mock<IHostApplicationLifetime>();
-        var task = new SamDailyScanTask(
-            orchestrator,
+        var task = new SamScanTask(
+            bulkOrchestrator,
+            dailyOrchestrator,
             _dataBridgeScanConfiguration,
             distributedLockMock.Object,
             appLifetimeMock.Object,
@@ -145,15 +152,16 @@ public class SamDailyScanTaskTests
     }
 
     [Fact]
-    public async Task RunAsync_ShouldBubbleException_WhenStepThrowsRetryableException()
+    public async Task RunAsync_ShouldBubbleException_WhenBulkStepThrowsRetryableException()
     {
         // Arrange
-        var loggerMock = new Mock<ILogger<SamDailyScanTask>>();
+        var loggerMock = new Mock<ILogger<SamScanTask>>();
         var lockHandleMock = new Mock<IDistributedLockHandle>();
         var distributedLockMock = new Mock<IDistributedLock>();
         var delayProviderMock = new Mock<IDelayProvider>();
-        var stepMock = new Mock<IScanStep<SamDailyScanContext>>();
-        var orchestrator = new SamDailyScanOrchestrator([stepMock.Object], new Mock<IApplicationMetrics>().Object);
+        var stepMock = new Mock<IScanStep<SamBulkScanContext>>();
+        var bulkOrchestrator = new SamBulkScanOrchestrator([stepMock.Object], new Mock<IApplicationMetrics>().Object);
+        var dailyOrchestrator = new SamDailyScanOrchestrator([], new Mock<IApplicationMetrics>().Object);
         var metricsMock = new Mock<IApplicationMetrics>();
         var scanStateRepositoryMock = new Mock<IScanStateRepository>();
 
@@ -162,12 +170,13 @@ public class SamDailyScanTaskTests
             .ReturnsAsync(lockHandleMock.Object);
 
         stepMock
-            .Setup(s => s.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.ExecuteAsync(It.IsAny<SamBulkScanContext>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new RetryableException("Something went wrong"));
 
         var appLifetimeMock = new Mock<IHostApplicationLifetime>();
-        var task = new SamDailyScanTask(
-            orchestrator,
+        var task = new SamScanTask(
+            bulkOrchestrator,
+            dailyOrchestrator,
             _dataBridgeScanConfiguration,
             distributedLockMock.Object,
             appLifetimeMock.Object,

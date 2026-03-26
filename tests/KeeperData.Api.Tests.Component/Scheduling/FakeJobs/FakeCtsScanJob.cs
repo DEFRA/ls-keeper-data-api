@@ -4,9 +4,9 @@ using Quartz;
 namespace KeeperData.Api.Tests.Component.Scheduling.FakeJobs;
 
 [DisallowConcurrentExecution]
-public class FakeCtsBulkScanJob(ICtsBulkScanTask task) : IJob
+public class FakeCtsScanJob(ICtsScanTask task) : IJob
 {
-    private readonly ICtsBulkScanTask _task = task;
+    private readonly ICtsScanTask _task = task;
 
     public async Task Execute(IJobExecutionContext context)
     {

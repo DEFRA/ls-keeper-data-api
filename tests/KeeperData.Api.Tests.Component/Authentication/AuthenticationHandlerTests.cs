@@ -42,19 +42,19 @@ public class AuthenticationHandlerTests
     {
         var configurationOverrides = new Dictionary<string, string?>
         {
-            ["BulkScanEndpointsEnabled"] = "true"
+            ["ScanEndpointsEnabled"] = "true"
         };
 
-        var ctsBulkScanTaskMock = new Mock<ICtsBulkScanTask>();
-        ctsBulkScanTaskMock.Setup(x => x.StartAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
+        var ctsScanTaskMock = new Mock<ICtsScanTask>();
+        ctsScanTaskMock.Setup(x => x.StartAsync(It.IsAny<bool>(), It.IsAny<int?>(), It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
 
         var factory = new AppWebApplicationFactory(configurationOverrides, useFakeAuth: true);
-        factory.OverrideServiceAsSingleton(ctsBulkScanTaskMock.Object);
+        factory.OverrideServiceAsSingleton(ctsScanTaskMock.Object);
 
         var client = factory.CreateClient();
         client.AddJwt();
 
-        var response = await client.PostAsync("/api/import/startCtsBulkScan", null);
+        var response = await client.PostAsync("/api/import/startCtsScan", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -64,19 +64,19 @@ public class AuthenticationHandlerTests
     {
         var configurationOverrides = new Dictionary<string, string?>
         {
-            ["BulkScanEndpointsEnabled"] = "true"
+            ["ScanEndpointsEnabled"] = "true"
         };
 
-        var ctsBulkScanTaskMock = new Mock<ICtsBulkScanTask>();
-        ctsBulkScanTaskMock.Setup(x => x.StartAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
+        var ctsScanTaskMock = new Mock<ICtsScanTask>();
+        ctsScanTaskMock.Setup(x => x.StartAsync(It.IsAny<bool>(), It.IsAny<int?>(), It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
 
         var factory = new AppWebApplicationFactory(configurationOverrides, useFakeAuth: true);
-        factory.OverrideServiceAsSingleton(ctsBulkScanTaskMock.Object);
+        factory.OverrideServiceAsSingleton(ctsScanTaskMock.Object);
 
         var client = factory.CreateClient();
         client.AddBasicApiKey(BasicApiKey, BasicSecret);
 
-        var response = await client.PostAsync("/api/import/startCtsBulkScan", null);
+        var response = await client.PostAsync("/api/import/startCtsScan", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.Accepted);
     }

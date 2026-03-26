@@ -1,7 +1,9 @@
 using FluentAssertions;
 using KeeperData.Api.Worker.Tasks.Implementations;
-using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily;
+using KeeperData.Application.Orchestration.ChangeScanning.Cts.Bulk;
+using KeeperData.Application.Orchestration.ChangeScanning.Cts.Daily;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
+using KeeperData.Core.Documents;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Providers;
 using KeeperData.Core.Repositories;
@@ -13,32 +15,34 @@ using Xunit;
 
 namespace KeeperData.Api.Worker.Tests.Unit.Tasks;
 
-public class SamDailyScanTaskTests
+public class CtsScanTaskTests
 {
-    private readonly Mock<SamDailyScanOrchestrator> _orchestratorMock;
+    private readonly Mock<CtsBulkScanOrchestrator> _bulkOrchestratorMock;
+    private readonly Mock<CtsDailyScanOrchestrator> _dailyOrchestratorMock;
     private readonly DataBridgeScanConfiguration _config;
     private readonly Mock<IDistributedLock> _distributedLockMock;
     private readonly Mock<IHostApplicationLifetime> _lifetimeMock;
-    private readonly Mock<ILogger<SamDailyScanTask>> _loggerMock;
+    private readonly Mock<ILogger<CtsScanTask>> _loggerMock;
     private readonly Mock<IDelayProvider> _delayProviderMock;
-    private readonly SamDailyScanTask _sut;
+    private readonly CtsScanTask _sut;
     private readonly Mock<IDistributedLockHandle> _lockHandleMock;
     private readonly CancellationTokenSource _appStoppingCts;
     private readonly Mock<IApplicationMetrics> _metricsMock;
-    private readonly Mock<IScanStateRepository> _scanStateMock;
+    private readonly Mock<IScanStateRepository> _scanStateRepositoryMock;
 
-    public SamDailyScanTaskTests()
+    public CtsScanTaskTests()
     {
-        _orchestratorMock = new Mock<SamDailyScanOrchestrator>(new List<Application.Orchestration.ChangeScanning.IScanStep<SamDailyScanContext>>(), new Mock<IApplicationMetrics>().Object);
+        _bulkOrchestratorMock = new Mock<CtsBulkScanOrchestrator>(new List<Application.Orchestration.ChangeScanning.IScanStep<CtsBulkScanContext>>(), new Mock<IApplicationMetrics>().Object);
+        _dailyOrchestratorMock = new Mock<CtsDailyScanOrchestrator>(new List<Application.Orchestration.ChangeScanning.IScanStep<CtsDailyScanContext>>(), new Mock<IApplicationMetrics>().Object);
         _config = new DataBridgeScanConfiguration { QueryPageSize = 100 };
         _distributedLockMock = new Mock<IDistributedLock>();
         _lifetimeMock = new Mock<IHostApplicationLifetime>();
-        _loggerMock = new Mock<ILogger<SamDailyScanTask>>();
+        _loggerMock = new Mock<ILogger<CtsScanTask>>();
         _delayProviderMock = new Mock<IDelayProvider>();
         _lockHandleMock = new Mock<IDistributedLockHandle>();
         _appStoppingCts = new CancellationTokenSource();
         _metricsMock = new Mock<IApplicationMetrics>();
-        _scanStateMock = new Mock<IScanStateRepository>();
+        _scanStateRepositoryMock = new Mock<IScanStateRepository>();
 
         _lifetimeMock.Setup(x => x.ApplicationStopping).Returns(_appStoppingCts.Token);
 
@@ -48,13 +52,14 @@ public class SamDailyScanTaskTests
         _delayProviderMock.Setup(x => x.DelayAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .Returns(async (TimeSpan _, CancellationToken token) => await Task.Delay(Timeout.Infinite, token));
 
-        _sut = new SamDailyScanTask(
-            _orchestratorMock.Object,
+        _sut = new CtsScanTask(
+            _bulkOrchestratorMock.Object,
+            _dailyOrchestratorMock.Object,
             _config,
             _distributedLockMock.Object,
             _lifetimeMock.Object,
             _delayProviderMock.Object,
-            _scanStateMock.Object,
+            _scanStateRepositoryMock.Object,
             _metricsMock.Object,
             _loggerMock.Object);
     }
@@ -65,9 +70,12 @@ public class SamDailyScanTaskTests
         _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_lockHandleMock.Object);
 
-        var result = await _sut.StartAsync(CancellationToken.None);
+        var result = await _sut.StartAsync(cancellationToken: CancellationToken.None);
 
         result.Should().NotBeNull();
+        result.Should().NotBeEmpty();
+
+        _loggerMock.Verify(x => x.Log(LogLevel.Information, It.IsAny<EventId>(), It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Lock acquired")), null, It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 
     [Fact]
@@ -77,8 +85,8 @@ public class SamDailyScanTaskTests
             .ReturnsAsync(_lockHandleMock.Object);
 
         var orchestratorStarted = new TaskCompletionSource();
-        _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
-            .Returns(async (SamDailyScanContext ctx, CancellationToken token) =>
+        _bulkOrchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), It.IsAny<CancellationToken>()))
+            .Returns(async (CtsBulkScanContext ctx, CancellationToken token) =>
             {
                 orchestratorStarted.SetResult();
                 try
@@ -91,13 +99,18 @@ public class SamDailyScanTaskTests
                 }
             });
 
-        await _sut.StartAsync(CancellationToken.None);
+        await _sut.StartAsync(cancellationToken: CancellationToken.None);
         await orchestratorStarted.Task;
 
         _appStoppingCts.Cancel();
         await Task.Delay(100);
 
-        _loggerMock.Verify(x => x.Log(LogLevel.Warning, It.IsAny<EventId>(), It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Application is shutting down")), null, It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+        _loggerMock.Verify(x => x.Log(
+            LogLevel.Warning,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Application is shutting down")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 
     [Fact]
@@ -108,7 +121,7 @@ public class SamDailyScanTaskTests
 
         var orchestratorStarted = new TaskCompletionSource();
 
-        _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
+        _bulkOrchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), It.IsAny<CancellationToken>()))
             .Returns(async () =>
             {
                 orchestratorStarted.SetResult();
@@ -116,16 +129,17 @@ public class SamDailyScanTaskTests
                 throw new InvalidOperationException("Background failure");
             });
 
-        await _sut.StartAsync(CancellationToken.None);
+        await _sut.StartAsync(cancellationToken: CancellationToken.None);
         await orchestratorStarted.Task;
-        await Task.Delay(100);
+        await Task.Delay(1000);
 
         _loggerMock.Verify(x => x.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
             It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Background task failed")),
             It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     [Fact]
@@ -134,20 +148,46 @@ public class SamDailyScanTaskTests
         _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((IDistributedLockHandle?)null);
 
-        var result = await _sut.StartAsync(CancellationToken.None);
+        var result = await _sut.StartAsync(cancellationToken: CancellationToken.None);
 
         result.Should().BeNull();
     }
 
     [Fact]
-    public async Task RunAsync_WhenLockAcquired_ShouldExecuteOrchestratorAndDisposeLock()
+    public async Task RunAsync_WhenLockAcquired_NoScanState_ShouldExecuteBulkOrchestratorAndDisposeLock()
     {
         _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_lockHandleMock.Object);
 
+        _scanStateRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ScanStateDocument?)null);
+
         await _sut.RunAsync(CancellationToken.None);
 
-        _orchestratorMock.Verify(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()), Times.Once);
+        _bulkOrchestratorMock.Verify(x => x.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), It.IsAny<CancellationToken>()), Times.Once);
+        _lockHandleMock.Verify(x => x.DisposeAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenLockAcquired_WithScanState_ShouldExecuteDailyOrchestrator()
+    {
+        _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_lockHandleMock.Object);
+
+        _scanStateRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ScanStateDocument
+            {
+                Id = "cts-scan",
+                LastSuccessfulScanStartedAt = DateTime.UtcNow.AddHours(-2),
+                LastSuccessfulScanCompletedAt = DateTime.UtcNow.AddHours(-1),
+                LastScanCorrelationId = Guid.NewGuid(),
+                LastScanMode = "daily",
+                LastScanItemCount = 100
+            });
+
+        await _sut.RunAsync(CancellationToken.None);
+
+        _dailyOrchestratorMock.Verify(x => x.ExecuteAsync(It.IsAny<CtsDailyScanContext>(), It.IsAny<CancellationToken>()), Times.Once);
         _lockHandleMock.Verify(x => x.DisposeAsync(), Times.Once);
     }
 
@@ -159,7 +199,8 @@ public class SamDailyScanTaskTests
 
         await _sut.RunAsync(CancellationToken.None);
 
-        _orchestratorMock.Verify(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()), Times.Never);
+        _bulkOrchestratorMock.Verify(x => x.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), It.IsAny<CancellationToken>()), Times.Never);
+        _dailyOrchestratorMock.Verify(x => x.ExecuteAsync(It.IsAny<CtsDailyScanContext>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -168,11 +209,38 @@ public class SamDailyScanTaskTests
         _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_lockHandleMock.Object);
 
-        _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
+        _bulkOrchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Exception"));
 
         await _sut.Invoking(s => s.RunAsync(CancellationToken.None))
             .Should().ThrowAsync<Exception>();
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenCancelled_ShouldLogCancellation()
+    {
+        _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_lockHandleMock.Object);
+
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        _bulkOrchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), It.IsAny<CancellationToken>()))
+            .Returns((CtsBulkScanContext ctx, CancellationToken token) =>
+            {
+                if (token.IsCancellationRequested) return Task.FromCanceled(token);
+                return Task.CompletedTask;
+            });
+
+        await _sut.Invoking(s => s.RunAsync(cts.Token))
+             .Should().ThrowAsync<OperationCanceledException>();
+
+        _loggerMock.Verify(x => x.Log(LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Import was cancelled")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     [Fact]
@@ -181,8 +249,8 @@ public class SamDailyScanTaskTests
         _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_lockHandleMock.Object);
 
-        _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
-            .Returns(async (SamDailyScanContext ctx, CancellationToken token) =>
+        _bulkOrchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), It.IsAny<CancellationToken>()))
+            .Returns(async (CtsBulkScanContext ctx, CancellationToken token) =>
             {
                 try { await Task.Delay(Timeout.Infinite, token); }
                 catch (TaskCanceledException) { throw new OperationCanceledException(); }
@@ -197,33 +265,18 @@ public class SamDailyScanTaskTests
         await _sut.Invoking(s => s.RunAsync(CancellationToken.None))
             .Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("Task was cancelled due to lock renewal failure");
-    }
 
-    [Fact]
-    public async Task RunAsync_WhenLockSuccessfullyRenewed_ShouldLogDebug()
-    {
-        // Arrange
-        _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(_lockHandleMock.Object);
-
-        var callCount = 0;
-        _delayProviderMock.Setup(x => x.DelayAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .Returns((TimeSpan _, CancellationToken token) =>
-                ++callCount == 1 ? Task.CompletedTask : Task.Delay(Timeout.Infinite, token));
-
-        _lockHandleMock.Setup(x => x.TryRenewAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        // Act
-        await _sut.RunAsync(CancellationToken.None);
-
-        // Assert
-        _loggerMock.Verify(x => x.Log(
-            LogLevel.Debug,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Successfully renewed lock")),
+        _loggerMock.Verify(x => x.Log(LogLevel.Error,
+            It.IsAny<EventId>(), It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Failed to renew lock")),
             null,
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+        _loggerMock.Verify(x => x.Log(LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Import was stopped due to lock renewal failure")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     [Fact]
@@ -234,8 +287,8 @@ public class SamDailyScanTaskTests
 
         var renewalAttempted = new TaskCompletionSource();
 
-        _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
-            .Returns(async (SamDailyScanContext ctx, CancellationToken token) =>
+        _bulkOrchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), It.IsAny<CancellationToken>()))
+            .Returns(async (CtsBulkScanContext ctx, CancellationToken token) =>
             {
                 await renewalAttempted.Task;
             });
@@ -265,8 +318,8 @@ public class SamDailyScanTaskTests
 
         var renewalStarted = new TaskCompletionSource();
 
-        _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
-            .Returns(async (SamDailyScanContext ctx, CancellationToken token) =>
+        _bulkOrchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), It.IsAny<CancellationToken>()))
+            .Returns(async (CtsBulkScanContext ctx, CancellationToken token) =>
             {
                 await renewalStarted.Task;
             });
@@ -294,8 +347,8 @@ public class SamDailyScanTaskTests
         var cts = new CancellationTokenSource();
         var renewalHit = new TaskCompletionSource();
 
-        _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
-            .Returns(async (SamDailyScanContext ctx, CancellationToken token) =>
+        _bulkOrchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), It.IsAny<CancellationToken>()))
+            .Returns(async (CtsBulkScanContext ctx, CancellationToken token) =>
             {
                 try { await renewalHit.Task; }
                 catch (TaskCanceledException) { }
@@ -324,8 +377,8 @@ public class SamDailyScanTaskTests
 
         var renewalHit = new TaskCompletionSource();
 
-        _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
-             .Returns(async (SamDailyScanContext ctx, CancellationToken token) =>
+        _bulkOrchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), It.IsAny<CancellationToken>()))
+             .Returns(async (CtsBulkScanContext ctx, CancellationToken token) =>
              {
                  await renewalHit.Task;
              });
@@ -347,55 +400,51 @@ public class SamDailyScanTaskTests
     }
 
     [Fact]
-    public async Task RunAsync_ShouldCalculateCorrectLookbackDate()
+    public async Task RunAsync_WhenLockSuccessfullyRenewed_ShouldLogDebug()
     {
-        // Arrange
-        _config.DailyScanIncludeChangesWithinTotalHours = 24;
-
-        SamDailyScanContext? capturedContext = null;
-
-        _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
-            .Callback<SamDailyScanContext, CancellationToken>((ctx, ct) => capturedContext = ctx)
-            .Returns(Task.CompletedTask);
-
-        _distributedLockMock.Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+        _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_lockHandleMock.Object);
 
-        // Act
+        var callCount = 0;
+        _delayProviderMock.Setup(x => x.DelayAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .Returns((TimeSpan _, CancellationToken token) =>
+                ++callCount == 1 ? Task.CompletedTask : Task.Delay(Timeout.Infinite, token));
+
+        _lockHandleMock.Setup(x => x.TryRenewAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
         await _sut.RunAsync(CancellationToken.None);
 
-        // Assert
-        capturedContext.Should().NotBeNull();
-
-        // To prove the logic is wrong for a "Daily Scan", we actually want it to be in the past:
-        capturedContext!.UpdatedSinceDateTime.Should().BeBefore(DateTime.UtcNow);
+        _loggerMock.Verify(x => x.Log(
+            LogLevel.Debug,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Successfully renewed lock")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 
     [Fact]
-    public async Task RunAsync_ShouldUseConfiguredHours_ToCalculateLookbackDate()
+    public async Task StartAsync_WithForceBulk_ShouldUseBulkOrchestrator()
     {
-        // Arrange
-        int hoursFromConfig = 48;
-        _config.DailyScanIncludeChangesWithinTotalHours = hoursFromConfig;
-
-        SamDailyScanContext? capturedContext = null;
-
-        _orchestratorMock.Setup(x => x.ExecuteAsync(It.IsAny<SamDailyScanContext>(), It.IsAny<CancellationToken>()))
-            .Callback<SamDailyScanContext, CancellationToken>((ctx, ct) => capturedContext = ctx)
-            .Returns(Task.CompletedTask);
-
-        _distributedLockMock.Setup(l => l.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+        _distributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_lockHandleMock.Object);
 
-        // Act
-        await _sut.RunAsync(CancellationToken.None);
+        _scanStateRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ScanStateDocument
+            {
+                Id = "cts-scan",
+                LastSuccessfulScanStartedAt = DateTime.UtcNow.AddHours(-2),
+                LastSuccessfulScanCompletedAt = DateTime.UtcNow.AddHours(-1),
+                LastScanCorrelationId = Guid.NewGuid(),
+                LastScanMode = "daily",
+                LastScanItemCount = 100
+            });
 
-        // Assert
-        capturedContext.Should().NotBeNull();
+        await _sut.StartAsync(forceBulk: true, cancellationToken: CancellationToken.None);
 
-        // Verify it's minus 48 hours
-        var expectedDate = DateTime.UtcNow.AddHours(-hoursFromConfig);
+        await Task.Delay(200);
 
-        capturedContext!.UpdatedSinceDateTime.Should().BeCloseTo(expectedDate, TimeSpan.FromSeconds(1));
+        _bulkOrchestratorMock.Verify(x => x.ExecuteAsync(It.IsAny<CtsBulkScanContext>(), It.IsAny<CancellationToken>()), Times.Once);
+        _dailyOrchestratorMock.Verify(x => x.ExecuteAsync(It.IsAny<CtsDailyScanContext>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

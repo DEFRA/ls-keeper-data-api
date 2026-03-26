@@ -6,10 +6,8 @@ public static class TestConstants
 
     public const string HealthCheckEndpoint = "/health";
 
-    public const string ImportStartCtsBulkScanEndpoint = "api/import/startCtsBulkScan";
-    public const string ImportStartSamBulkScanEndpoint = "api/import/startSamBulkScan";
-    public const string ImportStartCtsDailyScanEndpoint = "api/import/startCtsDailyScan";
-    public const string ImportStartSamDailyScanEndpoint = "api/import/startSamDailyScan";
+    public const string ImportStartCtsScanEndpoint = "api/import/startCtsScan";
+    public const string ImportStartSamScanEndpoint = "api/import/startSamScan";
 
     public const string AdminDlqCountEndpoint = "api/admin/queues/deadletter/count";
     public const string AdminDlqPeekEndpoint = "api/admin/queues/deadletter/peek";

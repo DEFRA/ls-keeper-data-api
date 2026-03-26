@@ -8,119 +8,94 @@ namespace KeeperData.Api.Tests.Component.Endpoints;
 
 public class ImportEndpointTests
 {
-    private readonly Mock<ICtsBulkScanTask> _ctsBulkScanTaskMock = new();
-    private readonly Mock<ISamBulkScanTask> _samBulkScanTaskMock = new();
-    private readonly Mock<ICtsDailyScanTask> _ctsDailyScanTaskMock = new();
-    private readonly Mock<ISamDailyScanTask> _samDailyScanTaskMock = new();
+    private readonly Mock<ICtsScanTask> _ctsScanTaskMock = new();
+    private readonly Mock<ISamScanTask> _samScanTaskMock = new();
 
     private const string BasicApiKey = "ApiKey";
     private const string BasicSecret = "integration-test-secret";
 
     public ImportEndpointTests()
     {
-        _ctsBulkScanTaskMock.Setup(x => x.StartAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
-        _samBulkScanTaskMock.Setup(x => x.StartAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
-        _ctsDailyScanTaskMock.Setup(x => x.StartAsync(It.IsAny<int?>(), It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
-        _samDailyScanTaskMock.Setup(x => x.StartAsync(It.IsAny<int?>(), It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
+        _ctsScanTaskMock.Setup(x => x.StartAsync(It.IsAny<bool>(), It.IsAny<int?>(), It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
+        _samScanTaskMock.Setup(x => x.StartAsync(It.IsAny<bool>(), It.IsAny<int?>(), It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
     }
 
     [Fact]
-    public async Task GivenCtsBulkScanEndpointsDisabled_WhenRequestMadeToEndpoint_ShouldReturnNotFound()
+    public async Task GivenCtsScanEndpointsDisabled_WhenRequestMadeToEndpoint_ShouldReturnNotFound()
     {
-        await ExecuteScanEndpointTest(TestConstants.ImportStartCtsBulkScanEndpoint,
-            _ctsBulkScanTaskMock.Object);
+        await ExecuteScanEndpointTest(TestConstants.ImportStartCtsScanEndpoint,
+            _ctsScanTaskMock.Object);
     }
 
     [Fact]
-    public async Task GivenSamBulkScanEndpointsDisabled_WhenRequestMadeToEndpoint_ShouldReturnNotFound()
+    public async Task GivenSamScanEndpointsDisabled_WhenRequestMadeToEndpoint_ShouldReturnNotFound()
     {
-        await ExecuteScanEndpointTest(TestConstants.ImportStartSamBulkScanEndpoint,
-            _samBulkScanTaskMock.Object);
+        await ExecuteScanEndpointTest(TestConstants.ImportStartSamScanEndpoint,
+            _samScanTaskMock.Object);
     }
 
     [Fact]
-    public async Task GivenCtsBulkScanEndpointsEnabled_WhenRequestMadeToEndpoint_ShouldSucceed()
+    public async Task GivenCtsScanEndpointsEnabled_WhenRequestMadeToEndpoint_ShouldSucceed()
     {
-        await ExecuteScanEndpointTest(TestConstants.ImportStartCtsBulkScanEndpoint,
-            _ctsBulkScanTaskMock.Object,
-            bulkScanEnabled: true,
+        await ExecuteScanEndpointTest(TestConstants.ImportStartCtsScanEndpoint,
+            _ctsScanTaskMock.Object,
+            scanEndpointsEnabled: true,
             expectedStatusCode: HttpStatusCode.Accepted);
     }
 
     [Fact]
-    public async Task GivenSamBulkScanEndpointsEnabled_WhenRequestMadeToEndpoint_ShouldSucceed()
+    public async Task GivenSamScanEndpointsEnabled_WhenRequestMadeToEndpoint_ShouldSucceed()
     {
-        await ExecuteScanEndpointTest(TestConstants.ImportStartSamBulkScanEndpoint,
-            _samBulkScanTaskMock.Object,
-            bulkScanEnabled: true,
+        await ExecuteScanEndpointTest(TestConstants.ImportStartSamScanEndpoint,
+            _samScanTaskMock.Object,
+            scanEndpointsEnabled: true,
             expectedStatusCode: HttpStatusCode.Accepted);
     }
 
     [Fact]
-    public async Task GivenCtsDailyScanEndpointsDisabled_WhenRequestMadeToEndpoint_ShouldReturnNotFound()
-    {
-        await ExecuteScanEndpointTest(TestConstants.ImportStartCtsDailyScanEndpoint,
-            _ctsDailyScanTaskMock.Object);
-    }
-
-    [Fact]
-    public async Task GivenSamDailyScanEndpointsDisabled_WhenRequestMadeToEndpoint_ShouldReturnNotFound()
-    {
-        await ExecuteScanEndpointTest(TestConstants.ImportStartSamDailyScanEndpoint,
-            _samDailyScanTaskMock.Object);
-    }
-
-    [Fact]
-    public async Task GivenCtsDailyScanEndpointsEnabled_WhenRequestMadeToEndpoint_ShouldSucceed()
-    {
-        await ExecuteScanEndpointTest(TestConstants.ImportStartCtsDailyScanEndpoint,
-            _ctsDailyScanTaskMock.Object,
-            dailyScanEnabled: true,
-            expectedStatusCode: HttpStatusCode.Accepted);
-    }
-
-    [Fact]
-    public async Task GivenSamDailyScanEndpointsEnabled_WhenRequestMadeToEndpoint_ShouldSucceed()
-    {
-        await ExecuteScanEndpointTest(TestConstants.ImportStartSamDailyScanEndpoint,
-            _samDailyScanTaskMock.Object,
-            dailyScanEnabled: true,
-            expectedStatusCode: HttpStatusCode.Accepted);
-    }
-
-    [Fact]
-    public async Task GivenCtsDailyScanEndpointEnabled_WhenSinceHoursProvided_ShouldForwardSinceHoursToTask()
+    public async Task GivenCtsScanEndpointEnabled_WhenSinceHoursProvided_ShouldForwardSinceHoursToTask()
     {
         const int sinceHours = 24;
 
-        await ExecuteDailyScanEndpointWithSinceHoursTest(
-            TestConstants.ImportStartCtsDailyScanEndpoint,
-            _ctsDailyScanTaskMock,
+        await ExecuteScanEndpointWithParamsTest(
+            TestConstants.ImportStartCtsScanEndpoint,
+            _ctsScanTaskMock,
             sinceHours: sinceHours);
 
-        _ctsDailyScanTaskMock.Verify(x => x.StartAsync(sinceHours, It.IsAny<CancellationToken>()), Times.Once);
+        _ctsScanTaskMock.Verify(x => x.StartAsync(false, sinceHours, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task GivenSamDailyScanEndpointEnabled_WhenSinceHoursNotProvided_ShouldForwardNullSinceHoursToTask()
+    public async Task GivenSamScanEndpointEnabled_WhenSinceHoursNotProvided_ShouldForwardNullSinceHoursToTask()
     {
-        await ExecuteDailyScanEndpointWithSinceHoursTest(
-            TestConstants.ImportStartSamDailyScanEndpoint,
-            _samDailyScanTaskMock,
+        await ExecuteScanEndpointWithParamsTest(
+            TestConstants.ImportStartSamScanEndpoint,
+            _samScanTaskMock,
             sinceHours: null);
 
-        _samDailyScanTaskMock.Verify(x => x.StartAsync(null, It.IsAny<CancellationToken>()), Times.Once);
+        _samScanTaskMock.Verify(x => x.StartAsync(false, null, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    private async Task ExecuteDailyScanEndpointWithSinceHoursTest<TService>(
+    [Fact]
+    public async Task GivenCtsScanEndpointEnabled_WhenForceBulkProvided_ShouldForwardForceBulkToTask()
+    {
+        await ExecuteScanEndpointWithParamsTest(
+            TestConstants.ImportStartCtsScanEndpoint,
+            _ctsScanTaskMock,
+            forceBulk: true);
+
+        _ctsScanTaskMock.Verify(x => x.StartAsync(true, null, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    private async Task ExecuteScanEndpointWithParamsTest<TService>(
         string endpoint,
         Mock<TService> serviceMock,
-        int? sinceHours) where TService : class
+        int? sinceHours = null,
+        bool? forceBulk = null) where TService : class
     {
         var configurationOverrides = new Dictionary<string, string?>
         {
-            ["BulkScanEndpointsEnabled"] = "false",
-            ["DailyScanEndpointsEnabled"] = "true"
+            ["ScanEndpointsEnabled"] = "true"
         };
 
         var factory = new AppWebApplicationFactory(configurationOverrides);
@@ -129,8 +104,14 @@ public class ImportEndpointTests
         var httpClient = factory.CreateClient();
         httpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
 
-        var url = sinceHours.HasValue
-            ? $"{endpoint}?sinceHours={sinceHours.Value}"
+        var queryParams = new List<string>();
+        if (sinceHours.HasValue)
+            queryParams.Add($"sinceHours={sinceHours.Value}");
+        if (forceBulk.HasValue)
+            queryParams.Add($"forceBulk={forceBulk.Value.ToString().ToLowerInvariant()}");
+
+        var url = queryParams.Count > 0
+            ? $"{endpoint}?{string.Join("&", queryParams)}"
             : endpoint;
 
         var response = await httpClient.PostAsync(url, null);
@@ -141,14 +122,12 @@ public class ImportEndpointTests
     private static async Task ExecuteScanEndpointTest<TService>(
         string endpoint,
         TService service,
-        bool bulkScanEnabled = false,
-        bool dailyScanEnabled = false,
+        bool scanEndpointsEnabled = false,
         HttpStatusCode expectedStatusCode = HttpStatusCode.NotFound) where TService : class
     {
         var configurationOverrides = new Dictionary<string, string?>
         {
-            ["BulkScanEndpointsEnabled"] = bulkScanEnabled.ToString().ToLowerInvariant(),
-            ["DailyScanEndpointsEnabled"] = dailyScanEnabled.ToString().ToLowerInvariant()
+            ["ScanEndpointsEnabled"] = scanEndpointsEnabled.ToString().ToLowerInvariant()
         };
 
         var factory = new AppWebApplicationFactory(configurationOverrides);

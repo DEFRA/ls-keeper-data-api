@@ -33,8 +33,9 @@ public static class WebApplicationExtensions
         var logger = app.Services.GetRequiredService<ILogger<Program>>();
         var configuration = app.Services.GetRequiredService<IConfiguration>();
         var healthcheckMaskingEnabled = configuration.GetValue<bool>("HealthcheckMaskingEnabled");
-        var bulkScanEndpointsEnabled = configuration.GetValue<bool>("BulkScanEndpointsEnabled");
-        var dailyScanEndpointsEnabled = configuration.GetValue<bool>("DailyScanEndpointsEnabled");
+        var scanEndpointsEnabled = configuration.GetValue<bool>("ScanEndpointsEnabled")
+            || configuration.GetValue<bool>("BulkScanEndpointsEnabled")
+            || configuration.GetValue<bool>("DailyScanEndpointsEnabled");
         var adminEndpointsEnabled = configuration.GetValue<bool>("AdminEndpointsEnabled");
 
         applicationLifetime.ApplicationStarted.Register(() =>
@@ -82,50 +83,26 @@ public static class WebApplicationExtensions
 
         app.MapGet("/", () => "Alive!").ExcludeFromDescription();
 
-        if (bulkScanEndpointsEnabled)
+        if (scanEndpointsEnabled)
         {
-            RegisterBulkScanEndpoint<ICtsBulkScanTask>(app, "/api/import/startCtsBulkScan", "CTS bulk scan")
+            RegisterSmartScanEndpoint<ICtsScanTask>(app, "/api/import/startCtsScan", "CTS scan")
                 .WithGroupName(InternalGroupName)
                 .WithTags("import")
-                .WithSummary("Start a CTS bulk scan")
-                .WithDescription("Triggers a full bulk scan of CTS data. Only one scan may run at a time.")
+                .WithSummary("Start a CTS scan")
+                .WithDescription("Triggers a CTS scan. Auto-decides bulk vs daily mode based on scan state. " +
+                    "Use ?forceBulk=true to force a full bulk scan. Use ?sinceHours=N to scan a custom window.")
                 .Produces<StartScanResponse>(StatusCodes.Status202Accepted)
                 .Produces<ErrorResponse>(StatusCodes.Status409Conflict)
                 .RequireAuthorization(new AuthorizeAttribute
                 {
                     AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
                 });
-            RegisterBulkScanEndpoint<ISamBulkScanTask>(app, "/api/import/startSamBulkScan", "SAM bulk scan")
+            RegisterSmartScanEndpoint<ISamScanTask>(app, "/api/import/startSamScan", "SAM scan")
                 .WithGroupName(InternalGroupName)
                 .WithTags("import")
-                .WithSummary("Start a SAM bulk scan")
-                .WithDescription("Triggers a full bulk scan of SAM data. Only one scan may run at a time.")
-                .Produces<StartScanResponse>(StatusCodes.Status202Accepted)
-                .Produces<ErrorResponse>(StatusCodes.Status409Conflict)
-                .RequireAuthorization(new AuthorizeAttribute
-                {
-                    AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
-                });
-        }
-
-        if (dailyScanEndpointsEnabled)
-        {
-            RegisterDailyScanEndpoint<ICtsDailyScanTask>(app, "/api/import/startCtsDailyScan", "CTS daily scan")
-                .WithGroupName(InternalGroupName)
-                .WithTags("import")
-                .WithSummary("Start a CTS daily scan")
-                .WithDescription("Triggers a daily incremental scan of CTS data. The sinceHours parameter controls how far back to scan.")
-                .Produces<StartScanResponse>(StatusCodes.Status202Accepted)
-                .Produces<ErrorResponse>(StatusCodes.Status409Conflict)
-                .RequireAuthorization(new AuthorizeAttribute
-                {
-                    AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
-                });
-            RegisterDailyScanEndpoint<ISamDailyScanTask>(app, "/api/import/startSamDailyScan", "SAM daily scan")
-                .WithGroupName(InternalGroupName)
-                .WithTags("import")
-                .WithSummary("Start a SAM daily scan")
-                .WithDescription("Triggers a daily incremental scan of SAM data. The sinceHours parameter controls how far back to scan.")
+                .WithSummary("Start a SAM scan")
+                .WithDescription("Triggers a SAM scan. Auto-decides bulk vs daily mode based on scan state. " +
+                    "Use ?forceBulk=true to force a full bulk scan. Use ?sinceHours=N to scan a custom window.")
                 .Produces<StartScanResponse>(StatusCodes.Status202Accepted)
                 .Produces<ErrorResponse>(StatusCodes.Status409Conflict)
                 .RequireAuthorization(new AuthorizeAttribute
@@ -141,31 +118,19 @@ public static class WebApplicationExtensions
         }
     }
 
-    private static RouteHandlerBuilder RegisterBulkScanEndpoint<TTask>(
+    private static RouteHandlerBuilder RegisterSmartScanEndpoint<TTask>(
         WebApplication app,
         string route,
         string scanName)
-        where TTask : IScanTask
+        where TTask : ISmartScanTask
     {
         return app.MapPost(route, async (
-            TTask scanTask,
-            ILogger<IScanTask> logger,
-            CancellationToken cancellationToken) =>
-            await ExecuteScanAsync(route, scanName, logger, ct => scanTask.StartAsync(ct), cancellationToken));
-    }
-
-    private static RouteHandlerBuilder RegisterDailyScanEndpoint<TTask>(
-        WebApplication app,
-        string route,
-        string scanName)
-        where TTask : IDailyScanTask
-    {
-        return app.MapPost(route, async (
+            [FromQuery] bool? forceBulk,
             [FromQuery] int? sinceHours,
             TTask scanTask,
-            ILogger<IScanTask> logger,
+            ILogger<ISmartScanTask> logger,
             CancellationToken cancellationToken) =>
-            await ExecuteScanAsync(route, scanName, logger, ct => scanTask.StartAsync(sinceHours, ct), cancellationToken));
+            await ExecuteScanAsync(route, scanName, logger, ct => scanTask.StartAsync(forceBulk ?? false, sinceHours, ct), cancellationToken));
     }
 
     private static void RegisterAdminDlqEndpoints(WebApplication app)
