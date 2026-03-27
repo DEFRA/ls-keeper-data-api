@@ -1,7 +1,6 @@
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Bulk;
 using KeeperData.Application.Orchestration.ChangeScanning.Sam.Daily;
 using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
-using KeeperData.Core.Exceptions;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Providers;
 using KeeperData.Core.Repositories;
@@ -33,73 +32,7 @@ public class SamScanTask(
     protected override string ScanSourceId => "sam-scan";
     protected override string LockName => nameof(SamScanTask);
 
-    protected override async Task ExecuteTaskAsync(
-        IDistributedLockHandle lockHandle,
-        Guid scanCorrelationId,
-        ScanMode scanMode,
-        CancellationTokenSource linkedCts)
-    {
-        var externalToken = linkedCts.Token;
-        var renewalTask = RenewLockPeriodicallyAsync(lockHandle, scanCorrelationId, linkedCts);
-
-        try
-        {
-            int totalItems;
-
-            if (scanMode.IsBulk)
-            {
-                totalItems = await ExecuteBulkScanAsync(scanCorrelationId, scanMode, linkedCts);
-            }
-            else
-            {
-                totalItems = await ExecuteDailyScanAsync(scanCorrelationId, scanMode, linkedCts);
-            }
-
-            await RecordScanStateAsync(scanCorrelationId, scanMode.ScanStartedAt, scanMode.ModeName, totalItems, linkedCts.Token);
-
-            Logger.LogInformation("Import completed successfully at {EndTime}, scanCorrelationId: {ScanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
-        }
-        catch (OperationCanceledException) when (renewalTask.IsFaulted || (renewalTask.IsCompleted && !externalToken.IsCancellationRequested))
-        {
-            Logger.LogError("Import was stopped due to lock renewal failure at {EndTime}, scanCorrelationId: {ScanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
-            throw new InvalidOperationException("Task was cancelled due to lock renewal failure");
-        }
-        catch (OperationCanceledException) when (externalToken.IsCancellationRequested)
-        {
-            Logger.LogInformation("Import was cancelled at {EndTime}, scanCorrelationId: {ScanCorrelationId}", DateTime.UtcNow, scanCorrelationId);
-            throw;
-        }
-        catch (RetryableException)
-        {
-            throw;
-        }
-        catch (NonRetryableException)
-        {
-            throw;
-        }
-        catch (Exception)
-        {
-            throw;
-        }
-        finally
-        {
-            if (!linkedCts.IsCancellationRequested)
-            {
-                await linkedCts.CancelAsync();
-            }
-
-            try
-            {
-                await renewalTask;
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Unexpected error in lock renewal task for {LockName} scanCorrelationId: {ScanCorrelationId}", LockName, scanCorrelationId);
-            }
-        }
-    }
-
-    private async Task<int> ExecuteBulkScanAsync(Guid scanCorrelationId, ScanMode scanMode, CancellationTokenSource linkedCts)
+    protected override async Task<int> ExecuteBulkScanAsync(Guid scanCorrelationId, ScanMode scanMode, CancellationTokenSource linkedCts)
     {
         var context = new SamBulkScanContext
         {
@@ -120,7 +53,7 @@ public class SamScanTask(
         return context.Holdings.CurrentSkip + context.Holders.CurrentSkip;
     }
 
-    private async Task<int> ExecuteDailyScanAsync(Guid scanCorrelationId, ScanMode scanMode, CancellationTokenSource linkedCts)
+    protected override async Task<int> ExecuteDailyScanAsync(Guid scanCorrelationId, ScanMode scanMode, CancellationTokenSource linkedCts)
     {
         var context = new SamDailyScanContext
         {
