@@ -13,7 +13,7 @@ using Xunit;
 
 namespace KeeperData.Api.Worker.Tests.Unit.Tasks;
 
-public class BulkScanTaskBaseTests
+public class SmartScanTaskBaseTests
 {
     private readonly Mock<DataBridgeScanConfiguration> _configMock;
     private readonly Mock<IDistributedLock> _distributedLockMock;
@@ -22,9 +22,9 @@ public class BulkScanTaskBaseTests
     private readonly Mock<IScanStateRepository> _scanStateRepositoryMock;
     private readonly Mock<IApplicationMetrics> _metricsMock;
     private readonly Mock<ILogger> _loggerMock;
-    private readonly TestBulkScanTask _sut;
+    private readonly TestSmartScanTask _sut;
 
-    public BulkScanTaskBaseTests()
+    public SmartScanTaskBaseTests()
     {
         _configMock = new Mock<DataBridgeScanConfiguration>();
         _distributedLockMock = new Mock<IDistributedLock>();
@@ -34,7 +34,7 @@ public class BulkScanTaskBaseTests
         _metricsMock = new Mock<IApplicationMetrics>();
         _loggerMock = new Mock<ILogger>();
 
-        _sut = new TestBulkScanTask(
+        _sut = new TestSmartScanTask(
             _configMock.Object,
             _distributedLockMock.Object,
             _applicationLifetimeMock.Object,
@@ -187,7 +187,7 @@ public class BulkScanTaskBaseTests
     }
 
     // Test implementation to expose protected method
-    private class TestBulkScanTask(
+    private class TestSmartScanTask(
         DataBridgeScanConfiguration dataBridgeScanConfiguration,
         IDistributedLock distributedLock,
         IHostApplicationLifetime applicationLifetime,
@@ -195,15 +195,20 @@ public class BulkScanTaskBaseTests
         IScanStateRepository scanStateRepository,
         IApplicationMetrics metrics,
         ILogger logger)
-        : BulkScanTaskBase(dataBridgeScanConfiguration, distributedLock, applicationLifetime, delayProvider,
+        : SmartScanTaskBase(dataBridgeScanConfiguration, distributedLock, applicationLifetime, delayProvider,
             scanStateRepository, metrics, logger)
     {
         protected override string ScanSourceId => "test-scan";
         protected override string LockName => "TestLock";
 
-        protected override Task ExecuteTaskAsync(IDistributedLockHandle lockHandle, Guid scanCorrelationId, CancellationTokenSource linkedCts)
+        protected override Task<int> ExecuteBulkScanAsync(Guid scanCorrelationId, ScanMode scanMode, CancellationTokenSource linkedCts)
         {
-            return Task.CompletedTask;
+            return Task.FromResult(0);
+        }
+
+        protected override Task<int> ExecuteDailyScanAsync(Guid scanCorrelationId, ScanMode scanMode, CancellationTokenSource linkedCts)
+        {
+            return Task.FromResult(0);
         }
 
         public Task TestRecordScanStateAsync(Guid scanCorrelationId, DateTime scanStartedAt, int itemCount, CancellationToken cancellationToken)

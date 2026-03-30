@@ -8,19 +8,19 @@ using Xunit;
 
 namespace KeeperData.Api.Worker.Tests.Unit.Jobs;
 
-public class CtsDailyScanJobTests
+public class SamScanJobTests
 {
-    private readonly Mock<ICtsDailyScanTask> _taskMock;
-    private readonly Mock<ILogger<CtsDailyScanJob>> _loggerMock;
+    private readonly Mock<ISamScanTask> _taskMock;
+    private readonly Mock<ILogger<SamScanJob>> _loggerMock;
     private readonly Mock<IJobExecutionContext> _contextMock;
-    private readonly CtsDailyScanJob _sut;
+    private readonly SamScanJob _sut;
 
-    public CtsDailyScanJobTests()
+    public SamScanJobTests()
     {
-        _taskMock = new Mock<ICtsDailyScanTask>();
-        _loggerMock = new Mock<ILogger<CtsDailyScanJob>>();
+        _taskMock = new Mock<ISamScanTask>();
+        _loggerMock = new Mock<ILogger<SamScanJob>>();
         _contextMock = new Mock<IJobExecutionContext>();
-        _sut = new CtsDailyScanJob(_taskMock.Object, _loggerMock.Object);
+        _sut = new SamScanJob(_taskMock.Object, _loggerMock.Object);
     }
 
     [Fact]
@@ -37,8 +37,7 @@ public class CtsDailyScanJobTests
             It.IsAny<EventId>(),
             It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("started")),
             null,
-            It.IsAny<Func<It.IsAnyType,
-            Exception?, string>>()),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
 

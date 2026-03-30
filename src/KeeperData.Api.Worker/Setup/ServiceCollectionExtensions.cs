@@ -26,56 +26,30 @@ public static class ServiceCollectionExtensions
 
         services.AddQuartz(q =>
         {
-            var ctsBulkScanJobConfig = scheduledJobConfiguration.FirstOrDefault(x => x.JobType == nameof(CtsBulkScanJob));
-            if (ctsBulkScanJobConfig?.Enabled == true && ctsBulkScanJobConfig?.CronSchedule != null)
+            var ctsScanJobConfig = scheduledJobConfiguration.FirstOrDefault(x => x.JobType == nameof(CtsScanJob));
+            if (ctsScanJobConfig?.Enabled == true && ctsScanJobConfig?.CronSchedule != null)
             {
-                q.AddJob<CtsBulkScanJob>(opts => opts.WithIdentity(ctsBulkScanJobConfig.JobType));
+                q.AddJob<CtsScanJob>(opts => opts.WithIdentity(ctsScanJobConfig.JobType));
 
                 q.AddTrigger(opts => opts
-                    .ForJob(ctsBulkScanJobConfig.JobType)
-                    .StartAt(ctsBulkScanJobConfig.EnabledFrom)
-                    .EndAt(ctsBulkScanJobConfig.EnabledTo)
-                    .WithIdentity($"{ctsBulkScanJobConfig.JobType}-trigger")
-                    .WithCronSchedule(ctsBulkScanJobConfig.CronSchedule));
+                    .ForJob(ctsScanJobConfig.JobType)
+                    .StartAt(ctsScanJobConfig.EnabledFrom)
+                    .EndAt(ctsScanJobConfig.EnabledTo)
+                    .WithIdentity($"{ctsScanJobConfig.JobType}-trigger")
+                    .WithCronSchedule(ctsScanJobConfig.CronSchedule));
             }
 
-            var samBulkScanJobConfig = scheduledJobConfiguration.FirstOrDefault(x => x.JobType == nameof(SamBulkScanJob));
-            if (samBulkScanJobConfig?.Enabled == true && samBulkScanJobConfig?.CronSchedule != null)
+            var samScanJobConfig = scheduledJobConfiguration.FirstOrDefault(x => x.JobType == nameof(SamScanJob));
+            if (samScanJobConfig?.Enabled == true && samScanJobConfig?.CronSchedule != null)
             {
-                q.AddJob<SamBulkScanJob>(opts => opts.WithIdentity(samBulkScanJobConfig.JobType));
+                q.AddJob<SamScanJob>(opts => opts.WithIdentity(samScanJobConfig.JobType));
 
                 q.AddTrigger(opts => opts
-                    .ForJob(samBulkScanJobConfig.JobType)
-                    .StartAt(samBulkScanJobConfig.EnabledFrom)
-                    .EndAt(samBulkScanJobConfig.EnabledTo)
-                    .WithIdentity($"{samBulkScanJobConfig.JobType}-trigger")
-                    .WithCronSchedule(samBulkScanJobConfig.CronSchedule));
-            }
-
-            var ctsDailyScanJobConfig = scheduledJobConfiguration.FirstOrDefault(x => x.JobType == nameof(CtsDailyScanJob));
-            if (ctsDailyScanJobConfig?.Enabled == true && ctsDailyScanJobConfig?.CronSchedule != null)
-            {
-                q.AddJob<CtsDailyScanJob>(opts => opts.WithIdentity(ctsDailyScanJobConfig.JobType));
-
-                q.AddTrigger(opts => opts
-                    .ForJob(ctsDailyScanJobConfig.JobType)
-                    .StartAt(ctsDailyScanJobConfig.EnabledFrom)
-                    .EndAt(ctsDailyScanJobConfig.EnabledTo)
-                    .WithIdentity($"{ctsDailyScanJobConfig.JobType}-trigger")
-                    .WithCronSchedule(ctsDailyScanJobConfig.CronSchedule));
-            }
-
-            var samDailyScanJobConfig = scheduledJobConfiguration.FirstOrDefault(x => x.JobType == nameof(SamDailyScanJob));
-            if (samDailyScanJobConfig?.Enabled == true && samDailyScanJobConfig?.CronSchedule != null)
-            {
-                q.AddJob<SamDailyScanJob>(opts => opts.WithIdentity(samDailyScanJobConfig.JobType));
-
-                q.AddTrigger(opts => opts
-                    .ForJob(samDailyScanJobConfig.JobType)
-                    .StartAt(samDailyScanJobConfig.EnabledFrom)
-                    .EndAt(samDailyScanJobConfig.EnabledTo)
-                    .WithIdentity($"{samDailyScanJobConfig.JobType}-trigger")
-                    .WithCronSchedule(samDailyScanJobConfig.CronSchedule));
+                    .ForJob(samScanJobConfig.JobType)
+                    .StartAt(samScanJobConfig.EnabledFrom)
+                    .EndAt(samScanJobConfig.EnabledTo)
+                    .WithIdentity($"{samScanJobConfig.JobType}-trigger")
+                    .WithCronSchedule(samScanJobConfig.CronSchedule));
             }
         });
 
@@ -89,20 +63,16 @@ public static class ServiceCollectionExtensions
 
     private static IServiceCollection AddJobs(this IServiceCollection services)
     {
-        services.AddScoped<CtsBulkScanJob>();
-        services.AddScoped<SamBulkScanJob>();
-        services.AddScoped<CtsDailyScanJob>();
-        services.AddScoped<SamDailyScanJob>();
+        services.AddScoped<CtsScanJob>();
+        services.AddScoped<SamScanJob>();
 
         return services;
     }
 
     private static IServiceCollection AddTasks(this IServiceCollection services)
     {
-        services.AddScoped<ICtsBulkScanTask, CtsBulkScanTask>();
-        services.AddScoped<ISamBulkScanTask, SamBulkScanTask>();
-        services.AddScoped<ICtsDailyScanTask, CtsDailyScanTask>();
-        services.AddScoped<ISamDailyScanTask, SamDailyScanTask>();
+        services.AddScoped<ICtsScanTask, CtsScanTask>();
+        services.AddScoped<ISamScanTask, SamScanTask>();
 
         return services;
     }

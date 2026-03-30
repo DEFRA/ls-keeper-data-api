@@ -15,10 +15,10 @@ public class SamBulkScanOrchestratorTests(AppTestFixture appTestFixture) : IClas
         // Arrange
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
         using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
-        var samBulkScanTask = scope.ServiceProvider.GetRequiredService<ISamBulkScanTask>();
+        var samScanTask = scope.ServiceProvider.GetRequiredService<ISamScanTask>();
 
         // Act
-        var scanCorrelationId = await samBulkScanTask.StartAsync();
+        var scanCorrelationId = await samScanTask.StartAsync(forceBulk: true);
 
         // Assert
         scanCorrelationId.Should().NotBeNull("orchestration should start successfully and return a correlation ID");
@@ -32,14 +32,14 @@ public class SamBulkScanOrchestratorTests(AppTestFixture appTestFixture) : IClas
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
         using var scope1 = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
         using var scope2 = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
-        var firstScanTask = scope1.ServiceProvider.GetRequiredService<ISamBulkScanTask>();
-        var secondScanTask = scope2.ServiceProvider.GetRequiredService<ISamBulkScanTask>();
+        var firstScanTask = scope1.ServiceProvider.GetRequiredService<ISamScanTask>();
+        var secondScanTask = scope2.ServiceProvider.GetRequiredService<ISamScanTask>();
 
         // Act - Start first scan to hold the distributed lock
-        var firstCorrelationId = await firstScanTask.StartAsync();
+        var firstCorrelationId = await firstScanTask.StartAsync(forceBulk: true);
 
         // Act - Try to start second scan immediately (should fail to acquire lock)
-        var secondCorrelationId = await secondScanTask.StartAsync();
+        var secondCorrelationId = await secondScanTask.StartAsync(forceBulk: true);
 
         // Assert
         firstCorrelationId.Should().NotBeNull("first orchestration should start successfully");
