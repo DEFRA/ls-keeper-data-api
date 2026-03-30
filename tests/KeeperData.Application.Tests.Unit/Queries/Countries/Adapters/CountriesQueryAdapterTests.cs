@@ -39,7 +39,7 @@ public class CountriesQueryAdapterTests
     public async Task WhenHandlingQueryWithNoFilters_AllCountriesShouldBeReturned()
     {
         GivenTheseCountries(_testCountries);
-        var (items, totalCount) = await WhenSearchingForCountries();
+        var (items, totalCount, nextCursor) = await WhenSearchingForCountries();
         var expected = s_countryGBAsDTO;
 
         items.Count.Should().Be(3);
@@ -66,7 +66,7 @@ public class CountriesQueryAdapterTests
         Debug.WriteLine(scenario);
         GivenTheseCountries(_testCountries);
 
-        var (items, totalCount) = await WhenSearchingForCountries(name, codesCsv, euTradeMember, devolvedAuthority, year.HasValue ? new DateTime(year.Value, month ?? 1, 1) : null);
+        var (items, totalCount, nextCursor) = await WhenSearchingForCountries(name, codesCsv, euTradeMember, devolvedAuthority, year.HasValue ? new DateTime(year.Value, month ?? 1, 1) : null);
 
         var codes = expectedCodes?.Split(",") ?? [];
         items.Count.Should().Be(codes.Length);
@@ -88,7 +88,7 @@ public class CountriesQueryAdapterTests
         Debug.WriteLine(scenario);
         GivenTheseCountries(_testCountries);
 
-        var (items, totalCount) = await WhenSearchingForCountries(sortBy: sortBy, ascDesc: ascDesc, page: page, pageSize: pageSize);
+        var (items, totalCount, nextCursor) = await WhenSearchingForCountries(sortBy: sortBy, ascDesc: ascDesc, page: page, pageSize: pageSize);
 
         var codes = expectedOrder?.Split(",") ?? [];
         items.Count.Should().Be(codes.Length);
@@ -114,7 +114,7 @@ public class CountriesQueryAdapterTests
         }
     }
 
-    private async Task<(List<CountryDTO> Items, int TotalCount)> WhenSearchingForCountries(string? name = null, string? codeCsv = null, bool? euTradeMember = null, bool? devolvedAuthority = null, DateTime? lastUpdated = null, string? sortBy = null, string? ascDesc = null, int? page = null, int? pageSize = null)
+    private async Task<(List<CountryDTO> Items, int TotalCount, string? NextCursor)> WhenSearchingForCountries(string? name = null, string? codeCsv = null, bool? euTradeMember = null, bool? devolvedAuthority = null, DateTime? lastUpdated = null, string? sortBy = null, string? ascDesc = null, int? page = null, int? pageSize = null)
     {
         var query = new GetCountriesQuery()
         {

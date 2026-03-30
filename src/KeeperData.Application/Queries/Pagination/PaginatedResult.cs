@@ -45,4 +45,5 @@ public class PaginatedResult<T>
     /// Whether there is a previous page available.
     /// </summary>
     public bool HasPreviousPage => Page > 1;
+    public string? NextCursor { get; set; }
 }
