@@ -171,7 +171,7 @@ public static class WebApplicationExtensions
             .WithDescription("⚠️ DESTRUCTIVE: Permanently deletes all messages from the dead letter queue. This operation cannot be undone.")
             .WithMetadata(new ProducesResponseTypeAttribute(typeof(PurgeResult), StatusCodes.Status200OK))
             .RequireAuthorization(adminAuth);
-        
+
         app.MapGet("/api/admin/queues/main/count", GetMainQueueCountHandler)
             .WithGroupName(InternalGroupName)
             .WithTags("queue")
