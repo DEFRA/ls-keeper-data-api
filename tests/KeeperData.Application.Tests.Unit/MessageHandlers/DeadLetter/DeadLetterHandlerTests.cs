@@ -13,7 +13,7 @@ namespace KeeperData.Application.Tests.Unit.MessageHandlers.DeadLetter;
 
 public class DeadLetterHandlerTests
 {
-    private readonly Mock<IDeadLetterQueueService> _dlqServiceMock = new();
+    private readonly Mock<IQueueService> _dlqServiceMock = new();
     private readonly Mock<IOptions<IntakeEventQueueOptions>> _queueOptionsMock = new();
     private readonly CancellationToken _cancellationToken = CancellationToken.None;
     private const string ValidDlqUrl = "https://sqs.us-east-1.amazonaws.com/123456789012/test-dlq";
@@ -485,6 +485,141 @@ public class DeadLetterHandlerTests
 
         // Act
         var result = await WebApplicationExtensions.PurgeDeadLetterQueueHandler(
+            _dlqServiceMock.Object,
+            _queueOptionsMock.Object,
+            NullLogger<Program>.Instance,
+            _cancellationToken);
+
+        // Assert
+        result.GetType().Name.Should().StartWith("JsonHttpResult");
+        var statusCodeProperty = result.GetType().GetProperty("StatusCode");
+        statusCodeProperty!.GetValue(result).Should().Be(503);
+    }
+
+    [Fact]
+    public async Task GetMainQueueCountHandler_WhenQueueUrlIsNull_ReturnsBadRequest()
+    {
+        // Arrange
+        _queueOptionsMock.Setup(o => o.Value)
+            .Returns(new IntakeEventQueueOptions
+            {
+                QueueUrl = null!,
+                DeadLetterQueueUrl = ValidDlqUrl
+            });
+
+        // Act
+        var result = await WebApplicationExtensions.GetMainQueueCountHandler(
+            _dlqServiceMock.Object,
+            _queueOptionsMock.Object,
+            NullLogger<Program>.Instance,
+            _cancellationToken);
+
+        // Assert
+        result.GetType().Name.Should().StartWith("BadRequest");
+        _dlqServiceMock.Verify(s => s.GetQueueStatsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetMainQueueCountHandler_WhenQueueUrlIsEmpty_ReturnsBadRequest()
+    {
+        // Arrange
+        _queueOptionsMock.Setup(o => o.Value)
+            .Returns(new IntakeEventQueueOptions
+            {
+                QueueUrl = string.Empty,
+                DeadLetterQueueUrl = ValidDlqUrl
+            });
+
+        // Act
+        var result = await WebApplicationExtensions.GetMainQueueCountHandler(
+            _dlqServiceMock.Object,
+            _queueOptionsMock.Object,
+            NullLogger<Program>.Instance,
+            _cancellationToken);
+
+        // Assert
+        result.GetType().Name.Should().StartWith("BadRequest");
+    }
+
+    [Fact]
+    public async Task GetMainQueueCountHandler_WhenQueueUrlIsWhitespace_ReturnsBadRequest()
+    {
+        // Arrange
+        _queueOptionsMock.Setup(o => o.Value)
+            .Returns(new IntakeEventQueueOptions
+            {
+                QueueUrl = "   ",
+                DeadLetterQueueUrl = ValidDlqUrl
+            });
+
+        // Act
+        var result = await WebApplicationExtensions.GetMainQueueCountHandler(
+            _dlqServiceMock.Object,
+            _queueOptionsMock.Object,
+            NullLogger<Program>.Instance,
+            _cancellationToken);
+
+        // Assert
+        result.GetType().Name.Should().StartWith("BadRequest");
+    }
+
+    [Fact]
+    public async Task GetMainQueueCountHandler_WhenServiceSucceeds_ReturnsOkWithStats()
+    {
+        // Arrange
+        const string mainQueueUrl = "https://sqs.us-east-1.amazonaws.com/123456789012/main-queue";
+        _queueOptionsMock.Setup(o => o.Value)
+            .Returns(new IntakeEventQueueOptions
+            {
+                QueueUrl = mainQueueUrl,
+                DeadLetterQueueUrl = ValidDlqUrl
+            });
+
+        var expectedStats = new QueueStats
+        {
+            QueueUrl = mainQueueUrl,
+            ApproximateMessageCount = 25,
+            ApproximateMessagesNotVisible = 5,
+            ApproximateMessagesDelayed = 2,
+            CheckedAt = DateTime.UtcNow
+        };
+
+        _dlqServiceMock.Setup(s => s.GetQueueStatsAsync(mainQueueUrl, _cancellationToken))
+            .ReturnsAsync(expectedStats);
+
+        // Act
+        var result = await WebApplicationExtensions.GetMainQueueCountHandler(
+            _dlqServiceMock.Object,
+            _queueOptionsMock.Object,
+            NullLogger<Program>.Instance,
+            _cancellationToken);
+
+        // Assert
+        result.Should().BeOfType<Ok<QueueStats>>();
+        var okResult = (Ok<QueueStats>)result;
+        okResult.Value.Should().Be(expectedStats);
+        okResult.Value.QueueUrl.Should().Be(mainQueueUrl);
+        okResult.Value.ApproximateMessageCount.Should().Be(25);
+        _dlqServiceMock.Verify(s => s.GetQueueStatsAsync(mainQueueUrl, _cancellationToken), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetMainQueueCountHandler_WhenServiceThrowsException_ReturnsServiceUnavailable()
+    {
+        // Arrange
+        const string mainQueueUrl = "https://sqs.us-east-1.amazonaws.com/123456789012/main-queue";
+        _queueOptionsMock.Setup(o => o.Value)
+            .Returns(new IntakeEventQueueOptions
+            {
+                QueueUrl = mainQueueUrl,
+                DeadLetterQueueUrl = ValidDlqUrl
+            });
+
+        _dlqServiceMock.Setup(s => s.GetQueueStatsAsync(mainQueueUrl, _cancellationToken))
+            .ThrowsAsync(new Exception("Network timeout"));
+
+        // Act
+        var result = await WebApplicationExtensions.GetMainQueueCountHandler(
             _dlqServiceMock.Object,
             _queueOptionsMock.Object,
             NullLogger<Program>.Instance,

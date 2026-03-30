@@ -8,11 +8,11 @@ using Microsoft.Extensions.Options;
 
 namespace KeeperData.Infrastructure.Messaging.Services;
 
-public partial class DeadLetterQueueService(
+public partial class QueueService(
     IAmazonSQS amazonSqs,
     IOptions<IntakeEventQueueOptions> options,
-    ILogger<DeadLetterQueueService> logger)
-    : IDeadLetterQueueService
+    ILogger<QueueService> logger)
+    : IQueueService
 {
     private readonly IntakeEventQueueOptions _queueConsumerOptions = options.Value;
 

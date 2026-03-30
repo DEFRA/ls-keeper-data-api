@@ -27,7 +27,7 @@ public class QueuePollerTests
     private readonly Mock<IAmazonSQS> _sqsMock = new();
     private readonly Mock<IMessageSerializer<SnsEnvelope>> _serializerMock = new();
     private readonly Mock<ILogger<QueuePoller>> _loggerMock = new();
-    private readonly Mock<IDeadLetterQueueService> _deadLetterQueueServiceMock = new();
+    private readonly Mock<IQueueService> _deadLetterQueueServiceMock = new();
     private readonly MessageCommandRegistry _messageCommandRegistry = new();
     private readonly Mock<IDataImportThrottlingConfiguration> _dataImportThrottlingConfigurationMock = new();
     private readonly Mock<IDelayProvider> _delayProviderMock = new();

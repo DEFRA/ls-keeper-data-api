@@ -11,18 +11,18 @@ using Moq;
 
 namespace KeeperData.Infrastructure.Tests.Unit.Messaging.Services;
 
-public class DeadLetterQueueServiceTests
+public class QueueServiceTests
 {
     private readonly Mock<IAmazonSQS> _mockSqs;
-    private readonly Mock<ILogger<DeadLetterQueueService>> _mockLogger;
+    private readonly Mock<ILogger<QueueService>> _mockLogger;
     private readonly IntakeEventQueueOptions _options;
     private readonly string _queueUrl = "https://sqs.us-east-1.amazonaws.com/123456789/main-queue";
     private readonly string _dlqUrl = "https://sqs.us-east-1.amazonaws.com/123456789/main-queue-dlq";
 
-    public DeadLetterQueueServiceTests()
+    public QueueServiceTests()
     {
         _mockSqs = new Mock<IAmazonSQS>();
-        _mockLogger = new Mock<ILogger<DeadLetterQueueService>>();
+        _mockLogger = new Mock<ILogger<QueueService>>();
         _options = new IntakeEventQueueOptions
         {
             QueueUrl = _queueUrl,
@@ -48,7 +48,7 @@ public class DeadLetterQueueServiceTests
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(new DeleteMessageResponse());
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         var result = await sut.MoveToDeadLetterQueueAsync(message, _queueUrl, exception, CancellationToken.None);
@@ -82,7 +82,7 @@ public class DeadLetterQueueServiceTests
             It.IsAny<CancellationToken>()))
             .ThrowsAsync(new AmazonSQSException("DLQ not found"));
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         var result = await sut.MoveToDeadLetterQueueAsync(message, _queueUrl, exception, CancellationToken.None);
@@ -114,7 +114,7 @@ public class DeadLetterQueueServiceTests
             It.IsAny<CancellationToken>()))
             .ThrowsAsync(new AmazonSQSException("Network timeout"));
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         var result = await sut.MoveToDeadLetterQueueAsync(message, _queueUrl, exception, CancellationToken.None);
@@ -147,7 +147,7 @@ public class DeadLetterQueueServiceTests
         var message = CreateTestMessage();
         var exception = new NonRetryableException("Test failure");
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(optionsWithoutDlq), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(optionsWithoutDlq), _mockLogger.Object);
 
         // Act
         var result = await sut.MoveToDeadLetterQueueAsync(message, _queueUrl, exception, CancellationToken.None);
@@ -185,7 +185,7 @@ public class DeadLetterQueueServiceTests
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(new DeleteMessageResponse());
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         await sut.MoveToDeadLetterQueueAsync(message, _queueUrl, exception, CancellationToken.None);
@@ -232,7 +232,7 @@ public class DeadLetterQueueServiceTests
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(new DeleteMessageResponse());
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         await sut.MoveToDeadLetterQueueAsync(message, _queueUrl, exception, CancellationToken.None);
@@ -266,7 +266,7 @@ public class DeadLetterQueueServiceTests
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(new DeleteMessageResponse());
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         await sut.MoveToDeadLetterQueueAsync(message, _queueUrl, exception, CancellationToken.None);
@@ -291,7 +291,7 @@ public class DeadLetterQueueServiceTests
             It.Is<CancellationToken>(ct => ct.IsCancellationRequested)))
             .ThrowsAsync(new OperationCanceledException());
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act & Assert
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
@@ -319,7 +319,7 @@ public class DeadLetterQueueServiceTests
                 }
             });
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         var result = await sut.GetQueueStatsAsync(_dlqUrl);
@@ -351,7 +351,7 @@ public class DeadLetterQueueServiceTests
                 }
             });
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         var result = await sut.GetQueueStatsAsync(_dlqUrl);
@@ -391,7 +391,7 @@ public class DeadLetterQueueServiceTests
                 }
             });
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         var result = await sut.PeekDeadLetterMessagesAsync(2);
@@ -426,7 +426,7 @@ public class DeadLetterQueueServiceTests
                 }
             });
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         await sut.PeekDeadLetterMessagesAsync(15);
@@ -458,7 +458,7 @@ public class DeadLetterQueueServiceTests
                 }
             });
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         var result = await sut.PeekDeadLetterMessagesAsync(5);
@@ -492,7 +492,7 @@ public class DeadLetterQueueServiceTests
                 }
             });
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         var result = await sut.PeekDeadLetterMessagesAsync(1);
@@ -547,7 +547,7 @@ public class DeadLetterQueueServiceTests
                 }
             });
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         var result = await sut.RedriveDeadLetterMessagesAsync(2);
@@ -589,7 +589,7 @@ public class DeadLetterQueueServiceTests
                 }
             });
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         var result = await sut.RedriveDeadLetterMessagesAsync(1);
@@ -639,7 +639,7 @@ public class DeadLetterQueueServiceTests
                 }
             });
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         var result = await sut.RedriveDeadLetterMessagesAsync(1);
@@ -690,7 +690,7 @@ public class DeadLetterQueueServiceTests
                 }
             });
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         await sut.RedriveDeadLetterMessagesAsync(1);
@@ -724,7 +724,7 @@ public class DeadLetterQueueServiceTests
                 }
             });
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         var result = await sut.RedriveDeadLetterMessagesAsync(10);
@@ -801,7 +801,7 @@ public class DeadLetterQueueServiceTests
                 }
             });
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         var result = await sut.RedriveDeadLetterMessagesAsync(3);
@@ -835,7 +835,7 @@ public class DeadLetterQueueServiceTests
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PurgeQueueResponse());
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         var result = await sut.PurgeDeadLetterQueueAsync();
@@ -868,7 +868,7 @@ public class DeadLetterQueueServiceTests
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PurgeQueueResponse());
 
-        var sut = new DeadLetterQueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
+        var sut = new QueueService(_mockSqs.Object, Options.Create(_options), _mockLogger.Object);
 
         // Act
         var result = await sut.PurgeDeadLetterQueueAsync();

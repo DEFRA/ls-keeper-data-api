@@ -284,10 +284,10 @@ public class AppWebApplicationFactory(
     {
         services.RemoveAll<QueueListener>();
         services.RemoveAll<TestQueuePollerObserver<MessageType>>();
-        services.RemoveAll<IDeadLetterQueueService>();
+        services.RemoveAll<IQueueService>();
         services.RemoveAll<IQueuePoller>();
 
-        services.AddScoped<IDeadLetterQueueService, DeadLetterQueueService>();
+        services.AddScoped<IQueueService, QueueService>();
         services.AddScoped<IQueuePoller, QueuePoller>();
 
         services.AddScoped<TestQueuePollerObserver<MessageType>>();

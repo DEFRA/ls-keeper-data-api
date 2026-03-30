@@ -171,6 +171,14 @@ public static class WebApplicationExtensions
             .WithDescription("⚠️ DESTRUCTIVE: Permanently deletes all messages from the dead letter queue. This operation cannot be undone.")
             .WithMetadata(new ProducesResponseTypeAttribute(typeof(PurgeResult), StatusCodes.Status200OK))
             .RequireAuthorization(adminAuth);
+        
+        app.MapGet("/api/admin/queues/main/count", GetMainQueueCountHandler)
+            .WithGroupName(InternalGroupName)
+            .WithTags("queue")
+            .WithSummary("Get main queue message count")
+            .WithDescription("Returns the approximate number of messages in the main intake queue")
+            .Produces<QueueStats>(StatusCodes.Status200OK)
+            .RequireAuthorization(adminAuth);
     }
 
     private static void RegisterAdminScanStateEndpoints(WebApplication app)
@@ -190,7 +198,7 @@ public static class WebApplicationExtensions
     }
 
     internal static async Task<IResult> GetDeadLetterQueueCountHandler(
-        IDeadLetterQueueService dlqService,
+        IQueueService dlqService,
         IOptions<IntakeEventQueueOptions> queueOptions,
         ILogger<Program> logger,
         CancellationToken ct)
@@ -213,7 +221,7 @@ public static class WebApplicationExtensions
 
     internal static async Task<IResult> GetDeadLetterMessagesHandler(
         int? maxMessages,
-        IDeadLetterQueueService dlqService,
+        IQueueService dlqService,
         IOptions<IntakeEventQueueOptions> queueOptions,
         ILogger<Program> logger,
         CancellationToken ct)
@@ -236,7 +244,7 @@ public static class WebApplicationExtensions
 
     internal static async Task<IResult> RedriveDeadLetterMessagesHandler(
         int? maxMessages,
-        IDeadLetterQueueService dlqService,
+        IQueueService dlqService,
         IOptions<IntakeEventQueueOptions> queueOptions,
         ILogger<Program> logger,
         CancellationToken ct)
@@ -258,7 +266,7 @@ public static class WebApplicationExtensions
     }
 
     internal static async Task<IResult> PurgeDeadLetterQueueHandler(
-        IDeadLetterQueueService dlqService,
+        IQueueService dlqService,
         IOptions<IntakeEventQueueOptions> queueOptions,
         ILogger<Program> logger,
         CancellationToken ct)
@@ -299,6 +307,28 @@ public static class WebApplicationExtensions
         {
             logger.LogError(ex, "Failed to retrieve scan states");
             return Results.Json(new { error = "Failed to retrieve scan states", detail = ex.Message }, statusCode: 500);
+        }
+    }
+
+    internal static async Task<IResult> GetMainQueueCountHandler(
+        IQueueService dlqService,
+        IOptions<IntakeEventQueueOptions> queueOptions,
+        ILogger<Program> logger,
+        CancellationToken ct)
+    {
+        var queueUrl = queueOptions.Value.QueueUrl;
+        if (string.IsNullOrWhiteSpace(queueUrl))
+            return Results.BadRequest(new { error = "Main queue URL is not configured" });
+
+        try
+        {
+            var stats = await dlqService.GetQueueStatsAsync(queueUrl, ct);
+            return Results.Ok(stats);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to get main queue stats");
+            return Results.Json(new { error = "Unable to reach main queue", detail = ex.Message }, statusCode: 503);
         }
     }
 
