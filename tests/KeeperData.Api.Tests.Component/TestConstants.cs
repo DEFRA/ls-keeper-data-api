@@ -13,4 +13,6 @@ public static class TestConstants
     public const string AdminDlqPeekEndpoint = "api/admin/queues/deadletter/peek";
     public const string AdminDlqRedriveEndpoint = "api/admin/queues/deadletter/redrive";
     public const string AdminDlqPurgeEndpoint = "api/admin/queues/deadletter/purge";
+
+    public const string AdminMainQueueCountEndpoint = "api/admin/queues/main/count";
 }

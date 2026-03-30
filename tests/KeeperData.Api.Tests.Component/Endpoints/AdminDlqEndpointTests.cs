@@ -10,7 +10,7 @@ namespace KeeperData.Api.Tests.Component.Endpoints;
 
 public class AdminDlqEndpointTests
 {
-    private readonly Mock<IDeadLetterQueueService> _dlqServiceMock = new();
+    private readonly Mock<IQueueService> _dlqServiceMock = new();
 
     private const string BasicApiKey = "ApiKey";
     private const string BasicSecret = "integration-test-secret";
@@ -374,9 +374,103 @@ public class AdminDlqEndpointTests
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
+    [Fact]
+    public async Task GivenAdminEndpointsDisabled_WhenGetMainQueueCountRequested_ShouldReturnNotFound()
+    {
+        await ExecuteAdminEndpointTest(
+            TestConstants.AdminMainQueueCountEndpoint,
+            _dlqServiceMock.Object,
+            HttpMethod.Get,
+            adminEndpointsEnabled: false,
+            expectedStatusCode: HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GivenAdminEndpointsEnabled_WhenGetMainQueueCountRequested_ShouldSucceed()
+    {
+        var configurationOverrides = new Dictionary<string, string?>
+        {
+            ["AdminEndpointsEnabled"] = "true",
+            ["QueueConsumerOptions:IntakeEventQueueOptions:QueueUrl"] = "http://localhost:4566/queue/test-main-queue",
+            ["QueueConsumerOptions:IntakeEventQueueOptions:DeadLetterQueueUrl"] = "http://localhost:4566/queue/test-dlq"
+        };
+
+        _dlqServiceMock.Setup(x => x.GetQueueStatsAsync("http://localhost:4566/queue/test-main-queue", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new QueueStats
+            {
+                QueueUrl = "http://localhost:4566/queue/test-main-queue",
+                ApproximateMessageCount = 15,
+                ApproximateMessagesNotVisible = 3,
+                ApproximateMessagesDelayed = 1,
+                CheckedAt = DateTime.UtcNow
+            });
+
+        var factory = new AppWebApplicationFactory(configurationOverrides);
+        factory.OverrideServiceAsSingleton(_dlqServiceMock.Object);
+
+        var httpClient = factory.CreateClient();
+        httpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
+
+        var response = await httpClient.GetAsync(TestConstants.AdminMainQueueCountEndpoint);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var stats = await response.Content.ReadFromJsonAsync<QueueStats>();
+        stats.Should().NotBeNull();
+        stats!.QueueUrl.Should().Be("http://localhost:4566/queue/test-main-queue");
+        stats.ApproximateMessageCount.Should().Be(15);
+        stats.ApproximateMessagesNotVisible.Should().Be(3);
+        stats.ApproximateMessagesDelayed.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GivenNoMainQueueConfigured_WhenGetMainQueueCountRequested_ShouldReturnBadRequest()
+    {
+        var configurationOverrides = new Dictionary<string, string?>
+        {
+            ["AdminEndpointsEnabled"] = "true",
+            ["QueueConsumerOptions:IntakeEventQueueOptions:QueueUrl"] = string.Empty,
+            ["QueueConsumerOptions:IntakeEventQueueOptions:DeadLetterQueueUrl"] = "http://localhost:4566/queue/test-dlq"
+        };
+
+        var factory = new AppWebApplicationFactory(configurationOverrides);
+        factory.OverrideServiceAsSingleton(_dlqServiceMock.Object);
+
+        var httpClient = factory.CreateClient();
+        httpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
+
+        var response = await httpClient.GetAsync(TestConstants.AdminMainQueueCountEndpoint);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task GivenServiceThrowsException_WhenGetMainQueueCountRequested_ShouldReturnServiceUnavailable()
+    {
+        var configurationOverrides = new Dictionary<string, string?>
+        {
+            ["AdminEndpointsEnabled"] = "true",
+            ["QueueConsumerOptions:IntakeEventQueueOptions:QueueUrl"] = "http://localhost:4566/queue/test-main-queue",
+            ["QueueConsumerOptions:IntakeEventQueueOptions:DeadLetterQueueUrl"] = "http://localhost:4566/queue/test-dlq"
+        };
+
+        _dlqServiceMock.Setup(x => x.GetQueueStatsAsync("http://localhost:4566/queue/test-main-queue", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("SQS service unavailable"));
+
+        var factory = new AppWebApplicationFactory(configurationOverrides);
+        factory.OverrideServiceAsSingleton(_dlqServiceMock.Object);
+
+        var httpClient = factory.CreateClient();
+        httpClient.AddBasicApiKey(BasicApiKey, BasicSecret);
+
+        var response = await httpClient.GetAsync(TestConstants.AdminMainQueueCountEndpoint);
+
+        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    }
+
     private static async Task ExecuteAdminEndpointTest(
         string endpoint,
-        IDeadLetterQueueService dlqService,
+        IQueueService dlqService,
         HttpMethod httpMethod,
         bool adminEndpointsEnabled = false,
         HttpStatusCode expectedStatusCode = HttpStatusCode.NotFound)

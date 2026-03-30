@@ -77,7 +77,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddHostedService<QueueListener>()
             .AddSingleton<IQueuePoller, QueuePoller>();
-        services.AddSingleton<IDeadLetterQueueService, DeadLetterQueueService>();
+        services.AddSingleton<IQueueService, QueueService>();
 
         services.AddTransient<IQueuePollerObserver<MessageType>, NullQueuePollerObserver<MessageType>>();
     }

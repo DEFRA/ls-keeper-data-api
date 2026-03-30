@@ -3,7 +3,7 @@ using KeeperData.Core.DeadLetter;
 
 namespace KeeperData.Infrastructure.Messaging.Services
 {
-    public interface IDeadLetterQueueService
+    public interface IQueueService
     {
         Task<bool> MoveToDeadLetterQueueAsync(Message message, string queueUrl, Exception ex, CancellationToken cancellationToken);
         Task<QueueStats> GetQueueStatsAsync(string queueUrl, CancellationToken ct = default);
