@@ -14,18 +14,8 @@ public class PartiesQueryAdapter(IPartiesRepository repository)
         GetPartiesQuery query,
         CancellationToken cancellationToken = default)
     {
-        var filterDefinition = PartyFilterBuilder.Build(query);
-        bool hasValidCursor = false;
-
-        if (!string.IsNullOrWhiteSpace(query.Cursor))
-        {
-            var cursorFilter = CursorPaginationHelper.BuildCursorFilter<PartyDocument>(query.Cursor, query.Sort, PartySortBuilder.GetSortFieldPath(query.Order));
-            if (cursorFilter != null)
-            {
-                filterDefinition = Builders<PartyDocument>.Filter.And(filterDefinition, cursorFilter);
-                hasValidCursor = true;
-            }
-        }
+        var (filterDefinition, hasValidCursor) = CursorPaginationHelper.ApplyCursorFilter(
+            PartyFilterBuilder.Build(query), query.Cursor, query.Sort, PartySortBuilder.GetSortFieldPath(query.Order));
 
         var sortDefinition = PartySortBuilder.Build(query);
         var totalCount = await _repository.CountAsync(filterDefinition, cancellationToken);
@@ -40,13 +30,7 @@ public class PartiesQueryAdapter(IPartiesRepository repository)
             take: query.PageSize,
             cancellationToken: cancellationToken);
 
-        string? nextCursor = null;
-        if (items != null && items.Count == query.PageSize)
-        {
-            var lastItem = items.Last();
-            var sortVal = GetSortValue(lastItem, query.Order);
-            nextCursor = CursorHelper.Encode(sortVal, lastItem.Id);
-        }
+        var nextCursor = CursorPaginationHelper.GetNextCursor(items, query.PageSize, doc => GetSortValue(doc, query.Order));
 
         return (items ?? [], totalCount, nextCursor);
     }

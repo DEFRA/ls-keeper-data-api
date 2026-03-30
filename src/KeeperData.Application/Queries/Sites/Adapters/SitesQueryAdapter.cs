@@ -14,18 +14,8 @@ public class SitesQueryAdapter(ISitesRepository repository)
         GetSitesQuery query,
         CancellationToken cancellationToken = default)
     {
-        var filterDefinition = SiteFilterBuilder.Build(query);
-        bool hasValidCursor = false;
-
-        if (!string.IsNullOrWhiteSpace(query.Cursor))
-        {
-            var cursorFilter = CursorPaginationHelper.BuildCursorFilter<SiteDocument>(query.Cursor, query.Sort, SiteSortBuilder.GetSortFieldPath(query.Order));
-            if (cursorFilter != null)
-            {
-                filterDefinition = Builders<SiteDocument>.Filter.And(filterDefinition, cursorFilter);
-                hasValidCursor = true;
-            }
-        }
+        var (filterDefinition, hasValidCursor) = CursorPaginationHelper.ApplyCursorFilter(
+            SiteFilterBuilder.Build(query), query.Cursor, query.Sort, SiteSortBuilder.GetSortFieldPath(query.Order));
 
         var sortDefinition = SiteSortBuilder.Build(query);
         var totalCount = await _repository.CountAsync(filterDefinition, cancellationToken);
@@ -39,13 +29,7 @@ public class SitesQueryAdapter(ISitesRepository repository)
             take: query.PageSize,
             cancellationToken: cancellationToken);
 
-        string? nextCursor = null;
-        if (items != null && items.Count == query.PageSize)
-        {
-            var lastItem = items.Last();
-            var sortVal = GetSortValue(lastItem, query.Order);
-            nextCursor = CursorHelper.Encode(sortVal, lastItem.Id);
-        }
+        var nextCursor = CursorPaginationHelper.GetNextCursor(items, query.PageSize, doc => GetSortValue(doc, query.Order));
 
         return (items ?? [], totalCount, nextCursor);
     }

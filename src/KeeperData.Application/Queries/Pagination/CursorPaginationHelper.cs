@@ -20,7 +20,6 @@ public static class CursorPaginationHelper
             ? primarySort.Descending(x => x.Id)
             : primarySort.Ascending(x => x.Id);
     }
-
     public static FilterDefinition<T>? BuildCursorFilter<T>(string? cursor, string? sortDirection, string sortFieldPath) where T : IEntity
     {
         var decoded = CursorHelper.Decode(cursor);
@@ -45,5 +44,34 @@ public static class CursorPaginationHelper
                 builder.And(builder.Eq(sortFieldPath, sortVal), builder.Lt(x => x.Id, lastId))
             );
         }
+    }
+
+    public static (FilterDefinition<T> Filter, bool HasValidCursor) ApplyCursorFilter<T>(
+        FilterDefinition<T> currentFilter,
+        string? cursor,
+        string? sortDirection,
+        string sortFieldPath) where T : IEntity
+    {
+        if (string.IsNullOrWhiteSpace(cursor))
+            return (currentFilter, false);
+
+        var cursorFilter = BuildCursorFilter<T>(cursor, sortDirection, sortFieldPath);
+        if (cursorFilter != null)
+        {
+            return (Builders<T>.Filter.And(currentFilter, cursorFilter), true);
+        }
+
+        return (currentFilter, false);
+    }
+
+    public static string? GetNextCursor<T>(List<T>? items, int pageSize, Func<T, string> getSortValueFunc) where T : IEntity
+    {
+        if (items != null && items.Count == pageSize)
+        {
+            var lastItem = items.Last();
+            var sortVal = getSortValueFunc(lastItem);
+            return CursorHelper.Encode(sortVal, lastItem.Id ?? string.Empty);
+        }
+        return null;
     }
 }
