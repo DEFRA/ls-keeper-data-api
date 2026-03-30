@@ -34,7 +34,7 @@ public class SitesQueryAdapter(ISitesRepository repository)
         return (items ?? [], totalCount, nextCursor);
     }
 
-    private string GetSortValue(SiteDocument doc, string? sortField)
+    private static string GetSortValue(SiteDocument doc, string? sortField)
     {
         return (sortField?.ToLowerInvariant()) switch
         {

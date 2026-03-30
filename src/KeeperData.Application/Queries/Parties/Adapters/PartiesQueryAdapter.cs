@@ -35,7 +35,7 @@ public class PartiesQueryAdapter(IPartiesRepository repository)
         return (items ?? [], totalCount, nextCursor);
     }
 
-    private string GetSortValue(PartyDocument doc, string? sortField)
+    private static string GetSortValue(PartyDocument doc, string? sortField)
     {
         return (sortField?.ToLowerInvariant()) switch
         {
