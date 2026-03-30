@@ -19,7 +19,7 @@ public class PartiesQueryAdapter(IPartiesRepository repository)
 
         if (!string.IsNullOrWhiteSpace(query.Cursor))
         {
-            var cursorFilter = BuildCursorFilter(query);
+            var cursorFilter = CursorPaginationHelper.BuildCursorFilter<PartyDocument>(query.Cursor, query.Sort, PartySortBuilder.GetSortFieldPath(query.Order));
             if (cursorFilter != null)
             {
                 filterDefinition = Builders<PartyDocument>.Filter.And(filterDefinition, cursorFilter);
@@ -49,33 +49,6 @@ public class PartiesQueryAdapter(IPartiesRepository repository)
         }
 
         return (items ?? [], totalCount, nextCursor);
-    }
-
-    private FilterDefinition<PartyDocument>? BuildCursorFilter(GetPartiesQuery query)
-    {
-        var decoded = CursorHelper.Decode(query.Cursor);
-        if (decoded == null) return null;
-
-        var (sortVal, lastId) = decoded.Value;
-        var sortFieldPath = PartySortBuilder.GetSortFieldPath(query.Order);
-        var isAscending = (query.Sort?.ToLowerInvariant() ?? "asc") == "asc";
-
-        var builder = Builders<PartyDocument>.Filter;
-
-        if (isAscending)
-        {
-            return builder.Or(
-                builder.Gt(sortFieldPath, sortVal),
-                builder.And(builder.Eq(sortFieldPath, sortVal), builder.Gt(x => x.Id, lastId))
-            );
-        }
-        else
-        {
-            return builder.Or(
-                builder.Lt(sortFieldPath, sortVal),
-                builder.And(builder.Eq(sortFieldPath, sortVal), builder.Lt(x => x.Id, lastId))
-            );
-        }
     }
 
     private string GetSortValue(PartyDocument doc, string? sortField)
