@@ -16,15 +16,18 @@ public class SitesQueryAdapter(ISitesRepository repository)
     GetSitesQuery query,
     CancellationToken cancellationToken = default)
     {
-        return await CursorPaginationHelper.ExecutePagedQueryAsync(
-            query,
-            SiteFilterBuilder.Build(query),
-            SiteSortBuilder.Build(query),
-            SiteSortBuilder.GetSortFieldPath(query.Order),
-            _repository.CountAsync,
-            _repository.FindAsync,
-            doc => GetSortValue(doc, query.Order),
-            cancellationToken);
+        var options = new CursorPaginationHelper.PagedQueryOptions<SiteDocument, GetSitesQuery>
+        {
+            Query = query,
+            BaseFilter = SiteFilterBuilder.Build(query),
+            SortDefinition = SiteSortBuilder.Build(query),
+            SortFieldPath = SiteSortBuilder.GetSortFieldPath(query.Order),
+            CountAsync = _repository.CountAsync,
+            FindAsync = _repository.FindAsync,
+            GetSortValue = doc => GetSortValue(doc, query.Order)
+        };
+
+        return await CursorPaginationHelper.ExecutePagedQueryAsync(options, cancellationToken);
     }
 
     private static string GetSortValue(SiteDocument doc, string? sortField)

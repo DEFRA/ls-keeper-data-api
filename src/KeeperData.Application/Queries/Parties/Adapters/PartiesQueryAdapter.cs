@@ -14,15 +14,18 @@ public class PartiesQueryAdapter(IPartiesRepository repository)
         GetPartiesQuery query,
         CancellationToken cancellationToken = default)
     {
-        return await CursorPaginationHelper.ExecutePagedQueryAsync(
-            query,
-            PartyFilterBuilder.Build(query),
-            PartySortBuilder.Build(query),
-            PartySortBuilder.GetSortFieldPath(query.Order),
-            _repository.CountAsync,
-            _repository.FindAsync,
-            doc => GetSortValue(doc, query.Order),
-            cancellationToken);
+        var options = new CursorPaginationHelper.PagedQueryOptions<PartyDocument, GetPartiesQuery>
+        {
+            Query = query,
+            BaseFilter = PartyFilterBuilder.Build(query),
+            SortDefinition = PartySortBuilder.Build(query),
+            SortFieldPath = PartySortBuilder.GetSortFieldPath(query.Order),
+            CountAsync = _repository.CountAsync,
+            FindAsync = _repository.FindAsync,
+            GetSortValue = doc => GetSortValue(doc, query.Order)
+        };
+
+        return await CursorPaginationHelper.ExecutePagedQueryAsync(options, cancellationToken);
     }
 
     private static string GetSortValue(PartyDocument doc, string? sortField)
