@@ -9,6 +9,7 @@ public static class DeadLetterQueueServiceConstants
     public static class Tags
     {
         public const string DeadLetterQueue = "Dead Letter Queue";
+        public const string MainQueue = "Main Queue";
     }
 
     public static class SqsAttributes
