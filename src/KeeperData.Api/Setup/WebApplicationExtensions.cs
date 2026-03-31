@@ -174,7 +174,7 @@ public static class WebApplicationExtensions
 
         app.MapGet("/api/admin/queues/main/count", GetMainQueueCountHandler)
             .WithGroupName(InternalGroupName)
-            .WithTags("queue")
+            .WithTags(DeadLetterQueueServiceConstants.Tags.MainQueue)
             .WithSummary("Get main queue message count")
             .WithDescription("Returns the approximate number of messages in the main intake queue")
             .Produces<QueueStats>(StatusCodes.Status200OK)
