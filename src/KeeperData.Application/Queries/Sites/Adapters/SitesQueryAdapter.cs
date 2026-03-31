@@ -14,16 +14,19 @@ public class SitesQueryAdapter(ISitesRepository repository)
         GetSitesQuery query,
         CancellationToken cancellationToken = default)
     {
-        var (filterDefinition, hasValidCursor) = CursorPaginationHelper.ApplyCursorFilter(
-            SiteFilterBuilder.Build(query), query.Cursor, query.Sort, SiteSortBuilder.GetSortFieldPath(query.Order));
+        var baseFilter = SiteFilterBuilder.Build(query);
+
+        var (pagedFilter, hasValidCursor) = CursorPaginationHelper.ApplyCursorFilter(
+            baseFilter, query.Cursor, query.Sort, SiteSortBuilder.GetSortFieldPath(query.Order));
 
         var sortDefinition = SiteSortBuilder.Build(query);
-        var totalCount = await _repository.CountAsync(filterDefinition, cancellationToken);
+
+        var totalCount = await _repository.CountAsync(baseFilter, cancellationToken);
 
         var skip = !hasValidCursor ? (query.Page - 1) * query.PageSize : 0;
 
         var items = await _repository.FindAsync(
-            filter: filterDefinition,
+            filter: pagedFilter,
             sort: sortDefinition,
             skip: skip,
             take: query.PageSize,

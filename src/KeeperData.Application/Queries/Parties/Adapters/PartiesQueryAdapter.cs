@@ -14,17 +14,21 @@ public class PartiesQueryAdapter(IPartiesRepository repository)
         GetPartiesQuery query,
         CancellationToken cancellationToken = default)
     {
-        var (filterDefinition, hasValidCursor) = CursorPaginationHelper.ApplyCursorFilter(
-            PartyFilterBuilder.Build(query), query.Cursor, query.Sort, PartySortBuilder.GetSortFieldPath(query.Order));
+        var baseFilter = PartyFilterBuilder.Build(query);
+
+        var (pagedFilter, hasValidCursor) = CursorPaginationHelper.ApplyCursorFilter(
+            baseFilter, query.Cursor, query.Sort, PartySortBuilder.GetSortFieldPath(query.Order));
 
         var sortDefinition = PartySortBuilder.Build(query);
-        var totalCount = await _repository.CountAsync(filterDefinition, cancellationToken);
+
+        // Count against the base search criteria, not the cursor-paginated filter
+        var totalCount = await _repository.CountAsync(baseFilter, cancellationToken);
 
         // fallback to skip for backward compatibility
         var skip = !hasValidCursor ? (query.Page - 1) * query.PageSize : 0;
 
         var items = await _repository.FindAsync(
-            filter: filterDefinition,
+            filter: pagedFilter,
             sort: sortDefinition,
             skip: skip,
             take: query.PageSize,
