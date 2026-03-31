@@ -115,6 +115,7 @@ public static class WebApplicationExtensions
         {
             RegisterAdminDlqEndpoints(app);
             RegisterAdminScanStateEndpoints(app);
+            RegisterSystemMaintenanceEndpoints(app);
         }
     }
 
@@ -168,7 +169,7 @@ public static class WebApplicationExtensions
             .WithGroupName(InternalGroupName)
             .WithTags(DeadLetterQueueServiceConstants.Tags.DeadLetterQueue)
             .WithSummary("Purge dead letter queue")
-            .WithDescription("⚠️ DESTRUCTIVE: Permanently deletes all messages from the dead letter queue. This operation cannot be undone.")
+            .WithDescription("DESTRUCTIVE: Permanently deletes all messages from the dead letter queue. This operation cannot be undone.")
             .WithMetadata(new ProducesResponseTypeAttribute(typeof(PurgeResult), StatusCodes.Status200OK))
             .RequireAuthorization(adminAuth);
 
@@ -178,6 +179,74 @@ public static class WebApplicationExtensions
             .WithSummary("Get main queue message count")
             .WithDescription("Returns the approximate number of messages in the main intake queue")
             .Produces<QueueStats>(StatusCodes.Status200OK)
+            .RequireAuthorization(adminAuth);
+    }
+
+    private static void RegisterSystemMaintenanceEndpoints(WebApplication app)
+    {
+        var adminAuth = new AuthorizeAttribute
+        {
+            AuthenticationSchemes = BasicAuthenticationHandler.SchemeName
+        };
+
+        // Collections endpoints
+        app.MapDelete("/api/import/collections/{collectionName}", DeleteCollectionHandler)
+            .WithGroupName(InternalGroupName)
+            .WithTags("system-maintenance")
+            .WithSummary("Delete a specific collection")
+            .WithDescription("DESTRUCTIVE: Permanently deletes a MongoDB collection. This operation cannot be undone.")
+            .Produces(StatusCodes.Status200OK)
+            .RequireAuthorization(adminAuth);
+
+        app.MapDelete("/api/import/collections", DeleteAllCollectionsHandler)
+            .WithGroupName(InternalGroupName)
+            .WithTags("system-maintenance")
+            .WithSummary("Delete all collections")
+            .WithDescription("DESTRUCTIVE: Permanently deletes all MongoDB collections. This operation cannot be undone.")
+            .Produces(StatusCodes.Status200OK)
+            .RequireAuthorization(adminAuth);
+
+        // Reporting collections endpoints
+        app.MapDelete("/api/import/reporting-collections/{collectionName}", DeleteReportingCollectionHandler)
+            .WithGroupName(InternalGroupName)
+            .WithTags("system-maintenance")
+            .WithSummary("Delete a specific reporting collection")
+            .WithDescription("DESTRUCTIVE: Permanently deletes a reporting MongoDB collection. This operation cannot be undone.")
+            .Produces(StatusCodes.Status200OK)
+            .RequireAuthorization(adminAuth);
+
+        app.MapDelete("/api/import/reporting-collections", DeleteAllReportingCollectionsHandler)
+            .WithGroupName(InternalGroupName)
+            .WithTags("system-maintenance")
+            .WithSummary("Delete all reporting collections")
+            .WithDescription("DESTRUCTIVE: Permanently deletes all reporting MongoDB collections. This operation cannot be undone.")
+            .Produces(StatusCodes.Status200OK)
+            .RequireAuthorization(adminAuth);
+
+        // Storage endpoints
+        app.MapDelete("/api/import/internal-storage", ClearInternalStorageHandler)
+            .WithGroupName(InternalGroupName)
+            .WithTags("system-maintenance")
+            .WithSummary("Clear internal storage")
+            .WithDescription("DESTRUCTIVE: Permanently clears S3 internal storage. This operation cannot be undone.")
+            .Produces(StatusCodes.Status200OK)
+            .RequireAuthorization(adminAuth);
+
+        // Cleanse data endpoints
+        app.MapPost("/api/cleanse/delete-data", DeleteCleanseDataHandler)
+            .WithGroupName(InternalGroupName)
+            .WithTags("system-maintenance")
+            .WithSummary("Delete cleanse data")
+            .WithDescription("DESTRUCTIVE: Permanently deletes cleanse data. This operation cannot be undone.")
+            .Produces(StatusCodes.Status200OK)
+            .RequireAuthorization(adminAuth);
+
+        app.MapPost("/api/cleanse/delete-metadata", DeleteCleanseMetadataHandler)
+            .WithGroupName(InternalGroupName)
+            .WithTags("system-maintenance")
+            .WithSummary("Delete cleanse metadata")
+            .WithDescription("DESTRUCTIVE: Permanently deletes cleanse metadata. This operation cannot be undone.")
+            .Produces(StatusCodes.Status200OK)
             .RequireAuthorization(adminAuth);
     }
 
@@ -203,6 +272,21 @@ public static class WebApplicationExtensions
         ILogger<Program> logger,
         CancellationToken ct)
     {
+        // TEMPORARY: Return dummy data for local testing
+        logger.LogInformation("Returning dummy DLQ count data for local testing");
+
+        var dummyStats = new QueueStats
+        {
+            QueueUrl = "http://localhost:4566/000000000000/keeper-data-dlq",
+            ApproximateMessageCount = 3,
+            ApproximateMessagesNotVisible = 0,
+            ApproximateMessagesDelayed = 0,
+            CheckedAt = DateTime.UtcNow
+        };
+
+        return Results.Ok(dummyStats);
+
+        /* ORIGINAL CODE - Uncomment to restore:
         var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
         if (string.IsNullOrWhiteSpace(dlqUrl))
             return Results.BadRequest(new { error = DeadLetterQueueServiceConstants.LogMessages.DeadLetterQueueUrlNotConfiguredError });
@@ -217,6 +301,7 @@ public static class WebApplicationExtensions
             logger.LogError(ex, "Failed to get DLQ stats");
             return Results.Json(new { error = DeadLetterQueueServiceConstants.LogMessages.UnableToReachDeadLetterQueueError, detail = ex.Message }, statusCode: 503);
         }
+        */
     }
 
     internal static async Task<IResult> GetDeadLetterMessagesHandler(
@@ -226,6 +311,48 @@ public static class WebApplicationExtensions
         ILogger<Program> logger,
         CancellationToken ct)
     {
+        // TEMPORARY: Return dummy data for local testing
+        logger.LogInformation("Returning dummy DLQ messages data for local testing");
+
+        var dummyMessages = new DeadLetterMessagesResult
+        {
+            Messages = new List<DeadLetterMessageDto>
+            {
+                new DeadLetterMessageDto
+                {
+                    MessageId = "12345-67890-abcdef",
+                    CorrelationId = "test-123",
+                    MessageType = "IMPORT_RECORD",
+                    Body = "{\"eventType\":\"IMPORT_RECORD\",\"correlationId\":\"test-123\",\"payload\":{\"id\":\"REC001\",\"name\":\"Test Record\"}}",
+                    SentTimestamp = DateTime.UtcNow.AddHours(-1).ToString("o"),
+                    ApproximateFirstReceiveTimestamp = DateTime.UtcNow.AddMinutes(-30).ToString("o")
+                },
+                new DeadLetterMessageDto
+                {
+                    MessageId = "fedcba-09876-54321",
+                    CorrelationId = "test-456",
+                    MessageType = "UPDATE_RECORD",
+                    Body = "{\"eventType\":\"UPDATE_RECORD\",\"correlationId\":\"test-456\",\"payload\":{\"id\":\"REC002\",\"status\":\"active\"}}",
+                    SentTimestamp = DateTime.UtcNow.AddHours(-2).ToString("o"),
+                    ApproximateFirstReceiveTimestamp = DateTime.UtcNow.AddHours(-1).ToString("o")
+                },
+                new DeadLetterMessageDto
+                {
+                    MessageId = "xyz789-abc123-def456",
+                    CorrelationId = "test-789",
+                    MessageType = "DELETE_RECORD",
+                    Body = "{\"eventType\":\"DELETE_RECORD\",\"correlationId\":\"test-789\",\"payload\":{\"id\":\"REC003\"}}",
+                    SentTimestamp = DateTime.UtcNow.AddMinutes(-15).ToString("o"),
+                    ApproximateFirstReceiveTimestamp = DateTime.UtcNow.AddMinutes(-5).ToString("o")
+                }
+            },
+            TotalApproximateCount = 3,
+            CheckedAt = DateTime.UtcNow
+        };
+
+        return Results.Ok(dummyMessages);
+
+        /* ORIGINAL CODE - Uncomment to restore:
         var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
         if (string.IsNullOrWhiteSpace(dlqUrl))
             return Results.BadRequest(new { error = DeadLetterQueueServiceConstants.LogMessages.DeadLetterQueueUrlNotConfiguredError });
@@ -240,6 +367,7 @@ public static class WebApplicationExtensions
             logger.LogError(ex, "Failed to peek DLQ messages");
             return Results.Json(new { error = DeadLetterQueueServiceConstants.LogMessages.UnableToReachDeadLetterQueueError, detail = ex.Message }, statusCode: 503);
         }
+        */
     }
 
     internal static async Task<IResult> RedriveDeadLetterMessagesHandler(
@@ -249,6 +377,24 @@ public static class WebApplicationExtensions
         ILogger<Program> logger,
         CancellationToken ct)
     {
+        // TEMPORARY: Return dummy data for local testing
+        logger.LogInformation("Returning dummy redrive summary data for local testing");
+
+        var countToRedrive = Math.Min(maxMessages ?? 10, 3);
+        var dummySummary = new RedriveSummary
+        {
+            MessagesRedriven = countToRedrive,
+            MessagesFailed = 0,
+            MessagesDuplicated = 0,
+            MessagesRemainingApprox = Math.Max(0, 3 - countToRedrive),
+            CorrelationIds = new List<string> { "test-123", "test-456", "test-789" }.Take(countToRedrive).ToList(),
+            StartedAt = DateTime.UtcNow.AddSeconds(-2),
+            CompletedAt = DateTime.UtcNow
+        };
+
+        return Results.Ok(dummySummary);
+
+        /* ORIGINAL CODE - Uncomment to restore:
         var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
         if (string.IsNullOrWhiteSpace(dlqUrl))
             return Results.BadRequest(new { error = DeadLetterQueueServiceConstants.LogMessages.DeadLetterQueueUrlNotConfiguredError });
@@ -263,6 +409,7 @@ public static class WebApplicationExtensions
             logger.LogError(ex, "Failed to redrive DLQ messages");
             return Results.Json(new { error = DeadLetterQueueServiceConstants.LogMessages.UnableToReachDeadLetterQueueError, detail = ex.Message }, statusCode: 503);
         }
+        */
     }
 
     internal static async Task<IResult> PurgeDeadLetterQueueHandler(
@@ -271,6 +418,19 @@ public static class WebApplicationExtensions
         ILogger<Program> logger,
         CancellationToken ct)
     {
+        // TEMPORARY: Return dummy data for local testing
+        logger.LogInformation("Returning dummy purge result data for local testing");
+
+        var dummyResult = new PurgeResult
+        {
+            Purged = true,
+            ApproximateMessagesPurged = 3,
+            PurgedAt = DateTime.UtcNow
+        };
+
+        return Results.Ok(dummyResult);
+
+        /* ORIGINAL CODE - Uncomment to restore:
         var dlqUrl = queueOptions.Value.DeadLetterQueueUrl;
         if (string.IsNullOrWhiteSpace(dlqUrl))
             return Results.BadRequest(new { error = DeadLetterQueueServiceConstants.LogMessages.DeadLetterQueueUrlNotConfiguredError });
@@ -289,6 +449,7 @@ public static class WebApplicationExtensions
             logger.LogError(ex, "Failed to purge DLQ");
             return Results.Json(new { error = DeadLetterQueueServiceConstants.LogMessages.UnableToReachDeadLetterQueueError, detail = ex.Message }, statusCode: 503);
         }
+        */
     }
 
     internal static async Task<IResult> GetScanStatesHandler(
@@ -368,5 +529,59 @@ public static class WebApplicationExtensions
             logger.LogWarning("{ScanName} start request was cancelled", scanName);
             return Results.Json(new ErrorResponse { Message = DeadLetterQueueServiceConstants.LogMessages.RequestCancelledError }, statusCode: 499);
         }
+    }
+
+    // System Maintenance Handlers - DUMMY IMPLEMENTATIONS FOR TESTING
+
+    internal static Task<IResult> DeleteCollectionHandler(
+        string collectionName,
+        ILogger<Program> logger)
+    {
+        logger.LogInformation("DUMMY: Would delete collection: {CollectionName}", collectionName);
+        return Task.FromResult(Results.Ok(new { success = true, message = $"Collection '{collectionName}' deleted (dummy)", deletedAt = DateTime.UtcNow }));
+    }
+
+    internal static Task<IResult> DeleteAllCollectionsHandler(
+        ILogger<Program> logger)
+    {
+        logger.LogInformation("DUMMY: Would delete all collections");
+        return Task.FromResult(Results.Ok(new { success = true, message = "All collections deleted (dummy)", deletedCount = 5, deletedAt = DateTime.UtcNow }));
+    }
+
+    internal static Task<IResult> DeleteReportingCollectionHandler(
+        string collectionName,
+        ILogger<Program> logger)
+    {
+        logger.LogInformation("DUMMY: Would delete reporting collection: {CollectionName}", collectionName);
+        return Task.FromResult(Results.Ok(new { success = true, message = $"Reporting collection '{collectionName}' deleted (dummy)", deletedAt = DateTime.UtcNow }));
+    }
+
+    internal static Task<IResult> DeleteAllReportingCollectionsHandler(
+        ILogger<Program> logger)
+    {
+        logger.LogInformation("DUMMY: Would delete all reporting collections");
+        return Task.FromResult(Results.Ok(new { success = true, message = "All reporting collections deleted (dummy)", deletedCount = 3, deletedAt = DateTime.UtcNow }));
+    }
+
+    internal static Task<IResult> ClearInternalStorageHandler(
+        string? sourceType,
+        ILogger<Program> logger)
+    {
+        logger.LogInformation("DUMMY: Would clear internal storage for sourceType: {SourceType}", sourceType ?? "all");
+        return Task.FromResult(Results.Ok(new { success = true, message = $"Internal storage cleared for {sourceType ?? "all sources"} (dummy)", clearedAt = DateTime.UtcNow }));
+    }
+
+    internal static Task<IResult> DeleteCleanseDataHandler(
+        ILogger<Program> logger)
+    {
+        logger.LogInformation("DUMMY: Would delete cleanse data");
+        return Task.FromResult(Results.Ok(new { success = true, message = "Cleanse data deleted (dummy)", deletedAt = DateTime.UtcNow }));
+    }
+
+    internal static Task<IResult> DeleteCleanseMetadataHandler(
+        ILogger<Program> logger)
+    {
+        logger.LogInformation("DUMMY: Would delete cleanse metadata");
+        return Task.FromResult(Results.Ok(new { success = true, message = "Cleanse metadata deleted (dummy)", deletedAt = DateTime.UtcNow }));
     }
 }
