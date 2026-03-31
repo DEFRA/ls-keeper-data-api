@@ -1,4 +1,6 @@
 using KeeperData.Application.Queries.Pagination;
+using KeeperData.Application.Queries.Parties;
+using KeeperData.Application.Queries.Parties.Builders;
 using KeeperData.Application.Queries.Sites.Builders;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Repositories;
@@ -11,30 +13,18 @@ public class SitesQueryAdapter(ISitesRepository repository)
     private readonly ISitesRepository _repository = repository;
 
     public async Task<(List<SiteDocument> Items, int TotalCount, string? NextCursor)> GetSitesAsync(
-        GetSitesQuery query,
-        CancellationToken cancellationToken = default)
+    GetSitesQuery query,
+    CancellationToken cancellationToken = default)
     {
-        var baseFilter = SiteFilterBuilder.Build(query);
-
-        var (pagedFilter, hasValidCursor) = CursorPaginationHelper.ApplyCursorFilter(
-            baseFilter, query.Cursor, query.Sort, SiteSortBuilder.GetSortFieldPath(query.Order));
-
-        var sortDefinition = SiteSortBuilder.Build(query);
-
-        var totalCount = await _repository.CountAsync(baseFilter, cancellationToken);
-
-        var skip = !hasValidCursor ? (query.Page - 1) * query.PageSize : 0;
-
-        var items = await _repository.FindAsync(
-            filter: pagedFilter,
-            sort: sortDefinition,
-            skip: skip,
-            take: query.PageSize,
-            cancellationToken: cancellationToken);
-
-        var nextCursor = CursorPaginationHelper.GetNextCursor(items, query.PageSize, doc => GetSortValue(doc, query.Order));
-
-        return (items ?? [], totalCount, nextCursor);
+        return await CursorPaginationHelper.ExecutePagedQueryAsync(
+            query,
+            SiteFilterBuilder.Build(query),
+            SiteSortBuilder.Build(query),
+            SiteSortBuilder.GetSortFieldPath(query.Order),
+            _repository.CountAsync,
+            _repository.FindAsync,
+            doc => GetSortValue(doc, query.Order),
+            cancellationToken);
     }
 
     private static string GetSortValue(SiteDocument doc, string? sortField)

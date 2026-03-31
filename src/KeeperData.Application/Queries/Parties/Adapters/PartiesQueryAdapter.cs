@@ -14,29 +14,15 @@ public class PartiesQueryAdapter(IPartiesRepository repository)
         GetPartiesQuery query,
         CancellationToken cancellationToken = default)
     {
-        var baseFilter = PartyFilterBuilder.Build(query);
-
-        var (pagedFilter, hasValidCursor) = CursorPaginationHelper.ApplyCursorFilter(
-            baseFilter, query.Cursor, query.Sort, PartySortBuilder.GetSortFieldPath(query.Order));
-
-        var sortDefinition = PartySortBuilder.Build(query);
-
-        // Count against the base search criteria, not the cursor-paginated filter
-        var totalCount = await _repository.CountAsync(baseFilter, cancellationToken);
-
-        // fallback to skip for backward compatibility
-        var skip = !hasValidCursor ? (query.Page - 1) * query.PageSize : 0;
-
-        var items = await _repository.FindAsync(
-            filter: pagedFilter,
-            sort: sortDefinition,
-            skip: skip,
-            take: query.PageSize,
-            cancellationToken: cancellationToken);
-
-        var nextCursor = CursorPaginationHelper.GetNextCursor(items, query.PageSize, doc => GetSortValue(doc, query.Order));
-
-        return (items ?? [], totalCount, nextCursor);
+        return await CursorPaginationHelper.ExecutePagedQueryAsync(
+            query,
+            PartyFilterBuilder.Build(query),
+            PartySortBuilder.Build(query),
+            PartySortBuilder.GetSortFieldPath(query.Order),
+            _repository.CountAsync,
+            _repository.FindAsync,
+            doc => GetSortValue(doc, query.Order),
+            cancellationToken);
     }
 
     private static string GetSortValue(PartyDocument doc, string? sortField)

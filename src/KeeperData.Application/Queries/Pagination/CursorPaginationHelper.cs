@@ -68,10 +68,36 @@ public static class CursorPaginationHelper
     {
         if (items != null && items.Count == pageSize)
         {
-            var lastItem = items.Last();
+            var lastItem = items[^1];
             var sortVal = getSortValueFunc(lastItem);
             return CursorHelper.Encode(sortVal, lastItem.Id ?? string.Empty);
         }
         return null;
+    }
+
+    public static async Task<(List<T> Items, int TotalCount, string? NextCursor)> ExecutePagedQueryAsync<T, TQuery>(
+        TQuery query,
+        FilterDefinition<T> baseFilter,
+        SortDefinition<T> sortDefinition,
+        string sortFieldPath,
+        Func<FilterDefinition<T>, CancellationToken, Task<int>> countAsync,
+        Func<FilterDefinition<T>, SortDefinition<T>, int, int, CancellationToken, Task<List<T>>> findAsync,
+        Func<T, string> getSortValue,
+        CancellationToken cancellationToken)
+        where T : IEntity
+        where TQuery : IPagedQuery<T>
+    {
+        var (pagedFilter, hasValidCursor) = ApplyCursorFilter(
+            baseFilter, query.Cursor, query.Sort, sortFieldPath);
+
+        var totalCount = await countAsync(baseFilter, cancellationToken);
+
+        var skip = !hasValidCursor ? (query.Page - 1) * query.PageSize : 0;
+
+        var items = await findAsync(pagedFilter, sortDefinition, skip, query.PageSize, cancellationToken);
+
+        var nextCursor = GetNextCursor(items, query.PageSize, getSortValue);
+
+        return (items ?? [], totalCount, nextCursor);
     }
 }
