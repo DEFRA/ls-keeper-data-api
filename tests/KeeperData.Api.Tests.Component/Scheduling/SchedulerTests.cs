@@ -12,13 +12,13 @@ using Xunit;
 public class SchedulerTests
 {
     [Fact]
-    public async Task Scheduler_WhenScanCTSBulkFilesJobIsTriggered_ExecutesSuccessfully()
+    public async Task Scheduler_WhenScanCTSJobIsTriggered_ExecutesSuccessfully()
     {
         var jobDidRun = new ManualResetEventSlim(false);
 
-        var taskProcessBulkFilesMock = new Mock<ICtsBulkScanTask>();
+        var taskMock = new Mock<ICtsScanTask>();
 
-        taskProcessBulkFilesMock.Setup(x => x.RunAsync(It.IsAny<CancellationToken>()))
+        taskMock.Setup(x => x.RunAsync(It.IsAny<CancellationToken>()))
             .Returns(() =>
             {
                 jobDidRun.Set();
@@ -28,13 +28,13 @@ public class SchedulerTests
         var host = Host.CreateDefaultBuilder()
             .ConfigureServices((hostContext, services) =>
             {
-                services.AddScoped(_ => taskProcessBulkFilesMock.Object);
+                services.AddScoped(_ => taskMock.Object);
                 services.AddQuartz(q =>
                 {
                     q.UseInMemoryStore();
 
                     var jobKey = new JobKey("TestJob");
-                    q.AddJob<FakeCtsBulkScanJob>(opts => opts.WithIdentity(jobKey).StoreDurably());
+                    q.AddJob<FakeCtsScanJob>(opts => opts.WithIdentity(jobKey).StoreDurably());
                 });
                 services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
             }).Build();
@@ -50,6 +50,6 @@ public class SchedulerTests
         await host.StopAsync();
 
         Assert.True(completedInTime, "The job did not complete in the expected time.");
-        taskProcessBulkFilesMock.Verify(x => x.RunAsync(It.IsAny<CancellationToken>()), Times.Once);
+        taskMock.Verify(x => x.RunAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

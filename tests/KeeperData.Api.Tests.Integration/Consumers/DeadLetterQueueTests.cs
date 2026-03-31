@@ -28,7 +28,7 @@ public class DeadLetterQueueTests : IAsyncLifetime
 
     private readonly AmazonSQSClient _sqsClient;
     private readonly AmazonSimpleNotificationServiceClient _snsClient;
-    private readonly ILogger<DeadLetterQueueService> _logger;
+    private readonly ILogger<QueueService> _logger;
 
     public DeadLetterQueueTests(LocalStackFixture localStackFixture)
     {
@@ -46,7 +46,7 @@ public class DeadLetterQueueTests : IAsyncLifetime
             ServiceURL = _localStackUrl
         });
 
-        _logger = new LoggerFactory().CreateLogger<DeadLetterQueueService>();
+        _logger = new LoggerFactory().CreateLogger<QueueService>();
     }
 
     public async Task InitializeAsync()
@@ -117,7 +117,7 @@ public class DeadLetterQueueTests : IAsyncLifetime
         try { await _snsClient.DeleteTopicAsync(_topicArn); } catch { }
     }
 
-    private DeadLetterQueueService CreateService()
+    private QueueService CreateService()
     {
         var options = Options.Create(new IntakeEventQueueOptions
         {
@@ -125,7 +125,7 @@ public class DeadLetterQueueTests : IAsyncLifetime
             DeadLetterQueueUrl = _dlqUrl
         });
 
-        return new DeadLetterQueueService(_sqsClient, options, _logger);
+        return new QueueService(_sqsClient, options, _logger);
     }
 
     private async Task<string> SendTestMessageAsync(string queueUrl, string messageBody, Dictionary<string, MessageAttributeValue>? attributes = null)
@@ -274,11 +274,6 @@ public class DeadLetterQueueTests : IAsyncLifetime
         {
             ["CorrelationId"] = new MessageAttributeValue { StringValue = "test-correlation-123", DataType = "String" },
             ["Subject"] = new MessageAttributeValue { StringValue = "TestEvent", DataType = "String" },
-            ["DLQ_OriginalMessageId"] = new MessageAttributeValue { StringValue = "original-msg-456", DataType = "String" },
-            ["DLQ_FailureReason"] = new MessageAttributeValue { StringValue = "NonRetryableException", DataType = "String" },
-            ["DLQ_FailureMessage"] = new MessageAttributeValue { StringValue = "Test failure message", DataType = "String" },
-            ["DLQ_FailureTimestamp"] = new MessageAttributeValue { StringValue = DateTime.UtcNow.ToString("O"), DataType = "String" },
-            ["DLQ_ReceiveCount"] = new MessageAttributeValue { StringValue = "2", DataType = "Number" }
         };
 
         await SendTestMessageAsync(_dlqUrl, "{\"test\": \"data\"}", attributes);
@@ -294,10 +289,6 @@ public class DeadLetterQueueTests : IAsyncLifetime
         var message = result.Messages.First();
         message.CorrelationId.Should().Be("test-correlation-123");
         message.MessageType.Should().Be("TestEvent");
-        message.OriginalMessageId.Should().Be("original-msg-456");
-        message.FailureReason.Should().Be("NonRetryableException");
-        message.FailureMessage.Should().Be("Test failure message");
-        message.ReceiveCount.Should().Be("2");
         message.Body.Should().Contain("test");
 
         await PurgeAsync();

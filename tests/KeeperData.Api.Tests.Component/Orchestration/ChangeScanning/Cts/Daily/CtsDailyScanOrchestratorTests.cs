@@ -15,10 +15,10 @@ public class CtsDailyScanOrchestratorTests(AppTestFixture appTestFixture) : ICla
         // Arrange
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
         using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
-        var ctsDailyScanTask = scope.ServiceProvider.GetRequiredService<ICtsDailyScanTask>();
+        var ctsScanTask = scope.ServiceProvider.GetRequiredService<ICtsScanTask>();
 
         // Act
-        var scanCorrelationId = await ctsDailyScanTask.StartAsync();
+        var scanCorrelationId = await ctsScanTask.StartAsync();
 
         // Assert
         scanCorrelationId.Should().NotBeNull("orchestration should start successfully and return a correlation ID");
@@ -32,8 +32,8 @@ public class CtsDailyScanOrchestratorTests(AppTestFixture appTestFixture) : ICla
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
         using var scope1 = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
         using var scope2 = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
-        var firstScanTask = scope1.ServiceProvider.GetRequiredService<ICtsDailyScanTask>();
-        var secondScanTask = scope2.ServiceProvider.GetRequiredService<ICtsDailyScanTask>();
+        var firstScanTask = scope1.ServiceProvider.GetRequiredService<ICtsScanTask>();
+        var secondScanTask = scope2.ServiceProvider.GetRequiredService<ICtsScanTask>();
 
         // Act - Start first scan to hold the distributed lock
         var firstCorrelationId = await firstScanTask.StartAsync();

@@ -9,7 +9,7 @@ info:
     * **Authenticate** with the Defra's identity system.
     * **Retrieve** reference data for Parties and its related information.
     
-  termsOfService: http://www.defra.gov.uk/legal
+  termsOfService: https://www.defra.gov.uk/legal
   
   contact:
     name: Defra Livestock Data Services Support
@@ -34,7 +34,7 @@ info:
   
 externalDocs:
   description: Defra APHA website
-  url: http://www.defra.gov.uk/
+  url: https://www.defra.gov.uk/
 tags:
   - name: party
 

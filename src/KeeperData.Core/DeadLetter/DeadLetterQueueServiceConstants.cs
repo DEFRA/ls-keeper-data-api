@@ -9,6 +9,7 @@ public static class DeadLetterQueueServiceConstants
     public static class Tags
     {
         public const string DeadLetterQueue = "Dead Letter Queue";
+        public const string MainQueue = "Main Queue";
     }
 
     public static class SqsAttributes
@@ -33,9 +34,7 @@ public static class DeadLetterQueueServiceConstants
 
     public static class Timeouts
     {
-        public const int ExtendedVisibilitySeconds = 300;
         public const int ReceiveMessageVisibilitySeconds = 60;
-        public const int PeekVisibilitySeconds = 0;
     }
 
     public static class Limits

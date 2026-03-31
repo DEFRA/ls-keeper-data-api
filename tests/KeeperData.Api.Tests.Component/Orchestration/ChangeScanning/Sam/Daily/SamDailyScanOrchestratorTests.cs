@@ -20,10 +20,10 @@ public class SamDailyScanOrchestratorTests : IClassFixture<AppTestFixture>
         // Arrange
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
         using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
-        var samDailyScanTask = scope.ServiceProvider.GetRequiredService<ISamDailyScanTask>();
+        var samScanTask = scope.ServiceProvider.GetRequiredService<ISamScanTask>();
 
         // Act
-        var scanCorrelationId = await samDailyScanTask.StartAsync();
+        var scanCorrelationId = await samScanTask.StartAsync();
 
         // Assert
         scanCorrelationId.Should().NotBeNull("orchestration should start successfully and return a correlation ID");
@@ -37,8 +37,8 @@ public class SamDailyScanOrchestratorTests : IClassFixture<AppTestFixture>
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
         using var scope1 = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
         using var scope2 = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
-        var firstScanTask = scope1.ServiceProvider.GetRequiredService<ISamDailyScanTask>();
-        var secondScanTask = scope2.ServiceProvider.GetRequiredService<ISamDailyScanTask>();
+        var firstScanTask = scope1.ServiceProvider.GetRequiredService<ISamScanTask>();
+        var secondScanTask = scope2.ServiceProvider.GetRequiredService<ISamScanTask>();
 
         // Act - Start first scan to hold the distributed lock
         var firstCorrelationId = await firstScanTask.StartAsync();

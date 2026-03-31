@@ -1,15 +1,27 @@
 namespace KeeperData.Core.DeadLetter
 {
+    /// <summary>
+    /// A message retrieved from a dead-letter queue.
+    /// </summary>
     public class DeadLetterMessageDto
     {
+        /// <summary>
+        /// The unique identifier of the dead-letter message.
+        /// </summary>
         public string MessageId { get; set; } = string.Empty;
-        public string? OriginalMessageId { get; set; }
-        public string? FailureReason { get; set; }
-        public string? FailureMessage { get; set; }
-        public string? FailureTimestamp { get; set; }
-        public string? ReceiveCount { get; set; }
         public string? CorrelationId { get; set; }
+
+        /// <summary>
+        /// The type of the original message.
+        /// </summary>
         public string? MessageType { get; set; }
+
+        /// <summary>
+        /// The body content of the dead-letter message.
+        /// </summary>
         public string Body { get; set; } = string.Empty;
+        public string? SentTimestamp { get; set; }
+        public string? ApproximateFirstReceiveTimestamp { get; set; }
+        public string? Md5OfBody { get; set; }
     }
 }
