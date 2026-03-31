@@ -14,25 +14,18 @@ public class PartiesQueryAdapter(IPartiesRepository repository)
         GetPartiesQuery query,
         CancellationToken cancellationToken = default)
     {
-        var (filterDefinition, hasValidCursor) = CursorPaginationHelper.ApplyCursorFilter(
-            PartyFilterBuilder.Build(query), query.Cursor, query.Sort, PartySortBuilder.GetSortFieldPath(query.Order));
+        var options = new CursorPaginationHelper.PagedQueryOptions<PartyDocument, GetPartiesQuery>
+        {
+            Query = query,
+            BaseFilter = PartyFilterBuilder.Build(query),
+            SortDefinition = PartySortBuilder.Build(query),
+            SortFieldPath = PartySortBuilder.GetSortFieldPath(query.Order),
+            CountAsync = _repository.CountAsync,
+            FindAsync = _repository.FindAsync,
+            GetSortValue = doc => GetSortValue(doc, query.Order)
+        };
 
-        var sortDefinition = PartySortBuilder.Build(query);
-        var totalCount = await _repository.CountAsync(filterDefinition, cancellationToken);
-
-        // fallback to skip for backward compatibility
-        var skip = !hasValidCursor ? (query.Page - 1) * query.PageSize : 0;
-
-        var items = await _repository.FindAsync(
-            filter: filterDefinition,
-            sort: sortDefinition,
-            skip: skip,
-            take: query.PageSize,
-            cancellationToken: cancellationToken);
-
-        var nextCursor = CursorPaginationHelper.GetNextCursor(items, query.PageSize, doc => GetSortValue(doc, query.Order));
-
-        return (items ?? [], totalCount, nextCursor);
+        return await CursorPaginationHelper.ExecutePagedQueryAsync(options, cancellationToken);
     }
 
     private static string GetSortValue(PartyDocument doc, string? sortField)

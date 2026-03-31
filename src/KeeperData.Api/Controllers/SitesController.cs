@@ -75,7 +75,8 @@ namespace KeeperData.Api.Controllers
                 Page = request.Page ?? 1,
                 PageSize = request.PageSize ?? 10,
                 Order = request.Order,
-                Sort = request.Sort
+                Sort = request.Sort,
+                Cursor = request.Cursor
             };
 
             var result = await _executor.ExecuteQuery(query);

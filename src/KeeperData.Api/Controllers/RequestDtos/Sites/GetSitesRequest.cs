@@ -64,4 +64,9 @@ public class GetSitesRequest
     /// The sort direction. Available values: asc, desc. Defaults to asc.
     /// </summary>
     [FromQuery] public string? Sort { get; set; }
+
+    /// <summary>
+    /// The cursor for the next page of results. Leave blank for the first page.
+    /// </summary>
+    [FromQuery] public string? Cursor { get; set; }
 }

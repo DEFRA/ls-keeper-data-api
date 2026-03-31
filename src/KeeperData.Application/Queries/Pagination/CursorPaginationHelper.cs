@@ -68,10 +68,43 @@ public static class CursorPaginationHelper
     {
         if (items != null && items.Count == pageSize)
         {
-            var lastItem = items.Last();
+            var lastItem = items[^1];
             var sortVal = getSortValueFunc(lastItem);
             return CursorHelper.Encode(sortVal, lastItem.Id ?? string.Empty);
         }
         return null;
+    }
+
+    public class PagedQueryOptions<T, TQuery>
+        where T : IEntity
+        where TQuery : IPagedQuery<T>
+    {
+        public required TQuery Query { get; init; }
+        public required FilterDefinition<T> BaseFilter { get; init; }
+        public required SortDefinition<T> SortDefinition { get; init; }
+        public required string SortFieldPath { get; init; }
+        public required Func<FilterDefinition<T>, CancellationToken, Task<int>> CountAsync { get; init; }
+        public required Func<FilterDefinition<T>, SortDefinition<T>, int, int, CancellationToken, Task<List<T>>> FindAsync { get; init; }
+        public required Func<T, string> GetSortValue { get; init; }
+    }
+
+    public static async Task<(List<T> Items, int TotalCount, string? NextCursor)> ExecutePagedQueryAsync<T, TQuery>(
+        PagedQueryOptions<T, TQuery> options,
+        CancellationToken cancellationToken)
+        where T : IEntity
+        where TQuery : IPagedQuery<T>
+    {
+        var (pagedFilter, hasValidCursor) = ApplyCursorFilter(
+            options.BaseFilter, options.Query.Cursor, options.Query.Sort, options.SortFieldPath);
+
+        var totalCount = await options.CountAsync(options.BaseFilter, cancellationToken);
+
+        var skip = !hasValidCursor ? (options.Query.Page - 1) * options.Query.PageSize : 0;
+
+        var items = await options.FindAsync(pagedFilter, options.SortDefinition, skip, options.Query.PageSize, cancellationToken);
+
+        var nextCursor = GetNextCursor(items, options.Query.PageSize, options.GetSortValue);
+
+        return (items ?? [], totalCount, nextCursor);
     }
 }
