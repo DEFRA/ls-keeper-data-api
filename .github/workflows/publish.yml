@@ -25,7 +25,34 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Compute next semver base
+        if: github.ref_name != 'main'
+        id: semver
+        uses: anothrNick/github-tag-action@1.75.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: true
+          WITH_V: false
+          DEFAULT_BUMP: patch
+
+      - name: Compute version override
+        if: github.ref_name != 'main'
+        id: version
+        run: |
+          BASE="${{ steps.semver.outputs.new_tag }}"
+          if [[ "${{ github.ref_name }}" == "dev" ]]; then
+            echo "tag=${BASE}-dev.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.ref_name }}" == bug/* ]]; then
+            echo "tag=${BASE}-bug.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${BASE}-feature.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build and Publish
         uses: DEFRA/cdp-build-action/build@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ steps.version.outputs.tag }}
