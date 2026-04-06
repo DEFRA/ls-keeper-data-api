@@ -56,18 +56,18 @@ public class SamHoldingMapperToGoldTests
 
     private List<FacilityBusinessActivityMapDocument> _activityMapData =
     [
-        new FacilityBusinessActivityMapDocument 
-        { 
-            IdentifierId = "map-1-id", 
-            FacilityActivityCode = "FAC1", 
-            AssociatedSiteActivityCode = "act1code", 
+        new FacilityBusinessActivityMapDocument
+        {
+            IdentifierId = "map-1-id",
+            FacilityActivityCode = "FAC1",
+            AssociatedSiteActivityCode = "act1code",
             AssociatedSiteTypeCode = "prem1code",
             IsActive = true
         },
-        new FacilityBusinessActivityMapDocument 
-        { 
-            IdentifierId = "map-2-id", 
-            FacilityActivityCode = "FAC2", 
+        new FacilityBusinessActivityMapDocument
+        {
+            IdentifierId = "map-2-id",
+            FacilityActivityCode = "FAC2",
             AssociatedSiteTypeCode = "prem2code",
             IsActive = true
         },
@@ -355,7 +355,7 @@ public class SamHoldingMapperToGoldTests
         // act1 -                       <--------------------->
         // act2 -                       <--------------------->
         // act3 -                       <--------------------->
-        var samHoldingDocuments = new List<SamHoldingDocument>()
+        var samHoldingDocuments = new List<SamHoldingDocument>
         {
             new SamHoldingDocument()
             {
@@ -424,7 +424,7 @@ public class SamHoldingMapperToGoldTests
         // act1 -                                <-------------
         // act2 -                                <-------------
         // act3 -                                <-------------
-        var samHoldingDocuments = new List<SamHoldingDocument>()
+        var samHoldingDocuments = new List<SamHoldingDocument>
         {
             new SamHoldingDocument()
             {
@@ -717,7 +717,7 @@ public class SamHoldingMapperToGoldTests
             }
         };
 
-        var inputHolding = new SamHoldingDocument() { SiteTypeIdentifier = "prem-2-id", SourceFacilitySubBusinessActivityCode = "FAC2,nonsense, more rubbish"};
+        var inputHolding = new SamHoldingDocument() { SiteTypeIdentifier = "prem-2-id", SourceFacilitySubBusinessActivityCode = "FAC2, nonsense, more rubbish"};
 
         var result = await WhenIMapSilverSiteToGold(inputHolding, existingSite, null);
 

@@ -45,20 +45,12 @@ public class SiteTypeDerivedCodeLookupService(
             .Where(h => !string.IsNullOrWhiteSpace(h.AssociatedSiteActivityCode))
             .ToList();
 
-        string? siteTypeCode;
-        string? siteTypeName;
-
-        if (hitsWithActivity.Count > 0)
-        {
+        var siteTypeCode =
             // Use the site type from the first activity hit (they should all agree on site type
             // given the spreadsheet structure, but we take the first as canonical).
-            siteTypeCode = hitsWithActivity.First().AssociatedSiteTypeCode;
-        }
-        else
-        {
+            hitsWithActivity.Count > 0 ? hitsWithActivity.First().AssociatedSiteTypeCode :
             // No activity derived - use the site type from any hit.
-            siteTypeCode = hits.First().AssociatedSiteTypeCode;
-        }
+            hits.First().AssociatedSiteTypeCode;
 
         if (string.IsNullOrWhiteSpace(siteTypeCode))
         {
@@ -71,7 +63,7 @@ public class SiteTypeDerivedCodeLookupService(
         // Resolve site type name from the SiteTypes reference data cache.
         var siteTypeDoc = _cache.SiteTypes
             .FirstOrDefault(st => st.Code.Equals(siteTypeCode, StringComparison.OrdinalIgnoreCase));
-        siteTypeName = siteTypeDoc?.Name ?? siteTypeCode;
+        var siteTypeName = siteTypeDoc?.Name ?? siteTypeCode;
 
         // Collect distinct activities from all hits.
         var activities = hitsWithActivity
