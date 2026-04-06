@@ -74,9 +74,9 @@ public class AppWebApplicationFactory(
     public readonly Mock<IScanStateRepository> _scanStateRepositoryMock = new();
 
     public readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
-    public readonly Mock<IPremiseActivityTypeLookupService> _premiseActivityTypeLookupServiceMock = new();
+    public readonly Mock<ISiteActivityTypeLookupService> _siteActivityTypeLookupServiceMock = new();
     public readonly Mock<IActivityCodeLookupService> _activityCodeLookupServiceMock = new();
-    public readonly Mock<IPremiseTypeLookupService> _premiseTypeLookupServiceMock = new();
+    public readonly Mock<ISiteTypeLookupService> _siteTypeLookupServiceMock = new();
     public readonly Mock<IProductionTypeLookupService> _productionTypeLookupServiceMock = new();
     public readonly Mock<IProductionUsageLookupService> _productionUsageLookupServiceMock = new();
     public readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
@@ -361,9 +361,9 @@ public class AppWebApplicationFactory(
     private void ConfigureTransientServices()
     {
         OverrideServiceAsTransient(_countryIdentifierLookupServiceMock.Object);
-        OverrideServiceAsTransient(_premiseActivityTypeLookupServiceMock.Object);
+        OverrideServiceAsTransient(_siteActivityTypeLookupServiceMock.Object);
         OverrideServiceAsTransient(_activityCodeLookupServiceMock.Object);
-        OverrideServiceAsTransient(_premiseTypeLookupServiceMock.Object);
+        OverrideServiceAsTransient(_siteTypeLookupServiceMock.Object);
         OverrideServiceAsTransient(_productionTypeLookupServiceMock.Object);
         OverrideServiceAsTransient(_productionUsageLookupServiceMock.Object);
         OverrideServiceAsTransient(_roleTypeLookupServiceMock.Object);
@@ -374,8 +374,8 @@ public class AppWebApplicationFactory(
     private void ResetTransientServiceMocks()
     {
         _countryIdentifierLookupServiceMock.Reset();
-        _premiseActivityTypeLookupServiceMock.Reset();
-        _premiseTypeLookupServiceMock.Reset();
+        _siteActivityTypeLookupServiceMock.Reset();
+        _siteTypeLookupServiceMock.Reset();
         _productionTypeLookupServiceMock.Reset();
         _productionUsageLookupServiceMock.Reset();
         _roleTypeLookupServiceMock.Reset();

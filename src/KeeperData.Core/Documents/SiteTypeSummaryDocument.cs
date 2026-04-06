@@ -8,7 +8,7 @@ namespace KeeperData.Core.Documents;
 /// <summary>
 /// The type of site an animal may reside at.
 /// </summary>
-public class PremisesTypeSummaryDocument : INestedEntity
+public class SiteTypeSummaryDocument : INestedEntity
 {
     /// <summary>
     /// This is an immutable field which represents the golden key of the reference object.
@@ -40,7 +40,7 @@ public class PremisesTypeSummaryDocument : INestedEntity
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime? LastUpdatedDate { get; set; }
 
-    public static PremisesTypeSummaryDocument FromDomain(PremisesType domain) => new()
+    public static SiteTypeSummaryDocument FromDomain(SiteType domain) => new()
     {
         IdentifierId = domain.Id,
         Code = domain.Code,
@@ -48,7 +48,7 @@ public class PremisesTypeSummaryDocument : INestedEntity
         LastUpdatedDate = domain.LastUpdatedDate
     };
 
-    public PremisesType ToDomain() => new(
+    public SiteType ToDomain() => new(
         IdentifierId,
         Code,
         Name,

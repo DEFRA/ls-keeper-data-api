@@ -32,6 +32,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Remove="..\KeeperData.Infrastructure\Data\Seed\premisestypes.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="KeeperData.Application.Tests.Unit" />
   </ItemGroup>
 

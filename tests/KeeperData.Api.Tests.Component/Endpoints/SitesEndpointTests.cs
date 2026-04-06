@@ -156,7 +156,7 @@ public class SitesEndpointTests(AppTestFixture appTestFixture) : IClassFixture<A
         {
             Id = Guid.NewGuid().ToString(),
             Name = name,
-            Type = new PremisesTypeSummaryDocument
+            Type = new SiteTypeSummaryDocument
             {
                 IdentifierId = Guid.NewGuid().ToString(),
                 Code = typeCode,

@@ -33,20 +33,22 @@ public class ReferenceDataCache(IServiceScopeFactory scopeFactory, ILogger<Refer
     private volatile IReadOnlyCollection<CountryDocument> _countries = [];
     private volatile IReadOnlyCollection<SpeciesDocument> _species = [];
     private volatile IReadOnlyCollection<RoleDocument> _roles = [];
-    private volatile IReadOnlyCollection<PremisesTypeDocument> _premisesTypes = [];
-    private volatile IReadOnlyCollection<PremisesActivityTypeDocument> _premisesActivityTypes = [];
+    private volatile IReadOnlyCollection<SiteTypeDocument> _siteTypes = [];
+    private volatile IReadOnlyCollection<SiteActivityTypeDocument> _siteActivityTypes = [];
     private volatile IReadOnlyCollection<SiteIdentifierTypeDocument> _siteIdentifierTypes = [];
     private volatile IReadOnlyCollection<ProductionUsageDocument> _productionUsages = [];
     private volatile IReadOnlyCollection<FacilityBusinessActivityMapDocument> _activityMaps = [];
+    private volatile IReadOnlyCollection<SiteTypeMapDocument> _siteTypeMaps = [];
 
     public IReadOnlyCollection<CountryDocument> Countries => _countries;
     public IReadOnlyCollection<SpeciesDocument> Species => _species;
     public IReadOnlyCollection<RoleDocument> Roles => _roles;
-    public IReadOnlyCollection<PremisesTypeDocument> PremisesTypes => _premisesTypes;
-    public IReadOnlyCollection<PremisesActivityTypeDocument> PremisesActivityTypes => _premisesActivityTypes;
+    public IReadOnlyCollection<SiteTypeDocument> SiteTypes => _siteTypes;
+    public IReadOnlyCollection<SiteActivityTypeDocument> SiteActivityTypes => _siteActivityTypes;
     public IReadOnlyCollection<SiteIdentifierTypeDocument> SiteIdentifierTypes => _siteIdentifierTypes;
     public IReadOnlyCollection<ProductionUsageDocument> ProductionUsages => _productionUsages;
     public IReadOnlyCollection<FacilityBusinessActivityMapDocument> ActivityMaps => _activityMaps;
+    public IReadOnlyCollection<SiteTypeMapDocument> SiteTypeMaps => _siteTypeMaps;
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
@@ -64,8 +66,9 @@ public class ReferenceDataCache(IServiceScopeFactory scopeFactory, ILogger<Refer
             var siteIdentifierTypeRepo = provider.GetRequiredService<ISiteIdentifierTypeRepository>();
             var productionUsageRepo = provider.GetRequiredService<IProductionUsageRepository>();
             var activityMapRepo = provider.GetRequiredService<IFacilityBusinessActivityMapRepository>();
-            var premisesTypeListRepo = provider.GetRequiredService<IGenericRepository<PremisesTypeListDocument>>();
-            var premisesActivityTypeListRepo = provider.GetRequiredService<IGenericRepository<PremisesActivityTypeListDocument>>();
+            var siteTypeListRepo = provider.GetRequiredService<IGenericRepository<SiteTypeListDocument>>();
+            var siteActivityTypeListRepo = provider.GetRequiredService<IGenericRepository<SiteActivityTypeListDocument>>();
+            var siteTypeMapListRepo = provider.GetRequiredService<IGenericRepository<SiteTypeMapListDocument>>();
 
             // Start all tasks in parallel
             var countriesTask = countryRepo.GetAllAsync(cancellationToken);
@@ -74,8 +77,9 @@ public class ReferenceDataCache(IServiceScopeFactory scopeFactory, ILogger<Refer
             var productionUsagesTask = productionUsageRepo.GetAllAsync(cancellationToken);
             var siteIdentifierTypesTask = siteIdentifierTypeRepo.GetAllAsync(cancellationToken);
             var activityMapsTask = activityMapRepo.GetAllAsync(cancellationToken);
-            var premisesTypeListTask = premisesTypeListRepo.FindOneAsync(x => x.Id == PremisesTypeListDocument.DocumentId, cancellationToken);
-            var premisesActivityTypeListTask = premisesActivityTypeListRepo.FindOneAsync(x => x.Id == PremisesActivityTypeListDocument.DocumentId, cancellationToken);
+            var siteTypeListTask = siteTypeListRepo.FindOneAsync(x => x.Id == SiteTypeListDocument.DocumentId, cancellationToken);
+            var siteActivityTypeListTask = siteActivityTypeListRepo.FindOneAsync(x => x.Id == SiteActivityTypeListDocument.DocumentId, cancellationToken);
+            var siteTypeMapListTask = siteTypeMapListRepo.FindOneAsync(x => x.Id == SiteTypeMapListDocument.DocumentId, cancellationToken);
 
             await Task.WhenAll(
                 countriesTask,
@@ -84,8 +88,9 @@ public class ReferenceDataCache(IServiceScopeFactory scopeFactory, ILogger<Refer
                 productionUsagesTask,
                 siteIdentifierTypesTask,
                 activityMapsTask,
-                premisesTypeListTask,
-                premisesActivityTypeListTask
+                siteTypeListTask,
+                siteActivityTypeListTask,
+                siteTypeMapListTask
             );
 
             var countries = await countriesTask;
@@ -94,8 +99,9 @@ public class ReferenceDataCache(IServiceScopeFactory scopeFactory, ILogger<Refer
             var productionUsages = await productionUsagesTask;
             var siteIdentifierTypes = await siteIdentifierTypesTask;
             var activityMaps = await activityMapsTask;
-            var premisesTypeList = await premisesTypeListTask;
-            var premisesActivityTypeList = await premisesActivityTypeListTask;
+            var siteTypeList = await siteTypeListTask;
+            var siteActivityTypeList = await siteActivityTypeListTask;
+            var siteTypeMapList = await siteTypeMapListTask;
 
             _countries = countries;
             _species = species;
@@ -103,14 +109,15 @@ public class ReferenceDataCache(IServiceScopeFactory scopeFactory, ILogger<Refer
             _productionUsages = productionUsages;
             _siteIdentifierTypes = siteIdentifierTypes;
             _activityMaps = activityMaps;
-            _premisesTypes = premisesTypeList?.Items ?? [];
-            _premisesActivityTypes = premisesActivityTypeList?.Items ?? [];
+            _siteTypes = siteTypeList?.Items ?? [];
+            _siteActivityTypes = siteActivityTypeList?.Items ?? [];
+            _siteTypeMaps = siteTypeMapList?.Items ?? [];
 
             logger.LogInformation(
-                "Reference data cache loaded: {Countries} countries, {Species} species, {Roles} roles, {PremisesTypes} premises types, {PremisesActivityTypes} activity types, {SiteIdentifierTypes} site identifier types, {ProductionUsages} production usages, {ActivityMaps} activity maps",
-                _countries.Count, _species.Count, _roles.Count, _premisesTypes.Count,
-                _premisesActivityTypes.Count, _siteIdentifierTypes.Count,
-                _productionUsages.Count, _activityMaps.Count);
+                "Reference data cache loaded: {Countries} countries, {Species} species, {Roles} roles, {SiteTypes} site types, {SiteActivityTypes} activity types, {SiteIdentifierTypes} site identifier types, {ProductionUsages} production usages, {ActivityMaps} activity maps, {SiteTypeMaps} site type maps",
+                _countries.Count, _species.Count, _roles.Count, _siteTypes.Count,
+                _siteActivityTypes.Count, _siteIdentifierTypes.Count,
+                _productionUsages.Count, _activityMaps.Count, _siteTypeMaps.Count);
         }
         catch (Exception ex)
         {

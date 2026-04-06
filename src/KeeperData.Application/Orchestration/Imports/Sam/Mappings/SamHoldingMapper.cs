@@ -6,6 +6,7 @@ using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Domain.Sites.Formatters;
 using KeeperData.Core.Extensions;
+using KeeperData.Core.Services;
 using MongoDB.Driver;
 
 namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
@@ -14,8 +15,8 @@ public static class SamHoldingMapper
 {
     public static async Task<List<SamHoldingDocument>> ToSilver(
         List<SamCphHolding> rawHoldings,
-        Func<string?, CancellationToken, Task<(string? PremiseActivityTypeId, string? PremiseActivityTypeName)>> resolvePremiseActivityType,
-        Func<string?, CancellationToken, Task<(string? PremiseTypeId, string? PremiseTypeName)>> resolvePremiseType,
+        Func<string?, CancellationToken, Task<(string? SiteActivityTypeId, string? SiteActivityTypeName)>> resolveSiteActivityType,
+        Func<string?, CancellationToken, Task<(string? SiteTypeId, string? SiteTypeName)>> resolveSiteType,
         Func<string?, string?, CancellationToken, Task<(string? countryId, string? countryCode, string? countryName)>> resolveCountry,
         CancellationToken cancellationToken)
     {
@@ -25,8 +26,8 @@ public static class SamHoldingMapper
         {
             var holding = await ToSilver(
                 h,
-                resolvePremiseActivityType,
-                resolvePremiseType,
+                resolveSiteActivityType,
+                resolveSiteType,
                 resolveCountry,
                 cancellationToken);
 
@@ -38,8 +39,8 @@ public static class SamHoldingMapper
 
     public static async Task<SamHoldingDocument> ToSilver(
         SamCphHolding h,
-        Func<string?, CancellationToken, Task<(string? PremiseActivityTypeId, string? PremiseActivityTypeName)>> resolvePremiseActivityType,
-        Func<string?, CancellationToken, Task<(string? PremiseTypeId, string? PremiseTypeName)>> resolvePremiseType,
+        Func<string?, CancellationToken, Task<(string? SiteActivityTypeId, string? SiteActivityTypeName)>> resolveSiteActivityType,
+        Func<string?, CancellationToken, Task<(string? SiteTypeId, string? SiteTypeName)>> resolveSiteType,
         Func<string?, string?, CancellationToken, Task<(string? countryId, string? countryCode, string? countryName)>> resolveCountry,
         CancellationToken cancellationToken)
     {
@@ -84,11 +85,11 @@ public static class SamHoldingMapper
             SourceFacilityBusinessActivityCode = h.FACILITY_BUSINSS_ACTVTY_CODE,
             SourceFacilitySubBusinessActivityCode = h.FCLTY_SUB_BSNSS_ACTVTY_CODE,
 
-            PremiseActivityTypeId = null,
-            PremiseActivityTypeCode = null,
+            SiteActivityTypeId = null,
+            SiteActivityTypeCode = null,
 
-            PremiseTypeIdentifier = null,
-            PremiseTypeCode = null,
+            SiteTypeIdentifier = null,
+            SiteTypeCode = null,
 
             SpeciesTypeCode = h.AnimalSpeciesCodeUnwrapped,
             ProductionUsageCodeList = [.. h.AnimalProductionUsageCodeList.Select(ProductionUsageCodeFormatters.TrimProductionUsageCodeHolding)],
@@ -135,10 +136,11 @@ public static class SamHoldingMapper
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         List<PartyDocument> goldParties,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
-        Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
+        Func<string?, CancellationToken, Task<SiteTypeDocument?>> getSiteTypeByCode,
         Func<string?, CancellationToken, Task<SiteIdentifierTypeDocument?>> getSiteIdentifierTypeByCode,
         Func<string?, CancellationToken, Task<(string? speciesTypeId, string? speciesTypeName)>> findSpecies,
-        Func<string?, CancellationToken, Task<PremisesActivityTypeDocument?>> getPremiseActivityTypeByCode,
+        Func<string?, CancellationToken, Task<SiteActivityTypeDocument?>> getSiteActivityTypeByCode,
+        ISiteTypeDerivedCodeLookupService derivedCodeLookupService,
         CancellationToken cancellationToken)
     {
         if (silverHoldings == null || silverHoldings.Count == 0)
@@ -153,11 +155,6 @@ public static class SamHoldingMapper
             findSpecies,
             cancellationToken);
 
-        var distinctPremiseActivities = await GetDistinctReferenceDataAsync(
-            silverHoldings.Select(h => h.PremiseActivityTypeCode),
-            getPremiseActivityTypeByCode,
-            cancellationToken);
-
         var species = distinctSpecies
             .Where(doc => doc.typeId is not null)
             .Select(doc => Species.Create(
@@ -167,14 +164,47 @@ public static class SamHoldingMapper
                 name: doc.typeName ?? string.Empty))
             .ToList();
 
-        var activities = distinctPremiseActivities
-            .Select(doc => SiteActivity.Create(
-                id: doc.IdentifierId,
-                type: doc.ToDomain(),
-                startDate: representative.HoldingStartDate,
-                endDate: representative.HoldingEndDate,
-                lastUpdatedDate: representative.LastUpdatedDate))
-            .ToList();
+        // Resolve site type and activities from the facility derived code via substring matching.
+        var allDerivedActivities = new List<SiteActivity>();
+        SiteType? derivedSiteType = null;
+
+        foreach (var holding in silverHoldings)
+        {
+            var derivedResult = derivedCodeLookupService.Resolve(holding.SourceFacilitySubBusinessActivityCode);
+            if (derivedResult == null) continue;
+
+            // Resolve site type from derived code (use first successful resolution).
+            if (derivedSiteType == null)
+            {
+                var siteTypeLookup = await getSiteTypeByCode(derivedResult.SiteTypeCode, cancellationToken);
+                if (siteTypeLookup != null)
+                {
+                    derivedSiteType = SiteType.Create(
+                        siteTypeLookup.IdentifierId,
+                        siteTypeLookup.Code,
+                        siteTypeLookup.Name,
+                        siteTypeLookup.LastModifiedDate);
+                }
+            }
+
+            // Resolve activities from derived code.
+            foreach (var derivedActivity in derivedResult.Activities)
+            {
+                if (allDerivedActivities.Any(a => a.Type.Code.Equals(derivedActivity.Code, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+
+                var activityDoc = await getSiteActivityTypeByCode(derivedActivity.Code, cancellationToken);
+                if (activityDoc != null)
+                {
+                    allDerivedActivities.Add(SiteActivity.Create(
+                        id: activityDoc.IdentifierId,
+                        type: activityDoc.ToDomain(),
+                        startDate: representative.HoldingStartDate,
+                        endDate: representative.HoldingEndDate,
+                        lastUpdatedDate: representative.LastUpdatedDate));
+                }
+            }
+        }
 
         var cphnSiteIdentifierTypeDocument = await getSiteIdentifierTypeByCode(
             HoldingIdentifierType.CPHN.ToString(),
@@ -193,9 +223,9 @@ public static class SamHoldingMapper
                 goldSiteGroupMarks,
                 goldParties,
                 getCountryById,
-                getPremiseTypeById,
                 species,
-                activities,
+                allDerivedActivities,
+                derivedSiteType,
                 cphnSiteIdentifierType,
                 cancellationToken)
             : await CreateSiteAsync(
@@ -204,9 +234,9 @@ public static class SamHoldingMapper
                 goldSiteGroupMarks,
                 goldParties,
                 getCountryById,
-                getPremiseTypeById,
                 species,
-                activities,
+                allDerivedActivities,
+                derivedSiteType,
                 cphnSiteIdentifierType,
                 cancellationToken);
 
@@ -219,23 +249,12 @@ public static class SamHoldingMapper
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         List<PartyDocument> goldParties,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
-        Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
         List<Species> species,
         List<SiteActivity> activities,
+        SiteType? siteType,
         SiteIdentifierType? siteIdentifierType,
         CancellationToken cancellationToken)
     {
-        var premiseTypeLookup = await GetPremiseTypeAsync(
-            representative.PremiseTypeIdentifier,
-            getPremiseTypeById,
-            cancellationToken);
-
-        var premiseType = premiseTypeLookup == null ? null : PremisesType.Create(
-            premiseTypeLookup.IdentifierId,
-            premiseTypeLookup.Code,
-            premiseTypeLookup.Name,
-            premiseTypeLookup.LastModifiedDate);
-
         var address = await LocationMapper.AddressToGold(representative.Location?.Address, getCountryById, cancellationToken);
         var communication = LocationMapper.CommunicationToGold(representative.Communication);
 
@@ -264,7 +283,7 @@ public static class SamHoldingMapper
             SourceSystemType.SAM.ToString(),
             null,
             representative.Deleted,
-            premiseType,
+            siteType,
             location);
 
         if (siteIdentifierType != null)
@@ -291,9 +310,9 @@ public static class SamHoldingMapper
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         List<PartyDocument> goldParties,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
-        Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
         List<Species> species,
         List<SiteActivity> activities,
+        SiteType? siteType,
         SiteIdentifierType? siteIdentifierType,
         CancellationToken cancellationToken)
     {
@@ -319,21 +338,8 @@ public static class SamHoldingMapper
         var updatedAddress = await LocationMapper.AddressToGold(representative.Location?.Address, getCountryById, cancellationToken);
         var updatedCommunication = LocationMapper.CommunicationToGold(representative.Communication);
 
-        if (representative.PremiseTypeIdentifier != site.Type?.Id)
-        {
-            var premiseTypeLookup = await GetPremiseTypeAsync(
-                representative.PremiseTypeIdentifier,
-                getPremiseTypeById,
-                cancellationToken);
-
-            var premiseType = premiseTypeLookup == null ? null : PremisesType.Create(
-                premiseTypeLookup.IdentifierId,
-                premiseTypeLookup.Code,
-                premiseTypeLookup.Name,
-                premiseTypeLookup.LastModifiedDate);
-
-            site.SetPremisesType(premiseType, representative.LastUpdatedDate);
-        }
+        // Always set the derived site type (may be null if no mapping found).
+        site.SetSiteType(siteType, representative.LastUpdatedDate);
 
         site.SetLocation(
             representative.LastUpdatedDate,
@@ -361,15 +367,6 @@ public static class SamHoldingMapper
         return site;
     }
 
-    private static async Task<PremisesTypeDocument?> GetPremiseTypeAsync(
-        string? premiseTypeIdentifier,
-        Func<string?, CancellationToken, Task<PremisesTypeDocument?>> getPremiseTypeById,
-        CancellationToken cancellationToken)
-    {
-        if (premiseTypeIdentifier == null) return null;
-
-        return await getPremiseTypeById(premiseTypeIdentifier, cancellationToken);
-    }
 
     private static async Task<List<(string searchValue, string? typeId, string? typeName)>> GetDistinctReferenceDataAsync(
         IEnumerable<string?> rawCodes,

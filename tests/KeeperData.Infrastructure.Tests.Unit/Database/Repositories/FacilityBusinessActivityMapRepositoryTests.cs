@@ -22,8 +22,8 @@ public class FacilityBusinessActivityMapRepositoryTests
             {
                 IdentifierId = "id1",
                 FacilityActivityCode = "AB-EMB-ECT",
-                AssociatedPremiseTypeCode = "AI",
-                AssociatedPremiseActivityCode = "EMB",
+                AssociatedSiteTypeCode = "AI",
+                AssociatedSiteActivityCode = "EMB",
                 IsActive = true,
                 EffectiveStartDate = DateTime.UtcNow,
                 CreatedDate = DateTime.UtcNow
@@ -32,8 +32,8 @@ public class FacilityBusinessActivityMapRepositoryTests
             {
                 IdentifierId = "id2",
                 FacilityActivityCode = "AB-SEM-SCCDOM",
-                AssociatedPremiseTypeCode = "AI",
-                AssociatedPremiseActivityCode = "SEM",
+                AssociatedSiteTypeCode = "AI",
+                AssociatedSiteActivityCode = "SEM",
                 IsActive = true,
                 EffectiveStartDate = DateTime.UtcNow,
                 CreatedDate = DateTime.UtcNow
@@ -43,17 +43,17 @@ public class FacilityBusinessActivityMapRepositoryTests
     [InlineData("AB-EMB-ECT", "AI", "EMB")]
     [InlineData("AB-SEM-SCCDOM", "AI", "SEM")]
     [InlineData("invalid", null, null)]
-    public async Task CanGetDocumentByFacilityActivityCode(string facilityActivityCode, string? associatedPremiseTypeCode, string? associatedPremiseActivityCode)
+    public async Task CanGetDocumentByFacilityActivityCode(string facilityActivityCode, string? associatedSiteTypeCode, string? associatedSiteActivityCode)
     {
         _fixture.SetUpDocuments(new FacilityBusinessActivityMapListDocument
         {
-            Id = "all-premisesactivitytypes",
+            Id = "all-siteactivitytypes",
             FacilityBusinessActivityMaps = TestData
         });
 
         var result = await _sut.FindByActivityCodeAsync(facilityActivityCode);
 
-        result?.AssociatedPremiseTypeCode.Should().Be(associatedPremiseTypeCode);
-        result?.AssociatedPremiseActivityCode.Should().Be(associatedPremiseActivityCode);
+        result?.AssociatedSiteTypeCode.Should().Be(associatedSiteTypeCode);
+        result?.AssociatedSiteActivityCode.Should().Be(associatedSiteActivityCode);
     }
 }

@@ -10,7 +10,7 @@ public class Site : IAggregateRoot
     public string Id { get; private set; }
     public DateTime CreatedDate { get; private set; }
     public DateTime LastUpdatedDate { get; private set; }
-    public PremisesType? Type { get; private set; }
+    public SiteType? Type { get; private set; }
     public string Name { get; private set; }
     public DateTime StartDate { get; private set; }
     public DateTime? EndDate { get; private set; }
@@ -52,7 +52,7 @@ public class Site : IAggregateRoot
         string? source,
         bool? destroyIdentityDocumentsFlag,
         bool deleted,
-        PremisesType? type,
+        SiteType? type,
         Location? location)
     {
         Id = id;
@@ -80,7 +80,7 @@ public class Site : IAggregateRoot
         string? source,
         bool? destroyIdentityDocumentsFlag,
         bool deleted,
-        PremisesType? type = null,
+        SiteType? type = null,
         Location? location = null)
     {
         var site = new Site(
@@ -127,7 +127,7 @@ public class Site : IAggregateRoot
         }
     }
 
-    public void SetPremisesType(PremisesType? type, DateTime lastUpdatedDate)
+    public void SetSiteType(SiteType? type, DateTime lastUpdatedDate)
     {
         if (Type == null && type == null) return;
 

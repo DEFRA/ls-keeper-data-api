@@ -37,7 +37,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     /// </summary>
     [BsonElement("type")]
     [JsonPropertyName("type")]
-    public PremisesTypeSummaryDocument? Type { get; set; }
+    public SiteTypeSummaryDocument? Type { get; set; }
 
     /// <summary>
     /// The name of the site.
@@ -139,7 +139,7 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         Id = m.Id,
         CreatedDate = m.CreatedDate,
         LastUpdatedDate = m.LastUpdatedDate,
-        Type = m.Type is not null ? PremisesTypeSummaryDocument.FromDomain(m.Type) : null,
+        Type = m.Type is not null ? SiteTypeSummaryDocument.FromDomain(m.Type) : null,
         Name = m.Name,
         State = m.State,
         Identifiers = [.. m.Identifiers.Select(SiteIdentifierDocument.FromDomain)],

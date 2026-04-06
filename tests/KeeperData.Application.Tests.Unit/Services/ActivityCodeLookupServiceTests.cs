@@ -13,16 +13,16 @@ public class ActivityCodeLookupServiceTests
     {
         var key = "abc";
         var activityCode = "activityCode";
-        var premiseTypeCode = "premiseTypeCode";
-        var returnedDocument = new FacilityBusinessActivityMapDocument { IdentifierId = "id1", FacilityActivityCode = key, AssociatedPremiseActivityCode = activityCode, AssociatedPremiseTypeCode = premiseTypeCode };
+        var siteTypeCode = "siteTypeCode";
+        var returnedDocument = new FacilityBusinessActivityMapDocument { IdentifierId = "id1", FacilityActivityCode = key, AssociatedSiteActivityCode = activityCode, AssociatedSiteTypeCode = siteTypeCode };
         var cache = new Mock<IReferenceDataCache>();
         cache.Setup(c => c.ActivityMaps).Returns(new[] { returnedDocument });
         var sut = new ActivityCodeLookupService(cache.Object);
 
         var returned = await sut.FindByActivityCodeAsync(key, CancellationToken.None);
 
-        returned.premiseActivityType.Should().Be(activityCode);
-        returned.premiseType.Should().Be(premiseTypeCode);
+        returned.siteActivityType.Should().Be(activityCode);
+        returned.siteType.Should().Be(siteTypeCode);
     }
 
     [Theory]
@@ -36,7 +36,7 @@ public class ActivityCodeLookupServiceTests
 
         var returned = await sut.FindByActivityCodeAsync(key, CancellationToken.None);
 
-        returned.premiseActivityType.Should().BeNull();
-        returned.premiseType.Should().BeNull();
+        returned.siteActivityType.Should().BeNull();
+        returned.siteType.Should().BeNull();
     }
 }

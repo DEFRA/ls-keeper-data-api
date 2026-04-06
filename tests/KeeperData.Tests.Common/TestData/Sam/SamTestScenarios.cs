@@ -6,17 +6,17 @@ namespace KeeperData.Tests.Common.TestData.Sam;
 
 public static class SamTestScenarios
 {
-    public static readonly (string? facilitySubActivityCode, string? associatedPremiseTypeCode, string? associatedPremiseActivityCode)[] SampleActivities
+    public static readonly (string? facilitySubActivityCode, string? associatedSiteTypeCode, string? associatedSiteActivityCode)[] SampleActivities
         = [
             ("AB-EMB-ECT", "AI", "EMB"),
             ("AB-SEM-ECT", "AH", "WM"),
             ("SLG-MPC-NA", "AH", "RM"),
              (null,null,null)];
 
-    public static (string? associatedPremiseTypeCode, string? associatedPremiseActivityCode) LookupCodes(string? key)
+    public static (string? associatedSiteTypeCode, string? associatedSiteActivityCode) LookupCodes(string? key)
     {
         var item = SampleActivities.SingleOrDefault(x => x.facilitySubActivityCode == key);
-        return (item.associatedPremiseTypeCode, item.associatedPremiseActivityCode);
+        return (item.associatedSiteTypeCode, item.associatedSiteActivityCode);
     }
 
     private static readonly string s_cphNumber = "12/345/6789";

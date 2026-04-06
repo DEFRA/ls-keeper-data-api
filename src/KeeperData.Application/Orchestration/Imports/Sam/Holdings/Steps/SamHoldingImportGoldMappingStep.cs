@@ -13,10 +13,11 @@ namespace KeeperData.Application.Orchestration.Imports.Sam.Holdings.Steps;
 [StepOrder(3)]
 public class SamHoldingImportGoldMappingStep(
     ICountryIdentifierLookupService countryIdentifierLookupService,
-    IPremiseTypeLookupService premiseTypeLookupService,
+    ISiteTypeLookupService siteTypeLookupService,
     ISpeciesTypeLookupService speciesTypeLookupService,
-    IPremiseActivityTypeLookupService premiseActivityTypeLookupService,
+    ISiteActivityTypeLookupService siteActivityTypeLookupService,
     ISiteIdentifierTypeLookupService siteIdentifierTypeLookupService,
+    ISiteTypeDerivedCodeLookupService siteTypeDerivedCodeLookupService,
     IGenericRepository<SiteDocument> goldSiteRepository,
     IPartiesRepository goldPartyRepository,
     ILogger<SamHoldingImportGoldMappingStep> logger)
@@ -60,10 +61,11 @@ public class SamHoldingImportGoldMappingStep(
                 context.GoldSiteGroupMarks,
                 context.GoldParties,
                 countryIdentifierLookupService.GetByIdAsync,
-                premiseTypeLookupService.GetByIdAsync,
+                siteTypeLookupService.GetByCodeAsync,
                 siteIdentifierTypeLookupService.GetByCodeAsync,
                 speciesTypeLookupService.FindAsync,
-                premiseActivityTypeLookupService.GetByCodeAsync,
+                siteActivityTypeLookupService.GetByCodeAsync,
+                siteTypeDerivedCodeLookupService,
                 cancellationToken);
 
             context.GoldSitePartyRoles = SitePartyRoleMapper.ToGold(

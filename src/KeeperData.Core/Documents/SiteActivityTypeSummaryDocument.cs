@@ -8,7 +8,7 @@ namespace KeeperData.Core.Documents;
 /// <summary>
 /// The type of activity associated with a site.
 /// </summary>
-public class PremisesActivityTypeSummaryDocument : INestedEntity
+public class SiteActivityTypeSummaryDocument : INestedEntity
 {
     /// <summary>
     /// This is an immutable field which represents the golden key of the reference object.
@@ -40,7 +40,7 @@ public class PremisesActivityTypeSummaryDocument : INestedEntity
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime? LastUpdatedDate { get; set; }
 
-    public static PremisesActivityTypeSummaryDocument FromDomain(SiteActivityType m) => new()
+    public static SiteActivityTypeSummaryDocument FromDomain(SiteActivityType m) => new()
     {
         IdentifierId = m.Id,
         Code = m.Code,

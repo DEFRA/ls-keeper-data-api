@@ -1,6 +1,6 @@
 namespace KeeperData.Core.Domain.Sites.Formatters;
 
-public static class PremiseActivityTypeFormatters
+public static class SiteActivityTypeFormatters
 {
     public static string TrimFacilityActivityCode(string? rawCode)
     {

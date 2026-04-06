@@ -8,33 +8,33 @@ using MongoDB.Driver;
 
 namespace KeeperData.Infrastructure.Database.Repositories;
 
-public class PremisesTypeRepository(
+public class SiteTypeRepository(
     IOptions<MongoConfig> mongoConfig,
     IMongoClient client,
     IUnitOfWork unitOfWork)
-    : ReferenceDataRepository<PremisesTypeListDocument, PremisesTypeDocument>(mongoConfig, client, unitOfWork), IPremisesTypeRepository
+    : ReferenceDataRepository<SiteTypeListDocument, SiteTypeDocument>(mongoConfig, client, unitOfWork), ISiteTypeRepository
 {
-    public new async Task<PremisesTypeDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken = default)
+    public new async Task<SiteTypeDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(id))
         {
             return null;
         }
 
-        var premisesTypes = await GetAllAsync(cancellationToken);
-        return premisesTypes.FirstOrDefault(x =>
+        var siteTypes = await GetAllAsync(cancellationToken);
+        return siteTypes.FirstOrDefault(x =>
             x.IdentifierId.Equals(id, StringComparison.OrdinalIgnoreCase));
     }
 
-    public async Task<(string? premiseTypeId, string? premiseTypeName)> FindAsync(string? lookupValue, CancellationToken cancellationToken = default)
+    public async Task<(string? siteTypeId, string? siteTypeName)> FindAsync(string? lookupValue, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(lookupValue))
         {
             return (null, null);
         }
 
-        var premisesTypes = await GetAllAsync(cancellationToken);
-        var match = premisesTypes.FirstOrDefault(x =>
+        var siteTypes = await GetAllAsync(cancellationToken);
+        var match = siteTypes.FirstOrDefault(x =>
             x.Code.Equals(lookupValue, StringComparison.OrdinalIgnoreCase) ||
             x.Name.Equals(lookupValue, StringComparison.OrdinalIgnoreCase));
 

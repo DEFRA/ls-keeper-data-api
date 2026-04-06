@@ -3,7 +3,7 @@ using KeeperData.Core.Domain.Sites.Formatters;
 
 namespace KeeperData.Core.Tests.Unit.Domain.Sites;
 
-public class PremiseActivityTypeFormattersTests
+public class SiteActivityTypeFormattersTests
 {
     [Theory]
     [InlineData("LAB-OLAB", "OLAB")]
@@ -17,7 +17,7 @@ public class PremiseActivityTypeFormattersTests
     [InlineData("   ", "")]
     public void TrimFacilityActivityCode_ReturnsExpected(string? input, string expected)
     {
-        var result = PremiseActivityTypeFormatters.TrimFacilityActivityCode(input);
+        var result = SiteActivityTypeFormatters.TrimFacilityActivityCode(input);
 
         result.Should().Be(expected);
     }

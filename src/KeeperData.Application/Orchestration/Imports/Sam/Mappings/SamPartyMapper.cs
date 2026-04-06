@@ -463,7 +463,7 @@ public static class SamPartyMapper
 
             foreach (var partyRoleSite in party.Roles.Where(x => x.Site?.Id == goldSite.Id).Select(s => s.Site))
             {
-                var premiseType = goldSite.Type != null ? PremisesType.Create(
+                var siteType = goldSite.Type != null ? SiteType.Create(
                     goldSite.Type.IdentifierId,
                     goldSite.Type.Code,
                     goldSite.Type.Name,
@@ -471,7 +471,7 @@ public static class SamPartyMapper
 
                 partyRoleSite!.ApplyChanges(
                     goldSite.Name,
-                    premiseType,
+                    siteType,
                     goldSite.State,
                     goldSite.LastUpdatedDate);
 

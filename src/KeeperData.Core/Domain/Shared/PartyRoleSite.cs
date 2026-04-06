@@ -7,7 +7,7 @@ public class PartyRoleSite : EntityObject
 {
     public string Id { get; private set; }
     public string? Name { get; private set; }
-    public PremisesType? Type { get; private set; }
+    public SiteType? Type { get; private set; }
     public string? State { get; private set; }
     public DateTime? LastUpdatedDate { get; private set; }
 
@@ -17,7 +17,7 @@ public class PartyRoleSite : EntityObject
     public PartyRoleSite(
         string id,
         string? name,
-        PremisesType? type,
+        SiteType? type,
         string? state,
         DateTime? lastUpdatedDate)
     {
@@ -31,7 +31,7 @@ public class PartyRoleSite : EntityObject
     public static PartyRoleSite Create(
         string siteId,
         string? name,
-        PremisesType? type,
+        SiteType? type,
         string? state = null)
     {
         return new PartyRoleSite(
@@ -48,7 +48,7 @@ public class PartyRoleSite : EntityObject
         _identifiers.AddRange(identifiers);
     }
 
-    public bool ApplyChanges(string? name, PremisesType? type, string? state, DateTime lastUpdatedDate)
+    public bool ApplyChanges(string? name, SiteType? type, string? state, DateTime lastUpdatedDate)
     {
         var changed = false;
 

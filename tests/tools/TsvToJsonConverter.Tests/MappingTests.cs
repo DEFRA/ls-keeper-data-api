@@ -115,14 +115,14 @@ public class MappingTests
     }
 
     [Fact]
-    public void MapPremisesType_WithValidData_CreatesCorrectObject()
+    public void MapSiteType_WithValidData_CreatesCorrectObject()
     {
         // Arrange
         var tsvLine = "AH\tNEWID()\tAgricultural Holding\tSystem\tNEWDATE()\t\tNEWDATE()\tTrue\t\tSystem\tNEWDATE()";
         var parts = tsvLine.Split('\t');
 
         // Act
-        var result = Program.MapPremisesType(parts);
+        var result = Program.MapSiteType(parts);
 
         // Assert
         result.Code.Should().Be("AH");
@@ -134,14 +134,14 @@ public class MappingTests
     }
 
     [Fact]
-    public void MapPremisesActivityType_WithValidData_CreatesCorrectObject()
+    public void MapSiteActivityType_WithValidData_CreatesCorrectObject()
     {
         // Arrange
         var tsvLine = "AFU\tNEWID()\tApproved Finishing Unit\tSystem\tNEWDATE()\t\tNEWDATE()\tTrue\t150\tSystem\tNEWDATE()";
         var parts = tsvLine.Split('\t');
 
         // Act
-        var result = Program.MapPremisesActivityType(parts);
+        var result = Program.MapSiteActivityType(parts);
 
         // Assert
         result.Code.Should().Be("AFU");
@@ -199,8 +199,8 @@ public class MappingTests
         var result = Program.MapFacilityBusinessActivityMap(parts);
 
         result.FacilityActivityCode.Should().Be("AB-EMB-ESEC");
-        result.AssociatedPremiseTypeCode.Should().Be("AI");
-        result.AssociatedPremiseActivityCode.Should().Be("Activity123");
+        result.AssociatedSiteTypeCode.Should().Be("AI");
+        result.AssociatedSiteActivityCode.Should().Be("Activity123");
 
         // Assert
         Guid.TryParse(result.Id, out _).Should().BeTrue();
@@ -228,8 +228,8 @@ public class MappingTests
 
         // Assert
         result.FacilityActivityCode.Should().Be("TB-AFU-");
-        result.AssociatedPremiseTypeCode.Should().BeNull();
-        result.AssociatedPremiseActivityCode.Should().BeNull();
+        result.AssociatedSiteTypeCode.Should().BeNull();
+        result.AssociatedSiteActivityCode.Should().BeNull();
     }
 
     [Fact]

@@ -14,13 +14,13 @@ public class FacilityBusinessActivityMapDocument : INestedEntity
     [JsonPropertyName("facilityActivityCode")]
     public required string FacilityActivityCode { get; set; }
 
-    [BsonElement("associatedPremiseTypeCode")]
-    [JsonPropertyName("associatedPremiseTypeCode")]
-    public string? AssociatedPremiseTypeCode { get; set; }
+    [BsonElement("associatedSiteTypeCode")]
+    [JsonPropertyName("associatedSiteTypeCode")]
+    public string? AssociatedSiteTypeCode { get; set; }
 
-    [BsonElement("associatedPremiseActivityCode")]
-    [JsonPropertyName("associatedPremiseActivityCode")]
-    public string? AssociatedPremiseActivityCode { get; set; }
+    [BsonElement("associatedSiteActivityCode")]
+    [JsonPropertyName("associatedSiteActivityCode")]
+    public string? AssociatedSiteActivityCode { get; set; }
 
     [BsonElement("isActive")]
     [JsonPropertyName("isActive")]

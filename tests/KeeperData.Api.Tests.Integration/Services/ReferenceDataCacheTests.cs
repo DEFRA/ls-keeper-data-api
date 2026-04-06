@@ -61,7 +61,7 @@ public class ReferenceDataCacheTests : IClassFixture<MongoDbFixture>
         IsActive = true
     };
 
-    private readonly PremisesTypeDocument _testPremisesType = new()
+    private readonly SiteTypeDocument _testSiteType = new()
     {
         IdentifierId = "pt-1",
         Code = "FARM",
@@ -69,7 +69,7 @@ public class ReferenceDataCacheTests : IClassFixture<MongoDbFixture>
         IsActive = true
     };
 
-    private readonly PremisesActivityTypeDocument _testPremisesActivityType = new()
+    private readonly SiteActivityTypeDocument _testSiteActivityType = new()
     {
         IdentifierId = "pat-1",
         Code = "KEEPING",
@@ -97,8 +97,8 @@ public class ReferenceDataCacheTests : IClassFixture<MongoDbFixture>
     {
         IdentifierId = "fba-1",
         FacilityActivityCode = "FA01",
-        AssociatedPremiseTypeCode = "FARM",
-        AssociatedPremiseActivityCode = "KEEPING",
+        AssociatedSiteTypeCode = "FARM",
+        AssociatedSiteActivityCode = "KEEPING",
         IsActive = true
     };
 
@@ -144,8 +144,8 @@ public class ReferenceDataCacheTests : IClassFixture<MongoDbFixture>
         cache.Countries.Should().HaveCount(2);
         cache.Species.Should().HaveCount(1);
         cache.Roles.Should().HaveCount(1);
-        cache.PremisesTypes.Should().HaveCount(1);
-        cache.PremisesActivityTypes.Should().HaveCount(1);
+        cache.SiteTypes.Should().HaveCount(1);
+        cache.SiteActivityTypes.Should().HaveCount(1);
         cache.SiteIdentifierTypes.Should().HaveCount(1);
         cache.ProductionUsages.Should().HaveCount(1);
         cache.ActivityMaps.Should().HaveCount(1);
@@ -181,8 +181,8 @@ public class ReferenceDataCacheTests : IClassFixture<MongoDbFixture>
 
         var activityMap = cache.ActivityMaps.FirstOrDefault(a => a.FacilityActivityCode == "FA01");
         activityMap.Should().NotBeNull();
-        activityMap!.AssociatedPremiseTypeCode.Should().Be("FARM");
-        activityMap.AssociatedPremiseActivityCode.Should().Be("KEEPING");
+        activityMap!.AssociatedSiteTypeCode.Should().Be("FARM");
+        activityMap.AssociatedSiteActivityCode.Should().Be("KEEPING");
 
         await CleanupReferenceDataAsync();
     }
@@ -197,8 +197,8 @@ public class ReferenceDataCacheTests : IClassFixture<MongoDbFixture>
         cache.Countries.Should().NotBeNull().And.BeEmpty();
         cache.Species.Should().NotBeNull().And.BeEmpty();
         cache.Roles.Should().NotBeNull().And.BeEmpty();
-        cache.PremisesTypes.Should().NotBeNull().And.BeEmpty();
-        cache.PremisesActivityTypes.Should().NotBeNull().And.BeEmpty();
+        cache.SiteTypes.Should().NotBeNull().And.BeEmpty();
+        cache.SiteActivityTypes.Should().NotBeNull().And.BeEmpty();
         cache.SiteIdentifierTypes.Should().NotBeNull().And.BeEmpty();
         cache.ProductionUsages.Should().NotBeNull().And.BeEmpty();
         cache.ActivityMaps.Should().NotBeNull().And.BeEmpty();
@@ -218,8 +218,8 @@ public class ReferenceDataCacheTests : IClassFixture<MongoDbFixture>
         cache.Countries.Should().HaveCount(1);
         cache.Species.Should().BeEmpty();
         cache.Roles.Should().BeEmpty();
-        cache.PremisesTypes.Should().BeEmpty();
-        cache.PremisesActivityTypes.Should().BeEmpty();
+        cache.SiteTypes.Should().BeEmpty();
+        cache.SiteActivityTypes.Should().BeEmpty();
         cache.SiteIdentifierTypes.Should().BeEmpty();
         cache.ProductionUsages.Should().BeEmpty();
         cache.ActivityMaps.Should().BeEmpty();
@@ -285,8 +285,8 @@ public class ReferenceDataCacheTests : IClassFixture<MongoDbFixture>
             cache.Countries,
             cache.Species,
             cache.Roles,
-            cache.PremisesTypes,
-            cache.PremisesActivityTypes,
+            cache.SiteTypes,
+            cache.SiteActivityTypes,
             cache.SiteIdentifierTypes,
             cache.ProductionUsages,
             cache.ActivityMaps
@@ -319,10 +319,10 @@ public class ReferenceDataCacheTests : IClassFixture<MongoDbFixture>
                 new[] { _testSpecies }),
             SeedReferenceListAsync(collection, RoleListDocument.DocumentId, "roles",
                 new[] { _testRole }),
-            SeedReferenceListAsync(collection, PremisesTypeListDocument.DocumentId, "premisesTypes",
-                new[] { _testPremisesType }),
-            SeedReferenceListAsync(collection, PremisesActivityTypeListDocument.DocumentId, "premisesActivityTypes",
-                new[] { _testPremisesActivityType }),
+            SeedReferenceListAsync(collection, SiteTypeListDocument.DocumentId, "siteTypes",
+                new[] { _testSiteType }),
+            SeedReferenceListAsync(collection, SiteActivityTypeListDocument.DocumentId, "siteActivityTypes",
+                new[] { _testSiteActivityType }),
             SeedReferenceListAsync(collection, SiteIdentifierTypeListDocument.DocumentId, "siteIdentifierTypes",
                 new[] { _testSiteIdentifierType }),
             SeedReferenceListAsync(collection, ProductionUsageListDocument.DocumentId, "productionUsages",
