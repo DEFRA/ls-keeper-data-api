@@ -104,13 +104,11 @@ public class SamHoldingMapperToGoldTests
         var sit = new SiteIdentifierTypeDocument() { IdentifierId = "cphn-sit-id", Code = "CPHN", Name = "CPH Number" };
         _getSiteIdentifierTypeByCode = (s, token) => Task.FromResult(s == "CPHN" ? sit : null);
         _getSiteActivityTypeByCode = (key, token) => Task.FromResult<SiteActivityTypeDocument?>(_activityData.SingleOrDefault(x => x.Code == key));
-        
-        // Create a real SiteTypeDerivedCodeLookupService with mocked dependencies
+
         var mockCache = new Mock<IReferenceDataCache>();
         mockCache.Setup(c => c.ActivityMaps).Returns(_activityMapData);
         mockCache.Setup(c => c.SiteTypes).Returns(_siteTypeData);
         mockCache.Setup(c => c.SiteActivityTypes).Returns(_activityData);
-        
         var mockLogger = new Mock<ILogger<SiteTypeDerivedCodeLookupService>>();
         _derivedCodeLookupService = new SiteTypeDerivedCodeLookupService(mockCache.Object, mockLogger.Object);
     }
@@ -718,7 +716,7 @@ public class SamHoldingMapperToGoldTests
         };
 
         var inputHolding = new SamHoldingDocument() { SiteTypeIdentifier = "prem-2-id", SourceFacilitySubBusinessActivityCode = "FAC2, nonsense, more rubbish"};
-
+        
         var result = await WhenIMapSilverSiteToGold(inputHolding, existingSite, null);
 
         result!.Type!.IdentifierId.Should().Be("prem-2-id");
