@@ -164,7 +164,52 @@ public static class SamHoldingMapper
                 name: doc.typeName ?? string.Empty))
             .ToList();
 
-        // Resolve site type and activities from the facility derived code via substring matching.
+        var (allDerivedActivities, derivedSiteType) 
+            = await ResolveSiteTypeAndActivities(silverHoldings, derivedCodeLookupService, getSiteTypeByCode, getSiteActivityTypeByCode, representative, cancellationToken);
+
+        var cphnSiteIdentifierTypeDocument = await getSiteIdentifierTypeByCode(
+            HoldingIdentifierType.CPHN.ToString(),
+            cancellationToken);
+
+        var cphnSiteIdentifierType = cphnSiteIdentifierTypeDocument == null ? null : new SiteIdentifierType(
+            cphnSiteIdentifierTypeDocument.IdentifierId,
+            cphnSiteIdentifierTypeDocument.Code,
+            cphnSiteIdentifierTypeDocument.Name,
+            cphnSiteIdentifierTypeDocument.LastModifiedDate);
+
+        var site = existingSite is not null
+            ? await UpdateSiteAsync(
+                representative,
+                existingSite,
+                goldSiteGroupMarks,
+                goldParties,
+                getCountryById,
+                species,
+                allDerivedActivities,
+                derivedSiteType,
+                cphnSiteIdentifierType,
+                cancellationToken)
+            : await CreateSiteAsync(
+                goldSiteId,
+                representative,
+                goldSiteGroupMarks,
+                goldParties,
+                getCountryById,
+                species,
+                allDerivedActivities,
+                derivedSiteType,
+                cphnSiteIdentifierType,
+                cancellationToken);
+
+        return SiteDocument.FromDomain(site);
+    }
+
+    private static async Task<(List<SiteActivity>, SiteType?)> ResolveSiteTypeAndActivities(List<SamHoldingDocument> silverHoldings,
+        ISiteTypeDerivedCodeLookupService derivedCodeLookupService, Func<string?, CancellationToken,
+            Task<SiteTypeDocument?>> getSiteTypeByCode, Func<string?, CancellationToken,
+            Task<SiteActivityTypeDocument?>> getSiteActivityTypeByCode,
+        SamHoldingDocument representative, CancellationToken cancellationToken)
+    {
         var allDerivedActivities = new List<SiteActivity>();
         SiteType? derivedSiteType = null;
 
@@ -206,41 +251,7 @@ public static class SamHoldingMapper
             }
         }
 
-        var cphnSiteIdentifierTypeDocument = await getSiteIdentifierTypeByCode(
-            HoldingIdentifierType.CPHN.ToString(),
-            cancellationToken);
-
-        var cphnSiteIdentifierType = cphnSiteIdentifierTypeDocument == null ? null : new SiteIdentifierType(
-            cphnSiteIdentifierTypeDocument.IdentifierId,
-            cphnSiteIdentifierTypeDocument.Code,
-            cphnSiteIdentifierTypeDocument.Name,
-            cphnSiteIdentifierTypeDocument.LastModifiedDate);
-
-        var site = existingSite is not null
-            ? await UpdateSiteAsync(
-                representative,
-                existingSite,
-                goldSiteGroupMarks,
-                goldParties,
-                getCountryById,
-                species,
-                allDerivedActivities,
-                derivedSiteType,
-                cphnSiteIdentifierType,
-                cancellationToken)
-            : await CreateSiteAsync(
-                goldSiteId,
-                representative,
-                goldSiteGroupMarks,
-                goldParties,
-                getCountryById,
-                species,
-                allDerivedActivities,
-                derivedSiteType,
-                cphnSiteIdentifierType,
-                cancellationToken);
-
-        return SiteDocument.FromDomain(site);
+        return (allDerivedActivities, derivedSiteType);
     }
 
     private static async Task<Site> CreateSiteAsync(
