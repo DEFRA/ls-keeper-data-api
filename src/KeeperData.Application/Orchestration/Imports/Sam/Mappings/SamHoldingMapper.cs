@@ -164,7 +164,13 @@ public static class SamHoldingMapper
                 name: doc.typeName ?? string.Empty))
             .ToList();
 
-        var (allDerivedActivities, derivedSiteType) = await ResolveSiteTypeAndActivities(silverHoldings, derivedCodeLookupService, getSiteTypeByCode, getSiteActivityTypeByCode, representative, cancellationToken);
+        var (allDerivedActivities, derivedSiteType) = await ResolveSiteTypeAndActivitiesAsync(
+            silverHoldings,
+            derivedCodeLookupService,
+            getSiteTypeByCode,
+            getSiteActivityTypeByCode,
+            representative,
+            cancellationToken);
 
         var cphnSiteIdentifierTypeDocument = await getSiteIdentifierTypeByCode(
             HoldingIdentifierType.CPHN.ToString(),
@@ -203,11 +209,13 @@ public static class SamHoldingMapper
         return SiteDocument.FromDomain(site);
     }
 
-    private static async Task<(List<SiteActivity>, SiteType?)> ResolveSiteTypeAndActivities(List<SamHoldingDocument> silverHoldings,
-        ISiteTypeDerivedCodeLookupService derivedCodeLookupService, Func<string?, CancellationToken,
-            Task<SiteTypeDocument?>> getSiteTypeByCode, Func<string?, CancellationToken,
-            Task<SiteActivityTypeDocument?>> getSiteActivityTypeByCode,
-        SamHoldingDocument representative, CancellationToken cancellationToken)
+    private static async Task<(List<SiteActivity>, SiteType?)> ResolveSiteTypeAndActivitiesAsync(
+        List<SamHoldingDocument> silverHoldings,
+        ISiteTypeDerivedCodeLookupService derivedCodeLookupService,
+        Func<string?, CancellationToken, Task<SiteTypeDocument?>> getSiteTypeByCode,
+        Func<string?, CancellationToken, Task<SiteActivityTypeDocument?>> getSiteActivityTypeByCode,
+        SamHoldingDocument representative,
+        CancellationToken cancellationToken)
     {
         var allDerivedActivities = new List<SiteActivity>();
         SiteType? derivedSiteType = null;
@@ -215,42 +223,84 @@ public static class SamHoldingMapper
         foreach (var holding in silverHoldings)
         {
             var derivedResult = derivedCodeLookupService.Resolve(holding.SourceFacilitySubBusinessActivityCode);
-            if (derivedResult == null) continue;
+            if (derivedResult == null)
+                continue;
 
-            // Resolve site type from derived code (use first successful resolution).
-            if (derivedSiteType == null)
-            {
-                var siteTypeLookup = await getSiteTypeByCode(derivedResult.SiteTypeCode, cancellationToken);
-                if (siteTypeLookup != null)
-                {
-                    derivedSiteType = SiteType.Create(
-                        siteTypeLookup.IdentifierId,
-                        siteTypeLookup.Code,
-                        siteTypeLookup.Name,
-                        siteTypeLookup.LastModifiedDate);
-                }
-            }
+            derivedSiteType ??= await ResolveSiteTypeAsync(derivedResult.SiteTypeCode, getSiteTypeByCode, cancellationToken);
 
-            // Resolve activities from derived code.
-            foreach (var derivedActivity in derivedResult.Activities)
-            {
-                if (allDerivedActivities.Any(a => a.Type.Code.Equals(derivedActivity.Code, StringComparison.OrdinalIgnoreCase)))
-                    continue;
-
-                var activityDoc = await getSiteActivityTypeByCode(derivedActivity.Code, cancellationToken);
-                if (activityDoc != null)
-                {
-                    allDerivedActivities.Add(SiteActivity.Create(
-                        id: activityDoc.IdentifierId,
-                        type: activityDoc.ToDomain(),
-                        startDate: representative.HoldingStartDate,
-                        endDate: representative.HoldingEndDate,
-                        lastUpdatedDate: representative.LastUpdatedDate));
-                }
-            }
+            await ResolveAndAddActivitiesAsync(
+                derivedResult.Activities,
+                allDerivedActivities,
+                getSiteActivityTypeByCode,
+                representative,
+                cancellationToken);
         }
 
         return (allDerivedActivities, derivedSiteType);
+    }
+
+    private static async Task<SiteType?> ResolveSiteTypeAsync(
+        string? siteTypeCode,
+        Func<string?, CancellationToken, Task<SiteTypeDocument?>> getSiteTypeByCode,
+        CancellationToken cancellationToken)
+    {
+        var siteTypeLookup = await getSiteTypeByCode(siteTypeCode, cancellationToken);
+
+        return siteTypeLookup == null
+            ? null
+            : SiteType.Create(
+                siteTypeLookup.IdentifierId,
+                siteTypeLookup.Code,
+                siteTypeLookup.Name,
+                siteTypeLookup.LastModifiedDate);
+    }
+
+    private static async Task ResolveAndAddActivitiesAsync(
+        List<SiteTypeDerivedActivityResult> derivedActivities,
+        List<SiteActivity> allDerivedActivities,
+        Func<string?, CancellationToken, Task<SiteActivityTypeDocument?>> getSiteActivityTypeByCode,
+        SamHoldingDocument representative,
+        CancellationToken cancellationToken)
+    {
+        foreach (var derivedActivity in derivedActivities)
+        {
+            if (IsActivityAlreadyAdded(allDerivedActivities, derivedActivity.Code))
+                continue;
+
+            var siteActivity = await CreateSiteActivityAsync(
+                derivedActivity.Code,
+                getSiteActivityTypeByCode,
+                representative,
+                cancellationToken);
+
+            if (siteActivity != null)
+            {
+                allDerivedActivities.Add(siteActivity);
+            }
+        }
+    }
+
+    private static bool IsActivityAlreadyAdded(List<SiteActivity> activities, string? activityCode)
+    {
+        return activities.Any(a => a.Type.Code.Equals(activityCode, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static async Task<SiteActivity?> CreateSiteActivityAsync(
+        string? activityCode,
+        Func<string?, CancellationToken, Task<SiteActivityTypeDocument?>> getSiteActivityTypeByCode,
+        SamHoldingDocument representative,
+        CancellationToken cancellationToken)
+    {
+        var activityDoc = await getSiteActivityTypeByCode(activityCode, cancellationToken);
+
+        return activityDoc == null
+            ? null
+            : SiteActivity.Create(
+                id: activityDoc.IdentifierId,
+                type: activityDoc.ToDomain(),
+                startDate: representative.HoldingStartDate,
+                endDate: representative.HoldingEndDate,
+                lastUpdatedDate: representative.LastUpdatedDate);
     }
 
     private static async Task<Site> CreateSiteAsync(
@@ -422,7 +472,9 @@ public static class SamHoldingMapper
 
     private static List<GroupMark> ToGroupMarks(List<SiteGroupMarkRelationshipDocument> relationships)
     {
-        return [.. relationships
+        return
+        [
+            .. relationships
             .Where(m => !string.IsNullOrWhiteSpace(m.Herdmark))
             .GroupBy(m => m.Herdmark)
             .Select(group =>
@@ -446,6 +498,7 @@ public static class SamHoldingMapper
                     startDate: herdmarkGroup.GroupMarkStartDate,
                     endDate: herdmarkGroup.GroupMarkEndDate,
                     species: speciesList);
-            })];
+            })
+        ];
     }
 }
