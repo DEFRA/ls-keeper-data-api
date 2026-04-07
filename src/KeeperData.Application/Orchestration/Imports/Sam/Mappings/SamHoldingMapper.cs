@@ -164,8 +164,7 @@ public static class SamHoldingMapper
                 name: doc.typeName ?? string.Empty))
             .ToList();
 
-        var (allDerivedActivities, derivedSiteType) 
-            = await ResolveSiteTypeAndActivities(silverHoldings, derivedCodeLookupService, getSiteTypeByCode, getSiteActivityTypeByCode, representative, cancellationToken);
+        var (allDerivedActivities, derivedSiteType) = await ResolveSiteTypeAndActivities(silverHoldings, derivedCodeLookupService, getSiteTypeByCode, getSiteActivityTypeByCode, representative, cancellationToken);
 
         var cphnSiteIdentifierTypeDocument = await getSiteIdentifierTypeByCode(
             HoldingIdentifierType.CPHN.ToString(),
