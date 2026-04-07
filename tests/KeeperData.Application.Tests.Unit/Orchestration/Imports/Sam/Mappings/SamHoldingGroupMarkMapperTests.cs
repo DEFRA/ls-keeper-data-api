@@ -12,13 +12,13 @@ namespace KeeperData.Application.Tests.Unit.Orchestration.Imports.Sam.Mappings;
 public class SamHoldingGroupMarkMapperTests
 {
     // Holdings
-    private readonly Mock<IPremiseActivityTypeLookupService> _premiseActivityTypeLookupServiceMock = new();
-    private readonly Mock<IPremiseTypeLookupService> _premiseTypeLookupServiceMock = new();
+    private readonly Mock<ISiteActivityTypeLookupService> _siteActivityTypeLookupServiceMock = new();
+    private readonly Mock<ISiteTypeLookupService> _siteTypeLookupServiceMock = new();
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
     private readonly Mock<IActivityCodeLookupService> _activityCodeLookupService = new();
 
-    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolvePremiseActivityType;
-    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolvePremiseType;
+    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveSiteActivityType;
+    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveSiteType;
     private readonly Func<string?, string?, CancellationToken, Task<(string?, string?, string?)>> _resolveCountry;
 
     // Herds
@@ -33,11 +33,11 @@ public class SamHoldingGroupMarkMapperTests
     public SamHoldingGroupMarkMapperTests()
     {
         // Holdings
-        _premiseActivityTypeLookupServiceMock
+        _siteActivityTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
-        _premiseTypeLookupServiceMock
+        _siteTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
@@ -45,8 +45,8 @@ public class SamHoldingGroupMarkMapperTests
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input, input));
 
-        _resolvePremiseActivityType = _premiseActivityTypeLookupServiceMock.Object.FindAsync;
-        _resolvePremiseType = _premiseTypeLookupServiceMock.Object.FindAsync;
+        _resolveSiteActivityType = _siteActivityTypeLookupServiceMock.Object.FindAsync;
+        _resolveSiteType = _siteTypeLookupServiceMock.Object.FindAsync;
         _resolveCountry = _countryIdentifierLookupServiceMock.Object.FindAsync;
 
         // Herds
@@ -80,8 +80,8 @@ public class SamHoldingGroupMarkMapperTests
 
         var silverHoldings = await SamHoldingMapper.ToSilver(
             rawHoldings,
-            _resolvePremiseActivityType,
-            _resolvePremiseType,
+            _resolveSiteActivityType,
+            _resolveSiteType,
             _resolveCountry,
             CancellationToken.None);
 

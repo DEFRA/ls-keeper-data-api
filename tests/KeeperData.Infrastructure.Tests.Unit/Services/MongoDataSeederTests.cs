@@ -23,8 +23,8 @@ public class MongoDataSeederTests : IDisposable
     private readonly Mock<IMongoCollection<CountryListDocument>> _mockCountryCollection;
     private readonly Mock<IMongoCollection<SpeciesListDocument>> _mockSpeciesCollection;
     private readonly Mock<IMongoCollection<RoleListDocument>> _mockRoleCollection;
-    private readonly Mock<IMongoCollection<PremisesTypeListDocument>> _mockPremisesTypeCollection;
-    private readonly Mock<IMongoCollection<PremisesActivityTypeListDocument>> _mockPremisesActivityTypeCollection;
+    private readonly Mock<IMongoCollection<SiteTypeListDocument>> _mockSiteTypeCollection;
+    private readonly Mock<IMongoCollection<SiteActivityTypeListDocument>> _mockSiteActivityTypeCollection;
     private readonly Mock<IMongoCollection<SiteIdentifierTypeListDocument>> _mockSiteIdentifierTypeCollection;
     private readonly Mock<IMongoCollection<ProductionUsageListDocument>> _mockProductionUsageCollection;
     private readonly Mock<IMongoCollection<FacilityBusinessActivityMapListDocument>> _mockFacilityBusinessActivityMapCollection;
@@ -43,8 +43,8 @@ public class MongoDataSeederTests : IDisposable
         _mockCountryCollection = new Mock<IMongoCollection<CountryListDocument>>();
         _mockSpeciesCollection = new Mock<IMongoCollection<SpeciesListDocument>>();
         _mockRoleCollection = new Mock<IMongoCollection<RoleListDocument>>();
-        _mockPremisesTypeCollection = new Mock<IMongoCollection<PremisesTypeListDocument>>();
-        _mockPremisesActivityTypeCollection = new Mock<IMongoCollection<PremisesActivityTypeListDocument>>();
+        _mockSiteTypeCollection = new Mock<IMongoCollection<SiteTypeListDocument>>();
+        _mockSiteActivityTypeCollection = new Mock<IMongoCollection<SiteActivityTypeListDocument>>();
         _mockSiteIdentifierTypeCollection = new Mock<IMongoCollection<SiteIdentifierTypeListDocument>>();
         _mockProductionUsageCollection = new Mock<IMongoCollection<ProductionUsageListDocument>>();
         _mockFacilityBusinessActivityMapCollection = new Mock<IMongoCollection<FacilityBusinessActivityMapListDocument>>();
@@ -60,8 +60,8 @@ public class MongoDataSeederTests : IDisposable
         _mockDatabase.Setup(d => d.GetCollection<CountryListDocument>(referenceDataCollection, null)).Returns(_mockCountryCollection.Object);
         _mockDatabase.Setup(d => d.GetCollection<SpeciesListDocument>(referenceDataCollection, null)).Returns(_mockSpeciesCollection.Object);
         _mockDatabase.Setup(d => d.GetCollection<RoleListDocument>(referenceDataCollection, null)).Returns(_mockRoleCollection.Object);
-        _mockDatabase.Setup(d => d.GetCollection<PremisesTypeListDocument>(referenceDataCollection, null)).Returns(_mockPremisesTypeCollection.Object);
-        _mockDatabase.Setup(d => d.GetCollection<PremisesActivityTypeListDocument>(referenceDataCollection, null)).Returns(_mockPremisesActivityTypeCollection.Object);
+        _mockDatabase.Setup(d => d.GetCollection<SiteTypeListDocument>(referenceDataCollection, null)).Returns(_mockSiteTypeCollection.Object);
+        _mockDatabase.Setup(d => d.GetCollection<SiteActivityTypeListDocument>(referenceDataCollection, null)).Returns(_mockSiteActivityTypeCollection.Object);
         _mockDatabase.Setup(d => d.GetCollection<SiteIdentifierTypeListDocument>(referenceDataCollection, null)).Returns(_mockSiteIdentifierTypeCollection.Object);
         _mockDatabase.Setup(d => d.GetCollection<ProductionUsageListDocument>(referenceDataCollection, null)).Returns(_mockProductionUsageCollection.Object);
         _mockDatabase.Setup(d => d.GetCollection<FacilityBusinessActivityMapListDocument>(referenceDataCollection, null)).Returns(_mockFacilityBusinessActivityMapCollection.Object);
@@ -156,9 +156,9 @@ public class MongoDataSeederTests : IDisposable
             LastModifiedDate = null
         };
     }
-    private static PremisesTypeDocument CreateTestPremisesType(string code, string name)
+    private static SiteTypeDocument CreateTestSiteType(string code, string name)
     {
-        return new PremisesTypeDocument
+        return new SiteTypeDocument
         {
             IdentifierId = Guid.NewGuid().ToString(),
             Code = code,
@@ -170,9 +170,9 @@ public class MongoDataSeederTests : IDisposable
         };
     }
 
-    private static PremisesActivityTypeDocument CreateTestPremisesActivityType(string code, string name)
+    private static SiteActivityTypeDocument CreateTestSiteActivityType(string code, string name)
     {
-        return new PremisesActivityTypeDocument
+        return new SiteActivityTypeDocument
         {
             IdentifierId = Guid.NewGuid().ToString(),
             Code = code,
@@ -210,14 +210,14 @@ public class MongoDataSeederTests : IDisposable
         };
     }
 
-    private FacilityBusinessActivityMapDocument CreateTestFacilityBusinessActivityMap(string facilityActivityCode, string associatedPremiseTypeCode, string associatedPremiseActivityCode)
+    private FacilityBusinessActivityMapDocument CreateTestFacilityBusinessActivityMap(string facilityActivityCode, string associatedSiteTypeCode, string associatedSiteActivityCode)
     {
         return new FacilityBusinessActivityMapDocument
         {
             IdentifierId = Guid.NewGuid().ToString(),
             FacilityActivityCode = facilityActivityCode,
-            AssociatedPremiseTypeCode = associatedPremiseTypeCode,
-            AssociatedPremiseActivityCode = associatedPremiseActivityCode,
+            AssociatedSiteTypeCode = associatedSiteTypeCode,
+            AssociatedSiteActivityCode = associatedSiteActivityCode,
             IsActive = true,
             EffectiveStartDate = DateTime.UtcNow,
             CreatedDate = DateTime.UtcNow
@@ -232,8 +232,8 @@ public class MongoDataSeederTests : IDisposable
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'countries.json' not found", Times.Once());
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'species.json' not found", Times.Once());
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'roles.json' not found", Times.Once());
-        _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'premisestypes.json' not found", Times.Once());
-        _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'premisesactivitytypes.json' not found", Times.Once());
+        _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'sitetypes.json' not found", Times.Once());
+        _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'siteactivitytypes.json' not found", Times.Once());
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'siteidentifiertypes.json' not found", Times.Once());
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'productionusages.json' not found", Times.Once());
         _mockLogger.VerifyLog(LogLevel.Information, "Seed file 'facilitybusinessactivitymaps.json' not found", Times.Once());
@@ -241,8 +241,8 @@ public class MongoDataSeederTests : IDisposable
         _mockCountryCollection.VerifyNoOtherCalls();
         _mockSpeciesCollection.VerifyNoOtherCalls();
         _mockRoleCollection.VerifyNoOtherCalls();
-        _mockPremisesTypeCollection.VerifyNoOtherCalls();
-        _mockPremisesActivityTypeCollection.VerifyNoOtherCalls();
+        _mockSiteTypeCollection.VerifyNoOtherCalls();
+        _mockSiteActivityTypeCollection.VerifyNoOtherCalls();
         _mockSiteIdentifierTypeCollection.VerifyNoOtherCalls();
         _mockProductionUsageCollection.VerifyNoOtherCalls();
         _mockFacilityBusinessActivityMapCollection.VerifyNoOtherCalls();
@@ -270,8 +270,8 @@ public class MongoDataSeederTests : IDisposable
         CreateJsonFile("countries.json", new List<CountryDocument> { CreateTestCountry("US", "USA") });
         CreateJsonFile("species.json", new List<SpeciesDocument> { CreateTestSpecies("CTT", "Cattle") });
         CreateJsonFile("roles.json", new List<RoleDocument> { CreateTestRole("KEEPER", "Livestock Keeper") });
-        CreateJsonFile("premisestypes.json", new List<PremisesTypeDocument> { CreateTestPremisesType("AH", "Agricultural Holding") });
-        CreateJsonFile("premisesactivitytypes.json", new List<PremisesActivityTypeDocument> { CreateTestPremisesActivityType("AFU", "Approved Finishing Unit") });
+        CreateJsonFile("sitetypes.json", new List<SiteTypeDocument> { CreateTestSiteType("AH", "Agricultural Holding") });
+        CreateJsonFile("siteactivitytypes.json", new List<SiteActivityTypeDocument> { CreateTestSiteActivityType("AFU", "Approved Finishing Unit") });
         CreateJsonFile("siteidentifiertypes.json", new List<SiteIdentifierTypeDocument> { CreateTestSiteIdentifierType("CPHN", "CPH Number") });
         CreateJsonFile("productionusages.json", new List<ProductionUsageDocument> { CreateTestProductionUsage("BEEF", "Beef") });
         CreateJsonFile("facilitybusinessactivitymaps.json", new List<FacilityBusinessActivityMapDocument> { CreateTestFacilityBusinessActivityMap("XX-XX-XX", "YY-YY", "ZZ") });
@@ -279,8 +279,8 @@ public class MongoDataSeederTests : IDisposable
         CountryListDocument? capturedCountryDoc = null;
         SpeciesListDocument? capturedSpeciesDoc = null;
         RoleListDocument? capturedRoleDoc = null;
-        PremisesTypeListDocument? capturedPremisesTypeDoc = null;
-        PremisesActivityTypeListDocument? capturedPremisesActivityTypeDoc = null;
+        SiteTypeListDocument? capturedSiteTypeDoc = null;
+        SiteActivityTypeListDocument? capturedSiteActivityTypeDoc = null;
         SiteIdentifierTypeListDocument? capturedSiteIdentifierTypeDoc = null;
         ProductionUsageListDocument? capturedProductionUsageDoc = null;
         FacilityBusinessActivityMapListDocument? capturedFacilityBusinessActivityMapDoc = null;
@@ -297,12 +297,12 @@ public class MongoDataSeederTests : IDisposable
             .Callback<FilterDefinition<RoleListDocument>, RoleListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedRoleDoc = doc)
             .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
 
-        _mockPremisesTypeCollection.Setup(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<PremisesTypeListDocument>>(), It.IsAny<PremisesTypeListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()))
-            .Callback<FilterDefinition<PremisesTypeListDocument>, PremisesTypeListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedPremisesTypeDoc = doc)
+        _mockSiteTypeCollection.Setup(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<SiteTypeListDocument>>(), It.IsAny<SiteTypeListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()))
+            .Callback<FilterDefinition<SiteTypeListDocument>, SiteTypeListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedSiteTypeDoc = doc)
             .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
 
-        _mockPremisesActivityTypeCollection.Setup(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<PremisesActivityTypeListDocument>>(), It.IsAny<PremisesActivityTypeListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()))
-            .Callback<FilterDefinition<PremisesActivityTypeListDocument>, PremisesActivityTypeListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedPremisesActivityTypeDoc = doc)
+        _mockSiteActivityTypeCollection.Setup(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<SiteActivityTypeListDocument>>(), It.IsAny<SiteActivityTypeListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()))
+            .Callback<FilterDefinition<SiteActivityTypeListDocument>, SiteActivityTypeListDocument, ReplaceOptions, CancellationToken>((_, doc, _, _) => capturedSiteActivityTypeDoc = doc)
             .Returns(Task.FromResult(Mock.Of<ReplaceOneResult>()));
 
         _mockSiteIdentifierTypeCollection.Setup(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<SiteIdentifierTypeListDocument>>(), It.IsAny<SiteIdentifierTypeListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()))
@@ -322,8 +322,8 @@ public class MongoDataSeederTests : IDisposable
         _mockCountryCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<CountryListDocument>>(), It.IsAny<CountryListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockSpeciesCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<SpeciesListDocument>>(), It.IsAny<SpeciesListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockRoleCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<RoleListDocument>>(), It.IsAny<RoleListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
-        _mockPremisesTypeCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<PremisesTypeListDocument>>(), It.IsAny<PremisesTypeListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
-        _mockPremisesActivityTypeCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<PremisesActivityTypeListDocument>>(), It.IsAny<PremisesActivityTypeListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockSiteTypeCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<SiteTypeListDocument>>(), It.IsAny<SiteTypeListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockSiteActivityTypeCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<SiteActivityTypeListDocument>>(), It.IsAny<SiteActivityTypeListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockSiteIdentifierTypeCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<SiteIdentifierTypeListDocument>>(), It.IsAny<SiteIdentifierTypeListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockFacilityBusinessActivityMapCollection.Verify(x => x.ReplaceOneAsync(It.IsAny<FilterDefinition<FacilityBusinessActivityMapListDocument>>(), It.IsAny<FacilityBusinessActivityMapListDocument>(), It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Once);
 
@@ -336,11 +336,11 @@ public class MongoDataSeederTests : IDisposable
         capturedRoleDoc.Should().NotBeNull();
         capturedRoleDoc!.Roles.Should().Contain(pr => pr.Code == "KEEPER");
 
-        capturedPremisesTypeDoc.Should().NotBeNull();
-        capturedPremisesTypeDoc?.PremisesTypes.Should().Contain(pt => pt.Code == "AH");
+        capturedSiteTypeDoc.Should().NotBeNull();
+        capturedSiteTypeDoc?.SiteTypes.Should().Contain(pt => pt.Code == "AH");
 
-        capturedPremisesActivityTypeDoc.Should().NotBeNull();
-        capturedPremisesActivityTypeDoc?.PremisesActivityTypes.Should().Contain(pat => pat.Code == "AFU");
+        capturedSiteActivityTypeDoc.Should().NotBeNull();
+        capturedSiteActivityTypeDoc?.SiteActivityTypes.Should().Contain(pat => pat.Code == "AFU");
 
         capturedSiteIdentifierTypeDoc.Should().NotBeNull();
         capturedSiteIdentifierTypeDoc?.SiteIdentifierTypes.Should().Contain(sit => sit.Code == "CPHN");

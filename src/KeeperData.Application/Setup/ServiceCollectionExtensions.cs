@@ -146,14 +146,15 @@ public static class ServiceCollectionExtensions
     public static void RegisterLookupServices(IServiceCollection services)
     {
         services.AddTransient<ICountryIdentifierLookupService, CountryIdentifierLookupService>();
-        services.AddTransient<IPremiseActivityTypeLookupService, PremiseActivityTypeLookupService>();
-        services.AddTransient<IPremiseTypeLookupService, PremiseTypeLookupService>();
+        services.AddTransient<ISiteActivityTypeLookupService, SiteActivityTypeLookupService>();
+        services.AddTransient<ISiteTypeLookupService, SiteTypeLookupService>();
         services.AddTransient<IProductionTypeLookupService, ProductionTypeLookupService>();
         services.AddTransient<IProductionUsageLookupService, ProductionUsageLookupService>();
         services.AddTransient<IRoleTypeLookupService, RoleTypeLookupService>();
         services.AddTransient<ISpeciesTypeLookupService, SpeciesTypeLookupService>();
         services.AddTransient<ISiteIdentifierTypeLookupService, SiteIdentifierTypeLookupService>();
         services.AddTransient<IActivityCodeLookupService, ActivityCodeLookupService>();
+        services.AddTransient<ISiteTypeDerivedCodeLookupService, SiteTypeDerivedCodeLookupService>();
     }
 
     public static void RegisterNotificationService(IServiceCollection services)

@@ -10,15 +10,17 @@ public interface IReferenceDataCache
 
     IReadOnlyCollection<RoleDocument> Roles { get; }
 
-    IReadOnlyCollection<PremisesTypeDocument> PremisesTypes { get; }
+    IReadOnlyCollection<SiteTypeDocument> SiteTypes { get; }
 
-    IReadOnlyCollection<PremisesActivityTypeDocument> PremisesActivityTypes { get; }
+    IReadOnlyCollection<SiteActivityTypeDocument> SiteActivityTypes { get; }
 
     IReadOnlyCollection<SiteIdentifierTypeDocument> SiteIdentifierTypes { get; }
 
     IReadOnlyCollection<ProductionUsageDocument> ProductionUsages { get; }
 
     IReadOnlyCollection<FacilityBusinessActivityMapDocument> ActivityMaps { get; }
+
+    IReadOnlyCollection<SiteTypeMapDocument> SiteTypeMaps { get; }
 
     Task InitializeAsync(CancellationToken cancellationToken = default);
 

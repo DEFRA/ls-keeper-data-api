@@ -5,23 +5,23 @@ using KeeperData.Infrastructure.Database.Repositories;
 
 namespace KeeperData.Infrastructure.Tests.Unit.Database.Repositories;
 
-public class PremisesActivityTypeRepositoryTests
+public class SiteActivityTypeRepositoryTests
 {
-    private readonly ReferenceRepositoryTestFixture<PremisesActivityTypeRepository, PremisesActivityTypeListDocument, PremisesActivityTypeDocument> _fixture;
-    private readonly PremisesActivityTypeRepository _sut;
+    private readonly ReferenceRepositoryTestFixture<SiteActivityTypeRepository, SiteActivityTypeListDocument, SiteActivityTypeDocument> _fixture;
+    private readonly SiteActivityTypeRepository _sut;
 
-    public PremisesActivityTypeRepositoryTests()
+    public SiteActivityTypeRepositoryTests()
     {
-        _fixture = new ReferenceRepositoryTestFixture<PremisesActivityTypeRepository, PremisesActivityTypeListDocument, PremisesActivityTypeDocument>();
-        _sut = _fixture.CreateSut((config, client, unitOfWork) => new PremisesActivityTypeRepository(config, client, unitOfWork));
+        _fixture = new ReferenceRepositoryTestFixture<SiteActivityTypeRepository, SiteActivityTypeListDocument, SiteActivityTypeDocument>();
+        _sut = _fixture.CreateSut((config, client, unitOfWork) => new SiteActivityTypeRepository(config, client, unitOfWork));
     }
 
     [Fact]
-    public async Task GetByIdAsync_WhenCalledWithValidId_ReturnsMatchingPremisesActivityType()
+    public async Task GetByIdAsync_WhenCalledWithValidId_ReturnsMatchingSiteActivityType()
     {
         var marpId = "66d885c0-ce67-4cb5-8fd2-dd1f70a3c0ab";
         var maruId = "89e6b48b-4aee-4a0f-9c0b-58e9aa6c3fb2";
-        var premisesActivityTypes = new List<PremisesActivityTypeDocument>
+        var siteActivityTypes = new List<SiteActivityTypeDocument>
         {
             new()
             {
@@ -45,10 +45,10 @@ public class PremisesActivityTypeRepositoryTests
             }
         };
 
-        var listDocument = new PremisesActivityTypeListDocument
+        var listDocument = new SiteActivityTypeListDocument
         {
-            Id = "all-premisesactivitytypes",
-            PremisesActivityTypes = premisesActivityTypes
+            Id = "all-siteactivitytypes",
+            SiteActivityTypes = siteActivityTypes
         };
 
         _fixture.SetUpDocuments(listDocument);
@@ -62,10 +62,10 @@ public class PremisesActivityTypeRepositoryTests
     }
 
     [Fact]
-    public async Task GetByIdAsync_WhenCalledWithValidIdDifferentCase_ReturnsMatchingPremisesActivityType()
+    public async Task GetByIdAsync_WhenCalledWithValidIdDifferentCase_ReturnsMatchingSiteActivityType()
     {
         var marpId = "66d885c0-ce67-4cb5-8fd2-dd1f70a3c0ab";
-        var premisesActivityTypes = new List<PremisesActivityTypeDocument>
+        var siteActivityTypes = new List<SiteActivityTypeDocument>
         {
             new()
             {
@@ -79,10 +79,10 @@ public class PremisesActivityTypeRepositoryTests
             }
         };
 
-        var listDocument = new PremisesActivityTypeListDocument
+        var listDocument = new SiteActivityTypeListDocument
         {
-            Id = "all-premisesactivitytypes",
-            PremisesActivityTypes = premisesActivityTypes
+            Id = "all-siteactivitytypes",
+            SiteActivityTypes = siteActivityTypes
         };
 
         _fixture.SetUpDocuments(listDocument);
@@ -96,7 +96,7 @@ public class PremisesActivityTypeRepositoryTests
     [Fact]
     public async Task GetByIdAsync_WhenIdNotFound_ReturnsNull()
     {
-        var premisesActivityTypes = new List<PremisesActivityTypeDocument>
+        var siteActivityTypes = new List<SiteActivityTypeDocument>
         {
             new()
             {
@@ -110,10 +110,10 @@ public class PremisesActivityTypeRepositoryTests
             }
         };
 
-        var listDocument = new PremisesActivityTypeListDocument
+        var listDocument = new SiteActivityTypeListDocument
         {
-            Id = "all-premisesactivitytypes",
-            PremisesActivityTypes = premisesActivityTypes
+            Id = "all-siteactivitytypes",
+            SiteActivityTypes = siteActivityTypes
         };
 
         _fixture.SetUpDocuments(listDocument);
@@ -142,7 +142,7 @@ public class PremisesActivityTypeRepositoryTests
     [Fact]
     public async Task FindAsync_WhenCalledWithMatchingCode_ReturnsCodeAndName()
     {
-        var premisesActivityTypes = new List<PremisesActivityTypeDocument>
+        var siteActivityTypes = new List<SiteActivityTypeDocument>
         {
             new()
             {
@@ -156,24 +156,24 @@ public class PremisesActivityTypeRepositoryTests
             }
         };
 
-        var listDocument = new PremisesActivityTypeListDocument
+        var listDocument = new SiteActivityTypeListDocument
         {
-            Id = "all-premisesactivitytypes",
-            PremisesActivityTypes = premisesActivityTypes
+            Id = "all-siteactivitytypes",
+            SiteActivityTypes = siteActivityTypes
         };
 
         _fixture.SetUpDocuments(listDocument);
 
         var result = await _sut.FindAsync("MARP");
 
-        result.premiseActivityTypeId.Should().Be("66d885c0-ce67-4cb5-8fd2-dd1f70a3c0ab");
-        result.premiseActivityTypeName.Should().Be("Market on Paved Ground");
+        result.siteActivityTypeId.Should().Be("66d885c0-ce67-4cb5-8fd2-dd1f70a3c0ab");
+        result.siteActivityTypeName.Should().Be("Market on Paved Ground");
     }
 
     [Fact]
     public async Task FindAsync_WhenCalledWithMatchingName_ReturnsCodeAndName()
     {
-        var premisesActivityTypes = new List<PremisesActivityTypeDocument>
+        var siteActivityTypes = new List<SiteActivityTypeDocument>
         {
             new()
             {
@@ -187,24 +187,24 @@ public class PremisesActivityTypeRepositoryTests
             }
         };
 
-        var listDocument = new PremisesActivityTypeListDocument
+        var listDocument = new SiteActivityTypeListDocument
         {
-            Id = "all-premisesactivitytypes",
-            PremisesActivityTypes = premisesActivityTypes
+            Id = "all-siteactivitytypes",
+            SiteActivityTypes = siteActivityTypes
         };
 
         _fixture.SetUpDocuments(listDocument);
 
         var result = await _sut.FindAsync("Collection Centre");
 
-        result.premiseActivityTypeId.Should().Be("5e22d572-c98e-4892-98f7-c02c6eb37224");
-        result.premiseActivityTypeName.Should().Be("Collection Centre");
+        result.siteActivityTypeId.Should().Be("5e22d572-c98e-4892-98f7-c02c6eb37224");
+        result.siteActivityTypeName.Should().Be("Collection Centre");
     }
 
     [Fact]
     public async Task FindAsync_WhenCalledWithDifferentCase_ReturnsCodeAndName()
     {
-        var premisesActivityTypes = new List<PremisesActivityTypeDocument>
+        var siteActivityTypes = new List<SiteActivityTypeDocument>
         {
             new()
             {
@@ -218,24 +218,24 @@ public class PremisesActivityTypeRepositoryTests
             }
         };
 
-        var listDocument = new PremisesActivityTypeListDocument
+        var listDocument = new SiteActivityTypeListDocument
         {
-            Id = "all-premisesactivitytypes",
-            PremisesActivityTypes = premisesActivityTypes
+            Id = "all-siteactivitytypes",
+            SiteActivityTypes = siteActivityTypes
         };
 
         _fixture.SetUpDocuments(listDocument);
 
         var result = await _sut.FindAsync("marp");
 
-        result.premiseActivityTypeId.Should().Be("66d885c0-ce67-4cb5-8fd2-dd1f70a3c0ab");
-        result.premiseActivityTypeName.Should().Be("Market on Paved Ground");
+        result.siteActivityTypeId.Should().Be("66d885c0-ce67-4cb5-8fd2-dd1f70a3c0ab");
+        result.siteActivityTypeName.Should().Be("Market on Paved Ground");
     }
 
     [Fact]
     public async Task FindAsync_WhenNoMatch_ReturnsNullTuple()
     {
-        var premisesActivityTypes = new List<PremisesActivityTypeDocument>
+        var siteActivityTypes = new List<SiteActivityTypeDocument>
         {
             new()
             {
@@ -249,18 +249,18 @@ public class PremisesActivityTypeRepositoryTests
             }
         };
 
-        var listDocument = new PremisesActivityTypeListDocument
+        var listDocument = new SiteActivityTypeListDocument
         {
-            Id = "all-premisesactivitytypes",
-            PremisesActivityTypes = premisesActivityTypes
+            Id = "all-siteactivitytypes",
+            SiteActivityTypes = siteActivityTypes
         };
 
         _fixture.SetUpDocuments(listDocument);
 
         var result = await _sut.FindAsync("NONEXISTENT");
 
-        result.premiseActivityTypeId.Should().BeNull();
-        result.premiseActivityTypeName.Should().BeNull();
+        result.siteActivityTypeId.Should().BeNull();
+        result.siteActivityTypeName.Should().BeNull();
     }
 
     [Fact]
@@ -268,14 +268,14 @@ public class PremisesActivityTypeRepositoryTests
     {
         var result = await _sut.FindAsync(null);
 
-        result.premiseActivityTypeId.Should().BeNull();
-        result.premiseActivityTypeName.Should().BeNull();
+        result.siteActivityTypeId.Should().BeNull();
+        result.siteActivityTypeName.Should().BeNull();
     }
 
     [Fact]
     public async Task FindAsync_WhenCodeMatchesAndNameAlsoExists_PrioritizesCodeMatch()
     {
-        var premisesActivityTypes = new List<PremisesActivityTypeDocument>
+        var siteActivityTypes = new List<SiteActivityTypeDocument>
         {
             new()
             {
@@ -299,17 +299,17 @@ public class PremisesActivityTypeRepositoryTests
             }
         };
 
-        var listDocument = new PremisesActivityTypeListDocument
+        var listDocument = new SiteActivityTypeListDocument
         {
-            Id = "all-premisesactivitytypes",
-            PremisesActivityTypes = premisesActivityTypes
+            Id = "all-siteactivitytypes",
+            SiteActivityTypes = siteActivityTypes
         };
 
         _fixture.SetUpDocuments(listDocument);
 
         var result = await _sut.FindAsync("CC");
 
-        result.premiseActivityTypeId.Should().Be("id1");
-        result.premiseActivityTypeName.Should().Be("Collection Centre");
+        result.siteActivityTypeId.Should().Be("id1");
+        result.siteActivityTypeName.Should().Be("Collection Centre");
     }
 }

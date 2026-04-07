@@ -1,11 +1,10 @@
-using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents;
 
-public class PremisesActivityTypeDocument : INestedEntity
+public class SiteTypeDocument : INestedEntity
 {
     [BsonElement("id")]
     [JsonPropertyName("id")]
@@ -23,9 +22,9 @@ public class PremisesActivityTypeDocument : INestedEntity
     [JsonPropertyName("isActive")]
     public bool IsActive { get; set; }
 
-    [BsonElement("priorityOrder")]
-    [JsonPropertyName("priorityOrder")]
-    public int PriorityOrder { get; set; }
+    [BsonElement("sortOrder")]
+    [JsonPropertyName("sortOrder")]
+    public int SortOrder { get; set; }
 
     [BsonElement("effectiveStartDate")]
     [JsonPropertyName("effectiveStartDate")]
@@ -50,26 +49,4 @@ public class PremisesActivityTypeDocument : INestedEntity
     [BsonElement("lastModifiedDate")]
     [JsonPropertyName("lastModifiedDate")]
     public DateTime? LastModifiedDate { get; set; }
-
-    public static PremisesActivityTypeDocument FromDomain(SiteActivityType m) => new()
-    {
-        IdentifierId = m.Id,
-        Code = m.Code,
-        Name = m.Name,
-        LastModifiedDate = m.LastUpdatedDate,
-
-        IsActive = true,
-        EffectiveStartDate = new DateTime(1900, 1, 1),
-        EffectiveEndDate = null,
-        CreatedBy = "System_FromDomain",
-        CreatedDate = DateTime.UtcNow,
-        LastModifiedBy = null
-    };
-
-    public SiteActivityType ToDomain() => new(
-        id: IdentifierId,
-        code: Code,
-        name: Name,
-        lastUpdatedDate: LastModifiedDate
-    );
 }

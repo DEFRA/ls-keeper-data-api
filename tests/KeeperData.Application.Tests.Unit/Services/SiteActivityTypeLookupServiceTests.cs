@@ -6,23 +6,23 @@ using Moq;
 
 namespace KeeperData.Application.Tests.Unit.Services;
 
-public class PremiseActivityTypeLookupServiceTests
+public class SiteActivityTypeLookupServiceTests
 {
     private readonly Mock<IReferenceDataCache> _mockCache;
-    private readonly PremiseActivityTypeLookupService _sut;
+    private readonly SiteActivityTypeLookupService _sut;
 
-    public PremiseActivityTypeLookupServiceTests()
+    public SiteActivityTypeLookupServiceTests()
     {
         _mockCache = new Mock<IReferenceDataCache>();
-        _mockCache.Setup(c => c.PremisesActivityTypes).Returns(Array.Empty<PremisesActivityTypeDocument>());
-        _sut = new PremiseActivityTypeLookupService(_mockCache.Object);
+        _mockCache.Setup(c => c.SiteActivityTypes).Returns(Array.Empty<SiteActivityTypeDocument>());
+        _sut = new SiteActivityTypeLookupService(_mockCache.Object);
     }
 
     [Fact]
     public async Task GetByIdAsync_WhenCalled_DelegatesToRepository()
     {
         // Arrange
-        var expectedDocument = new PremisesActivityTypeDocument
+        var expectedDocument = new SiteActivityTypeDocument
         {
             IdentifierId = "test-id",
             Code = "MARP",
@@ -32,7 +32,7 @@ public class PremiseActivityTypeLookupServiceTests
             EffectiveStartDate = DateTime.UtcNow,
             CreatedDate = DateTime.UtcNow
         };
-        _mockCache.Setup(c => c.PremisesActivityTypes).Returns(new[] { expectedDocument });
+        _mockCache.Setup(c => c.SiteActivityTypes).Returns(new[] { expectedDocument });
 
         // Act
         var result = await _sut.GetByIdAsync("test-id", CancellationToken.None);
@@ -45,7 +45,7 @@ public class PremiseActivityTypeLookupServiceTests
     public async Task GetByIdAsync_WhenNotFound_ReturnsNull()
     {
         // Arrange
-        _mockCache.Setup(c => c.PremisesActivityTypes).Returns(Array.Empty<PremisesActivityTypeDocument>());
+        _mockCache.Setup(c => c.SiteActivityTypes).Returns(Array.Empty<SiteActivityTypeDocument>());
 
         // Act
         var result = await _sut.GetByIdAsync("non-existent", CancellationToken.None);
@@ -55,10 +55,10 @@ public class PremiseActivityTypeLookupServiceTests
     }
 
     [Fact]
-    public async Task FindAsync_WhenCalledWithValidLookupValue_ReturnsMatchingPremiseActivityType()
+    public async Task FindAsync_WhenCalledWithValidLookupValue_ReturnsMatchingSiteActivityType()
     {
         // Arrange
-        var doc = new PremisesActivityTypeDocument
+        var doc = new SiteActivityTypeDocument
         {
             IdentifierId = "MARP",
             Code = "MARP",
@@ -68,21 +68,21 @@ public class PremiseActivityTypeLookupServiceTests
             EffectiveStartDate = DateTime.UtcNow,
             CreatedDate = DateTime.UtcNow
         };
-        _mockCache.Setup(c => c.PremisesActivityTypes).Returns(new[] { doc });
+        _mockCache.Setup(c => c.SiteActivityTypes).Returns(new[] { doc });
 
         // Act
         var result = await _sut.FindAsync("MARP", CancellationToken.None);
 
         // Assert
-        result.premiseActivityTypeId.Should().Be("MARP");
-        result.premiseActivityTypeName.Should().Be("Market on Paved Ground");
+        result.siteActivityTypeId.Should().Be("MARP");
+        result.siteActivityTypeName.Should().Be("Market on Paved Ground");
     }
 
     [Fact]
-    public async Task FindAsync_WhenCalledWithName_ReturnsMatchingPremiseActivityType()
+    public async Task FindAsync_WhenCalledWithName_ReturnsMatchingSiteActivityType()
     {
         // Arrange
-        var doc = new PremisesActivityTypeDocument
+        var doc = new SiteActivityTypeDocument
         {
             IdentifierId = "CC",
             Code = "CC",
@@ -92,27 +92,27 @@ public class PremiseActivityTypeLookupServiceTests
             EffectiveStartDate = DateTime.UtcNow,
             CreatedDate = DateTime.UtcNow
         };
-        _mockCache.Setup(c => c.PremisesActivityTypes).Returns(new[] { doc });
+        _mockCache.Setup(c => c.SiteActivityTypes).Returns(new[] { doc });
 
         // Act
         var result = await _sut.FindAsync("Collection Centre", CancellationToken.None);
 
         // Assert
-        result.premiseActivityTypeId.Should().Be("CC");
-        result.premiseActivityTypeName.Should().Be("Collection Centre");
+        result.siteActivityTypeId.Should().Be("CC");
+        result.siteActivityTypeName.Should().Be("Collection Centre");
     }
 
     [Fact]
     public async Task FindAsync_WhenNotFound_ReturnsNullTuple()
     {
         // Arrange
-        _mockCache.Setup(c => c.PremisesActivityTypes).Returns(Array.Empty<PremisesActivityTypeDocument>());
+        _mockCache.Setup(c => c.SiteActivityTypes).Returns(Array.Empty<SiteActivityTypeDocument>());
 
         // Act
         var result = await _sut.FindAsync("NONEXISTENT", CancellationToken.None);
 
         // Assert
-        result.premiseActivityTypeId.Should().BeNull();
-        result.premiseActivityTypeName.Should().BeNull();
+        result.siteActivityTypeId.Should().BeNull();
+        result.siteActivityTypeName.Should().BeNull();
     }
 }

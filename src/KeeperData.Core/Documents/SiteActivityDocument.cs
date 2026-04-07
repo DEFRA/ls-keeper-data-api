@@ -19,7 +19,7 @@ public class SiteActivityDocument : INestedEntity
     /// </summary>
     [BsonElement("type")]
     [JsonPropertyName("type")]
-    public required PremisesActivityTypeSummaryDocument Type { get; set; }
+    public required SiteActivityTypeSummaryDocument Type { get; set; }
 
     /// <summary>
     /// The start date of the activity.
@@ -45,7 +45,7 @@ public class SiteActivityDocument : INestedEntity
     public static SiteActivityDocument FromDomain(SiteActivity m) => new()
     {
         IdentifierId = m.Id,
-        Type = PremisesActivityTypeSummaryDocument.FromDomain(m.Type),
+        Type = SiteActivityTypeSummaryDocument.FromDomain(m.Type),
         StartDate = m.StartDate,
         EndDate = m.EndDate,
         LastUpdatedDate = m.LastUpdatedDate

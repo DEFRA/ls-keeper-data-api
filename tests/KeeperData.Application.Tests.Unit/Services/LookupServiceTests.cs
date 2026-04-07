@@ -34,39 +34,39 @@ public class LookupServiceTests
     }
 
     [Fact]
-    public async Task PremiseActivityTypeLookupService_GetByCodeAsync_ReturnsDocument()
+    public async Task SiteActivityTypeLookupService_GetByCodeAsync_ReturnsDocument()
     {
         var cache = new Mock<IReferenceDataCache>();
-        var doc = new PremisesActivityTypeDocument { IdentifierId = "1", Code = "MKT", Name = "Market", IsActive = true };
-        cache.Setup(c => c.PremisesActivityTypes).Returns(new[] { doc });
+        var doc = new SiteActivityTypeDocument { IdentifierId = "1", Code = "MKT", Name = "Market", IsActive = true };
+        cache.Setup(c => c.SiteActivityTypes).Returns(new[] { doc });
 
-        var service = new PremiseActivityTypeLookupService(cache.Object);
+        var service = new SiteActivityTypeLookupService(cache.Object);
         var result = await service.GetByCodeAsync("MKT", CancellationToken.None);
 
         result.Should().BeEquivalentTo(doc);
     }
 
     [Fact]
-    public async Task PremiseActivityTypeLookupService_FindAsync_WhenCodeMatches_ReturnsIdAndName()
+    public async Task SiteActivityTypeLookupService_FindAsync_WhenCodeMatches_ReturnsIdAndName()
     {
         var cache = new Mock<IReferenceDataCache>();
-        var doc = new PremisesActivityTypeDocument { IdentifierId = "1", Code = "MKT", Name = "Market", IsActive = true };
-        cache.Setup(c => c.PremisesActivityTypes).Returns(new[] { doc });
+        var doc = new SiteActivityTypeDocument { IdentifierId = "1", Code = "MKT", Name = "Market", IsActive = true };
+        cache.Setup(c => c.SiteActivityTypes).Returns(new[] { doc });
 
-        var service = new PremiseActivityTypeLookupService(cache.Object);
+        var service = new SiteActivityTypeLookupService(cache.Object);
         var result = await service.FindAsync("MKT", CancellationToken.None);
 
-        result.premiseActivityTypeId.Should().Be("1");
-        result.premiseActivityTypeName.Should().Be("Market");
+        result.siteActivityTypeId.Should().Be("1");
+        result.siteActivityTypeName.Should().Be("Market");
     }
 
     [Fact]
-    public async Task PremiseActivityTypeLookupService_GetByCodeAsync_ReturnsNull_WhenNotFound()
+    public async Task SiteActivityTypeLookupService_GetByCodeAsync_ReturnsNull_WhenNotFound()
     {
         var cache = new Mock<IReferenceDataCache>();
-        cache.Setup(c => c.PremisesActivityTypes).Returns(Array.Empty<PremisesActivityTypeDocument>());
+        cache.Setup(c => c.SiteActivityTypes).Returns(Array.Empty<SiteActivityTypeDocument>());
 
-        var service = new PremiseActivityTypeLookupService(cache.Object);
+        var service = new SiteActivityTypeLookupService(cache.Object);
         var result = await service.GetByCodeAsync("UNKNOWN", CancellationToken.None);
 
         result.Should().BeNull();

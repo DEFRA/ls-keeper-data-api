@@ -49,7 +49,7 @@ public class SiteDocumentTests
 
     private static SiteActivityDocument MakeSiteActivityDocument(string id, string patId = "pat-id", string patCode = "pat-code", string patName = "pat-name")
     {
-        return new SiteActivityDocument() { IdentifierId = id, Type = new PremisesActivityTypeSummaryDocument() { IdentifierId = patId, Code = patCode, Name = patName } };
+        return new SiteActivityDocument() { IdentifierId = id, Type = new SiteActivityTypeSummaryDocument() { IdentifierId = patId, Code = patCode, Name = patName } };
     }
 
     private static Site EmptySite(DateTime? lastUpdatedDate = null)

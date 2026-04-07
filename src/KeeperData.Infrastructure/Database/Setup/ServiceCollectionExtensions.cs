@@ -49,10 +49,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISpeciesRepository, SpeciesRepository>();
         services.AddScoped<IFacilityBusinessActivityMapRepository, FacilityBusinessActivityMapRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
-        services.AddScoped<IPremisesTypeRepository, PremisesTypeRepository>();
-        services.AddScoped<IPremisesActivityTypeRepository, PremisesActivityTypeRepository>();
+        services.AddScoped<ISiteTypeRepository, SiteTypeRepository>();
+        services.AddScoped<ISiteActivityTypeRepository, SiteActivityTypeRepository>();
         services.AddScoped<IProductionUsageRepository, ProductionUsageRepository>();
         services.AddScoped<ISiteIdentifierTypeRepository, SiteIdentifierTypeRepository>();
+        services.AddScoped<ISiteTypeMapRepository, SiteTypeMapRepository>();
         services.AddScoped<ISitesRepository, SitesRepository>();
         services.AddScoped<IPartiesRepository, PartiesRepository>();
         services.AddScoped<IGoldSitePartyRoleRelationshipRepository, GoldSitePartyRoleRelationshipRepository>();

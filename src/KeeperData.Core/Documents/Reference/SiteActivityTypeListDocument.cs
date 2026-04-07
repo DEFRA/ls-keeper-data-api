@@ -5,9 +5,9 @@ using System.Text.Json.Serialization;
 namespace KeeperData.Core.Documents.Reference;
 
 [CollectionName("referenceData")]
-public class PremisesTypeListDocument : IListDocument, IReferenceListDocument<PremisesTypeDocument>
+public class SiteActivityTypeListDocument : IListDocument, IReferenceListDocument<SiteActivityTypeDocument>
 {
-    public static string DocumentId => "all-premisestypes";
+    public static string DocumentId => "all-siteactivitytypes";
 
     [BsonId]
     [BsonElement("id")]
@@ -18,9 +18,9 @@ public class PremisesTypeListDocument : IListDocument, IReferenceListDocument<Pr
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
 
-    [BsonElement("premisesTypes")]
-    [JsonPropertyName("premisesTypes")]
-    public List<PremisesTypeDocument> PremisesTypes { get; set; } = [];
+    [BsonElement("siteActivityTypes")]
+    [JsonPropertyName("siteActivityTypes")]
+    public List<SiteActivityTypeDocument> SiteActivityTypes { get; set; } = [];
 
-    public IReadOnlyCollection<PremisesTypeDocument> Items => PremisesTypes.AsReadOnly();
+    public IReadOnlyCollection<SiteActivityTypeDocument> Items => SiteActivityTypes.AsReadOnly();
 }

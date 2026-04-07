@@ -42,16 +42,16 @@ public static class Program
                     jsonString = await GenericTsvConverter.Convert(inputPath, MapRole);
                     break;
 
-                case "premisestypes":
-                    inputPath = "premisestypes.tsv";
-                    outputPath = "premisestypes_generated.json";
-                    jsonString = await GenericTsvConverter.Convert(inputPath, MapPremisesType);
+                case "sitetypes":
+                    inputPath = "sitetypes.tsv";
+                    outputPath = "sitetypes_generated.json";
+                    jsonString = await GenericTsvConverter.Convert(inputPath, MapSiteType);
                     break;
 
-                case "premisesactivitytypes":
-                    inputPath = "premisesactivitytypes.tsv";
-                    outputPath = "premisesactivitytypes_generated.json";
-                    jsonString = await GenericTsvConverter.Convert(inputPath, MapPremisesActivityType);
+                case "siteactivitytypes":
+                    inputPath = "siteactivitytypes.tsv";
+                    outputPath = "siteactivitytypes_generated.json";
+                    jsonString = await GenericTsvConverter.Convert(inputPath, MapSiteActivityType);
                     break;
 
                 case "siteidentifiertypes":
@@ -158,11 +158,11 @@ public static class Program
         );
     }
 
-    public static PremisesTypeJson MapPremisesType(string[] parts)
+    public static SiteTypeJson MapSiteType(string[] parts)
     {
-        if (parts.Length < 11) throw new InvalidDataException("TSV line for premises type has fewer than 11 columns.");
+        if (parts.Length < 11) throw new InvalidDataException("TSV line for site type has fewer than 11 columns.");
 
-        return new PremisesTypeJson(
+        return new SiteTypeJson(
             Id: HandlePlaceholderId(parts[1]),
             Code: parts[0].Trim(),
             Name: parts[2].Trim().Trim('"'),
@@ -177,11 +177,11 @@ public static class Program
         );
     }
 
-    public static PremisesActivityTypeJson MapPremisesActivityType(string[] parts)
+    public static SiteActivityTypeJson MapSiteActivityType(string[] parts)
     {
-        if (parts.Length < 11) throw new InvalidDataException("TSV line for premises activity type has fewer than 11 columns.");
+        if (parts.Length < 11) throw new InvalidDataException("TSV line for site activity type has fewer than 11 columns.");
 
-        return new PremisesActivityTypeJson(
+        return new SiteActivityTypeJson(
             Id: HandlePlaceholderId(parts[1]),
             Code: parts[0].Trim(),
             Name: parts[2].Trim().Trim('"'),
@@ -244,8 +244,8 @@ public static class Program
 
             // 2. Map the 3 columns from the TSV
             FacilityActivityCode: parts[0].Trim(),
-            AssociatedPremiseTypeCode: string.IsNullOrWhiteSpace(parts[1]) ? null : parts[1].Trim(),
-            AssociatedPremiseActivityCode: (parts.Length > 2 && !string.IsNullOrWhiteSpace(parts[2])) ? parts[2].Trim() : null,
+            AssociatedSiteTypeCode: string.IsNullOrWhiteSpace(parts[1]) ? null : parts[1].Trim(),
+            AssociatedSiteActivityCode: (parts.Length > 2 && !string.IsNullOrWhiteSpace(parts[2])) ? parts[2].Trim() : null,
 
             // 3. Generate Defaults for Audit fields required by Schema
             IsActive: true,
@@ -262,7 +262,7 @@ public static class Program
     {
         Console.WriteLine("\nUsage: dotnet run <data_type>");
         Console.WriteLine("Available data types: countries, species, partyroles, " +
-            "premisesactivitytypes, siteidentifiertypes, productionusages, facilitybusinessactivitymaps");
+            "siteactivitytypes, siteidentifiertypes, productionusages, facilitybusinessactivitymaps");
     }
 
     private static void PrintSuccess(string outputPath, string inputPath)

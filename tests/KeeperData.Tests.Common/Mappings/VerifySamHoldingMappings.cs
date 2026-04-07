@@ -18,7 +18,7 @@ public static class VerifySamHoldingMappings
                             source.PAON_END_NUMBER, source.PAON_END_NUMBER_SUFFIX,
                             source.SAON_DESCRIPTION, source.PAON_DESCRIPTION);
 
-        var formattedFacilityBusinessActivityCode = PremiseActivityTypeFormatters.TrimFacilityActivityCode(source.FACILITY_BUSINSS_ACTVTY_CODE);
+        var formattedFacilityBusinessActivityCode = SiteActivityTypeFormatters.TrimFacilityActivityCode(source.FACILITY_BUSINSS_ACTVTY_CODE);
 
         source.Should().NotBeNull();
         target.Should().NotBeNull();
@@ -50,12 +50,12 @@ public static class VerifySamHoldingMappings
 
         target.MovementRestrictionReasonCode.Should().Be(source.MOVEMENT_RSTRCTN_RSN_CODE);
 
-        // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
-        // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
-        target.PremiseActivityTypeCode.Should().BeNull();
-        target.PremiseTypeCode.Should().BeNull();
-        // target.PremiseActivityTypeCode.Should().Be(SamTestScenarios.LookupCodes(source.FCLTY_SUB_BSNSS_ACTVTY_CODE).associatedPremiseActivityCode);
-        // target.PremiseTypeCode.Should().Be(SamTestScenarios.LookupCodes(source.FCLTY_SUB_BSNSS_ACTVTY_CODE).associatedPremiseTypeCode);
+        // SiteType and SiteActivityType Removed in 'ULITP-3974'
+        // Once code list & approach defined, 'SiteActivityTypeCode' & 'SiteTypeCode' to be added back in.
+        target.SiteActivityTypeCode.Should().BeNull();
+        target.SiteTypeCode.Should().BeNull();
+        // target.SiteActivityTypeCode.Should().Be(SamTestScenarios.LookupCodes(source.FCLTY_SUB_BSNSS_ACTVTY_CODE).associatedSiteActivityCode);
+        // target.SiteTypeCode.Should().Be(SamTestScenarios.LookupCodes(source.FCLTY_SUB_BSNSS_ACTVTY_CODE).associatedSiteTypeCode);
 
         target.SpeciesTypeCode.Should().Be(source.AnimalSpeciesCodeUnwrapped);
 

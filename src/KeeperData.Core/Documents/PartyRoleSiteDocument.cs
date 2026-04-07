@@ -29,7 +29,7 @@ public class PartyRoleSiteDocument : INestedEntity
     /// </summary>
     [BsonElement("type")]
     [JsonPropertyName("type")]
-    public PremisesTypeSummaryDocument? Type { get; set; }
+    public SiteTypeSummaryDocument? Type { get; set; }
 
     /// <summary>
     /// The current state of the site.
@@ -56,7 +56,7 @@ public class PartyRoleSiteDocument : INestedEntity
     {
         IdentifierId = m.Id,
         Name = m.Name,
-        Type = m.Type != null ? PremisesTypeSummaryDocument.FromDomain(m.Type) : null,
+        Type = m.Type != null ? SiteTypeSummaryDocument.FromDomain(m.Type) : null,
         State = m.State,
         LastUpdatedDate = m.LastUpdatedDate,
         Identifiers = m.Identifiers?

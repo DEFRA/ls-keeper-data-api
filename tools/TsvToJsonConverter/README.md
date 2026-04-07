@@ -32,13 +32,13 @@ dotnet run species
 
 dotnet run roles
 
-**To convert premisestypes:**
+**To convert sitetypes:**
 
-dotnet run premisestypes
+dotnet run sitetypes
 
-**To convert premisesactivitytypes:**
+**To convert siteactivitytypes:**
 
-dotnet run premisesactivitytypes
+dotnet run siteactivitytypes
 
 **To convert siteidentifiertypes:**
 

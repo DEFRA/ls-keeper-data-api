@@ -52,7 +52,7 @@ public record RoleJson(
 );
 
 [ExcludeFromCodeCoverage]
-public record PremisesTypeJson(
+public record SiteTypeJson(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("code")] string Code,
     [property: JsonPropertyName("name")] string Name,
@@ -67,7 +67,7 @@ public record PremisesTypeJson(
 );
 
 [ExcludeFromCodeCoverage]
-public record PremisesActivityTypeJson(
+public record SiteActivityTypeJson(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("code")] string Code,
     [property: JsonPropertyName("name")] string Name,
@@ -113,8 +113,8 @@ public record ProductionUsageJson(
 public record FacilityBusinessActivityMapJson(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("facilityActivityCode")] string FacilityActivityCode,
-    [property: JsonPropertyName("associatedPremiseTypeCode")] string? AssociatedPremiseTypeCode,
-    [property: JsonPropertyName("associatedPremiseActivityCode")] string? AssociatedPremiseActivityCode,
+    [property: JsonPropertyName("associatedSiteTypeCode")] string? AssociatedSiteTypeCode,
+    [property: JsonPropertyName("associatedSiteActivityCode")] string? AssociatedSiteActivityCode,
     [property: JsonPropertyName("isActive")] bool IsActive,
     [property: JsonPropertyName("effectiveStartDate")] DateTime EffectiveStartDate,
     [property: JsonPropertyName("effectiveEndDate")] DateTime? EffectiveEndDate,

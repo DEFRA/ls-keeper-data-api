@@ -102,7 +102,7 @@ public class SitesQueryAdapterTests
         {
             Id = "999",
             Name = "DefaultName",
-            Type = new PremisesTypeSummaryDocument { Code = "AH", IdentifierId = "x", Name = "x" },
+            Type = new SiteTypeSummaryDocument() { Code = "AH", IdentifierId = "x", Name = "x" },
             Identifiers = new List<SiteIdentifierDocument>
             {
                 new() { Identifier = "12/345", IdentifierId = "y", Type = new SiteIdentifierSummaryDocument { Code = "y", IdentifierId = "y", Name = "y" } }

@@ -2,12 +2,12 @@ using KeeperData.Core.Documents;
 
 namespace KeeperData.Tests.Common.TestData;
 
-public static class PremiseActivityTypeData
+public static class SiteActivityTypeData
 {
-    private static readonly Dictionary<string, PremisesActivityTypeDocument> s_premiseActivityTypesByCode =
+    private static readonly Dictionary<string, SiteActivityTypeDocument> s_siteActivityTypesByCode =
         new()
         {
-            ["RM"] = new PremisesActivityTypeDocument
+            ["RM"] = new SiteActivityTypeDocument
             {
                 IdentifierId = "d2d9be5e-18b4-4424-b196-fd40f3b105d8",
                 Code = "RM",
@@ -16,7 +16,7 @@ public static class PremiseActivityTypeData
                 IsActive = true
             },
 
-            ["WM"] = new PremisesActivityTypeDocument
+            ["WM"] = new SiteActivityTypeDocument
             {
                 IdentifierId = "e0dd8921-3593-4e58-b797-a7c8673d8e40",
                 Code = "WM",
@@ -26,8 +26,8 @@ public static class PremiseActivityTypeData
             }
         };
 
-    private static readonly Dictionary<string, PremisesActivityTypeDocument> s_premiseActivityTypesById =
-        s_premiseActivityTypesByCode.Values.ToDictionary(c => c.IdentifierId);
+    private static readonly Dictionary<string, SiteActivityTypeDocument> s_siteActivityTypesById =
+        s_siteActivityTypesByCode.Values.ToDictionary(c => c.IdentifierId);
 
     public static (string? id, string? name) Find(string code)
     {
@@ -36,9 +36,9 @@ public static class PremiseActivityTypeData
         return (type.IdentifierId, type.Name);
     }
 
-    public static PremisesActivityTypeDocument GetById(string id) => s_premiseActivityTypesById[id];
+    public static SiteActivityTypeDocument GetById(string id) => s_siteActivityTypesById[id];
 
-    public static PremisesActivityTypeDocument GetByCode(string code) => s_premiseActivityTypesByCode[code];
+    public static SiteActivityTypeDocument GetByCode(string code) => s_siteActivityTypesByCode[code];
 
-    public static IEnumerable<PremisesActivityTypeDocument> All => s_premiseActivityTypesByCode.Values;
+    public static IEnumerable<SiteActivityTypeDocument> All => s_siteActivityTypesByCode.Values;
 }

@@ -2,14 +2,14 @@ using KeeperData.Core.Domain.BuildingBlocks;
 
 namespace KeeperData.Core.Domain.Shared;
 
-public class PremisesType : EntityObject
+public class SiteType : EntityObject
 {
     public string Id { get; private set; }
     public string Code { get; private set; }
     public string Description { get; private set; }
     public DateTime? LastUpdatedDate { get; private set; }
 
-    public PremisesType(
+    public SiteType(
         string id,
         string code,
         string description,
@@ -21,13 +21,13 @@ public class PremisesType : EntityObject
         LastUpdatedDate = lastUpdatedDate;
     }
 
-    public static PremisesType Create(
+    public static SiteType Create(
         string id,
         string code,
         string description,
         DateTime? lastUpdatedDate)
     {
-        return new PremisesType(
+        return new SiteType(
             id,
             code,
             description,

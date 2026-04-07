@@ -31,10 +31,10 @@ public static class VerifyCtsHoldingMappings
             : HoldingStatusType.Active.GetDescription();
         target.HoldingStatus.Should().Be(expectedStatus);
 
-        target.PremiseActivityTypeId.Should().BeNull();
-        target.PremiseActivityTypeCode.Should().BeNull();
-        target.PremiseTypeIdentifier.Should().BeNull();
-        target.PremiseTypeCode.Should().BeNull();
+        target.SiteActivityTypeId.Should().BeNull();
+        target.SiteActivityTypeCode.Should().BeNull();
+        target.SiteTypeIdentifier.Should().BeNull();
+        target.SiteTypeCode.Should().BeNull();
 
         // Location
         target.Location.Should().NotBeNull();

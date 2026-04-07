@@ -1,7 +1,11 @@
 using FluentAssertions;
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
+using KeeperData.Application.Services;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Services;
+using Microsoft.Extensions.Logging;
+using Moq;
 using System.Diagnostics;
 using AddressDocument = KeeperData.Core.Documents.AddressDocument;
 using LocationDocument = KeeperData.Core.Documents.LocationDocument;
@@ -11,10 +15,11 @@ namespace KeeperData.Application.Tests.Unit.Orchestration.Imports.Sam.Mappings;
 public class SamHoldingMapperToGoldTests
 {
     private Func<string?, CancellationToken, Task<CountryDocument?>> _getCountryById;
-    private Func<string?, CancellationToken, Task<PremisesTypeDocument?>> _getPremiseTypeById;
+    private Func<string?, CancellationToken, Task<SiteTypeDocument?>> _getSiteTypeByCode;
     private Func<string?, CancellationToken, Task<SiteIdentifierTypeDocument?>> _getSiteIdentifierTypeByCode;
     private Func<string?, CancellationToken, Task<(string? speciesTypeId, string? speciesTypeName)>> _getSpeciesByCode;
-    private Func<string?, CancellationToken, Task<PremisesActivityTypeDocument?>> _getPremiseActivityTypeByCode;
+    private Func<string?, CancellationToken, Task<SiteActivityTypeDocument?>> _getSiteActivityTypeByCode;
+    private ISiteTypeDerivedCodeLookupService _derivedCodeLookupService;
 
     private const string GoldSiteId = "gold-site-id";
 
@@ -35,18 +40,53 @@ public class SamHoldingMapperToGoldTests
         new SpeciesDocument { IdentifierId = "spec-3-id", Code = "spec3code", Name = "spec3name" }
     ];
 
-    private List<PremisesTypeDocument> _premiseTypeData =
+    private List<SiteTypeDocument> _siteTypeData =
     [
-        new PremisesTypeDocument { IdentifierId = "prem-1-id", Code = "prem1code", Name = "prem1name" },
-        new PremisesTypeDocument { IdentifierId = "prem-2-id", Code = "prem2code", Name = "prem2name" },
-        new PremisesTypeDocument { IdentifierId = "prem-3-id", Code = "prem3code", Name = "prem3name" }
+        new SiteTypeDocument { IdentifierId = "prem-1-id", Code = "prem1code", Name = "prem1name" },
+        new SiteTypeDocument { IdentifierId = "prem-2-id", Code = "prem2code", Name = "prem2name" },
+        new SiteTypeDocument { IdentifierId = "prem-3-id", Code = "prem3code", Name = "prem3name" }
     ];
 
-    private List<PremisesActivityTypeDocument> _activityData =
+    private List<SiteActivityTypeDocument> _activityData =
     [
-        new PremisesActivityTypeDocument { IdentifierId = "act-1-id", Code = "act1code", Name = "act1name" },
-        new PremisesActivityTypeDocument { IdentifierId = "act-2-id", Code = "act2code", Name = "act2name" },
-        new PremisesActivityTypeDocument { IdentifierId = "act-3-id", Code = "act3code", Name = "act3name" }
+        new SiteActivityTypeDocument { IdentifierId = "act-1-id", Code = "act1code", Name = "act1name" },
+        new SiteActivityTypeDocument { IdentifierId = "act-2-id", Code = "act2code", Name = "act2name" },
+        new SiteActivityTypeDocument { IdentifierId = "act-3-id", Code = "act3code", Name = "act3name" }
+    ];
+
+    private List<FacilityBusinessActivityMapDocument> _activityMapData =
+    [
+        new FacilityBusinessActivityMapDocument
+        {
+            IdentifierId = "map-1-id",
+            FacilityActivityCode = "FAC1",
+            AssociatedSiteActivityCode = "act1code",
+            AssociatedSiteTypeCode = "prem1code",
+            IsActive = true
+        },
+        new FacilityBusinessActivityMapDocument
+        {
+            IdentifierId = "map-2-id",
+            FacilityActivityCode = "FAC2",
+            AssociatedSiteTypeCode = "prem2code",
+            IsActive = true
+        },
+        new FacilityBusinessActivityMapDocument
+        {
+            IdentifierId = "map-3-id",
+            FacilityActivityCode = "FAC3",
+            AssociatedSiteActivityCode = "act3code",
+            AssociatedSiteTypeCode = "prem3code",
+            IsActive = true
+        },
+        new FacilityBusinessActivityMapDocument
+        {
+            IdentifierId = "map-4-id",
+            FacilityActivityCode = "FAC4",
+            AssociatedSiteActivityCode = "act2code",
+            AssociatedSiteTypeCode = "prem2code",
+            IsActive = true
+        },
     ];
 
     public SamHoldingMapperToGoldTests()
@@ -60,10 +100,17 @@ public class SamHoldingMapperToGoldTests
             return Task.FromResult<(string? speciesTypeId, string? speciesTypeName)>((match?.IdentifierId, match?.Name));
         };
 
-        _getPremiseTypeById = (key, token) => Task.FromResult<PremisesTypeDocument?>(_premiseTypeData.SingleOrDefault(x => x.IdentifierId == key));
+        _getSiteTypeByCode = (key, token) => Task.FromResult<SiteTypeDocument?>(_siteTypeData.SingleOrDefault(x => x.Code == key));
         var sit = new SiteIdentifierTypeDocument() { IdentifierId = "cphn-sit-id", Code = "CPHN", Name = "CPH Number" };
         _getSiteIdentifierTypeByCode = (s, token) => Task.FromResult(s == "CPHN" ? sit : null);
-        _getPremiseActivityTypeByCode = (key, token) => Task.FromResult<PremisesActivityTypeDocument?>(_activityData.SingleOrDefault(x => x.Code == key));
+        _getSiteActivityTypeByCode = (key, token) => Task.FromResult<SiteActivityTypeDocument?>(_activityData.SingleOrDefault(x => x.Code == key));
+
+        var mockCache = new Mock<IReferenceDataCache>();
+        mockCache.Setup(c => c.ActivityMaps).Returns(_activityMapData);
+        mockCache.Setup(c => c.SiteTypes).Returns(_siteTypeData);
+        mockCache.Setup(c => c.SiteActivityTypes).Returns(_activityData);
+        var mockLogger = new Mock<ILogger<SiteTypeDerivedCodeLookupService>>();
+        _derivedCodeLookupService = new SiteTypeDerivedCodeLookupService(mockCache.Object, mockLogger.Object);
     }
 
     public static IEnumerable<object[]> TestDataForNewGoldMappings
@@ -85,17 +132,19 @@ public class SamHoldingMapperToGoldTests
                         d.EndDate = new DateTime(2005, 1, 1);
                     }];
             yield return
-            ["When mapping SamHoldingDocument with unknown premise",
-                (SamHoldingDocument s) => { s.PremiseTypeIdentifier = "prem-invalid-id"; },
+            ["When mapping SamHoldingDocument with unknown site type",
+                (SamHoldingDocument s) => { s.SiteTypeIdentifier = "prem-invalid-id"; },
                 (SiteDocument d) => {}];
             yield return
-            ["When mapping SamHoldingDocument with premise",
-                (SamHoldingDocument s) => { s.PremiseTypeIdentifier = "prem-1-id"; },
+            ["When mapping SamHoldingDocument with site type",
+                (SamHoldingDocument s) => { s.SiteTypeIdentifier = "prem-1-id";
+                    s.SourceFacilitySubBusinessActivityCode = "FAC2";
+                },
                 (SiteDocument d) =>
                 {
-                    d.Type = new PremisesTypeSummaryDocument()
+                    d.Type = new SiteTypeSummaryDocument()
                     {
-                        Code = "prem1code", Name = "prem1name", IdentifierId = "prem-1-id"
+                        Code = "prem2code", Name = "prem2name", IdentifierId = "prem-2-id"
                     };
                 }];
             yield return
@@ -103,17 +152,25 @@ public class SamHoldingMapperToGoldTests
                 (SamHoldingDocument s) => { s.SpeciesTypeCode = "spec1code"; },
                 (SiteDocument d) =>
                 {
-                    d.Species = [new SpeciesSummaryDocument(){ IdentifierId = "spec-1-id", Code = "spec1code", Name = "spec1name" }];
+                    d.Species =
+                    [
+                        new SpeciesSummaryDocument(){ IdentifierId = "spec-1-id", Code = "spec1code", Name = "spec1name" }
+                    ];
+
                 }];
             yield return
             ["When mapping SamHoldingDocument with activity",
-                (SamHoldingDocument s) => { s.PremiseActivityTypeCode = "act1code"; },
+                (SamHoldingDocument s) => { s.SiteActivityTypeCode = "act1code"; s.SourceFacilitySubBusinessActivityCode = "FAC1"; },
                 (SiteDocument d) =>
                 {
+                    d.Type = new SiteTypeSummaryDocument()
+                    {
+                        Code = "prem1code", Name = "prem1name", IdentifierId = "prem-1-id"
+                    };
                     d.Activities = [new SiteActivityDocument()
                     {
                         IdentifierId = "act-1-id",
-                        Type = new PremisesActivityTypeSummaryDocument()
+                        Type = new SiteActivityTypeSummaryDocument()
                         {
                             IdentifierId = "act-1-id",
                             Code = "act1code",
@@ -121,6 +178,7 @@ public class SamHoldingMapperToGoldTests
                         },
                         StartDate = DateTime.MinValue
                     }];
+
                 }];
             yield return
             ["When mapping SamHoldingDocument with location info",
@@ -161,12 +219,35 @@ public class SamHoldingMapperToGoldTests
                         OsMapReference = "SU087290"
                     };
                 }];
+
             yield return
             ["When mapping SamHoldingDocument with cphn",
                 (SamHoldingDocument s) => { s.CountyParishHoldingNumber = "site-cphn"; },
                 (SiteDocument d) =>
                 {
                     d.Identifiers[0].Identifier = "site-cphn";
+                }];
+
+            yield return
+            ["When mapping SamHoldingDocument with facility derived code",
+                (SamHoldingDocument s) => { s.SourceFacilitySubBusinessActivityCode = "FAC1"; },
+                (SiteDocument d) =>
+                {
+                    d.Type = new SiteTypeSummaryDocument()
+                    {
+                        Code = "prem1code", Name = "prem1name", IdentifierId = "prem-1-id"
+                    };
+                    d.Activities = [new SiteActivityDocument()
+                    {
+                        IdentifierId = "act-1-id",
+                        Type = new SiteActivityTypeSummaryDocument()
+                        {
+                            IdentifierId = "act-1-id",
+                            Code = "act1code",
+                            Name = "act1name"
+                        },
+                        StartDate = DateTime.MinValue
+                    }];
                 }];
         }
     }
@@ -181,10 +262,11 @@ public class SamHoldingMapperToGoldTests
             new List<SiteGroupMarkRelationshipDocument>(),
             new List<PartyDocument>(),
             _getCountryById,
-            _getPremiseTypeById,
+            _getSiteTypeByCode,
             _getSiteIdentifierTypeByCode,
             _getSpeciesByCode,
-            _getPremiseActivityTypeByCode,
+            _getSiteActivityTypeByCode,
+            _derivedCodeLookupService,
             CancellationToken.None
         );
 
@@ -271,41 +353,62 @@ public class SamHoldingMapperToGoldTests
 
         // OUTPUT
         // timeline:  2001  -  2002  -  2003  -  2004
-        // act1 -                       <---------------------
-        // act2 -                       <---------------------
-        // act3 -                       <---------------------
-        var samHoldingDocuments = new List<SamHoldingDocument>()
+        // act1 -                       <--------------------->
+        // act2 -                       <--------------------->
+        // act3 -                       <--------------------->
+        var samHoldingDocuments = new List<SamHoldingDocument>
         {
             new SamHoldingDocument()
             {
-                PremiseActivityTypeCode = "act1code",
+                SiteActivityTypeCode = "act1code",
                 HoldingStartDate = new DateTime(2001, 01, 01),
                 HoldingEndDate = new DateTime(2003, 01, 01), // stopped doing this in 2003
-                HoldingStatus = "inactive"
+                HoldingStatus = "inactive",
+                SourceFacilitySubBusinessActivityCode = "FAC1"
             },
             new SamHoldingDocument()
             {
-                PremiseActivityTypeCode = "act2code",
+                SiteActivityTypeCode = "act2code",
                 HoldingStartDate = new DateTime(2003, 01, 01), // consecutive to act1, no terminating date
                 HoldingEndDate = null,
-                HoldingStatus = "active"
+                HoldingStatus = "active",
+                SourceFacilitySubBusinessActivityCode = "FAC2"
             },
             new SamHoldingDocument()
             {
-                PremiseActivityTypeCode = "act3code",
+                SiteActivityTypeCode = "act3code",
                 HoldingStartDate = new DateTime(2002, 01, 01), // overlapping with act2 but terminated in 2004
                 HoldingEndDate = new DateTime(2004, 01, 01),
-                HoldingStatus = "inactive"
+                HoldingStatus = "inactive",
+                SourceFacilitySubBusinessActivityCode = "FAC3"
             }
         };
 
         var expected = GetBlankSiteDocument();
-        expected.Activities = new List<SiteActivityDocument>
-        {
-            new SiteActivityDocument { IdentifierId = "act-1-id", Type = new PremisesActivityTypeSummaryDocument { IdentifierId = "act-1-id", Code = "act1code", Name = "act1name" }, StartDate = new DateTime(2003,01,01), EndDate = null },
-            new SiteActivityDocument { IdentifierId = "act-2-id", Type = new PremisesActivityTypeSummaryDocument { IdentifierId = "act-2-id", Code = "act2code", Name = "act2name" }, StartDate = new DateTime(2003,01,01), EndDate = null },
-            new SiteActivityDocument { IdentifierId = "act-3-id", Type = new PremisesActivityTypeSummaryDocument { IdentifierId = "act-3-id", Code = "act3code", Name = "act3name" }, StartDate = new DateTime(2003,01,01), EndDate = null }
-        };
+        expected.Type = new SiteTypeSummaryDocument { Code = "prem1code", Name = "prem1name", IdentifierId = "prem-1-id" };
+        expected.Activities =
+        [
+            new SiteActivityDocument
+            {
+                IdentifierId = "act-1-id",
+                Type = new SiteActivityTypeSummaryDocument
+                {
+                    IdentifierId = "act-1-id", Code = "act1code", Name = "act1name"
+                },
+                StartDate = new DateTime(2003, 01, 01),
+                EndDate = null
+            },
+            new SiteActivityDocument
+            {
+                IdentifierId = "act-3-id",
+                Type = new SiteActivityTypeSummaryDocument
+                {
+                    IdentifierId = "act-3-id", Code = "act3code", Name = "act3name"
+                },
+                StartDate = new DateTime(2003, 01, 01),
+                EndDate = null
+            }
+        ];
         expected.State = "active";
         expected.StartDate = new DateTime(2003, 01, 01);
 
@@ -337,58 +440,103 @@ public class SamHoldingMapperToGoldTests
         // act1 -                                <-------------
         // act2 -                                <-------------
         // act3 -                                <-------------
-        var samHoldingDocuments = new List<SamHoldingDocument>()
+        var samHoldingDocuments = new List<SamHoldingDocument>
         {
             new SamHoldingDocument()
             {
-                PremiseActivityTypeCode = "act1code",
+                SiteActivityTypeCode = "act1code",
                 HoldingStartDate = new DateTime(2001, 01, 01),
                 HoldingEndDate = new DateTime(2002, 01, 01),
-                HoldingStatus = "inactive"
+                HoldingStatus = "inactive",
+                SourceFacilitySubBusinessActivityCode = "FAC1"
             },
             new SamHoldingDocument()
             {
-                PremiseActivityTypeCode = "act1code",
+                SiteActivityTypeCode = "act1code",
                 HoldingStartDate = new DateTime(2002, 01, 01),
                 HoldingEndDate = new DateTime(2003, 01, 01),
-                HoldingStatus = "inactive"
+                HoldingStatus = "inactive",
+                SourceFacilitySubBusinessActivityCode = "FAC1"
             },
             new SamHoldingDocument()
             {
-                PremiseActivityTypeCode = "act2code",
+                SiteActivityTypeCode = "act2code",
                 HoldingStartDate = new DateTime(2003, 01, 01),
                 HoldingEndDate = new DateTime(2004, 01, 01),
-                HoldingStatus = "inactive"
+                HoldingStatus = "inactive",
+                SourceFacilitySubBusinessActivityCode = "FAC4"
             },
             new SamHoldingDocument()
             {
-                PremiseActivityTypeCode = "act2code",
+                SiteActivityTypeCode = "act2code",
                 HoldingStartDate = new DateTime(2004, 01, 01),
                 HoldingEndDate = null,
-                HoldingStatus = "active"
+                HoldingStatus = "active",
+                SourceFacilitySubBusinessActivityCode = "FAC4"
             },
             new SamHoldingDocument()
             {
-                PremiseActivityTypeCode = "act3code",
+                SiteActivityTypeCode = "act3code",
                 HoldingStartDate = new DateTime(2002, 01, 01),
                 HoldingEndDate = new DateTime(2003, 01, 01),
-                HoldingStatus = "inactive"
+                HoldingStatus = "inactive",
+                SourceFacilitySubBusinessActivityCode = "FAC3"
             },
             new SamHoldingDocument()
             {
-                PremiseActivityTypeCode = "act3code",
+                SiteActivityTypeCode = "act3code",
                 HoldingStartDate = new DateTime(2003, 01, 01),
                 HoldingEndDate = new DateTime(2004, 01, 01),
-                HoldingStatus = "inactive"
+                HoldingStatus = "inactive",
+                SourceFacilitySubBusinessActivityCode = "FAC3"
             }
         };
 
         var expected = GetBlankSiteDocument();
+        expected.Type = new SiteTypeSummaryDocument()
+        {
+            Code = "prem1code",
+            Name = "prem1name",
+            IdentifierId = "prem-1-id"
+        };
         expected.Activities = new List<SiteActivityDocument>
         {
-            new SiteActivityDocument { IdentifierId = "act-1-id", Type = new PremisesActivityTypeSummaryDocument { IdentifierId = "act-1-id", Code = "act1code", Name = "act1name" }, StartDate = new DateTime(2004,01,01), EndDate = null },
-            new SiteActivityDocument { IdentifierId = "act-2-id", Type = new PremisesActivityTypeSummaryDocument { IdentifierId = "act-2-id", Code = "act2code", Name = "act2name" }, StartDate = new DateTime(2004,01,01), EndDate = null },
-            new SiteActivityDocument { IdentifierId = "act-3-id", Type = new PremisesActivityTypeSummaryDocument { IdentifierId = "act-3-id", Code = "act3code", Name = "act3name" }, StartDate = new DateTime(2004,01,01), EndDate = null }
+            new SiteActivityDocument
+            {
+                IdentifierId = "act-1-id",
+                Type = new SiteActivityTypeSummaryDocument
+                {
+                    IdentifierId = "act-1-id",
+                    Code = "act1code",
+                    Name = "act1name"
+                },
+                StartDate = new DateTime(2004,01,01),
+                EndDate = null
+            },
+            new SiteActivityDocument
+            {
+                IdentifierId = "act-2-id",
+                Type = new SiteActivityTypeSummaryDocument
+                {
+                    IdentifierId = "act-2-id",
+                    Code = "act2code",
+                    Name = "act2name"
+                },
+                StartDate = new DateTime(2004,01,01),
+                EndDate = null
+            },
+            new SiteActivityDocument
+            {
+                IdentifierId = "act-3-id",
+                Type = new SiteActivityTypeSummaryDocument
+                {
+                    IdentifierId = "act-3-id",
+                    Code = "act3code",
+                    Name = "act3name"
+                },
+                StartDate = new DateTime(2004,01,01),
+                EndDate = null
+            }
         };
         expected.State = "active";
         expected.StartDate = new DateTime(2004, 01, 01);
@@ -471,7 +619,10 @@ public class SamHoldingMapperToGoldTests
     public async Task WhenGroupMarkHerdMarkIsEmpty_ShouldNotGroupMark()
     {
         var inputHolding = new SamHoldingDocument() { };
-        List<SiteGroupMarkRelationshipDocument> groupMarks = [CreateGroupMarkRelationshipDocument()];
+        List<SiteGroupMarkRelationshipDocument> groupMarks =
+        [
+            CreateGroupMarkRelationshipDocument()
+        ];
         groupMarks[0].Herdmark = "";
 
         var result = await WhenIMapSilverSiteToGold(inputHolding, null, groupMarks);
@@ -483,7 +634,10 @@ public class SamHoldingMapperToGoldTests
     public async Task WhenSpeciesTypeIdIsNull_ShouldMapMarkWithoutSpecies()
     {
         var inputHolding = new SamHoldingDocument() { };
-        List<SiteGroupMarkRelationshipDocument> groupMarks = [CreateGroupMarkRelationshipDocument()];
+        List<SiteGroupMarkRelationshipDocument> groupMarks =
+        [
+            CreateGroupMarkRelationshipDocument()
+        ];
         groupMarks[0].SpeciesTypeId = null;
 
         var expectedMark = CreateBaseLineExpectedGroupMarkDocument();
@@ -604,14 +758,14 @@ public class SamHoldingMapperToGoldTests
     }
 
     [Fact]
-    public async Task WhenUpdatingPremiseTypeSite_ItShouldUpdate()
+    public async Task WhenUpdatingSiteTypeSite_ItShouldUpdate()
     {
         var existingSite = new SiteDocument()
         {
             Id = GoldSiteId,
             Name = "",
             Source = "SAM",
-            Type = new PremisesTypeSummaryDocument()
+            Type = new SiteTypeSummaryDocument()
             {
                 Code = "prem1code",
                 Name = "prem1name",
@@ -620,7 +774,11 @@ public class SamHoldingMapperToGoldTests
             }
         };
 
-        var inputHolding = new SamHoldingDocument() { PremiseTypeIdentifier = "prem-2-id" };
+        var inputHolding = new SamHoldingDocument()
+        {
+            SiteTypeIdentifier = "prem-2-id",
+            SourceFacilitySubBusinessActivityCode = "FAC2, nonsense, more rubbish"
+        };
 
         var result = await WhenIMapSilverSiteToGold(inputHolding, existingSite, null);
 
@@ -683,11 +841,13 @@ public class SamHoldingMapperToGoldTests
                     IdentifierId = "any-guid",
                     Postcode = ""
                 },
-                Communication = [new KeeperData.Core.Documents.CommunicationDocument()
-                {
-                    IdentifierId = "any-guid",
-                    PrimaryContactFlag = false
-                }
+                Communication =
+                [
+                    new KeeperData.Core.Documents.CommunicationDocument()
+                    {
+                        IdentifierId = "any-guid",
+                        PrimaryContactFlag = false
+                    }
                 ]
             },
             Identifiers = new List<SiteIdentifierDocument>()
@@ -721,10 +881,11 @@ public class SamHoldingMapperToGoldTests
             goldSiteGroupMarks ?? [],
             new List<PartyDocument>(),
             _getCountryById,
-            _getPremiseTypeById,
+            _getSiteTypeByCode,
             _getSiteIdentifierTypeByCode,
             _getSpeciesByCode,
-            _getPremiseActivityTypeByCode,
+            _getSiteActivityTypeByCode,
+            _derivedCodeLookupService,
             CancellationToken.None
         );
     }

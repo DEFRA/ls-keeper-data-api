@@ -5,23 +5,23 @@ using KeeperData.Infrastructure.Database.Repositories;
 
 namespace KeeperData.Infrastructure.Tests.Unit.Database.Repositories;
 
-public class PremisesTypeRepositoryTests
+public class SiteTypeRepositoryTests
 {
-    private readonly ReferenceRepositoryTestFixture<PremisesTypeRepository, PremisesTypeListDocument, PremisesTypeDocument> _fixture;
-    private readonly PremisesTypeRepository _sut;
+    private readonly ReferenceRepositoryTestFixture<SiteTypeRepository, SiteTypeListDocument, SiteTypeDocument> _fixture;
+    private readonly SiteTypeRepository _sut;
 
-    public PremisesTypeRepositoryTests()
+    public SiteTypeRepositoryTests()
     {
-        _fixture = new ReferenceRepositoryTestFixture<PremisesTypeRepository, PremisesTypeListDocument, PremisesTypeDocument>();
-        _sut = _fixture.CreateSut((config, client, unitOfWork) => new PremisesTypeRepository(config, client, unitOfWork));
+        _fixture = new ReferenceRepositoryTestFixture<SiteTypeRepository, SiteTypeListDocument, SiteTypeDocument>();
+        _sut = _fixture.CreateSut((config, client, unitOfWork) => new SiteTypeRepository(config, client, unitOfWork));
     }
 
     [Fact]
-    public async Task GetByIdAsync_WhenCalledWithValidId_ReturnsMatchingPremisesType()
+    public async Task GetByIdAsync_WhenCalledWithValidId_ReturnsMatchingSiteType()
     {
         var acId = "1dbd0ea4-5f10-45a4-a0f6-e328a3074b6a";
         var maId = "491cbd98-5bb7-46c3-abc7-30a232f65043";
-        var premisesTypes = new List<PremisesTypeDocument>
+        var siteTypes = new List<SiteTypeDocument>
         {
             new()
             {
@@ -45,10 +45,10 @@ public class PremisesTypeRepositoryTests
             }
         };
 
-        var listDocument = new PremisesTypeListDocument
+        var listDocument = new SiteTypeListDocument
         {
-            Id = "all-premisestypes",
-            PremisesTypes = premisesTypes
+            Id = "all-sitetypes",
+            SiteTypes = siteTypes
         };
 
         _fixture.SetUpDocuments(listDocument);
@@ -62,10 +62,10 @@ public class PremisesTypeRepositoryTests
     }
 
     [Fact]
-    public async Task GetByIdAsync_WhenCalledWithValidIdDifferentCase_ReturnsMatchingPremisesType()
+    public async Task GetByIdAsync_WhenCalledWithValidIdDifferentCase_ReturnsMatchingSiteType()
     {
         var acId = "1dbd0ea4-5f10-45a4-a0f6-e328a3074b6a";
-        var premisesTypes = new List<PremisesTypeDocument>
+        var siteTypes = new List<SiteTypeDocument>
         {
             new()
             {
@@ -79,10 +79,10 @@ public class PremisesTypeRepositoryTests
             }
         };
 
-        var listDocument = new PremisesTypeListDocument
+        var listDocument = new SiteTypeListDocument
         {
-            Id = "all-premisestypes",
-            PremisesTypes = premisesTypes
+            Id = "all-sitetypes",
+            SiteTypes = siteTypes
         };
 
         _fixture.SetUpDocuments(listDocument);
@@ -107,7 +107,7 @@ public class PremisesTypeRepositoryTests
     [Fact]
     public async Task GetByIdAsync_WhenIdNotFound_ReturnsNull()
     {
-        var premisesTypes = new List<PremisesTypeDocument>
+        var siteTypes = new List<SiteTypeDocument>
         {
             new()
             {
@@ -121,10 +121,10 @@ public class PremisesTypeRepositoryTests
             }
         };
 
-        var listDocument = new PremisesTypeListDocument
+        var listDocument = new SiteTypeListDocument
         {
-            Id = "all-premisestypes",
-            PremisesTypes = premisesTypes
+            Id = "all-sitetypes",
+            SiteTypes = siteTypes
         };
 
         _fixture.SetUpDocuments(listDocument);
@@ -137,7 +137,7 @@ public class PremisesTypeRepositoryTests
     [Fact]
     public async Task FindAsync_WhenCalledWithMatchingCode_ReturnsCodeAndName()
     {
-        var premisesTypes = new List<PremisesTypeDocument>
+        var siteTypes = new List<SiteTypeDocument>
         {
             new()
             {
@@ -151,24 +151,24 @@ public class PremisesTypeRepositoryTests
             }
         };
 
-        var listDocument = new PremisesTypeListDocument
+        var listDocument = new SiteTypeListDocument
         {
-            Id = "all-premisestypes",
-            PremisesTypes = premisesTypes
+            Id = "all-sitetypes",
+            SiteTypes = siteTypes
         };
 
         _fixture.SetUpDocuments(listDocument);
 
         var result = await _sut.FindAsync("AC");
 
-        result.premiseTypeId.Should().Be("1dbd0ea4-5f10-45a4-a0f6-e328a3074b6a");
-        result.premiseTypeName.Should().Be("Assembly Centre");
+        result.siteTypeId.Should().Be("1dbd0ea4-5f10-45a4-a0f6-e328a3074b6a");
+        result.siteTypeName.Should().Be("Assembly Centre");
     }
 
     [Fact]
     public async Task FindAsync_WhenCalledWithMatchingName_ReturnsCodeAndName()
     {
-        var premisesTypes = new List<PremisesTypeDocument>
+        var siteTypes = new List<SiteTypeDocument>
         {
             new()
             {
@@ -182,24 +182,24 @@ public class PremisesTypeRepositoryTests
             }
         };
 
-        var listDocument = new PremisesTypeListDocument
+        var listDocument = new SiteTypeListDocument
         {
-            Id = "all-premisestypes",
-            PremisesTypes = premisesTypes
+            Id = "all-sitetypes",
+            SiteTypes = siteTypes
         };
 
         _fixture.SetUpDocuments(listDocument);
 
         var result = await _sut.FindAsync("Market");
 
-        result.premiseTypeId.Should().Be("491cbd98-5bb7-46c3-abc7-30a232f65043");
-        result.premiseTypeName.Should().Be("Market");
+        result.siteTypeId.Should().Be("491cbd98-5bb7-46c3-abc7-30a232f65043");
+        result.siteTypeName.Should().Be("Market");
     }
 
     [Fact]
     public async Task FindAsync_WhenCalledWithDifferentCase_ReturnsCodeAndName()
     {
-        var premisesTypes = new List<PremisesTypeDocument>
+        var siteTypes = new List<SiteTypeDocument>
         {
             new()
             {
@@ -213,18 +213,18 @@ public class PremisesTypeRepositoryTests
             }
         };
 
-        var listDocument = new PremisesTypeListDocument
+        var listDocument = new SiteTypeListDocument
         {
-            Id = "all-premisestypes",
-            PremisesTypes = premisesTypes
+            Id = "all-sitetypes",
+            SiteTypes = siteTypes
         };
 
         _fixture.SetUpDocuments(listDocument);
 
         var result = await _sut.FindAsync("ac");
 
-        result.premiseTypeId.Should().Be("1dbd0ea4-5f10-45a4-a0f6-e328a3074b6a");
-        result.premiseTypeName.Should().Be("Assembly Centre");
+        result.siteTypeId.Should().Be("1dbd0ea4-5f10-45a4-a0f6-e328a3074b6a");
+        result.siteTypeName.Should().Be("Assembly Centre");
     }
 
     [Theory]
@@ -235,14 +235,14 @@ public class PremisesTypeRepositoryTests
     {
         var result = await _sut.FindAsync(lookupValue);
 
-        result.premiseTypeId.Should().BeNull();
-        result.premiseTypeName.Should().BeNull();
+        result.siteTypeId.Should().BeNull();
+        result.siteTypeName.Should().BeNull();
     }
 
     [Fact]
     public async Task FindAsync_WhenNoMatch_ReturnsNullTuple()
     {
-        var premisesTypes = new List<PremisesTypeDocument>
+        var siteTypes = new List<SiteTypeDocument>
         {
             new()
             {
@@ -256,24 +256,24 @@ public class PremisesTypeRepositoryTests
             }
         };
 
-        var listDocument = new PremisesTypeListDocument
+        var listDocument = new SiteTypeListDocument
         {
-            Id = "all-premisestypes",
-            PremisesTypes = premisesTypes
+            Id = "all-sitetypes",
+            SiteTypes = siteTypes
         };
 
         _fixture.SetUpDocuments(listDocument);
 
         var result = await _sut.FindAsync("NONEXISTENT");
 
-        result.premiseTypeId.Should().BeNull();
-        result.premiseTypeName.Should().BeNull();
+        result.siteTypeId.Should().BeNull();
+        result.siteTypeName.Should().BeNull();
     }
 
     [Fact]
     public async Task FindAsync_WhenCodeMatchesAndNameAlsoExists_PrioritizesCodeMatch()
     {
-        var premisesTypes = new List<PremisesTypeDocument>
+        var siteTypes = new List<SiteTypeDocument>
         {
             new()
             {
@@ -297,17 +297,17 @@ public class PremisesTypeRepositoryTests
             }
         };
 
-        var listDocument = new PremisesTypeListDocument
+        var listDocument = new SiteTypeListDocument
         {
-            Id = "all-premisestypes",
-            PremisesTypes = premisesTypes
+            Id = "all-sitetypes",
+            SiteTypes = siteTypes
         };
 
         _fixture.SetUpDocuments(listDocument);
 
         var result = await _sut.FindAsync("MA");
 
-        result.premiseTypeId.Should().Be("id1");
-        result.premiseTypeName.Should().Be("Market");
+        result.siteTypeId.Should().Be("id1");
+        result.siteTypeName.Should().Be("Market");
     }
 }

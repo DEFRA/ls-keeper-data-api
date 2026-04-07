@@ -1,0 +1,251 @@
+[
+  {
+    "id": "3df9a105-f337-5f64-baf7-4dbfc49db1e0",
+    "type": {
+      "code": "AC",
+      "name": "Assembly Centre"
+    },
+    "activities": [
+      {
+        "code": "AP",
+        "name": "Airport"
+      },
+      {
+        "code": "BI",
+        "name": "Border Inspection Post"
+      },
+      {
+        "code": "LR",
+        "name": "Lairage"
+      },
+      {
+        "code": "SP",
+        "name": "Seaport"
+      },
+      {
+        "code": "ST",
+        "name": "Staging Post"
+      },
+      {
+        "code": "WP",
+        "name": "Wildlife Park"
+      },
+      {
+        "code": "ZO",
+        "name": "Zoo"
+      }
+    ]
+  },
+  {
+    "id": "3b14242c-21f3-5aea-a7a3-ea43cbe0e35a",
+    "type": {
+      "code": "AH",
+      "name": "Agricultural Holding"
+    },
+    "activities": []
+  },
+  {
+    "id": "e1478ae8-5d77-5760-a441-6113484d7337",
+    "type": {
+      "code": "AI",
+      "name": "AI Sub Centre"
+    },
+    "activities": []
+  },
+  {
+    "id": "a06427ee-9ddc-5dc7-9d86-7a9cb3e4b45b",
+    "type": {
+      "code": "CC",
+      "name": "Collection Centre"
+    },
+    "activities": []
+  },
+  {
+    "id": "f4eeb55e-1714-5f7c-9bae-2ebb27a4b4df",
+    "type": {
+      "code": "ET",
+      "name": "Embryo Transfer Unit"
+    },
+    "activities": []
+  },
+  {
+    "id": "c6bce51b-c09a-51d4-8aac-9336a34111d8",
+    "type": {
+      "code": "FA",
+      "name": "Factory"
+    },
+    "activities": []
+  },
+  {
+    "id": "f5196a6a-1aff-5589-8e5f-c43bc368ef44",
+    "type": {
+      "code": "FM",
+      "name": "Feed Mill"
+    },
+    "activities": []
+  },
+  {
+    "id": "3d520565-e95f-5ded-b4ba-3da4b8902e36",
+    "type": {
+      "code": "HA",
+      "name": "Haulier"
+    },
+    "activities": []
+  },
+  {
+    "id": "9559ec59-d07a-5485-a2e6-fb06bbccf62a",
+    "type": {
+      "code": "LR",
+      "name": "Laboratory/Research Establishment"
+    },
+    "activities": []
+  },
+  {
+    "id": "003ca8fb-4fb7-5c6a-946c-a07f3925894f",
+    "type": {
+      "code": "LT",
+      "name": "Local Authority Tip"
+    },
+    "activities": []
+  },
+  {
+    "id": "f3b7e19b-44ae-5f33-8a72-8c701d47a0b6",
+    "type": {
+      "code": "MA",
+      "name": "Market"
+    },
+    "activities": [
+      {
+        "code": "SLM",
+        "name": "Slaughter Market"
+      },
+      {
+        "code": "STM",
+        "name": "Store Market"
+      }
+    ]
+  },
+  {
+    "id": "53a21567-f866-5786-8e83-65d1faa911ae",
+    "type": {
+      "code": "PF",
+      "name": "Pet Food Manufacturer"
+    },
+    "activities": []
+  },
+  {
+    "id": "45ffb1e1-72fc-56bd-8875-18fffb5ba5a4",
+    "type": {
+      "code": "PP",
+      "name": "Protein Processor"
+    },
+    "activities": [
+      {
+        "code": "TAP",
+        "name": "TSE Approved Plant"
+      }
+    ]
+  },
+  {
+    "id": "8a93d991-f0d6-5657-b6da-6cc8120921bf",
+    "type": {
+      "code": "RE",
+      "name": "Renderers"
+    },
+    "activities": []
+  },
+  {
+    "id": "d9a45f64-c5ef-5441-a983-e90f29756d2b",
+    "type": {
+      "code": "RK",
+      "name": "Recognised Kennels"
+    },
+    "activities": []
+  },
+  {
+    "id": "77bf1380-c486-51eb-aedf-a1d820003ccc",
+    "type": {
+      "code": "SG",
+      "name": "Showground"
+    },
+    "activities": [
+      {
+        "code": "SGC",
+        "name": "Cleansable"
+      },
+      {
+        "code": "SGNC",
+        "name": "Non-cleansable"
+      }
+    ]
+  },
+  {
+    "id": "e672f722-f159-531c-9c65-ad5eb4f24788",
+    "type": {
+      "code": "SH",
+      "name": "Slaughterhouse"
+    },
+    "activities": [
+      {
+        "code": "SM",
+        "name": "Both Red and White Meat processing and Coldstore"
+      },
+      {
+        "code": "SR",
+        "name": "Red Meat"
+      },
+      {
+        "code": "SW",
+        "name": "White Meat"
+      }
+    ]
+  },
+  {
+    "id": "a4abce5f-408f-5dfa-b317-c87e753ef9ff",
+    "type": {
+      "code": "SO",
+      "name": "Storage Plant"
+    },
+    "activities": []
+  },
+  {
+    "id": "c31bf28c-7253-5b29-a896-5b8c7754f0d0",
+    "type": {
+      "code": "SS",
+      "name": "Semen Shop"
+    },
+    "activities": []
+  },
+  {
+    "id": "4881379d-588f-5254-8d3a-d9a8f8560641",
+    "type": {
+      "code": "TH",
+      "name": "Tannery/Hide Merchant"
+    },
+    "activities": []
+  },
+  {
+    "id": "c2a068e5-59cc-5af7-833b-692cd37d554e",
+    "type": {
+      "code": "VE",
+      "name": "Veterinary Practice/Hospital/School"
+    },
+    "activities": []
+  },
+  {
+    "id": "2037a766-7557-57a1-a383-6672c3242ac3",
+    "type": {
+      "code": "WP",
+      "name": "Wildlife Park"
+    },
+    "activities": []
+  },
+  {
+    "id": "2d30840b-dae7-504e-8aff-3dd0caf80f29",
+    "type": {
+      "code": "ZO",
+      "name": "Zoo"
+    },
+    "activities": []
+  }
+]

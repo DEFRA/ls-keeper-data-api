@@ -6,23 +6,23 @@ using Moq;
 
 namespace KeeperData.Application.Tests.Unit.Services;
 
-public class PremiseTypeLookupServiceTests
+public class SiteTypeLookupServiceTests
 {
     private readonly Mock<IReferenceDataCache> _mockCache;
-    private readonly PremiseTypeLookupService _sut;
+    private readonly SiteTypeLookupService _sut;
 
-    public PremiseTypeLookupServiceTests()
+    public SiteTypeLookupServiceTests()
     {
         _mockCache = new Mock<IReferenceDataCache>();
-        _mockCache.Setup(c => c.PremisesTypes).Returns(Array.Empty<PremisesTypeDocument>());
-        _sut = new PremiseTypeLookupService(_mockCache.Object);
+        _mockCache.Setup(c => c.SiteTypes).Returns(Array.Empty<SiteTypeDocument>());
+        _sut = new SiteTypeLookupService(_mockCache.Object);
     }
 
     [Fact]
     public async Task GetByIdAsync_WhenCalled_DelegatesToRepository()
     {
         // Arrange
-        var expectedDocument = new PremisesTypeDocument
+        var expectedDocument = new SiteTypeDocument
         {
             IdentifierId = "test-id",
             Code = "AC",
@@ -32,7 +32,7 @@ public class PremiseTypeLookupServiceTests
             EffectiveStartDate = DateTime.UtcNow,
             CreatedDate = DateTime.UtcNow
         };
-        _mockCache.Setup(c => c.PremisesTypes).Returns(new[] { expectedDocument });
+        _mockCache.Setup(c => c.SiteTypes).Returns(new[] { expectedDocument });
 
         // Act
         var result = await _sut.GetByIdAsync("test-id", CancellationToken.None);
@@ -45,7 +45,7 @@ public class PremiseTypeLookupServiceTests
     public async Task GetByIdAsync_WhenNotFound_ReturnsNull()
     {
         // Arrange
-        _mockCache.Setup(c => c.PremisesTypes).Returns(Array.Empty<PremisesTypeDocument>());
+        _mockCache.Setup(c => c.SiteTypes).Returns(Array.Empty<SiteTypeDocument>());
 
         // Act
         var result = await _sut.GetByIdAsync("non-existent", CancellationToken.None);
@@ -55,10 +55,10 @@ public class PremiseTypeLookupServiceTests
     }
 
     [Fact]
-    public async Task FindAsync_WhenCalledWithValidLookupValue_ReturnsMatchingPremiseType()
+    public async Task FindAsync_WhenCalledWithValidLookupValue_ReturnsMatchingSiteType()
     {
         // Arrange
-        var doc = new PremisesTypeDocument
+        var doc = new SiteTypeDocument
         {
             IdentifierId = "AC",
             Code = "AC",
@@ -68,21 +68,21 @@ public class PremiseTypeLookupServiceTests
             EffectiveStartDate = DateTime.UtcNow,
             CreatedDate = DateTime.UtcNow
         };
-        _mockCache.Setup(c => c.PremisesTypes).Returns(new[] { doc });
+        _mockCache.Setup(c => c.SiteTypes).Returns(new[] { doc });
 
         // Act
         var result = await _sut.FindAsync("AC", CancellationToken.None);
 
         // Assert
-        result.premiseTypeId.Should().Be("AC");
-        result.premiseTypeName.Should().Be("Assembly Centre");
+        result.siteTypeId.Should().Be("AC");
+        result.siteTypeName.Should().Be("Assembly Centre");
     }
 
     [Fact]
-    public async Task FindAsync_WhenCalledWithName_ReturnsMatchingPremiseType()
+    public async Task FindAsync_WhenCalledWithName_ReturnsMatchingSiteType()
     {
         // Arrange
-        var doc = new PremisesTypeDocument
+        var doc = new SiteTypeDocument
         {
             IdentifierId = "MA",
             Code = "MA",
@@ -92,27 +92,27 @@ public class PremiseTypeLookupServiceTests
             EffectiveStartDate = DateTime.UtcNow,
             CreatedDate = DateTime.UtcNow
         };
-        _mockCache.Setup(c => c.PremisesTypes).Returns(new[] { doc });
+        _mockCache.Setup(c => c.SiteTypes).Returns(new[] { doc });
 
         // Act
         var result = await _sut.FindAsync("Market", CancellationToken.None);
 
         // Assert
-        result.premiseTypeId.Should().Be("MA");
-        result.premiseTypeName.Should().Be("Market");
+        result.siteTypeId.Should().Be("MA");
+        result.siteTypeName.Should().Be("Market");
     }
 
     [Fact]
     public async Task FindAsync_WhenNotFound_ReturnsNullTuple()
     {
         // Arrange
-        _mockCache.Setup(c => c.PremisesTypes).Returns(Array.Empty<PremisesTypeDocument>());
+        _mockCache.Setup(c => c.SiteTypes).Returns(Array.Empty<SiteTypeDocument>());
 
         // Act
         var result = await _sut.FindAsync("NONEXISTENT", CancellationToken.None);
 
         // Assert
-        result.premiseTypeId.Should().BeNull();
-        result.premiseTypeName.Should().BeNull();
+        result.siteTypeId.Should().BeNull();
+        result.siteTypeName.Should().BeNull();
     }
 }

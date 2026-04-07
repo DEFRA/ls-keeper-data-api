@@ -118,7 +118,7 @@ public class SitePartyRoleMapperTests
     private readonly SamHoldingImportGoldMappingStep _goldMappingStep;
 
     private readonly Mock<IProductionUsageLookupService> _productionUsageLookupServiceMock = new();
-    private readonly Mock<IPremiseActivityTypeLookupService> _premiseActivityTypeLookupServiceMock = new();
+    private readonly Mock<ISiteActivityTypeLookupService> _siteActivityTypeLookupServiceMock = new();
     private readonly Mock<ISpeciesTypeLookupService> _speciesTypeLookupServiceMock = new();
     private readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
     private readonly Mock<ISiteIdentifierTypeLookupService> _siteIdentifierTypeLookupServiceMock = new();
@@ -130,7 +130,7 @@ public class SitePartyRoleMapperTests
         _productionUsageLookupServiceMock.Setup(x => x.FindAsync("BEEF", It.IsAny<CancellationToken>()))
             .ReturnsAsync(("ba9cb8fb-ab7f-42f2-bc1f-fa4d7fda4824", "Beef"));
 
-        _premiseActivityTypeLookupServiceMock.Setup(x => x.FindAsync("RM", It.IsAny<CancellationToken>()))
+        _siteActivityTypeLookupServiceMock.Setup(x => x.FindAsync("RM", It.IsAny<CancellationToken>()))
             .ReturnsAsync(("d2d9be5e-18b4-4424-b196-fd40f3b105d8", "Red Meat"));
 
         _speciesTypeLookupServiceMock.Setup(x => x.FindAsync("CTT", It.IsAny<CancellationToken>()))
@@ -156,8 +156,8 @@ public class SitePartyRoleMapperTests
             .ReturnsAsync((SiteDocument?)null);
 
         _silverMappingStep = new SamHoldingImportSilverMappingStep(
-            Mock.Of<IPremiseActivityTypeLookupService>(),
-            Mock.Of<IPremiseTypeLookupService>(),
+            Mock.Of<ISiteActivityTypeLookupService>(),
+            Mock.Of<ISiteTypeLookupService>(),
             _roleTypeLookupServiceMock.Object,
             Mock.Of<ICountryIdentifierLookupService>(),
             _productionUsageLookupServiceMock.Object,
@@ -166,10 +166,11 @@ public class SitePartyRoleMapperTests
 
         _goldMappingStep = new SamHoldingImportGoldMappingStep(
             Mock.Of<ICountryIdentifierLookupService>(),
-            Mock.Of<IPremiseTypeLookupService>(),
+            Mock.Of<ISiteTypeLookupService>(),
             _speciesTypeLookupServiceMock.Object,
-            _premiseActivityTypeLookupServiceMock.Object,
+            _siteActivityTypeLookupServiceMock.Object,
             _siteIdentifierTypeLookupServiceMock.Object,
+            Mock.Of<ISiteTypeDerivedCodeLookupService>(),
             _goldSiteRepositoryMock.Object,
             Mock.Of<IPartiesRepository>(),
             Mock.Of<ILogger<SamHoldingImportGoldMappingStep>>());

@@ -4,42 +4,42 @@ using KeeperData.Core.Services;
 
 namespace KeeperData.Application.Services;
 
-public class PremiseActivityTypeLookupService(IReferenceDataCache cache) : IPremiseActivityTypeLookupService
+public class SiteActivityTypeLookupService(IReferenceDataCache cache) : ISiteActivityTypeLookupService
 {
-    public Task<PremisesActivityTypeDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
+    public Task<SiteActivityTypeDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(id))
-            return Task.FromResult<PremisesActivityTypeDocument?>(null);
+            return Task.FromResult<SiteActivityTypeDocument?>(null);
 
-        var match = cache.PremisesActivityTypes.FirstOrDefault(s =>
+        var match = cache.SiteActivityTypes.FirstOrDefault(s =>
             s.IdentifierId.Equals(id, StringComparison.OrdinalIgnoreCase));
 
         return Task.FromResult(match);
     }
 
-    public Task<PremisesActivityTypeDocument?> GetByCodeAsync(string? code, CancellationToken cancellationToken)
+    public Task<SiteActivityTypeDocument?> GetByCodeAsync(string? code, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(code))
-            return Task.FromResult<PremisesActivityTypeDocument?>(null);
+            return Task.FromResult<SiteActivityTypeDocument?>(null);
 
-        var match = cache.PremisesActivityTypes.FirstOrDefault(s =>
+        var match = cache.SiteActivityTypes.FirstOrDefault(s =>
             s.Code.Equals(code, StringComparison.OrdinalIgnoreCase));
 
-        match ??= cache.PremisesActivityTypes.FirstOrDefault(s =>
+        match ??= cache.SiteActivityTypes.FirstOrDefault(s =>
             s.Name.Equals(code, StringComparison.OrdinalIgnoreCase));
 
         return Task.FromResult(match);
     }
 
-    public Task<(string? premiseActivityTypeId, string? premiseActivityTypeName)> FindAsync(string? lookupValue, CancellationToken cancellationToken)
+    public Task<(string? siteActivityTypeId, string? siteActivityTypeName)> FindAsync(string? lookupValue, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(lookupValue))
             return Task.FromResult<(string?, string?)>((null, null));
 
-        var match = cache.PremisesActivityTypes.FirstOrDefault(s =>
+        var match = cache.SiteActivityTypes.FirstOrDefault(s =>
             s.Code.Equals(lookupValue, StringComparison.OrdinalIgnoreCase));
 
-        match ??= cache.PremisesActivityTypes.FirstOrDefault(s =>
+        match ??= cache.SiteActivityTypes.FirstOrDefault(s =>
             s.Name.Equals(lookupValue, StringComparison.OrdinalIgnoreCase));
 
         return Task.FromResult(match != null
