@@ -32,12 +32,14 @@ public class SpeciesController(IRequestExecutor executor) : ControllerBase
     /// <response code="401">Access token is not set or invalid.</response>
     /// <response code="403">The requestor is not authorized to perform this operation on the resource.</response>
     /// <response code="500">Internal server error</response>
+    /// <response code="503">Service Unavailable</response>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<SpeciesListResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> GetSpeciesTypes([FromQuery] GetSpeciesRequest request)
     {
         var query = new GetSpeciesQuery
