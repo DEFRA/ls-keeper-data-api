@@ -243,7 +243,8 @@ public class FakeDataBridgeClient : IDataBridgeClient
                 CPH = id ?? $"{_random.Next(10, 99)}{_random.Next(100, 999)}{_random.Next(1000, 9999)}",
                 FEATURE_NAME = Guid.NewGuid().ToString(),
                 CPH_TYPE = "PERMANENT",
-                FEATURE_ADDRESS_FROM_DATE = DateTime.Today.AddDays(-1)
+                FEATURE_ADDRESS_FROM_DATE = DateTime.Today.AddDays(-1),
+                FCLTY_SUB_BSNSS_ACTVTY_CODE = "SLG-RM-NA"
             }];
     }
 
