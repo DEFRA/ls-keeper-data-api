@@ -192,7 +192,7 @@ public static class WebApplicationExtensions
             .WithGroupName(InternalGroupName)
             .WithTags("scan-state")
             .WithSummary("Get scan states")
-            .WithDescription("Retrieves all scan state records showing the history and status of scans")
+            .WithDescription("Retrieves all scan state records showing the history and status of scans.")
             .WithMetadata(new ProducesResponseTypeAttribute(typeof(IEnumerable<ScanStateDocument>), StatusCodes.Status200OK))
             .RequireAuthorization(adminAuth);
     }
