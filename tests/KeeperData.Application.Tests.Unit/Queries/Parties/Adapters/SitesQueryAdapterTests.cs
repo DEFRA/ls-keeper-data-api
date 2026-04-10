@@ -3,12 +3,11 @@ using KeeperData.Application.Queries.Pagination;
 using KeeperData.Application.Queries.Sites;
 using KeeperData.Application.Queries.Sites.Adapters;
 using KeeperData.Core.Documents;
-using KeeperData.Core.DTOs;
 using KeeperData.Core.Repositories;
 using MongoDB.Driver;
 using Moq;
 
-namespace KeeperData.Application.Tests.Unit.Queries.Sites.Adapters;
+namespace KeeperData.Application.Tests.Unit.Queries.Parties.Adapters;
 
 public class SitesQueryAdapterTests
 {
