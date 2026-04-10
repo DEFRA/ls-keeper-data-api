@@ -46,4 +46,17 @@ public class PaginatedResult<T>
     /// </summary>
     public bool HasPreviousPage => Page > 1;
     public string? NextCursor { get; set; }
+
+    /// <summary>
+    /// Projects the items in this result to a different type, preserving pagination metadata.
+    /// </summary>
+    public PaginatedResult<U> Map<U>(Func<T, U> mapper) => new()
+    {
+        Count = Count,
+        TotalCount = TotalCount,
+        Values = Values.Select(mapper).ToList(),
+        Page = Page,
+        PageSize = PageSize,
+        NextCursor = NextCursor
+    };
 }

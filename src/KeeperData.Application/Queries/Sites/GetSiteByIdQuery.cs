@@ -1,9 +1,9 @@
 using FluentValidation;
-using KeeperData.Core.Documents;
+using KeeperData.Core.DTOs;
 
 namespace KeeperData.Application.Queries.Sites;
 
-public record GetSiteByIdQuery(string Id) : IQuery<SiteDocument>;
+public record GetSiteByIdQuery(string Id) : IQuery<SiteDto>;
 
 /// <summary>
 /// Example implementation only. To remove in future stories.

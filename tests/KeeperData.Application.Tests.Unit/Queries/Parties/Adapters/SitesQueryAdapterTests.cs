@@ -3,6 +3,7 @@ using KeeperData.Application.Queries.Pagination;
 using KeeperData.Application.Queries.Sites;
 using KeeperData.Application.Queries.Sites.Adapters;
 using KeeperData.Core.Documents;
+using KeeperData.Core.DTOs;
 using KeeperData.Core.Repositories;
 using MongoDB.Driver;
 using Moq;
@@ -34,7 +35,9 @@ public class SitesQueryAdapterTests
 
         var (items, count, nextCursor) = await _adapter.GetSitesAsync(query);
 
-        items.Should().BeEquivalentTo(expectedItems);
+        items.Should().HaveCount(1);
+        items[0].Id.Should().Be("1");
+        items[0].Name.Should().Be("A");
         count.Should().Be(1);
         nextCursor.Should().BeNull();
     }
