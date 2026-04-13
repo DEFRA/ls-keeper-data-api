@@ -17,7 +17,7 @@ public static class EqualityTestAddressHelper
 
     public static Address EmptyAddress(string id)
     {
-        return AddressWith(id, "s", "", "", "", "", "", null, DateTime.MinValue);
+        return AddressWith(id, "", "", "", "", "", "", null, DateTime.MinValue);
     }
 
     public static Communication CommunicationWithId(string id, string email = "joe@google.com")
