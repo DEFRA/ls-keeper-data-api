@@ -44,11 +44,11 @@ public class SiteDocumentExtensionsTests
             Name = "Test Site",
             StartDate = DateTime.UtcNow,
             LastUpdatedDate = DateTime.UtcNow,
-            Identifiers = null,
-            Parties = null,
-            Species = null,
-            Marks = null,
-            Activities = null
+            Identifiers = [],
+            Parties = [],
+            Species = [],
+            Marks = [],
+            Activities = []
         };
 
         // Act
@@ -253,7 +253,7 @@ public class SiteDocumentExtensionsTests
         var locationDocument = new LocationDocument
         {
             IdentifierId = "loc-1",
-            Communication = null,
+            Communication = [],
             LastUpdatedDate = DateTime.UtcNow
         };
 
@@ -412,8 +412,8 @@ public class SiteDocumentExtensionsTests
             CustomerNumber = "C12345",
             Name = "Test Party",
             LastUpdatedDate = DateTime.UtcNow,
-            Communication = null,
-            PartyRoles = null
+            Communication = [],
+            PartyRoles = []
         };
 
         var siteDocument = new SiteDocument
@@ -508,7 +508,7 @@ public class SiteDocumentExtensionsTests
                 Name = "Owner",
                 LastUpdatedDate = DateTime.UtcNow
             },
-            SpeciesManagedByRole = null,
+            SpeciesManagedByRole = [],
             LastUpdatedDate = DateTime.UtcNow
         };
 
@@ -620,7 +620,7 @@ public class SiteDocumentExtensionsTests
             IdentifierId = "mark-1",
             Mark = "H12345",
             StartDate = DateTime.UtcNow,
-            Species = null,
+            Species = [],
             LastUpdatedDate = DateTime.UtcNow
         };
 
