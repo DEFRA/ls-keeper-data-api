@@ -2,9 +2,6 @@ using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.DTOs;
 
-/// <summary>
-/// A lightweight country summary embedded within address records.
-/// </summary>
 public class CountrySummaryDto: CountryDTO
 {
     /// <summary>
