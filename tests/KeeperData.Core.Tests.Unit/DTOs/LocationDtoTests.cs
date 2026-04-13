@@ -20,7 +20,7 @@ public class LocationDtoTests
             IdentifierId = Guid.NewGuid()
                 .ToString(),
             Postcode = "SW1A 1AA",
-            AddressLine1 = null
+            AddressLine1 = "test1"
         };
         var communication = new List<CommunicationDto>
         {
