@@ -20,7 +20,7 @@ public class AddressDocument : INestedEntity
     /// <example>671544009</example>
     [BsonElement("uprn")]
     [JsonPropertyName("uprn")]
-    public int? Uprn { get; set; }
+    public string? Uprn { get; set; }
 
     /// <summary>
     /// This single address line is associated with the OS Address Base Fields such as SAO_TEXT, SAO_START_NUMBER, PAO_TEXT, PAO_START_NUMBER and STREET_DESCRIPTION.

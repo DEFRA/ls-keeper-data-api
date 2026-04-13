@@ -41,7 +41,7 @@ public static class ExpectedGoldParties
                 CorrespondanceAddress = new AddressDocument
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
-                    Uprn = 25962203,
+                    Uprn = "25962203",
                     AddressLine1 = "1-3, 10-12",
                     AddressLine2 = "Elm Grove",
                     PostTown = "Manchester",
@@ -278,7 +278,7 @@ public static class ExpectedGoldParties
                 CorrespondanceAddress = new AddressDocument
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
-                    Uprn = 25962203,
+                    Uprn = 25962203.ToString(),
                     AddressLine1 = "1-3, 10-12",
                     AddressLine2 = "Elm Grove",
                     PostTown = "Manchester",
@@ -400,7 +400,7 @@ public static class ExpectedGoldParties
                 CorrespondanceAddress = new AddressDocument
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
-                    Uprn = 25962203,
+                    Uprn = "25962203",
                     AddressLine1 = "1-3, 10-12",
                     AddressLine2 = "Elm Grove",
                     PostTown = "Manchester",
@@ -509,7 +509,7 @@ public static class ExpectedGoldParties
                 CorrespondanceAddress = new AddressDocument
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
-                    Uprn = 25962203,
+                    Uprn = "25962203",
                     AddressLine1 = "1-3, 10-12",
                     AddressLine2 = "Elm Grove",
                     PostTown = "Manchester",
