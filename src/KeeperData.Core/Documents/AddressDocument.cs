@@ -1,5 +1,6 @@
 using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Repositories;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
 
@@ -19,6 +20,7 @@ public class AddressDocument : INestedEntity
     /// </summary>
     /// <example>671544009</example>
     [BsonElement("uprn")]
+    [BsonRepresentation(BsonType.String)]
     [JsonPropertyName("uprn")]
     public string? Uprn { get; set; }
 
