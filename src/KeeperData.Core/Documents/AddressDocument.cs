@@ -18,7 +18,7 @@ public class AddressDocument : INestedEntity
     /// <summary>
     /// The Unique Property Reference Number.
     /// </summary>
-    /// <example>671544009</example>
+    /// <example>6715440101</example>
     [BsonElement("uprn")]
     [BsonRepresentation(BsonType.String)]
     [JsonPropertyName("uprn")]
