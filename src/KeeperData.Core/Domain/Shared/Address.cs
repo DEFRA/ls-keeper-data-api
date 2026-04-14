@@ -5,7 +5,7 @@ namespace KeeperData.Core.Domain.Shared;
 public class Address : EntityObject
 {
     public string Id { get; private set; }
-    public string? Uprn { get; private set; }
+    public int? Uprn { get; private set; }
     public string AddressLine1 { get; private set; }
     public string? AddressLine2 { get; private set; }
     public string? PostTown { get; private set; }
@@ -16,7 +16,7 @@ public class Address : EntityObject
 
     public Address(
         string id,
-        string? uprn,
+        int? uprn,
         string addressLine1,
         string? addressLine2,
         string? postTown,
@@ -37,7 +37,7 @@ public class Address : EntityObject
     }
 
     public static Address Create(
-        string? uprn,
+        int? uprn,
         string addressLine1,
         string? addressLine2,
         string? postTown,
@@ -59,7 +59,7 @@ public class Address : EntityObject
 
     public bool ApplyChanges(
         DateTime lastUpdatedDate,
-        string? uprn,
+        int? uprn,
         string addressLine1,
         string? addressLine2,
         string? postTown,
@@ -90,7 +90,7 @@ public class Address : EntityObject
 
     public override IEnumerable<object> GetEqualityComponents()
     {
-        yield return Uprn ?? string.Empty;
+        yield return Uprn ?? 0;
         yield return AddressLine1;
         yield return AddressLine2 ?? string.Empty;
         yield return PostTown ?? string.Empty;
