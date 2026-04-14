@@ -5,7 +5,7 @@ namespace KeeperData.Core.Tests.Unit.Domain.Sites;
 public static class EqualityTestAddressHelper
 {
 
-    public static Address AddressWith(string id, int? propertyRef = null, string line1 = "", string? line2 = null, string? postTown = "", string? county = null, string postcode = "", Country? country = null, DateTime? updated = null)
+    public static Address AddressWith(string id, string? propertyRef = null, string line1 = "", string? line2 = null, string? postTown = "", string? county = null, string postcode = "", Country? country = null, DateTime? updated = null)
     {
         return new Address(id, propertyRef, line1, line2, postTown, county, postcode, country, updated ?? DateTime.MinValue);
     }
@@ -17,7 +17,7 @@ public static class EqualityTestAddressHelper
 
     public static Address EmptyAddress(string id)
     {
-        return AddressWith(id, 0, "", "", "", "", "", null, DateTime.MinValue);
+        return AddressWith(id, "", "", "", "", "", "", null, DateTime.MinValue);
     }
 
     public static Communication CommunicationWithId(string id, string email = "joe@google.com")

@@ -107,7 +107,7 @@ public class SamPartyMapperToGoldTests
                     expected.CorrespondanceAddress!.County = "locale";
                     expected.CorrespondanceAddress!.Postcode = "postcode";
                     expected.CorrespondanceAddress!.PostTown = "town";
-                    expected.CorrespondanceAddress!.Uprn = 1234;
+                    expected.CorrespondanceAddress!.Uprn = "1234";
                 }];
             yield return [ "When mapping empty PartyDocument.Communication",
                 (SamPartyDocument input) =>
