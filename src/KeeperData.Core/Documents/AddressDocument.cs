@@ -20,7 +20,7 @@ public class AddressDocument : INestedEntity
     /// </summary>
     /// <example>6715440101</example>
     [BsonElement("uprn")]
-    [BsonRepresentation(BsonType.String)]
+    [BsonRepresentation(BsonType.Int32, AllowTruncation = true)]
     [JsonPropertyName("uprn")]
     public string? Uprn { get; set; }
 
