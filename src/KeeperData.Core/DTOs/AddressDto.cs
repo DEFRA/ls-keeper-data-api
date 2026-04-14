@@ -18,7 +18,7 @@ public class AddressDto
     /// </summary>
     /// <example>671544009</example>
     [JsonPropertyName("uprn")]
-    public string? Uprn { get; set; }
+    public int? Uprn { get; set; }
 
     /// <summary>
     /// This single address line is associated with the OS Address Base Fields such as SAO_TEXT, SAO_START_NUMBER, PAO_TEXT, PAO_START_NUMBER and STREET_DESCRIPTION.
