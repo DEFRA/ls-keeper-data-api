@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents.Silver;
 
+[BsonIgnoreExtraElements(Inherited = true)]
 public class BaseHoldingDocument
 {
     [JsonPropertyName("countyParishHoldingNumber")]
