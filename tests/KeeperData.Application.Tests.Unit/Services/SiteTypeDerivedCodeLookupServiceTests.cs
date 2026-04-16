@@ -255,7 +255,15 @@ public class SiteTypeDerivedCodeLookupServiceTests
         var result = _sut.Resolve(rawCode);
 
         // Assert
-        result.Should().NotBeNull();
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Failed to resolve facility code")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            Times.Once);
+        result.Should().BeNull();
     }
 
     [Fact]
