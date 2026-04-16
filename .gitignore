@@ -274,3 +274,4 @@ library.db
 /localstack_data/cache
 /coverage
 /coverage-report
+/localstack_data/logs/localstack_infra.err
