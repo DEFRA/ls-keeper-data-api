@@ -13,6 +13,7 @@ public class SiteTypeDerivedCodeLookupService(
     IReferenceDataCache referenceDataCache,
     ILogger<SiteTypeDerivedCodeLookupService> logger) : ISiteTypeDerivedCodeLookupService
 {
+    private const string ErrorCodeMetadataKey = "ErrorCode";
     private const string NoMappingFoundCode = "NO_MAPPING_FOUND";
     private const string NoSiteTypeCode = "NO_SITE_TYPE";
     private const string ConflictingSiteTypesCode = "CONFLICTING_SITE_TYPES";
@@ -23,7 +24,7 @@ public class SiteTypeDerivedCodeLookupService(
 
         if (!result.IsFailed) return result.Value;
         var error = result.Errors[0];
-        var errorCode = error.Metadata.TryGetValue("ErrorCode", out var value)
+        var errorCode = error.Metadata.TryGetValue(ErrorCodeMetadataKey, out var value)
             ? value?.ToString()
             : "UNKNOWN";
 
@@ -40,7 +41,7 @@ public class SiteTypeDerivedCodeLookupService(
     {
         if (string.IsNullOrWhiteSpace(rawFacilityDerivedCode))
             return Result.Fail(new Error("Raw facility code is null or whitespace")
-                .WithMetadata("ErrorCode", NoMappingFoundCode));
+                .WithMetadata(ErrorCodeMetadataKey, NoMappingFoundCode));
 
         return FindAllFacilityCodesHits(rawFacilityDerivedCode)
             .Bind(hits => FilterPartialMatches(hits, rawFacilityDerivedCode))
@@ -100,7 +101,7 @@ public class SiteTypeDerivedCodeLookupService(
         return hits.Count > 0
             ? Result.Ok(hits)
             : Result.Fail(new Error($"No facility derived code mapping found for raw value '{rawFacilityDerivedCode}'. Flagged for review.")
-                .WithMetadata("ErrorCode", NoMappingFoundCode));
+                .WithMetadata(ErrorCodeMetadataKey, NoMappingFoundCode));
     }
 
     private static Result<ResolutionContext> ResolveSiteTypeCode(
@@ -118,7 +119,7 @@ public class SiteTypeDerivedCodeLookupService(
         if (string.IsNullOrWhiteSpace(siteTypeCode))
         {
             return Result.Fail(new Error($"Facility derived code mapping for '{rawFacilityDerivedCode}' has no associated site type code. Flagged for review.")
-                .WithMetadata("ErrorCode", NoSiteTypeCode));
+                .WithMetadata(ErrorCodeMetadataKey, NoSiteTypeCode));
         }
 
         return Result.Ok(new ResolutionContext(
@@ -140,7 +141,7 @@ public class SiteTypeDerivedCodeLookupService(
         if (allSiteTypeCodes.Count > 1)
         {
             return Result.Fail(new Error($"Multiple facility codes in '{rawFacilityDerivedCode}' map to different site types: [{string.Join(", ", allSiteTypeCodes)}]. Cannot determine which to use.")
-                .WithMetadata("ErrorCode", ConflictingSiteTypesCode));
+                .WithMetadata(ErrorCodeMetadataKey, ConflictingSiteTypesCode));
         }
 
         return Result.Ok(context);
