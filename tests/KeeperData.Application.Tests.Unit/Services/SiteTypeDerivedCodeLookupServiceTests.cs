@@ -101,33 +101,66 @@ public class SiteTypeDerivedCodeLookupServiceTests
     }
 
     [Fact]
-    public void Resolve_WithNullInput_ReturnsNull()
+    public void Resolve_WithNullInput_ReturnsDefaultSiteTypeAH()
     {
         // Act
         var result = _sut.Resolve(null);
 
         // Assert
-        result.Should().BeNull();
+        result.Should().NotBeNull();
+        result!.SiteTypeCode.Should().Be("AH");
+        result.SiteTypeName.Should().Be("Agricultural Holding");
+        result.Activities.Should().BeEmpty();
     }
 
     [Fact]
-    public void Resolve_WithEmptyString_ReturnsNull()
+    public void Resolve_WithEmptyString_ReturnsDefaultSiteTypeAH()
     {
         // Act
         var result = _sut.Resolve("");
 
         // Assert
-        result.Should().BeNull();
+        result.Should().NotBeNull();
+        result!.SiteTypeCode.Should().Be("AH");
+        result.SiteTypeName.Should().Be("Agricultural Holding");
+        result.Activities.Should().BeEmpty();
     }
 
     [Fact]
-    public void Resolve_WithWhitespace_ReturnsNull()
+    public void Resolve_WithWhitespace_ReturnsDefaultSiteTypeAH()
     {
         // Act
         var result = _sut.Resolve("   ");
 
         // Assert
-        result.Should().BeNull();
+        result.Should().NotBeNull();
+        result!.SiteTypeCode.Should().Be("AH");
+        result.SiteTypeName.Should().Be("Agricultural Holding");
+        result.Activities.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Resolve_WithNullInput_WhenSiteTypeNotInCache_ReturnsDefaultCodeWithFallbackName()
+    {
+        // Arrange - Remove AH from site types
+        _mockCache.Setup(c => c.SiteTypes).Returns(new List<SiteTypeDocument>
+        {
+            new()
+            {
+                IdentifierId = "ai-id",
+                Code = "AI",
+                Name = "Artificial Insemination Centre"
+            }
+        });
+
+        // Act
+        var result = _sut.Resolve(null);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.SiteTypeCode.Should().Be("AH");
+        result.SiteTypeName.Should().Be("AH"); // Fallback to code when not in cache
+        result.Activities.Should().BeEmpty();
     }
 
     [Fact]

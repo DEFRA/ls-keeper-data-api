@@ -17,9 +17,13 @@ public class SiteTypeDerivedCodeLookupService(
     private const string NoMappingFoundCode = "NO_MAPPING_FOUND";
     private const string NoSiteTypeCode = "NO_SITE_TYPE";
     private const string ConflictingSiteTypesCode = "CONFLICTING_SITE_TYPES";
+    private const string DefaultSiteTypeCode = "AH";
 
     public SiteTypeDerivedCodeResult? Resolve(string? rawFacilityDerivedCode)
     {
+        if (string.IsNullOrWhiteSpace(rawFacilityDerivedCode))
+            return BuildDefaultResult();
+
         var result = ResolveInternal(rawFacilityDerivedCode);
 
         if (!result.IsFailed) return result.Value;
@@ -37,12 +41,8 @@ public class SiteTypeDerivedCodeLookupService(
 
     }
 
-    private Result<SiteTypeDerivedCodeResult> ResolveInternal(string? rawFacilityDerivedCode)
+    private Result<SiteTypeDerivedCodeResult> ResolveInternal(string rawFacilityDerivedCode)
     {
-        if (string.IsNullOrWhiteSpace(rawFacilityDerivedCode))
-            return Result.Fail(new Error("Raw facility code is null or whitespace")
-                .WithMetadata(ErrorCodeMetadataKey, NoMappingFoundCode));
-
         return FindAllFacilityCodesHits(rawFacilityDerivedCode)
             .Bind(hits => FilterPartialMatches(hits, rawFacilityDerivedCode))
             .Bind(hits => ValidateHasResults(hits, rawFacilityDerivedCode))
@@ -175,6 +175,20 @@ public class SiteTypeDerivedCodeLookupService(
             SiteTypeCode = context.SiteTypeCode,
             SiteTypeName = siteTypeName,
             Activities = activities
+        };
+    }
+
+    private SiteTypeDerivedCodeResult BuildDefaultResult()
+    {
+        var siteTypeDoc = referenceDataCache.SiteTypes
+            .FirstOrDefault(st => st.Code.Equals(DefaultSiteTypeCode, StringComparison.OrdinalIgnoreCase));
+        var siteTypeName = siteTypeDoc?.Name ?? DefaultSiteTypeCode;
+
+        return new SiteTypeDerivedCodeResult
+        {
+            SiteTypeCode = DefaultSiteTypeCode,
+            SiteTypeName = siteTypeName,
+            Activities = []
         };
     }
 
