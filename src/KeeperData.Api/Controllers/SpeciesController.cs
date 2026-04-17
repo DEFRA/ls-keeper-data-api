@@ -12,7 +12,7 @@ namespace KeeperData.Api.Controllers;
 /// </summary>
 [Authorize(Policy = "BasicOrBearer")]
 [ApiController]
-[Route("api/reference/[controller]")]
+[Route("api/[controller]")]
 [ApiExplorerSettings(GroupName = "public")]
 [Produces("application/json")]
 [Tags("site reference")]
