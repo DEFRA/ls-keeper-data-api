@@ -259,9 +259,9 @@ public class SiteTypeDerivedCodeLookupServiceTests
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Failed to resolve facility code")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Failed to resolve facility code")),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
         result.Should().BeNull();
     }
@@ -347,7 +347,9 @@ public class SiteTypeDerivedCodeLookupServiceTests
 
         // Assert
         result.Should().NotBeNull();
-        result!.Activities.Should().HaveCount(1); // Deduplicated
+        result!.SiteTypeCode.Should().Be("AH");
+        result.Activities.Should().HaveCount(1); // Deduplicated
         result.Activities[0].Code.Should().Be("SLM");
+        result.Activities[0].Name.Should().Be("Semen Collection from Livestock Male");
     }
-}       
+}
