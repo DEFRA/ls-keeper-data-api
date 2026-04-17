@@ -22,7 +22,7 @@ public class SiteTypeDerivedCodeLookupService(
         var result = ResolveInternal(rawFacilityDerivedCode);
 
         if (!result.IsFailed) return result.Value;
-        var error = result.Errors.First();
+        var error = result.Errors[0];
         var errorCode = error.Metadata.TryGetValue("ErrorCode", out var value)
             ? value?.ToString()
             : "UNKNOWN";
@@ -93,7 +93,7 @@ public class SiteTypeDerivedCodeLookupService(
         return Result.Ok(filteredHits);
     }
 
-    private Result<List<FacilityBusinessActivityMapDocument>> ValidateHasResults(
+    private static Result<List<FacilityBusinessActivityMapDocument>> ValidateHasResults(
         List<FacilityBusinessActivityMapDocument> hits,
         string rawFacilityDerivedCode)
     {
@@ -103,7 +103,7 @@ public class SiteTypeDerivedCodeLookupService(
                 .WithMetadata("ErrorCode", NoMappingFoundCode));
     }
 
-    private Result<ResolutionContext> ResolveSiteTypeCode(
+    private static Result<ResolutionContext> ResolveSiteTypeCode(
         List<FacilityBusinessActivityMapDocument> hits,
         string rawFacilityDerivedCode)
     {
@@ -112,8 +112,8 @@ public class SiteTypeDerivedCodeLookupService(
             .ToList();
 
         var siteTypeCode = hitsWithActivity.Count > 0
-            ? hitsWithActivity.First().AssociatedSiteTypeCode
-            : hits.First().AssociatedSiteTypeCode;
+            ? hitsWithActivity[0].AssociatedSiteTypeCode
+            : hits[0].AssociatedSiteTypeCode;
 
         if (string.IsNullOrWhiteSpace(siteTypeCode))
         {
@@ -127,7 +127,7 @@ public class SiteTypeDerivedCodeLookupService(
             siteTypeCode));
     }
 
-    private Result<ResolutionContext> ValidateSingleSiteType(
+    private static Result<ResolutionContext> ValidateSingleSiteType(
         ResolutionContext context,
         string rawFacilityDerivedCode)
     {
@@ -177,7 +177,7 @@ public class SiteTypeDerivedCodeLookupService(
         };
     }
 
-    private record ResolutionContext(
+    private sealed record ResolutionContext(
         List<FacilityBusinessActivityMapDocument> AllHits,
         List<FacilityBusinessActivityMapDocument> HitsWithActivity,
         string SiteTypeCode);
