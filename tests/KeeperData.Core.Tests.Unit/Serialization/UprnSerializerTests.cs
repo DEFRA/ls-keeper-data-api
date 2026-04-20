@@ -125,7 +125,6 @@ public class UprnSerializerTests
 
         reader.ReadStartDocument();
         reader.ReadName();
-        
         var act = () => _sut.Deserialize(context, new BsonDeserializationArgs());
 
         act.Should().Throw<BsonSerializationException>()

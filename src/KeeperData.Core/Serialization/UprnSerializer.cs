@@ -9,7 +9,6 @@ public class UprnSerializer : SerializerBase<string?>
     public override string? Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
     {
         var bsonType = context.Reader.GetCurrentBsonType();
-        
         switch (bsonType)
         {
             case BsonType.Null:
