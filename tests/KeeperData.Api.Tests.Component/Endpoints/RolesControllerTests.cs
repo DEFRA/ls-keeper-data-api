@@ -26,9 +26,10 @@ public class RolesControllerTests
     {
         // Arrange
         var request = new GetRolesRequest { LastUpdatedDate = DateTime.UtcNow };
-        var expectedResponse = new List<RoleListResponse>
+        var expectedResponse = new RoleListResponse
         {
-            new() { Count = 1, Values = [new RoleDto { IdentifierId = "1", Code = "KEEPER", Name = "Livestock Keeper" }] }
+            Count = 1,
+            Values = [new RoleDto { IdentifierId = "1", Code = "KEEPER", Name = "Livestock Keeper" }]
         };
 
         _executorMock.Setup(x => x.ExecuteQuery(

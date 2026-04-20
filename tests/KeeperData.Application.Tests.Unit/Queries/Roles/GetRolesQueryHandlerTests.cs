@@ -2,6 +2,7 @@ using FluentAssertions;
 using KeeperData.Application.Queries.Roles;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Repositories;
+using KeeperData.Core.Services;
 using Moq;
 using Xunit;
 
@@ -9,13 +10,13 @@ namespace KeeperData.Application.Tests.Unit.Queries.Roles;
 
 public class GetRolesQueryHandlerTests
 {
-    private readonly Mock<IRoleRepository> _repositoryMock;
+    private readonly Mock<IReferenceDataCache> _cacheMock;
     private readonly GetRolesQueryHandler _sut;
 
     public GetRolesQueryHandlerTests()
     {
-        _repositoryMock = new Mock<IRoleRepository>();
-        _sut = new GetRolesQueryHandler(_repositoryMock.Object);
+        _cacheMock = new Mock<IReferenceDataCache>();
+        _sut = new GetRolesQueryHandler(_cacheMock.Object);
     }
 
     [Fact]
@@ -29,25 +30,21 @@ public class GetRolesQueryHandlerTests
             CreateDoc("2", "AGENT", "Agent", 10)
         };
 
-        _repositoryMock.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(mockData);
+        _cacheMock.Setup(c => c.Roles).Returns(mockData);
 
         var query = new GetRolesQuery();
 
         // Act
-        var result = (await _sut.Handle(query, CancellationToken.None)).ToList();
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Should().ContainSingle();
-        var response = result.First();
+        result.Should().NotBeNull();
+        result.Count.Should().Be(3);
+        result.Values.Should().HaveCount(3);
 
-        response.Count.Should().Be(3);
-        response.Values.Should().HaveCount(3);
-
-        // Assert Ordering (AC7)
-        response.Values[0].Name.Should().Be("Agent"); // SortOrder 10, A
-        response.Values[1].Name.Should().Be("Livestock Keeper"); // SortOrder 10, L
-        response.Values[2].Name.Should().Be("Livestock Owner");  // SortOrder 20
+        result.Values[0].Name.Should().Be("Agent"); // SortOrder 10, A
+        result.Values[1].Name.Should().Be("Livestock Keeper"); // SortOrder 10, L
+        result.Values[2].Name.Should().Be("Livestock Owner");  // SortOrder 20
     }
 
     [Fact]
@@ -62,38 +59,34 @@ public class GetRolesQueryHandlerTests
             CreateDoc("3", "EXACT", "Exact Role", 30, filterDate)
         };
 
-        _repositoryMock.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(mockData);
+        _cacheMock.Setup(c => c.Roles).Returns(mockData);
 
         var query = new GetRolesQuery { LastUpdatedDate = filterDate };
 
-        // Act
-        var result = (await _sut.Handle(query, CancellationToken.None)).ToList();
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        var response = result.First();
-        response.Count.Should().Be(2);
-        response.Values.Should().Contain(s => s.Code == "NEW");
-        response.Values.Should().Contain(s => s.Code == "EXACT");
-        response.Values.Should().NotContain(s => s.Code == "OLD");
+        result.Count.Should().Be(2);
+        result.Values.Should().Contain(s => s.Code == "NEW");
+        result.Values.Should().Contain(s => s.Code == "EXACT");
+        result.Values.Should().NotContain(s => s.Code == "OLD");
     }
 
     [Fact]
     public async Task Handle_WhenNoRolesExist_ReturnsEmptyList()
     {
         // Arrange
-        _repositoryMock.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<RoleDocument>());
+        _cacheMock.Setup(c => c.Roles).Returns([]);
 
         var query = new GetRolesQuery();
 
         // Act
-        var result = (await _sut.Handle(query, CancellationToken.None)).ToList();
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        var response = result.First();
-        response.Count.Should().Be(0);
-        response.Values.Should().BeEmpty();
+        result.Should().NotBeNull();
+        result.Count.Should().Be(0);
+        result.Values.Should().BeEmpty();
     }
 
     private static RoleDocument CreateDoc(string id, string code, string name, int sortOrder, DateTime? lastModified = null)

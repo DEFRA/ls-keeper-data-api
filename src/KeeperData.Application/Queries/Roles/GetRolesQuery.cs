@@ -3,7 +3,7 @@ using KeeperData.Core.DTOs;
 
 namespace KeeperData.Application.Queries.Roles;
 
-public class GetRolesQuery : IQuery<IEnumerable<RoleListResponse>>
+public class GetRolesQuery : IQuery<RoleListResponse>
 {
     public DateTime? LastUpdatedDate { get; set; }
 }

@@ -1,16 +1,16 @@
 using KeeperData.Application.Queries;
+using KeeperData.Application.Queries.Roles;
 using KeeperData.Core.DTOs;
-using KeeperData.Core.Repositories;
+using KeeperData.Core.Services;
 
-namespace KeeperData.Application.Queries.Roles;
-
-public class GetRolesQueryHandler(IRoleRepository repository) : IQueryHandler<GetRolesQuery, IEnumerable<RoleListResponse>>
+public class GetRolesQueryHandler(IReferenceDataCache cache) : IQueryHandler<GetRolesQuery, RoleListResponse>
 {
-    private readonly IRoleRepository _repository = repository;
+    private readonly IReferenceDataCache _cache = cache;
 
-    public async Task<IEnumerable<RoleListResponse>> Handle(GetRolesQuery request, CancellationToken cancellationToken)
+    public Task<RoleListResponse> Handle(GetRolesQuery request, CancellationToken cancellationToken)
     {
-        var items = await _repository.GetAllAsync(cancellationToken);
+        // Get items instantly from memory instead of the database
+        var items = _cache.Roles;
 
         var filteredItems = items
             .Where(r => !request.LastUpdatedDate.HasValue || r.LastModifiedDate >= request.LastUpdatedDate.Value)
@@ -31,6 +31,6 @@ public class GetRolesQueryHandler(IRoleRepository repository) : IQueryHandler<Ge
             Values = filteredItems
         };
 
-        return [response];
+        return Task.FromResult(response);
     }
 }
