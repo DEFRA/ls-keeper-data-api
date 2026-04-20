@@ -449,27 +449,6 @@ public static class SamHoldingMapper
         return [.. results];
     }
 
-    private static async Task<List<T>> GetDistinctReferenceDataAsync<T>(
-        IEnumerable<string?> rawCodes,
-        Func<string?, CancellationToken, Task<T?>> getTypeByCodeAsync,
-        CancellationToken cancellationToken)
-    {
-        var distinctCodes = rawCodes
-            .Where(code => !string.IsNullOrWhiteSpace(code))
-            .Distinct()
-            .ToList();
-
-        var tasks = distinctCodes
-            .Select(async code =>
-            {
-                var type = await getTypeByCodeAsync(code, cancellationToken);
-                return type;
-            });
-
-        var results = await Task.WhenAll(tasks);
-        return [.. results.OfType<T>()];
-    }
-
     private static List<GroupMark> ToGroupMarks(List<SiteGroupMarkRelationshipDocument> relationships)
     {
         return

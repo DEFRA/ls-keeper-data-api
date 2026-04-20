@@ -159,10 +159,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
         string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
-        var data = Enumerable.Range(0, top).Select(_ => GetCtsAgentOrKeeper()).SelectMany(x => x).ToList();
-        var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
-        var response = GetDataBridgeResponse(objects!, top, skip);
-        return Task.FromResult<DataBridgeResponse<T>?>(response);
+        return GenerateFakeCtsAgentOrKeeperResponseAsync<T>(top, skip);
     }
 
     public Task<List<CtsAgentOrKeeper>> GetCtsAgentsAsync(string id, CancellationToken cancellationToken)
@@ -194,10 +191,7 @@ public class FakeDataBridgeClient : IDataBridgeClient
         string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
-        var data = Enumerable.Range(0, top).Select(_ => GetCtsAgentOrKeeper()).SelectMany(x => x).ToList();
-        var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
-        var response = GetDataBridgeResponse(objects!, top, skip);
-        return Task.FromResult<DataBridgeResponse<T>?>(response);
+        return GenerateFakeCtsAgentOrKeeperResponseAsync<T>(top, skip);
     }
 
     public Task<List<CtsAgentOrKeeper>> GetCtsKeepersAsync(string id, CancellationToken cancellationToken)
@@ -216,6 +210,13 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult<CtsAgentOrKeeper?>(null);
     }
 
+    private Task<DataBridgeResponse<T>?> GenerateFakeCtsAgentOrKeeperResponseAsync<T>(int top, int skip)
+    {
+        var data = Enumerable.Range(0, top).Select(_ => GetCtsAgentOrKeeper()).SelectMany(x => x).ToList();
+        var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
+        var response = GetDataBridgeResponse(objects!, top, skip);
+        return Task.FromResult<DataBridgeResponse<T>?>(response);
+    }
     private static DataBridgeResponse<T> GetDataBridgeResponse<T>(List<T> data, int top, int skip)
     {
         return new DataBridgeResponse<T>

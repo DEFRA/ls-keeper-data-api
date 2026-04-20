@@ -3,6 +3,8 @@ using KeeperData.Application.Queries.Roles;
 using KeeperData.Core.DTOs;
 using KeeperData.Core.Services;
 
+namespace KeeperData.Application.Queries.Roles;
+
 public class GetRolesQueryHandler(IReferenceDataCache cache) : IQueryHandler<GetRolesQuery, RoleListResponse>
 {
     private readonly IReferenceDataCache _cache = cache;
