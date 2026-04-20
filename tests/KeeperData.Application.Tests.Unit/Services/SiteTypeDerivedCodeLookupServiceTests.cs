@@ -58,6 +58,22 @@ public class SiteTypeDerivedCodeLookupServiceTests
                 AssociatedSiteTypeCode = "AI",
                 AssociatedSiteActivityCode = null,
                 IsActive = true
+            },
+            new()
+            {
+                IdentifierId = "5",
+                FacilityActivityCode = "LAF-HAT-NA",
+                AssociatedSiteTypeCode = "AH",
+                AssociatedSiteActivityCode = "HATCH",
+                IsActive = true
+            },
+            new()
+            {
+                IdentifierId = "6",
+                FacilityActivityCode = "LAF-HAT-NAIT",
+                AssociatedSiteTypeCode = "AH",
+                AssociatedSiteActivityCode = "HATCH-IT",
+                IsActive = true
             }
         });
 
@@ -96,6 +112,18 @@ public class SiteTypeDerivedCodeLookupServiceTests
                 IdentifierId = "afu-id",
                 Code = "AFU",
                 Name = "Approved Finishing Unit"
+            },
+            new()
+            {
+                IdentifierId = "hatch-id",
+                Code = "HATCH",
+                Name = "Hatchery"
+            },
+            new()
+            {
+                IdentifierId = "hatch-it-id",
+                Code = "HATCH-IT",
+                Name = "Hatchery IT"
             }
         });
     }
@@ -193,6 +221,60 @@ public class SiteTypeDerivedCodeLookupServiceTests
         result.Activities.Should().HaveCount(1);
         result.Activities[0].Code.Should().Be("STM");
         result.Activities[0].Name.Should().Be("Storage of Embryos/Semen from Livestock");
+    }
+
+    [Fact]
+    public void Resolve_WithSharedPrefixCodes_ShorterCode_ReturnsOnlyShorterMatch()
+    {
+        // Arrange - Test the LAF-HAT-NA scenario
+        // Both "LAF-HAT-NA" and "LAF-HAT-NAIT" exist in the maps
+        // When raw code contains only "LAF-HAT-NA", should only return HATCH
+
+        // Act
+        var result = _sut.Resolve("LAF-HAT-NA");
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.SiteTypeCode.Should().Be("AH");
+        result.Activities.Should().HaveCount(1);
+        result.Activities[0].Code.Should().Be("HATCH");
+        result.Activities[0].Name.Should().Be("Hatchery");
+    }
+
+    [Fact]
+    public void Resolve_WithSharedPrefixCodes_LongerCode_ReturnsOnlyLongerMatch()
+    {
+        // Arrange - Test the LAF-HAT-NAIT scenario
+        // Both "LAF-HAT-NA" and "LAF-HAT-NAIT" exist in the maps
+        // When raw code contains "LAF-HAT-NAIT", should only return HATCH-IT (not HATCH)
+
+        // Act
+        var result = _sut.Resolve("LAF-HAT-NAIT");
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.SiteTypeCode.Should().Be("AH");
+        result.Activities.Should().HaveCount(1);
+        result.Activities[0].Code.Should().Be("HATCH-IT");
+        result.Activities[0].Name.Should().Be("Hatchery IT");
+        result.Activities.Should().NotContain(a => a.Code == "HATCH");
+    }
+
+    [Fact]
+    public void Resolve_WithSharedPrefixCodes_BothCodesInString_ReturnsOnlyLongerMatch()
+    {
+        // Arrange - Both codes present in the raw string
+        // Should filter out the shorter one and return only the longer match
+
+        // Act
+        var result = _sut.Resolve("LAF-HAT-NA LAF-HAT-NAIT");
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.SiteTypeCode.Should().Be("AH");
+        result.Activities.Should().HaveCount(1);
+        result.Activities[0].Code.Should().Be("HATCH-IT");
+        result.Activities.Should().NotContain(a => a.Code == "HATCH");
     }
 
     [Fact]
