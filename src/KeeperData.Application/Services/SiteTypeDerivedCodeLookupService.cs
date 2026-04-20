@@ -75,6 +75,7 @@ public class SiteTypeDerivedCodeLookupService(
         {
             var isPartialMatch = hits.Any(otherHit =>
                 otherHit != hit &&
+                otherHit.FacilityActivityCode!.Length > hit.FacilityActivityCode!.Length &&
                 otherHit.FacilityActivityCode!.Contains(hit.FacilityActivityCode!, StringComparison.OrdinalIgnoreCase));
 
             if (!isPartialMatch)
