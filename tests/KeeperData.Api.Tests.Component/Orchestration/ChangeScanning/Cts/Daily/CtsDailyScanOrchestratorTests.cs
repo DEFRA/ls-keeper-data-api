@@ -35,14 +35,17 @@ public class CtsDailyScanOrchestratorTests(AppTestFixture appTestFixture) : ICla
         var firstScanTask = scope1.ServiceProvider.GetRequiredService<ICtsScanTask>();
         var secondScanTask = scope2.ServiceProvider.GetRequiredService<ICtsScanTask>();
 
-        // Act - Start first scan to hold the distributed lock
-        var firstCorrelationId = await firstScanTask.StartAsync();
+        // Act - Start both scans concurrently to ensure lock contention
+        var firstScanTaskExecution = firstScanTask.StartAsync();
+        var secondScanTaskExecution = secondScanTask.StartAsync();
 
-        // Act - Try to start second scan immediately (should fail to acquire lock)
-        var secondCorrelationId = await secondScanTask.StartAsync();
+        var results = await Task.WhenAll(firstScanTaskExecution, secondScanTaskExecution);
 
-        // Assert
-        firstCorrelationId.Should().NotBeNull("first orchestration should start successfully");
-        secondCorrelationId.Should().BeNull("second orchestration should fail due to distributed lock being held");
+        // Assert - One should succeed, one should fail
+        var successfulScans = results.Where(r => r != null).ToList();
+        var failedScans = results.Where(r => r == null).ToList();
+
+        successfulScans.Should().ContainSingle("exactly one orchestration should acquire the lock and start successfully");
+        failedScans.Should().ContainSingle("exactly one orchestration should fail to acquire the lock");
     }
 }

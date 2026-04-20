@@ -91,25 +91,11 @@ public static class ServiceCollectionExtensions
                     BsonSerializer.RegisterSerializer(typeof(Guid), new GuidSerializer(GuidRepresentation.Standard));
                     ConventionRegistry.Register("CamelCase", new ConventionPack { new CamelCaseElementNameConvention() }, _ => true);
 
-                    RegisterLegacyFieldSupport();
                     RegisterAllDocumentsFromAssembly(typeof(INestedEntity).Assembly);
 
                     s_mongoSerializersRegistered = true;
                 }
             }
-        }
-    }
-
-    private static void RegisterLegacyFieldSupport()
-    {
-        if (!BsonClassMap.IsClassMapRegistered(typeof(BaseHoldingDocument)))
-        {
-            BsonClassMap.RegisterClassMap<BaseHoldingDocument>(cm =>
-            {
-                cm.AutoMap();
-                cm.SetIgnoreExtraElements(true);
-                cm.SetIgnoreExtraElementsIsInherited(true);
-            });
         }
     }
 

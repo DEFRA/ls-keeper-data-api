@@ -1,78 +1,166 @@
+using FluentResults;
+using KeeperData.Core.Documents;
 using KeeperData.Core.Services;
 using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Application.Services;
 
 /// <summary>
-/// Resolves a raw FCLTY_SUB_BSNSS_ACTVTY_CODE string into a Site Type and zero or more Site Activities
-/// by performing substring matching against known facility derived codes from the mapping spreadsheet.
+/// Resolves a raw FCLTY_SUB_BSNSS_ACTVTY_CODE string into a Site Type and zero or more Site Activities.
+/// The raw code may contain multiple facility codes separated by commas, spaces, or other delimiters.
 /// </summary>
 public class SiteTypeDerivedCodeLookupService(
-    IReferenceDataCache cache,
+    IReferenceDataCache referenceDataCache,
     ILogger<SiteTypeDerivedCodeLookupService> logger) : ISiteTypeDerivedCodeLookupService
 {
-    private readonly IReferenceDataCache _cache = cache;
-    private readonly ILogger<SiteTypeDerivedCodeLookupService> _logger = logger;
+    private const string ErrorCodeMetadataKey = "ErrorCode";
+    private const string NoMappingFoundCode = "NO_MAPPING_FOUND";
+    private const string NoSiteTypeCode = "NO_SITE_TYPE";
+    private const string ConflictingSiteTypesCode = "CONFLICTING_SITE_TYPES";
+    private const string DefaultSiteTypeCode = "AH";
 
     public SiteTypeDerivedCodeResult? Resolve(string? rawFacilityDerivedCode)
     {
         if (string.IsNullOrWhiteSpace(rawFacilityDerivedCode))
-            return null;
+            return BuildDefaultResult();
 
-        var activityMaps = _cache.ActivityMaps;
-        if (activityMaps == null || activityMaps.Count == 0)
-            return null;
+        var result = ResolveInternal(rawFacilityDerivedCode);
 
-        // Perform substring matching: for each known facility derived code,
-        // check if it appears as a substring in the raw value.
-        var hits = activityMaps
+        if (!result.IsFailed) return result.Value;
+        var error = result.Errors[0];
+        var errorCode = error.Metadata.TryGetValue(ErrorCodeMetadataKey, out var value)
+            ? value?.ToString()
+            : "UNKNOWN";
+
+        logger.LogWarning(
+            "Failed to resolve facility code '{RawCode}': {ErrorMessage} (Code: {ErrorCode})",
+            rawFacilityDerivedCode,
+            error.Message,
+            errorCode);
+        return null;
+
+    }
+
+    private Result<SiteTypeDerivedCodeResult> ResolveInternal(string rawFacilityDerivedCode)
+    {
+        return FindAllFacilityCodesHits(rawFacilityDerivedCode)
+            .Bind(hits => FilterPartialMatches(hits, rawFacilityDerivedCode))
+            .Bind(hits => ValidateHasResults(hits, rawFacilityDerivedCode))
+            .Bind(hits => ResolveSiteTypeCode(hits, rawFacilityDerivedCode))
+            .Bind(context => ValidateSingleSiteType(context, rawFacilityDerivedCode))
+            .Map(BuildResult);
+    }
+
+    private Result<List<FacilityBusinessActivityMapDocument>> FindAllFacilityCodesHits(string rawFacilityDerivedCode)
+    {
+        var hits = referenceDataCache.ActivityMaps
             .Where(map => map.IsActive &&
                           !string.IsNullOrWhiteSpace(map.FacilityActivityCode) &&
                           rawFacilityDerivedCode.Contains(map.FacilityActivityCode, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        if (hits.Count == 0)
+        return Result.Ok(hits);
+    }
+
+    private Result<List<FacilityBusinessActivityMapDocument>> FilterPartialMatches(
+        List<FacilityBusinessActivityMapDocument> hits,
+        string rawFacilityDerivedCode)
+    {
+        if (hits.Count <= 1)
+            return Result.Ok(hits);
+
+        var filteredHits = new List<FacilityBusinessActivityMapDocument>();
+
+        foreach (var hit in hits)
         {
-            _logger.LogWarning(
-                "No facility derived code mapping found for raw value '{RawCode}'. Flagged for review.",
-                rawFacilityDerivedCode);
-            return null;
+            var isPartialMatch = hits.Any(otherHit =>
+                otherHit != hit &&
+                otherHit.FacilityActivityCode!.Length > hit.FacilityActivityCode!.Length &&
+                otherHit.FacilityActivityCode!.Contains(hit.FacilityActivityCode!, StringComparison.OrdinalIgnoreCase));
+
+            if (!isPartialMatch)
+            {
+                filteredHits.Add(hit);
+            }
         }
 
-        // Try to resolve via an activity mapping first, then fall back to site type only.
-        // Hits with an activity code take priority for determining the site type.
+        if (filteredHits.Count > 1)
+        {
+            logger.LogInformation(
+                "Multiple distinct facility derived code mappings found for raw value '{RawCode}': [{Codes}].",
+                rawFacilityDerivedCode,
+                string.Join(", ", filteredHits.Select(h => h.FacilityActivityCode)));
+        }
+
+        return Result.Ok(filteredHits);
+    }
+
+    private static Result<List<FacilityBusinessActivityMapDocument>> ValidateHasResults(
+        List<FacilityBusinessActivityMapDocument> hits,
+        string rawFacilityDerivedCode)
+    {
+        return hits.Count > 0
+            ? Result.Ok(hits)
+            : Result.Fail(new Error($"No facility derived code mapping found for raw value '{rawFacilityDerivedCode}'. Flagged for review.")
+                .WithMetadata(ErrorCodeMetadataKey, NoMappingFoundCode));
+    }
+
+    private static Result<ResolutionContext> ResolveSiteTypeCode(
+        List<FacilityBusinessActivityMapDocument> hits,
+        string rawFacilityDerivedCode)
+    {
         var hitsWithActivity = hits
             .Where(h => !string.IsNullOrWhiteSpace(h.AssociatedSiteActivityCode))
             .ToList();
 
-        var siteTypeCode =
-            // Use the site type from the first activity hit (they should all agree on site type
-            // given the spreadsheet structure, but we take the first as canonical).
-            hitsWithActivity.Count > 0 ? hitsWithActivity.First().AssociatedSiteTypeCode :
-            // No activity derived - use the site type from any hit.
-            hits.First().AssociatedSiteTypeCode;
+        var siteTypeCode = hitsWithActivity.Count > 0
+            ? hitsWithActivity[0].AssociatedSiteTypeCode
+            : hits[0].AssociatedSiteTypeCode;
 
         if (string.IsNullOrWhiteSpace(siteTypeCode))
         {
-            _logger.LogWarning(
-                "Facility derived code mapping for '{RawCode}' has no associated site type code. Flagged for review.",
-                rawFacilityDerivedCode);
-            return null;
+            return Result.Fail(new Error($"Facility derived code mapping for '{rawFacilityDerivedCode}' has no associated site type code. Flagged for review.")
+                .WithMetadata(ErrorCodeMetadataKey, NoSiteTypeCode));
         }
 
-        // Resolve site type name from the SiteTypes reference data cache.
-        var siteTypeDoc = _cache.SiteTypes
-            .FirstOrDefault(st => st.Code.Equals(siteTypeCode, StringComparison.OrdinalIgnoreCase));
-        var siteTypeName = siteTypeDoc?.Name ?? siteTypeCode;
+        return Result.Ok(new ResolutionContext(
+            hits,
+            hitsWithActivity,
+            siteTypeCode));
+    }
 
-        // Collect distinct activities from all hits.
-        var activities = hitsWithActivity
+    private static Result<ResolutionContext> ValidateSingleSiteType(
+        ResolutionContext context,
+        string rawFacilityDerivedCode)
+    {
+        var allSiteTypeCodes = context.AllHits
+            .Select(h => h.AssociatedSiteTypeCode)
+            .Where(st => !string.IsNullOrWhiteSpace(st))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (allSiteTypeCodes.Count > 1)
+        {
+            return Result.Fail(new Error($"Multiple facility codes in '{rawFacilityDerivedCode}' map to different site types: [{string.Join(", ", allSiteTypeCodes)}]. Cannot determine which to use.")
+                .WithMetadata(ErrorCodeMetadataKey, ConflictingSiteTypesCode));
+        }
+
+        return Result.Ok(context);
+    }
+
+    private SiteTypeDerivedCodeResult BuildResult(ResolutionContext context)
+    {
+        var siteTypeDoc = referenceDataCache.SiteTypes
+            .FirstOrDefault(st => st.Code.Equals(context.SiteTypeCode, StringComparison.OrdinalIgnoreCase));
+        var siteTypeName = siteTypeDoc?.Name ?? context.SiteTypeCode;
+
+        var activities = context.HitsWithActivity
             .Where(h => !string.IsNullOrWhiteSpace(h.AssociatedSiteActivityCode))
             .Select(h => h.AssociatedSiteActivityCode!)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Select(activityCode =>
             {
-                var activityDoc = _cache.SiteActivityTypes
+                var activityDoc = referenceDataCache.SiteActivityTypes
                     .FirstOrDefault(at => at.Code.Equals(activityCode, StringComparison.OrdinalIgnoreCase));
 
                 return new SiteTypeDerivedActivityResult
@@ -85,9 +173,28 @@ public class SiteTypeDerivedCodeLookupService(
 
         return new SiteTypeDerivedCodeResult
         {
-            SiteTypeCode = siteTypeCode,
+            SiteTypeCode = context.SiteTypeCode,
             SiteTypeName = siteTypeName,
             Activities = activities
         };
     }
+
+    private SiteTypeDerivedCodeResult BuildDefaultResult()
+    {
+        var siteTypeDoc = referenceDataCache.SiteTypes
+            .FirstOrDefault(st => st.Code.Equals(DefaultSiteTypeCode, StringComparison.OrdinalIgnoreCase));
+        var siteTypeName = siteTypeDoc?.Name ?? DefaultSiteTypeCode;
+
+        return new SiteTypeDerivedCodeResult
+        {
+            SiteTypeCode = DefaultSiteTypeCode,
+            SiteTypeName = siteTypeName,
+            Activities = []
+        };
+    }
+
+    private sealed record ResolutionContext(
+        List<FacilityBusinessActivityMapDocument> AllHits,
+        List<FacilityBusinessActivityMapDocument> HitsWithActivity,
+        string SiteTypeCode);
 }
