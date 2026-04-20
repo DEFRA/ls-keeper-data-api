@@ -121,8 +121,7 @@ public class ReferenceDataCache(IServiceScopeFactory scopeFactory, ILogger<Refer
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to load reference data into cache");
-            throw;
+            throw new InvalidOperationException("Failed to load reference data into cache", ex);
         }
         finally
         {

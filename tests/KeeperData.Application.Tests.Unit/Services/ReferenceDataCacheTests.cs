@@ -224,11 +224,11 @@ public class ReferenceDataCacheTests
     }
 
     [Fact]
-    public async Task InitializeAsync_WhenRepositoryThrowsException_LogsErrorAndThrows()
+    public async Task InitializeAsync_WhenRepositoryThrowsException_ThrowsInvalidOperationExceptionWithInnerException()
     {
         // Arrange
-        var exception = new InvalidOperationException("Database connection failed");
-        _countryRepository.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ThrowsAsync(exception);
+        var originalException = new Exception("Database connection failed");
+        _countryRepository.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ThrowsAsync(originalException);
 
         var cache = new ReferenceDataCache(_serviceScopeFactory.Object, _logger.Object);
 
@@ -236,17 +236,11 @@ public class ReferenceDataCacheTests
         Func<Task> act = async () => await cache.InitializeAsync();
 
         // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("Database connection failed");
+        var thrownException = await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Failed to load reference data into cache");
 
-        _logger.Verify(
-            x => x.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Failed to load reference data into cache")),
-                It.Is<Exception>(ex => ex == exception),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once);
+        thrownException.WithInnerException<Exception>()
+            .Which.Should().Be(originalException);
     }
 
     [Fact]
