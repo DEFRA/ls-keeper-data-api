@@ -17,10 +17,8 @@ public static class LocationMapper
             getCountryById,
             cancellationToken);
 
-        int? uprn = int.TryParse(incomingAddress?.UniquePropertyReferenceNumber, out var value) ? value : null;
-
         var updatedAddress = Address.Create(
-            uprn,
+            incomingAddress?.UniquePropertyReferenceNumber,
             incomingAddress?.AddressLine ?? string.Empty,
             incomingAddress?.AddressStreet,
             incomingAddress?.AddressTown,
