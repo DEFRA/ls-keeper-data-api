@@ -42,7 +42,7 @@ public static class ExpectedGoldSite
                 Address = new AddressDocument()
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
-                    Uprn = 25962203,
+                    Uprn = "25962203",
                     AddressLine1 = "1-3, 10-12",
                     AddressLine2 = "Market Square",
                     PostTown = "Oxford",
@@ -115,7 +115,7 @@ public static class ExpectedGoldSite
                     CorrespondanceAddress = new AddressDocument
                     {
                         IdentifierId = Guid.NewGuid().ToString(),
-                        Uprn = 25962203,
+                        Uprn = "25962203",
                         AddressLine1 = "1-3, 10-12",
                         AddressLine2 = "Elm Grove",
                         PostTown = "Manchester",
@@ -255,7 +255,7 @@ public static class ExpectedGoldSite
                     CorrespondanceAddress = new AddressDocument
                     {
                         IdentifierId = Guid.NewGuid().ToString(),
-                        Uprn = 25962203,
+                        Uprn = "25962203",
                         AddressLine1 = "1-3, 10-12",
                         AddressLine2 = "Elm Grove",
                         PostTown = "Manchester",
@@ -469,7 +469,7 @@ public static class ExpectedGoldSite
                     CorrespondanceAddress = new AddressDocument
                     {
                         IdentifierId = Guid.NewGuid().ToString(),
-                        Uprn = 25962203,
+                        Uprn = "25962203",
                         AddressLine1 = "1-3, 10-12",
                         AddressLine2 = "Elm Grove",
                         PostTown = "Manchester",
@@ -545,7 +545,7 @@ public static class ExpectedGoldSite
                     CorrespondanceAddress = new AddressDocument
                     {
                         IdentifierId = Guid.NewGuid().ToString(),
-                        Uprn = 25962203,
+                        Uprn = "25962203",
                         AddressLine1 = "1-3, 10-12",
                         AddressLine2 = "Elm Grove",
                         PostTown = "Manchester",

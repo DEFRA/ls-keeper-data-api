@@ -282,7 +282,7 @@ public class SiteDocumentExtensionsTests
         var addressDocument = new AddressDocument
         {
             IdentifierId = "addr-1",
-            Uprn = 10002345,
+            Uprn = "10002345",
             AddressLine1 = "10 Downing Street",
             AddressLine2 = "Westminster",
             PostTown = "London",
@@ -322,7 +322,7 @@ public class SiteDocumentExtensionsTests
         // Assert
         result.Location!.Address.Should().NotBeNull();
         var address = result.Location.Address!;
-        address.Uprn.Should().Be(10002345);
+        address.Uprn.Should().Be("10002345");
         address.AddressLine1.Should().Be("10 Downing Street");
         address.Postcode.Should().Be("SW1A 2AA");
         address.Country.Should().NotBeNull();
