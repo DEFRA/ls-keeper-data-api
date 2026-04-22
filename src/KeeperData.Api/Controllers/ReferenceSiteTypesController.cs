@@ -31,7 +31,8 @@ public class ReferenceSiteTypesController(IRequestExecutor executor) : Controlle
     /// <response code="400">Invalid request</response>
     /// <response code="401">Access token is not set or invalid.</response>
     /// <response code="403">The requestor is not authorized to perform this operation on the resource.</response>
-    /// <response code="500">Internal server error</response>[HttpGet]
+    /// <response code="500">Internal server error</response>
+    [HttpGet]
     [ProducesResponseType(typeof(ReferenceSiteTypeListResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
