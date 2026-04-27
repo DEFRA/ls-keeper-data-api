@@ -36,7 +36,7 @@ public class SiteIdentifierDto
 /// <summary>
 /// The type which identifies the site identifier.
 /// </summary>
-public class SiteIdentifierTypeDto: ISummaryDto
+public class SiteIdentifierTypeDto : ISummaryDto
 {
     /// <summary>
     /// This is an immutable field which represents the golden key of the reference object.

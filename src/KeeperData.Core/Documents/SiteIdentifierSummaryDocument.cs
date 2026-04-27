@@ -8,7 +8,7 @@ namespace KeeperData.Core.Documents;
 /// <summary>
 /// The type which identifies the site identifier.
 /// </summary>
-public class SiteIdentifierSummaryDocument: ISummaryDocument
+public class SiteIdentifierSummaryDocument : ISummaryDocument
 {
     /// <summary>
     /// This is an immutable field which represents the golden key of the reference object.
