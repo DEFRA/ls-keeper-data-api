@@ -36,27 +36,27 @@ public class SiteIdentifierDto
 /// <summary>
 /// The type which identifies the site identifier.
 /// </summary>
-public class SiteIdentifierTypeDto: ISummaryDto
+public class SiteIdentifierTypeDto : ISummaryDto
 {
     /// <summary>
     /// This is an immutable field which represents the golden key of the reference object.
     /// </summary>
     [JsonPropertyName("id")]
-    public string IdentifierId { get; set; }
+    public string IdentifierId { get; set; } = string.Empty;
 
     /// <summary>
     /// The business key/code values for a Site Identifier Type.
     /// </summary>
     /// <example>CPHN</example>
     [JsonPropertyName("code")]
-    public string Code { get; set; }
+    public string Code { get; set; } = string.Empty;
 
     /// <summary>
     /// The type which identifies the site identifier.
     /// </summary>
     /// <example>CPH Number</example>
     [JsonPropertyName("name")]
-    public string Name { get; set; }
+    public string Name { get; set; } = string.Empty;
 
     /// <summary>
     /// The timestamp of the last time the SiteIdentifier Type record was updated.
