@@ -28,13 +28,25 @@ public class GetPartyByIdQueryHandlerTests
     }
 
     [Fact]
-    public async Task GivenPartyDoesExistWhenGettingDocumentItShouldReturnRequestedDocument()
+    public async Task GivenPartyDoesExistWhenGettingDocumentItShouldReturnDto()
     {
-        var expectedDocument = new PartyDocument { Id = PartyIdThatExists };
-        mockRepo.Setup(x => x.GetByIdAsync(PartyIdThatExists, Token)).Returns(Task.FromResult(expectedDocument));
+        var expectedDocument = new PartyDocument
+        {
+            Id = PartyIdThatExists,
+            FirstName = "John",
+            LastName = "Doe",
+            Name = "John Doe",
+            CustomerNumber = "C77473"
+        };
+        mockRepo.Setup(x => x.GetByIdAsync(PartyIdThatExists, Token)).ReturnsAsync(expectedDocument);
 
         var result = await sut.Handle(new GetPartyByIdQuery(PartyIdThatExists), Token);
 
-        result.Should().Be(expectedDocument);
+        result.Should().NotBeNull();
+        result.Id.Should().Be(PartyIdThatExists);
+        result.FirstName.Should().Be("John");
+        result.LastName.Should().Be("Doe");
+        result.Name.Should().Be("John Doe");
+        result.CustomerNumber.Should().Be("C77473");
     }
 }

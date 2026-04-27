@@ -1,10 +1,10 @@
 using FluentValidation;
 using KeeperData.Application.Configuration;
-using KeeperData.Core.Documents;
+using KeeperData.Core.DTOs;
 
 namespace KeeperData.Application.Queries.Parties;
 
-public class GetPartiesQuery : IPagedQuery<PartyDocument>
+public class GetPartiesQuery : IPagedQuery<PartyDto>
 {
     public string? FirstName { get; set; }
     public string? LastName { get; set; }

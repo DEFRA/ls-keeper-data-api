@@ -1,16 +1,25 @@
 using KeeperData.Application.Queries.Pagination;
 using KeeperData.Application.Queries.Parties.Adapters;
-using KeeperData.Core.Documents;
+using KeeperData.Core.DTOs;
+using MediatR;
 
 namespace KeeperData.Application.Queries.Parties;
 
 public class GetPartiesQueryHandler(PartiesQueryAdapter adapter)
-    : PagedQueryHandler<GetPartiesQuery, PartyDocument>
+    : IRequestHandler<GetPartiesQuery, PaginatedResult<PartyDto>>
 {
-    private readonly PartiesQueryAdapter _adapter = adapter;
-
-    protected override async Task<(List<PartyDocument> Items, int TotalCount, string? NextCursor)> FetchAsync(GetPartiesQuery request, CancellationToken cancellationToken)
+    public async Task<PaginatedResult<PartyDto>> Handle(GetPartiesQuery request, CancellationToken cancellationToken)
     {
-        return await _adapter.GetPartiesAsync(request, cancellationToken);
+        var (items, totalCount, nextCursor) = await adapter.GetPartiesAsync(request, cancellationToken);
+
+        return new PaginatedResult<PartyDto>
+        {
+            Count = items.Count,
+            TotalCount = totalCount,
+            Values = items,
+            Page = request.Page,
+            PageSize = request.PageSize,
+            NextCursor = nextCursor
+        };
     }
 }
