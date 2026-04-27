@@ -5,7 +5,7 @@ namespace KeeperData.Core.DTOs;
 /// <summary>
 /// The type of site an animal may reside at.
 /// </summary>
-public class SiteTypeSummaryDto
+public class SiteTypeSummaryDto: ISummaryDto
 {
     /// <summary>
     /// This is an immutable field which represents the golden key of the reference object.

@@ -1,4 +1,5 @@
 using KeeperData.Core.DTOs;
+using KeeperData.Core.Repositories;
 
 namespace KeeperData.Core.Documents;
 
@@ -45,27 +46,17 @@ public static class PartyDocumentExtensions
         LastUpdatedDate = doc.LastUpdatedDate
     };
 
-    private static SiteTypeSummaryDto ToDto(this SiteTypeSummaryDocument doc) => new()
-    {
-        IdentifierId = doc.IdentifierId,
-        Code = doc.Code,
-        Name = doc.Name,
-        LastUpdatedDate = doc.LastUpdatedDate
-    };
+    private static SiteTypeSummaryDto ToDto(this SiteTypeSummaryDocument doc) =>
+        MapSummaryToDto<SiteTypeSummaryDto>(doc);
+
+    private static SiteIdentifierTypeDto ToDto(this SiteIdentifierSummaryDocument doc) =>
+        MapSummaryToDto<SiteIdentifierTypeDto>(doc);
 
     private static SiteIdentifierDto ToDto(this SiteIdentifierDocument doc) => new()
     {
         IdentifierId = doc.IdentifierId,
         Identifier = doc.Identifier,
         Type = doc.Type.ToDto(),
-        LastUpdatedDate = doc.LastUpdatedDate
-    };
-
-    private static SiteIdentifierTypeDto ToDto(this SiteIdentifierSummaryDocument doc) => new()
-    {
-        IdentifierId = doc.IdentifierId,
-        Code = doc.Code,
-        Name = doc.Name,
         LastUpdatedDate = doc.LastUpdatedDate
     };
 
@@ -118,6 +109,14 @@ public static class PartyDocumentExtensions
         Name = doc.Name,
         StartDate = doc.StartDate,
         EndDate = doc.EndDate,
+        LastUpdatedDate = doc.LastUpdatedDate
+    };
+
+    private static TDto MapSummaryToDto<TDto>(ISummaryDocument doc) where TDto : ISummaryDto, new() => new()
+    {
+        IdentifierId = doc.IdentifierId,
+        Code = doc.Code,
+        Name = doc.Name,
         LastUpdatedDate = doc.LastUpdatedDate
     };
 }

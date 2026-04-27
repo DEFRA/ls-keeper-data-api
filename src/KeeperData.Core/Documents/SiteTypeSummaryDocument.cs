@@ -8,7 +8,7 @@ namespace KeeperData.Core.Documents;
 /// <summary>
 /// The type of site an animal may reside at.
 /// </summary>
-public class SiteTypeSummaryDocument : INestedEntity
+public class SiteTypeSummaryDocument : INestedEntity, ISummaryDocument
 {
     /// <summary>
     /// This is an immutable field which represents the golden key of the reference object.
