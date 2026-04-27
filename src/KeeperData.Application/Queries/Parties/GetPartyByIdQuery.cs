@@ -1,9 +1,9 @@
 using FluentValidation;
-using KeeperData.Core.Documents;
+using KeeperData.Core.DTOs;
 
 namespace KeeperData.Application.Queries.Parties;
 
-public record GetPartyByIdQuery(string Id) : IQuery<PartyDocument>;
+public record GetPartyByIdQuery(string Id) : IQuery<PartyDto>;
 
 /// <summary>
 /// Example implementation only. To remove in future stories.
