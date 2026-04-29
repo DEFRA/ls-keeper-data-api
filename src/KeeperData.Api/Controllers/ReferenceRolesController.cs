@@ -1,6 +1,6 @@
-using KeeperData.Api.Controllers.RequestDtos.Roles;
+using KeeperData.Api.Controllers.RequestDtos.ReferenceRoles;
 using KeeperData.Application;
-using KeeperData.Application.Queries.Roles;
+using KeeperData.Application.Queries.ReferenceRoles;
 using KeeperData.Core.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,11 +12,11 @@ namespace KeeperData.Api.Controllers;
 /// </summary>
 [Authorize(Policy = "BasicOrBearer")]
 [ApiController]
-[Route("api/reference/[controller]")]
+[Route("api/reference/roles")]
 [ApiExplorerSettings(GroupName = "public")]
 [Produces("application/json")]
 [Tags("site reference")]
-public class RolesController(IRequestExecutor executor) : ControllerBase
+public class ReferenceRolesController(IRequestExecutor executor) : ControllerBase
 {
     private readonly IRequestExecutor _executor = executor;
 
@@ -39,9 +39,9 @@ public class RolesController(IRequestExecutor executor) : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-    public async Task<IActionResult> GetRoles([FromQuery] GetRolesRequest request)
+    public async Task<IActionResult> GetRoles([FromQuery] GetReferenceRolesRequest request)
     {
-        var query = new GetRolesQuery
+        var query = new GetReferenceRolesQuery
         {
             LastUpdatedDate = request.LastUpdatedDate
         };
@@ -74,7 +74,7 @@ public class RolesController(IRequestExecutor executor) : ControllerBase
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> GetRoleById(string id)
     {
-        var result = await _executor.ExecuteQuery(new GetRoleByIdQuery(id));
+        var result = await _executor.ExecuteQuery(new GetReferenceRoleByIdQuery(id));
         return Ok(result);
     }
 }

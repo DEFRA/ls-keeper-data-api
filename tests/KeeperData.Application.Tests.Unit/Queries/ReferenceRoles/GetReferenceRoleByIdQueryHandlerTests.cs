@@ -1,22 +1,22 @@
 using FluentAssertions;
-using KeeperData.Application.Queries.Roles;
+using KeeperData.Application.Queries.ReferenceRoles;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Repositories;
 using Moq;
 using Xunit;
 
-namespace KeeperData.Application.Tests.Unit.Queries.Roles;
+namespace KeeperData.Application.Tests.Unit.Queries.ReferenceRoles;
 
-public class GetRoleByIdQueryHandlerTests
+public class GetReferenceRoleByIdQueryHandlerTests
 {
     private readonly Mock<IRoleRepository> _repositoryMock;
-    private readonly GetRoleByIdQueryHandler _sut;
+    private readonly GetReferenceRoleByIdQueryHandler _sut;
 
-    public GetRoleByIdQueryHandlerTests()
+    public GetReferenceRoleByIdQueryHandlerTests()
     {
         _repositoryMock = new Mock<IRoleRepository>();
-        _sut = new GetRoleByIdQueryHandler(_repositoryMock.Object);
+        _sut = new GetReferenceRoleByIdQueryHandler(_repositoryMock.Object);
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public class GetRoleByIdQueryHandlerTests
         _repositoryMock.Setup(r => r.GetByIdAsync(roleId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockDoc);
 
-        var query = new GetRoleByIdQuery(roleId);
+        var query = new GetReferenceRoleByIdQuery(roleId);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
@@ -58,7 +58,7 @@ public class GetRoleByIdQueryHandlerTests
         _repositoryMock.Setup(r => r.GetByIdAsync(roleId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((RoleDocument)null!);
 
-        var query = new GetRoleByIdQuery(roleId);
+        var query = new GetReferenceRoleByIdQuery(roleId);
 
         // Act
         var act = async () => await _sut.Handle(query, CancellationToken.None);
