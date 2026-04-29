@@ -41,7 +41,7 @@ public static class ExpectedGoldParties
                 CorrespondanceAddress = new AddressDocument
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
-                    Uprn = 25962203,
+                    Uprn = "25962203",
                     AddressLine1 = "1-3, 10-12",
                     AddressLine2 = "Elm Grove",
                     PostTown = "Manchester",
@@ -60,10 +60,10 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                            // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
-                            // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+                            // SiteType and SiteActivityType Removed in 'ULITP-3974'
+                            // Once code list & approach defined, 'SiteActivityTypeCode' & 'SiteTypeCode' to be added back in.
                             Type = null,
-                            //Type = new PremisesTypeSummaryDocument
+                            //Type = new SiteTypeSummaryDocument
                             //{
                             //    IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
                             //    Code = "AH",
@@ -134,10 +134,10 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                             // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
-                            // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+                             // SiteType and SiteActivityType Removed in 'ULITP-3974'
+                            // Once code list & approach defined, 'SiteActivityTypeCode' & 'SiteTypeCode' to be added back in.
                             Type = null,
-                            //Type = new PremisesTypeSummaryDocument
+                            //Type = new SiteTypeSummaryDocument
                             //{
                             //    IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
                             //    Code = "AH",
@@ -208,10 +208,10 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                             // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
-                            // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+                             // SiteType and SiteActivityType Removed in 'ULITP-3974'
+                            // Once code list & approach defined, 'SiteActivityTypeCode' & 'SiteTypeCode' to be added back in.
                             Type = null,
-                            //Type = new PremisesTypeSummaryDocument
+                            //Type = new SiteTypeSummaryDocument
                             //{
                             //    IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
                             //    Code = "AH",
@@ -278,7 +278,7 @@ public static class ExpectedGoldParties
                 CorrespondanceAddress = new AddressDocument
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
-                    Uprn = 25962203,
+                    Uprn = "25962203",
                     AddressLine1 = "1-3, 10-12",
                     AddressLine2 = "Elm Grove",
                     PostTown = "Manchester",
@@ -297,10 +297,10 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                             // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
-                            // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+                             // SiteType and SiteActivityType Removed in 'ULITP-3974'
+                            // Once code list & approach defined, 'SiteActivityTypeCode' & 'SiteTypeCode' to be added back in.
                             Type = null,
-                            //Type = new PremisesTypeSummaryDocument
+                            //Type = new SiteTypeSummaryDocument
                             //{
                             //    IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
                             //    Code = "AH",
@@ -400,7 +400,7 @@ public static class ExpectedGoldParties
                 CorrespondanceAddress = new AddressDocument
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
-                    Uprn = 25962203,
+                    Uprn = "25962203",
                     AddressLine1 = "1-3, 10-12",
                     AddressLine2 = "Elm Grove",
                     PostTown = "Manchester",
@@ -419,10 +419,10 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                             // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
-                            // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+                             // SiteType and SiteActivityType Removed in 'ULITP-3974'
+                            // Once code list & approach defined, 'SiteActivityTypeCode' & 'SiteTypeCode' to be added back in.
                             Type = null,
-                            //Type = new PremisesTypeSummaryDocument
+                            //Type = new SiteTypeSummaryDocument
                             //{
                             //    IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
                             //    Code = "AH",
@@ -509,7 +509,7 @@ public static class ExpectedGoldParties
                 CorrespondanceAddress = new AddressDocument
                 {
                     IdentifierId = Guid.NewGuid().ToString(),
-                    Uprn = 25962203,
+                    Uprn = "25962203",
                     AddressLine1 = "1-3, 10-12",
                     AddressLine2 = "Elm Grove",
                     PostTown = "Manchester",
@@ -528,10 +528,10 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                             // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
-                            // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+                             // SiteType and SiteActivityType Removed in 'ULITP-3974'
+                            // Once code list & approach defined, 'SiteActivityTypeCode' & 'SiteTypeCode' to be added back in.
                             Type = null,
-                            //Type = new PremisesTypeSummaryDocument
+                            //Type = new SiteTypeSummaryDocument
                             //{
                             //    IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
                             //    Code = "AH",
@@ -573,10 +573,10 @@ public static class ExpectedGoldParties
                         {
                             IdentifierId = s_siteId,
                             Name = "North Market Farm",
-                             // PremiseType and PremiseActivityType Removed in 'ULITP-3974'
-                            // Once code list & approach defined, 'PremiseActivityTypeCode' & 'PremiseTypeCode' to be added back in.
+                             // SiteType and SiteActivityType Removed in 'ULITP-3974'
+                            // Once code list & approach defined, 'SiteActivityTypeCode' & 'SiteTypeCode' to be added back in.
                             Type = null,
-                            //Type = new PremisesTypeSummaryDocument
+                            //Type = new SiteTypeSummaryDocument
                             //{
                             //    IdentifierId = "d819dc18-f5a1-4d1a-b332-d18f9d1f9227",
                             //    Code = "AH",

@@ -1,18 +1,17 @@
 using KeeperData.Core.Documents;
+using KeeperData.Core.DTOs;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Repositories;
 
 namespace KeeperData.Application.Queries.Sites;
 
-public class GetSiteByIdQueryHandler(IGenericRepository<SiteDocument> repository) : IQueryHandler<GetSiteByIdQuery, SiteDocument>
+public class GetSiteByIdQueryHandler(IGenericRepository<SiteDocument> repository) : IQueryHandler<GetSiteByIdQuery, SiteDto>
 {
-    private readonly IGenericRepository<SiteDocument> _repository = repository;
-
-    public async Task<SiteDocument> Handle(GetSiteByIdQuery request, CancellationToken cancellationToken)
+    public async Task<SiteDto> Handle(GetSiteByIdQuery request, CancellationToken cancellationToken)
     {
-        var document = await _repository.GetByIdAsync(request.Id, cancellationToken)
-            ?? throw new NotFoundException($"Document with Id {request.Id} not found.");
+        var document = await repository.GetByIdAsync(request.Id, cancellationToken)
+                       ?? throw new NotFoundException($"Document with Id {request.Id} not found.");
 
-        return document;
+        return document.ToDto();
     }
 }

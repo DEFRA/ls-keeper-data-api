@@ -292,11 +292,11 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? input, string? internalCode, CancellationToken token) => (Guid.NewGuid().ToString(), input, input));
 
-        _appTestFixture.AppWebApplicationFactory._premiseActivityTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._siteActivityTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
-        _appTestFixture.AppWebApplicationFactory._premiseTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._siteTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 

@@ -1,6 +1,7 @@
 using FluentAssertions;
 using KeeperData.Application.Queries.Sites;
 using KeeperData.Core.Documents;
+using KeeperData.Core.DTOs;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Repositories;
 using Moq;
@@ -30,11 +31,19 @@ public class GetSiteByIdQueryHandlerTests
     [Fact]
     public async Task GivenSiteDoesExistWhenGettingDocumentItShouldReturnRequestedDocument()
     {
-        var expectedDocument = new SiteDocument { Id = SiteIdThatExists };
-        mockRepo.Setup(x => x.GetByIdAsync(SiteIdThatExists, Token)).Returns(Task.FromResult(expectedDocument));
+        var siteDocument = new SiteDocument
+        {
+            Id = SiteIdThatExists,
+            Name = "Test Site",
+            StartDate = DateTime.UtcNow
+        };
+        mockRepo.Setup(x => x.GetByIdAsync(SiteIdThatExists, Token)).ReturnsAsync(siteDocument);
 
         var result = await sut.Handle(new GetSiteByIdQuery(SiteIdThatExists), Token);
 
-        result.Should().Be(expectedDocument);
+        result.Should().NotBeNull();
+        result.Id.Should().Be(SiteIdThatExists);
+        result.Name.Should().Be("Test Site");
+        result.StartDate.Should().Be(siteDocument.StartDate);
     }
 }

@@ -4,7 +4,7 @@ namespace KeeperData.Application.Services;
 
 public class ActivityCodeLookupService(IReferenceDataCache cache) : IActivityCodeLookupService
 {
-    public Task<(string? premiseType, string? premiseActivityType)> FindByActivityCodeAsync(string? activityCode, CancellationToken cancellationToken)
+    public Task<(string? siteType, string? siteActivityType)> FindByActivityCodeAsync(string? activityCode, CancellationToken cancellationToken)
     {
         if (activityCode == null)
             return Task.FromResult<(string?, string?)>((null, null));
@@ -12,6 +12,6 @@ public class ActivityCodeLookupService(IReferenceDataCache cache) : IActivityCod
         var result = cache.ActivityMaps.FirstOrDefault(s =>
             s.FacilityActivityCode.Equals(activityCode, StringComparison.OrdinalIgnoreCase));
 
-        return Task.FromResult((result?.AssociatedPremiseTypeCode, result?.AssociatedPremiseActivityCode));
+        return Task.FromResult((result?.AssociatedSiteTypeCode, result?.AssociatedSiteActivityCode));
     }
 }

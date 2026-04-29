@@ -38,11 +38,11 @@ public static class CtsHoldingMapper
             HoldingEndDate = h.LOC_EFFECTIVE_TO,
             HoldingStatus = HoldingStatusFormatters.FormatHoldingStatus(h.IsDeleted ?? false),
 
-            PremiseActivityTypeId = null,
-            PremiseActivityTypeCode = null,
+            SiteActivityTypeId = null,
+            SiteActivityTypeCode = null,
 
-            PremiseTypeIdentifier = null,
-            PremiseTypeCode = null,
+            SiteTypeIdentifier = null,
+            SiteTypeCode = null,
 
             Location = new LocationDocument
             {

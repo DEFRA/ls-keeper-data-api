@@ -25,16 +25,18 @@ public class PartiesQueryAdapterTests
     public async Task GetPartiesAsync_WithNoCursor_ShouldFallbackToSkip()
     {
         var query = new GetPartiesQuery { Page = 2, PageSize = 10, Order = "name", Sort = "asc" };
-        var expectedItems = new List<PartyDocument> { new() { Id = "1", Name = "A" } };
+        var documents = new List<PartyDocument> { new() { Id = "1", Name = "A" } };
 
         _repositoryMock.Setup(x => x.CountAsync(It.IsAny<FilterDefinition<PartyDocument>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
         _repositoryMock.Setup(x => x.FindAsync(It.IsAny<FilterDefinition<PartyDocument>>(), It.IsAny<SortDefinition<PartyDocument>>(), 10, 10, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedItems);
+            .ReturnsAsync(documents);
 
         var (items, count, nextCursor) = await _adapter.GetPartiesAsync(query);
 
-        items.Should().BeEquivalentTo(expectedItems);
+        items.Should().HaveCount(1);
+        items[0].Id.Should().Be("1");
+        items[0].Name.Should().Be("A");
         count.Should().Be(1);
         nextCursor.Should().BeNull();
     }
@@ -67,14 +69,16 @@ public class PartiesQueryAdapterTests
     {
         var cursor = CursorHelper.Encode("Smith", "123");
         var query = new GetPartiesQuery { PageSize = 10, Cursor = cursor, Order = "name", Sort = sortDirection };
-        var expectedItems = new List<PartyDocument> { new() { Id = "1", Name = "A" } };
+        var documents = new List<PartyDocument> { new() { Id = "1", Name = "A" } };
 
         _repositoryMock.Setup(x => x.FindAsync(It.IsAny<FilterDefinition<PartyDocument>>(), It.IsAny<SortDefinition<PartyDocument>>(), 0, 10, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedItems);
+            .ReturnsAsync(documents);
 
         var (items, count, nextCursor) = await _adapter.GetPartiesAsync(query);
 
-        items.Should().BeEquivalentTo(expectedItems);
+        items.Should().HaveCount(1);
+        items[0].Id.Should().Be("1");
+        items[0].Name.Should().Be("A");
         // Verifies skip was 0
         _repositoryMock.Verify(x => x.FindAsync(It.IsAny<FilterDefinition<PartyDocument>>(), It.IsAny<SortDefinition<PartyDocument>>(), 0, 10, It.IsAny<CancellationToken>()), Times.Once);
     }

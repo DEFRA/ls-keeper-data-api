@@ -1,13 +1,14 @@
 using KeeperData.Core.Domain.Sites;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
+using KeeperData.Core.Repositories;
 
 namespace KeeperData.Core.Documents;
 
 /// <summary>
 /// The type which identifies the site identifier.
 /// </summary>
-public class SiteIdentifierSummaryDocument
+public class SiteIdentifierSummaryDocument : ISummaryDocument
 {
     /// <summary>
     /// This is an immutable field which represents the golden key of the reference object.

@@ -74,9 +74,9 @@ public class AppWebApplicationFactory(
     public readonly Mock<IScanStateRepository> _scanStateRepositoryMock = new();
 
     public readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
-    public readonly Mock<IPremiseActivityTypeLookupService> _premiseActivityTypeLookupServiceMock = new();
+    public readonly Mock<ISiteActivityTypeLookupService> _siteActivityTypeLookupServiceMock = new();
     public readonly Mock<IActivityCodeLookupService> _activityCodeLookupServiceMock = new();
-    public readonly Mock<IPremiseTypeLookupService> _premiseTypeLookupServiceMock = new();
+    public readonly Mock<ISiteTypeLookupService> _siteTypeLookupServiceMock = new();
     public readonly Mock<IProductionTypeLookupService> _productionTypeLookupServiceMock = new();
     public readonly Mock<IProductionUsageLookupService> _productionUsageLookupServiceMock = new();
     public readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
@@ -84,6 +84,8 @@ public class AppWebApplicationFactory(
     public readonly Mock<ISiteIdentifierTypeLookupService> _siteIdentifierTypeLookupServiceMock = new();
 
     public readonly Mock<IRequestHandler<ProcessSamImportHoldingMessageCommand, MessageType>> _samImportHoldingMessageHandlerMock = new();
+
+    public readonly Mock<IReferenceDataCache> _referenceDataCacheMock = new();
 
     private readonly List<Action<IServiceCollection>> _overrideServices = [];
     private readonly IDictionary<string, string?> _configurationOverrides = configurationOverrides ?? new Dictionary<string, string?>();
@@ -143,6 +145,7 @@ public class AppWebApplicationFactory(
             ConfigureDatabase(services);
 
             ConfigureMessageConsumers(services);
+            ConfigureReferenceDataCache(services);
 
             services.AddHttpClient("DataBridgeApi")
                 .ConfigurePrimaryHttpMessageHandler(() => DataBridgeApiClientHttpMessageHandlerMock.Object);
@@ -228,6 +231,12 @@ public class AppWebApplicationFactory(
         ResetTransientServiceMocks();
         ResetTestMessageHandlerMocks();
         ResetDistributedLockMock();
+        ResetReferenceDataCache();
+    }
+
+    private void ResetReferenceDataCache()
+    {
+        _referenceDataCacheMock.Reset();
     }
 
     private void ResetDistributedLockMock()
@@ -294,6 +303,20 @@ public class AppWebApplicationFactory(
         services.AddScoped<IQueuePollerObserver<MessageType>>(sp => sp.GetRequiredService<TestQueuePollerObserver<MessageType>>());
     }
 
+    private void ConfigureReferenceDataCache(IServiceCollection services)
+    {
+        // Configure Reference Data Cache Mock
+        _referenceDataCacheMock.Setup(c => c.SiteTypeMaps).Returns(new List<SiteTypeMapDocument>());
+        _referenceDataCacheMock.Setup(c => c.Countries).Returns(new List<CountryDocument>());
+        _referenceDataCacheMock.Setup(c => c.Species).Returns(new List<SpeciesDocument>());
+        _referenceDataCacheMock.Setup(c => c.Roles).Returns(new List<RoleDocument>());
+        _referenceDataCacheMock.Setup(c => c.SiteTypes).Returns(new List<SiteTypeDocument>());
+        _referenceDataCacheMock.Setup(c => c.SiteActivityTypes).Returns(new List<SiteActivityTypeDocument>());
+        _referenceDataCacheMock.Setup(c => c.SiteIdentifierTypes).Returns(new List<SiteIdentifierTypeDocument>());
+        _referenceDataCacheMock.Setup(c => c.ProductionUsages).Returns(new List<ProductionUsageDocument>());
+        _referenceDataCacheMock.Setup(c => c.ActivityMaps).Returns(new List<FacilityBusinessActivityMapDocument>());
+    }
+
     private void ConfigureRepositories()
     {
         OverrideServiceAsScoped(_sitesRepositoryMock.Object);
@@ -314,6 +337,8 @@ public class AppWebApplicationFactory(
         OverrideServiceAsScoped(_countryRepositoryMock.Object);
 
         OverrideServiceAsSingleton(_scanStateRepositoryMock.Object);
+
+        OverrideServiceAsSingleton(_referenceDataCacheMock.Object);
 
         ConfigureDefaultRepositoryBehavior();
     }
@@ -361,9 +386,9 @@ public class AppWebApplicationFactory(
     private void ConfigureTransientServices()
     {
         OverrideServiceAsTransient(_countryIdentifierLookupServiceMock.Object);
-        OverrideServiceAsTransient(_premiseActivityTypeLookupServiceMock.Object);
+        OverrideServiceAsTransient(_siteActivityTypeLookupServiceMock.Object);
         OverrideServiceAsTransient(_activityCodeLookupServiceMock.Object);
-        OverrideServiceAsTransient(_premiseTypeLookupServiceMock.Object);
+        OverrideServiceAsTransient(_siteTypeLookupServiceMock.Object);
         OverrideServiceAsTransient(_productionTypeLookupServiceMock.Object);
         OverrideServiceAsTransient(_productionUsageLookupServiceMock.Object);
         OverrideServiceAsTransient(_roleTypeLookupServiceMock.Object);
@@ -374,8 +399,8 @@ public class AppWebApplicationFactory(
     private void ResetTransientServiceMocks()
     {
         _countryIdentifierLookupServiceMock.Reset();
-        _premiseActivityTypeLookupServiceMock.Reset();
-        _premiseTypeLookupServiceMock.Reset();
+        _siteActivityTypeLookupServiceMock.Reset();
+        _siteTypeLookupServiceMock.Reset();
         _productionTypeLookupServiceMock.Reset();
         _productionUsageLookupServiceMock.Reset();
         _roleTypeLookupServiceMock.Reset();

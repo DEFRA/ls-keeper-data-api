@@ -1,10 +1,10 @@
 using FluentValidation;
 using KeeperData.Application.Configuration;
-using KeeperData.Core.Documents;
+using KeeperData.Core.DTOs;
 
 namespace KeeperData.Application.Queries.Sites;
 
-public class GetSitesQuery : IPagedQuery<SiteDocument>
+public class GetSitesQuery : IPagedQuery<SiteDto>
 {
     public string? SiteIdentifier { get; set; }
     public List<string>? SiteIdentifiers { get; set; }

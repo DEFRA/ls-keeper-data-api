@@ -1,3 +1,4 @@
+using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Repositories;
@@ -49,10 +50,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISpeciesRepository, SpeciesRepository>();
         services.AddScoped<IFacilityBusinessActivityMapRepository, FacilityBusinessActivityMapRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
-        services.AddScoped<IPremisesTypeRepository, PremisesTypeRepository>();
-        services.AddScoped<IPremisesActivityTypeRepository, PremisesActivityTypeRepository>();
+        services.AddScoped<ISiteTypeRepository, SiteTypeRepository>();
+        services.AddScoped<ISiteActivityTypeRepository, SiteActivityTypeRepository>();
         services.AddScoped<IProductionUsageRepository, ProductionUsageRepository>();
         services.AddScoped<ISiteIdentifierTypeRepository, SiteIdentifierTypeRepository>();
+        services.AddScoped<ISiteTypeMapRepository, SiteTypeMapRepository>();
         services.AddScoped<ISitesRepository, SitesRepository>();
         services.AddScoped<IPartiesRepository, PartiesRepository>();
         services.AddScoped<IGoldSitePartyRoleRelationshipRepository, GoldSitePartyRoleRelationshipRepository>();
@@ -88,9 +90,10 @@ public static class ServiceCollectionExtensions
                 {
                     BsonSerializer.RegisterSerializer(typeof(Guid), new GuidSerializer(GuidRepresentation.Standard));
                     ConventionRegistry.Register("CamelCase", new ConventionPack { new CamelCaseElementNameConvention() }, _ => true);
-                    s_mongoSerializersRegistered = true;
 
                     RegisterAllDocumentsFromAssembly(typeof(INestedEntity).Assembly);
+
+                    s_mongoSerializersRegistered = true;
                 }
             }
         }

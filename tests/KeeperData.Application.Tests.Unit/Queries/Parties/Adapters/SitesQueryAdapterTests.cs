@@ -7,7 +7,7 @@ using KeeperData.Core.Repositories;
 using MongoDB.Driver;
 using Moq;
 
-namespace KeeperData.Application.Tests.Unit.Queries.Sites.Adapters;
+namespace KeeperData.Application.Tests.Unit.Queries.Parties.Adapters;
 
 public class SitesQueryAdapterTests
 {
@@ -34,7 +34,9 @@ public class SitesQueryAdapterTests
 
         var (items, count, nextCursor) = await _adapter.GetSitesAsync(query);
 
-        items.Should().BeEquivalentTo(expectedItems);
+        items.Should().HaveCount(1);
+        items[0].Id.Should().Be("1");
+        items[0].Name.Should().Be("A");
         count.Should().Be(1);
         nextCursor.Should().BeNull();
     }
@@ -102,7 +104,7 @@ public class SitesQueryAdapterTests
         {
             Id = "999",
             Name = "DefaultName",
-            Type = new PremisesTypeSummaryDocument { Code = "AH", IdentifierId = "x", Name = "x" },
+            Type = new SiteTypeSummaryDocument() { Code = "AH", IdentifierId = "x", Name = "x" },
             Identifiers = new List<SiteIdentifierDocument>
             {
                 new() { Identifier = "12/345", IdentifierId = "y", Type = new SiteIdentifierSummaryDocument { Code = "y", IdentifierId = "y", Name = "y" } }

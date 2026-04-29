@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.Documents.Silver;
 
+[BsonIgnoreExtraElements(Inherited = true)]
 public class BaseHoldingDocument
 {
     [JsonPropertyName("countyParishHoldingNumber")]
@@ -37,21 +38,21 @@ public class BaseHoldingDocument
     [BsonElement("holdingStatus")]
     public string? HoldingStatus { get; set; }
 
-    [JsonPropertyName("premiseActivityTypeId")]
-    [BsonElement("premiseActivityTypeId")]
-    public string? PremiseActivityTypeId { get; set; } // LOV Lookup / Internal Id
+    [JsonPropertyName("siteActivityTypeId")]
+    [BsonElement("siteActivityTypeId")]
+    public string? SiteActivityTypeId { get; set; } // LOV Lookup / Internal Id
 
-    [JsonPropertyName("premiseActivityTypeCode")]
-    [BsonElement("premiseActivityTypeCode")]
-    public string? PremiseActivityTypeCode { get; set; }
+    [JsonPropertyName("siteActivityTypeCode")]
+    [BsonElement("siteActivityTypeCode")]
+    public string? SiteActivityTypeCode { get; set; }
 
-    [JsonPropertyName("premiseTypeIdentifier")]
-    [BsonElement("premiseTypeIdentifier")]
-    public string? PremiseTypeIdentifier { get; set; } // LOV Lookup / Internal Id
+    [JsonPropertyName("siteTypeIdentifier")]
+    [BsonElement("siteTypeIdentifier")]
+    public string? SiteTypeIdentifier { get; set; } // LOV Lookup / Internal Id
 
-    [JsonPropertyName("premiseTypeCode")]
-    [BsonElement("premiseTypeCode")]
-    public string? PremiseTypeCode { get; set; }
+    [JsonPropertyName("siteTypeCode")]
+    [BsonElement("siteTypeCode")]
+    public string? SiteTypeCode { get; set; }
 
     [JsonPropertyName("location")]
     [BsonElement("location")]

@@ -47,11 +47,12 @@ public class MongoDataSeeder(
                 SeedAsync<CountryListDocument, CountryDocument>(cancellationToken),
                 SeedAsync<SpeciesListDocument, SpeciesDocument>(cancellationToken),
                 SeedAsync<RoleListDocument, RoleDocument>(cancellationToken),
-                SeedAsync<PremisesTypeListDocument, PremisesTypeDocument>(cancellationToken),
-                SeedAsync<PremisesActivityTypeListDocument, PremisesActivityTypeDocument>(cancellationToken),
+                SeedAsync<SiteTypeListDocument, SiteTypeDocument>(cancellationToken),
+                SeedAsync<SiteActivityTypeListDocument, SiteActivityTypeDocument>(cancellationToken),
                 SeedAsync<SiteIdentifierTypeListDocument, SiteIdentifierTypeDocument>(cancellationToken),
                 SeedAsync<ProductionUsageListDocument, ProductionUsageDocument>(cancellationToken),
-                SeedAsync<FacilityBusinessActivityMapListDocument, FacilityBusinessActivityMapDocument>(cancellationToken)
+                SeedAsync<FacilityBusinessActivityMapListDocument, FacilityBusinessActivityMapDocument>(cancellationToken),
+                SeedAsync<SiteTypeMapListDocument, SiteTypeMapDocument>(cancellationToken)
             );
         }
         catch (Exception ex)

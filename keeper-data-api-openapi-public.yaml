@@ -701,6 +701,191 @@ components:
           format: date-time
           description: "The timestamp of the last time the Site record was updated"
 
+    # ─── Species (reference) ──────────────────────────────────────────
+    Species:
+      type: object
+      description: A species reference record.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: "This is an immutable field which represents the golden key of the reference object."
+        code:
+          type: string
+          example: CTT
+          description: "The species code."
+        name:
+          type: string
+          example: Cattle
+          description: "The species name."
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: "The timestamp of the last time the Species record was updated."
+      required:
+        - code
+        - name
+
+    SpeciesListResponse:
+      type: object
+      description: The list of species wrapped with a count of available records.
+      properties:
+        count:
+          type: integer
+          description: Total number of species returned (or available).
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/Species'
+
+    # ─── Identifier Type (reference) ──────────────────────────────────
+    IdentifierType:
+      type: object
+      description: An identifier type reference record.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: "This is an immutable field which represents the golden key of the reference object."
+        code:
+          type: string
+          example: CPHN
+          description: "The identifier type code."
+        name:
+          type: string
+          example: "CPH Number"
+          description: "The identifier type name."
+        description:
+          type: string
+          nullable: true
+          example: "Description for CPH Number"
+          description: "The identifier type description."
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: "The timestamp of the last time the Identifier Type record was updated."
+      required:
+        - code
+        - name
+
+    IdentifierTypeListResponse:
+      type: object
+      description: The list of identifier types wrapped with a count of available records.
+      properties:
+        count:
+          type: integer
+          description: Total number of identifier types returned.
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/IdentifierType'
+
+    # ─── Role (reference) ─────────────────────────────────────────────
+    RoleListResponse:
+      type: object
+      description: The list of roles wrapped with a count of available records.
+      properties:
+        count:
+          type: integer
+          description: Total number of roles returned (or available).
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+
+    # ─── Reference Site Type (reference) ──────────────────────────────
+    ReferenceSiteType:
+      type: object
+      description: |-
+        An isolated site type reference record. Distinct from the SiteTypes endpoint which returns site types with their associated activities;
+        this DTO returns only the site type information without the associated activities.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: "This is an immutable field which represents the golden key of the reference object."
+        code:
+          type: string
+          example: AH
+          description: "The site type code."
+        name:
+          type: string
+          example: "Agricultural Holding"
+          description: "The site type name."
+      required:
+        - code
+        - name
+
+    ReferenceSiteTypeListResponse:
+      type: object
+      description: The list of reference site types wrapped with a count of available records.
+      properties:
+        count:
+          type: integer
+          description: Total number of site types returned (or available).
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferenceSiteType'
+
+    # ─── Site Type with Activities ────────────────────────────────────
+    SiteTypeInfo:
+      type: object
+      description: Represents the type classification of a site (code and name).
+      properties:
+        code:
+          type: string
+          example: MA
+          description: "The business key/code for the site type."
+        name:
+          type: string
+          example: Market
+          description: "The descriptive name of the site type."
+      required:
+        - code
+        - name
+
+    SiteActivityInfo:
+      type: object
+      description: Represents an activity that can occur at a site type.
+      properties:
+        code:
+          type: string
+          example: STM
+          description: "The business key/code for the site activity."
+        name:
+          type: string
+          example: "Store Market"
+          description: "The descriptive name of the site activity."
+      required:
+        - code
+        - name
+
+    SiteTypeWithActivities:
+      type: object
+      description: A Site Type with its associated Site Activities.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Unique identifier for this site type.
+        type:
+          $ref: '#/components/schemas/SiteTypeInfo'
+        activities:
+          type: array
+          description: The activities associated with this site type. Empty if no activities apply.
+          items:
+            $ref: '#/components/schemas/SiteActivityInfo'
+      required:
+        - id
+        - type
+
     # ─── Error Schemas ────────────────────────────────────────────────
     ProblemDetails:
       type: object
@@ -1146,6 +1331,12 @@ paths:
           schema:
             type: string
             format: date-time
+        - name: cursor
+          in: query
+          required: false
+          description: The cursor for the next page of results. Leave blank for the first page.
+          schema:
+            type: string
       responses:
         '200':
           description: OK - Successful operation
@@ -1288,6 +1479,12 @@ paths:
           schema:
             type: string
             format: date-time
+        - name: cursor
+          in: query
+          required: false
+          description: The cursor for the next page of results. Leave blank for the first page.
+          schema:
+            type: string
       responses:
         '200':
           description: OK - Successful
@@ -1355,3 +1552,316 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+
+  # ═══════════════════════════════════════════════════════════════════
+  # SPECIES
+  # ═══════════════════════════════════════════════════════════════════
+  /api/species:
+    get:
+      tags:
+        - site reference
+      summary: Retrieve all species types
+      description: Get a list of all available species types. Supports Change Data Capture (CDC) via the lastUpdatedDate parameter.
+      operationId: getSpeciesTypes
+      parameters:
+        - name: lastUpdatedDate
+          in: query
+          required: false
+          description: Returns only Species that have been updated since this timestamp (inclusive). This is the key parameter for Change Data Capture (CDC).
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: OK - Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeciesListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/species/{id}:
+    get:
+      tags:
+        - site reference
+      summary: Retrieve a species type's detailed information.
+      description: The endpoint returns an object containing the requested species type and any relations information.
+      operationId: getSpeciesTypeById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique identifier (UUID) of the species type.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK - Successful request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Species'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  # ═══════════════════════════════════════════════════════════════════
+  # SITE TYPES (with activities)
+  # ═══════════════════════════════════════════════════════════════════
+  /api/sitetypes:
+    get:
+      tags:
+        - site reference
+      summary: Retrieve all Site Types with their associated Site Activities.
+      description: |-
+        Returns all Site Types. Each Site Type includes zero, one, or many Site Activities.
+        Site Types are uniquely identified by SiteTypeCode.
+        Site Activities are uniquely identified by SiteActivityCode within a SiteTypeCode.
+      operationId: getSiteTypesWithActivities
+      responses:
+        '200':
+          description: OK - Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SiteTypeWithActivities'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # ═══════════════════════════════════════════════════════════════════
+  # IDENTIFIER TYPES (reference)
+  # ═══════════════════════════════════════════════════════════════════
+  /api/reference/identifiertypes:
+    get:
+      tags:
+        - site reference
+      summary: Retrieve all identifier types
+      description: Get a list of all available identifier types. Supports Change Data Capture (CDC) via the lastUpdatedDate parameter.
+      operationId: getIdentifierTypes
+      parameters:
+        - name: lastUpdatedDate
+          in: query
+          required: false
+          description: Returns only Identifier Types that have been updated since this timestamp (inclusive). This is the key parameter for Change Data Capture (CDC).
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: OK - Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentifierTypeListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/reference/identifiertypes/{id}:
+    get:
+      tags:
+        - site reference
+      summary: Retrieve an identifier type's detailed information.
+      description: The endpoint returns an object containing the requested identifier type.
+      operationId: getIdentifierTypeById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique identifier (UUID) of the identifier type.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK - Successful request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentifierType'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  # ═══════════════════════════════════════════════════════════════════
+  # ROLES (reference)
+  # ═══════════════════════════════════════════════════════════════════
+  /api/reference/roles:
+    get:
+      tags:
+        - site reference
+      summary: Retrieve all roles
+      description: Get a list of all available roles. Supports Change Data Capture (CDC) via the lastUpdatedDate parameter.
+      operationId: getRoles
+      parameters:
+        - name: lastUpdatedDate
+          in: query
+          required: false
+          description: Returns only Roles that have been updated since this timestamp (inclusive). This is the key parameter for Change Data Capture (CDC).
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: OK - Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/reference/roles/{id}:
+    get:
+      tags:
+        - site reference
+      summary: Retrieve a role's detailed information based on its identifier.
+      description: The endpoint returns an object containing the requested role and any relations information.
+      operationId: getRoleById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique identifier (UUID) of the role.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK - Successful request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  # ═══════════════════════════════════════════════════════════════════
+  # SITE TYPES (reference - without activities)
+  # ═══════════════════════════════════════════════════════════════════
+  /api/reference/sitetypes:
+    get:
+      tags:
+        - site reference
+      summary: Retrieve all site types
+      description: Get a list of all available site types. Supports Change Data Capture (CDC) via the lastUpdatedDate parameter.
+      operationId: getReferenceSiteTypes
+      parameters:
+        - name: lastUpdatedDate
+          in: query
+          required: false
+          description: Returns only Site Types that have been updated since this timestamp (inclusive). This is the key parameter for Change Data Capture (CDC).
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: OK - Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferenceSiteTypeListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/reference/sitetypes/{id}:
+    get:
+      tags:
+        - site reference
+      summary: Retrieve a site type's detailed information.
+      description: The endpoint returns an object containing the requested site type and any relations information.
+      operationId: getReferenceSiteTypeById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique identifier (UUID) of the site type.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK - Successful request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferenceSiteType'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'

@@ -13,21 +13,21 @@ namespace KeeperData.Application.Tests.Unit.Orchestration.Imports.Sam.Mappings;
 
 public class SamHoldingMapperTests
 {
-    private readonly Mock<IPremiseActivityTypeLookupService> _premiseActivityTypeLookupServiceMock = new();
-    private readonly Mock<IPremiseTypeLookupService> _premiseTypeLookupServiceMock = new();
+    private readonly Mock<ISiteActivityTypeLookupService> _siteActivityTypeLookupServiceMock = new();
+    private readonly Mock<ISiteTypeLookupService> _siteTypeLookupServiceMock = new();
     private readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
     private readonly Mock<IActivityCodeLookupService> _activityCodeLookupServiceMock = new();
-    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolvePremiseActivityType;
-    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolvePremiseType;
+    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveSiteActivityType;
+    private readonly Func<string?, CancellationToken, Task<(string?, string?)>> _resolveSiteType;
     private readonly Func<string?, string?, CancellationToken, Task<(string?, string?, string?)>> _resolveCountry;
 
     public SamHoldingMapperTests()
     {
-        _premiseActivityTypeLookupServiceMock
+        _siteActivityTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
-        _premiseTypeLookupServiceMock
+        _siteTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
 
@@ -38,8 +38,8 @@ public class SamHoldingMapperTests
         _activityCodeLookupServiceMock.Setup(x => x.FindByActivityCodeAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? key, CancellationToken token) => SamTestScenarios.LookupCodes(key));
 
-        _resolvePremiseActivityType = _premiseActivityTypeLookupServiceMock.Object.FindAsync;
-        _resolvePremiseType = _premiseTypeLookupServiceMock.Object.FindAsync;
+        _resolveSiteActivityType = _siteActivityTypeLookupServiceMock.Object.FindAsync;
+        _resolveSiteType = _siteTypeLookupServiceMock.Object.FindAsync;
         _resolveCountry = _countryIdentifierLookupServiceMock.Object.FindAsync;
     }
 
@@ -48,8 +48,8 @@ public class SamHoldingMapperTests
     {
         var results = await SamHoldingMapper.ToSilver(
             (List<SamCphHolding>?)null!,
-            _resolvePremiseActivityType,
-            _resolvePremiseType,
+            _resolveSiteActivityType,
+            _resolveSiteType,
             _resolveCountry,
             CancellationToken.None);
 
@@ -62,8 +62,8 @@ public class SamHoldingMapperTests
     {
         var results = await SamHoldingMapper.ToSilver(
             [],
-            _resolvePremiseActivityType,
-            _resolvePremiseType,
+            _resolveSiteActivityType,
+            _resolveSiteType,
             _resolveCountry,
             CancellationToken.None);
 
@@ -80,8 +80,8 @@ public class SamHoldingMapperTests
 
         var results = await SamHoldingMapper.ToSilver(
             records,
-            _resolvePremiseActivityType,
-            _resolvePremiseType,
+            _resolveSiteActivityType,
+            _resolveSiteType,
             _resolveCountry,
             CancellationToken.None);
 

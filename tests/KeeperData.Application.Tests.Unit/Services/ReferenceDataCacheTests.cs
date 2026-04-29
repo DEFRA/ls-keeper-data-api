@@ -23,8 +23,9 @@ public class ReferenceDataCacheTests
     private readonly Mock<ISiteIdentifierTypeRepository> _siteIdentifierTypeRepository;
     private readonly Mock<IProductionUsageRepository> _productionUsageRepository;
     private readonly Mock<IFacilityBusinessActivityMapRepository> _activityMapRepository;
-    private readonly Mock<IGenericRepository<PremisesTypeListDocument>> _premisesTypeListRepository;
-    private readonly Mock<IGenericRepository<PremisesActivityTypeListDocument>> _premisesActivityTypeListRepository;
+    private readonly Mock<IGenericRepository<SiteTypeListDocument>> _siteTypeListRepository;
+    private readonly Mock<IGenericRepository<SiteActivityTypeListDocument>> _siteActivityTypeListRepository;
+    private readonly Mock<IGenericRepository<SiteTypeMapListDocument>> _siteTypeMapListRepository;
 
     public ReferenceDataCacheTests()
     {
@@ -39,8 +40,9 @@ public class ReferenceDataCacheTests
         _siteIdentifierTypeRepository = new Mock<ISiteIdentifierTypeRepository>();
         _productionUsageRepository = new Mock<IProductionUsageRepository>();
         _activityMapRepository = new Mock<IFacilityBusinessActivityMapRepository>();
-        _premisesTypeListRepository = new Mock<IGenericRepository<PremisesTypeListDocument>>();
-        _premisesActivityTypeListRepository = new Mock<IGenericRepository<PremisesActivityTypeListDocument>>();
+        _siteTypeListRepository = new Mock<IGenericRepository<SiteTypeListDocument>>();
+        _siteActivityTypeListRepository = new Mock<IGenericRepository<SiteActivityTypeListDocument>>();
+        _siteTypeMapListRepository = new Mock<IGenericRepository<SiteTypeMapListDocument>>();
 
         _serviceScopeFactory.Setup(x => x.CreateScope()).Returns(_serviceScope.Object);
         _serviceScope.Setup(x => x.ServiceProvider).Returns(_serviceProvider.Object);
@@ -51,8 +53,9 @@ public class ReferenceDataCacheTests
         _serviceProvider.Setup(x => x.GetService(typeof(ISiteIdentifierTypeRepository))).Returns(_siteIdentifierTypeRepository.Object);
         _serviceProvider.Setup(x => x.GetService(typeof(IProductionUsageRepository))).Returns(_productionUsageRepository.Object);
         _serviceProvider.Setup(x => x.GetService(typeof(IFacilityBusinessActivityMapRepository))).Returns(_activityMapRepository.Object);
-        _serviceProvider.Setup(x => x.GetService(typeof(IGenericRepository<PremisesTypeListDocument>))).Returns(_premisesTypeListRepository.Object);
-        _serviceProvider.Setup(x => x.GetService(typeof(IGenericRepository<PremisesActivityTypeListDocument>))).Returns(_premisesActivityTypeListRepository.Object);
+        _serviceProvider.Setup(x => x.GetService(typeof(IGenericRepository<SiteTypeListDocument>))).Returns(_siteTypeListRepository.Object);
+        _serviceProvider.Setup(x => x.GetService(typeof(IGenericRepository<SiteActivityTypeListDocument>))).Returns(_siteActivityTypeListRepository.Object);
+        _serviceProvider.Setup(x => x.GetService(typeof(IGenericRepository<SiteTypeMapListDocument>))).Returns(_siteTypeMapListRepository.Object);
     }
 
     [Fact]
@@ -83,18 +86,18 @@ public class ReferenceDataCacheTests
         {
             new() { IdentifierId = "fba1", FacilityActivityCode = "FA01", IsActive = true }
         };
-        var premisesTypeList = new PremisesTypeListDocument
+        var siteTypeList = new SiteTypeListDocument
         {
-            Id = PremisesTypeListDocument.DocumentId,
-            PremisesTypes = new List<PremisesTypeDocument>
+            Id = SiteTypeListDocument.DocumentId,
+            SiteTypes = new List<SiteTypeDocument>
             {
                 new() { IdentifierId = "pt1", Code = "FARM", Name = "Farm", IsActive = true }
             }
         };
-        var premisesActivityTypeList = new PremisesActivityTypeListDocument
+        var siteActivityTypeList = new SiteActivityTypeListDocument
         {
-            Id = PremisesActivityTypeListDocument.DocumentId,
-            PremisesActivityTypes = new List<PremisesActivityTypeDocument>
+            Id = SiteActivityTypeListDocument.DocumentId,
+            SiteActivityTypes = new List<SiteActivityTypeDocument>
             {
                 new() { IdentifierId = "pat1", Code = "KEEPING", Name = "Keeping", IsActive = true }
             }
@@ -106,10 +109,12 @@ public class ReferenceDataCacheTests
         _siteIdentifierTypeRepository.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(siteIdentifierTypes);
         _productionUsageRepository.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(productionUsages);
         _activityMapRepository.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(activityMaps);
-        _premisesTypeListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<PremisesTypeListDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(premisesTypeList);
-        _premisesActivityTypeListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<PremisesActivityTypeListDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(premisesActivityTypeList);
+        _siteTypeListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<SiteTypeListDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(siteTypeList);
+        _siteActivityTypeListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<SiteActivityTypeListDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(siteActivityTypeList);
+        _siteTypeMapListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<SiteTypeMapListDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SiteTypeMapListDocument?)null);
 
         var cache = new ReferenceDataCache(_serviceScopeFactory.Object, _logger.Object);
 
@@ -135,11 +140,11 @@ public class ReferenceDataCacheTests
         cache.ActivityMaps.Should().HaveCount(1);
         cache.ActivityMaps.First().FacilityActivityCode.Should().Be("FA01");
 
-        cache.PremisesTypes.Should().HaveCount(1);
-        cache.PremisesTypes.First().Code.Should().Be("FARM");
+        cache.SiteTypes.Should().HaveCount(1);
+        cache.SiteTypes.First().Code.Should().Be("FARM");
 
-        cache.PremisesActivityTypes.Should().HaveCount(1);
-        cache.PremisesActivityTypes.First().Code.Should().Be("KEEPING");
+        cache.SiteActivityTypes.Should().HaveCount(1);
+        cache.SiteActivityTypes.First().Code.Should().Be("KEEPING");
     }
 
     [Fact]
@@ -152,10 +157,12 @@ public class ReferenceDataCacheTests
         _siteIdentifierTypeRepository.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new List<SiteIdentifierTypeDocument>());
         _productionUsageRepository.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new List<ProductionUsageDocument>());
         _activityMapRepository.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new List<FacilityBusinessActivityMapDocument>());
-        _premisesTypeListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<PremisesTypeListDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((PremisesTypeListDocument?)null);
-        _premisesActivityTypeListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<PremisesActivityTypeListDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((PremisesActivityTypeListDocument?)null);
+        _siteTypeListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<SiteTypeListDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SiteTypeListDocument?)null);
+        _siteActivityTypeListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<SiteActivityTypeListDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SiteActivityTypeListDocument?)null);
+        _siteTypeMapListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<SiteTypeMapListDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SiteTypeMapListDocument?)null);
 
         var cache = new ReferenceDataCache(_serviceScopeFactory.Object, _logger.Object);
 
@@ -169,8 +176,8 @@ public class ReferenceDataCacheTests
         cache.SiteIdentifierTypes.Should().NotBeNull().And.BeEmpty();
         cache.ProductionUsages.Should().NotBeNull().And.BeEmpty();
         cache.ActivityMaps.Should().NotBeNull().And.BeEmpty();
-        cache.PremisesTypes.Should().NotBeNull().And.BeEmpty();
-        cache.PremisesActivityTypes.Should().NotBeNull().And.BeEmpty();
+        cache.SiteTypes.Should().NotBeNull().And.BeEmpty();
+        cache.SiteActivityTypes.Should().NotBeNull().And.BeEmpty();
     }
 
     [Fact]
@@ -195,10 +202,12 @@ public class ReferenceDataCacheTests
         _siteIdentifierTypeRepository.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new List<SiteIdentifierTypeDocument>());
         _productionUsageRepository.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new List<ProductionUsageDocument>());
         _activityMapRepository.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new List<FacilityBusinessActivityMapDocument>());
-        _premisesTypeListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<PremisesTypeListDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((PremisesTypeListDocument?)null);
-        _premisesActivityTypeListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<PremisesActivityTypeListDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((PremisesActivityTypeListDocument?)null);
+        _siteTypeListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<SiteTypeListDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SiteTypeListDocument?)null);
+        _siteActivityTypeListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<SiteActivityTypeListDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SiteActivityTypeListDocument?)null);
+        _siteTypeMapListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<SiteTypeMapListDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SiteTypeMapListDocument?)null);
 
         var cache = new ReferenceDataCache(_serviceScopeFactory.Object, _logger.Object);
 
@@ -215,11 +224,11 @@ public class ReferenceDataCacheTests
     }
 
     [Fact]
-    public async Task InitializeAsync_WhenRepositoryThrowsException_LogsErrorAndThrows()
+    public async Task InitializeAsync_WhenRepositoryThrowsException_ThrowsInvalidOperationExceptionWithInnerException()
     {
         // Arrange
-        var exception = new InvalidOperationException("Database connection failed");
-        _countryRepository.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ThrowsAsync(exception);
+        var originalException = new Exception("Database connection failed");
+        _countryRepository.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ThrowsAsync(originalException);
 
         var cache = new ReferenceDataCache(_serviceScopeFactory.Object, _logger.Object);
 
@@ -227,17 +236,11 @@ public class ReferenceDataCacheTests
         Func<Task> act = async () => await cache.InitializeAsync();
 
         // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("Database connection failed");
+        var thrownException = await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Failed to load reference data into cache");
 
-        _logger.Verify(
-            x => x.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Failed to load reference data into cache")),
-                It.Is<Exception>(ex => ex == exception),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once);
+        thrownException.WithInnerException<Exception>()
+            .Which.Should().Be(originalException);
     }
 
     [Fact]
@@ -258,14 +261,19 @@ public class ReferenceDataCacheTests
         _siteIdentifierTypeRepository.Verify(x => x.GetAllAsync(It.IsAny<CancellationToken>()), Times.Once);
         _productionUsageRepository.Verify(x => x.GetAllAsync(It.IsAny<CancellationToken>()), Times.Once);
         _activityMapRepository.Verify(x => x.GetAllAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _premisesTypeListRepository.Verify(
+        _siteTypeListRepository.Verify(
             x => x.FindOneAsync(
-                It.IsAny<Expression<Func<PremisesTypeListDocument, bool>>>(),
+                It.IsAny<Expression<Func<SiteTypeListDocument, bool>>>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
-        _premisesActivityTypeListRepository.Verify(
+        _siteActivityTypeListRepository.Verify(
             x => x.FindOneAsync(
-                It.IsAny<Expression<Func<PremisesActivityTypeListDocument, bool>>>(),
+                It.IsAny<Expression<Func<SiteActivityTypeListDocument, bool>>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+        _siteTypeMapListRepository.Verify(
+            x => x.FindOneAsync(
+                It.IsAny<Expression<Func<SiteTypeMapListDocument, bool>>>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -386,9 +394,11 @@ public class ReferenceDataCacheTests
         _siteIdentifierTypeRepository.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new List<SiteIdentifierTypeDocument>());
         _productionUsageRepository.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new List<ProductionUsageDocument>());
         _activityMapRepository.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new List<FacilityBusinessActivityMapDocument>());
-        _premisesTypeListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<PremisesTypeListDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((PremisesTypeListDocument?)null);
-        _premisesActivityTypeListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<PremisesActivityTypeListDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((PremisesActivityTypeListDocument?)null);
+        _siteTypeListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<SiteTypeListDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SiteTypeListDocument?)null);
+        _siteActivityTypeListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<SiteActivityTypeListDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SiteActivityTypeListDocument?)null);
+        _siteTypeMapListRepository.Setup(x => x.FindOneAsync(It.IsAny<Expression<Func<SiteTypeMapListDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SiteTypeMapListDocument?)null);
     }
 }

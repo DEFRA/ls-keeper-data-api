@@ -1,5 +1,7 @@
 using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Repositories;
+using KeeperData.Core.Serialization;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
 
@@ -17,10 +19,11 @@ public class AddressDocument : INestedEntity
     /// <summary>
     /// The Unique Property Reference Number.
     /// </summary>
-    /// <example>671544009</example>
+    /// <example>6715440101</example>
     [BsonElement("uprn")]
+    [BsonSerializer(typeof(UprnSerializer))]
     [JsonPropertyName("uprn")]
-    public int? Uprn { get; set; }
+    public string? Uprn { get; set; }
 
     /// <summary>
     /// This single address line is associated with the OS Address Base Fields such as SAO_TEXT, SAO_START_NUMBER, PAO_TEXT, PAO_START_NUMBER and STREET_DESCRIPTION.

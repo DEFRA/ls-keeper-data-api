@@ -259,16 +259,16 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
             .Setup(x => x.FindByActivityCodeAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? key, CancellationToken token) => SamTestScenarios.LookupCodes(key));
 
-        _appTestFixture.AppWebApplicationFactory._premiseActivityTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._siteActivityTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? code, CancellationToken token) => (PremiseActivityTypeData.Find(code!)));
+            .ReturnsAsync((string? code, CancellationToken token) => (SiteActivityTypeData.Find(code!)));
 
-        _appTestFixture.AppWebApplicationFactory._premiseActivityTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._siteActivityTypeLookupServiceMock
             .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? id, CancellationToken token) => (PremiseActivityTypeData.GetById(id!)));
+            .ReturnsAsync((string? id, CancellationToken token) => (SiteActivityTypeData.GetById(id!)));
 
-        _appTestFixture.AppWebApplicationFactory._premiseActivityTypeLookupServiceMock.Setup(x => x.GetByCodeAsync("WM", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PremisesActivityTypeDocument
+        _appTestFixture.AppWebApplicationFactory._siteActivityTypeLookupServiceMock.Setup(x => x.GetByCodeAsync("WM", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SiteActivityTypeDocument
             {
                 IdentifierId = "e0dd8921-3593-4e58-b797-a7c8673d8e40",
                 Code = "WM",
@@ -276,8 +276,8 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
                 IsActive = true
             });
 
-        _appTestFixture.AppWebApplicationFactory._premiseActivityTypeLookupServiceMock.Setup(x => x.GetByCodeAsync("RM", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PremisesActivityTypeDocument
+        _appTestFixture.AppWebApplicationFactory._siteActivityTypeLookupServiceMock.Setup(x => x.GetByCodeAsync("RM", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SiteActivityTypeDocument
             {
                 IdentifierId = "d2d9be5e-18b4-4424-b196-fd40f3b105d8",
                 Code = "RM",
@@ -285,13 +285,13 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
                 IsActive = true
             });
 
-        _appTestFixture.AppWebApplicationFactory._premiseTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._siteTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? code, CancellationToken token) => (PremiseTypeData.Find(code!)));
+            .ReturnsAsync((string? code, CancellationToken token) => (SiteTypeData.Find(code!)));
 
-        _appTestFixture.AppWebApplicationFactory._premiseTypeLookupServiceMock
+        _appTestFixture.AppWebApplicationFactory._siteTypeLookupServiceMock
             .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string? id, CancellationToken token) => (PremiseTypeData.GetById(id!)));
+            .ReturnsAsync((string? id, CancellationToken token) => (SiteTypeData.GetById(id!)));
 
         _appTestFixture.AppWebApplicationFactory._productionUsageLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))

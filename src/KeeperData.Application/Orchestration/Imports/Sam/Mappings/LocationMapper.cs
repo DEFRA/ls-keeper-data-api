@@ -12,15 +12,13 @@ public static class LocationMapper
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
         CancellationToken cancellationToken)
     {
-        int? uprn = int.TryParse(incomingAddress?.UniquePropertyReferenceNumber, out var value) ? value : null;
-
         var country = await GetCountryAsync(
             incomingAddress?.CountryIdentifier,
             getCountryById,
             cancellationToken);
 
         var updatedAddress = Address.Create(
-            uprn,
+            incomingAddress?.UniquePropertyReferenceNumber,
             incomingAddress?.AddressLine ?? string.Empty,
             incomingAddress?.AddressStreet,
             incomingAddress?.AddressTown,
