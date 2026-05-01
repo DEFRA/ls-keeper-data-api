@@ -1,22 +1,22 @@
 using FluentAssertions;
-using KeeperData.Application.Queries.Roles;
+using KeeperData.Application.Queries.ReferenceRoles;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
 using Moq;
 using Xunit;
 
-namespace KeeperData.Application.Tests.Unit.Queries.Roles;
+namespace KeeperData.Application.Tests.Unit.Queries.ReferenceRoles;
 
-public class GetRolesQueryHandlerTests
+public class GetReferenceRolesQueryHandlerTests
 {
     private readonly Mock<IReferenceDataCache> _cacheMock;
-    private readonly GetRolesQueryHandler _sut;
+    private readonly GetReferenceRolesQueryHandler _sut;
 
-    public GetRolesQueryHandlerTests()
+    public GetReferenceRolesQueryHandlerTests()
     {
         _cacheMock = new Mock<IReferenceDataCache>();
-        _sut = new GetRolesQueryHandler(_cacheMock.Object);
+        _sut = new GetReferenceRolesQueryHandler(_cacheMock.Object);
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public class GetRolesQueryHandlerTests
 
         _cacheMock.Setup(c => c.Roles).Returns(mockData);
 
-        var query = new GetRolesQuery();
+        var query = new GetReferenceRolesQuery();
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
@@ -61,7 +61,7 @@ public class GetRolesQueryHandlerTests
 
         _cacheMock.Setup(c => c.Roles).Returns(mockData);
 
-        var query = new GetRolesQuery { LastUpdatedDate = filterDate };
+        var query = new GetReferenceRolesQuery { LastUpdatedDate = filterDate };
 
         var result = await _sut.Handle(query, CancellationToken.None);
 
@@ -78,7 +78,7 @@ public class GetRolesQueryHandlerTests
         // Arrange
         _cacheMock.Setup(c => c.Roles).Returns([]);
 
-        var query = new GetRolesQuery();
+        var query = new GetReferenceRolesQuery();
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);

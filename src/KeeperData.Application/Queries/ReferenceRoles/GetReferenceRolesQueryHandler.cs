@@ -1,15 +1,15 @@
 using KeeperData.Application.Queries;
-using KeeperData.Application.Queries.Roles;
+using KeeperData.Application.Queries.ReferenceRoles;
 using KeeperData.Core.DTOs;
 using KeeperData.Core.Services;
 
-namespace KeeperData.Application.Queries.Roles;
+namespace KeeperData.Application.Queries.ReferenceRoles;
 
-public class GetRolesQueryHandler(IReferenceDataCache cache) : IQueryHandler<GetRolesQuery, RoleListResponse>
+public class GetReferenceRolesQueryHandler(IReferenceDataCache cache) : IQueryHandler<GetReferenceRolesQuery, RoleListResponse>
 {
     private readonly IReferenceDataCache _cache = cache;
 
-    public Task<RoleListResponse> Handle(GetRolesQuery request, CancellationToken cancellationToken)
+    public Task<RoleListResponse> Handle(GetReferenceRolesQuery request, CancellationToken cancellationToken)
     {
         // Get items instantly from memory instead of the database
         var items = _cache.Roles;
