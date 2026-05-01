@@ -48,8 +48,6 @@ public class CtsDailyScanOrchestratorTests(AppTestFixture appTestFixture) : ICla
         // At least one should fail (proving the lock works), and at most one should succeed
         failedScans.Should().HaveCountGreaterThanOrEqualTo(1, "at least one orchestration should fail to acquire the lock");
         successfulScans.Should().HaveCountLessThanOrEqualTo(1, "at most one orchestration should acquire the lock and start successfully");
-        
-        // The total should always be 2
         (successfulScans.Count + failedScans.Count).Should().Be(2, "both scan attempts should complete");
     }
 }
