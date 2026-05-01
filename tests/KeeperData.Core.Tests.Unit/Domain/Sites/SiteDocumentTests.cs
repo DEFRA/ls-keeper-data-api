@@ -10,7 +10,7 @@ public class SiteDocumentTests
     public void WhenSiteIsEmpty_ToDomainShouldMapCorrectly()
     {
         var sut = new SiteDocument() { Id = "", Name = "" };
-        var expected = new Site("", DateTime.MinValue, DateTime.MinValue, "", DateTime.MinValue, null, null, null, null, false, null, null);
+        var expected = new Site("", DateTime.MinValue, DateTime.MinValue, "", DateTime.MinValue, null, null, null, null, false, null, null, null, null);
 
         var result = sut.ToDomain();
 
@@ -55,7 +55,7 @@ public class SiteDocumentTests
     private static Site EmptySite(DateTime? lastUpdatedDate = null)
     {
         lastUpdatedDate ??= DateTime.MinValue;
-        return new Site("", DateTime.MinValue, lastUpdatedDate!.Value, "", DateTime.MinValue, null, null, null, null, false, null, null);
+        return new Site("", DateTime.MinValue, lastUpdatedDate!.Value, "", DateTime.MinValue, null, null, null, null, false, null, null, null, null);
     }
 
     private static SiteDocument EmptySiteDocument()

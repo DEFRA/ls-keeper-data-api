@@ -26,7 +26,9 @@ public static class SiteDocumentExtensions
         Parties = doc.Parties?.Select(p => p.ToDto()).ToList() ?? [],
         Species = doc.Species?.Select(s => s.ToDto()).ToList() ?? [],
         Marks = doc.Marks?.Select(m => m.ToDto()).ToList() ?? [],
-        Activities = doc.Activities?.Select(a => a.ToDto()).ToList() ?? []
+        Activities = doc.Activities?.Select(a => a.ToDto()).ToList() ?? [],
+        ParentSiteIdentifier = doc.ParentSiteIdentifier,
+        HoldingType = doc.HoldingType
     };
 
     private static SiteTypeSummaryDto ToDto(this SiteTypeSummaryDocument doc) => new()
