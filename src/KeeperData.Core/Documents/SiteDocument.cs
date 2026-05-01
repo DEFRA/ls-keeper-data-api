@@ -9,6 +9,7 @@ using System.Text.Json.Serialization;
 namespace KeeperData.Core.Documents;
 
 [CollectionName("sites")]
+[BsonIgnoreExtraElements]
 public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 {
     /// <summary>

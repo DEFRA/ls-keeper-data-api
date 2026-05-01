@@ -7,6 +7,7 @@ using KeeperData.Core.Extensions;
 using System.Net;
 using System.Net.Http.Json;
 using System.Web;
+using KeeperData.Core.DTOs;
 
 namespace KeeperData.Api.Tests.Integration.Endpoints;
 
@@ -38,7 +39,10 @@ public class SitesEndpointTests(
                     State = HoldingStatusType.Active.GetDescription(),
                     Name = "Site A",
                     CreatedDate = new DateTime(2010,01,01),
-                    LastUpdatedDate = new DateTime(2010,01,01)
+                    LastUpdatedDate = new DateTime(2010,01,01),
+                    StartDate = new DateTime(2010,01,01),
+                    ParentSiteIdentifier = "PARENT-123",
+                    HoldingType = "PERMANENT"
                 },
                 new()
                 {
@@ -46,7 +50,11 @@ public class SitesEndpointTests(
                     Type = new SiteTypeSummaryDocument { IdentifierId = "t2", Code = "Other", Name = "Other Premise" },
                     State = HoldingStatusType.Active.GetDescription(),
                     Name = "Site B",
-                    LastUpdatedDate = new DateTime(2011,01,01)
+                    CreatedDate = new DateTime(2011,01,01),
+                    LastUpdatedDate = new DateTime(2011,01,01),
+                    StartDate = new DateTime(2011,01,01),
+                    ParentSiteIdentifier = "PARENT-123",
+                    HoldingType = "PERMANENT"
                 },
                 new()
                 {
@@ -54,7 +62,11 @@ public class SitesEndpointTests(
                     Type = new SiteTypeSummaryDocument { IdentifierId = "t1", Code = "Business", Name = "Business Premise" },
                     State = HoldingStatusType.Active.GetDescription(),
                     Name = "Site C",
-                    LastUpdatedDate = new DateTime(2012,01,01)
+                    CreatedDate = new DateTime(2012,01,01),
+                    LastUpdatedDate = new DateTime(2012,01,01),
+                    StartDate = new DateTime(2012,01,01),
+                    ParentSiteIdentifier = "PARENT-123",
+                    HoldingType = "PERMANENT"
                 }
             };
 
@@ -119,7 +131,7 @@ public class SitesEndpointTests(
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var responseBody = await response.Content.ReadAsStringAsync();
-        var result = await response.Content.ReadFromJsonAsync<PaginatedResult<SiteDocument>>();
+        var result = await response.Content.ReadFromJsonAsync<PaginatedResult<SiteDto>>();
 
         result.Should().NotBeNull();
         result.Count.Should().Be(expectedCount);
@@ -142,7 +154,7 @@ public class SitesEndpointTests(
 
         if (expectedHttpCode == HttpStatusCode.OK)
         {
-            var result = await response.Content.ReadFromJsonAsync<SiteDocument>();
+            var result = await response.Content.ReadFromJsonAsync<SiteDto>();
             result.Should().NotBeNull();
         }
 
@@ -155,7 +167,7 @@ public class SitesEndpointTests(
             type != null ? $"type={HttpUtility.UrlEncode(type)}" : null,
             identifier != null ? $"siteIdentifier={HttpUtility.UrlEncode(identifier)}" : null,
             identifiers != null ? $"siteIdentifiers={HttpUtility.UrlEncode(identifiers)}" : null,
-            lastUpdatedDate != null ? $"lastUpdatedDate={HttpUtility.UrlEncode(lastUpdatedDate.ToString())}" : null
+            lastUpdatedDate != null ? $"lastUpdatedDate={HttpUtility.UrlEncode(lastUpdatedDate.Value.ToString("yyyy-MM-dd"))}" : null
         };
 
         return string.Join('&', parameters.Where(p => p != null).ToList());
