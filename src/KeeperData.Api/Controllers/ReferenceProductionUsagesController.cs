@@ -32,6 +32,7 @@ public class ReferenceProductionUsagesController(IRequestExecutor executor) : Co
     /// <response code="401">Access token is not set or invalid.</response>
     /// <response code="403">The requestor is not authorized to perform this operation on the resource.</response>
     /// <response code="500">Internal server error</response>
+    /// <response code="503">Service Unavailable</response>
     [HttpGet]
     [ProducesResponseType(typeof(ReferenceProductionUsageListResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
