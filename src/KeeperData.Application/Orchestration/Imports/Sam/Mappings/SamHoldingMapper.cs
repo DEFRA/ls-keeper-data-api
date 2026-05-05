@@ -343,6 +343,8 @@ public static class SamHoldingMapper
             SourceSystemType.SAM.ToString(),
             null,
             representative.Deleted,
+            representative.SecondaryCph,
+            representative.CphTypeIdentifier,
             siteType,
             location);
 
@@ -393,7 +395,9 @@ public static class SamHoldingMapper
             representative.HoldingStatus,
             SourceSystemType.SAM.ToString(),
             null,
-            representative.Deleted);
+            representative.Deleted,
+            representative.SecondaryCph,
+            representative.CphTypeIdentifier);
 
         var updatedAddress = await LocationMapper.AddressToGold(representative.Location?.Address, getCountryById, cancellationToken);
         var updatedCommunication = LocationMapper.CommunicationToGold(representative.Communication);

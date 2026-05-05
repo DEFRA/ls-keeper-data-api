@@ -9,6 +9,7 @@ using System.Text.Json.Serialization;
 namespace KeeperData.Core.Documents;
 
 [CollectionName("sites")]
+[BsonIgnoreExtraElements]
 public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 {
     /// <summary>
@@ -78,6 +79,14 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     [JsonPropertyName("source")]
     [AutoIndexed]
     public string? Source { get; set; }
+
+    [BsonElement("parentSiteIdentifier")]
+    [JsonPropertyName("parentSiteIdentifier")]
+    public string? ParentSiteIdentifier { get; set; }
+
+    [BsonElement("holdingType")]
+    [JsonPropertyName("holdingType")]
+    public string? HoldingType { get; set; }
 
     /// <summary>
     /// Indicates whether identity documents should be destroyed for this site.
@@ -152,7 +161,9 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         Parties = [.. m.Parties.Select(SitePartyDocument.FromDomain)],
         Species = [.. m.Species.Select(SpeciesSummaryDocument.FromDomain)],
         Marks = [.. m.Marks.Select(GroupMarkDocument.FromDomain)],
-        Activities = [.. m.Activities.Select(SiteActivityDocument.FromDomain)]
+        Activities = [.. m.Activities.Select(SiteActivityDocument.FromDomain)],
+        ParentSiteIdentifier = m.ParentSiteIdentifier,
+        HoldingType = m.HoldingType
     };
 
     public Site ToDomain()
@@ -169,7 +180,9 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
             DestroyIdentityDocumentsFlag,
             Deleted,
             Type?.ToDomain(),
-            Location?.ToDomain()
+            Location?.ToDomain(),
+            ParentSiteIdentifier,
+            HoldingType
         );
 
         foreach (var si in Identifiers)

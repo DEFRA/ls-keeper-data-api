@@ -98,4 +98,10 @@ public class SiteDto
     /// </summary>
     [JsonPropertyName("activities")]
     public List<SiteActivityDto> Activities { get; set; } = [];
+
+    [JsonPropertyName("parentSiteIdentifier")]
+    public string? ParentSiteIdentifier { get; set; }
+
+    [JsonPropertyName("holdingType")]
+    public string? HoldingType { get; set; }
 }

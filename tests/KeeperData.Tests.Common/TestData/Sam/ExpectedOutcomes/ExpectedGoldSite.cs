@@ -32,6 +32,9 @@ public static class ExpectedGoldSite
             DestroyIdentityDocumentsFlag = null,
             Deleted = false,
 
+            ParentSiteIdentifier = "12/345/9999",
+            HoldingType = "PERMANENT",
+
             Location = new LocationDocument()
             {
                 IdentifierId = Guid.NewGuid().ToString(),
@@ -437,6 +440,9 @@ public static class ExpectedGoldSite
 
             Location = DefaultExpectedSite.Location,
             Identifiers = DefaultExpectedSite.Identifiers,
+
+            ParentSiteIdentifier = "12/345/9999",
+            HoldingType = "PERMANENT",
 
             Parties =
             [

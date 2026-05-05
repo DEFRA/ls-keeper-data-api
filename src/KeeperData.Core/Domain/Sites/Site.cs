@@ -19,6 +19,9 @@ public class Site : IAggregateRoot
     public bool? DestroyIdentityDocumentsFlag { get; private set; }
     public bool Deleted { get; private set; }
 
+    public string? ParentSiteIdentifier { get; private set; }
+    public string? HoldingType { get; private set; }
+
     private readonly List<SiteIdentifier> _identifiers = [];
     public IReadOnlyCollection<SiteIdentifier> Identifiers => _identifiers.AsReadOnly();
 
@@ -53,7 +56,9 @@ public class Site : IAggregateRoot
         bool? destroyIdentityDocumentsFlag,
         bool deleted,
         SiteType? type,
-        Location? location)
+        Location? location,
+        string? parentSiteIdentifier,
+        string? holdingType)
     {
         Id = id;
         CreatedDate = createdDate;
@@ -67,6 +72,8 @@ public class Site : IAggregateRoot
         Deleted = deleted;
         Type = type;
         _location = location;
+        ParentSiteIdentifier = parentSiteIdentifier;
+        HoldingType = holdingType;
     }
 
     public static Site Create(
@@ -80,6 +87,8 @@ public class Site : IAggregateRoot
         string? source,
         bool? destroyIdentityDocumentsFlag,
         bool deleted,
+        string? parentSiteIdentifier,
+        string? holdingType,
         SiteType? type = null,
         Location? location = null)
     {
@@ -95,7 +104,9 @@ public class Site : IAggregateRoot
             destroyIdentityDocumentsFlag,
             deleted,
             type,
-            location);
+            location,
+            parentSiteIdentifier,
+            holdingType);
 
         site._domainEvents.Add(new SiteCreatedDomainEvent(site.Id));
         return site;
@@ -109,7 +120,9 @@ public class Site : IAggregateRoot
         string? state,
         string? source,
         bool? destroyIdentityDocumentsFlag,
-        bool deleted)
+        bool deleted,
+        string? parentSiteIdentifier,
+        string? holdingType)
     {
         var changed = false;
 
@@ -120,6 +133,8 @@ public class Site : IAggregateRoot
         changed |= Change(Source, source, v => Source = v, lastUpdatedDate);
         changed |= Change(DestroyIdentityDocumentsFlag, destroyIdentityDocumentsFlag, v => DestroyIdentityDocumentsFlag = v, lastUpdatedDate);
         changed |= Change(Deleted, deleted, v => Deleted = v, lastUpdatedDate);
+        changed |= Change(ParentSiteIdentifier, parentSiteIdentifier, v => ParentSiteIdentifier = v, lastUpdatedDate);
+        changed |= Change(HoldingType, holdingType, v => HoldingType = v, lastUpdatedDate);
 
         if (changed)
         {

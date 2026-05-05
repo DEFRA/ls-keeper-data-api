@@ -156,6 +156,6 @@ public class SiteTests
 
     private static Site CreateSite(DateTime lastUpdatedDate, Location? location = null)
     {
-        return new Site("id", DateTime.MinValue, lastUpdatedDate, "site-name", DateTime.MinValue, null, null, null, null, false, null, location);
+        return new Site("id", DateTime.MinValue, lastUpdatedDate, "site-name", DateTime.MinValue, null, null, null, null, false, null, location, null, null);
     }
 }
