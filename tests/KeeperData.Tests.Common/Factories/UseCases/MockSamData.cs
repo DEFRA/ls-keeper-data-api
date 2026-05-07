@@ -209,6 +209,17 @@ public static class MockSamData
                 ]
             });
 
+    public static DataBridgeResponse<SamPort> GetSamPortsDataBridgeResponse(int top, int count, int totalCount) =>
+        new()
+        {
+            CollectionName = "collection",
+            Top = top,
+            Skip = 0,
+            Count = count,
+            TotalCount = totalCount,
+            Data = [.. s_fixture.CreateMany<SamPort>(count)]
+        };
+
     public static DataBridgeResponse<SamScanPortIdentifier> GetSamPortsScanIdentifierDataBridgeResponse(int top, int count, int totalCount) =>
         new()
         {
@@ -219,4 +230,30 @@ public static class MockSamData
             TotalCount = totalCount,
             Data = [.. s_fixture.CreateMany<SamScanPortIdentifier>(count)]
         };
+
+    public static StringContent GetSamPortsStringContentResponse(int top, int skip) =>
+        HttpContentUtility.CreateResponseContent(
+            new DataBridgeResponse<SamPort>
+            {
+                CollectionName = "collection",
+                Top = top,
+                Skip = skip,
+                Count = top,
+                Data = [.. s_fixture.CreateMany<SamPort>(top)]
+            });
+
+    public static StringContent GetSamPortsStringContentResponse(string cph) =>
+        HttpContentUtility.CreateResponseContent(
+            new DataBridgeResponse<SamPort>
+            {
+                CollectionName = "collection",
+                Count = 1,
+                Data =
+                [
+                    new MockSamRawDataFactory().CreateMockPort(
+                        changeType: DataBridgeConstants.ChangeTypeInsert,
+                        batchId: 1,
+                        cph: cph)
+                ]
+            });
 }

@@ -1,5 +1,6 @@
 using FluentAssertions;
 using KeeperData.Api.Worker.Tasks;
+using KeeperData.Tests.Common.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -9,9 +10,11 @@ public class SamBulkScanOrchestratorTests(AppTestFixture appTestFixture) : IClas
 {
     private readonly AppTestFixture _appTestFixture = appTestFixture;
 
-    [Fact]
+    [SkippableFact]
     public async Task StartSamBulkScan_WithValidRequest_ShouldExecuteOrchestration()
     {
+        Skip.If(TestEnvironmentHelper.IsRunningInCi(), "This test requires local environment");
+
         // Arrange
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
         using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
@@ -25,9 +28,11 @@ public class SamBulkScanOrchestratorTests(AppTestFixture appTestFixture) : IClas
         scanCorrelationId.Should().NotBe(Guid.Empty, "correlation ID should be a valid GUID");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task StartSamBulkScan_WhenDistributedLockCannotBeAcquired_ShouldReturnNull()
     {
+        Skip.If(TestEnvironmentHelper.IsRunningInCi(), "This test requires local environment");
+
         // Arrange
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
         using var scope1 = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
