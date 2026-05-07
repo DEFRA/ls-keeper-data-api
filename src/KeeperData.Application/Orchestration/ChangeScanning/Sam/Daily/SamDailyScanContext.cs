@@ -9,4 +9,5 @@ public class SamDailyScanContext : ScanContext
     public EntityScanContext Holders { get; init; } = new();
     public EntityScanContext Herds { get; init; } = new();
     public EntityScanContext Parties { get; init; } = new();
+    public EntityScanContext Ports { get; init; } = new();
 }

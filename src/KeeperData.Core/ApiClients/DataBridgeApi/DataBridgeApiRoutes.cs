@@ -10,4 +10,5 @@ public static class DataBridgeApiRoutes
     public const string GetSamHolders = "api/query/sam_cph_holder";
     public const string GetSamParties = "api/query/sam_party";
     public const string GetSamHerds = "api/query/sam_herd";
+    public const string GetSamPorts = "api/query/amls2_port";
 }

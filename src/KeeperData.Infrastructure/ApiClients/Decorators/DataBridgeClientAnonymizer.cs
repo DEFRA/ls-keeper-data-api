@@ -112,6 +112,22 @@ public class DataBridgeClientAnonymizer(
         return result;
     }
 
+    public async Task<DataBridgeResponse<T>?> GetSamPortsAsync<T>(
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await inner.GetSamPortsAsync<T>(top, skip, selectFields, updatedSinceDateTime, orderBy, cancellationToken);
+        PiiAnonymizerHelper.AnonymizeResponse(result, logger);
+        return result;
+    }
+
+    public Task<List<SamPort>> GetSamPortsAsync(string id, CancellationToken cancellationToken)
+        => inner.GetSamPortsAsync(id, cancellationToken);
+
     public async Task<DataBridgeResponse<T>?> GetCtsHoldingsAsync<T>(
         int top,
         int skip,

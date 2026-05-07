@@ -144,4 +144,12 @@ public static class DataBridgeQueries
             [FilterKey] = filter
         };
     }
+
+    public static Dictionary<string, string> SamPortsByCph(string id)
+    {
+        return new Dictionary<string, string>
+        {
+            [FilterKey] = $"CPH eq '{id}'"
+        };
+    }
 }

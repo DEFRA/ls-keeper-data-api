@@ -208,4 +208,15 @@ public static class MockSamData
                         partyIds: [partyId])
                 ]
             });
+
+    public static DataBridgeResponse<SamScanPortIdentifier> GetSamPortsScanIdentifierDataBridgeResponse(int top, int count, int totalCount) =>
+        new()
+        {
+            CollectionName = "collection",
+            Top = top,
+            Skip = 0,
+            Count = count,
+            TotalCount = totalCount,
+            Data = [.. s_fixture.CreateMany<SamScanPortIdentifier>(count)]
+        };
 }

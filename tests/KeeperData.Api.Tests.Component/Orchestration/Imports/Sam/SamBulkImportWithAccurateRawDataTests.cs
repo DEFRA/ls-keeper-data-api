@@ -55,7 +55,7 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
     {
         var partyIds = scenarioData.RawParties.Select(x => x.PARTY_ID).Union(scenarioData.RawHolders.Select(x => x.PARTY_ID)).Distinct().ToList();
 
-        var (holdingsUri, herdsUri, holdersUri, partiesUri) = GetAllQueryUris(scenarioData.Cph, partyIds);
+        var (holdingsUri, herdsUri, holdersUri, partiesUri, portsUri) = GetAllQueryUris(scenarioData.Cph, partyIds);
 
         SetupDefaultRepositoryMocks();
         SetupDefaultLookupServiceMocks();
@@ -69,6 +69,7 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, herdsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawHerds));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, holdersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawHolders));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, partiesUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawParties));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, portsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawPorts ?? []));
 
         return await ExecuteTestAsync(_appTestFixture.AppWebApplicationFactory, scenarioData.Cph);
     }
@@ -148,7 +149,7 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
             .ReturnsResponse(httpStatusCode, httpResponseMessage);
     }
 
-    private static (string holdingsUri, string herdsUri, string holdersUri, string partiesUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)
+    private static (string holdingsUri, string herdsUri, string holdersUri, string partiesUri, string portsUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)
     {
         var holdingsUri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamHoldings,
@@ -170,7 +171,12 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
             new { },
             DataBridgeQueries.SamPartiesByPartyIds(partyIds));
 
-        return (holdingsUri, herdsUri, holdersUri, partiesUri);
+        var portsUri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamPorts,
+            new { },
+            DataBridgeQueries.SamPortsByCph(holdingIdentifier));
+
+        return (holdingsUri, herdsUri, holdersUri, partiesUri, portsUri);
     }
 
     private void SetupDefaultRepositoryMocks()
@@ -178,8 +184,42 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
         // Silver
         CommonRepositoryMocks.SetupDefaultSamSilverRepositoryMocks(_appTestFixture.AppWebApplicationFactory);
 
+        // Silver Ports
+        _appTestFixture.AppWebApplicationFactory._silverSamPortRepositoryMock
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamPortDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        _appTestFixture.AppWebApplicationFactory._silverSamPortRepositoryMock
+            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<SamPortDocument>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _appTestFixture.AppWebApplicationFactory._silverSamPortRepositoryMock
+            .Setup(r => r.BulkUpdateWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamPortDocument>, UpdateDefinition<SamPortDocument>)>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _appTestFixture.AppWebApplicationFactory._silverSamPortRepositoryMock
+            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamPortDocument>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         // Gold
         CommonRepositoryMocks.SetupDefaultGoldRepositoryMocks(_appTestFixture.AppWebApplicationFactory);
+
+        // Gold Ports
+        _appTestFixture.AppWebApplicationFactory._goldPortRepositoryMock
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<PortDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        _appTestFixture.AppWebApplicationFactory._goldPortRepositoryMock
+            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<PortDocument>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _appTestFixture.AppWebApplicationFactory._goldPortRepositoryMock
+            .Setup(r => r.BulkUpdateWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<PortDocument>, UpdateDefinition<PortDocument>)>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _appTestFixture.AppWebApplicationFactory._goldPortRepositoryMock
+            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<PortDocument>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
     }
 
     private void SetupRepositoryMocksFromContext(SamHoldingImportContext context)
@@ -209,6 +249,15 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
             {
                 h.Id = Guid.NewGuid().ToString();
                 return h;
+            })]);
+
+        // Silver Ports
+        _appTestFixture.AppWebApplicationFactory._silverSamPortRepositoryMock
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamPortDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([.. context.SilverPorts.Select(p =>
+            {
+                p.Id = Guid.NewGuid().ToString();
+                return p;
             })]);
 
         // Gold Site
@@ -241,6 +290,15 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
             {
                 h.Id = Guid.NewGuid().ToString();
                 return h;
+            })]);
+
+        // Gold Ports
+        _appTestFixture.AppWebApplicationFactory._goldPortRepositoryMock
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<PortDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([.. context.GoldPorts.Select(p =>
+            {
+                p.Id = Guid.NewGuid().ToString();
+                return p;
             })]);
     }
 

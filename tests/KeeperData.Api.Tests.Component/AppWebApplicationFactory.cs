@@ -66,8 +66,10 @@ public class AppWebApplicationFactory(
     public readonly Mock<IGenericRepository<SamHoldingDocument>> _silverSamHoldingRepositoryMock = new();
     public readonly Mock<IGenericRepository<SamPartyDocument>> _silverSamPartyRepositoryMock = new();
     public readonly Mock<IGenericRepository<SamHerdDocument>> _silverSamHerdRepositoryMock = new();
+    public readonly Mock<IGenericRepository<SamPortDocument>> _silverSamPortRepositoryMock = new();
     public readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
     public readonly Mock<IGenericRepository<PartyDocument>> _goldPartyRepositoryMock = new();
+    public readonly Mock<IGenericRepository<PortDocument>> _goldPortRepositoryMock = new();
     public readonly Mock<IGoldSitePartyRoleRelationshipRepository> _goldSitePartyRoleRelationshipRepositoryMock = new();
     public readonly Mock<IRoleRepository> _roleRepositoryMock = new();
     public readonly Mock<ICountryRepository> _countryRepositoryMock = new();
@@ -328,9 +330,11 @@ public class AppWebApplicationFactory(
         OverrideServiceAsScoped(_silverSamHoldingRepositoryMock.Object);
         OverrideServiceAsScoped(_silverSamPartyRepositoryMock.Object);
         OverrideServiceAsScoped(_silverSamHerdRepositoryMock.Object);
+        OverrideServiceAsScoped(_silverSamPortRepositoryMock.Object);
 
         OverrideServiceAsScoped(_goldSiteRepositoryMock.Object);
         OverrideServiceAsScoped(_goldPartyRepositoryMock.Object);
+        OverrideServiceAsScoped(_goldPortRepositoryMock.Object);
         OverrideServiceAsScoped(_goldSitePartyRoleRelationshipRepositoryMock.Object);
 
         OverrideServiceAsScoped(_roleRepositoryMock.Object);
@@ -372,9 +376,11 @@ public class AppWebApplicationFactory(
         _silverSamHoldingRepositoryMock.Reset();
         _silverSamPartyRepositoryMock.Reset();
         _silverSamHerdRepositoryMock.Reset();
+        _silverSamPortRepositoryMock.Reset();
 
         _goldSiteRepositoryMock.Reset();
         _goldPartyRepositoryMock.Reset();
+        _goldPortRepositoryMock.Reset();
         _goldSitePartyRoleRelationshipRepositoryMock.Reset();
 
         _roleRepositoryMock.Reset();

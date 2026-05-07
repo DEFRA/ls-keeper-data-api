@@ -44,7 +44,9 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
             herdCount: 1,
             partyCount: 1);
 
-        var (holdingsUri, herdsUri, holdersUri, partiesUri) = GetAllQueryUris(holdingIdentifier, parties.Select(x => x.PARTY_ID));
+        var ports = new List<SamPort>();
+
+        var (holdingsUri, herdsUri, holdersUri, partiesUri, portsUri) = GetAllQueryUris(holdingIdentifier, parties.Select(x => x.PARTY_ID));
 
         SetupRepositoryMocks();
         SetupLookupServiceMocks();
@@ -53,6 +55,7 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, herdsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(herds));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, holdersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holders));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, partiesUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(parties));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, portsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(ports));
 
         var result = await ExecuteTestAsync(_appTestFixture.AppWebApplicationFactory, holdingIdentifier);
 
@@ -60,6 +63,7 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         VerifyDataBridgeApiEndpointCalled(_appTestFixture.AppWebApplicationFactory, herdsUri, Times.Once());
         VerifyDataBridgeApiEndpointCalled(_appTestFixture.AppWebApplicationFactory, holdersUri, Times.Once());
         VerifyDataBridgeApiEndpointCalled(_appTestFixture.AppWebApplicationFactory, partiesUri, Times.Once());
+        VerifyDataBridgeApiEndpointCalled(_appTestFixture.AppWebApplicationFactory, portsUri, Times.Once());
 
         VerifyRawDataTypes(result, holdingIdentifier, holders[0].PARTY_ID, parties[0].PARTY_ID);
         VerifySilverDataTypes(result, holdingIdentifier);
@@ -105,13 +109,15 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
 
         var herds = new List<SamHerd>();
         var parties = new List<SamParty>();
+        var ports = new List<SamPort>();
 
-        var (holdingsUri, herdsUri, holdersUri, partiesUri) = GetAllQueryUris(cph, []);
+        var (holdingsUri, herdsUri, holdersUri, partiesUri, portsUri) = GetAllQueryUris(cph, []);
 
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holdings));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, herdsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(herds));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, holdersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holders));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, partiesUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(parties));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, portsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(ports));
 
         // Act
         await ExecuteTestAsync(_appTestFixture.AppWebApplicationFactory, cph);
@@ -169,6 +175,8 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         context.RawParties.Should().NotBeNull().And.HaveCount(2);
         context.RawParties.Count(x => x.PARTY_ID == samPartyId).Should().Be(1);
         context.RawParties.Count(x => x.PARTY_ID == samHolderPartyId).Should().Be(1);
+
+        context.RawPorts.Should().NotBeNull();
     }
 
     private static void VerifySilverDataTypes(SamHoldingImportContext context, string holdingIdentifier)
@@ -196,6 +204,8 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         context.SilverHerds.Should().NotBeNull().And.HaveCount(1);
         context.SilverHerds[0].CountyParishHoldingHerd.Should().Contain(holdingIdentifier);
         context.SilverHerds[0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
+
+        context.SilverPorts.Should().NotBeNull();
     }
 
     private static void VerifyGoldDataTypes(SamHoldingImportContext context, string holdingIdentifier)
@@ -225,9 +235,11 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         {
             context.GoldSiteGroupMarks[i].HoldingIdentifier.Should().Be(holdingIdentifier);
         }
+
+        context.GoldPorts.Should().NotBeNull();
     }
 
-    private static (string holdingsUri, string herdsUri, string holdersUri, string partiesUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)
+    private static (string holdingsUri, string herdsUri, string holdersUri, string partiesUri, string portsUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)
     {
         var holdingsUri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamHoldings,
@@ -249,7 +261,12 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
             new { },
             DataBridgeQueries.SamPartiesByPartyIds(partyIds));
 
-        return (holdingsUri, herdsUri, holdersUri, partiesUri);
+        var portsUri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamPorts,
+            new { },
+            DataBridgeQueries.SamPortsByCph(holdingIdentifier));
+
+        return (holdingsUri, herdsUri, holdersUri, partiesUri, portsUri);
     }
 
     private void SetupRepositoryMocks(
@@ -275,8 +292,42 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         // Silver
         CommonRepositoryMocks.SetupDefaultSamSilverRepositoryMocks(_appTestFixture.AppWebApplicationFactory);
 
+        // Silver Ports
+        _appTestFixture.AppWebApplicationFactory._silverSamPortRepositoryMock
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamPortDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        _appTestFixture.AppWebApplicationFactory._silverSamPortRepositoryMock
+            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<SamPortDocument>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _appTestFixture.AppWebApplicationFactory._silverSamPortRepositoryMock
+            .Setup(r => r.BulkUpdateWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamPortDocument>, UpdateDefinition<SamPortDocument>)>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _appTestFixture.AppWebApplicationFactory._silverSamPortRepositoryMock
+            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamPortDocument>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         // Gold
         CommonRepositoryMocks.SetupDefaultGoldRepositoryMocks(_appTestFixture.AppWebApplicationFactory);
+
+        // Gold Ports
+        _appTestFixture.AppWebApplicationFactory._goldPortRepositoryMock
+            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<PortDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        _appTestFixture.AppWebApplicationFactory._goldPortRepositoryMock
+            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<PortDocument>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _appTestFixture.AppWebApplicationFactory._goldPortRepositoryMock
+            .Setup(r => r.BulkUpdateWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<PortDocument>, UpdateDefinition<PortDocument>)>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _appTestFixture.AppWebApplicationFactory._goldPortRepositoryMock
+            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<PortDocument>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         // Overrides
 
