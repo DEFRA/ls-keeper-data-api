@@ -1,33 +1,41 @@
 using FluentAssertions;
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
-using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Domain.Enums;
+using KeeperData.Core.Extensions;
 
 namespace KeeperData.Application.Tests.Unit.Orchestration.Imports.Sam.Mappings;
 
 public class SamPortMapperTests
 {
     [Fact]
-    public void GivenNullableRawPorts_WhenCallingToSilver_ShouldReturnEmptyList()
+    public async Task GivenNullableRawPorts_WhenCallingToSilver_ShouldReturnEmptyList()
     {
-        var results = SamPortMapper.ToSilver((List<SamPort>?)null!);
+        var results = await SamPortMapper.ToSilver(
+            (List<SamPort>?)null!,
+            (_, _, _) => Task.FromResult<(string?, string?, string?)>((null, null, null)),
+            CancellationToken.None);
 
         results.Should().NotBeNull();
         results.Should().BeEmpty();
     }
 
     [Fact]
-    public void GivenEmptyRawPorts_WhenCallingToSilver_ShouldReturnEmptyList()
+    public async Task GivenEmptyRawPorts_WhenCallingToSilver_ShouldReturnEmptyList()
     {
-        var results = SamPortMapper.ToSilver([]);
+        var results = await SamPortMapper.ToSilver(
+            [],
+            (_, _, _) => Task.FromResult<(string?, string?, string?)>((null, null, null)),
+            CancellationToken.None);
 
         results.Should().NotBeNull();
         results.Should().BeEmpty();
     }
 
     [Fact]
-    public void GivenRawPortsWithEmptyCph_WhenCallingToSilver_ShouldFilterOutEmptyCph()
+    public async Task GivenRawPortsWithEmptyCph_WhenCallingToSilver_ShouldFilterOutEmptyCph()
     {
         var rawPorts = new List<SamPort>
         {
@@ -37,14 +45,17 @@ public class SamPortMapperTests
             new() { CPH = "  ", PREMISES_NAME = "Whitespace CPH" }
         };
 
-        var results = SamPortMapper.ToSilver(rawPorts);
+        var results = await SamPortMapper.ToSilver(
+            rawPorts,
+            (_, _, _) => Task.FromResult<(string?, string?, string?)>((null, null, null)),
+            CancellationToken.None);
 
         results.Should().HaveCount(1);
         results[0].CountyParishHoldingNumber.Should().Be("12/345/6789");
     }
 
     [Fact]
-    public void GivenSingleRawPort_WhenCallingToSilver_ShouldMapAllProperties()
+    public async Task GivenSingleRawPort_WhenCallingToSilver_ShouldMapAllProperties()
     {
         var rawPort = new SamPort
         {
@@ -64,7 +75,10 @@ public class SamPortMapperTests
             NORTHING = 500000
         };
 
-        var result = SamPortMapper.ToSilver(rawPort);
+        var result = await SamPortMapper.ToSilver(
+            rawPort,
+            (_, _, _) => Task.FromResult<(string?, string?, string?)>(("country-id", "GB", "United Kingdom")),
+            CancellationToken.None);
 
         result.Should().NotBeNull();
         result.Id.Should().BeNull();
@@ -72,20 +86,22 @@ public class SamPortMapperTests
         result.CreatedDate.Should().Be(new DateTime(2025, 1, 1, 10, 0, 0));
         result.LastUpdatedDate.Should().Be(new DateTime(2025, 1, 2, 15, 30, 0));
         result.Deleted.Should().BeFalse();
-        result.ChangeType.Should().Be("I");
         result.CountyParishHoldingNumber.Should().Be("12/345/6789");
-        result.PremisesName.Should().Be("Test Port Name");
-        result.AddressLine1.Should().Be("Address Line 1");
-        result.AddressLine2.Should().Be("Address Line 2");
-        result.AddressLine3.Should().Be("Address Line 3");
-        result.Postcode.Should().Be("AB12 3CD");
-        result.MapReference.Should().Be("SK123456");
-        result.Easting.Should().Be(400000);
-        result.Northing.Should().Be(500000);
+        result.LocationName.Should().Be("Test Port Name");
+        result.CphTypeIdentifier.Should().Be(HoldingIdentifierType.PRTN.ToString());
+        result.Location.Should().NotBeNull();
+        result.Location!.Address.Should().NotBeNull();
+        result.Location.Address!.AddressLine.Should().Be("Address Line 1");
+        result.Location.Address.AddressLocality.Should().Be("Address Line 2");
+        result.Location.Address.AddressStreet.Should().Be("Address Line 3");
+        result.Location.Address.AddressPostCode.Should().Be("AB12 3CD");
+        result.Location.OsMapReference.Should().Be("SK123456");
+        result.Location.Easting.Should().Be(400000);
+        result.Location.Northing.Should().Be(500000);
     }
 
     [Fact]
-    public void GivenRawPortWithNullDates_WhenCallingToSilver_ShouldUseUtcNow()
+    public async Task GivenRawPortWithNullDates_WhenCallingToSilver_ShouldUseUtcNow()
     {
         var rawPort = new SamPort
         {
@@ -95,15 +111,19 @@ public class SamPortMapperTests
         };
 
         var beforeMapping = DateTime.UtcNow;
-        var result = SamPortMapper.ToSilver(rawPort);
+        var result = await SamPortMapper.ToSilver(
+            rawPort,
+            (_, _, _) => Task.FromResult<(string?, string?, string?)>((null, null, null)),
+            CancellationToken.None);
         var afterMapping = DateTime.UtcNow;
 
         result.CreatedDate.Should().BeOnOrAfter(beforeMapping).And.BeOnOrBefore(afterMapping);
         result.LastUpdatedDate.Should().BeOnOrAfter(beforeMapping).And.BeOnOrBefore(afterMapping);
+        result.HoldingStartDate.Should().BeOnOrAfter(beforeMapping).And.BeOnOrBefore(afterMapping);
     }
 
     [Fact]
-    public void GivenRawPortWithNullIsDeleted_WhenCallingToSilver_ShouldDefaultToFalse()
+    public async Task GivenRawPortWithNullIsDeleted_WhenCallingToSilver_ShouldDefaultToFalse()
     {
         var rawPort = new SamPort
         {
@@ -111,7 +131,10 @@ public class SamPortMapperTests
             IsDeleted = null
         };
 
-        var result = SamPortMapper.ToSilver(rawPort);
+        var result = await SamPortMapper.ToSilver(
+            rawPort,
+            (_, _, _) => Task.FromResult<(string?, string?, string?)>((null, null, null)),
+            CancellationToken.None);
 
         result.Deleted.Should().BeFalse();
     }
@@ -120,7 +143,7 @@ public class SamPortMapperTests
     [InlineData(1)]
     [InlineData(3)]
     [InlineData(5)]
-    public void GivenMultipleRawPorts_WhenCallingToSilver_ShouldMapAll(int count)
+    public async Task GivenMultipleRawPorts_WhenCallingToSilver_ShouldMapAll(int count)
     {
         var rawPorts = Enumerable.Range(1, count).Select(i => new SamPort
         {
@@ -129,150 +152,22 @@ public class SamPortMapperTests
             BATCH_ID = i
         }).ToList();
 
-        var results = SamPortMapper.ToSilver(rawPorts);
+        var results = await SamPortMapper.ToSilver(
+            rawPorts,
+            (_, _, _) => Task.FromResult<(string?, string?, string?)>((null, null, null)),
+            CancellationToken.None);
 
         results.Should().HaveCount(count);
         for (var i = 0; i < count; i++)
         {
             results[i].CountyParishHoldingNumber.Should().Be($"12/345/{6001 + i}");
-            results[i].PremisesName.Should().Be($"Port {i + 1}");
+            results[i].LocationName.Should().Be($"Port {i + 1}");
             results[i].LastUpdatedBatchId.Should().Be(i + 1);
         }
     }
 
     [Fact]
-    public void GivenNullableSilverPorts_WhenCallingToGold_ShouldReturnEmptyList()
-    {
-        List<SamPortDocument>? nullPorts = null;
-        var results = SamPortMapper.ToGold(nullPorts!, "12/345/6789");
-
-        results.Should().NotBeNull();
-        results.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void GivenEmptySilverPorts_WhenCallingToGold_ShouldReturnEmptyList()
-    {
-        var results = SamPortMapper.ToGold([], "12/345/6789");
-
-        results.Should().NotBeNull();
-        results.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void GivenSilverPort_WhenCallingToGold_ShouldMapAllProperties()
-    {
-        var holdingIdentifier = "12/345/6789";
-        var silverPort = new SamPortDocument
-        {
-            Id = "silver-id",
-            CreatedDate = new DateTime(2025, 1, 1, 10, 0, 0),
-            LastUpdatedDate = new DateTime(2025, 1, 2, 15, 30, 0),
-            Deleted = false,
-            ChangeType = "U",
-            CountyParishHoldingNumber = "12/345/6789",
-            PremisesName = "Gold Port Name",
-            AddressLine1 = "Gold Address 1",
-            AddressLine2 = "Gold Address 2",
-            AddressLine3 = "Gold Address 3",
-            Postcode = "EF45 6GH",
-            MapReference = "SU987654",
-            Easting = 600000,
-            Northing = 700000
-        };
-
-        var result = SamPortMapper.ToGold(silverPort, holdingIdentifier);
-
-        result.Should().NotBeNull();
-        result.Id.Should().BeNull();
-        result.HoldingIdentifier.Should().Be(holdingIdentifier);
-        result.Name.Should().Be("Gold Port Name");
-        result.CreatedDate.Should().Be(new DateTime(2025, 1, 1, 10, 0, 0));
-        result.LastUpdatedDate.Should().Be(new DateTime(2025, 1, 2, 15, 30, 0));
-        result.Deleted.Should().BeFalse();
-        result.ChangeType.Should().Be("U");
-        result.AddressLine1.Should().Be("Gold Address 1");
-        result.AddressLine2.Should().Be("Gold Address 2");
-        result.AddressLine3.Should().Be("Gold Address 3");
-        result.Postcode.Should().Be("EF45 6GH");
-        result.MapReference.Should().Be("SU987654");
-        result.Easting.Should().Be(600000);
-        result.Northing.Should().Be(700000);
-        result.Source.Should().Be("SAM");
-    }
-
-    [Theory]
-    [InlineData(1)]
-    [InlineData(3)]
-    [InlineData(5)]
-    public void GivenMultipleSilverPorts_WhenCallingToGold_ShouldMapAll(int count)
-    {
-        var holdingIdentifier = "12/345/6789";
-        var silverPorts = Enumerable.Range(1, count).Select(i => new SamPortDocument
-        {
-            CountyParishHoldingNumber = "12/345/6789",
-            PremisesName = $"Gold Port {i}",
-            ChangeType = "I"
-        }).ToList();
-
-        var results = SamPortMapper.ToGold(silverPorts, holdingIdentifier);
-
-        results.Should().HaveCount(count);
-        for (var i = 0; i < count; i++)
-        {
-            results[i].HoldingIdentifier.Should().Be(holdingIdentifier);
-            results[i].Name.Should().Be($"Gold Port {i + 1}");
-            results[i].Source.Should().Be("SAM");
-        }
-    }
-
-    [Fact]
-    public void GivenSilverPortWithNullValues_WhenCallingToGold_ShouldHandleNulls()
-    {
-        var holdingIdentifier = "12/345/6789";
-        var silverPort = new SamPortDocument
-        {
-            CountyParishHoldingNumber = "12/345/6789",
-            PremisesName = null,
-            AddressLine1 = null,
-            AddressLine2 = null,
-            AddressLine3 = null,
-            Postcode = null,
-            MapReference = null,
-            Easting = null,
-            Northing = null
-        };
-
-        var result = SamPortMapper.ToGold(silverPort, holdingIdentifier);
-
-        result.Should().NotBeNull();
-        result.Name.Should().BeNull();
-        result.AddressLine1.Should().BeNull();
-        result.AddressLine2.Should().BeNull();
-        result.AddressLine3.Should().BeNull();
-        result.Postcode.Should().BeNull();
-        result.MapReference.Should().BeNull();
-        result.Easting.Should().BeNull();
-        result.Northing.Should().BeNull();
-    }
-
-    [Fact]
-    public void GivenDifferentHoldingIdentifier_WhenCallingToGold_ShouldUseProvidedIdentifier()
-    {
-        var providedIdentifier = "99/888/7777";
-        var silverPort = new SamPortDocument
-        {
-            CountyParishHoldingNumber = "12/345/6789",
-            PremisesName = "Test Port"
-        };
-
-        var result = SamPortMapper.ToGold(silverPort, providedIdentifier);
-
-        result.HoldingIdentifier.Should().Be(providedIdentifier);
-    }
-
-    [Fact]
-    public void GivenPortWithDeletedFlag_WhenCallingToSilver_ShouldPreserveDeletedFlag()
+    public async Task GivenPortWithDeletedFlag_WhenCallingToSilver_ShouldPreserveDeletedFlag()
     {
         var rawPort = new SamPort
         {
@@ -280,22 +175,159 @@ public class SamPortMapperTests
             IsDeleted = true
         };
 
-        var result = SamPortMapper.ToSilver(rawPort);
+        var result = await SamPortMapper.ToSilver(
+            rawPort,
+            (_, _, _) => Task.FromResult<(string?, string?, string?)>((null, null, null)),
+            CancellationToken.None);
 
         result.Deleted.Should().BeTrue();
     }
 
     [Fact]
-    public void GivenPortWithDeletedFlag_WhenCallingToGold_ShouldPreserveDeletedFlag()
+    public async Task GivenRawPort_WhenCallingToSilver_ShouldSetCphTypeIdentifierToPRTN()
     {
-        var silverPort = new SamPortDocument
+        var rawPort = new SamPort
         {
-            CountyParishHoldingNumber = "12/345/6789",
-            Deleted = true
+            CPH = "12/345/6789",
+            PREMISES_NAME = "Test Port"
         };
 
-        var result = SamPortMapper.ToGold(silverPort, "12/345/6789");
+        var result = await SamPortMapper.ToSilver(
+            rawPort,
+            (_, _, _) => Task.FromResult<(string?, string?, string?)>((null, null, null)),
+            CancellationToken.None);
 
-        result.Deleted.Should().BeTrue();
+        result.CphTypeIdentifier.Should().Be(HoldingIdentifierType.PRTN.ToString());
+    }
+
+    [Fact]
+    public async Task GivenRawPort_WhenCallingToSilver_ShouldSetHoldingSpecificFieldsToNull()
+    {
+        var rawPort = new SamPort
+        {
+            CPH = "12/345/6789",
+            PREMISES_NAME = "Test Port"
+        };
+
+        var result = await SamPortMapper.ToSilver(
+            rawPort,
+            (_, _, _) => Task.FromResult<(string?, string?, string?)>((null, null, null)),
+            CancellationToken.None);
+
+        result.SecondaryCph.Should().BeNull();
+        result.CphRelationshipType.Should().BeNull();
+        result.AlternativeHoldingIdentifier.Should().BeNull();
+        result.SourceFacilityTypeCode.Should().BeNull();
+        result.SourceFacilityBusinessActivityCode.Should().BeNull();
+        result.SourceFacilitySubBusinessActivityCode.Should().BeNull();
+        result.SpeciesTypeCode.Should().BeNull();
+        result.ProductionUsageCodeList.Should().BeEmpty();
+        result.DiseaseType.Should().BeNull();
+        result.Interval.Should().BeNull();
+        result.IntervalUnitOfTime.Should().BeNull();
+        result.MovementRestrictionReasonCode.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GivenRawPort_WhenCallingToSilver_ShouldResolveCountry()
+    {
+        var rawPort = new SamPort
+        {
+            CPH = "12/345/6789",
+            PREMISES_NAME = "Test Port"
+        };
+
+        var countryId = "country-123";
+        var countryCode = "GB";
+
+        var result = await SamPortMapper.ToSilver(
+            rawPort,
+            (_, _, _) => Task.FromResult<(string?, string?, string?)>((countryId, countryCode, "United Kingdom")),
+            CancellationToken.None);
+
+        result.Location!.Address!.CountryIdentifier.Should().Be(countryId);
+        result.Location.Address.CountryCode.Should().Be(countryCode);
+    }
+
+    [Fact]
+    public async Task GivenRawPortWithNullAddress_WhenCallingToSilver_ShouldHandleNullValues()
+    {
+        var rawPort = new SamPort
+        {
+            CPH = "12/345/6789",
+            PREMISES_NAME = null,
+            ADDRESS_LINE_1 = null,
+            ADDRESS_LINE_2 = null,
+            ADDRESS_LINE_3 = null,
+            POSTCODE = null,
+            MAP_REFERENCE = null,
+            EASTING = null,
+            NORTHING = null
+        };
+
+        var result = await SamPortMapper.ToSilver(
+            rawPort,
+            (_, _, _) => Task.FromResult<(string?, string?, string?)>((null, null, null)),
+            CancellationToken.None);
+
+        result.LocationName.Should().BeNull();
+        result.Location!.Address!.AddressLine.Should().BeNull();
+        result.Location.Address.AddressLocality.Should().BeNull();
+        result.Location.Address.AddressStreet.Should().BeNull();
+        result.Location.Address.AddressPostCode.Should().BeNull();
+        result.Location.OsMapReference.Should().BeNull();
+        result.Location.Easting.Should().BeNull();
+        result.Location.Northing.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GivenRawPort_WhenCallingToSilver_ShouldCreateLocationAndAddressWithIds()
+    {
+        var rawPort = new SamPort
+        {
+            CPH = "12/345/6789",
+            PREMISES_NAME = "Test Port"
+        };
+
+        var result = await SamPortMapper.ToSilver(
+            rawPort,
+            (_, _, _) => Task.FromResult<(string?, string?, string?)>((null, null, null)),
+            CancellationToken.None);
+
+        result.Location.Should().NotBeNull();
+        result.Location!.IdentifierId.Should().NotBeNullOrWhiteSpace();
+        result.Location.Address.Should().NotBeNull();
+        result.Location.Address!.IdentifierId.Should().NotBeNullOrWhiteSpace();
+        result.Communication.Should().NotBeNull();
+        result.Communication!.IdentifierId.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task GivenRawPort_WhenCallingToSilver_ShouldSetHoldingStatusBasedOnDeletedFlag()
+    {
+        var activePort = new SamPort
+        {
+            CPH = "12/345/6789",
+            IsDeleted = false
+        };
+
+        var deletedPort = new SamPort
+        {
+            CPH = "98/765/4321",
+            IsDeleted = true
+        };
+
+        var activeResult = await SamPortMapper.ToSilver(
+            activePort,
+            (_, _, _) => Task.FromResult<(string?, string?, string?)>((null, null, null)),
+            CancellationToken.None);
+
+        var deletedResult = await SamPortMapper.ToSilver(
+            deletedPort,
+            (_, _, _) => Task.FromResult<(string?, string?, string?)>((null, null, null)),
+            CancellationToken.None);
+
+        activeResult.HoldingStatus.Should().Be(HoldingStatusType.Active.GetDescription());
+        deletedResult.HoldingStatus.Should().Be(HoldingStatusType.Inactive.GetDescription());
     }
 }

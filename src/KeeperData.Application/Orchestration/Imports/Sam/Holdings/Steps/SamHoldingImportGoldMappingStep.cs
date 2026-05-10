@@ -78,7 +78,5 @@ public class SamHoldingImportGoldMappingStep(
                 context.GoldParties,
                 context.GoldSite);
         }
-
-        context.GoldPorts = SamPortMapper.ToGold(context.SilverPorts, context.Cph);
     }
 }

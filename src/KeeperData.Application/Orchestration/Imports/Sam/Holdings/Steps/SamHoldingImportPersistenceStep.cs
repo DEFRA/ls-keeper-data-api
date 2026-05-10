@@ -13,10 +13,8 @@ public class SamHoldingImportPersistenceStep(
     IGenericRepository<SamHoldingDocument> silverHoldingRepository,
     IGenericRepository<SamPartyDocument> silverPartyRepository,
     IGenericRepository<SamHerdDocument> silverHerdRepository,
-    IGenericRepository<SamPortDocument> silverPortRepository,
     IGenericRepository<SiteDocument> goldSiteRepository,
     IGenericRepository<PartyDocument> goldPartyRepository,
-    IGenericRepository<PortDocument> goldPortRepository,
     IGoldSitePartyRoleRelationshipRepository goldSitePartyRoleRelationshipRepository,
     ILogger<SamHoldingImportPersistenceStep> logger)
     : ImportStepBase<SamHoldingImportContext>(logger)
@@ -24,11 +22,9 @@ public class SamHoldingImportPersistenceStep(
     private readonly IGenericRepository<SamHoldingDocument> _silverHoldingRepository = silverHoldingRepository;
     private readonly IGenericRepository<SamPartyDocument> _silverPartyRepository = silverPartyRepository;
     private readonly IGenericRepository<SamHerdDocument> _silverHerdRepository = silverHerdRepository;
-    private readonly IGenericRepository<SamPortDocument> _silverPortRepository = silverPortRepository;
 
     private readonly IGenericRepository<SiteDocument> _goldSiteRepository = goldSiteRepository;
     private readonly IGenericRepository<PartyDocument> _goldPartyRepository = goldPartyRepository;
-    private readonly IGenericRepository<PortDocument> _goldPortRepository = goldPortRepository;
     private readonly IGoldSitePartyRoleRelationshipRepository _goldSitePartyRoleRelationshipRepository = goldSitePartyRoleRelationshipRepository;
 
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
@@ -39,7 +35,6 @@ public class SamHoldingImportPersistenceStep(
 
         await UpsertSilverHerdsAndDeleteOrphansAsync(context.Cph, context.SilverHerds, cancellationToken);
 
-        await UpsertSilverPortsAndDeleteOrphansAsync(context.Cph, context.SilverPorts, cancellationToken);
 
         if (context.GoldSite != null)
         {
@@ -55,8 +50,6 @@ public class SamHoldingImportPersistenceStep(
             context.Cph,
             context.GoldSitePartyRoles,
             cancellationToken);
-
-        await UpsertGoldPortsAndDeleteOrphansAsync(context.Cph, context.GoldPorts, cancellationToken);
     }
 
     private async Task UpsertSilverHoldingsAndDeleteOrphansAsync(
@@ -364,139 +357,6 @@ public class SamHoldingImportPersistenceStep(
         CancellationToken cancellationToken)
     {
         return await _goldSitePartyRoleRelationshipRepository.FindAsync(
-            x => x.HoldingIdentifier == holdingIdentifier,
-            cancellationToken) ?? [];
-    }
-
-    private async Task UpsertSilverPortsAndDeleteOrphansAsync(
-        string holdingIdentifier,
-        List<SamPortDocument> incomingPorts,
-        CancellationToken cancellationToken)
-    {
-        incomingPorts ??= [];
-
-        var incomingKeys = incomingPorts
-            .Select(p => $"{p.CountyParishHoldingNumber}::{p.PremisesName}")
-            .ToHashSet();
-
-        var existingPorts = await GetExistingSilverPortsAsync(holdingIdentifier, cancellationToken);
-
-        var newItems = new List<SamPortDocument>();
-        var updateItems = new List<(FilterDefinition<SamPortDocument> Filter, UpdateDefinition<SamPortDocument> Update)>();
-
-        foreach (var incoming in incomingPorts)
-        {
-            var existing = existingPorts.FirstOrDefault(e =>
-                e.CountyParishHoldingNumber == incoming.CountyParishHoldingNumber
-                && e.PremisesName == incoming.PremisesName);
-
-            if (existing is null)
-            {
-                incoming.Id = Guid.NewGuid().ToString();
-                newItems.Add(incoming);
-            }
-            else
-            {
-                incoming.Id = existing.Id;
-
-                var filter = Builders<SamPortDocument>.Filter.Eq(x => x.Id, incoming.Id);
-                var update = Builders<SamPortDocument>.Update.SetAll(incoming);
-                updateItems.Add((filter, update));
-            }
-        }
-
-        if (newItems.Count > 0)
-            await _silverPortRepository.AddManyAsync(newItems, cancellationToken);
-
-        if (updateItems.Count > 0)
-            await _silverPortRepository.BulkUpdateWithCustomFilterAsync(updateItems, cancellationToken);
-
-        var orphanedPorts = existingPorts?
-            .Where(e => !incomingKeys.Contains($"{e.CountyParishHoldingNumber}::{e.PremisesName}"))
-            .ToList() ?? [];
-
-        if (orphanedPorts.Count > 0)
-        {
-            var deleteFilter = Builders<SamPortDocument>.Filter.In(
-                x => x.Id,
-                orphanedPorts.Select(d => d.Id)
-            );
-
-            await _silverPortRepository.DeleteManyAsync(deleteFilter, cancellationToken);
-        }
-    }
-
-    private async Task<List<SamPortDocument>> GetExistingSilverPortsAsync(
-        string holdingIdentifier,
-        CancellationToken cancellationToken)
-    {
-        return await _silverPortRepository.FindAsync(
-            x => x.CountyParishHoldingNumber == holdingIdentifier,
-            cancellationToken) ?? [];
-    }
-
-    private async Task UpsertGoldPortsAndDeleteOrphansAsync(
-        string holdingIdentifier,
-        List<PortDocument> incomingPorts,
-        CancellationToken cancellationToken)
-    {
-        incomingPorts ??= [];
-
-        var incomingKeys = incomingPorts
-            .Select(p => $"{p.HoldingIdentifier}::{p.Name}")
-            .ToHashSet();
-
-        var existingPorts = await GetExistingGoldPortsAsync(holdingIdentifier, cancellationToken);
-
-        var newItems = new List<PortDocument>();
-        var updateItems = new List<(FilterDefinition<PortDocument> Filter, UpdateDefinition<PortDocument> Update)>();
-
-        foreach (var incoming in incomingPorts)
-        {
-            var existing = existingPorts.FirstOrDefault(e =>
-                e.HoldingIdentifier == incoming.HoldingIdentifier
-                && e.Name == incoming.Name);
-
-            if (existing is null)
-            {
-                incoming.Id = Guid.NewGuid().ToString();
-                newItems.Add(incoming);
-            }
-            else
-            {
-                incoming.Id = existing.Id;
-
-                var filter = Builders<PortDocument>.Filter.Eq(x => x.Id, incoming.Id);
-                var update = Builders<PortDocument>.Update.SetAll(incoming);
-                updateItems.Add((filter, update));
-            }
-        }
-
-        if (newItems.Count > 0)
-            await _goldPortRepository.AddManyAsync(newItems, cancellationToken);
-
-        if (updateItems.Count > 0)
-            await _goldPortRepository.BulkUpdateWithCustomFilterAsync(updateItems, cancellationToken);
-
-        var orphanedPorts = existingPorts?
-            .Where(e => !incomingKeys.Contains($"{e.HoldingIdentifier}::{e.Name}"))
-            .ToList() ?? [];
-
-        if (orphanedPorts.Count > 0)
-        {
-            var deleteFilter = Builders<PortDocument>.Filter.In(
-                x => x.Id,
-                orphanedPorts.Select(d => d.Id));
-
-            await _goldPortRepository.DeleteManyAsync(deleteFilter, cancellationToken);
-        }
-    }
-
-    private async Task<List<PortDocument>> GetExistingGoldPortsAsync(
-        string holdingIdentifier,
-        CancellationToken cancellationToken)
-    {
-        return await _goldPortRepository.FindAsync(
             x => x.HoldingIdentifier == holdingIdentifier,
             cancellationToken) ?? [];
     }

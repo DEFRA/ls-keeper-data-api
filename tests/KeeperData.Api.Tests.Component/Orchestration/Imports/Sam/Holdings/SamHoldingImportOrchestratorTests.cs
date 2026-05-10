@@ -204,8 +204,6 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         context.SilverHerds.Should().NotBeNull().And.HaveCount(1);
         context.SilverHerds[0].CountyParishHoldingHerd.Should().Contain(holdingIdentifier);
         context.SilverHerds[0].CountyParishHoldingNumber.Should().Be(holdingIdentifier);
-
-        context.SilverPorts.Should().NotBeNull();
     }
 
     private static void VerifyGoldDataTypes(SamHoldingImportContext context, string holdingIdentifier)
@@ -235,8 +233,6 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         {
             context.GoldSiteGroupMarks[i].HoldingIdentifier.Should().Be(holdingIdentifier);
         }
-
-        context.GoldPorts.Should().NotBeNull();
     }
 
     private static (string holdingsUri, string herdsUri, string holdersUri, string partiesUri, string portsUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)
@@ -292,44 +288,8 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         // Silver
         CommonRepositoryMocks.SetupDefaultSamSilverRepositoryMocks(_appTestFixture.AppWebApplicationFactory);
 
-        // Silver Ports
-        _appTestFixture.AppWebApplicationFactory._silverSamPortRepositoryMock
-            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamPortDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
-
-        _appTestFixture.AppWebApplicationFactory._silverSamPortRepositoryMock
-            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<SamPortDocument>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _appTestFixture.AppWebApplicationFactory._silverSamPortRepositoryMock
-            .Setup(r => r.BulkUpdateWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SamPortDocument>, UpdateDefinition<SamPortDocument>)>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _appTestFixture.AppWebApplicationFactory._silverSamPortRepositoryMock
-            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<SamPortDocument>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
         // Gold
         CommonRepositoryMocks.SetupDefaultGoldRepositoryMocks(_appTestFixture.AppWebApplicationFactory);
-
-        // Gold Ports
-        _appTestFixture.AppWebApplicationFactory._goldPortRepositoryMock
-            .Setup(r => r.FindAsync(It.IsAny<Expression<Func<PortDocument, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
-
-        _appTestFixture.AppWebApplicationFactory._goldPortRepositoryMock
-            .Setup(r => r.AddManyAsync(It.IsAny<IEnumerable<PortDocument>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _appTestFixture.AppWebApplicationFactory._goldPortRepositoryMock
-            .Setup(r => r.BulkUpdateWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<PortDocument>, UpdateDefinition<PortDocument>)>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _appTestFixture.AppWebApplicationFactory._goldPortRepositoryMock
-            .Setup(r => r.DeleteManyAsync(It.IsAny<FilterDefinition<PortDocument>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Overrides
 
         // Gold Site
         _appTestFixture.AppWebApplicationFactory._goldSiteRepositoryMock
