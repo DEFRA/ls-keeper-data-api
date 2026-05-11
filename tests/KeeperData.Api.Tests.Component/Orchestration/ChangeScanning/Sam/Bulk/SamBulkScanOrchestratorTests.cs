@@ -1,5 +1,7 @@
 using FluentAssertions;
 using KeeperData.Api.Worker.Tasks;
+using KeeperData.Core.Locking;
+using KeeperData.Tests.Common.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -7,9 +9,7 @@ namespace KeeperData.Api.Tests.Component.Orchestration.ChangeScanning.Sam.Bulk;
 
 public class SamBulkScanOrchestratorTests(AppTestFixture appTestFixture) : IClassFixture<AppTestFixture>
 {
-    private readonly AppTestFixture _appTestFixture = appTestFixture;
-
-    [Fact]
+    private readonly AppTestFixture _appTestFixture = appTestFixture; [Fact]
     public async Task StartSamBulkScan_WithValidRequest_ShouldExecuteOrchestration()
     {
         // Arrange
@@ -30,23 +30,20 @@ public class SamBulkScanOrchestratorTests(AppTestFixture appTestFixture) : IClas
     {
         // Arrange
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
-        using var scope1 = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
-        using var scope2 = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
-        var firstScanTask = scope1.ServiceProvider.GetRequiredService<ISamScanTask>();
-        var secondScanTask = scope2.ServiceProvider.GetRequiredService<ISamScanTask>();
+        using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
 
-        // Act - Start both scans concurrently to ensure lock contention
-        var firstScanTaskExecution = firstScanTask.StartAsync(forceBulk: true);
-        var secondScanTaskExecution = secondScanTask.StartAsync(forceBulk: true);
+        var samScanTask = scope.ServiceProvider.GetRequiredService<ISamScanTask>();
+        var distributedLock = scope.ServiceProvider.GetRequiredService<IDistributedLock>();
 
-        var results = await Task.WhenAll(firstScanTaskExecution, secondScanTaskExecution);
+        // Act 1 - Manually acquire the lock. 
+        // If it succeeds, we hold it. If it returns null, another test is already holding it.
+        // The lock is now guaranteed to be unavailable for StartAsync
+        await using var manualLock = await distributedLock.TryAcquireAsync("SamScanTask", TimeSpan.FromMinutes(5));
 
-        // Assert - One should succeed, one should fail (or both could fail due to timing)
-        var successfulScans = results.Where(r => r != null).ToList();
-        var failedScans = results.Where(r => r == null).ToList();
+        // Act 2 - Try to start the scan while the lock is unavailable
+        var scanCorrelationId = await samScanTask.StartAsync(forceBulk: true);
 
-        failedScans.Should().HaveCountGreaterThanOrEqualTo(1, "at least one orchestration should fail to acquire the lock");
-        successfulScans.Should().HaveCountLessThanOrEqualTo(1, "at most one orchestration should acquire the lock and start successfully");
-        (successfulScans.Count + failedScans.Count).Should().Be(2, "both scan attempts should complete");
+        // Assert
+        scanCorrelationId.Should().BeNull("the orchestration should fail to acquire the lock and return null");
     }
 }
