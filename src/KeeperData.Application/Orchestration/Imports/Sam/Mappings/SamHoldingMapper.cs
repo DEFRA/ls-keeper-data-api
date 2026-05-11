@@ -343,10 +343,11 @@ public static class SamHoldingMapper
             SourceSystemType.SAM.ToString(),
             null,
             representative.Deleted,
-            representative.SecondaryCph,
+            representative.CphRelationshipType.IsPermanentLandHolding() ? null : representative.SecondaryCph,
             representative.CphTypeIdentifier,
             siteType,
-            location);
+            location,
+            representative.CphRelationshipType.IsPermanentLandHolding() ? representative.SecondaryCph : null);
 
         if (siteIdentifierType != null)
         {
@@ -396,8 +397,9 @@ public static class SamHoldingMapper
             SourceSystemType.SAM.ToString(),
             null,
             representative.Deleted,
-            representative.SecondaryCph,
-            representative.CphTypeIdentifier);
+            representative.CphRelationshipType.IsPermanentLandHolding() ? null : representative.SecondaryCph,
+            representative.CphTypeIdentifier,
+            representative.CphRelationshipType.IsPermanentLandHolding() ? representative.SecondaryCph : null);
 
         var updatedAddress = await LocationMapper.AddressToGold(representative.Location?.Address, getCountryById, cancellationToken);
         var updatedCommunication = LocationMapper.CommunicationToGold(representative.Communication);

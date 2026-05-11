@@ -739,6 +739,52 @@ public class SiteDocumentExtensionsTests
         species.EndDate.Should().Be(new DateTime(2024, 12, 31));
     }
 
+    [Fact]
+    public void ToDto_WithPermanentLandHoldingIdentifier_ShouldMapCorrectly()
+    {
+        // Arrange
+        var siteDocument = new SiteDocument
+        {
+            Id = "site-123",
+            Name = "Test Site",
+            StartDate = DateTime.UtcNow,
+            LastUpdatedDate = DateTime.UtcNow,
+            ParentSiteIdentifier = "PARENT-456",
+            HoldingType = "PERMANENT",
+            PermanentLandHoldingIdentifier = "12/345/9999",
+            Identifiers = []
+        };
+
+        // Act
+        var result = siteDocument.ToDto();
+
+        // Assert
+        result.ParentSiteIdentifier.Should().Be("PARENT-456");
+        result.HoldingType.Should().Be("PERMANENT");
+        result.PermanentLandHoldingIdentifier.Should().Be("12/345/9999");
+    }
+
+    [Fact]
+    public void ToDto_WithNullPermanentLandHoldingIdentifier_ShouldMapAsNull()
+    {
+        // Arrange
+        var siteDocument = new SiteDocument
+        {
+            Id = "site-123",
+            Name = "Test Site",
+            StartDate = DateTime.UtcNow,
+            LastUpdatedDate = DateTime.UtcNow,
+            PermanentLandHoldingIdentifier = null,
+            Identifiers = []
+        };
+
+        // Act
+        var result = siteDocument.ToDto();
+
+        // Assert
+        result.PermanentLandHoldingIdentifier.Should().BeNull();
+    }
+
     private static SiteDocument CreateFullSiteDocument()
     {
         return new SiteDocument

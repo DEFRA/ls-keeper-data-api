@@ -32,7 +32,10 @@ public class SiteParentSiteIdentifierAndHoldingTypeTests
             null,
             false,
             parentSiteIdentifier,
-            holdingType);
+            holdingType,
+            null,
+            null,
+            null);
 
         // Assert
         site.ParentSiteIdentifier.Should().Be(parentSiteIdentifier);
@@ -62,6 +65,9 @@ public class SiteParentSiteIdentifierAndHoldingTypeTests
             null,
             false,
             null,
+            null,
+            null,
+            null,
             null);
 
         // Assert
@@ -85,7 +91,10 @@ public class SiteParentSiteIdentifierAndHoldingTypeTests
             null,
             false,
             "12/345/9999",
-            "PERMANENT");
+            "PERMANENT",
+            null,
+            null,
+            null);
 
         var newParentSiteIdentifier = "98/765/4321";
         var updateTime = DateTime.UtcNow.AddHours(1);
@@ -101,7 +110,8 @@ public class SiteParentSiteIdentifierAndHoldingTypeTests
             null,
             false,
             newParentSiteIdentifier,
-            "PERMANENT");
+            "PERMANENT",
+            null);
 
         // Assert
         site.ParentSiteIdentifier.Should().Be(newParentSiteIdentifier);
@@ -124,7 +134,10 @@ public class SiteParentSiteIdentifierAndHoldingTypeTests
             null,
             false,
             "12/345/9999",
-            "PERMANENT");
+            "PERMANENT",
+            null,
+            null,
+            null);
 
         var newHoldingType = "TEMPORARY";
         var updateTime = DateTime.UtcNow.AddHours(1);
@@ -140,7 +153,8 @@ public class SiteParentSiteIdentifierAndHoldingTypeTests
             null,
             false,
             "12/345/9999",
-            newHoldingType);
+            newHoldingType,
+            null);
 
         // Assert
         site.HoldingType.Should().Be(newHoldingType);
@@ -163,7 +177,10 @@ public class SiteParentSiteIdentifierAndHoldingTypeTests
             null,
             false,
             "12/345/9999",
-            "PERMANENT");
+            "PERMANENT",
+            null,
+            null,
+            null);
 
         var updateTime = DateTime.UtcNow.AddHours(1);
 
@@ -178,7 +195,8 @@ public class SiteParentSiteIdentifierAndHoldingTypeTests
             null,
             false,
             null,
-            "PERMANENT");
+            "PERMANENT",
+            null);
 
         // Assert
         site.ParentSiteIdentifier.Should().BeNull();
@@ -196,14 +214,17 @@ public class SiteParentSiteIdentifierAndHoldingTypeTests
             initialTime,
             initialTime,
             "Test Site",
-             startDate,
+            startDate,
             null,
             "Active",
             "SAM",
             null,
             false,
             "12/345/9999",
-            "PERMANENT");
+            "PERMANENT",
+            null,
+            null,
+            null);
 
         var updateTime = DateTime.UtcNow.AddHours(1);
 
@@ -218,7 +239,8 @@ public class SiteParentSiteIdentifierAndHoldingTypeTests
             null,
             false,
             "12/345/9999",
-            "PERMANENT");
+            "PERMANENT",
+            null);
 
         // Assert - LastUpdatedDate should NOT change because values are the same
         site.ParentSiteIdentifier.Should().Be("12/345/9999");
@@ -242,7 +264,10 @@ public class SiteParentSiteIdentifierAndHoldingTypeTests
             null,
             false,
             "12/345/9999",
-            "PERMANENT");
+            "PERMANENT",
+            null,
+            null,
+            null);
 
         // Act
         var document = SiteDocument.FromDomain(site);
@@ -267,6 +292,9 @@ public class SiteParentSiteIdentifierAndHoldingTypeTests
             "SAM",
             null,
             false,
+            null,
+            null,
+            null,
             null,
             null);
 
@@ -398,7 +426,10 @@ public class SiteParentSiteIdentifierAndHoldingTypeTests
             null,
             false,
             "12/345/9999",
-            "PERMANENT");
+            "PERMANENT",
+            null,
+            null,
+            null);
 
         // Act
         var document = SiteDocument.FromDomain(originalSite);
@@ -433,7 +464,10 @@ public class SiteParentSiteIdentifierAndHoldingTypeTests
             null,
             false,
             parentSiteIdentifier,
-            holdingType);
+            holdingType,
+            null,
+            null,
+            null);
 
         // Assert
         site.ParentSiteIdentifier.Should().Be(parentSiteIdentifier);
@@ -456,7 +490,10 @@ public class SiteParentSiteIdentifierAndHoldingTypeTests
             null,
             false,
             "12/345/9999",
-            "PERMANENT");
+            "PERMANENT",
+            null,
+            null,
+            null);
 
         site.ClearDomainEvents(); // Clear creation event
 
@@ -471,7 +508,8 @@ public class SiteParentSiteIdentifierAndHoldingTypeTests
             null,
             false,
             "98/765/4321", // Changed
-            "PERMANENT");
+            "PERMANENT",
+            null);
 
         // Assert
         site.DomainEvents.Should().HaveCount(1);
@@ -494,7 +532,10 @@ public class SiteParentSiteIdentifierAndHoldingTypeTests
             null,
             false,
             "12/345/9999",
-            "PERMANENT");
+            "PERMANENT",
+            null,
+            null,
+            null);
 
         site.ClearDomainEvents(); // Clear creation event
 
@@ -509,7 +550,8 @@ public class SiteParentSiteIdentifierAndHoldingTypeTests
             null,
             false,
             "12/345/9999",
-            "TEMPORARY"); // Changed
+            "TEMPORARY", // Changed
+            null);
 
         // Assert
         site.DomainEvents.Should().HaveCount(1);

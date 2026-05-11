@@ -28,7 +28,8 @@ public static class SiteDocumentExtensions
         Marks = doc.Marks?.Select(m => m.ToDto()).ToList() ?? [],
         Activities = doc.Activities?.Select(a => a.ToDto()).ToList() ?? [],
         ParentSiteIdentifier = doc.ParentSiteIdentifier,
-        HoldingType = doc.HoldingType
+        HoldingType = doc.HoldingType,
+        PermanentLandHoldingIdentifier = doc.PermanentLandHoldingIdentifier
     };
 
     private static SiteTypeSummaryDto ToDto(this SiteTypeSummaryDocument doc) => new()
