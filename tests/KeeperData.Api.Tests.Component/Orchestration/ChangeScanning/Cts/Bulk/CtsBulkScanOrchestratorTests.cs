@@ -7,7 +7,8 @@ using Xunit;
 
 namespace KeeperData.Api.Tests.Component.Orchestration.ChangeScanning.Cts.Bulk;
 
-public class CtsBulkScanOrchestratorTests(AppTestFixture appTestFixture) : IClassFixture<AppTestFixture>
+[Collection("ScanOrchestration")]
+public class CtsBulkScanOrchestratorTests(AppTestFixture appTestFixture)
 {
     private readonly AppTestFixture _appTestFixture = appTestFixture;
 

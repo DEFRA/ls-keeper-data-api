@@ -7,7 +7,8 @@ using Xunit;
 
 namespace KeeperData.Api.Tests.Component.Orchestration.ChangeScanning.Sam.Bulk;
 
-public class SamBulkScanOrchestratorTests(AppTestFixture appTestFixture) : IClassFixture<AppTestFixture>
+[Collection("ScanOrchestration")]
+public class SamBulkScanOrchestratorTests(AppTestFixture appTestFixture)
 {
     private readonly AppTestFixture _appTestFixture = appTestFixture; [Fact]
     public async Task StartSamBulkScan_WithValidRequest_ShouldExecuteOrchestration()

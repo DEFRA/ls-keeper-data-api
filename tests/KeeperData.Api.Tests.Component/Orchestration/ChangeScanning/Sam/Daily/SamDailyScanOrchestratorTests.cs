@@ -1,18 +1,16 @@
 using FluentAssertions;
 using KeeperData.Api.Worker.Tasks;
+using KeeperData.Core.Locking;
+using KeeperData.Tests.Common.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace KeeperData.Api.Tests.Component.Orchestration.ChangeScanning.Sam.Daily;
 
-public class SamDailyScanOrchestratorTests : IClassFixture<AppTestFixture>
+[Collection("ScanOrchestration")]
+public class SamDailyScanOrchestratorTests(AppTestFixture appTestFixture)
 {
-    private readonly AppTestFixture _appTestFixture;
-
-    public SamDailyScanOrchestratorTests(AppTestFixture appTestFixture)
-    {
-        _appTestFixture = appTestFixture;
-    }
+    private readonly AppTestFixture _appTestFixture = appTestFixture;
 
     [Fact]
     public async Task StartSamDailyScan_WithValidRequest_ShouldExecuteOrchestration()
@@ -20,10 +18,11 @@ public class SamDailyScanOrchestratorTests : IClassFixture<AppTestFixture>
         // Arrange
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
         using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
+
         var samScanTask = scope.ServiceProvider.GetRequiredService<ISamScanTask>();
 
         // Act
-        var scanCorrelationId = await samScanTask.StartAsync();
+        var scanCorrelationId = await samScanTask.StartAsync(forceBulk: false);
 
         // Assert
         scanCorrelationId.Should().NotBeNull("orchestration should start successfully and return a correlation ID");
@@ -35,19 +34,18 @@ public class SamDailyScanOrchestratorTests : IClassFixture<AppTestFixture>
     {
         // Arrange
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
-        using var scope1 = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
-        using var scope2 = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
-        var firstScanTask = scope1.ServiceProvider.GetRequiredService<ISamScanTask>();
-        var secondScanTask = scope2.ServiceProvider.GetRequiredService<ISamScanTask>();
+        using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
 
-        // Act - Start first scan to hold the distributed lock
-        var firstCorrelationId = await firstScanTask.StartAsync();
+        var samScanTask = scope.ServiceProvider.GetRequiredService<ISamScanTask>();
+        var distributedLock = scope.ServiceProvider.GetRequiredService<IDistributedLock>();
 
-        // Act - Try to start second scan immediately (should fail to acquire lock)
-        var secondCorrelationId = await secondScanTask.StartAsync();
+        // Act 1 - Manually acquire the lock. 
+        await using var manualLock = await distributedLock.TryAcquireAsync("SamScanTask", TimeSpan.FromMinutes(5));
+
+        // Act 2 - Try to start the scan while the lock is unavailable
+        var scanCorrelationId = await samScanTask.StartAsync(forceBulk: false);
 
         // Assert
-        firstCorrelationId.Should().NotBeNull("first orchestration should start successfully");
-        secondCorrelationId.Should().BeNull("second orchestration should fail due to distributed lock being held");
+        scanCorrelationId.Should().BeNull("the orchestration should fail to acquire the lock and return null");
     }
 }

@@ -1,11 +1,14 @@
 using FluentAssertions;
 using KeeperData.Api.Worker.Tasks;
+using KeeperData.Core.Locking;
+using KeeperData.Tests.Common.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace KeeperData.Api.Tests.Component.Orchestration.ChangeScanning.Cts.Daily;
 
-public class CtsDailyScanOrchestratorTests(AppTestFixture appTestFixture) : IClassFixture<AppTestFixture>
+[Collection("ScanOrchestration")]
+public class CtsDailyScanOrchestratorTests(AppTestFixture appTestFixture)
 {
     private readonly AppTestFixture _appTestFixture = appTestFixture;
 
@@ -15,10 +18,11 @@ public class CtsDailyScanOrchestratorTests(AppTestFixture appTestFixture) : ICla
         // Arrange
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
         using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
+
         var ctsScanTask = scope.ServiceProvider.GetRequiredService<ICtsScanTask>();
 
         // Act
-        var scanCorrelationId = await ctsScanTask.StartAsync();
+        var scanCorrelationId = await ctsScanTask.StartAsync(forceBulk: false);
 
         // Assert
         scanCorrelationId.Should().NotBeNull("orchestration should start successfully and return a correlation ID");
@@ -30,24 +34,20 @@ public class CtsDailyScanOrchestratorTests(AppTestFixture appTestFixture) : ICla
     {
         // Arrange
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
-        using var scope1 = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
-        using var scope2 = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
-        var firstScanTask = scope1.ServiceProvider.GetRequiredService<ICtsScanTask>();
-        var secondScanTask = scope2.ServiceProvider.GetRequiredService<ICtsScanTask>();
+        using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
 
-        // Act - Start both scans concurrently to ensure lock contention
-        var firstScanTaskExecution = firstScanTask.StartAsync();
-        var secondScanTaskExecution = secondScanTask.StartAsync();
+        var ctsScanTask = scope.ServiceProvider.GetRequiredService<ICtsScanTask>();
+        var distributedLock = scope.ServiceProvider.GetRequiredService<IDistributedLock>();
 
-        var results = await Task.WhenAll(firstScanTaskExecution, secondScanTaskExecution);
+        // Act 1 - Manually acquire the lock. 
+        // If it succeeds, we hold it. If it returns null, another test is already holding it.
+        // The lock is now guaranteed to be unavailable for StartAsync.
+        await using var manualLock = await distributedLock.TryAcquireAsync("CtsScanTask", TimeSpan.FromMinutes(5));
 
-        // Assert - One should succeed, one should fail (or both could fail due to timing)
-        var successfulScans = results.Where(r => r != null).ToList();
-        var failedScans = results.Where(r => r == null).ToList();
+        // Act 2 - Try to start the scan while the lock is unavailable
+        var scanCorrelationId = await ctsScanTask.StartAsync(forceBulk: false);
 
-        // At least one should fail (proving the lock works), and at most one should succeed
-        failedScans.Should().HaveCountGreaterThanOrEqualTo(1, "at least one orchestration should fail to acquire the lock");
-        successfulScans.Should().HaveCountLessThanOrEqualTo(1, "at most one orchestration should acquire the lock and start successfully");
-        (successfulScans.Count + failedScans.Count).Should().Be(2, "both scan attempts should complete");
+        // Assert
+        scanCorrelationId.Should().BeNull("the orchestration should fail to acquire the lock and return null");
     }
 }
