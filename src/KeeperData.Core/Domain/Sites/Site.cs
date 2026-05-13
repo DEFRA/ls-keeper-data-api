@@ -21,6 +21,7 @@ public class Site : IAggregateRoot
 
     public string? ParentSiteIdentifier { get; private set; }
     public string? HoldingType { get; private set; }
+    public string? PermanentLandHoldingIdentifier { get; private set; }
 
     private readonly List<SiteIdentifier> _identifiers = [];
     public IReadOnlyCollection<SiteIdentifier> Identifiers => _identifiers.AsReadOnly();
@@ -58,7 +59,8 @@ public class Site : IAggregateRoot
         SiteType? type,
         Location? location,
         string? parentSiteIdentifier,
-        string? holdingType)
+        string? holdingType,
+        string? permanentLandHoldingIdentifier)
     {
         Id = id;
         CreatedDate = createdDate;
@@ -74,6 +76,7 @@ public class Site : IAggregateRoot
         _location = location;
         ParentSiteIdentifier = parentSiteIdentifier;
         HoldingType = holdingType;
+        PermanentLandHoldingIdentifier = permanentLandHoldingIdentifier;
     }
 
     public static Site Create(
@@ -90,7 +93,8 @@ public class Site : IAggregateRoot
         string? parentSiteIdentifier,
         string? holdingType,
         SiteType? type = null,
-        Location? location = null)
+        Location? location = null,
+        string? permanentLandHoldingIdentifier = null)
     {
         var site = new Site(
             id,
@@ -106,7 +110,8 @@ public class Site : IAggregateRoot
             type,
             location,
             parentSiteIdentifier,
-            holdingType);
+            holdingType,
+            permanentLandHoldingIdentifier);
 
         site._domainEvents.Add(new SiteCreatedDomainEvent(site.Id));
         return site;
@@ -122,7 +127,8 @@ public class Site : IAggregateRoot
         bool? destroyIdentityDocumentsFlag,
         bool deleted,
         string? parentSiteIdentifier,
-        string? holdingType)
+        string? holdingType,
+        string? permanentLandHoldingIdentifier)
     {
         var changed = false;
 
@@ -135,6 +141,7 @@ public class Site : IAggregateRoot
         changed |= Change(Deleted, deleted, v => Deleted = v, lastUpdatedDate);
         changed |= Change(ParentSiteIdentifier, parentSiteIdentifier, v => ParentSiteIdentifier = v, lastUpdatedDate);
         changed |= Change(HoldingType, holdingType, v => HoldingType = v, lastUpdatedDate);
+        changed |= Change(PermanentLandHoldingIdentifier, permanentLandHoldingIdentifier, v => PermanentLandHoldingIdentifier = v, lastUpdatedDate);
 
         if (changed)
         {

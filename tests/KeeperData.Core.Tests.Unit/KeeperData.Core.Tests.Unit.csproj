@@ -16,6 +16,10 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Compile Include="Extensions\StringExtensionsTests.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
       <PackageReference Include="FluentAssertions" Version="7.2.0" />
       <PackageReference Include="coverlet.collector" Version="6.0.4">
         <PrivateAssets>all</PrivateAssets>

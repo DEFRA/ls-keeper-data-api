@@ -104,4 +104,7 @@ public class SiteDto
 
     [JsonPropertyName("holdingType")]
     public string? HoldingType { get; set; }
+
+    [JsonPropertyName("permanentLandHoldingIdentifier")]
+    public string? PermanentLandHoldingIdentifier { get; set; }
 }
