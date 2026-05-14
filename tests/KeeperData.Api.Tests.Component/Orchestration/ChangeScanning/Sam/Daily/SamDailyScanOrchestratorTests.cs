@@ -21,8 +21,14 @@ public class SamDailyScanOrchestratorTests(AppTestFixture appTestFixture)
 
         var samScanTask = scope.ServiceProvider.GetRequiredService<ISamScanTask>();
 
-        // Act
-        var scanCorrelationId = await samScanTask.StartAsync(forceBulk: false);
+        // Act - Spin-wait to ensure previous tests' background tasks have completely finished
+        Guid? scanCorrelationId = null;
+        for (int i = 0; i < 50; i++)
+        {
+            scanCorrelationId = await samScanTask.StartAsync(forceBulk: false);
+            if (scanCorrelationId != null) break;
+            await Task.Delay(100);
+        }
 
         // Assert
         scanCorrelationId.Should().NotBeNull("orchestration should start successfully and return a correlation ID");
@@ -39,13 +45,25 @@ public class SamDailyScanOrchestratorTests(AppTestFixture appTestFixture)
         var samScanTask = scope.ServiceProvider.GetRequiredService<ISamScanTask>();
         var distributedLock = scope.ServiceProvider.GetRequiredService<IDistributedLock>();
 
-        // Act 1 - Manually acquire the lock. 
-        await using var manualLock = await distributedLock.TryAcquireAsync("SamScanTask", TimeSpan.FromMinutes(5));
+        // Act 1 - Spin-wait to manually acquire the lock, waiting out any lingering background tasks
+        IDistributedLockHandle? manualLock = null;
+        for (int i = 0; i < 50; i++)
+        {
+            manualLock = await distributedLock.TryAcquireAsync("SamScanTask", TimeSpan.FromMinutes(5));
+            if (manualLock != null) break;
+            await Task.Delay(100);
+        }
 
-        // Act 2 - Try to start the scan while the lock is unavailable
-        var scanCorrelationId = await samScanTask.StartAsync(forceBulk: false);
+        // Fails the test immediately if the background task never released the lock
+        manualLock.Should().NotBeNull("test setup must acquire the initial lock");
 
-        // Assert
-        scanCorrelationId.Should().BeNull("the orchestration should fail to acquire the lock and return null");
+        await using (manualLock)
+        {
+            // Act 2 - Try to start the scan while we explicitly hold the lock
+            var scanCorrelationId = await samScanTask.StartAsync(forceBulk: false);
+
+            // Assert
+            scanCorrelationId.Should().BeNull("the orchestration should fail to acquire the lock and return null");
+        }
     }
 }

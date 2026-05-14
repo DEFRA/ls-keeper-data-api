@@ -10,16 +10,25 @@ namespace KeeperData.Api.Tests.Component.Orchestration.ChangeScanning.Sam.Bulk;
 [Collection("ScanOrchestration")]
 public class SamBulkScanOrchestratorTests(AppTestFixture appTestFixture)
 {
-    private readonly AppTestFixture _appTestFixture = appTestFixture; [Fact]
+    private readonly AppTestFixture _appTestFixture = appTestFixture;
+
+    [Fact]
     public async Task StartSamBulkScan_WithValidRequest_ShouldExecuteOrchestration()
     {
         // Arrange
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
         using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
+
         var samScanTask = scope.ServiceProvider.GetRequiredService<ISamScanTask>();
 
-        // Act
-        var scanCorrelationId = await samScanTask.StartAsync(forceBulk: true);
+        // Act - Spin-wait to ensure previous tests' background tasks have completely finished
+        Guid? scanCorrelationId = null;
+        for (int i = 0; i < 50; i++)
+        {
+            scanCorrelationId = await samScanTask.StartAsync(forceBulk: true);
+            if (scanCorrelationId != null) break;
+            await Task.Delay(100);
+        }
 
         // Assert
         scanCorrelationId.Should().NotBeNull("orchestration should start successfully and return a correlation ID");
@@ -36,15 +45,24 @@ public class SamBulkScanOrchestratorTests(AppTestFixture appTestFixture)
         var samScanTask = scope.ServiceProvider.GetRequiredService<ISamScanTask>();
         var distributedLock = scope.ServiceProvider.GetRequiredService<IDistributedLock>();
 
-        // Act 1 - Manually acquire the lock. 
-        // If it succeeds, we hold it. If it returns null, another test is already holding it.
-        // The lock is now guaranteed to be unavailable for StartAsync
-        await using var manualLock = await distributedLock.TryAcquireAsync("SamScanTask", TimeSpan.FromMinutes(5));
+        // Act 1 - Spin-wait to manually acquire the lock, waiting out any lingering background tasks
+        IDistributedLockHandle? manualLock = null;
+        for (int i = 0; i < 50; i++)
+        {
+            manualLock = await distributedLock.TryAcquireAsync("SamScanTask", TimeSpan.FromMinutes(5));
+            if (manualLock != null) break;
+            await Task.Delay(100);
+        }
 
-        // Act 2 - Try to start the scan while the lock is unavailable
-        var scanCorrelationId = await samScanTask.StartAsync(forceBulk: true);
+        manualLock.Should().NotBeNull("test setup must acquire the initial lock");
 
-        // Assert
-        scanCorrelationId.Should().BeNull("the orchestration should fail to acquire the lock and return null");
+        await using (manualLock)
+        {
+            // Act 2 - Try to start the scan while we explicitly hold the lock
+            var scanCorrelationId = await samScanTask.StartAsync(forceBulk: true);
+
+            // Assert
+            scanCorrelationId.Should().BeNull("the orchestration should fail to acquire the lock and return null");
+        }
     }
 }
