@@ -1,11 +1,14 @@
 using FluentAssertions;
 using KeeperData.Api.Worker.Tasks;
+using KeeperData.Core.Locking;
+using KeeperData.Tests.Common.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace KeeperData.Api.Tests.Component.Orchestration.ChangeScanning.Cts.Bulk;
 
-public class CtsBulkScanOrchestratorTests(AppTestFixture appTestFixture) : IClassFixture<AppTestFixture>
+[Collection("ScanOrchestration")]
+public class CtsBulkScanOrchestratorTests(AppTestFixture appTestFixture)
 {
     private readonly AppTestFixture _appTestFixture = appTestFixture;
 
@@ -15,10 +18,17 @@ public class CtsBulkScanOrchestratorTests(AppTestFixture appTestFixture) : IClas
         // Arrange
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
         using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
+
         var ctsScanTask = scope.ServiceProvider.GetRequiredService<ICtsScanTask>();
 
-        // Act
-        var scanCorrelationId = await ctsScanTask.StartAsync(forceBulk: true);
+        // Act - Spin-wait to ensure previous tests' background tasks have completely finished
+        Guid? scanCorrelationId = null;
+        for (int i = 0; i < 50; i++)
+        {
+            scanCorrelationId = await ctsScanTask.StartAsync(forceBulk: true);
+            if (scanCorrelationId != null) break;
+            await Task.Delay(100);
+        }
 
         // Assert
         scanCorrelationId.Should().NotBeNull("orchestration should start successfully and return a correlation ID");
@@ -30,26 +40,29 @@ public class CtsBulkScanOrchestratorTests(AppTestFixture appTestFixture) : IClas
     {
         // Arrange
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
-        using var scope1 = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
-        using var scope2 = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
-        var firstScanTask = scope1.ServiceProvider.GetRequiredService<ICtsScanTask>();
-        var secondScanTask = scope2.ServiceProvider.GetRequiredService<ICtsScanTask>();
+        using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
 
-        // Act - Start both scans concurrently to ensure lock contention
-        var firstScanTaskExecution = firstScanTask.StartAsync(forceBulk: true);
-        var secondScanTaskExecution = secondScanTask.StartAsync(forceBulk: true);
+        var ctsScanTask = scope.ServiceProvider.GetRequiredService<ICtsScanTask>();
+        var distributedLock = scope.ServiceProvider.GetRequiredService<IDistributedLock>();
 
-        var results = await Task.WhenAll(firstScanTaskExecution, secondScanTaskExecution);
+        // Act 1 - Spin-wait to manually acquire the lock, waiting out any lingering background tasks
+        IDistributedLockHandle? manualLock = null;
+        for (int i = 0; i < 50; i++)
+        {
+            manualLock = await distributedLock.TryAcquireAsync("CtsScanTask", TimeSpan.FromMinutes(5));
+            if (manualLock != null) break;
+            await Task.Delay(100);
+        }
 
-        // Assert - One should succeed, one should fail (or both could fail due to timing)
-        var successfulScans = results.Where(r => r != null).ToList();
-        var failedScans = results.Where(r => r == null).ToList();
+        manualLock.Should().NotBeNull("test setup must acquire the initial lock");
 
-        // At least one should fail (proving the lock works), and at most one should succeed
-        failedScans.Should().HaveCountGreaterThanOrEqualTo(1, "at least one orchestration should fail to acquire the lock");
-        successfulScans.Should().HaveCountLessThanOrEqualTo(1, "at most one orchestration should acquire the lock and start successfully");
+        await using (manualLock)
+        {
+            // Act 2 - Try to start the scan while we explicitly hold the lock
+            var scanCorrelationId = await ctsScanTask.StartAsync(forceBulk: true);
 
-        // The total should always be 2
-        (successfulScans.Count + failedScans.Count).Should().Be(2, "both scan attempts should complete");
+            // Assert
+            scanCorrelationId.Should().BeNull("the orchestration should fail to acquire the lock and return null");
+        }
     }
 }
