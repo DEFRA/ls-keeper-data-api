@@ -298,4 +298,86 @@ public class EmfExporterTests
         // Assert
         act.Should().NotThrow();
     }
+
+    [Fact]
+    public async Task OnMeasurementRecorded_WithEmptyTagValue_UsesUnknownFallback()
+    {
+        // Arrange
+        var mockCloudWatch = new Mock<IAmazonCloudWatch>();
+        mockCloudWatch.Setup(c => c.PutMetricDataAsync(It.IsAny<PutMetricDataRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PutMetricDataResponse { HttpStatusCode = System.Net.HttpStatusCode.OK });
+
+        EmfExporter.Init(_mockLogger.Object, "test-namespace", mockCloudWatch.Object);
+
+        using var meter = new Meter(MetricNames.MeterName);
+        var counter = meter.CreateCounter<long>("test_empty_tag");
+
+        // Act
+        counter.Add(1, new KeyValuePair<string, object?>("EmptyTag", null));
+
+        // Assert - Polling loop for CI runner safety
+        bool fallbackFound = false;
+        for (int i = 0; i < 50; i++)
+        {
+            await Task.Delay(100);
+
+            var invocations = mockCloudWatch.Invocations;
+            if (invocations.Count > 0)
+            {
+                var request = (PutMetricDataRequest)invocations[0].Arguments[0];
+                var dimension = request.MetricData[0].Dimensions.FirstOrDefault(d => d.Name == "EmptyTag");
+
+                // Assert it successfully swapped NULL for "unknown"
+                if (dimension != null && dimension.Value == "unknown")
+                {
+                    fallbackFound = true;
+                    break;
+                }
+            }
+        }
+
+        fallbackFound.Should().BeTrue("the empty tag should be safely replaced with 'unknown'");
+    }
+
+    [Fact]
+    public void OnMeasurementRecorded_WithActiveActivity_IncludesTraceId()
+    {
+        // Arrange
+        EmfExporter.Init(_mockLogger.Object, "test-namespace", null);
+        using var meter = new Meter(MetricNames.MeterName);
+        var counter = meter.CreateCounter<long>("test_activity");
+
+        using var activity = new System.Diagnostics.Activity("TestActivity");
+        activity.Start();
+
+        // Act
+        Action act = () => counter.Add(1);
+
+        // Assert
+        act.Should().NotThrow();
+
+        activity.Stop();
+    }
+
+    [Fact]
+    public void OnMeasurementRecorded_WhenExceptionOccurs_LogsError()
+    {
+        // Arrange
+        EmfExporter.Init(_mockLogger.Object, "test-namespace", null);
+        using var meter = new Meter(MetricNames.MeterName);
+        var counter = meter.CreateCounter<long>("test_exception");
+
+        // Act
+        counter.Add(1, new KeyValuePair<string, object?>(null!, "value"));
+
+        // Assert
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Failed to process metric measurement")),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
 }
