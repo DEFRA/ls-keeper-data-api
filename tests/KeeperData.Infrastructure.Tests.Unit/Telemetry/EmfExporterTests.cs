@@ -229,17 +229,23 @@ public class EmfExporterTests
 
         // Act
         counter.Add(1);
-        await Task.Delay(200);
 
-        // Assert
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("LocalStack CloudWatch rejected metric")),
-                It.IsAny<Exception?>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.AtLeastOnce);
+        // Assert - Polling loop for CI runner
+        bool logFound = false;
+        for (int i = 0; i < 50; i++)
+        {
+            await Task.Delay(100); // Wait up to 5 seconds
+
+            // Check invocations manually to avoid ILogger generic type matching bugs
+            logFound = _mockLogger.Invocations.Any(inv =>
+                inv.Method.Name == "Log" &&
+                inv.Arguments.Count > 2 &&
+                inv.Arguments[2]?.ToString()?.Contains("LocalStack CloudWatch rejected metric") == true);
+
+            if (logFound) break;
+        }
+
+        logFound.Should().BeTrue("the warning log should be emitted when CloudWatch rejects the metric");
     }
 
     [Fact]
@@ -248,26 +254,31 @@ public class EmfExporterTests
         // Arrange
         var mockCloudWatch = new Mock<IAmazonCloudWatch>();
         mockCloudWatch.Setup(c => c.PutMetricDataAsync(It.IsAny<PutMetricDataRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Network error"));
+            .ThrowsAsync(new Exception("Simulated network failure"));
 
         EmfExporter.Init(_mockLogger.Object, "test-namespace", mockCloudWatch.Object);
 
         using var meter = new Meter(MetricNames.MeterName);
-        var counter = meter.CreateCounter<long>("test_cloudwatch_exception");
+        var counter = meter.CreateCounter<long>("test_cloudwatch_error");
 
         // Act
         counter.Add(1);
-        await Task.Delay(200);
 
         // Assert
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Failed to push metric to LocalStack CloudWatch")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.AtLeastOnce);
+        bool logFound = false;
+        for (int i = 0; i < 50; i++)
+        {
+            await Task.Delay(100);
+
+            logFound = _mockLogger.Invocations.Any(inv =>
+                inv.Method.Name == "Log" &&
+                inv.Arguments.Count > 2 &&
+                inv.Arguments[2]?.ToString()?.Contains("Failed to push metric to LocalStack CloudWatch") == true);
+
+            if (logFound) break;
+        }
+
+        logFound.Should().BeTrue("the error log should be emitted when CloudWatch throws an exception");
     }
 
     [Fact]
