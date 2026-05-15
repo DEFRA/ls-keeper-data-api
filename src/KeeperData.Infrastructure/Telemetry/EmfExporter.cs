@@ -72,7 +72,8 @@ public static class EmfExporter
             var safeTags = new Dictionary<string, string>();
             foreach (var tag in tags)
             {
-                safeTags[tag.Key] = string.IsNullOrWhiteSpace(tag.Value?.ToString()) ? "unknown" : tag.Value!.ToString();
+                var valStr = tag.Value?.ToString();
+                safeTags[tag.Key] = string.IsNullOrWhiteSpace(valStr) ? "unknown" : valStr!;
             }
 
             // 2. Push standard EMF Metric
