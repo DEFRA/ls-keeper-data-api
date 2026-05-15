@@ -30,6 +30,7 @@ public static class EmfExportExtensions
         return builder;
     }
 }
+
 public static class EmfExporter
 {
     private static readonly MeterListener meterListener = new();
@@ -66,75 +67,86 @@ public static class EmfExporter
         {
             var value = Convert.ToDouble(measurement);
             var name = instrument.Name.Dehumanize().Camelize();
-            var unit = instrument.Unit == "ea" ? Unit.COUNT : Unit.MILLISECONDS;
 
-            using (var metricsLogger = new MetricsLogger())
+            // 1. Sanitize tags once to prevent AWS EMF crashes on empty dimensions
+            var safeTags = new Dictionary<string, string>();
+            foreach (var tag in tags)
             {
-                metricsLogger.SetNamespace(awsNamespace);
-                var dimensionSet = new DimensionSet();
-
-                foreach (var tag in tags)
-                {
-                    var safeValue = string.IsNullOrWhiteSpace(tag.Value?.ToString()) ? "unknown" : tag.Value!.ToString();
-                    dimensionSet.AddDimension(tag.Key, safeValue);
-                }
-
-                if (!string.IsNullOrEmpty(Activity.Current?.Id))
-                {
-                    metricsLogger.PutProperty("TraceId", Activity.Current.Id);
-                }
-
-                metricsLogger.SetDimensions(dimensionSet);
-                metricsLogger.PutMetric(name, value, unit);
-                metricsLogger.Flush();
+                safeTags[tag.Key] = string.IsNullOrWhiteSpace(tag.Value?.ToString()) ? "unknown" : tag.Value!.ToString();
             }
 
-            // Only for LocalStack grafana metrics
+            // 2. Push standard EMF Metric
+            var emfUnit = instrument.Unit == "ea" ? Unit.COUNT : Unit.MILLISECONDS;
+            PushEmfMetric(name, value, emfUnit, safeTags);
+
+            // 3. Push LocalStack Metric (if applicable)
             if (_cloudWatchClient != null)
             {
-                var dimensions = new List<Dimension>();
-                foreach (var tag in tags)
-                {
-                    var safeValue = string.IsNullOrWhiteSpace(tag.Value?.ToString()) ? "unknown" : tag.Value!.ToString();
-                    dimensions.Add(new Dimension { Name = tag.Key, Value = safeValue });
-                }
-
-                var request = new PutMetricDataRequest
-                {
-                    Namespace = awsNamespace,
-                    MetricData =
-                    [
-                        new MetricDatum
-                        {
-                            MetricName = name,
-                            Value = value,
-                            Dimensions = dimensions,
-                            Unit = instrument.Unit == "ea" ? StandardUnit.Count : StandardUnit.Milliseconds,
-                            Timestamp = DateTime.UtcNow
-                        }
-                    ]
-                };
-
-                Task.Run(async () =>
-                {
-                    try
-                    {
-                        var response = await _cloudWatchClient.PutMetricDataAsync(request);
-                        if ((int)response.HttpStatusCode >= 400)
-                        {
-                            log?.LogWarning("LocalStack CloudWatch rejected metric. Status: {Status}", response.HttpStatusCode);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        log?.LogError(ex, "Failed to push metric to LocalStack CloudWatch");
-                    }
-                });
+                var standardUnit = instrument.Unit == "ea" ? StandardUnit.Count : StandardUnit.Milliseconds;
+                PushLocalStackMetric(name, value, standardUnit, safeTags);
             }
         }
         catch (Exception e)
         {
-            log.LogError(e, "Failed to push EMF metric");
+            log.LogError(e, "Failed to process metric measurement");
         }
+    }
+
+    private static void PushEmfMetric(string name, double value, Unit unit, Dictionary<string, string> safeTags)
+    {
+        using var metricsLogger = new MetricsLogger();
+        metricsLogger.SetNamespace(awsNamespace);
+
+        var dimensionSet = new DimensionSet();
+        foreach (var tag in safeTags)
+        {
+            dimensionSet.AddDimension(tag.Key, tag.Value);
+        }
+
+        if (!string.IsNullOrEmpty(Activity.Current?.Id))
+        {
+            metricsLogger.PutProperty("TraceId", Activity.Current.Id);
+        }
+
+        metricsLogger.SetDimensions(dimensionSet);
+        metricsLogger.PutMetric(name, value, unit);
+        metricsLogger.Flush();
+    }
+
+    private static void PushLocalStackMetric(string name, double value, StandardUnit unit, Dictionary<string, string> safeTags)
+    {
+        var dimensions = safeTags.Select(t => new Dimension { Name = t.Key, Value = t.Value }).ToList();
+
+        var request = new PutMetricDataRequest
+        {
+            Namespace = awsNamespace,
+            MetricData =
+            [
+                new MetricDatum
+                {
+                    MetricName = name,
+                    Value = value,
+                    Dimensions = dimensions,
+                    Unit = unit,
+                    Timestamp = DateTime.UtcNow
+                }
+            ]
+        };
+
+        Task.Run(async () =>
+        {
+            try
+            {
+                var response = await _cloudWatchClient!.PutMetricDataAsync(request);
+                if ((int)response.HttpStatusCode >= 400)
+                {
+                    log?.LogWarning("LocalStack CloudWatch rejected metric. Status: {Status}", response.HttpStatusCode);
+                }
+            }
+            catch (Exception ex)
+            {
+                log?.LogError(ex, "Failed to push metric to LocalStack CloudWatch");
+            }
+        });
     }
 }
