@@ -75,7 +75,8 @@ public static class EmfExporter
 
                 foreach (var tag in tags)
                 {
-                    dimensionSet.AddDimension(tag.Key, tag.Value?.ToString());
+                    var safeValue = string.IsNullOrWhiteSpace(tag.Value?.ToString()) ? "unknown" : tag.Value!.ToString();
+                    dimensionSet.AddDimension(tag.Key, safeValue);
                 }
 
                 if (!string.IsNullOrEmpty(Activity.Current?.Id))
@@ -94,7 +95,8 @@ public static class EmfExporter
                 var dimensions = new List<Dimension>();
                 foreach (var tag in tags)
                 {
-                    dimensions.Add(new Dimension { Name = tag.Key, Value = tag.Value?.ToString() ?? "unknown" });
+                    var safeValue = string.IsNullOrWhiteSpace(tag.Value?.ToString()) ? "unknown" : tag.Value!.ToString();
+                    dimensions.Add(new Dimension { Name = tag.Key, Value = safeValue });
                 }
 
                 var request = new PutMetricDataRequest
