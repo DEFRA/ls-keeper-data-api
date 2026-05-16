@@ -210,6 +210,25 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult<CtsAgentOrKeeper?>(null);
     }
 
+    public Task<DataBridgeResponse<T>?> GetSamCommonLandsAsync<T>(
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
+        CancellationToken cancellationToken = default)
+    {
+        var data = GetSamCommonLands();
+        var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
+        var response = GetDataBridgeResponse(objects!, top, skip);
+        return Task.FromResult<DataBridgeResponse<T>?>(response);
+    }
+
+    public Task<List<SamCommonLand>> GetSamCommonLandsByCommonCphAsync(string cph, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(GetSamCommonLands(commonCph: cph));
+    }
+
     private Task<DataBridgeResponse<T>?> GenerateFakeCtsAgentOrKeeperResponseAsync<T>(int top, int skip)
     {
         var data = Enumerable.Range(0, top).Select(_ => GetCtsAgentOrKeeper()).SelectMany(x => x).ToList();
@@ -340,6 +359,32 @@ public class FakeDataBridgeClient : IDataBridgeClient
                 PAR_SURNAME = Guid.NewGuid().ToString(),
                 ADR_NAME = Guid.NewGuid().ToString(),
                 LPR_EFFECTIVE_FROM_DATE = DateTime.Today.AddDays(-1)
+            }];
+    }
+
+    private static List<SamCommonLand> GetSamCommonLands(string? commonCph = null)
+    {
+        var cph = commonCph ?? "00/000/0001";
+        return [
+            new SamCommonLand
+            {
+                BATCH_ID = 1,
+                CHANGE_TYPE = "I",
+                IsDeleted = false,
+                UpdatedAtUtc = DateTime.UtcNow,
+                CreatedAtUtc = DateTime.UtcNow,
+                COMMON_CPH = cph,
+                MAIN_CPH = "-",
+                COMMON_LAND_PREMISE_ID = "546196",
+                BUSINESS_USAGE = "Common Land",
+                PREMISES_NAME = "-",
+                ADDRESS_LINE_1 = "Land off Fawdon Park Road",
+                LOCAL_AUTH_NAME = "TEST COUNCIL",
+                COUNTRY = "England",
+                EASTING = "422473",
+                NORTHING = "569204",
+                LINK_ID = "-1",
+                CONTIGUOUS_COMMON = "No"
             }];
     }
 }
