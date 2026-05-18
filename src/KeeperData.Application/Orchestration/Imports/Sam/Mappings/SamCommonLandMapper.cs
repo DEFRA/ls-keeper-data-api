@@ -83,8 +83,11 @@ public static class SamCommonLandMapper
         return result;
     }
 
-    public static List<AssociatedHoldingRelationship> ToAssociatedCommonLands(List<SamCommonLand> relationshipRecords)
+    public static List<AssociatedHoldingRelationship> ToAssociatedCommonLands(List<SamCommonLand>? relationshipRecords)
     {
+        if (relationshipRecords == null || relationshipRecords.Count == 0)
+            return [];
+
         return relationshipRecords
             .Where(r => r.IsRelationshipRecord && !string.IsNullOrWhiteSpace(r.COMMON_CPH))
             .Select(r => new AssociatedHoldingRelationship
