@@ -63,7 +63,9 @@ public class SamImportHoldingMessageTests(
 
     private async Task VerifySilverDataTypesAsync(string holdingIdentifier)
     {
-        var silverSamHoldingFilter = Builders<SamHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
+        var silverSamHoldingFilter = Builders<SamHoldingDocument>.Filter.And(
+            Builders<SamHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier),
+            Builders<SamHoldingDocument>.Filter.Ne(x => x.SiteTypeCode, "CL"));
         var silverSamHoldings = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("samHoldings", silverSamHoldingFilter);
 
         var silverSamPartyFilter = Builders<SamPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
@@ -109,10 +111,10 @@ public class SamImportHoldingMessageTests(
         {
             ["CorrelationId"] = correlationId
         };
-        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var sam = new CancellationTokenSource();
-        await _localStackFixture.SqsClient.SendMessageAsync(request, sam.Token);
+        await localStackFixture.SqsClient.SendMessageAsync(request, sam.Token);
     }
 
     private static SamImportHoldingMessage GetSamImportHoldingMessage(string holdingIdentifier) => new()
@@ -127,6 +129,6 @@ public class SamImportHoldingMessageTests(
 
     public async Task DisposeAsync()
     {
-        await _mongoDbFixture.PurgeDataTables();
+        await mongoDbFixture.PurgeDataTables();
     }
 }

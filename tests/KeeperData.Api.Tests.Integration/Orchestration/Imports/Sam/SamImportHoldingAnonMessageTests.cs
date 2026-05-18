@@ -59,7 +59,9 @@ public class SamImportHoldingAnonMessageTests(
 
     private async Task VerifySilverDataTypesAsync(string holdingIdentifier)
     {
-        var silverSamHoldingFilter = Builders<SamHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
+        var silverSamHoldingFilter = Builders<SamHoldingDocument>.Filter.And(
+            Builders<SamHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier),
+            Builders<SamHoldingDocument>.Filter.Ne(x => x.SiteTypeCode, "CL"));
         var silverSamHoldings = await mongoDbFixture.MongoVerifier.FindDocumentsAsync("samHoldings", silverSamHoldingFilter);
 
         var silverSamPartyFilter = Builders<SamPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
