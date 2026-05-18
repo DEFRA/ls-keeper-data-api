@@ -28,7 +28,7 @@ public class SamCommonLandTests
         // Arrange
         var commonLand = new SamCommonLand
         {
-            MAIN_CPH = null,
+            MAIN_CPH = string.Empty,
             COMMON_CPH = "00/000/0001"
         };
 
@@ -127,7 +127,6 @@ public class SamCommonLandTests
     [Theory]
     [InlineData("12/345/6789", "00/000/0001", true)]
     [InlineData("-", "00/000/0001", false)]
-    [InlineData(null, "00/000/0001", false)]
     [InlineData("", "00/000/0001", false)]
     [InlineData("  ", "00/000/0001", false)]
     public void IsDefinitionRecord_AndIsRelationshipRecord_ShouldBeOpposite(string mainCph, string commonCph, bool expectedRelationship)

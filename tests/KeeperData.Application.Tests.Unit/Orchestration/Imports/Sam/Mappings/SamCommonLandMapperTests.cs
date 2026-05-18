@@ -380,7 +380,7 @@ public class SamCommonLandMapperTests
             },
             new()
             {
-                MAIN_CPH = null,
+                MAIN_CPH = string.Empty,
                 COMMON_CPH = "00/000/0002"
             }
         };
