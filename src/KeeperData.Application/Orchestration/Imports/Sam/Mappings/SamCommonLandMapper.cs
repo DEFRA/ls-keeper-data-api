@@ -1,6 +1,7 @@
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Sites.Formatters;
+using System.Globalization;
 
 namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 
@@ -105,12 +106,12 @@ public static class SamCommonLandMapper
         if (string.IsNullOrWhiteSpace(date))
             return null;
 
-        if (DateTime.TryParse(date, out var parsed))
+        if (DateTime.TryParse(date, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
         {
             if (parsed.Year >= 2999)
                 return null;
 
-            return parsed.ToString("yyyy-MM-dd");
+            return parsed.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         }
 
         return date;
