@@ -153,7 +153,7 @@ public class SamCommonLandMapperTests
         var holding = result[0];
         holding.CountyParishHoldingNumber.Should().Be("00/000/0001");
         holding.AssociatedMainHoldings.Should().HaveCount(2);
-        
+
         var holding1 = holding.AssociatedMainHoldings.FirstOrDefault(h => h.HoldingIdentifier == "12/345/6789");
         holding1.Should().NotBeNull();
         holding1!.ContiguousFlag.Should().BeTrue();
@@ -421,7 +421,6 @@ public class SamCommonLandMapperTests
 
         // Assert
         result.Should().HaveCount(2);
-        
         var assoc1 = result[0];
         assoc1.HoldingIdentifier.Should().Be("00/000/0001");
         assoc1.ContiguousFlag.Should().BeTrue();
