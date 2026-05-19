@@ -55,7 +55,7 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
     {
         var partyIds = scenarioData.RawParties.Select(x => x.PARTY_ID).Union(scenarioData.RawHolders.Select(x => x.PARTY_ID)).Distinct().ToList();
 
-        var (holdingsUri, herdsUri, holdersUri, partiesUri) = GetAllQueryUris(scenarioData.Cph, partyIds);
+        var (holdingsUri, herdsUri, holdersUri, partiesUri, commonLandsUri) = GetAllQueryUris(scenarioData.Cph, partyIds);
 
         SetupDefaultRepositoryMocks();
         SetupDefaultLookupServiceMocks();
@@ -69,6 +69,7 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, herdsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawHerds));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, holdersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawHolders));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, partiesUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawParties));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, commonLandsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawCommonLandsByCommonCph));
 
         return await ExecuteTestAsync(_appTestFixture.AppWebApplicationFactory, scenarioData.Cph);
     }
@@ -148,7 +149,7 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
             .ReturnsResponse(httpStatusCode, httpResponseMessage);
     }
 
-    private static (string holdingsUri, string herdsUri, string holdersUri, string partiesUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)
+    private static (string holdingsUri, string herdsUri, string holdersUri, string partiesUri, string commonLandsUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)
     {
         var holdingsUri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamHoldings,
@@ -170,7 +171,12 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
             new { },
             DataBridgeQueries.SamPartiesByPartyIds(partyIds));
 
-        return (holdingsUri, herdsUri, holdersUri, partiesUri);
+        var commonLandsUri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamCommonLands,
+            new { },
+            DataBridgeQueries.SamCommonLandsByCommonCph(holdingIdentifier));
+
+        return (holdingsUri, herdsUri, holdersUri, partiesUri, commonLandsUri);
     }
 
     private void SetupDefaultRepositoryMocks()
@@ -292,6 +298,15 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
         _appTestFixture.AppWebApplicationFactory._siteTypeLookupServiceMock
             .Setup(x => x.GetByIdAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? id, CancellationToken token) => (SiteTypeData.GetById(id!)));
+
+        _appTestFixture.AppWebApplicationFactory._siteTypeLookupServiceMock.Setup(x => x.GetByCodeAsync("CL", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SiteTypeDocument
+            {
+                IdentifierId = "cl-site-type-id",
+                Code = "CL",
+                Name = "Common Land",
+                IsActive = true
+            });
 
         _appTestFixture.AppWebApplicationFactory._productionUsageLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))

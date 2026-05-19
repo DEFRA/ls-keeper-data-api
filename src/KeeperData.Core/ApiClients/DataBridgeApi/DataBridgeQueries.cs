@@ -144,4 +144,13 @@ public static class DataBridgeQueries
             [FilterKey] = filter
         };
     }
+
+    public static Dictionary<string, string> SamCommonLandsByCommonCph(string id)
+    {
+        return new Dictionary<string, string>
+        {
+            [FilterKey] = $"COMMON_CPH eq '{id}'"
+        };
+    }
+
 }

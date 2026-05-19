@@ -147,6 +147,18 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     [JsonPropertyName("activities")]
     public List<SiteActivityDocument> Activities { get; set; } = [];
 
+    [BsonElement("localAuthorityName")]
+    [JsonPropertyName("localAuthorityName")]
+    public string? LocalAuthorityName { get; set; }
+
+    [BsonElement("associatedMainHoldings")]
+    [JsonPropertyName("associatedMainHoldings")]
+    public List<AssociatedHoldingDocument> AssociatedMainHoldings { get; set; } = [];
+
+    [BsonElement("associatedCommonLands")]
+    [JsonPropertyName("associatedCommonLands")]
+    public List<AssociatedHoldingDocument> AssociatedCommonLands { get; set; } = [];
+
     public static SiteDocument FromDomain(Site m) => new()
     {
         Id = m.Id,

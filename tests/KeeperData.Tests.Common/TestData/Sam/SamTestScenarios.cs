@@ -40,6 +40,7 @@ public static class SamTestScenarios
             SamParty_C1000001,
             SamParty_C1000002
         ],
+        RawCommonLandsByCommonCph = [],
         ExpectedGoldSite = ExpectedGoldSite.DefaultExpectedSite,
         ExpectedGoldParties = ExpectedGoldParties.DefaultExpectedParties,
         ExpectedGoldSitePartyRoles = ExpectedGoldSitePartyRoles.DefaultExpectedSitePartyRoles,
@@ -72,6 +73,7 @@ public static class SamTestScenarios
                 p1_updated,
                 SamParty_C1000005
             ],
+            RawCommonLandsByCommonCph = [],
             ExpectedGoldSite = ExpectedGoldSite.ExpectedSite_UpdatedHolderAndParties,
             ExpectedGoldParties = ExpectedGoldParties.ExpectedParties_UpdatedHolderAndParties,
             ExpectedGoldSitePartyRoles = ExpectedGoldSitePartyRoles.ExpectedSitePartyRoles_UpdatedHolderAndParties,
@@ -87,6 +89,7 @@ public static class SamTestScenarios
         public List<SamHerd> RawHerds { get; set; } = [];
         public List<SamCphHolder> RawHolders { get; set; } = [];
         public List<SamParty> RawParties { get; set; } = [];
+        public List<SamCommonLand> RawCommonLandsByCommonCph { get; set; } = [];
 
         public SiteDocument? ExpectedGoldSite { get; set; }
         public List<PartyDocument> ExpectedGoldParties { get; set; } = [];

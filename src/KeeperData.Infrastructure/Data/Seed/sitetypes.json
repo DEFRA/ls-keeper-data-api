@@ -251,5 +251,16 @@
     "createdDate": "2025-10-30T15:26:16.6311387Z",
     "lastModifiedBy": "System",
     "lastModifiedDate": "2025-10-30T15:26:16.6311387Z"
+  },
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "code": "CL",
+    "name": "Common Land",
+    "isActive": true,
+    "sortOrder": 23,
+    "createdBy": "System",
+    "createdDate": "2025-10-30T15:26:16.6311387Z",
+    "lastModifiedBy": "System",
+    "lastModifiedDate": "2025-10-30T15:26:16.6311387Z"
   }
 ]

@@ -81,6 +81,18 @@ public class SamHoldingDocument : BaseHoldingDocument, IEntity, IDeletableEntity
     [BsonElement("sourceFacilitySubBusinessActivityCode")]
     public string? SourceFacilitySubBusinessActivityCode { get; set; }
 
+    [JsonPropertyName("localAuthorityName")]
+    [BsonElement("localAuthorityName")]
+    public string? LocalAuthorityName { get; set; }
+
+    [JsonPropertyName("associatedMainHoldings")]
+    [BsonElement("associatedMainHoldings")]
+    public List<AssociatedHoldingRelationship> AssociatedMainHoldings { get; set; } = [];
+
+    [JsonPropertyName("associatedCommonLands")]
+    [BsonElement("associatedCommonLands")]
+    public List<AssociatedHoldingRelationship> AssociatedCommonLands { get; set; } = [];
+
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {
         return AutoIndexedAttribute.GetIndexModels<SamHoldingDocument>();

@@ -1,6 +1,7 @@
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents;
+using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Extensions;
 using KeeperData.Core.Repositories;
@@ -68,6 +69,8 @@ public class SamHoldingImportGoldMappingStep(
                 siteTypeDerivedCodeLookupService,
                 cancellationToken);
 
+            EnrichWithCommonLandData(context.GoldSite, representative);
+
             context.GoldSitePartyRoles = SitePartyRoleMapper.ToGold(
                 context.GoldParties,
                 context.GoldSiteGroupMarks,
@@ -78,5 +81,32 @@ public class SamHoldingImportGoldMappingStep(
                 context.GoldParties,
                 context.GoldSite);
         }
+    }
+
+    private static void EnrichWithCommonLandData(SiteDocument? goldSite, SamHoldingDocument representative)
+    {
+        if (goldSite == null) return;
+
+        goldSite.LocalAuthorityName = representative.LocalAuthorityName;
+
+        goldSite.AssociatedMainHoldings = representative.AssociatedMainHoldings
+            .Select(r => new AssociatedHoldingDocument
+            {
+                HoldingIdentifier = r.HoldingIdentifier,
+                ContiguousFlag = r.ContiguousFlag,
+                StartDate = r.StartDate,
+                EndDate = r.EndDate
+            })
+            .ToList();
+
+        goldSite.AssociatedCommonLands = representative.AssociatedCommonLands
+            .Select(r => new AssociatedHoldingDocument
+            {
+                HoldingIdentifier = r.HoldingIdentifier,
+                ContiguousFlag = r.ContiguousFlag,
+                StartDate = r.StartDate,
+                EndDate = r.EndDate
+            })
+            .ToList();
     }
 }

@@ -105,6 +105,14 @@ public class SiteDto
     [JsonPropertyName("holdingType")]
     public string? HoldingType { get; set; }
 
+    [JsonPropertyName("localAuthorityName")]
+    public string? LocalAuthorityName { get; set; }
+
+    [JsonPropertyName("associatedMainHoldings")]
+    public List<AssociatedHoldingDto> AssociatedMainHoldings { get; set; } = [];
+
+    [JsonPropertyName("associatedCommonLands")]
+    public List<AssociatedHoldingDto> AssociatedCommonLands { get; set; } = [];
     [JsonPropertyName("permanentLandHoldingIdentifier")]
     public string? PermanentLandHoldingIdentifier { get; set; }
 }

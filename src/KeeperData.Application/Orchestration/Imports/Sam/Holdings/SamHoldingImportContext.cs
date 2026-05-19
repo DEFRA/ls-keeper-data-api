@@ -15,6 +15,7 @@ public class SamHoldingImportContext
     public List<SamHerd> RawHerds { get; set; } = [];
     public List<SamCphHolder> RawHolders { get; set; } = [];
     public List<SamParty> RawParties { get; set; } = [];
+    public List<SamCommonLand> RawCommonLandsByCommonCph { get; set; } = [];
 
     public List<SamHoldingDocument> SilverHoldings { get; set; } = [];
     public List<SamPartyDocument> SilverParties { get; set; } = [];

@@ -208,4 +208,54 @@ public static class MockSamData
                         partyIds: [partyId])
                 ]
             });
+
+    public static DataBridgeResponse<SamCommonLand> GetSamCommonLandsDataBridgeResponse(int top, int count, int totalCount) =>
+        new()
+        {
+            CollectionName = "collection",
+            Top = top,
+            Skip = 0,
+            Count = count,
+            TotalCount = totalCount,
+            Data = [.. s_fixture.CreateMany<SamCommonLand>(count)]
+        };
+
+    public static StringContent GetSamCommonLandsStringContentResponse(int top, int skip) =>
+        HttpContentUtility.CreateResponseContent(
+            new DataBridgeResponse<SamCommonLand>
+            {
+                CollectionName = "collection",
+                Top = top,
+                Skip = skip,
+                Data = [.. s_fixture.CreateMany<SamCommonLand>(top)]
+            });
+
+    public static StringContent GetSamCommonLandsStringContentResponse(string commonCph) =>
+        HttpContentUtility.CreateResponseContent(
+            new DataBridgeResponse<SamCommonLand>
+            {
+                CollectionName = "collection",
+                Data =
+                [
+                    new SamCommonLand
+                    {
+                        BATCH_ID = 1,
+                        CHANGE_TYPE = DataBridgeConstants.ChangeTypeInsert,
+                        MAIN_CPH = "-",
+                        COMMON_CPH = commonCph,
+                        PREMISES_NAME = "Test Common Land",
+                        ADDRESS_LINE_1 = "Test Address",
+                        LOCAL_AUTH_NAME = "Test Council"
+                    },
+                    new SamCommonLand
+                    {
+                        BATCH_ID = 1,
+                        CHANGE_TYPE = DataBridgeConstants.ChangeTypeInsert,
+                        MAIN_CPH = "12/345/6789",
+                        COMMON_CPH = commonCph,
+                        CONTIGUOUS_COMMON = "Yes",
+                        START_DATE = "2020-01-01"
+                    }
+                ]
+            });
 }
