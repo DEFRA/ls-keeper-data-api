@@ -11,12 +11,23 @@ using MongoDB.Driver;
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Sam;
 
 [Collection("IntegrationAnonymization"), Trait("Dependence", "testcontainers")]
-public class SamImportHoldingAnonMessageTests(
-    MongoDbAnonymousFixture mongoDbFixture,
-    LocalStackAnonymousFixture localStackFixture,
-    ApiAnonymousContainerFixture apiContainerFixture) : IAsyncLifetime
+public class SamImportHoldingAnonMessageTests : IAsyncLifetime
 {
+    private readonly MongoDbAnonymousFixture _mongoDbFixture;
+    private readonly LocalStackAnonymousFixture _localStackFixture;
+    private readonly ApiAnonymousContainerFixture _apiContainerFixture;
+
     private const int ProcessingTimeCircuitBreakerSeconds = 30;
+
+    public SamImportHoldingAnonMessageTests(
+        MongoDbAnonymousFixture mongoDbFixture,
+        LocalStackAnonymousFixture localStackFixture,
+        ApiAnonymousContainerFixture apiContainerFixture)
+    {
+        _mongoDbFixture = mongoDbFixture;
+        _localStackFixture = localStackFixture;
+        _apiContainerFixture = apiContainerFixture;
+    }
 
     [Fact]
     public async Task GivenSamImportHoldingMessage_WhenReceivedOnTheQueue_ShouldCompleteWithAnonData()
@@ -45,7 +56,7 @@ public class SamImportHoldingAnonMessageTests(
         while (DateTime.UtcNow - startTime < timeout)
         {
             foundLogEntry = await ContainerLoggingUtility.FindContainerLogEntryAsync(
-                apiContainerFixture.ApiContainer,
+                _apiContainerFixture.ApiContainer,
                 $"Handled message with correlationId: \"{correlationId}\"");
 
             if (foundLogEntry)
@@ -62,10 +73,10 @@ public class SamImportHoldingAnonMessageTests(
         var silverSamHoldingFilter = Builders<SamHoldingDocument>.Filter.And(
             Builders<SamHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier),
             Builders<SamHoldingDocument>.Filter.Ne(x => x.SiteTypeCode, "CL"));
-        var silverSamHoldings = await mongoDbFixture.MongoVerifier.FindDocumentsAsync("samHoldings", silverSamHoldingFilter);
+        var silverSamHoldings = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("samHoldings", silverSamHoldingFilter);
 
         var silverSamPartyFilter = Builders<SamPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
-        var silverSamParties = await mongoDbFixture.MongoVerifier.FindDocumentsAsync("samParties", silverSamPartyFilter);
+        var silverSamParties = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("samParties", silverSamPartyFilter);
 
         silverSamHoldings.Should().NotBeNull().And.HaveCount(1);
         silverSamParties.Should().NotBeNull().And.HaveCountGreaterThanOrEqualTo(1);
@@ -77,7 +88,7 @@ public class SamImportHoldingAnonMessageTests(
         }
 
         var silverSamHerdFilter = Builders<SamHerdDocument>.Filter.Eq(x => x.CountyParishHoldingHerd, $"{holdingIdentifier}/01");
-        var silverSamHerds = await mongoDbFixture.MongoVerifier.FindDocumentsAsync("samHerds", silverSamHerdFilter);
+        var silverSamHerds = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("samHerds", silverSamHerdFilter);
         silverSamHerds.Should().NotBeNull().And.HaveCount(1);
     }
 
@@ -86,14 +97,14 @@ public class SamImportHoldingAnonMessageTests(
         var siteFilter = Builders<SiteDocument>.Filter.ElemMatch(
             x => x.Identifiers,
             i => i.Identifier == holdingIdentifier);
-        var sites = await mongoDbFixture.MongoVerifier.FindDocumentsAsync("sites", siteFilter);
+        var sites = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("sites", siteFilter);
 
         var partyRoleRelationshipFilter = Builders<Core.Documents.SitePartyRoleRelationshipDocument>.Filter.Eq(x => x.HoldingIdentifier, holdingIdentifier);
-        var partyRoleRelationships = await mongoDbFixture.MongoVerifier.FindDocumentsAsync("sitePartyRoleRelationships", partyRoleRelationshipFilter);
+        var partyRoleRelationships = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("sitePartyRoleRelationships", partyRoleRelationshipFilter);
         var partyRolePartyIds = partyRoleRelationships.Select(r => r.CustomerNumber).Distinct().ToList();
 
         var partyFilter = Builders<PartyDocument>.Filter.In(x => x.CustomerNumber, partyRolePartyIds);
-        var parties = await mongoDbFixture.MongoVerifier.FindDocumentsAsync("parties", partyFilter);
+        var parties = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("parties", partyFilter);
         var partyIds = parties.Select(x => x.CustomerNumber).Distinct().ToHashSet();
 
         sites.Should().NotBeNull().And.HaveCount(1);
@@ -113,10 +124,10 @@ public class SamImportHoldingAnonMessageTests(
         {
             ["CorrelationId"] = correlationId
         };
-        var request = SQSMessageUtility.CreateMessage(localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var sam = new CancellationTokenSource();
-        await localStackFixture.SqsClient.SendMessageAsync(request, sam.Token);
+        await _localStackFixture.SqsClient.SendMessageAsync(request, sam.Token);
     }
 
     private static SamImportHoldingMessage GetSamImportHoldingMessage(string holdingIdentifier) => new()
@@ -131,6 +142,6 @@ public class SamImportHoldingAnonMessageTests(
 
     public async Task DisposeAsync()
     {
-        await mongoDbFixture.PurgeDataTables();
+        await _mongoDbFixture.PurgeDataTables();
     }
 }

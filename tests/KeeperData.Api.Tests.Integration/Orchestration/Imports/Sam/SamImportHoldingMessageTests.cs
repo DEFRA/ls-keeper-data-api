@@ -11,16 +11,23 @@ using MongoDB.Driver;
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Sam;
 
 [Collection("Integration"), Trait("Dependence", "testcontainers")]
-public class SamImportHoldingMessageTests(
-    MongoDbFixture mongoDbFixture,
-    LocalStackFixture localStackFixture,
-    ApiContainerFixture apiContainerFixture) : IAsyncLifetime
+public class SamImportHoldingMessageTests : IAsyncLifetime
 {
-    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
-    private readonly LocalStackFixture _localStackFixture = localStackFixture;
-    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
+    private readonly MongoDbFixture _mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture;
 
     private const int ProcessingTimeCircuitBreakerSeconds = 30;
+
+    public SamImportHoldingMessageTests(
+        MongoDbFixture mongoDbFixture,
+        LocalStackFixture localStackFixture,
+        ApiContainerFixture apiContainerFixture)
+    {
+        _mongoDbFixture = mongoDbFixture;
+        _localStackFixture = localStackFixture;
+        _apiContainerFixture = apiContainerFixture;
+    }
 
     [Fact]
     public async Task GivenSamImportHoldingMessage_WhenReceivedOnTheQueue_ShouldComplete()
@@ -111,10 +118,10 @@ public class SamImportHoldingMessageTests(
         {
             ["CorrelationId"] = correlationId
         };
-        var request = SQSMessageUtility.CreateMessage(localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
+        var request = SQSMessageUtility.CreateMessage(_localStackFixture.KrdsIntakeQueueUrl!, message, typeof(TMessage).Name, additionalUserProperties);
 
         using var sam = new CancellationTokenSource();
-        await localStackFixture.SqsClient.SendMessageAsync(request, sam.Token);
+        await _localStackFixture.SqsClient.SendMessageAsync(request, sam.Token);
     }
 
     private static SamImportHoldingMessage GetSamImportHoldingMessage(string holdingIdentifier) => new()
@@ -129,6 +136,6 @@ public class SamImportHoldingMessageTests(
 
     public async Task DisposeAsync()
     {
-        await mongoDbFixture.PurgeDataTables();
+        await _mongoDbFixture.PurgeDataTables();
     }
 }
