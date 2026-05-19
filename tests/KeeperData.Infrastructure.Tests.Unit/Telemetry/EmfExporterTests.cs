@@ -214,29 +214,30 @@ public class EmfExporterTests
             ), It.IsAny<CancellationToken>()), Times.Once);
     }
 
+
     [Fact]
     public async Task OnMeasurementRecorded_WithCloudWatchClient_LogsWarningOnFailure()
     {
         // Arrange
         var mockCloudWatch = new Mock<IAmazonCloudWatch>();
+
         mockCloudWatch.Setup(c => c.PutMetricDataAsync(It.IsAny<PutMetricDataRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PutMetricDataResponse { HttpStatusCode = System.Net.HttpStatusCode.BadRequest });
 
         EmfExporter.Init(_mockLogger.Object, "test-namespace", mockCloudWatch.Object);
 
         using var meter = new Meter(MetricNames.MeterName);
-        var counter = meter.CreateCounter<long>("test_cloudwatch_fail");
+        var counter = meter.CreateCounter<long>($"test_cloudwatch_fail_{Guid.NewGuid():N}");
 
         // Act
         counter.Add(1);
 
-        // Assert - Polling loop for CI runner
+        // Assert
         bool logFound = false;
         for (int i = 0; i < 50; i++)
         {
-            await Task.Delay(100); // Wait up to 5 seconds
+            await Task.Delay(100);
 
-            // Check invocations manually to avoid ILogger generic type matching bugs
             logFound = _mockLogger.Invocations.Any(inv =>
                 inv.Method.Name == "Log" &&
                 inv.Arguments.Count > 2 &&
@@ -253,13 +254,14 @@ public class EmfExporterTests
     {
         // Arrange
         var mockCloudWatch = new Mock<IAmazonCloudWatch>();
+
         mockCloudWatch.Setup(c => c.PutMetricDataAsync(It.IsAny<PutMetricDataRequest>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Simulated network failure"));
 
         EmfExporter.Init(_mockLogger.Object, "test-namespace", mockCloudWatch.Object);
 
         using var meter = new Meter(MetricNames.MeterName);
-        var counter = meter.CreateCounter<long>("test_cloudwatch_error");
+        var counter = meter.CreateCounter<long>($"test_cloudwatch_error_{Guid.NewGuid():N}");
 
         // Act
         counter.Add(1);
@@ -310,30 +312,33 @@ public class EmfExporterTests
         EmfExporter.Init(_mockLogger.Object, "test-namespace", mockCloudWatch.Object);
 
         using var meter = new Meter(MetricNames.MeterName);
-        var counter = meter.CreateCounter<long>("test_empty_tag");
+        var counter = meter.CreateCounter<long>($"test_empty_tag_{Guid.NewGuid():N}");
 
         // Act
         counter.Add(1, new KeyValuePair<string, object?>("EmptyTag", null));
 
-        // Assert - Polling loop for CI runner safety
+        // Assert
         bool fallbackFound = false;
         for (int i = 0; i < 50; i++)
         {
             await Task.Delay(100);
 
             var invocations = mockCloudWatch.Invocations;
-            if (invocations.Count > 0)
+            foreach (var inv in invocations)
             {
-                var request = (PutMetricDataRequest)invocations[0].Arguments[0];
+                if (inv.Method.Name != "PutMetricDataAsync") continue;
+
+                var request = (PutMetricDataRequest)inv.Arguments[0];
                 var dimension = request.MetricData[0].Dimensions.FirstOrDefault(d => d.Name == "EmptyTag");
 
-                // Assert it successfully swapped NULL for "unknown"
                 if (dimension != null && dimension.Value == "unknown")
                 {
                     fallbackFound = true;
                     break;
                 }
             }
+
+            if (fallbackFound) break;
         }
 
         fallbackFound.Should().BeTrue("the empty tag should be safely replaced with 'unknown'");
@@ -345,7 +350,7 @@ public class EmfExporterTests
         // Arrange
         EmfExporter.Init(_mockLogger.Object, "test-namespace", null);
         using var meter = new Meter(MetricNames.MeterName);
-        var counter = meter.CreateCounter<long>("test_activity");
+        var counter = meter.CreateCounter<long>($"test_activity_{Guid.NewGuid():N}");
 
         using var activity = new System.Diagnostics.Activity("TestActivity");
         activity.Start();
@@ -365,7 +370,7 @@ public class EmfExporterTests
         // Arrange
         EmfExporter.Init(_mockLogger.Object, "test-namespace", null);
         using var meter = new Meter(MetricNames.MeterName);
-        var counter = meter.CreateCounter<long>("test_exception");
+        var counter = meter.CreateCounter<long>($"test_exception_{Guid.NewGuid():N}");
 
         // Act
         counter.Add(1, new KeyValuePair<string, object?>(null!, "value"));

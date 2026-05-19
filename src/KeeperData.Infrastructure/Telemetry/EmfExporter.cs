@@ -81,10 +81,12 @@ public static class EmfExporter
             PushEmfMetric(name, value, emfUnit, safeTags);
 
             // 3. Push LocalStack Metric (if applicable)
-            if (_cloudWatchClient != null)
+            // Capture the static client synchronously so the background thread doesn't crash if another test overwrites it
+            var currentClient = _cloudWatchClient;
+            if (currentClient != null)
             {
                 var standardUnit = instrument.Unit == "ea" ? StandardUnit.Count : StandardUnit.Milliseconds;
-                PushLocalStackMetric(name, value, standardUnit, safeTags);
+                PushLocalStackMetric(currentClient, name, value, standardUnit, safeTags);
             }
         }
         catch (Exception e)
@@ -114,7 +116,8 @@ public static class EmfExporter
         metricsLogger.Flush();
     }
 
-    private static void PushLocalStackMetric(string name, double value, StandardUnit unit, Dictionary<string, string> safeTags)
+    // Pass the specific client explicitly
+    private static void PushLocalStackMetric(IAmazonCloudWatch cloudWatchClient, string name, double value, StandardUnit unit, Dictionary<string, string> safeTags)
     {
         var dimensions = safeTags.Select(t => new Dimension { Name = t.Key, Value = t.Value }).ToList();
 
@@ -138,7 +141,7 @@ public static class EmfExporter
         {
             try
             {
-                var response = await _cloudWatchClient!.PutMetricDataAsync(request);
+                var response = await cloudWatchClient.PutMetricDataAsync(request);
                 if ((int)response.HttpStatusCode >= 400)
                 {
                     log?.LogWarning("LocalStack CloudWatch rejected metric. Status: {Status}", response.HttpStatusCode);
