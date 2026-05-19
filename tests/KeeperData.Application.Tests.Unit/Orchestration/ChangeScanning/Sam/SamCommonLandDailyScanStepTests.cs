@@ -176,7 +176,7 @@ public class SamCommonLandDailyScanStepTests
             Data =
             [
                 new SamScanCommonLandIdentifier { COMMON_CPH = "00/000/0001" },
-                new SamScanCommonLandIdentifier { COMMON_CPH = null },
+                new SamScanCommonLandIdentifier { COMMON_CPH = "" },
                 new SamScanCommonLandIdentifier { COMMON_CPH = "" },
                 new SamScanCommonLandIdentifier { COMMON_CPH = "00/000/0002" }
             ]
