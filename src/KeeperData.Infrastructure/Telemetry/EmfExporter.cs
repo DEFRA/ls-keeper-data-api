@@ -63,6 +63,8 @@ public static class EmfExporter
         ReadOnlySpan<KeyValuePair<string, object?>> tags,
         object? state)
     {
+        var currentLog = log;
+
         try
         {
             var value = Convert.ToDouble(measurement);
@@ -86,12 +88,12 @@ public static class EmfExporter
             if (currentClient != null)
             {
                 var standardUnit = instrument.Unit == "ea" ? StandardUnit.Count : StandardUnit.Milliseconds;
-                PushLocalStackMetric(currentClient, name, value, standardUnit, safeTags);
+                PushLocalStackMetric(currentClient, currentLog, name, value, standardUnit, safeTags);
             }
         }
         catch (Exception e)
         {
-            log.LogError(e, "Failed to process metric measurement");
+            currentLog?.LogError(e, "Failed to process metric measurement");
         }
     }
 
@@ -117,7 +119,7 @@ public static class EmfExporter
     }
 
     // Pass the specific client explicitly
-    private static void PushLocalStackMetric(IAmazonCloudWatch cloudWatchClient, string name, double value, StandardUnit unit, Dictionary<string, string> safeTags)
+    private static void PushLocalStackMetric(IAmazonCloudWatch cloudWatchClient, ILogger currentLog, string name, double value, StandardUnit unit, Dictionary<string, string> safeTags)
     {
         var dimensions = safeTags.Select(t => new Dimension { Name = t.Key, Value = t.Value }).ToList();
 
@@ -144,12 +146,12 @@ public static class EmfExporter
                 var response = await cloudWatchClient.PutMetricDataAsync(request);
                 if ((int)response.HttpStatusCode >= 400)
                 {
-                    log?.LogWarning("LocalStack CloudWatch rejected metric. Status: {Status}", response.HttpStatusCode);
+                    currentLog?.LogWarning("LocalStack CloudWatch rejected metric. Status: {Status}", response.HttpStatusCode);
                 }
             }
             catch (Exception ex)
             {
-                log?.LogError(ex, "Failed to push metric to LocalStack CloudWatch");
+                currentLog?.LogError(ex, "Failed to push metric to LocalStack CloudWatch");
             }
         });
     }
