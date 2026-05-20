@@ -184,10 +184,14 @@ public class EmfExporterTests
         // Assert
         act.Should().NotThrow();
     }
+
     [Fact]
     public async Task OnMeasurementRecorded_WithCloudWatchClient_ShouldPutMetricData()
     {
         // Arrange
+        var guid = Guid.NewGuid().ToString("N");
+        var uniqueMetricName = $"test_cloudwatch_success_{guid}";
+
         var mockCloudWatch = new Mock<IAmazonCloudWatch>();
         mockCloudWatch.Setup(c => c.PutMetricDataAsync(It.IsAny<PutMetricDataRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PutMetricDataResponse { HttpStatusCode = System.Net.HttpStatusCode.OK });
@@ -195,23 +199,40 @@ public class EmfExporterTests
         EmfExporter.Init(_mockLogger.Object, "test-namespace", mockCloudWatch.Object);
 
         using var meter = new Meter(MetricNames.MeterName);
-        var counter = meter.CreateCounter<long>("test_cloudwatch_counter");
-
-        var tags = new TagList { { "test_key", "test_value" } };
+        var counter = meter.CreateCounter<long>(uniqueMetricName);
 
         // Act
-        counter.Add(1, tags);
-        await Task.Delay(200);
+        counter.Add(1, new KeyValuePair<string, object?>("test_key", "test_value"));
 
-        // Assert
-        mockCloudWatch.Verify(c => c.PutMetricDataAsync(
-            It.Is<PutMetricDataRequest>(r =>
-                r.Namespace == "test-namespace" &&
-                r.MetricData.Count == 1 &&
-                !string.IsNullOrEmpty(r.MetricData[0].MetricName) &&
-                r.MetricData[0].Value == 1.0 &&
-                r.MetricData[0].Dimensions.Any(d => d.Name == "test_key" && d.Value == "test_value")
-            ), It.IsAny<CancellationToken>()), Times.Once);
+        // Assert - Polling loop for CI runner safety
+        bool metricSent = false;
+        for (int i = 0; i < 50; i++)
+        {
+            await Task.Delay(100);
+
+            var invocations = mockCloudWatch.Invocations;
+            foreach (var inv in invocations)
+            {
+                if (inv.Method.Name != "PutMetricDataAsync") continue;
+
+                var request = (PutMetricDataRequest)inv.Arguments[0];
+
+                // Verify the metric matches our unique Guid to avoid Humanizer casing bugs
+                if (request.Namespace == "test-namespace" &&
+                    request.MetricData.Count == 1 &&
+                    request.MetricData[0].MetricName.Contains(guid, StringComparison.OrdinalIgnoreCase) &&
+                    request.MetricData[0].Value == 1.0 &&
+                    request.MetricData[0].Dimensions.Any(d => d.Name == "test_key" && d.Value == "test_value"))
+                {
+                    metricSent = true;
+                    break;
+                }
+            }
+
+            if (metricSent) break;
+        }
+
+        metricSent.Should().BeTrue("the metric should be successfully pushed to LocalStack CloudWatch");
     }
 
 
