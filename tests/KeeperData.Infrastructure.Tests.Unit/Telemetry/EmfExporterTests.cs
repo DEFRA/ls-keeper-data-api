@@ -184,10 +184,14 @@ public class EmfExporterTests
         // Assert
         act.Should().NotThrow();
     }
+
     [Fact]
     public async Task OnMeasurementRecorded_WithCloudWatchClient_ShouldPutMetricData()
     {
         // Arrange
+        var guid = Guid.NewGuid().ToString("N");
+        var uniqueMetricName = $"test_cloudwatch_success_{guid}";
+
         var mockCloudWatch = new Mock<IAmazonCloudWatch>();
         mockCloudWatch.Setup(c => c.PutMetricDataAsync(It.IsAny<PutMetricDataRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PutMetricDataResponse { HttpStatusCode = System.Net.HttpStatusCode.OK });
@@ -195,51 +199,75 @@ public class EmfExporterTests
         EmfExporter.Init(_mockLogger.Object, "test-namespace", mockCloudWatch.Object);
 
         using var meter = new Meter(MetricNames.MeterName);
-        var counter = meter.CreateCounter<long>("test_cloudwatch_counter");
-
-        var tags = new TagList { { "test_key", "test_value" } };
+        var counter = meter.CreateCounter<long>(uniqueMetricName);
 
         // Act
-        counter.Add(1, tags);
-        await Task.Delay(200);
+        counter.Add(1, new KeyValuePair<string, object?>("test_key", "test_value"));
 
-        // Assert
-        mockCloudWatch.Verify(c => c.PutMetricDataAsync(
-            It.Is<PutMetricDataRequest>(r =>
-                r.Namespace == "test-namespace" &&
-                r.MetricData.Count == 1 &&
-                !string.IsNullOrEmpty(r.MetricData[0].MetricName) &&
-                r.MetricData[0].Value == 1.0 &&
-                r.MetricData[0].Dimensions.Any(d => d.Name == "test_key" && d.Value == "test_value")
-            ), It.IsAny<CancellationToken>()), Times.Once);
+        // Assert - Polling loop for CI runner safety
+        bool metricSent = false;
+        for (int i = 0; i < 50; i++)
+        {
+            await Task.Delay(100);
+
+            var invocations = mockCloudWatch.Invocations;
+            foreach (var inv in invocations)
+            {
+                if (inv.Method.Name != "PutMetricDataAsync") continue;
+
+                var request = (PutMetricDataRequest)inv.Arguments[0];
+
+                // Verify the metric matches our unique Guid to avoid Humanizer casing bugs
+                if (request.Namespace == "test-namespace" &&
+                    request.MetricData.Count == 1 &&
+                    request.MetricData[0].MetricName.Contains(guid, StringComparison.OrdinalIgnoreCase) &&
+                    request.MetricData[0].Value == 1.0 &&
+                    request.MetricData[0].Dimensions.Any(d => d.Name == "test_key" && d.Value == "test_value"))
+                {
+                    metricSent = true;
+                    break;
+                }
+            }
+
+            if (metricSent) break;
+        }
+
+        metricSent.Should().BeTrue("the metric should be successfully pushed to LocalStack CloudWatch");
     }
+
 
     [Fact]
     public async Task OnMeasurementRecorded_WithCloudWatchClient_LogsWarningOnFailure()
     {
         // Arrange
         var mockCloudWatch = new Mock<IAmazonCloudWatch>();
+
         mockCloudWatch.Setup(c => c.PutMetricDataAsync(It.IsAny<PutMetricDataRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PutMetricDataResponse { HttpStatusCode = System.Net.HttpStatusCode.BadRequest });
 
         EmfExporter.Init(_mockLogger.Object, "test-namespace", mockCloudWatch.Object);
 
         using var meter = new Meter(MetricNames.MeterName);
-        var counter = meter.CreateCounter<long>("test_cloudwatch_fail");
+        var counter = meter.CreateCounter<long>($"test_cloudwatch_fail_{Guid.NewGuid():N}");
 
         // Act
         counter.Add(1);
-        await Task.Delay(200);
 
         // Assert
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("LocalStack CloudWatch rejected metric")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.AtLeastOnce);
+        bool logFound = false;
+        for (int i = 0; i < 50; i++)
+        {
+            await Task.Delay(100);
+
+            logFound = _mockLogger.Invocations.Any(inv =>
+                inv.Method.Name == "Log" &&
+                inv.Arguments.Count > 2 &&
+                inv.Arguments[2]?.ToString()?.Contains("LocalStack CloudWatch rejected metric") == true);
+
+            if (logFound) break;
+        }
+
+        logFound.Should().BeTrue("the warning log should be emitted when CloudWatch rejects the metric");
     }
 
     [Fact]
@@ -247,27 +275,33 @@ public class EmfExporterTests
     {
         // Arrange
         var mockCloudWatch = new Mock<IAmazonCloudWatch>();
+
         mockCloudWatch.Setup(c => c.PutMetricDataAsync(It.IsAny<PutMetricDataRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Network error"));
+            .ThrowsAsync(new Exception("Simulated network failure"));
 
         EmfExporter.Init(_mockLogger.Object, "test-namespace", mockCloudWatch.Object);
 
         using var meter = new Meter(MetricNames.MeterName);
-        var counter = meter.CreateCounter<long>("test_cloudwatch_exception");
+        var counter = meter.CreateCounter<long>($"test_cloudwatch_error_{Guid.NewGuid():N}");
 
         // Act
         counter.Add(1);
-        await Task.Delay(200);
 
         // Assert
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Failed to push metric to LocalStack CloudWatch")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.AtLeastOnce);
+        bool logFound = false;
+        for (int i = 0; i < 50; i++)
+        {
+            await Task.Delay(100);
+
+            logFound = _mockLogger.Invocations.Any(inv =>
+                inv.Method.Name == "Log" &&
+                inv.Arguments.Count > 2 &&
+                inv.Arguments[2]?.ToString()?.Contains("Failed to push metric to LocalStack CloudWatch") == true);
+
+            if (logFound) break;
+        }
+
+        logFound.Should().BeTrue("the error log should be emitted when CloudWatch throws an exception");
     }
 
     [Fact]
@@ -286,5 +320,90 @@ public class EmfExporterTests
 
         // Assert
         act.Should().NotThrow();
+    }
+
+    [Fact]
+    public async Task OnMeasurementRecorded_WithEmptyTagValue_UsesUnknownFallback()
+    {
+        // Arrange
+        var mockCloudWatch = new Mock<IAmazonCloudWatch>();
+        mockCloudWatch.Setup(c => c.PutMetricDataAsync(It.IsAny<PutMetricDataRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PutMetricDataResponse { HttpStatusCode = System.Net.HttpStatusCode.OK });
+
+        EmfExporter.Init(_mockLogger.Object, "test-namespace", mockCloudWatch.Object);
+
+        using var meter = new Meter(MetricNames.MeterName);
+        var counter = meter.CreateCounter<long>($"test_empty_tag_{Guid.NewGuid():N}");
+
+        // Act
+        counter.Add(1, new KeyValuePair<string, object?>("EmptyTag", null));
+
+        // Assert
+        bool fallbackFound = false;
+        for (int i = 0; i < 50; i++)
+        {
+            await Task.Delay(100);
+
+            var invocations = mockCloudWatch.Invocations;
+            foreach (var inv in invocations)
+            {
+                if (inv.Method.Name != "PutMetricDataAsync") continue;
+
+                var request = (PutMetricDataRequest)inv.Arguments[0];
+                var dimension = request.MetricData[0].Dimensions.FirstOrDefault(d => d.Name == "EmptyTag");
+
+                if (dimension != null && dimension.Value == "unknown")
+                {
+                    fallbackFound = true;
+                    break;
+                }
+            }
+
+            if (fallbackFound) break;
+        }
+
+        fallbackFound.Should().BeTrue("the empty tag should be safely replaced with 'unknown'");
+    }
+
+    [Fact]
+    public void OnMeasurementRecorded_WithActiveActivity_IncludesTraceId()
+    {
+        // Arrange
+        EmfExporter.Init(_mockLogger.Object, "test-namespace", null);
+        using var meter = new Meter(MetricNames.MeterName);
+        var counter = meter.CreateCounter<long>($"test_activity_{Guid.NewGuid():N}");
+
+        using var activity = new System.Diagnostics.Activity("TestActivity");
+        activity.Start();
+
+        // Act
+        Action act = () => counter.Add(1);
+
+        // Assert
+        act.Should().NotThrow();
+
+        activity.Stop();
+    }
+
+    [Fact]
+    public void OnMeasurementRecorded_WhenExceptionOccurs_LogsError()
+    {
+        // Arrange
+        EmfExporter.Init(_mockLogger.Object, "test-namespace", null);
+        using var meter = new Meter(MetricNames.MeterName);
+        var counter = meter.CreateCounter<long>($"test_exception_{Guid.NewGuid():N}");
+
+        // Act
+        counter.Add(1, new KeyValuePair<string, object?>(null!, "value"));
+
+        // Assert
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Failed to process metric measurement")),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 }

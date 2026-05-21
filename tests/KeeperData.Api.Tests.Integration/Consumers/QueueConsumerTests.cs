@@ -25,14 +25,23 @@ public class QueueConsumerTests(
 
         await ExecuteTopicTest(correlationId, message);
 
-        // Wait briefly to allow processing
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        // Added polling loop
+        bool foundMessageProcesseEntryInLogs = false;
+        for (int i = 0; i < 15; i++)
+        {
+            foundMessageProcesseEntryInLogs = await ContainerLoggingUtility.FindContainerLogEntryAsync(
+                _apiContainerFixture.ApiContainer,
+                $"Handled message with correlationId: \"{correlationId}\"");
 
-        var foundMessageProcesseEntryInLogs = await ContainerLoggingUtility.FindContainerLogEntryAsync(
-            _apiContainerFixture.ApiContainer,
-            $"Handled message with correlationId: \"{correlationId}\"");
+            if (foundMessageProcesseEntryInLogs)
+            {
+                break;
+            }
 
-        foundMessageProcesseEntryInLogs.Should().BeTrue();
+            await Task.Delay(TimeSpan.FromSeconds(2));
+        }
+
+        foundMessageProcesseEntryInLogs.Should().BeTrue("The API container should successfully process the message and log its completion");
     }
 
     [Fact]
@@ -44,14 +53,22 @@ public class QueueConsumerTests(
 
         await ExecuteQueueTest(correlationId, message);
 
-        // Wait briefly to allow processing
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        bool foundMessageProcesseEntryInLogs = false;
+        for (int i = 0; i < 15; i++)
+        {
+            foundMessageProcesseEntryInLogs = await ContainerLoggingUtility.FindContainerLogEntryAsync(
+                _apiContainerFixture.ApiContainer,
+                $"Handled message with correlationId: \"{correlationId}\"");
 
-        var foundMessageProcesseEntryInLogs = await ContainerLoggingUtility.FindContainerLogEntryAsync(
-            _apiContainerFixture.ApiContainer,
-            $"Handled message with correlationId: \"{correlationId}\"");
+            if (foundMessageProcesseEntryInLogs)
+            {
+                break;
+            }
 
-        foundMessageProcesseEntryInLogs.Should().BeTrue();
+            await Task.Delay(TimeSpan.FromSeconds(2));
+        }
+
+        foundMessageProcesseEntryInLogs.Should().BeTrue("The API container should successfully process the message and log its completion");
     }
 
     private async Task ExecuteTopicTest<TMessage>(string correlationId, TMessage message)
