@@ -546,9 +546,7 @@ public class DataBridgeClientTests
 
         result.Should().NotBeNull().And.HaveCount(2);
         result[0].COMMON_CPH.Should().Be(cph);
-        result[0].IsDefinitionRecord.Should().BeTrue();
         result[1].COMMON_CPH.Should().Be(cph);
-        result[1].IsRelationshipRecord.Should().BeTrue();
     }
 
     [Fact]

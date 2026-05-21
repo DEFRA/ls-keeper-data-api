@@ -27,6 +27,7 @@ public class SamHoldingImportContext
     public List<string> ExistingGoldPartyIds { get; set; } = [];
 
     public SiteDocument? GoldSite { get; set; }
+    public List<SiteDocument> AssociatedMainSites { get; set; } = [];
     public List<PartyDocument> GoldParties { get; set; } = [];
     public List<Core.Documents.SitePartyRoleRelationshipDocument> GoldSitePartyRoles { get; set; } = [];
     public List<SiteGroupMarkRelationshipDocument> GoldSiteGroupMarks { get; set; } = [];

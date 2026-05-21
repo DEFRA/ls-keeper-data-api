@@ -14,32 +14,23 @@ public static class SamCommonLandMapper
         if (rawCommonLands == null || rawCommonLands.Count == 0)
             return [];
 
-        var definitionRecords = rawCommonLands
-            .Where(r => r.IsDefinitionRecord && !string.IsNullOrWhiteSpace(r.COMMON_CPH))
-            .GroupBy(r => r.COMMON_CPH)
-            .ToList();
-
-        var relationshipRecords = rawCommonLands
-            .Where(r => r.IsRelationshipRecord)
-            .ToList();
-
         var result = new List<SamHoldingDocument>();
 
-        foreach (var group in definitionRecords)
+        foreach (var representative in rawCommonLands.Where(r => !string.IsNullOrWhiteSpace(r.COMMON_CPH)))
         {
-            var representative = group.OrderByDescending(r => r.UpdatedAtUtc).First();
-            var commonCph = group.Key;
+            var commonCph = representative.COMMON_CPH!;
 
-            var associatedMainHoldings = relationshipRecords
-                .Where(r => r.COMMON_CPH == commonCph)
-                .Select(r => new AssociatedHoldingRelationship
+            var associatedMainHoldings = new List<AssociatedHoldingRelationship>();
+            if (representative.IsMainCphPopulated)
+            {
+                associatedMainHoldings.Add(new AssociatedHoldingRelationship
                 {
-                    HoldingIdentifier = r.MAIN_CPH,
-                    ContiguousFlag = string.Equals(r.CONTIGUOUS_COMMON, "Yes", StringComparison.OrdinalIgnoreCase),
-                    StartDate = NormaliseDate(r.START_DATE),
-                    EndDate = NormaliseDate(r.END_DATE)
-                })
-                .ToList();
+                    HoldingIdentifier = representative.MAIN_CPH,
+                    ContiguousFlag = string.Equals(representative.CONTIGUOUS_COMMON, "Yes", StringComparison.OrdinalIgnoreCase),
+                    StartDate = NormaliseDate(representative.START_DATE),
+                    EndDate = NormaliseDate(representative.END_DATE)
+                });
+            }
 
             var holding = new SamHoldingDocument
             {
@@ -90,7 +81,7 @@ public static class SamCommonLandMapper
             return [];
 
         return relationshipRecords
-            .Where(r => r.IsRelationshipRecord && !string.IsNullOrWhiteSpace(r.COMMON_CPH))
+            .Where(r => !string.IsNullOrWhiteSpace(r.COMMON_CPH))
             .Select(r => new AssociatedHoldingRelationship
             {
                 HoldingIdentifier = r.COMMON_CPH,
