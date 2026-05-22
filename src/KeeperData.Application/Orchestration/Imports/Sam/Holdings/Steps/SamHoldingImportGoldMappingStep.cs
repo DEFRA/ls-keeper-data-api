@@ -138,19 +138,22 @@ public class SamHoldingImportGoldMappingStep(
                 EndDate = mainHolding.EndDate
             };
 
-            mainSite.AssociatedCommonLands ??= [];
+            // Ensure the main site's AssociatedCommonLands list exists
+            mainSite.AssociatedCommonLands ??= new List<AssociatedHoldingDocument>();
 
+            // Only add the common land entry if it does not already exist
             if (!mainSite.AssociatedCommonLands.Any(a => a.HoldingIdentifier == commonForMain.HoldingIdentifier))
             {
                 mainSite.AssociatedCommonLands.Add(commonForMain);
-                context.AssociatedMainSites ??= new List<SiteDocument>();
-
-                var existingIndex = context.AssociatedMainSites.FindIndex(s => s.Id == mainSite.Id);
-                if (existingIndex >= 0)
-                    context.AssociatedMainSites[existingIndex] = mainSite;
-                else
-                    context.AssociatedMainSites.Add(mainSite);
             }
+
+            // Ensure the main site is present in the context so the persistence step can operate on it
+            context.AssociatedMainSites ??= new List<SiteDocument>();
+            var existingIndex = context.AssociatedMainSites.FindIndex(s => s.Id == mainSite.Id);
+            if (existingIndex >= 0)
+                context.AssociatedMainSites[existingIndex] = mainSite;
+            else
+                context.AssociatedMainSites.Add(mainSite);
         }
     }
 }
