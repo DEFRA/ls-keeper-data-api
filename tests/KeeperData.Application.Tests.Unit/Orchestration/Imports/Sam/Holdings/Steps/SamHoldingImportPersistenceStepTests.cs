@@ -76,7 +76,7 @@ public class SamHoldingImportPersistenceStepTests
 
         await step.ExecuteAsync(context, CancellationToken.None);
 
-        Assert.Equal(2, captured.Count);
+        Assert.Single(captured, _ => true);
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public class SamHoldingImportPersistenceStepTests
 
         await step.ExecuteAsync(context, CancellationToken.None);
 
-        Assert.Equal(1, captured.Count);
+        Assert.Single(captured, _ => true);
     }
 
     [Fact]

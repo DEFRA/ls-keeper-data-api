@@ -35,7 +35,7 @@ public class SamHoldingImportGoldMappingStepTests
             {
                 new Core.Documents.SiteIdentifierDocument { Identifier = "MAIN-1", IdentifierId = "id-1", Type = new Core.Documents.SiteIdentifierSummaryDocument { IdentifierId = "type-1", Code = "CPH", Name = "CPH Number" }, LastUpdatedDate = DateTime.UtcNow }
             },
-            AssociatedCommonLands = null // explicitly null to exercise null-coalescing
+            AssociatedCommonLands = new List<AssociatedHoldingDocument>() // use empty list (property non-nullable)
         };
 
         goldSiteRepoMock.Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
@@ -156,7 +156,7 @@ public class SamHoldingImportGoldMappingStepTests
             {
                 new Core.Documents.SiteIdentifierDocument { Identifier = "MAIN-1", IdentifierId = "id-1", Type = new Core.Documents.SiteIdentifierSummaryDocument { IdentifierId = "type-1", Code = "CPH", Name = "CPH Number" }, LastUpdatedDate = DateTime.UtcNow }
             },
-            AssociatedCommonLands = null
+            AssociatedCommonLands = new List<AssociatedHoldingDocument>()
         };
 
         goldSiteRepoMock.Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
