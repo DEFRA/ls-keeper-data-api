@@ -177,13 +177,12 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
             new { },
             DataBridgeQueries.SamPortsByCph(holdingIdentifier));
 
-        return (holdingsUri, herdsUri, holdersUri, partiesUri, portsUri);
         var commonLandsUri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamCommonLands,
             new { },
             DataBridgeQueries.SamCommonLandsByCommonCph(holdingIdentifier));
 
-        return (holdingsUri, herdsUri, holdersUri, partiesUri, commonLandsUri);
+        return (holdingsUri, herdsUri, holdersUri, partiesUri, commonLandsUri, portsUri);
     }
 
     private void SetupDefaultRepositoryMocks()

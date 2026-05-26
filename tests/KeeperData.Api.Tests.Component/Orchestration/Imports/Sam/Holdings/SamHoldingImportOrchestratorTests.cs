@@ -267,8 +267,6 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
             new { },
             DataBridgeQueries.SamCommonLandsByCommonCph(holdingIdentifier));
 
-        return (holdingsUri, herdsUri, holdersUri, partiesUri, commonLandsUri);
-
         var portsUri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamPorts,
             new { },
