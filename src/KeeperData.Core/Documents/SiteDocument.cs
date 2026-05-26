@@ -88,6 +88,10 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     [JsonPropertyName("holdingType")]
     public string? HoldingType { get; set; }
 
+    [BsonElement("permanentLandHoldingIdentifier")]
+    [JsonPropertyName("permanentLandHoldingIdentifier")]
+    public string? PermanentLandHoldingIdentifier { get; set; }
+
     /// <summary>
     /// Indicates whether identity documents should be destroyed for this site.
     /// </summary>
@@ -143,6 +147,18 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     [JsonPropertyName("activities")]
     public List<SiteActivityDocument> Activities { get; set; } = [];
 
+    [BsonElement("localAuthorityName")]
+    [JsonPropertyName("localAuthorityName")]
+    public string? LocalAuthorityName { get; set; }
+
+    [BsonElement("associatedMainHoldings")]
+    [JsonPropertyName("associatedMainHoldings")]
+    public List<AssociatedHoldingDocument> AssociatedMainHoldings { get; set; } = [];
+
+    [BsonElement("associatedCommonLands")]
+    [JsonPropertyName("associatedCommonLands")]
+    public List<AssociatedHoldingDocument> AssociatedCommonLands { get; set; } = [];
+
     public static SiteDocument FromDomain(Site m) => new()
     {
         Id = m.Id,
@@ -163,7 +179,8 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         Marks = [.. m.Marks.Select(GroupMarkDocument.FromDomain)],
         Activities = [.. m.Activities.Select(SiteActivityDocument.FromDomain)],
         ParentSiteIdentifier = m.ParentSiteIdentifier,
-        HoldingType = m.HoldingType
+        HoldingType = m.HoldingType,
+        PermanentLandHoldingIdentifier = m.PermanentLandHoldingIdentifier
     };
 
     public Site ToDomain()
@@ -182,7 +199,8 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
             Type?.ToDomain(),
             Location?.ToDomain(),
             ParentSiteIdentifier,
-            HoldingType
+            HoldingType,
+            PermanentLandHoldingIdentifier
         );
 
         foreach (var si in Identifiers)

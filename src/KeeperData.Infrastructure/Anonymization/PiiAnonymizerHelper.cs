@@ -57,6 +57,10 @@ public static class PiiAnonymizerHelper
         {
             AnonymizeAll(result.Data as List<CtsAgentOrKeeper> ?? [], AnonymizeCtsAgentOrKeeper, logger);
         }
+        else if (type == typeof(SamCommonLand))
+        {
+            AnonymizeAll(result.Data as List<SamCommonLand> ?? [], AnonymizeSamCommonLand, logger);
+        }
         else if (type == typeof(SamHerd))
         {
             return;
@@ -312,5 +316,32 @@ public static class PiiAnonymizerHelper
 
         if (holding.LOC_MOBILE_NUMBER is not null)
             holding.LOC_MOBILE_NUMBER = faker.Phone.PhoneNumber(MobileNumberFormat);
+    }
+
+    public static void AnonymizeSamCommonLand(SamCommonLand commonLand)
+    {
+        var seed = GetStableSeed(commonLand.COMMON_CPH);
+        var faker = CreateFaker(seed);
+
+        if (commonLand.ADDRESS_LINE_1 is not null)
+            commonLand.ADDRESS_LINE_1 = faker.Address.StreetAddress();
+
+        if (commonLand.ADDRESS_LINE_2 is not null)
+            commonLand.ADDRESS_LINE_2 = faker.Address.SecondaryAddress();
+
+        if (commonLand.ADDRESS_LINE_3 is not null)
+            commonLand.ADDRESS_LINE_3 = faker.Address.City();
+
+        if (commonLand.POSTCODE is not null)
+            commonLand.POSTCODE = faker.Address.ZipCode(PostcodeFormat);
+
+        if (commonLand.PREMISES_NAME is not null && commonLand.PREMISES_NAME != "-")
+            commonLand.PREMISES_NAME = faker.Company.CompanyName();
+
+        if (commonLand.EASTING is not null)
+            commonLand.EASTING = faker.Random.Int(100000, 999999).ToString();
+
+        if (commonLand.NORTHING is not null)
+            commonLand.NORTHING = faker.Random.Int(200000, 999999).ToString();
     }
 }

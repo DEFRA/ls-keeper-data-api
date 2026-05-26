@@ -31,6 +31,7 @@ public class DataBridgeClient(
     private readonly bool _samHerdsEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamHerdsEnabled");
     private readonly bool _samPartiesEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamPartiesEnabled");
     private readonly bool _samPortsEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamPortsEnabled");
+    private readonly bool _samCommonLandsEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamCommonLandsEnabled");
 
     private const string ClientName = "DataBridgeApi";
 
@@ -411,6 +412,46 @@ public class DataBridgeClient(
             cancellationToken);
 
         return result.Data.FirstOrDefault();
+    }
+
+    public async Task<DataBridgeResponse<T>?> GetSamCommonLandsAsync<T>(
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_samCommonLandsEnabled) return null;
+
+        return await ExecutePagedRequestWithMetricsAsync<T>(
+            "sam_common_lands",
+            top,
+            async () =>
+            {
+                var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
+                var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamCommonLands, new { }, query);
+
+                return await GetFromApiAsync<T>(
+                    uri,
+                    $"Sam paged common lands for top '{top}', skip '{skip}'",
+                    cancellationToken);
+            });
+    }
+
+    public async Task<List<SamCommonLand>> GetSamCommonLandsByCommonCphAsync(string cph, CancellationToken cancellationToken)
+    {
+        if (!_samCommonLandsEnabled) return [];
+
+        var query = DataBridgeQueries.SamCommonLandsByCommonCph(cph);
+        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamCommonLands, new { }, query);
+
+        var result = await GetFromApiAsync<SamCommonLand>(
+            uri,
+            $"Sam common lands for COMMON_CPH '{cph}'",
+            cancellationToken);
+
+        return result.Data;
     }
 
     private async Task<DataBridgeResponse<T>?> ExecutePagedRequestWithMetricsAsync<T>(

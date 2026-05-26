@@ -44,6 +44,11 @@ public class SamHoldingImportPersistenceStep(
                 cancellationToken);
         }
 
+        if (context.AssociatedMainSites != null && context.AssociatedMainSites.Count > 0)
+        {
+            await UpdateAssociatedMainSitesAsync(context.AssociatedMainSites, cancellationToken);
+        }
+
         await UpsertGoldPartiesAsync(context.ExistingGoldPartyIds, context.GoldParties, cancellationToken);
 
         await UpsertGoldPartyRolesAndDeleteOrphansAsync(
@@ -271,6 +276,27 @@ public class SamHoldingImportPersistenceStep(
 
         if (updateItems.Count > 0)
             await _goldPartyRepository.BulkUpdateWithCustomFilterAsync(updateItems, cancellationToken);
+    }
+
+    private async Task UpdateAssociatedMainSitesAsync(
+        List<SiteDocument> associatedMainSites,
+        CancellationToken cancellationToken)
+    {
+        var updateItems = new List<(FilterDefinition<SiteDocument> Filter, UpdateDefinition<SiteDocument> Update)>();
+
+        foreach (var site in associatedMainSites)
+        {
+            // Only update existing sites; do not create new ones here.
+            if (string.IsNullOrWhiteSpace(site.Id))
+                continue;
+
+            var filter = Builders<SiteDocument>.Filter.Eq(x => x.Id, site.Id);
+            var update = Builders<SiteDocument>.Update.SetAll(site);
+            updateItems.Add((filter, update));
+        }
+
+        if (updateItems.Count > 0)
+            await _goldSiteRepository.BulkUpdateWithCustomFilterAsync(updateItems, cancellationToken);
     }
 
     private async Task UpsertGoldPartyRolesAndDeleteOrphansAsync(

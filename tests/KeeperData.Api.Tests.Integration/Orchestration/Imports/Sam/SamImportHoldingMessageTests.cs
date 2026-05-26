@@ -11,16 +11,23 @@ using MongoDB.Driver;
 namespace KeeperData.Api.Tests.Integration.Orchestration.Imports.Sam;
 
 [Collection("Integration"), Trait("Dependence", "testcontainers")]
-public class SamImportHoldingMessageTests(
-    MongoDbFixture mongoDbFixture,
-    LocalStackFixture localStackFixture,
-    ApiContainerFixture apiContainerFixture) : IAsyncLifetime
+public class SamImportHoldingMessageTests : IAsyncLifetime
 {
-    private readonly MongoDbFixture _mongoDbFixture = mongoDbFixture;
-    private readonly LocalStackFixture _localStackFixture = localStackFixture;
-    private readonly ApiContainerFixture _apiContainerFixture = apiContainerFixture;
+    private readonly MongoDbFixture _mongoDbFixture;
+    private readonly LocalStackFixture _localStackFixture;
+    private readonly ApiContainerFixture _apiContainerFixture;
 
     private const int ProcessingTimeCircuitBreakerSeconds = 30;
+
+    public SamImportHoldingMessageTests(
+        MongoDbFixture mongoDbFixture,
+        LocalStackFixture localStackFixture,
+        ApiContainerFixture apiContainerFixture)
+    {
+        _mongoDbFixture = mongoDbFixture;
+        _localStackFixture = localStackFixture;
+        _apiContainerFixture = apiContainerFixture;
+    }
 
     [Fact]
     public async Task GivenSamImportHoldingMessage_WhenReceivedOnTheQueue_ShouldComplete()
@@ -63,7 +70,9 @@ public class SamImportHoldingMessageTests(
 
     private async Task VerifySilverDataTypesAsync(string holdingIdentifier)
     {
-        var silverSamHoldingFilter = Builders<SamHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);
+        var silverSamHoldingFilter = Builders<SamHoldingDocument>.Filter.And(
+            Builders<SamHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier),
+            Builders<SamHoldingDocument>.Filter.Ne(x => x.SiteTypeCode, "CL"));
         var silverSamHoldings = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("samHoldings", silverSamHoldingFilter);
 
         var silverSamPartyFilter = Builders<SamPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);

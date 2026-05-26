@@ -1,6 +1,7 @@
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents;
+using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Extensions;
 using KeeperData.Core.Repositories;
@@ -68,6 +69,11 @@ public class SamHoldingImportGoldMappingStep(
                 siteTypeDerivedCodeLookupService,
                 cancellationToken);
 
+            await EnrichWithCommonLandDataAsync(context, representative, cancellationToken);
+
+            logger.LogInformation("Associated main sites queued for update: {Count} for CPH {Cph}",
+                context.AssociatedMainSites?.Count ?? 0, context.Cph);
+
             context.GoldSitePartyRoles = SitePartyRoleMapper.ToGold(
                 context.GoldParties,
                 context.GoldSiteGroupMarks,
@@ -77,6 +83,77 @@ public class SamHoldingImportGoldMappingStep(
             SamPartyMapper.EnrichPartyRoleWithSiteInformation(
                 context.GoldParties,
                 context.GoldSite);
+        }
+    }
+
+    private async Task EnrichWithCommonLandDataAsync(SamHoldingImportContext context, SamHoldingDocument representative, CancellationToken cancellationToken)
+    {
+        var goldSite = context.GoldSite;
+        if (goldSite == null) return;
+
+        goldSite.LocalAuthorityName = representative.LocalAuthorityName;
+
+        goldSite.AssociatedMainHoldings = representative.AssociatedMainHoldings
+            .Select(r => new AssociatedHoldingDocument
+            {
+                HoldingIdentifier = r.HoldingIdentifier,
+                ContiguousFlag = r.ContiguousFlag,
+                StartDate = r.StartDate,
+                EndDate = r.EndDate
+            })
+            .ToList();
+
+        if (goldSite.AssociatedMainHoldings?.Count > 0)
+        {
+            await FindAndUpdateMainSiteIfExists(context, representative, goldSite.AssociatedMainHoldings, cancellationToken);
+        }
+    }
+
+    private async Task FindAndUpdateMainSiteIfExists(SamHoldingImportContext context, SamHoldingDocument representative, List<AssociatedHoldingDocument> mainHoldings, CancellationToken cancellationToken)
+    {
+        foreach (var mainHolding in mainHoldings)
+        {
+            if (string.IsNullOrWhiteSpace(mainHolding.HoldingIdentifier))
+                continue;
+
+            var filter = Builders<SiteDocument>.Filter.ElemMatch(
+                x => x.Identifiers,
+                i => i.Identifier == mainHolding.HoldingIdentifier);
+
+            var mainSite = await goldSiteRepository.FindOneByFilterAsync(filter, cancellationToken);
+
+            if (mainSite is null)
+            {
+                logger.LogDebug("No main site found for identifier {Identifier}", mainHolding.HoldingIdentifier);
+                continue;
+            }
+
+            logger.LogInformation("Found main site {SiteId} for identifier {Identifier}", mainSite.Id, mainHolding.HoldingIdentifier);
+
+            var commonForMain = new AssociatedHoldingDocument
+            {
+                HoldingIdentifier = representative.CountyParishHoldingNumber,
+                ContiguousFlag = mainHolding.ContiguousFlag,
+                StartDate = mainHolding.StartDate,
+                EndDate = mainHolding.EndDate
+            };
+
+            // Ensure the main site's AssociatedCommonLands list exists
+            mainSite.AssociatedCommonLands ??= new List<AssociatedHoldingDocument>();
+
+            // Only add the common land entry if it does not already exist
+            if (!mainSite.AssociatedCommonLands.Any(a => a.HoldingIdentifier == commonForMain.HoldingIdentifier))
+            {
+                mainSite.AssociatedCommonLands.Add(commonForMain);
+            }
+
+            // Ensure the main site is present in the context so the persistence step can operate on it
+            context.AssociatedMainSites ??= new List<SiteDocument>();
+            var existingIndex = context.AssociatedMainSites.FindIndex(s => s.Id == mainSite.Id);
+            if (existingIndex >= 0)
+                context.AssociatedMainSites[existingIndex] = mainSite;
+            else
+                context.AssociatedMainSites.Add(mainSite);
         }
     }
 }

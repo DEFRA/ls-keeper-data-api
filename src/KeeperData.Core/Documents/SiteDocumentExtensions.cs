@@ -28,7 +28,19 @@ public static class SiteDocumentExtensions
         Marks = doc.Marks?.Select(m => m.ToDto()).ToList() ?? [],
         Activities = doc.Activities?.Select(a => a.ToDto()).ToList() ?? [],
         ParentSiteIdentifier = doc.ParentSiteIdentifier,
-        HoldingType = doc.HoldingType
+        HoldingType = doc.HoldingType,
+        PermanentLandHoldingIdentifier = doc.PermanentLandHoldingIdentifier,
+        LocalAuthorityName = doc.LocalAuthorityName,
+        AssociatedMainHoldings = doc.AssociatedMainHoldings?.Select(h => h.ToDto()).ToList() ?? [],
+        AssociatedCommonLands = doc.AssociatedCommonLands?.Select(h => h.ToDto()).ToList() ?? []
+    };
+
+    private static AssociatedHoldingDto ToDto(this AssociatedHoldingDocument doc) => new()
+    {
+        HoldingIdentifier = doc.HoldingIdentifier,
+        ContiguousFlag = doc.ContiguousFlag,
+        StartDate = doc.StartDate,
+        EndDate = doc.EndDate
     };
 
     private static SiteTypeSummaryDto ToDto(this SiteTypeSummaryDocument doc) => new()

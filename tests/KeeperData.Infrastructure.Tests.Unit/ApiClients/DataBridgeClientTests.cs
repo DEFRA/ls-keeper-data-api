@@ -676,4 +676,117 @@ public class DataBridgeClientTests
         await act.Should().ThrowAsync<NonRetryableException>()
             .WithMessage("*Deserialization error*");
     }
+
+    [Fact]
+    public async Task GetSamCommonLandsAsPagedResponseAsync_ShouldReturnCommonLands_WhenApiReturnsSuccess()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { "ApiClients:DataBridgeApi:ServiceName", "" },
+                { "DataBridgeCollectionFlags:SamCommonLandsEnabled", "true" }
+            })
+            .Build();
+
+        var client = new DataBridgeClient(
+            _httpClientFactoryMock.Object,
+            configuration,
+            _loggerMock.Object,
+            _metricsMock.Object);
+
+        var expectedResponse = MockSamData.GetSamCommonLandsStringContentResponse(10, 0);
+
+        var uri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamCommonLands,
+            new { },
+            DataBridgeQueries.PagedRecords(10, 0));
+
+        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
+            .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
+
+        var result = await client.GetSamCommonLandsAsync<SamCommonLand>(10, 0, cancellationToken: CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.Data.Should().NotBeNull().And.HaveCount(10);
+    }
+
+    [Fact]
+    public async Task GetSamCommonLandsByCommonCphAsync_ShouldReturnCommonLands_WhenApiReturnsSuccess()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { "ApiClients:DataBridgeApi:ServiceName", "" },
+                { "DataBridgeCollectionFlags:SamCommonLandsEnabled", "true" }
+            })
+            .Build();
+
+        var client = new DataBridgeClient(
+            _httpClientFactoryMock.Object,
+            configuration,
+            _loggerMock.Object,
+            _metricsMock.Object);
+
+        var cph = "00/000/0001";
+        var expectedResponse = MockSamData.GetSamCommonLandsStringContentResponse(cph);
+
+        var uri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamCommonLands,
+            new { },
+            DataBridgeQueries.SamCommonLandsByCommonCph(cph));
+
+        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
+            .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
+
+        var result = await client.GetSamCommonLandsByCommonCphAsync(cph, CancellationToken.None);
+
+        result.Should().NotBeNull().And.HaveCount(2);
+        result[0].COMMON_CPH.Should().Be(cph);
+        result[1].COMMON_CPH.Should().Be(cph);
+    }
+
+    [Fact]
+    public async Task GetSamCommonLandsAsync_WhenDisabled_ShouldReturnNull()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { "ApiClients:DataBridgeApi:ServiceName", "" },
+                { "DataBridgeCollectionFlags:SamCommonLandsEnabled", "false" }
+            })
+            .Build();
+
+        var client = new DataBridgeClient(
+            _httpClientFactoryMock.Object,
+            configuration,
+            _loggerMock.Object,
+            _metricsMock.Object);
+
+        var result = await client.GetSamCommonLandsAsync<SamCommonLand>(10, 0, cancellationToken: CancellationToken.None);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetSamCommonLandsByCommonCphAsync_WhenDisabled_ShouldReturnEmptyList()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { "ApiClients:DataBridgeApi:ServiceName", "" },
+                { "DataBridgeCollectionFlags:SamCommonLandsEnabled", "false" }
+            })
+            .Build();
+
+        var client = new DataBridgeClient(
+            _httpClientFactoryMock.Object,
+            configuration,
+            _loggerMock.Object,
+            _metricsMock.Object);
+
+        var result = await client.GetSamCommonLandsByCommonCphAsync("00/000/0001", CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.Should().BeEmpty();
+    }
 }

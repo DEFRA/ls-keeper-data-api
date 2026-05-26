@@ -25,6 +25,12 @@ public class SamHoldingImportSilverMappingStep(
             countryIdentifierLookupService.FindAsync,
             cancellationToken);
 
+        var commonLandHoldings = SamCommonLandMapper.ToSilver(context.RawCommonLandsByCommonCph);
+        if (commonLandHoldings.Count > 0)
+        {
+            context.SilverHoldings.AddRange(commonLandHoldings);
+        }
+
         context.SilverParties = [
             .. await SamPartyMapper.ToSilver(
                 context.Cph,

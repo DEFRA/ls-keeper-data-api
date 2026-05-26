@@ -207,4 +207,25 @@ public class DataBridgeClientAnonymizer(
             PiiAnonymizerHelper.AnonymizeCtsAgentOrKeeper(result);
         return result;
     }
+
+    public async Task<DataBridgeResponse<T>?> GetSamCommonLandsAsync<T>(
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await inner.GetSamCommonLandsAsync<T>(top, skip, selectFields, updatedSinceDateTime, orderBy, cancellationToken);
+        PiiAnonymizerHelper.AnonymizeResponse(result, logger);
+        return result;
+    }
+
+    public async Task<List<SamCommonLand>> GetSamCommonLandsByCommonCphAsync(string cph, CancellationToken cancellationToken)
+    {
+        var result = await inner.GetSamCommonLandsByCommonCphAsync(cph, cancellationToken);
+        PiiAnonymizerHelper.AnonymizeAll(result, PiiAnonymizerHelper.AnonymizeSamCommonLand, logger);
+        return result;
+    }
+
 }

@@ -2,6 +2,8 @@ using FluentAssertions;
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
+using KeeperData.Core.Documents;
+using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Services;
 using KeeperData.Tests.Common.Factories;
 using KeeperData.Tests.Common.Generators;
@@ -94,7 +96,134 @@ public class SamHoldingMapperTests
         }
     }
 
-    // TODO - ADD ToGold Tests
+    [Fact]
+    public async Task ToGold_WithPermanentLandHoldingRelationship_ShouldSetPermanentLandHoldingIdentifier()
+    {
+        var silverHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "12/345/6789",
+            SecondaryCph = "12/345/9999",
+            CphRelationshipType = "PCPHLANDUSEDBYTCPH",
+            LocationName = "Test Farm",
+            CphTypeIdentifier = "PERMANENT",
+            CreatedDate = DateTime.UtcNow,
+            LastUpdatedDate = DateTime.UtcNow,
+            HoldingStartDate = DateTime.UtcNow
+        };
+
+        var siteIdentifierType = new SiteIdentifierTypeDocument
+        {
+            IdentifierId = "type-id",
+            Code = "CPHN",
+            Name = "CPH Number",
+            LastModifiedDate = DateTime.UtcNow
+        };
+
+        var result = await SamHoldingMapper.ToGold(
+            "gold-site-id",
+            null,
+            [silverHolding],
+            [],
+            [],
+            (_, _) => Task.FromResult<CountryDocument?>(null),
+            (_, _) => Task.FromResult<SiteTypeDocument?>(null),
+            (code, _) => Task.FromResult<SiteIdentifierTypeDocument?>(
+                code == "CPHN" ? siteIdentifierType : null),
+            (_, _) => Task.FromResult<(string?, string?)>((null, null)),
+            (_, _) => Task.FromResult<SiteActivityTypeDocument?>(null),
+            Mock.Of<ISiteTypeDerivedCodeLookupService>(),
+            CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.ParentSiteIdentifier.Should().BeNull();
+        result.PermanentLandHoldingIdentifier.Should().Be("12/345/9999");
+    }
+
+    [Fact]
+    public async Task ToGold_WithNonPermanentLandHoldingRelationship_ShouldSetParentSiteIdentifier()
+    {
+        var silverHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "12/345/6789",
+            SecondaryCph = "12/345/8888",
+            CphRelationshipType = "OTHERTYPECPH",
+            LocationName = "Test Farm",
+            CphTypeIdentifier = "PERMANENT",
+            CreatedDate = DateTime.UtcNow,
+            LastUpdatedDate = DateTime.UtcNow,
+            HoldingStartDate = DateTime.UtcNow
+        };
+
+        var siteIdentifierType = new SiteIdentifierTypeDocument
+        {
+            IdentifierId = "type-id",
+            Code = "CPHN",
+            Name = "CPH Number",
+            LastModifiedDate = DateTime.UtcNow
+        };
+
+        var result = await SamHoldingMapper.ToGold(
+            "gold-site-id",
+            null,
+            [silverHolding],
+            [],
+            [],
+            (_, _) => Task.FromResult<CountryDocument?>(null),
+            (_, _) => Task.FromResult<SiteTypeDocument?>(null),
+            (code, _) => Task.FromResult<SiteIdentifierTypeDocument?>(
+                code == "CPHN" ? siteIdentifierType : null),
+            (_, _) => Task.FromResult<(string?, string?)>((null, null)),
+            (_, _) => Task.FromResult<SiteActivityTypeDocument?>(null),
+            Mock.Of<ISiteTypeDerivedCodeLookupService>(),
+            CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.ParentSiteIdentifier.Should().Be("12/345/8888");
+        result.PermanentLandHoldingIdentifier.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ToGold_WithNullSecondaryCph_ShouldHaveNullIdentifiers()
+    {
+        var silverHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "12/345/6789",
+            SecondaryCph = null,
+            CphRelationshipType = null,
+            LocationName = "Test Farm",
+            CphTypeIdentifier = "PERMANENT",
+            CreatedDate = DateTime.UtcNow,
+            LastUpdatedDate = DateTime.UtcNow,
+            HoldingStartDate = DateTime.UtcNow
+        };
+
+        var siteIdentifierType = new SiteIdentifierTypeDocument
+        {
+            IdentifierId = "type-id",
+            Code = "CPHN",
+            Name = "CPH Number",
+            LastModifiedDate = DateTime.UtcNow
+        };
+
+        var result = await SamHoldingMapper.ToGold(
+            "gold-site-id",
+            null,
+            [silverHolding],
+            [],
+            [],
+            (_, _) => Task.FromResult<CountryDocument?>(null),
+            (_, _) => Task.FromResult<SiteTypeDocument?>(null),
+            (code, _) => Task.FromResult<SiteIdentifierTypeDocument?>(
+                code == "CPHN" ? siteIdentifierType : null),
+            (_, _) => Task.FromResult<(string?, string?)>((null, null)),
+            (_, _) => Task.FromResult<SiteActivityTypeDocument?>(null),
+            Mock.Of<ISiteTypeDerivedCodeLookupService>(),
+            CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.ParentSiteIdentifier.Should().BeNull();
+        result.PermanentLandHoldingIdentifier.Should().BeNull();
+    }
 
     private static List<SamCphHolding> GenerateSamCphHolding(int quantity)
     {

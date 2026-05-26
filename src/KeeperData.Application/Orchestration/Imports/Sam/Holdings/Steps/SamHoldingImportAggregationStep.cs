@@ -19,12 +19,14 @@ public class SamHoldingImportAggregationStep(
         var getHoldersTask = _dataBridgeClient.GetSamHoldersByCphAsync(context.Cph, cancellationToken);
         var getHerdsTask = _dataBridgeClient.GetSamHerdsAsync(context.Cph, cancellationToken);
         var getPortsTask = _dataBridgeClient.GetSamPortsAsync(context.Cph, cancellationToken);
+        var getCommonLandsByCommonCphTask = _dataBridgeClient.GetSamCommonLandsByCommonCphAsync(context.Cph, cancellationToken);
 
         await Task.WhenAll(
             getHoldingsTask,
             getHoldersTask,
             getHerdsTask,
-            getPortsTask);
+            getPortsTask,
+            getCommonLandsByCommonCphTask);
 
         context.RawHoldings = getHoldingsTask.Result;
 
@@ -33,6 +35,8 @@ public class SamHoldingImportAggregationStep(
         context.RawHolders = getHoldersTask.Result;
 
         context.RawPorts = getPortsTask.Result;
+
+        context.RawCommonLandsByCommonCph = getCommonLandsByCommonCphTask.Result;
 
         var parties = await GetSamPartiesAsync(context, cancellationToken);
         context.RawParties = SamPartyMapper.AggregatePartyAndHolder(parties, context.RawHolders);

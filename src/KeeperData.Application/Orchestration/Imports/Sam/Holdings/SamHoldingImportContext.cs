@@ -15,7 +15,7 @@ public class SamHoldingImportContext
     public List<SamHerd> RawHerds { get; set; } = [];
     public List<SamCphHolder> RawHolders { get; set; } = [];
     public List<SamParty> RawParties { get; set; } = [];
-    public List<SamPort> RawPorts { get; set; } = [];
+    public List<SamCommonLand> RawCommonLandsByCommonCph { get; set; } = [];
 
     public List<SamHoldingDocument> SilverHoldings { get; set; } = [];
     public List<SamPartyDocument> SilverParties { get; set; } = [];
@@ -27,6 +27,7 @@ public class SamHoldingImportContext
     public List<string> ExistingGoldPartyIds { get; set; } = [];
 
     public SiteDocument? GoldSite { get; set; }
+    public List<SiteDocument> AssociatedMainSites { get; set; } = [];
     public List<PartyDocument> GoldParties { get; set; } = [];
     public List<Core.Documents.SitePartyRoleRelationshipDocument> GoldSitePartyRoles { get; set; } = [];
     public List<SiteGroupMarkRelationshipDocument> GoldSiteGroupMarks { get; set; } = [];

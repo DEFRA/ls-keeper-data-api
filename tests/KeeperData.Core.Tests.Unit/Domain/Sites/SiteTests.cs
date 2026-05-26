@@ -149,6 +149,214 @@ public class SiteTests
         sut.Activities.Select(x => x.Id).Should().BeEquivalentTo(["act-2-id", "act-4-id"]);
     }
 
+    [Fact]
+    public void Create_WithPermanentLandHoldingIdentifier_ShouldSetProperty()
+    {
+        var permanentLandHoldingId = "12/345/9999";
+
+        var site = Site.Create(
+            "site-id",
+            DateTime.UtcNow,
+            DateTime.UtcNow,
+            "Test Site",
+            DateTime.UtcNow,
+            null,
+            null,
+            "SAM",
+            null,
+            false,
+            null,
+            "PERMANENT",
+            null,
+            null,
+            permanentLandHoldingId);
+
+        site.PermanentLandHoldingIdentifier.Should().Be(permanentLandHoldingId);
+    }
+
+    [Fact]
+    public void Create_WithNullPermanentLandHoldingIdentifier_ShouldBeNull()
+    {
+        var site = Site.Create(
+            "site-id",
+            DateTime.UtcNow,
+            DateTime.UtcNow,
+            "Test Site",
+            DateTime.UtcNow,
+            null,
+            null,
+            "SAM",
+            null,
+            false,
+            null,
+            "PERMANENT",
+            null,
+            null,
+            null);
+
+        site.PermanentLandHoldingIdentifier.Should().BeNull();
+    }
+
+    [Fact]
+    public void Update_WithDifferentPermanentLandHoldingIdentifier_ShouldUpdateProperty()
+    {
+        var oldLastUpdatedDate = new DateTime(2020, 1, 1);
+        var newLastUpdatedDate = new DateTime(2025, 1, 1);
+        var site = Site.Create(
+            "site-id",
+            oldLastUpdatedDate,
+            oldLastUpdatedDate,
+            "Test Site",
+            oldLastUpdatedDate,
+            null,
+            null,
+            "SAM",
+            null,
+            false,
+            null,
+            "PERMANENT",
+            null,
+            null,
+            "12/345/8888");
+
+        site.Update(
+            newLastUpdatedDate,
+            "Test Site",
+            oldLastUpdatedDate,
+            null,
+            null,
+            "SAM",
+            null,
+            false,
+            null,
+            "PERMANENT",
+            "12/345/9999");
+
+        site.PermanentLandHoldingIdentifier.Should().Be("12/345/9999");
+        site.LastUpdatedDate.Should().Be(newLastUpdatedDate);
+    }
+
+    [Fact]
+    public void Update_WithSamePermanentLandHoldingIdentifier_ShouldNotUpdateLastUpdatedDate()
+    {
+        var oldLastUpdatedDate = new DateTime(2020, 1, 1);
+        var newLastUpdatedDate = new DateTime(2025, 1, 1);
+        var permanentLandHoldingId = "12/345/9999";
+
+        var site = Site.Create(
+            "site-id",
+            oldLastUpdatedDate,
+            oldLastUpdatedDate,
+            "Test Site",
+            oldLastUpdatedDate,
+            null,
+            null,
+            "SAM",
+            null,
+            false,
+            null,
+            "PERMANENT",
+            null,
+            null,
+            permanentLandHoldingId);
+
+        site.Update(
+            newLastUpdatedDate,
+            "Test Site",
+            oldLastUpdatedDate,
+            null,
+            null,
+            "SAM",
+            null,
+            false,
+            null,
+            "PERMANENT",
+            permanentLandHoldingId);
+
+        site.PermanentLandHoldingIdentifier.Should().Be(permanentLandHoldingId);
+        site.LastUpdatedDate.Should().Be(oldLastUpdatedDate);
+    }
+
+    [Fact]
+    public void Update_ChangingFromNullToValue_ShouldUpdateProperty()
+    {
+        var oldLastUpdatedDate = new DateTime(2020, 1, 1);
+        var newLastUpdatedDate = new DateTime(2025, 1, 1);
+
+        var site = Site.Create(
+            "site-id",
+            oldLastUpdatedDate,
+            oldLastUpdatedDate,
+            "Test Site",
+            oldLastUpdatedDate,
+            null,
+            null,
+            "SAM",
+            null,
+            false,
+            null,
+            "PERMANENT",
+            null,
+            null,
+            null);
+
+        site.Update(
+            newLastUpdatedDate,
+            "Test Site",
+            oldLastUpdatedDate,
+            null,
+            null,
+            "SAM",
+            null,
+            false,
+            null,
+            "PERMANENT",
+            "12/345/9999");
+
+        site.PermanentLandHoldingIdentifier.Should().Be("12/345/9999");
+        site.LastUpdatedDate.Should().Be(newLastUpdatedDate);
+    }
+
+    [Fact]
+    public void Update_ChangingFromValueToNull_ShouldUpdateProperty()
+    {
+        var oldLastUpdatedDate = new DateTime(2020, 1, 1);
+        var newLastUpdatedDate = new DateTime(2025, 1, 1);
+
+        var site = Site.Create(
+            "site-id",
+            oldLastUpdatedDate,
+            oldLastUpdatedDate,
+            "Test Site",
+            oldLastUpdatedDate,
+            null,
+            null,
+            "SAM",
+            null,
+            false,
+            null,
+            "PERMANENT",
+            null,
+            null,
+            "12/345/9999");
+
+        site.Update(
+            newLastUpdatedDate,
+            "Test Site",
+            oldLastUpdatedDate,
+            null,
+            null,
+            "SAM",
+            null,
+            false,
+            null,
+            "PERMANENT",
+            null);
+
+        site.PermanentLandHoldingIdentifier.Should().BeNull();
+        site.LastUpdatedDate.Should().Be(newLastUpdatedDate);
+    }
+
     private static SiteActivity CreateSiteActivity(string actId)
     {
         return new SiteActivity(actId, new SiteActivityType("sat-id", null, "sat-code", "sat-name"), null, null, DateTime.MinValue);
@@ -156,6 +364,6 @@ public class SiteTests
 
     private static Site CreateSite(DateTime lastUpdatedDate, Location? location = null)
     {
-        return new Site("id", DateTime.MinValue, lastUpdatedDate, "site-name", DateTime.MinValue, null, null, null, null, false, null, location, null, null);
+        return new Site("id", DateTime.MinValue, lastUpdatedDate, "site-name", DateTime.MinValue, null, null, null, null, false, null, location, null, null, null);
     }
 }
