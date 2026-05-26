@@ -95,124 +95,6 @@ public class SamCommonLandMapperTests
     }
 
     [Fact]
-    public void ToSilver_WithDefinitionAndRelationshipRecords_ShouldMapAssociatedMainHoldings()
-    {
-        // Arrange
-        var now = DateTime.UtcNow;
-        var rawCommonLands = new List<SamCommonLand>
-        {
-            new()
-            {
-                BATCH_ID = 1,
-                CHANGE_TYPE = "I",
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now,
-                IsDeleted = false,
-                MAIN_CPH = "-",
-                COMMON_CPH = "00/000/0001",
-                PREMISES_NAME = "Common Land A",
-                ADDRESS_LINE_1 = "Road A",
-                LOCAL_AUTH_NAME = "Council A",
-                COUNTRY = "England",
-                EASTING = "422473",
-                NORTHING = "569204"
-            },
-            new()
-            {
-                BATCH_ID = 1,
-                CHANGE_TYPE = "I",
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now,
-                IsDeleted = false,
-                MAIN_CPH = "12/345/6789",
-                COMMON_CPH = "00/000/0001",
-                CONTIGUOUS_COMMON = "Yes",
-                START_DATE = "2020-01-01",
-                END_DATE = "2024-12-31"
-            },
-            new()
-            {
-                BATCH_ID = 1,
-                CHANGE_TYPE = "I",
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now,
-                IsDeleted = false,
-                MAIN_CPH = "98/765/4321",
-                COMMON_CPH = "00/000/0001",
-                CONTIGUOUS_COMMON = "No",
-                START_DATE = "2021-06-01",
-                END_DATE = null
-            }
-        };
-
-        // Act
-        var result = SamCommonLandMapper.ToSilver(rawCommonLands);
-
-        // Assert
-        result.Should().HaveCount(1);
-        var holding = result[0];
-        holding.CountyParishHoldingNumber.Should().Be("00/000/0001");
-        holding.AssociatedMainHoldings.Should().HaveCount(2);
-
-        var holding1 = holding.AssociatedMainHoldings.FirstOrDefault(h => h.HoldingIdentifier == "12/345/6789");
-        holding1.Should().NotBeNull();
-        holding1!.ContiguousFlag.Should().BeTrue();
-        holding1.StartDate.Should().Be("2020-01-01");
-        holding1.EndDate.Should().Be("2024-12-31");
-
-        var holding2 = holding.AssociatedMainHoldings.FirstOrDefault(h => h.HoldingIdentifier == "98/765/4321");
-        holding2.Should().NotBeNull();
-        holding2!.ContiguousFlag.Should().BeFalse();
-        holding2.StartDate.Should().Be("2021-06-01");
-        holding2.EndDate.Should().BeNull();
-    }
-
-    [Fact]
-    public void ToSilver_WithMultipleDefinitionRecords_ShouldUseLatestUpdated()
-    {
-        // Arrange
-        var older = DateTime.UtcNow.AddDays(-10);
-        var newer = DateTime.UtcNow;
-        var rawCommonLands = new List<SamCommonLand>
-        {
-            new()
-            {
-                BATCH_ID = 1,
-                UpdatedAtUtc = older,
-                MAIN_CPH = "-",
-                COMMON_CPH = "00/000/0001",
-                PREMISES_NAME = "Older Name",
-                ADDRESS_LINE_1 = "Old Address",
-                EASTING = "100000",
-                NORTHING = "200000"
-            },
-            new()
-            {
-                BATCH_ID = 2,
-                UpdatedAtUtc = newer,
-                MAIN_CPH = "-",
-                COMMON_CPH = "00/000/0001",
-                PREMISES_NAME = "Newer Name",
-                ADDRESS_LINE_1 = "New Address",
-                EASTING = "111111",
-                NORTHING = "222222"
-            }
-        };
-
-        // Act
-        var result = SamCommonLandMapper.ToSilver(rawCommonLands);
-
-        // Assert
-        result.Should().HaveCount(1);
-        var holding = result[0];
-        holding.LocationName.Should().Be("Newer Name");
-        holding.Location!.Address!.AddressLine.Should().Be("New Address");
-        holding.Location.Easting.Should().Be(111111);
-        holding.Location.Northing.Should().Be(222222);
-        holding.LastUpdatedBatchId.Should().Be(2);
-    }
-
-    [Fact]
     public void ToSilver_WithDeletedRecord_ShouldMapDeletedStatus()
     {
         // Arrange
@@ -337,8 +219,8 @@ public class SamCommonLandMapperTests
         var result = SamCommonLandMapper.ToSilver(rawCommonLands);
 
         // Assert
-        result[0].AssociatedMainHoldings[0].StartDate.Should().BeNull();
-        result[0].AssociatedMainHoldings[0].EndDate.Should().BeNull();
+        result[1].AssociatedMainHoldings[0].StartDate.Should().BeNull();
+        result[1].AssociatedMainHoldings[0].EndDate.Should().BeNull();
     }
 
     [Fact]
@@ -359,31 +241,6 @@ public class SamCommonLandMapperTests
     {
         // Arrange
         var rawCommonLands = new List<SamCommonLand>();
-
-        // Act
-        var result = SamCommonLandMapper.ToAssociatedCommonLands(rawCommonLands);
-
-        // Assert
-        result.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void ToAssociatedCommonLands_WithDefinitionRecords_ShouldFilterThemOut()
-    {
-        // Arrange
-        var rawCommonLands = new List<SamCommonLand>
-        {
-            new()
-            {
-                MAIN_CPH = "-",
-                COMMON_CPH = "00/000/0001"
-            },
-            new()
-            {
-                MAIN_CPH = string.Empty,
-                COMMON_CPH = "00/000/0002"
-            }
-        };
 
         // Act
         var result = SamCommonLandMapper.ToAssociatedCommonLands(rawCommonLands);

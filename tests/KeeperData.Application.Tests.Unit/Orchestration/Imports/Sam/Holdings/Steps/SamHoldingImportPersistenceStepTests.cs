@@ -32,6 +32,174 @@ public class SamHoldingImportPersistenceStepTests
     }
 
     [Fact]
+    public async Task UpdateAssociatedMainSitesAsync_CallsBulkUpdateForSitesWithId()
+    {
+        var goldSiteRepo = new Mock<IGenericRepository<SiteDocument>>();
+        var logger = new Mock<ILogger<SamHoldingImportPersistenceStep>>();
+
+        var captured = new List<(FilterDefinition<SiteDocument> Filter, UpdateDefinition<SiteDocument> Update)>();
+        goldSiteRepo.Setup(r => r.BulkUpdateWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SiteDocument>, UpdateDefinition<SiteDocument>)>>(), It.IsAny<CancellationToken>()))
+            .Callback((IEnumerable<(FilterDefinition<SiteDocument>, UpdateDefinition<SiteDocument>)> items, CancellationToken ct) =>
+            {
+                captured = items.ToList();
+            })
+            .Returns(Task.CompletedTask);
+
+        // Provide empty results for other repositories
+        _silverHoldingRepositoryMock.Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHoldingDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<SamHoldingDocument>());
+        _silverPartyRepositoryMock.Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamPartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<SamPartyDocument>());
+        _silverHerdRepositoryMock.Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHerdDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<SamHerdDocument>());
+        _goldSitePartyRoleRelationshipRepositoryMock.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Core.Documents.SitePartyRoleRelationshipDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Core.Documents.SitePartyRoleRelationshipDocument>());
+
+        var step = new SamHoldingImportPersistenceStep(
+            _silverHoldingRepositoryMock.Object,
+            _silverPartyRepositoryMock.Object,
+            _silverHerdRepositoryMock.Object,
+            goldSiteRepo.Object,
+            _goldPartyRepositoryMock.Object,
+            _goldSitePartyRoleRelationshipRepositoryMock.Object,
+            logger.Object);
+
+        var context = new SamHoldingImportContext
+        {
+            Cph = "CPH-1",
+            AssociatedMainSites = new List<SiteDocument>
+            {
+                new SiteDocument { Id = "s1" },
+                new SiteDocument { Id = "s2" }
+            }
+        };
+
+        await step.ExecuteAsync(context, CancellationToken.None);
+
+        Assert.Equal(2, captured.Count);
+    }
+
+    [Fact]
+    public async Task UpdateAssociatedMainSitesAsync_SkipsSitesWithoutId()
+    {
+        var goldSiteRepo = new Mock<IGenericRepository<SiteDocument>>();
+        var logger = new Mock<ILogger<SamHoldingImportPersistenceStep>>();
+
+        var captured = new List<(FilterDefinition<SiteDocument> Filter, UpdateDefinition<SiteDocument> Update)>();
+        goldSiteRepo.Setup(r => r.BulkUpdateWithCustomFilterAsync(It.IsAny<IEnumerable<(FilterDefinition<SiteDocument>, UpdateDefinition<SiteDocument>)>>(), It.IsAny<CancellationToken>()))
+            .Callback((IEnumerable<(FilterDefinition<SiteDocument>, UpdateDefinition<SiteDocument>)> items, CancellationToken ct) =>
+            {
+                captured = items.ToList();
+            })
+            .Returns(Task.CompletedTask);
+
+        _silverHoldingRepositoryMock.Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHoldingDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<SamHoldingDocument>());
+        _silverPartyRepositoryMock.Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamPartyDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<SamPartyDocument>());
+        _silverHerdRepositoryMock.Setup(r => r.FindAsync(It.IsAny<Expression<Func<SamHerdDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<SamHerdDocument>());
+        _goldSitePartyRoleRelationshipRepositoryMock.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Core.Documents.SitePartyRoleRelationshipDocument, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Core.Documents.SitePartyRoleRelationshipDocument>());
+
+        var step = new SamHoldingImportPersistenceStep(
+            _silverHoldingRepositoryMock.Object,
+            _silverPartyRepositoryMock.Object,
+            _silverHerdRepositoryMock.Object,
+            goldSiteRepo.Object,
+            _goldPartyRepositoryMock.Object,
+            _goldSitePartyRoleRelationshipRepositoryMock.Object,
+            logger.Object);
+
+        var context = new SamHoldingImportContext
+        {
+            Cph = "CPH-1",
+            AssociatedMainSites = new List<SiteDocument>
+            {
+                new SiteDocument { Id = "s1" },
+                new SiteDocument { Id = string.Empty }
+            }
+        };
+
+        await step.ExecuteAsync(context, CancellationToken.None);
+
+        Assert.Single(captured);
+    }
+
+    [Fact]
+    public async Task EnrichWithCommonLandDataAsync_FindsMainSiteAndAddsAssociatedCommonLand()
+    {
+        var goldSiteRepoMock = new Mock<IGenericRepository<SiteDocument>>();
+        var partiesRepoMock = new Mock<IPartiesRepository>();
+
+        var context = new SamHoldingImportContext
+        {
+            Cph = "CPH-1",
+            SilverHoldings = new List<SamHoldingDocument>(),
+            SilverHerds = new List<SamHerdDocument>(),
+            SilverParties = new List<SamPartyDocument>(),
+        };
+
+        var representative = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "CPH-1",
+            LocationName = "Loc",
+            SpeciesTypeCode = "S",
+            SecondaryCph = null,
+            LocalAuthorityName = "LA",
+            AssociatedMainHoldings = new List<AssociatedHoldingRelationship>
+            {
+                new AssociatedHoldingRelationship { HoldingIdentifier = "MAIN-1", ContiguousFlag = true }
+            },
+            AssociatedCommonLands = new List<AssociatedHoldingRelationship>()
+        };
+
+        var mainSite = new SiteDocument
+        {
+            Id = "site-1",
+            Identifiers = new List<Core.Documents.SiteIdentifierDocument>
+            {
+                new Core.Documents.SiteIdentifierDocument
+                {
+                    IdentifierId = "id-1",
+                    Identifier = "MAIN-1",
+                    Type = new Core.Documents.SiteIdentifierSummaryDocument { IdentifierId = "type-1", Code = "CPH", Name = "CPH Number" },
+                    LastUpdatedDate = DateTime.UtcNow
+                }
+            }
+        };
+
+        goldSiteRepoMock.Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mainSite);
+
+        // Call the private method via public flow: set context.GoldSite accordingly and call ExecuteCoreAsync
+        context.GoldSite = new SiteDocument { Id = "site-rep" };
+        context.SilverHoldings.Add(representative);
+
+        // The mapping step uses its own logger type; create a mapping step and execute it
+        var mappingStep = new SamHoldingImportGoldMappingStep(
+            Mock.Of<KeeperData.Core.Services.ICountryIdentifierLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISpeciesTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteActivityTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteIdentifierTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteTypeDerivedCodeLookupService>(),
+            goldSiteRepoMock.Object,
+            partiesRepoMock.Object,
+            new Mock<ILogger<SamHoldingImportGoldMappingStep>>().Object);
+
+        await mappingStep.ExecuteAsync(context, CancellationToken.None);
+
+        // After execution, context.AssociatedMainSites should contain the updated main site
+        Assert.NotNull(context.AssociatedMainSites);
+        Assert.Single(context.AssociatedMainSites);
+        var updated = context.AssociatedMainSites[0];
+        Assert.Equal("site-1", updated.Id);
+        Assert.NotEmpty(updated.AssociatedCommonLands);
+        Assert.Contains(updated.AssociatedCommonLands, a => a.HoldingIdentifier == "CPH-1");
+    }
+
+    [Fact]
     public async Task GivenIncomingHoldingsEmpty_WhenStepExecuted_ShouldDeleteOrphans()
     {
         var context = new SamHoldingImportContext

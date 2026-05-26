@@ -56,6 +56,5 @@ public class SamCommonLand : BronzeBase
     [JsonPropertyName("END_DATE")]
     public string? END_DATE { get; set; }
 
-    public bool IsDefinitionRecord => MAIN_CPH == "-" || string.IsNullOrWhiteSpace(MAIN_CPH);
-    public bool IsRelationshipRecord => !IsDefinitionRecord;
+    public bool IsMainCphPopulated => MAIN_CPH != "-" && !string.IsNullOrWhiteSpace(MAIN_CPH);
 }
