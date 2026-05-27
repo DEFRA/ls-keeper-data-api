@@ -24,4 +24,10 @@ public class ReferenceProductionUsageDto
     /// </summary>
     [JsonPropertyName("description")]
     public required string Description { get; set; }
+
+    /// <summary>
+    /// The timestamp of the last time the Production Usage record was updated.
+    /// </summary>
+    [JsonPropertyName("lastUpdatedDate")]
+    public DateTime? LastUpdatedDate { get; set; }
 }

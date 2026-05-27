@@ -19,7 +19,8 @@ public class GetReferenceProductionUsageByIdQueryHandler(IReferenceDataCache cac
         {
             Id = item.IdentifierId,
             Code = item.Code,
-            Description = item.Description
+            Description = item.Description,
+            LastUpdatedDate = item.LastModifiedDate
         };
 
         return Task.FromResult(dto);
