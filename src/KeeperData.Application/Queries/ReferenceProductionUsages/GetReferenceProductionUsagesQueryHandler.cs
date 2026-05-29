@@ -21,7 +21,8 @@ public class GetReferenceProductionUsagesQueryHandler(IReferenceDataCache cache)
             {
                 Id = p.IdentifierId,
                 Code = p.Code,
-                Description = p.Description
+                Description = p.Description,
+                LastUpdatedDate = p.LastModifiedDate
             })
             .ToList();
 
