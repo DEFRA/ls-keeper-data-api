@@ -24,4 +24,10 @@ public class ReferenceActivityDto
     /// </summary>
     [JsonPropertyName("name")]
     public required string Name { get; set; }
+
+    /// <summary>
+    /// The timestamp of the last time the Activity record was updated.
+    /// </summary>
+    [JsonPropertyName("lastUpdatedDate")]
+    public DateTime? LastUpdatedDate { get; set; }
 }
