@@ -8,6 +8,7 @@ namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 public static class SamCommonLandMapper
 {
     private const string CommonLandSiteTypeCode = "CL";
+    private const string CommonLandBusinessUsage = "Common Land";
 
     public static List<SamHoldingDocument> ToSilver(List<SamCommonLand> rawCommonLands)
     {
@@ -38,6 +39,8 @@ public static class SamCommonLandMapper
                 CreatedDate = representative.CreatedAtUtc ?? DateTime.UtcNow,
                 LastUpdatedDate = representative.UpdatedAtUtc ?? DateTime.UtcNow,
                 Deleted = representative.IsDeleted ?? false,
+
+                SourceFacilitySubBusinessActivityCode = CommonLandBusinessUsage,
 
                 CountyParishHoldingNumber = commonCph,
                 CphTypeIdentifier = string.Empty,
