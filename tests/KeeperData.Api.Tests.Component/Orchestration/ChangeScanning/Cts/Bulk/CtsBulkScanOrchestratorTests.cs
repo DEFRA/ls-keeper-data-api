@@ -12,11 +12,9 @@ public class CtsBulkScanOrchestratorTests(AppTestFixture appTestFixture)
 {
     private readonly AppTestFixture _appTestFixture = appTestFixture;
 
-    [SkippableFact]
+    [Fact]
     public async Task StartCtsBulkScan_WithValidRequest_ShouldExecuteOrchestration()
     {
-        Skip.If(TestEnvironmentHelper.IsRunningInCi(), "This test requires local environment");
-
         // Arrange
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
         using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
@@ -37,11 +35,9 @@ public class CtsBulkScanOrchestratorTests(AppTestFixture appTestFixture)
         scanCorrelationId.Should().NotBe(Guid.Empty, "correlation ID should be a valid GUID");
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task StartCtsBulkScan_WhenDistributedLockCannotBeAcquired_ShouldReturnNull()
     {
-        Skip.If(TestEnvironmentHelper.IsRunningInCi(), "This test requires local environment");
-
         // Arrange
         _appTestFixture.AppWebApplicationFactory.ResetMocks();
         using var scope = _appTestFixture.AppWebApplicationFactory.Services.CreateScope();
