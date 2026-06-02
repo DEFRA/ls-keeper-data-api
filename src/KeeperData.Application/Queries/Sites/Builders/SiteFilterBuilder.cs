@@ -23,7 +23,7 @@ public static class SiteFilterBuilder
 
         if (query.SiteIdentifiers is { Count: > 0 })
         {
-            filters.Add(builder.In("identifiers.type.code", query.SiteIdentifiers));
+            filters.Add(builder.In("identifiers.identifier", query.SiteIdentifiers));
         }
 
         if (query.Type is { Count: > 0 })

@@ -57,7 +57,7 @@ public class SiteFilterBuilderTests
         var expectedBson = BsonDocument.Parse(@"
             {
                 ""deleted"": false,
-                ""identifiers.type.code"": { ""$in"": [ ""CPH123"", ""CPH456"" ] }
+                ""identifiers.identifier"": { ""$in"": [ ""CPH123"", ""CPH456"" ] }
             }");
 
         renderedFilter.Should().BeEquivalentTo(expectedBson);
