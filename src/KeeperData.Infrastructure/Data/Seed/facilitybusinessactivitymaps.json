@@ -1714,5 +1714,18 @@
     "createdDate": "2026-01-07T15:15:19.6664728Z",
     "lastModifiedBy": "System",
     "lastModifiedDate": "2026-01-07T15:15:19.6664728Z"
+  },
+  {
+    "id": "31996b6f-4771-4fc8-a831-3001741c681c",
+    "facilityActivityCode": "Common Land",
+    "associatedSiteTypeCode": "CL",
+    "associatedSiteActivityCode": null,
+    "isActive": true,
+    "effectiveStartDate": "2026-01-07T15:15:19.6664728Z",
+    "effectiveEndDate": null,
+    "createdBy": "System",
+    "createdDate": "2026-01-07T15:15:19.6664728Z",
+    "lastModifiedBy": "System",
+    "lastModifiedDate": "2026-01-07T15:15:19.6664728Z"
   }
 ]

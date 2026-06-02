@@ -374,4 +374,52 @@ public class SamCommonLandMapperTests
         // Assert
         result[0].StartDate.Should().Be(expectedDate);
     }
+
+    [Fact]
+    public void ToSilver_ShouldMapBusinessUsageToSourceFacilitySubBusinessActivityCode()
+    {
+        // Arrange
+        var rawCommonLands = new List<SamCommonLand>
+        {
+            new()
+            {
+                BATCH_ID = 1,
+                COMMON_CPH = "00/000/0001",
+                BUSINESS_USAGE = "Common Land",
+                PREMISES_NAME = "Test Common Land",
+                ADDRESS_LINE_1 = "Test Address"
+            }
+        };
+
+        // Act
+        var result = SamCommonLandMapper.ToSilver(rawCommonLands);
+
+        // Assert
+        result.Should().HaveCount(1);
+        result[0].SourceFacilitySubBusinessActivityCode.Should().Be("Common Land");
+    }
+
+    [Fact]
+    public void ToSilver_ShouldMapSiteTypeCodeToCL()
+    {
+        // Arrange
+        var rawCommonLands = new List<SamCommonLand>
+        {
+            new()
+            {
+                BATCH_ID = 1,
+                COMMON_CPH = "00/000/0001",
+                BUSINESS_USAGE = "Common Land",
+                PREMISES_NAME = "Test Common Land",
+                ADDRESS_LINE_1 = "Test Address"
+            }
+        };
+
+        // Act
+        var result = SamCommonLandMapper.ToSilver(rawCommonLands);
+
+        // Assert
+        result.Should().HaveCount(1);
+        result[0].SiteTypeCode.Should().Be("CL");
+    }
 }
