@@ -74,6 +74,14 @@ public class SiteTypeDerivedCodeLookupServiceTests
                 AssociatedSiteTypeCode = "AH",
                 AssociatedSiteActivityCode = "HATCH-IT",
                 IsActive = true
+            },
+            new()
+            {
+                IdentifierId = "7",
+                FacilityActivityCode = "Common Land",
+                AssociatedSiteTypeCode = "CL",
+                AssociatedSiteActivityCode = null,
+                IsActive = true
             }
         });
 
@@ -90,6 +98,12 @@ public class SiteTypeDerivedCodeLookupServiceTests
                 IdentifierId = "ai-id",
                 Code = "AI",
                 Name = "Artificial Insemination Centre"
+            },
+            new()
+            {
+                IdentifierId = "cl-id",
+                Code = "CL",
+                Name = "Common Land"
             }
         });
 
@@ -466,5 +480,18 @@ public class SiteTypeDerivedCodeLookupServiceTests
         result.Activities.Should().HaveCount(1); // Deduplicated
         result.Activities[0].Code.Should().Be("SLM");
         result.Activities[0].Name.Should().Be("Semen Collection from Livestock Male");
+    }
+
+    [Fact]
+    public void Resolve_WithCommonLandBusinessUsage_ReturnsCLSiteType()
+    {
+        // Act
+        var result = _sut.Resolve("Common Land");
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.SiteTypeCode.Should().Be("CL");
+        result.SiteTypeName.Should().Be("Common Land");
+        result.Activities.Should().BeEmpty();
     }
 }
