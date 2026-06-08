@@ -35,6 +35,7 @@ public class SamHoldingImportPersistenceStep(
 
         await UpsertSilverHerdsAndDeleteOrphansAsync(context.Cph, context.SilverHerds, cancellationToken);
 
+
         if (context.GoldSite != null)
         {
             await UpsertGoldSiteAsync(

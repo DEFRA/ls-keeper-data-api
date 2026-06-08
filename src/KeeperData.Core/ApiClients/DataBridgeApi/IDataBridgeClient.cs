@@ -47,6 +47,15 @@ public interface IDataBridgeClient
         CancellationToken cancellationToken = default);
     Task<List<SamParty>> GetSamPartiesAsync(IEnumerable<string> ids, CancellationToken cancellationToken);
 
+    Task<DataBridgeResponse<T>?> GetSamPortsAsync<T>(
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
+        CancellationToken cancellationToken = default);
+    Task<List<SamPort>> GetSamPortsAsync(string id, CancellationToken cancellationToken);
+
     Task<DataBridgeResponse<T>?> GetCtsHoldingsAsync<T>(
         int top,
         int skip,

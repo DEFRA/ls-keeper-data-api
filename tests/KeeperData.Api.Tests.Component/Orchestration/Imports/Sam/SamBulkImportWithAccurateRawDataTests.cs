@@ -55,7 +55,7 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
     {
         var partyIds = scenarioData.RawParties.Select(x => x.PARTY_ID).Union(scenarioData.RawHolders.Select(x => x.PARTY_ID)).Distinct().ToList();
 
-        var (holdingsUri, herdsUri, holdersUri, partiesUri, commonLandsUri) = GetAllQueryUris(scenarioData.Cph, partyIds);
+        var (holdingsUri, herdsUri, holdersUri, partiesUri, commonLandsUri, portsUri) = GetAllQueryUris(scenarioData.Cph, partyIds);
 
         SetupDefaultRepositoryMocks();
         SetupDefaultLookupServiceMocks();
@@ -69,6 +69,7 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, herdsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawHerds));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, holdersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawHolders));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, partiesUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawParties));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, portsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawPorts ?? []));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, commonLandsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(scenarioData.RawCommonLandsByCommonCph));
 
         return await ExecuteTestAsync(_appTestFixture.AppWebApplicationFactory, scenarioData.Cph);
@@ -149,7 +150,7 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
             .ReturnsResponse(httpStatusCode, httpResponseMessage);
     }
 
-    private static (string holdingsUri, string herdsUri, string holdersUri, string partiesUri, string commonLandsUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)
+    private static (string holdingsUri, string herdsUri, string holdersUri, string partiesUri, string commonLandsUri, string portsUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)
     {
         var holdingsUri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamHoldings,
@@ -171,12 +172,17 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
             new { },
             DataBridgeQueries.SamPartiesByPartyIds(partyIds));
 
+        var portsUri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamPorts,
+            new { },
+            DataBridgeQueries.SamPortsByCph(holdingIdentifier));
+
         var commonLandsUri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamCommonLands,
             new { },
             DataBridgeQueries.SamCommonLandsByCommonCph(holdingIdentifier));
 
-        return (holdingsUri, herdsUri, holdersUri, partiesUri, commonLandsUri);
+        return (holdingsUri, herdsUri, holdersUri, partiesUri, commonLandsUri, portsUri);
     }
 
     private void SetupDefaultRepositoryMocks()
