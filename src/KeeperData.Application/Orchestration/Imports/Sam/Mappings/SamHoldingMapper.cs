@@ -360,13 +360,6 @@ public static class SamHoldingMapper
             address,
             communication: [communication]);
 
-        var groupMarks = ToGroupMarks(goldSiteGroupMarks);
-
-        var siteParties = goldParties
-            .Where(p => !p.Deleted && !string.IsNullOrWhiteSpace(p.CustomerNumber))
-            .Select(p => p.ToSitePartyDomain(representative.LastUpdatedDate))
-            .ToList();
-
         var site = Site.Create(
             goldSiteId,
             representative.CreatedDate,
@@ -384,20 +377,7 @@ public static class SamHoldingMapper
             location,
             representative.CphRelationshipType.IsPermanentLandHolding() ? representative.SecondaryCph : null);
 
-        if (siteIdentifierType != null)
-        {
-            site.SetSiteIdentifier(
-                identifierLastUpdatedDate: representative.LastUpdatedDate,
-                identifier: representative.CountyParishHoldingNumber,
-                type: siteIdentifierType,
-                id: null,
-                siteLastUpdatedDate: representative.LastUpdatedDate);
-        }
-
-        site.SetSpecies(species, representative.LastUpdatedDate);
-        site.SetActivities(activities, representative.LastUpdatedDate);
-        site.SetGroupMarks(groupMarks, representative.LastUpdatedDate);
-        site.SetSiteParties(goldSiteId, siteParties, representative.LastUpdatedDate);
+        ApplySiteData(site, goldSiteId, representative, goldSiteGroupMarks, goldParties, species, activities, siteIdentifierType);
 
         return site;
     }
@@ -415,13 +395,6 @@ public static class SamHoldingMapper
         CancellationToken cancellationToken)
     {
         var site = existing.ToDomain();
-
-        var groupMarks = ToGroupMarks(goldSiteGroupMarks);
-
-        var siteParties = goldParties
-            .Where(p => !p.Deleted && !string.IsNullOrWhiteSpace(p.CustomerNumber))
-            .Select(p => p.ToSitePartyDomain(representative.LastUpdatedDate))
-            .ToList();
 
         site.Update(
             representative.LastUpdatedDate,
@@ -450,20 +423,7 @@ public static class SamHoldingMapper
             updatedAddress,
             [updatedCommunication]);
 
-        if (siteIdentifierType != null)
-        {
-            site.SetSiteIdentifier(
-                identifierLastUpdatedDate: representative.LastUpdatedDate,
-                identifier: representative.CountyParishHoldingNumber,
-                type: siteIdentifierType,
-                id: null,
-                siteLastUpdatedDate: representative.LastUpdatedDate);
-        }
-
-        site.SetSpecies(species, representative.LastUpdatedDate);
-        site.SetActivities(activities, representative.LastUpdatedDate);
-        site.SetGroupMarks(groupMarks, representative.LastUpdatedDate);
-        site.SetSiteParties(existing.Id, siteParties, representative.LastUpdatedDate);
+        ApplySiteData(site, existing.Id, representative, goldSiteGroupMarks, goldParties, species, activities, siteIdentifierType);
 
         return site;
     }
@@ -488,6 +448,38 @@ public static class SamHoldingMapper
 
         var results = await Task.WhenAll(tasks);
         return [.. results];
+    }
+
+    private static void ApplySiteData(
+        Site site,
+        string siteId,
+        SamHoldingDocument representative,
+        List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
+        List<PartyDocument> goldParties,
+        List<Species> species,
+        List<SiteActivity> activities,
+        SiteIdentifierType? siteIdentifierType)
+    {
+        var groupMarks = ToGroupMarks(goldSiteGroupMarks);
+        var siteParties = goldParties
+            .Where(p => !p.Deleted && !string.IsNullOrWhiteSpace(p.CustomerNumber))
+            .Select(p => p.ToSitePartyDomain(representative.LastUpdatedDate))
+            .ToList();
+
+        if (siteIdentifierType != null)
+        {
+            site.SetSiteIdentifier(
+                identifierLastUpdatedDate: representative.LastUpdatedDate,
+                identifier: representative.CountyParishHoldingNumber,
+                type: siteIdentifierType,
+                id: null,
+                siteLastUpdatedDate: representative.LastUpdatedDate);
+        }
+
+        site.SetSpecies(species, representative.LastUpdatedDate);
+        site.SetActivities(activities, representative.LastUpdatedDate);
+        site.SetGroupMarks(groupMarks, representative.LastUpdatedDate);
+        site.SetSiteParties(siteId, siteParties, representative.LastUpdatedDate);
     }
 
     private static List<GroupMark> ToGroupMarks(List<SiteGroupMarkRelationshipDocument> relationships)

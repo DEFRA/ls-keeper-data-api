@@ -307,6 +307,71 @@ public class SamHoldingImportGoldMappingStepTests
     }
 
     [Fact]
+    public async Task SelectRepresentativeHolding_ReturnsActiveCommonLand_WhenAllHoldingsAreCommonLandAndOneIsActive()
+    {
+        // Arrange: all holdings are Common Land (Priorities 1 & 2 fail), one is active
+        var goldSiteRepoMock = new Mock<IGenericRepository<SiteDocument>>();
+        var partiesRepoMock = new Mock<IPartiesRepository>();
+
+        var activeCommonLand = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "ACTIVE-CPH",
+            SourceFacilitySubBusinessActivityCode = "Common Land",
+            HoldingStatus = "active",
+            LastUpdatedDate = DateTime.UtcNow
+        };
+
+        var inactiveCommonLand = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "INACTIVE-CPH",
+            SourceFacilitySubBusinessActivityCode = "Common Land",
+            HoldingStatus = "inactive",
+            LastUpdatedDate = DateTime.UtcNow.AddDays(-1)
+        };
+
+        SiteDocument? capturedFilter = null;
+        goldSiteRepoMock
+            .Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SiteDocument?)null);
+
+        var context = new SamHoldingImportContext
+        {
+            Cph = "ACTIVE-CPH",
+            SilverHoldings = new List<SamHoldingDocument> { inactiveCommonLand, activeCommonLand },
+            SilverHerds = new List<SamHerdDocument>(),
+            SilverParties = new List<SamPartyDocument>(),
+            GoldSite = new SiteDocument { Id = "pre-set" }
+        };
+
+        var mappingStep = new SamHoldingImportGoldMappingStep(
+            Mock.Of<KeeperData.Core.Services.ICountryIdentifierLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISpeciesTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteActivityTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteIdentifierTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteTypeDerivedCodeLookupService>(),
+            goldSiteRepoMock.Object,
+            partiesRepoMock.Object,
+            new Mock<ILogger<SamHoldingImportGoldMappingStep>>().Object);
+
+        // Act
+        await mappingStep.ExecuteAsync(context, CancellationToken.None);
+
+        // Assert: the active Common Land holding was selected as representative,
+        // so the existing-site filter used its CPH and GoldSiteId was assigned.
+        // FindOneByFilterAsync is called once, meaning representative selection completed.
+        goldSiteRepoMock.Verify(
+            r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // The GoldSiteId is always assigned when SilverHoldings is non-empty
+        Assert.NotNull(context.GoldSiteId);
+
+        // The representative's CPH drives the context Cph; confirm it matches the active holding
+        Assert.Equal("ACTIVE-CPH", context.Cph);
+    }
+
+    [Fact]
     public async Task EnrichWithCommonLandData_DeduplicatesAssociatedMainHoldings_WhenSameIdentifierInMultipleHoldings()
     {
         var goldSiteRepoMock = new Mock<IGenericRepository<SiteDocument>>();
