@@ -72,7 +72,8 @@ public class SamImportHoldingAnonMessageTests : IAsyncLifetime
     {
         var silverSamHoldingFilter = Builders<SamHoldingDocument>.Filter.And(
             Builders<SamHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier),
-            Builders<SamHoldingDocument>.Filter.Ne(x => x.SiteTypeCode, "CL"));
+            Builders<SamHoldingDocument>.Filter.Ne(x => x.SiteTypeCode, "CL"),
+            Builders<SamHoldingDocument>.Filter.Ne(x => x.CphTypeIdentifier, "PRTN"));
         var silverSamHoldings = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("samHoldings", silverSamHoldingFilter);
 
         var silverSamPartyFilter = Builders<SamPartyDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, holdingIdentifier);

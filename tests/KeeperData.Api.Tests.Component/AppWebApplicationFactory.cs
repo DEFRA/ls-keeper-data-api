@@ -259,6 +259,12 @@ public class AppWebApplicationFactory(
         Environment.SetEnvironmentVariable("ApiClients__DataBridgeApi__BridgeApiSubscriptionKey", "XYZ");
         Environment.SetEnvironmentVariable("ServiceBusSenderConfiguration__IntakeEventQueue__QueueUrl", "http://localhost:4566/000000000000/test-queue");
         Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__CtsAgentsEnabled", "true");
+        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamHoldingsEnabled", "true");
+        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamHoldersEnabled", "true");
+        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamHerdsEnabled", "true");
+        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamPartiesEnabled", "true");
+        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamPortsEnabled", "true");
+        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamCommonLandsEnabled", "true");
         Environment.SetEnvironmentVariable("BulkScanEndpointsEnabled", "false");
         Environment.SetEnvironmentVariable("DailyScanEndpointsEnabled", "false");
         Environment.SetEnvironmentVariable("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicName", "ls_keeper_data_import_complete");

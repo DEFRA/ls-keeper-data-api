@@ -77,6 +77,19 @@ public class MockSamRawDataFactory
         return _fixture.Create<SamParty>();
     }
 
+    public SamPort CreateMockPort(
+        string changeType,
+        int batchId,
+        string cph)
+    {
+        _fixture.Customizations.Add(new SamPortBuilder(
+            changeType,
+            batchId,
+            cph));
+
+        return _fixture.Create<SamPort>();
+    }
+
     public (string holdingIdentifier, List<SamCphHolding> holdings, List<SamCphHolder> holders, List<SamHerd> herds, List<SamParty> parties) CreateMockData(
         string changeType,
         int holdingCount,

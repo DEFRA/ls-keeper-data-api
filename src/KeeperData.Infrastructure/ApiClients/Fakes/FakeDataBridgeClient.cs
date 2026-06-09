@@ -132,6 +132,31 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult(ids.Select(GetSamParty).ToList());
     }
 
+    public Task<DataBridgeResponse<T>?> GetSamPortsAsync<T>(
+            int top,
+            int skip,
+            string? selectFields = null,
+            DateTime? updatedSinceDateTime = null,
+            string? orderBy = null,
+            CancellationToken cancellationToken = default)
+    {
+        var data = Enumerable.Range(0, top).Select(_ => GetSamPort()).SelectMany(x => x).ToList();
+
+        if (updatedSinceDateTime.HasValue)
+        {
+            data = data.Where(x => (x.UpdatedAtUtc >= updatedSinceDateTime) || (x.CreatedAtUtc >= updatedSinceDateTime)).ToList();
+        }
+
+        var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
+        var response = GetDataBridgeResponse(objects!, top, skip);
+        return Task.FromResult<DataBridgeResponse<T>?>(response);
+    }
+
+    public Task<List<SamPort>> GetSamPortsAsync(string id, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(GetSamPort(id));
+    }
+
     public Task<DataBridgeResponse<T>?> GetCtsHoldingsAsync<T>(
         int top,
         int skip,
@@ -361,6 +386,27 @@ public class FakeDataBridgeClient : IDataBridgeClient
                 ORGANISATION_NAME = Guid.NewGuid().ToString(),
                 PARTY_ROLE_FROM_DATE = DateTime.Today.AddDays(-1),
                 ROLES = "AGENT"
+            }];
+    }
+
+    private List<SamPort> GetSamPort(string? id = null)
+    {
+        return [
+            new SamPort {
+                BATCH_ID = 1,
+                CHANGE_TYPE = "I",
+                IsDeleted = false,
+                UpdatedAtUtc = DateTime.UtcNow,
+                CreatedAtUtc = DateTime.UtcNow,
+                CPH = id ?? $"{_random.Next(10, 99)}/{_random.Next(100, 999)}/{_random.Next(1000, 9999)}",
+                PREMISES_NAME = "Test Port",
+                ADDRESS_LINE_1 = "Harbour Office",
+                ADDRESS_LINE_2 = "Port Road",
+                ADDRESS_LINE_3 = "Portstown",
+                POSTCODE = "PT1 1PT",
+                MAP_REFERENCE = $"AB{_random.Next(100000, 999999)}",
+                EASTING = _random.Next(100000, 600000),
+                NORTHING = _random.Next(100000, 600000)
             }];
     }
 

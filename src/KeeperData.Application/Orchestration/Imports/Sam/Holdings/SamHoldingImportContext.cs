@@ -33,4 +33,5 @@ public class SamHoldingImportContext
     public List<SiteGroupMarkRelationshipDocument> GoldSiteGroupMarks { get; set; } = [];
 
     public List<SitePartyRoleRelationship> PartiesWithNoRelationshipToSiteToClean { get; set; } = [];
+    public List<SamPort> RawPorts { get; set; } = [];
 }

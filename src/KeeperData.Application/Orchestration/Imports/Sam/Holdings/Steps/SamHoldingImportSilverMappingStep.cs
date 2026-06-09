@@ -49,5 +49,9 @@ public class SamHoldingImportSilverMappingStep(
             productionUsageLookupService.FindAsync,
             speciesTypeLookupService.FindAsync,
             cancellationToken);
+
+        context.SilverHoldings.AddRange(await SamPortMapper.ToSilver(context.RawPorts,
+            countryIdentifierLookupService.FindAsync,
+            cancellationToken));
     }
 }
