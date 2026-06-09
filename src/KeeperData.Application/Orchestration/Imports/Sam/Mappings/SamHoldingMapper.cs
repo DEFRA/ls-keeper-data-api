@@ -129,6 +129,42 @@ public static class SamHoldingMapper
         return result;
     }
 
+    private static SamHoldingDocument SelectRepresentativeHolding(List<SamHoldingDocument> silverHoldings)
+    {
+        const string commonLandBusinessUsage = "Common Land";
+        var activeStatus = HoldingStatusType.Active.GetDescription();
+
+        // Priority 1: Active SAM Holding (not Common Land)
+        var activeSamHolding = silverHoldings
+            .Where(x => x.HoldingStatus == activeStatus && x.SourceFacilitySubBusinessActivityCode != commonLandBusinessUsage)
+            .OrderByDescending(h => h.LastUpdatedDate)
+            .FirstOrDefault();
+
+        if (activeSamHolding != null)
+            return activeSamHolding;
+
+        // Priority 2: Any SAM Holding (not Common Land)
+        var samHolding = silverHoldings
+            .Where(x => x.SourceFacilitySubBusinessActivityCode != commonLandBusinessUsage)
+            .OrderByDescending(h => h.LastUpdatedDate)
+            .FirstOrDefault();
+
+        if (samHolding != null)
+            return samHolding;
+
+        // Priority 3: Active Common Land
+        var activeCommonLand = silverHoldings
+            .Where(x => x.HoldingStatus == activeStatus)
+            .OrderByDescending(h => h.LastUpdatedDate)
+            .FirstOrDefault();
+
+        if (activeCommonLand != null)
+            return activeCommonLand;
+
+        // Priority 4: Any holding (fallback)
+        return silverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
+    }
+
     public static async Task<SiteDocument?> ToGold(
         string goldSiteId,
         SiteDocument? existingSite,
@@ -146,9 +182,8 @@ public static class SamHoldingMapper
         if (silverHoldings == null || silverHoldings.Count == 0)
             return null;
 
-        var representative = silverHoldings.Any(x => x.HoldingStatus == HoldingStatusType.Active.GetDescription())
-            ? silverHoldings.Where(x => x.HoldingStatus == HoldingStatusType.Active.GetDescription()).OrderByDescending(h => h.LastUpdatedDate).First()
-            : silverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
+        // Prefer SAM Holding over Common Land when selecting representative
+        var representative = SelectRepresentativeHolding(silverHoldings);
 
         var distinctSpecies = await GetDistinctReferenceDataAsync(
             silverHoldings.Select(h => h.SpeciesTypeCode),

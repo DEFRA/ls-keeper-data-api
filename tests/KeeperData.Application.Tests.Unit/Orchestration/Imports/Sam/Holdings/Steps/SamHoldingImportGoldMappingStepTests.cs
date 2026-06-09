@@ -194,4 +194,178 @@ public class SamHoldingImportGoldMappingStepTests
         Assert.NotNull(replaced.AssociatedCommonLands);
         Assert.Contains(replaced.AssociatedCommonLands, a => a.HoldingIdentifier == "CPH-1");
     }
+
+    [Fact]
+    public async Task EnrichWithCommonLandData_MergesLocalAuthorityName_WhenMultipleSilverHoldings()
+    {
+        var goldSiteRepoMock = new Mock<IGenericRepository<SiteDocument>>();
+        var partiesRepoMock = new Mock<IPartiesRepository>();
+
+        var samHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "CPH-1",
+            SourceFacilitySubBusinessActivityCode = "Sheep Farm",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow,
+            LocalAuthorityName = null
+        };
+
+        var commonLandHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "CPH-1",
+            SourceFacilitySubBusinessActivityCode = "Common Land",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow.AddDays(-1),
+            LocalAuthorityName = "Devon County Council"
+        };
+
+        goldSiteRepoMock.Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SiteDocument?)null);
+
+        var context = new SamHoldingImportContext
+        {
+            Cph = "CPH-1",
+            SilverHoldings = new List<SamHoldingDocument> { samHolding, commonLandHolding },
+            SilverHerds = new List<SamHerdDocument>(),
+            SilverParties = new List<SamPartyDocument>(),
+            GoldSite = new SiteDocument { Id = "gold-site-1" }
+        };
+
+        var mappingStep = new SamHoldingImportGoldMappingStep(
+            Mock.Of<KeeperData.Core.Services.ICountryIdentifierLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISpeciesTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteActivityTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteIdentifierTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteTypeDerivedCodeLookupService>(),
+            goldSiteRepoMock.Object,
+            partiesRepoMock.Object,
+            new Mock<ILogger<SamHoldingImportGoldMappingStep>>().Object);
+
+        await mappingStep.ExecuteAsync(context, CancellationToken.None);
+
+        Assert.Equal("Devon County Council", context.GoldSite.LocalAuthorityName);
+    }
+
+    [Fact]
+    public async Task EnrichWithCommonLandData_MergesAssociatedMainHoldings_WhenMultipleSilverHoldings()
+    {
+        var goldSiteRepoMock = new Mock<IGenericRepository<SiteDocument>>();
+        var partiesRepoMock = new Mock<IPartiesRepository>();
+
+        var samHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "CPH-1",
+            SourceFacilitySubBusinessActivityCode = "Sheep Farm",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow,
+            AssociatedMainHoldings = new List<AssociatedHoldingRelationship>()
+        };
+
+        var commonLandHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "CPH-1",
+            SourceFacilitySubBusinessActivityCode = "Common Land",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow.AddDays(-1),
+            AssociatedMainHoldings = new List<AssociatedHoldingRelationship>
+            {
+                new AssociatedHoldingRelationship { HoldingIdentifier = "MAIN-1", ContiguousFlag = true, StartDate = "2024-01-01" },
+                new AssociatedHoldingRelationship { HoldingIdentifier = "MAIN-2", ContiguousFlag = false, StartDate = "2024-02-01" }
+            }
+        };
+
+        goldSiteRepoMock.Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SiteDocument?)null);
+
+        var context = new SamHoldingImportContext
+        {
+            Cph = "CPH-1",
+            SilverHoldings = new List<SamHoldingDocument> { samHolding, commonLandHolding },
+            SilverHerds = new List<SamHerdDocument>(),
+            SilverParties = new List<SamPartyDocument>(),
+            GoldSite = new SiteDocument { Id = "gold-site-1" }
+        };
+
+        var mappingStep = new SamHoldingImportGoldMappingStep(
+            Mock.Of<KeeperData.Core.Services.ICountryIdentifierLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISpeciesTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteActivityTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteIdentifierTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteTypeDerivedCodeLookupService>(),
+            goldSiteRepoMock.Object,
+            partiesRepoMock.Object,
+            new Mock<ILogger<SamHoldingImportGoldMappingStep>>().Object);
+
+        await mappingStep.ExecuteAsync(context, CancellationToken.None);
+
+        Assert.NotNull(context.GoldSite.AssociatedMainHoldings);
+        Assert.Equal(2, context.GoldSite.AssociatedMainHoldings.Count);
+        Assert.Contains(context.GoldSite.AssociatedMainHoldings, h => h.HoldingIdentifier == "MAIN-1");
+        Assert.Contains(context.GoldSite.AssociatedMainHoldings, h => h.HoldingIdentifier == "MAIN-2");
+    }
+
+    [Fact]
+    public async Task EnrichWithCommonLandData_DeduplicatesAssociatedMainHoldings_WhenSameIdentifierInMultipleHoldings()
+    {
+        var goldSiteRepoMock = new Mock<IGenericRepository<SiteDocument>>();
+        var partiesRepoMock = new Mock<IPartiesRepository>();
+
+        var samHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "CPH-1",
+            SourceFacilitySubBusinessActivityCode = "Sheep Farm",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow,
+            AssociatedMainHoldings = new List<AssociatedHoldingRelationship>
+            {
+                new AssociatedHoldingRelationship { HoldingIdentifier = "MAIN-1", ContiguousFlag = true, StartDate = "2024-01-01" }
+            }
+        };
+
+        var commonLandHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "CPH-1",
+            SourceFacilitySubBusinessActivityCode = "Common Land",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow.AddDays(-1),
+            AssociatedMainHoldings = new List<AssociatedHoldingRelationship>
+            {
+                new AssociatedHoldingRelationship { HoldingIdentifier = "MAIN-1", ContiguousFlag = false, StartDate = "2024-03-01" }
+            }
+        };
+
+        goldSiteRepoMock.Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SiteDocument?)null);
+
+        var context = new SamHoldingImportContext
+        {
+            Cph = "CPH-1",
+            SilverHoldings = new List<SamHoldingDocument> { samHolding, commonLandHolding },
+            SilverHerds = new List<SamHerdDocument>(),
+            SilverParties = new List<SamPartyDocument>(),
+            GoldSite = new SiteDocument { Id = "gold-site-1" }
+        };
+
+        var mappingStep = new SamHoldingImportGoldMappingStep(
+            Mock.Of<KeeperData.Core.Services.ICountryIdentifierLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISpeciesTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteActivityTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteIdentifierTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteTypeDerivedCodeLookupService>(),
+            goldSiteRepoMock.Object,
+            partiesRepoMock.Object,
+            new Mock<ILogger<SamHoldingImportGoldMappingStep>>().Object);
+
+        await mappingStep.ExecuteAsync(context, CancellationToken.None);
+
+        Assert.NotNull(context.GoldSite.AssociatedMainHoldings);
+        Assert.Single(context.GoldSite.AssociatedMainHoldings);
+        var mainHolding = context.GoldSite.AssociatedMainHoldings[0];
+        Assert.Equal("MAIN-1", mainHolding.HoldingIdentifier);
+        // Should prefer the most recent StartDate (2024-03-01)
+        Assert.Equal("2024-03-01", mainHolding.StartDate);
+    }
 }
