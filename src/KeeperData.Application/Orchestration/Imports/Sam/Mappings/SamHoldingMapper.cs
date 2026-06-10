@@ -92,7 +92,7 @@ public static class SamHoldingMapper
             SiteTypeCode = null,
 
             SpeciesTypeCode = h.AnimalSpeciesCodeUnwrapped,
-            ProductionUsageCodeList = [.. h.AnimalProductionUsageCodeList.Select(ProductionUsageCodeFormatters.TrimProductionUsageCodeHolding)],
+            ProductionUsageCodeList = [.. h.AnimalProductionUsageCodeList.Select(ProductionUsageCodeFormatters.TrimProductionUsageCodeHolding).Distinct()],
 
             Location = new Core.Documents.Silver.LocationDocument
             {
