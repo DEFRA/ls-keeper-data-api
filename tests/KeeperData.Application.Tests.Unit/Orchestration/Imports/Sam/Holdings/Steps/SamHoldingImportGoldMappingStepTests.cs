@@ -329,7 +329,6 @@ public class SamHoldingImportGoldMappingStepTests
             LastUpdatedDate = DateTime.UtcNow.AddDays(-1)
         };
 
-        SiteDocument? capturedFilter = null;
         goldSiteRepoMock
             .Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((SiteDocument?)null);
