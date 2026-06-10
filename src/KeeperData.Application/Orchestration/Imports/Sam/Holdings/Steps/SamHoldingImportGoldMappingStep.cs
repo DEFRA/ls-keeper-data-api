@@ -166,5 +166,4 @@ public class SamHoldingImportGoldMappingStep(
                 context.AssociatedMainSites.Add(mainSite);
         }
     }
-
-    }
+}
