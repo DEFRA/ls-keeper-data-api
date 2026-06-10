@@ -350,8 +350,8 @@ public static class SamHoldingMapper
         SiteIdentifierType? siteIdentifierType,
         CancellationToken cancellationToken)
     {
-        var address = await LocationMapper.AddressToGold(representative.Location?.Address, getCountryById, cancellationToken);
-        var communication = LocationMapper.CommunicationToGold(representative.Communication);
+        var (address, communication) = await ResolveLocationPartsAsync(representative, getCountryById, cancellationToken);
+        var isPermanentLandHolding = representative.CphRelationshipType.IsPermanentLandHolding();
 
         var location = Location.Create(
             representative.Location?.OsMapReference,
@@ -371,11 +371,11 @@ public static class SamHoldingMapper
             SourceSystemType.SAM.ToString(),
             null,
             representative.Deleted,
-            representative.CphRelationshipType.IsPermanentLandHolding() ? null : representative.SecondaryCph,
+            isPermanentLandHolding ? null : representative.SecondaryCph,
             representative.CphTypeIdentifier,
             siteType,
             location,
-            representative.CphRelationshipType.IsPermanentLandHolding() ? representative.SecondaryCph : null);
+            isPermanentLandHolding ? representative.SecondaryCph : null);
 
         ApplySiteData(site, goldSiteId, representative, goldSiteGroupMarks, goldParties, species, activities, siteIdentifierType);
 
@@ -394,6 +394,7 @@ public static class SamHoldingMapper
         SiteIdentifierType? siteIdentifierType,
         CancellationToken cancellationToken)
     {
+        var isPermanentLandHolding = representative.CphRelationshipType.IsPermanentLandHolding();
         var site = existing.ToDomain();
 
         site.Update(
@@ -405,12 +406,11 @@ public static class SamHoldingMapper
             SourceSystemType.SAM.ToString(),
             null,
             representative.Deleted,
-            representative.CphRelationshipType.IsPermanentLandHolding() ? null : representative.SecondaryCph,
+            isPermanentLandHolding ? null : representative.SecondaryCph,
             representative.CphTypeIdentifier,
-            representative.CphRelationshipType.IsPermanentLandHolding() ? representative.SecondaryCph : null);
+            isPermanentLandHolding ? representative.SecondaryCph : null);
 
-        var updatedAddress = await LocationMapper.AddressToGold(representative.Location?.Address, getCountryById, cancellationToken);
-        var updatedCommunication = LocationMapper.CommunicationToGold(representative.Communication);
+        var (updatedAddress, updatedCommunication) = await ResolveLocationPartsAsync(representative, getCountryById, cancellationToken);
 
         // Always set the derived site type (may be null if no mapping found).
         site.SetSiteType(siteType, representative.LastUpdatedDate);
@@ -428,6 +428,16 @@ public static class SamHoldingMapper
         return site;
     }
 
+
+    private static async Task<(Address address, Communication communication)> ResolveLocationPartsAsync(
+        SamHoldingDocument representative,
+        Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
+        CancellationToken cancellationToken)
+    {
+        var address = await LocationMapper.AddressToGold(representative.Location?.Address, getCountryById, cancellationToken);
+        var communication = LocationMapper.CommunicationToGold(representative.Communication);
+        return (address, communication);
+    }
 
     private static async Task<List<(string searchValue, string? typeId, string? typeName)>> GetDistinctReferenceDataAsync(
         IEnumerable<string?> rawCodes,
