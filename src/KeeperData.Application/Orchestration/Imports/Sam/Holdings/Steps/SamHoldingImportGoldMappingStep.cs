@@ -28,9 +28,8 @@ public class SamHoldingImportGoldMappingStep(
     {
         if (context.SilverHoldings.Count > 0)
         {
-            var representative = context.SilverHoldings.Any(x => x.HoldingStatus == HoldingStatusType.Active.GetDescription())
-            ? context.SilverHoldings.Where(x => x.HoldingStatus == HoldingStatusType.Active.GetDescription()).OrderByDescending(h => h.LastUpdatedDate).First()
-            : context.SilverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
+            // Prefer SAM Holding over Common Land when selecting representative
+            var representative = SamHoldingMapper.SelectRepresentativeHolding(context.SilverHoldings);
 
             var existingHoldingFilter = Builders<SiteDocument>.Filter.ElemMatch(
                 x => x.Identifiers,
@@ -69,7 +68,7 @@ public class SamHoldingImportGoldMappingStep(
                 siteTypeDerivedCodeLookupService,
                 cancellationToken);
 
-            await EnrichWithCommonLandDataAsync(context, representative, cancellationToken);
+            await EnrichWithCommonLandDataAsync(context, context.SilverHoldings, cancellationToken);
 
             logger.LogInformation("Associated main sites queued for update: {Count} for CPH {Cph}",
                 context.AssociatedMainSites?.Count ?? 0, context.Cph);
@@ -86,14 +85,21 @@ public class SamHoldingImportGoldMappingStep(
         }
     }
 
-    private async Task EnrichWithCommonLandDataAsync(SamHoldingImportContext context, SamHoldingDocument representative, CancellationToken cancellationToken)
+    private async Task EnrichWithCommonLandDataAsync(SamHoldingImportContext context, List<SamHoldingDocument> silverHoldings, CancellationToken cancellationToken)
     {
         var goldSite = context.GoldSite;
         if (goldSite == null) return;
 
-        goldSite.LocalAuthorityName = representative.LocalAuthorityName;
+        // Merge LocalAuthorityName - prefer non-null value from any holding
+        goldSite.LocalAuthorityName = silverHoldings
+            .Select(h => h.LocalAuthorityName)
+            .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name));
 
-        goldSite.AssociatedMainHoldings = representative.AssociatedMainHoldings
+        // Merge AssociatedMainHoldings from all holdings, removing duplicates
+        var allMainHoldings = silverHoldings
+            .SelectMany(h => h.AssociatedMainHoldings)
+            .GroupBy(r => r.HoldingIdentifier)
+            .Select(g => g.OrderByDescending(r => r.StartDate).First())
             .Select(r => new AssociatedHoldingDocument
             {
                 HoldingIdentifier = r.HoldingIdentifier,
@@ -103,13 +109,17 @@ public class SamHoldingImportGoldMappingStep(
             })
             .ToList();
 
+        goldSite.AssociatedMainHoldings = allMainHoldings;
+
         if (goldSite.AssociatedMainHoldings?.Count > 0)
         {
-            await FindAndUpdateMainSiteIfExists(context, representative, goldSite.AssociatedMainHoldings, cancellationToken);
+            // Get the CPH from any holding (they all have the same CPH)
+            var cph = silverHoldings.First().CountyParishHoldingNumber;
+            await FindAndUpdateMainSiteIfExists(context, cph, goldSite.AssociatedMainHoldings, cancellationToken);
         }
     }
 
-    private async Task FindAndUpdateMainSiteIfExists(SamHoldingImportContext context, SamHoldingDocument representative, List<AssociatedHoldingDocument> mainHoldings, CancellationToken cancellationToken)
+    private async Task FindAndUpdateMainSiteIfExists(SamHoldingImportContext context, string commonCph, List<AssociatedHoldingDocument> mainHoldings, CancellationToken cancellationToken)
     {
         foreach (var mainHolding in mainHoldings)
         {
@@ -132,7 +142,7 @@ public class SamHoldingImportGoldMappingStep(
 
             var commonForMain = new AssociatedHoldingDocument
             {
-                HoldingIdentifier = representative.CountyParishHoldingNumber,
+                HoldingIdentifier = commonCph,
                 ContiguousFlag = mainHolding.ContiguousFlag,
                 StartDate = mainHolding.StartDate,
                 EndDate = mainHolding.EndDate
