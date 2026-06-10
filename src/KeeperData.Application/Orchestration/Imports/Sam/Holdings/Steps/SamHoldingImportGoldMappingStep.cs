@@ -29,7 +29,7 @@ public class SamHoldingImportGoldMappingStep(
         if (context.SilverHoldings.Count > 0)
         {
             // Prefer SAM Holding over Common Land when selecting representative
-            var representative = SelectRepresentativeHolding(context.SilverHoldings);
+            var representative = SamHoldingMapper.SelectRepresentativeHolding(context.SilverHoldings);
 
             var existingHoldingFilter = Builders<SiteDocument>.Filter.ElemMatch(
                 x => x.Identifiers,
@@ -167,39 +167,4 @@ public class SamHoldingImportGoldMappingStep(
         }
     }
 
-    private static SamHoldingDocument SelectRepresentativeHolding(List<SamHoldingDocument> silverHoldings)
-    {
-        const string commonLandBusinessUsage = "Common Land";
-        var activeStatus = HoldingStatusType.Active.GetDescription();
-
-        // Priority 1: Active SAM Holding (not Common Land)
-        var activeSamHolding = silverHoldings
-            .Where(x => x.HoldingStatus == activeStatus && x.SourceFacilitySubBusinessActivityCode != commonLandBusinessUsage)
-            .OrderByDescending(h => h.LastUpdatedDate)
-            .FirstOrDefault();
-
-        if (activeSamHolding != null)
-            return activeSamHolding;
-
-        // Priority 2: Any SAM Holding (not Common Land)
-        var samHolding = silverHoldings
-            .Where(x => x.SourceFacilitySubBusinessActivityCode != commonLandBusinessUsage)
-            .OrderByDescending(h => h.LastUpdatedDate)
-            .FirstOrDefault();
-
-        if (samHolding != null)
-            return samHolding;
-
-        // Priority 3: Active Common Land
-        var activeCommonLand = silverHoldings
-            .Where(x => x.HoldingStatus == activeStatus)
-            .OrderByDescending(h => h.LastUpdatedDate)
-            .FirstOrDefault();
-
-        if (activeCommonLand != null)
-            return activeCommonLand;
-
-        // Priority 4: Any holding (fallback)
-        return silverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
     }
-}

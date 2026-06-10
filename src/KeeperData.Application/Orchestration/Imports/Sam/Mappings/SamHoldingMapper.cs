@@ -129,7 +129,7 @@ public static class SamHoldingMapper
         return result;
     }
 
-    private static SamHoldingDocument SelectRepresentativeHolding(List<SamHoldingDocument> silverHoldings)
+    internal static SamHoldingDocument SelectRepresentativeHolding(List<SamHoldingDocument> silverHoldings)
     {
         const string commonLandBusinessUsage = "Common Land";
         var activeStatus = HoldingStatusType.Active.GetDescription();
