@@ -9,34 +9,40 @@ namespace KeeperData.Application.Tests.Unit.Orchestration.Imports.Sam.Mappings;
 
 public class SamCommonLandMapperTests
 {
+    private static readonly Func<string?, string?, CancellationToken, Task<(string?, string?, string?)>> NoopResolveCountry =
+        (_, _, _) => Task.FromResult<(string?, string?, string?)>((null, null, null));
+
+    private static Func<string?, string?, CancellationToken, Task<(string?, string?, string?)>> ResolveCountry(string? id, string? code) =>
+        (_, _, _) => Task.FromResult<(string?, string?, string?)>((id, code, null));
+
     [Fact]
-    public void ToSilver_WithNullInput_ShouldReturnEmptyList()
+    public async Task ToSilver_WithNullInput_ShouldReturnEmptyList()
     {
         // Arrange
         List<SamCommonLand>? rawCommonLands = null;
 
         // Act
-        var result = SamCommonLandMapper.ToSilver(rawCommonLands!);
+        var result = await SamCommonLandMapper.ToSilver(rawCommonLands!, NoopResolveCountry, CancellationToken.None);
 
         // Assert
         result.Should().BeEmpty();
     }
 
     [Fact]
-    public void ToSilver_WithEmptyList_ShouldReturnEmptyList()
+    public async Task ToSilver_WithEmptyList_ShouldReturnEmptyList()
     {
         // Arrange
         var rawCommonLands = new List<SamCommonLand>();
 
         // Act
-        var result = SamCommonLandMapper.ToSilver(rawCommonLands);
+        var result = await SamCommonLandMapper.ToSilver(rawCommonLands, NoopResolveCountry, CancellationToken.None);
 
         // Assert
         result.Should().BeEmpty();
     }
 
     [Fact]
-    public void ToSilver_WithDefinitionRecordOnly_ShouldCreateSamHoldingDocument()
+    public async Task ToSilver_WithDefinitionRecordOnly_ShouldCreateSamHoldingDocument()
     {
         // Arrange
         var now = DateTime.UtcNow;
@@ -68,7 +74,10 @@ public class SamCommonLandMapperTests
         };
 
         // Act
-        var result = SamCommonLandMapper.ToSilver(rawCommonLands);
+        var result = await SamCommonLandMapper.ToSilver(
+            rawCommonLands,
+            ResolveCountry("country-id-1", "England"),
+            CancellationToken.None);
 
         // Assert
         result.Should().HaveCount(1);
@@ -88,14 +97,15 @@ public class SamCommonLandMapperTests
         holding.Location.Northing.Should().Be(569204);
         holding.Location.Address.Should().NotBeNull();
         holding.Location.Address!.AddressLine.Should().Be("Land off Road");
-        holding.Location.Address.AddressLocality.Should().Be("Village");
-        holding.Location.Address.AddressStreet.Should().Be("District");
+        holding.Location.Address.AddressStreet.Should().Be("Village");
+        holding.Location.Address.AddressTown.Should().Be("District");
         holding.Location.Address.AddressPostCode.Should().Be("AB12 3CD");
         holding.Location.Address.CountryCode.Should().Be("England");
+        holding.Location.Address.CountryIdentifier.Should().Be("country-id-1");
     }
 
     [Fact]
-    public void ToSilver_WithDeletedRecord_ShouldMapDeletedStatus()
+    public async Task ToSilver_WithDeletedRecord_ShouldMapDeletedStatus()
     {
         // Arrange
         var rawCommonLands = new List<SamCommonLand>
@@ -112,7 +122,7 @@ public class SamCommonLandMapperTests
         };
 
         // Act
-        var result = SamCommonLandMapper.ToSilver(rawCommonLands);
+        var result = await SamCommonLandMapper.ToSilver(rawCommonLands, NoopResolveCountry, CancellationToken.None);
 
         // Assert
         result.Should().HaveCount(1);
@@ -121,7 +131,7 @@ public class SamCommonLandMapperTests
     }
 
     [Fact]
-    public void ToSilver_WithPlaceholderPremisesName_ShouldSetToNull()
+    public async Task ToSilver_WithPlaceholderPremisesName_ShouldSetToNull()
     {
         // Arrange
         var rawCommonLands = new List<SamCommonLand>
@@ -136,14 +146,14 @@ public class SamCommonLandMapperTests
         };
 
         // Act
-        var result = SamCommonLandMapper.ToSilver(rawCommonLands);
+        var result = await SamCommonLandMapper.ToSilver(rawCommonLands, NoopResolveCountry, CancellationToken.None);
 
         // Assert
         result[0].LocationName.Should().BeNull();
     }
 
     [Fact]
-    public void ToSilver_WithEmptyCommonCph_ShouldBeFiltered()
+    public async Task ToSilver_WithEmptyCommonCph_ShouldBeFiltered()
     {
         // Arrange
         var rawCommonLands = new List<SamCommonLand>
@@ -163,14 +173,14 @@ public class SamCommonLandMapperTests
         };
 
         // Act
-        var result = SamCommonLandMapper.ToSilver(rawCommonLands);
+        var result = await SamCommonLandMapper.ToSilver(rawCommonLands, NoopResolveCountry, CancellationToken.None);
 
         // Assert
         result.Should().BeEmpty();
     }
 
     [Fact]
-    public void ToSilver_WithInvalidEastingNorthing_ShouldSetToNull()
+    public async Task ToSilver_WithInvalidEastingNorthing_ShouldSetToNull()
     {
         // Arrange
         var rawCommonLands = new List<SamCommonLand>
@@ -187,7 +197,7 @@ public class SamCommonLandMapperTests
         };
 
         // Act
-        var result = SamCommonLandMapper.ToSilver(rawCommonLands);
+        var result = await SamCommonLandMapper.ToSilver(rawCommonLands, NoopResolveCountry, CancellationToken.None);
 
         // Assert
         result[0].Location!.Easting.Should().BeNull();
@@ -195,7 +205,7 @@ public class SamCommonLandMapperTests
     }
 
     [Fact]
-    public void ToSilver_WithFutureDate_ShouldNormaliseToNull()
+    public async Task ToSilver_WithFutureDate_ShouldNormaliseToNull()
     {
         // Arrange
         var rawCommonLands = new List<SamCommonLand>
@@ -216,7 +226,7 @@ public class SamCommonLandMapperTests
         };
 
         // Act
-        var result = SamCommonLandMapper.ToSilver(rawCommonLands);
+        var result = await SamCommonLandMapper.ToSilver(rawCommonLands, NoopResolveCountry, CancellationToken.None);
 
         // Assert
         result[1].AssociatedMainHoldings[0].StartDate.Should().BeNull();
@@ -376,7 +386,7 @@ public class SamCommonLandMapperTests
     }
 
     [Fact]
-    public void ToSilver_ShouldMapBusinessUsageToSourceFacilitySubBusinessActivityCode()
+    public async Task ToSilver_ShouldMapBusinessUsageToSourceFacilitySubBusinessActivityCode()
     {
         // Arrange
         var rawCommonLands = new List<SamCommonLand>
@@ -392,7 +402,7 @@ public class SamCommonLandMapperTests
         };
 
         // Act
-        var result = SamCommonLandMapper.ToSilver(rawCommonLands);
+        var result = await SamCommonLandMapper.ToSilver(rawCommonLands, NoopResolveCountry, CancellationToken.None);
 
         // Assert
         result.Should().HaveCount(1);
@@ -400,7 +410,7 @@ public class SamCommonLandMapperTests
     }
 
     [Fact]
-    public void ToSilver_ShouldMapSiteTypeCodeToCL()
+    public async Task ToSilver_ShouldMapSiteTypeCodeToCL()
     {
         // Arrange
         var rawCommonLands = new List<SamCommonLand>
@@ -416,7 +426,7 @@ public class SamCommonLandMapperTests
         };
 
         // Act
-        var result = SamCommonLandMapper.ToSilver(rawCommonLands);
+        var result = await SamCommonLandMapper.ToSilver(rawCommonLands, NoopResolveCountry, CancellationToken.None);
 
         // Assert
         result.Should().HaveCount(1);

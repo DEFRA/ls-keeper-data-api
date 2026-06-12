@@ -165,6 +165,19 @@ public static class SamHoldingMapper
         return silverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
     }
 
+    public static SamHoldingDocument SelectAddressSource(List<SamHoldingDocument> silverHoldings)
+    {
+        const string commonLandBusinessUsage = "Common Land";
+
+        // Common land address takes precedence — use the most recently updated common land if present
+        var commonLand = silverHoldings
+            .Where(x => x.SourceFacilitySubBusinessActivityCode == commonLandBusinessUsage)
+            .OrderByDescending(h => h.LastUpdatedDate)
+            .FirstOrDefault();
+
+        return commonLand ?? SelectRepresentativeHolding(silverHoldings);
+    }
+
     public static async Task<SiteDocument?> ToGold(
         string goldSiteId,
         SiteDocument? existingSite,
@@ -184,6 +197,9 @@ public static class SamHoldingMapper
 
         // Prefer SAM Holding over Common Land when selecting representative
         var representative = SelectRepresentativeHolding(silverHoldings);
+
+        // Common land address takes precedence over site address for location data
+        var addressSource = SelectAddressSource(silverHoldings);
 
         var distinctSpecies = await GetDistinctReferenceDataAsync(
             silverHoldings.Select(h => h.SpeciesTypeCode),
@@ -220,6 +236,7 @@ public static class SamHoldingMapper
         var site = existingSite is not null
             ? await UpdateSiteAsync(
                 representative,
+                addressSource,
                 existingSite,
                 goldSiteGroupMarks,
                 goldParties,
@@ -232,6 +249,7 @@ public static class SamHoldingMapper
             : await CreateSiteAsync(
                 goldSiteId,
                 representative,
+                addressSource,
                 goldSiteGroupMarks,
                 goldParties,
                 getCountryById,
@@ -341,6 +359,7 @@ public static class SamHoldingMapper
     private static async Task<Site> CreateSiteAsync(
         string goldSiteId,
         SamHoldingDocument representative,
+        SamHoldingDocument addressSource,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         List<PartyDocument> goldParties,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
@@ -350,13 +369,13 @@ public static class SamHoldingMapper
         SiteIdentifierType? siteIdentifierType,
         CancellationToken cancellationToken)
     {
-        var (address, communication) = await ResolveLocationPartsAsync(representative, getCountryById, cancellationToken);
+        var (address, communication) = await ResolveLocationPartsAsync(addressSource, getCountryById, cancellationToken);
         var isPermanentLandHolding = representative.CphRelationshipType.IsPermanentLandHolding();
 
         var location = Location.Create(
-            representative.Location?.OsMapReference,
-            representative.Location?.Easting,
-            representative.Location?.Northing,
+            addressSource.Location?.OsMapReference,
+            addressSource.Location?.Easting,
+            addressSource.Location?.Northing,
             address,
             communication: [communication]);
 
@@ -384,6 +403,7 @@ public static class SamHoldingMapper
 
     private static async Task<Site> UpdateSiteAsync(
         SamHoldingDocument representative,
+        SamHoldingDocument addressSource,
         SiteDocument existing,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         List<PartyDocument> goldParties,
@@ -410,16 +430,16 @@ public static class SamHoldingMapper
             representative.CphTypeIdentifier,
             isPermanentLandHolding ? representative.SecondaryCph : null);
 
-        var (updatedAddress, updatedCommunication) = await ResolveLocationPartsAsync(representative, getCountryById, cancellationToken);
+        var (updatedAddress, updatedCommunication) = await ResolveLocationPartsAsync(addressSource, getCountryById, cancellationToken);
 
         // Always set the derived site type (may be null if no mapping found).
         site.SetSiteType(siteType, representative.LastUpdatedDate);
 
         site.SetLocation(
             representative.LastUpdatedDate,
-            representative.Location?.OsMapReference,
-            representative.Location?.Easting,
-            representative.Location?.Northing,
+            addressSource.Location?.OsMapReference,
+            addressSource.Location?.Easting,
+            addressSource.Location?.Northing,
             updatedAddress,
             [updatedCommunication]);
 

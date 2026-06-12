@@ -10,7 +10,10 @@ public static class SamCommonLandMapper
     private const string CommonLandSiteTypeCode = "CL";
     private const string CommonLandBusinessUsage = "Common Land";
 
-    public static List<SamHoldingDocument> ToSilver(List<SamCommonLand> rawCommonLands)
+    public static async Task<List<SamHoldingDocument>> ToSilver(
+        List<SamCommonLand> rawCommonLands,
+        Func<string?, string?, CancellationToken, Task<(string? countryId, string? countryCode, string? countryName)>> resolveCountry,
+        CancellationToken cancellationToken)
     {
         if (rawCommonLands == null || rawCommonLands.Count == 0)
             return [];
@@ -32,6 +35,8 @@ public static class SamCommonLandMapper
                     EndDate = NormaliseDate(representative.END_DATE)
                 });
             }
+
+            var (countryId, countryCode, _) = await resolveCountry(representative.COUNTRY, null, cancellationToken);
 
             var holding = new SamHoldingDocument
             {
@@ -64,10 +69,11 @@ public static class SamCommonLandMapper
                     {
                         IdentifierId = Guid.NewGuid().ToString(),
                         AddressLine = representative.ADDRESS_LINE_1,
-                        AddressLocality = representative.ADDRESS_LINE_2,
-                        AddressStreet = representative.ADDRESS_LINE_3,
+                        AddressStreet = representative.ADDRESS_LINE_2,
+                        AddressTown = representative.ADDRESS_LINE_3,
                         AddressPostCode = representative.POSTCODE,
-                        CountryCode = representative.COUNTRY
+                        CountryCode = countryCode,
+                        CountryIdentifier = countryId
                     }
                 }
             };
