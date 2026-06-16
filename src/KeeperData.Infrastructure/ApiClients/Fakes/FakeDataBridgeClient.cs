@@ -304,17 +304,47 @@ public class FakeDataBridgeClient : IDataBridgeClient
     private List<SamCphHolding> GetSamCphHolding(string? id = null)
     {
         return [
-            new SamCphHolding {
+            new SamCphHolding
+            {
+                ANIMAL_PRODUCTION_USAGE_CODE = "MEAT",
+                ANIMAL_SPECIES_CODE = "CTT",
                 BATCH_ID = 1,
                 CHANGE_TYPE = "I",
-                IsDeleted = false,
-                UpdatedAtUtc = DateTime.UtcNow,
-                CreatedAtUtc = DateTime.UtcNow,
-                CPH = id ?? $"{_random.Next(10, 99)}{_random.Next(100, 999)}{_random.Next(1000, 9999)}",
-                FEATURE_NAME = Guid.NewGuid().ToString(),
+                COUNTRY_CODE = "GB",
+                CPH = id ?? $"{_random.Next(10, 99)}/{_random.Next(100, 999):000}/{_random.Next(1000, 9999)}",
+                CPH_RELATIONSHIP_TYPE = "MAIN",
                 CPH_TYPE = "PERMANENT",
+                CreatedAtUtc = DateTime.UtcNow,
+                DISEASE_TYPE = null,
+                EASTING = 400022,
+                FACILITY_BUSINSS_ACTVTY_CODE = "FACACT",
+                FACILITY_TYPE_CODE = "CL",
+                FCLTY_SUB_BSNSS_ACTVTY_CODE = "FACSUB",
                 FEATURE_ADDRESS_FROM_DATE = DateTime.Today.AddDays(-1),
-                FCLTY_SUB_BSNSS_ACTVTY_CODE = "SLG-RM-NA"
+                FEATURE_ADDRESS_TO_DATE = null,
+                FEATURE_NAME = "Feature 22",
+                INTERVAL = 12m,
+                INTERVAL_UNIT_OF_TIME = "Months",
+                IsDeleted = false,
+                LOCALITY = "Locality22",
+                MOVEMENT_RSTRCTN_RSN_CODE = null,
+                NORTHING = 500022,
+                OS_MAP_REFERENCE = null,
+                PAON_END_NUMBER = 20,
+                PAON_END_NUMBER_SUFFIX = 'D',
+                PAON_START_NUMBER = 2,
+                PAON_START_NUMBER_SUFFIX = 'C',
+                POSTCODE = "CPH22 222",
+                SAON_END_NUMBER = 10,
+                SAON_END_NUMBER_SUFFIX = 'B',
+                SAON_START_NUMBER = 1,
+                SAON_START_NUMBER_SUFFIX = 'A',
+                SECONDARY_CPH = "00/000/9267",
+                STREET = "Holding Street 22",
+                TOWN = "Town22",
+                UDPRN = "25000022",
+                UK_INTERNAL_CODE = "ENGLAND",
+                UpdatedAtUtc = DateTime.UtcNow
             }];
     }
 

@@ -812,6 +812,160 @@ public class SamHoldingMapperToGoldTests
         result.EffectiveToDate.Should().Be(rawShowgrounds[0].END_DATE);
         result.ApprovalCurrentFlag.Should().BeTrue();
     }
+  
+    public void SelectAddressSource_WhenCommonLandAndSiteHoldingPresent_ShouldReturnCommonLand()
+    {
+        var siteHolding = new SamHoldingDocument
+        {
+            SourceFacilitySubBusinessActivityCode = "Sheep Farm",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow
+        };
+        var commonLand = new SamHoldingDocument
+        {
+            SourceFacilitySubBusinessActivityCode = "Common Land",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow.AddDays(-1)
+        };
+
+        var result = SamHoldingMapper.SelectAddressSource([siteHolding, commonLand]);
+
+        result.Should().BeSameAs(commonLand);
+    }
+
+    [Fact]
+    public void SelectAddressSource_WhenNoCommonLandPresent_ShouldReturnRepresentative()
+    {
+        var siteHolding = new SamHoldingDocument
+        {
+            SourceFacilitySubBusinessActivityCode = "Sheep Farm",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow
+        };
+
+        var result = SamHoldingMapper.SelectAddressSource([siteHolding]);
+
+        result.Should().BeSameAs(siteHolding);
+    }
+
+    [Fact]
+    public void SelectAddressSource_WithMultipleCommonLands_ShouldReturnMostRecent()
+    {
+        var olderCommonLand = new SamHoldingDocument
+        {
+            SourceFacilitySubBusinessActivityCode = "Common Land",
+            LastUpdatedDate = DateTime.UtcNow.AddDays(-5)
+        };
+        var newerCommonLand = new SamHoldingDocument
+        {
+            SourceFacilitySubBusinessActivityCode = "Common Land",
+            LastUpdatedDate = DateTime.UtcNow
+        };
+
+        var result = SamHoldingMapper.SelectAddressSource([olderCommonLand, newerCommonLand]);
+
+        result.Should().BeSameAs(newerCommonLand);
+    }
+
+    [Fact]
+    public async Task ToGold_WhenCommonLandAndSiteHoldingPresent_NewSite_ShouldUseCommonLandAddress()
+    {
+        var siteHolding = new SamHoldingDocument
+        {
+            SourceFacilitySubBusinessActivityCode = "Sheep Farm",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow,
+            Location = new Core.Documents.Silver.LocationDocument
+            {
+                IdentifierId = "site-loc",
+                Address = new Core.Documents.Silver.AddressDocument
+                {
+                    IdentifierId = "site-addr",
+                    AddressLine = "Site Road",
+                    AddressPostCode = "S1 1AA",
+                    CountryIdentifier = "en123"
+                }
+            }
+        };
+        var commonLand = new SamHoldingDocument
+        {
+            SourceFacilitySubBusinessActivityCode = "Common Land",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow.AddDays(-1),
+            Location = new Core.Documents.Silver.LocationDocument
+            {
+                IdentifierId = "cl-loc",
+                Easting = 123456,
+                Northing = 654321,
+                Address = new Core.Documents.Silver.AddressDocument
+                {
+                    IdentifierId = "cl-addr",
+                    AddressLine = "Common Land Road",
+                    AddressPostCode = "CL1 1AA",
+                    CountryIdentifier = "fr123"
+                }
+            }
+        };
+
+        var result = await WhenIMapSilverSitesToGold([siteHolding, commonLand], null);
+
+        result!.Location!.Address!.AddressLine1.Should().Be("Common Land Road");
+        result.Location.Address.Postcode.Should().Be("CL1 1AA");
+        result.Location.Address.Country!.Code.Should().Be("FR");
+        result.Location.Easting.Should().Be(123456);
+        result.Location.Northing.Should().Be(654321);
+        result.Name.Should().Be(string.Empty); // name still comes from site representative
+    }
+
+    [Fact]
+    public async Task ToGold_WhenCommonLandAndSiteHoldingPresent_ExistingSite_ShouldUseCommonLandAddress()
+    {
+        var siteHolding = new SamHoldingDocument
+        {
+            SourceFacilitySubBusinessActivityCode = "Sheep Farm",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow,
+            Location = new Core.Documents.Silver.LocationDocument
+            {
+                IdentifierId = "site-loc",
+                Address = new Core.Documents.Silver.AddressDocument
+                {
+                    IdentifierId = "site-addr",
+                    AddressLine = "Site Road",
+                    AddressPostCode = "S1 1AA",
+                    CountryIdentifier = "en123"
+                }
+            }
+        };
+        var commonLand = new SamHoldingDocument
+        {
+            SourceFacilitySubBusinessActivityCode = "Common Land",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow.AddDays(-1),
+            Location = new Core.Documents.Silver.LocationDocument
+            {
+                IdentifierId = "cl-loc",
+                Easting = 123456,
+                Northing = 654321,
+                Address = new Core.Documents.Silver.AddressDocument
+                {
+                    IdentifierId = "cl-addr",
+                    AddressLine = "Common Land Road",
+                    AddressPostCode = "CL1 1AA",
+                    CountryIdentifier = "fr123"
+                }
+            }
+        };
+        var existingSite = new SiteDocument { Id = GoldSiteId };
+
+        var result = await WhenIMapSilverSitesToGold([siteHolding, commonLand], existingSite);
+
+        result!.Location!.Address!.AddressLine1.Should().Be("Common Land Road");
+        result.Location.Address.Postcode.Should().Be("CL1 1AA");
+        result.Location.Address.Country!.Code.Should().Be("FR");
+        result.Location.Easting.Should().Be(123456);
+        result.Location.Northing.Should().Be(654321);
+    }
 
     private static SiteGroupMarkRelationshipDocument CreateGroupMarkRelationshipDocument(string? id = "group-mark-id", string herdmark = "H1000001")
     {

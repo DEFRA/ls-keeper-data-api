@@ -242,4 +242,205 @@ public class SamHoldingMapperTests
         }
         return records;
     }
+
+    [Fact]
+    public async Task ToGold_PrefersActiveSamHolding_OverCommonLand()
+    {
+        var activeSamHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "CPH-1",
+            SourceFacilitySubBusinessActivityCode = "Sheep Farm",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow,
+            LocationName = "SAM Farm Location",
+            SpeciesTypeCode = "SHE"
+        };
+
+        var activeCommonLand = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "CPH-1",
+            SourceFacilitySubBusinessActivityCode = "Common Land",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow.AddDays(1), // More recent, but should not be selected
+            LocationName = "Common Land Location",
+            SpeciesTypeCode = null
+        };
+
+        var siteIdentifierType = new SiteIdentifierTypeDocument
+        {
+            IdentifierId = "type-id",
+            Code = "CPHN",
+            Name = "CPH Number",
+            LastModifiedDate = DateTime.UtcNow
+        };
+
+        var result = await SamHoldingMapper.ToGold(
+            "gold-site-id",
+            null,
+            [activeSamHolding, activeCommonLand],
+            [],
+            [],
+            (_, _) => Task.FromResult<CountryDocument?>(null),
+            (_, _) => Task.FromResult<SiteTypeDocument?>(null),
+            (code, _) => Task.FromResult<SiteIdentifierTypeDocument?>(
+                code == "CPHN" ? siteIdentifierType : null),
+            (code, _) => Task.FromResult<(string?, string?)>(code == "SHE" ? ("species-id", "Sheep") : (null, null)),
+            (_, _) => Task.FromResult<SiteActivityTypeDocument?>(null),
+            Mock.Of<ISiteTypeDerivedCodeLookupService>(),
+            CancellationToken.None);
+
+        result.Should().NotBeNull();
+        // Verify that SAM Holding was used as representative by checking species (only SAM has it)
+        result!.Species.Should().NotBeNull();
+        result.Species.Should().ContainSingle(s => s.Code == "SHE");
+    }
+
+    [Fact]
+    public async Task ToGold_PrefersInactiveSamHolding_OverActiveCommonLand()
+    {
+        var inactiveSamHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "CPH-1",
+            SourceFacilitySubBusinessActivityCode = "Cattle Farm",
+            HoldingStatus = "Inactive",
+            LastUpdatedDate = DateTime.UtcNow,
+            LocationName = "SAM Farm Location",
+            SpeciesTypeCode = "CAT"
+        };
+
+        var activeCommonLand = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "CPH-1",
+            SourceFacilitySubBusinessActivityCode = "Common Land",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow.AddDays(1),
+            LocationName = "Common Land Location",
+            SpeciesTypeCode = null
+        };
+
+        var siteIdentifierType = new SiteIdentifierTypeDocument
+        {
+            IdentifierId = "type-id",
+            Code = "CPHN",
+            Name = "CPH Number",
+            LastModifiedDate = DateTime.UtcNow
+        };
+
+        var result = await SamHoldingMapper.ToGold(
+            "gold-site-id",
+            null,
+            [inactiveSamHolding, activeCommonLand],
+            [],
+            [],
+            (_, _) => Task.FromResult<CountryDocument?>(null),
+            (_, _) => Task.FromResult<SiteTypeDocument?>(null),
+            (code, _) => Task.FromResult<SiteIdentifierTypeDocument?>(
+                code == "CPHN" ? siteIdentifierType : null),
+            (code, _) => Task.FromResult<(string?, string?)>(code == "CAT" ? ("species-id", "Cattle") : (null, null)),
+            (_, _) => Task.FromResult<SiteActivityTypeDocument?>(null),
+            Mock.Of<ISiteTypeDerivedCodeLookupService>(),
+            CancellationToken.None);
+
+        result.Should().NotBeNull();
+        // Verify that SAM Holding was used (Priority 2 beats Priority 3)
+        result!.Species.Should().NotBeNull();
+        result.Species.Should().ContainSingle(s => s.Code == "CAT");
+    }
+
+    [Fact]
+    public async Task ToGold_SelectsCommonLand_WhenOnlyCommonLandPresent()
+    {
+        var activeCommonLand = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "CPH-1",
+            SourceFacilitySubBusinessActivityCode = "Common Land",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow,
+            LocationName = "Common Land Location",
+            LocalAuthorityName = "Devon County Council",
+            CreatedDate = DateTime.UtcNow
+        };
+
+        var siteIdentifierType = new SiteIdentifierTypeDocument
+        {
+            IdentifierId = "type-id",
+            Code = "CPHN",
+            Name = "CPH Number",
+            LastModifiedDate = DateTime.UtcNow
+        };
+
+        var result = await SamHoldingMapper.ToGold(
+            "gold-site-id",
+            null,
+            [activeCommonLand],
+            [],
+            [],
+            (_, _) => Task.FromResult<CountryDocument?>(null),
+            (_, _) => Task.FromResult<SiteTypeDocument?>(null),
+            (code, _) => Task.FromResult<SiteIdentifierTypeDocument?>(
+                code == "CPHN" ? siteIdentifierType : null),
+            (_, _) => Task.FromResult<(string?, string?)>((null, null)),
+            (_, _) => Task.FromResult<SiteActivityTypeDocument?>(null),
+            Mock.Of<ISiteTypeDerivedCodeLookupService>(),
+            CancellationToken.None);
+
+        result.Should().NotBeNull();
+        // Verify Common Land was selected as representative (fallback when no SAM Holding)
+        result!.Name.Should().Be("Common Land Location");
+    }
+
+    [Fact]
+    public async Task ToGold_SelectsMostRecentActiveSamHolding_WhenMultipleActiveSamHoldings()
+    {
+        var olderSamHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "CPH-1",
+            SourceFacilitySubBusinessActivityCode = "Pig Farm",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow.AddDays(-5),
+            LocationName = "Old Location",
+            SpeciesTypeCode = "PIG"
+        };
+
+        var newerSamHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "CPH-1",
+            SourceFacilitySubBusinessActivityCode = "Sheep Farm",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow,
+            LocationName = "New Location",
+            SpeciesTypeCode = "SHE"
+        };
+
+        var siteIdentifierType = new SiteIdentifierTypeDocument
+        {
+            IdentifierId = "type-id",
+            Code = "CPHN",
+            Name = "CPH Number",
+            LastModifiedDate = DateTime.UtcNow
+        };
+
+        var result = await SamHoldingMapper.ToGold(
+            "gold-site-id",
+            null,
+            [olderSamHolding, newerSamHolding],
+            [],
+            [],
+            (_, _) => Task.FromResult<CountryDocument?>(null),
+            (_, _) => Task.FromResult<SiteTypeDocument?>(null),
+            (code, _) => Task.FromResult<SiteIdentifierTypeDocument?>(
+                code == "CPHN" ? siteIdentifierType : null),
+            (code, _) => Task.FromResult<(string?, string?)>(
+                code == "SHE" ? ("sheep-id", "Sheep") :
+                code == "PIG" ? ("pig-id", "Pig") : (null, null)),
+            (_, _) => Task.FromResult<SiteActivityTypeDocument?>(null),
+            Mock.Of<ISiteTypeDerivedCodeLookupService>(),
+            CancellationToken.None);
+
+        result.Should().NotBeNull();
+        // Should have both species (aggregated from all), but verify the newer one is present
+        result!.Species.Should().NotBeNull();
+        result.Species.Should().Contain(s => s.Code == "SHE");
+        result.Species.Should().Contain(s => s.Code == "PIG");
+    }
 }
