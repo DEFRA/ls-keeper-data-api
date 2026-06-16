@@ -434,7 +434,6 @@ public static class SamHoldingMapper
             effectiveFromDate,
             effectiveToDate,
             approvalCurrentFlag);
-            isPermanentLandHolding ? representative.SecondaryCph : null);
 
         ApplySiteData(site, goldSiteId, representative, goldSiteGroupMarks, goldParties, species, activities, siteIdentifierType);
 
@@ -475,7 +474,6 @@ public static class SamHoldingMapper
             effectiveFromDate,
             effectiveToDate,
             approvalCurrentFlag);
-            isPermanentLandHolding ? representative.SecondaryCph : null);
 
         var (updatedAddress, updatedCommunication) = await ResolveLocationPartsAsync(addressSource, getCountryById, cancellationToken);
 
