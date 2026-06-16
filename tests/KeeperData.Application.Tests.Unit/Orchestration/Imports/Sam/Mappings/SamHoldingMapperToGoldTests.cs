@@ -1,6 +1,7 @@
 using FluentAssertions;
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 using KeeperData.Application.Services;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Services;
@@ -261,6 +262,7 @@ public class SamHoldingMapperToGoldTests
             new List<SamHoldingDocument>() { },
             new List<SiteGroupMarkRelationshipDocument>(),
             new List<PartyDocument>(),
+            new List<SamShowground>(),
             _getCountryById,
             _getSiteTypeByCode,
             _getSiteIdentifierTypeByCode,
@@ -787,6 +789,30 @@ public class SamHoldingMapperToGoldTests
         result.Type.Name.Should().Be("prem2name");
     }
 
+    [Fact]
+    public async Task WhenMappingShowgroundData_ShouldMapEffectiveDatesCorrectly()
+    {
+        // Arrange
+        var inputHolding = new SamHoldingDocument { CountyParishHoldingNumber = "12/345/6789" };
+        var rawShowgrounds = new List<SamShowground>
+        {
+            new SamShowground
+            {
+                CPH = "12/345/6789",
+                START_DATE = DateTime.UtcNow.AddDays(-10),
+                END_DATE = DateTime.UtcNow.AddDays(10)
+            }
+        };
+
+        // Act
+        var result = await WhenIMapSilverSiteToGold(inputHolding, null, null, rawShowgrounds);
+
+        // Assert
+        result!.EffectiveFromDate.Should().Be(rawShowgrounds[0].START_DATE);
+        result.EffectiveToDate.Should().Be(rawShowgrounds[0].END_DATE);
+        result.ApprovalCurrentFlag.Should().BeTrue();
+    }
+
     private static SiteGroupMarkRelationshipDocument CreateGroupMarkRelationshipDocument(string? id = "group-mark-id", string herdmark = "H1000001")
     {
         return new SiteGroupMarkRelationshipDocument()
@@ -833,6 +859,7 @@ public class SamHoldingMapperToGoldTests
             Name = "",
             Source = "SAM",
             HoldingType = string.Empty,
+            ApprovalCurrentFlag = null,
             Location = new LocationDocument()
             {
                 IdentifierId = "any-guid",
@@ -868,12 +895,12 @@ public class SamHoldingMapperToGoldTests
         };
     }
 
-    private async Task<SiteDocument?> WhenIMapSilverSiteToGold(SamHoldingDocument inputHolding, SiteDocument? existingSite, List<SiteGroupMarkRelationshipDocument>? goldSiteGroupMarks = null)
+    private async Task<SiteDocument?> WhenIMapSilverSiteToGold(SamHoldingDocument inputHolding, SiteDocument? existingSite, List<SiteGroupMarkRelationshipDocument>? goldSiteGroupMarks = null, List<SamShowground>? rawShowgrounds = null)
     {
-        return await WhenIMapSilverSitesToGold(new List<SamHoldingDocument>() { inputHolding }, existingSite, goldSiteGroupMarks);
+        return await WhenIMapSilverSitesToGold(new List<SamHoldingDocument>() { inputHolding }, existingSite, goldSiteGroupMarks, rawShowgrounds);
     }
 
-    private async Task<SiteDocument?> WhenIMapSilverSitesToGold(List<SamHoldingDocument> inputHoldings, SiteDocument? existingSite, List<SiteGroupMarkRelationshipDocument>? goldSiteGroupMarks = null)
+    private async Task<SiteDocument?> WhenIMapSilverSitesToGold(List<SamHoldingDocument> inputHoldings, SiteDocument? existingSite, List<SiteGroupMarkRelationshipDocument>? goldSiteGroupMarks = null, List<SamShowground>? rawShowgrounds = null)
     {
         return await SamHoldingMapper.ToGold(
             GoldSiteId,
@@ -881,6 +908,7 @@ public class SamHoldingMapperToGoldTests
             inputHoldings,
             goldSiteGroupMarks ?? [],
             new List<PartyDocument>(),
+            rawShowgrounds ?? [],
             _getCountryById,
             _getSiteTypeByCode,
             _getSiteIdentifierTypeByCode,

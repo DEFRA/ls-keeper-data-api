@@ -11,4 +11,5 @@ public class SamDailyScanContext : ScanContext
     public EntityScanContext Parties { get; init; } = new();
     public EntityScanContext Ports { get; init; } = new();
     public EntityScanContext CommonLands { get; init; } = new();
+    public EntityScanContext Showgrounds { get; init; } = new();
 }

@@ -32,6 +32,9 @@ public class SiteDocumentExtensionsTests
         result.Species.Should().HaveCount(1);
         result.Marks.Should().HaveCount(1);
         result.Activities.Should().HaveCount(1);
+        result.EffectiveFromDate.Should().Be(siteDocument.EffectiveFromDate);
+        result.EffectiveToDate.Should().Be(siteDocument.EffectiveToDate);
+        result.ApprovalCurrentFlag.Should().Be(siteDocument.ApprovalCurrentFlag);
     }
 
     [Fact]
@@ -865,7 +868,10 @@ public class SiteDocumentExtensionsTests
                     },
                     StartDate = DateTime.UtcNow
                 }
-            ]
+            ],
+            EffectiveFromDate = new DateTime(2023, 1, 1),
+            EffectiveToDate = new DateTime(2024, 1, 1),
+            ApprovalCurrentFlag = false
         };
     }
 }

@@ -125,6 +125,7 @@ public class SamHoldingMapperTests
             [silverHolding],
             [],
             [],
+            [],
             (_, _) => Task.FromResult<CountryDocument?>(null),
             (_, _) => Task.FromResult<SiteTypeDocument?>(null),
             (code, _) => Task.FromResult<SiteIdentifierTypeDocument?>(
@@ -168,6 +169,7 @@ public class SamHoldingMapperTests
             [silverHolding],
             [],
             [],
+            [],
             (_, _) => Task.FromResult<CountryDocument?>(null),
             (_, _) => Task.FromResult<SiteTypeDocument?>(null),
             (code, _) => Task.FromResult<SiteIdentifierTypeDocument?>(
@@ -209,6 +211,7 @@ public class SamHoldingMapperTests
             "gold-site-id",
             null,
             [silverHolding],
+            [],
             [],
             [],
             (_, _) => Task.FromResult<CountryDocument?>(null),

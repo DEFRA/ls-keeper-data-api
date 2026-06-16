@@ -161,4 +161,11 @@ public static class DataBridgeQueries
             [FilterKey] = $"CPH eq '{id}'"
         };
     }
+    public static Dictionary<string, string> SamShowgroundsByCph(string id)
+    {
+        return new Dictionary<string, string>
+        {
+            [FilterKey] = $"CPH eq '{id}'"
+        };
+    }
 }

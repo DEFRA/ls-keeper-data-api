@@ -56,7 +56,6 @@ public static class SamHoldingMapper
         var result = new SamHoldingDocument
         {
             // Id - Leave to support upsert assigning Id
-
             LastUpdatedBatchId = h.BATCH_ID,
             CreatedDate = h.CreatedAtUtc ?? DateTime.UtcNow,
             LastUpdatedDate = h.UpdatedAtUtc ?? DateTime.UtcNow,
@@ -109,10 +108,8 @@ public static class SamHoldingMapper
                     AddressTown = h.TOWN,
                     AddressPostCode = h.POSTCODE,
                     CountrySubDivision = h.UK_INTERNAL_CODE,
-
                     CountryIdentifier = countryId,
                     CountryCode = countryCode,
-
                     UniquePropertyReferenceNumber = h.UDPRN
                 }
             },
@@ -135,6 +132,7 @@ public static class SamHoldingMapper
         List<SamHoldingDocument> silverHoldings,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         List<PartyDocument> goldParties,
+        List<SamShowground> rawShowgrounds,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
         Func<string?, CancellationToken, Task<SiteTypeDocument?>> getSiteTypeByCode,
         Func<string?, CancellationToken, Task<SiteIdentifierTypeDocument?>> getSiteIdentifierTypeByCode,
@@ -182,6 +180,35 @@ public static class SamHoldingMapper
             cphnSiteIdentifierTypeDocument.Name,
             cphnSiteIdentifierTypeDocument.LastModifiedDate);
 
+        var showground = rawShowgrounds?.FirstOrDefault();
+        DateTime? effectiveFromDate = null;
+        DateTime? effectiveToDate = null;
+        bool? approvalCurrentFlag = null;
+
+        if (showground != null)
+        {
+            effectiveFromDate = showground.START_DATE;
+            effectiveToDate = showground.END_DATE;
+            var now = DateTime.UtcNow;
+
+            if (effectiveFromDate == null && effectiveToDate == null)
+            {
+                approvalCurrentFlag = true;
+            }
+            else if (effectiveFromDate != null && effectiveToDate == null)
+            {
+                approvalCurrentFlag = now >= effectiveFromDate;
+            }
+            else if (effectiveFromDate == null && effectiveToDate != null)
+            {
+                approvalCurrentFlag = now <= effectiveToDate;
+            }
+            else
+            {
+                approvalCurrentFlag = now >= effectiveFromDate && now <= effectiveToDate;
+            }
+        }
+
         var site = existingSite is not null
             ? await UpdateSiteAsync(
                 representative,
@@ -193,6 +220,9 @@ public static class SamHoldingMapper
                 allDerivedActivities,
                 derivedSiteType,
                 cphnSiteIdentifierType,
+                effectiveFromDate,
+                effectiveToDate,
+                approvalCurrentFlag,
                 cancellationToken)
             : await CreateSiteAsync(
                 goldSiteId,
@@ -204,6 +234,9 @@ public static class SamHoldingMapper
                 allDerivedActivities,
                 derivedSiteType,
                 cphnSiteIdentifierType,
+                effectiveFromDate,
+                effectiveToDate,
+                approvalCurrentFlag,
                 cancellationToken);
 
         return SiteDocument.FromDomain(site);
@@ -313,6 +346,9 @@ public static class SamHoldingMapper
         List<SiteActivity> activities,
         SiteType? siteType,
         SiteIdentifierType? siteIdentifierType,
+        DateTime? effectiveFromDate,
+        DateTime? effectiveToDate,
+        bool? approvalCurrentFlag,
         CancellationToken cancellationToken)
     {
         var address = await LocationMapper.AddressToGold(representative.Location?.Address, getCountryById, cancellationToken);
@@ -347,7 +383,10 @@ public static class SamHoldingMapper
             representative.CphTypeIdentifier,
             siteType,
             location,
-            representative.CphRelationshipType.IsPermanentLandHolding() ? representative.SecondaryCph : null);
+            representative.CphRelationshipType.IsPermanentLandHolding() ? representative.SecondaryCph : null,
+            effectiveFromDate,
+            effectiveToDate,
+            approvalCurrentFlag);
 
         if (siteIdentifierType != null)
         {
@@ -377,6 +416,9 @@ public static class SamHoldingMapper
         List<SiteActivity> activities,
         SiteType? siteType,
         SiteIdentifierType? siteIdentifierType,
+        DateTime? effectiveFromDate,
+        DateTime? effectiveToDate,
+        bool? approvalCurrentFlag,
         CancellationToken cancellationToken)
     {
         var site = existing.ToDomain();
@@ -399,7 +441,10 @@ public static class SamHoldingMapper
             representative.Deleted,
             representative.CphRelationshipType.IsPermanentLandHolding() ? null : representative.SecondaryCph,
             representative.CphTypeIdentifier,
-            representative.CphRelationshipType.IsPermanentLandHolding() ? representative.SecondaryCph : null);
+            representative.CphRelationshipType.IsPermanentLandHolding() ? representative.SecondaryCph : null,
+            effectiveFromDate,
+            effectiveToDate,
+            approvalCurrentFlag);
 
         var updatedAddress = await LocationMapper.AddressToGold(representative.Location?.Address, getCountryById, cancellationToken);
         var updatedCommunication = LocationMapper.CommunicationToGold(representative.Communication);

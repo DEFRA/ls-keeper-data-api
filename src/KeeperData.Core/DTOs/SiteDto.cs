@@ -115,4 +115,13 @@ public class SiteDto
     public List<AssociatedHoldingDto> AssociatedCommonLands { get; set; } = [];
     [JsonPropertyName("permanentLandHoldingIdentifier")]
     public string? PermanentLandHoldingIdentifier { get; set; }
+
+    [JsonPropertyName("effectiveFromDate")]
+    public DateTime? EffectiveFromDate { get; set; }
+
+    [JsonPropertyName("effectiveToDate")]
+    public DateTime? EffectiveToDate { get; set; }
+
+    [JsonPropertyName("approvalCurrentFlag")]
+    public bool? ApprovalCurrentFlag { get; set; }
 }
