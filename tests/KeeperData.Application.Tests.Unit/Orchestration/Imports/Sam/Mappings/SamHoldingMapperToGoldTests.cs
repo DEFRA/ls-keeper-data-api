@@ -812,7 +812,8 @@ public class SamHoldingMapperToGoldTests
         result.EffectiveToDate.Should().Be(rawShowgrounds[0].END_DATE);
         result.ApprovalCurrentFlag.Should().BeTrue();
     }
-  
+
+    [Fact]
     public void SelectAddressSource_WhenCommonLandAndSiteHoldingPresent_ShouldReturnCommonLand()
     {
         var siteHolding = new SamHoldingDocument

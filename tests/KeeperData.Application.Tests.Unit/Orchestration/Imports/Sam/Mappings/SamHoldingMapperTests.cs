@@ -280,6 +280,7 @@ public class SamHoldingMapperTests
             [activeSamHolding, activeCommonLand],
             [],
             [],
+            [],
             (_, _) => Task.FromResult<CountryDocument?>(null),
             (_, _) => Task.FromResult<SiteTypeDocument?>(null),
             (code, _) => Task.FromResult<SiteIdentifierTypeDocument?>(
@@ -332,6 +333,7 @@ public class SamHoldingMapperTests
             [inactiveSamHolding, activeCommonLand],
             [],
             [],
+            [],
             (_, _) => Task.FromResult<CountryDocument?>(null),
             (_, _) => Task.FromResult<SiteTypeDocument?>(null),
             (code, _) => Task.FromResult<SiteIdentifierTypeDocument?>(
@@ -373,6 +375,7 @@ public class SamHoldingMapperTests
             "gold-site-id",
             null,
             [activeCommonLand],
+            [],
             [],
             [],
             (_, _) => Task.FromResult<CountryDocument?>(null),
@@ -424,6 +427,7 @@ public class SamHoldingMapperTests
             "gold-site-id",
             null,
             [olderSamHolding, newerSamHolding],
+            [],
             [],
             [],
             (_, _) => Task.FromResult<CountryDocument?>(null),
