@@ -447,4 +447,90 @@ public class SamHoldingMapperTests
         result.Species.Should().Contain(s => s.Code == "SHE");
         result.Species.Should().Contain(s => s.Code == "PIG");
     }
+
+    [Theory]
+    [InlineData(null, null, true)]   // No effective dates -> always current
+    [InlineData(-5, null, true)]     // Started in the past, no end -> current
+    [InlineData(5, null, false)]     // Starts in the future -> not current
+    [InlineData(null, 5, true)]      // Ends in the future, no start -> current
+    [InlineData(null, -5, false)]    // Ended in the past -> not current
+    [InlineData(-5, 5, true)]        // Within the effective window -> current
+    [InlineData(5, 10, false)]       // Window entirely in the future -> not current
+    [InlineData(-10, -5, false)]     // Window entirely in the past -> not current
+    public async Task ToGold_WithShowground_SetsApprovalCurrentFlagFromEffectiveDates(
+        int? fromOffsetDays, int? toOffsetDays, bool expectedFlag)
+    {
+        var now = DateTime.UtcNow;
+        var showground = new SamShowground
+        {
+            CPH = "12/345/6789",
+            START_DATE = fromOffsetDays.HasValue ? now.AddDays(fromOffsetDays.Value) : null,
+            END_DATE = toOffsetDays.HasValue ? now.AddDays(toOffsetDays.Value) : null
+        };
+
+        var result = await SamHoldingMapper.ToGold(
+            "gold-site-id",
+            null,
+            [BuildSilverHolding()],
+            [],
+            [],
+            [showground],
+            (_, _) => Task.FromResult<CountryDocument?>(null),
+            (_, _) => Task.FromResult<SiteTypeDocument?>(null),
+            (code, _) => Task.FromResult<SiteIdentifierTypeDocument?>(BuildCphnIdentifierType(code)),
+            (_, _) => Task.FromResult<(string?, string?)>((null, null)),
+            (_, _) => Task.FromResult<SiteActivityTypeDocument?>(null),
+            Mock.Of<ISiteTypeDerivedCodeLookupService>(),
+            CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.ApprovalCurrentFlag.Should().Be(expectedFlag);
+        result.EffectiveFromDate.Should().Be(showground.START_DATE);
+        result.EffectiveToDate.Should().Be(showground.END_DATE);
+    }
+
+    [Fact]
+    public async Task ToGold_WithoutShowground_LeavesApprovalFieldsNull()
+    {
+        var result = await SamHoldingMapper.ToGold(
+            "gold-site-id",
+            null,
+            [BuildSilverHolding()],
+            [],
+            [],
+            [],
+            (_, _) => Task.FromResult<CountryDocument?>(null),
+            (_, _) => Task.FromResult<SiteTypeDocument?>(null),
+            (code, _) => Task.FromResult<SiteIdentifierTypeDocument?>(BuildCphnIdentifierType(code)),
+            (_, _) => Task.FromResult<(string?, string?)>((null, null)),
+            (_, _) => Task.FromResult<SiteActivityTypeDocument?>(null),
+            Mock.Of<ISiteTypeDerivedCodeLookupService>(),
+            CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.ApprovalCurrentFlag.Should().BeNull();
+        result.EffectiveFromDate.Should().BeNull();
+        result.EffectiveToDate.Should().BeNull();
+    }
+
+    private static SamHoldingDocument BuildSilverHolding() => new()
+    {
+        CountyParishHoldingNumber = "12/345/6789",
+        LocationName = "Test Farm",
+        HoldingStatus = "Active",
+        CreatedDate = DateTime.UtcNow,
+        LastUpdatedDate = DateTime.UtcNow,
+        HoldingStartDate = DateTime.UtcNow
+    };
+
+    private static SiteIdentifierTypeDocument? BuildCphnIdentifierType(string? code) =>
+        code == "CPHN"
+            ? new SiteIdentifierTypeDocument
+            {
+                IdentifierId = "type-id",
+                Code = "CPHN",
+                Name = "CPH Number",
+                LastModifiedDate = DateTime.UtcNow
+            }
+            : null;
 }

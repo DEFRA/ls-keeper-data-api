@@ -242,22 +242,9 @@ public static class SamHoldingMapper
             effectiveToDate = showground.END_DATE;
             var now = DateTime.UtcNow;
 
-            if (effectiveFromDate == null && effectiveToDate == null)
-            {
-                approvalCurrentFlag = true;
-            }
-            else if (effectiveFromDate != null && effectiveToDate == null)
-            {
-                approvalCurrentFlag = now >= effectiveFromDate;
-            }
-            else if (effectiveFromDate == null && effectiveToDate != null)
-            {
-                approvalCurrentFlag = now <= effectiveToDate;
-            }
-            else
-            {
-                approvalCurrentFlag = now >= effectiveFromDate && now <= effectiveToDate;
-            }
+            approvalCurrentFlag =
+                (effectiveFromDate == null || now >= effectiveFromDate.Value)
+                && (effectiveToDate == null || now <= effectiveToDate.Value);
         }
 
         var site = existingSite is not null
