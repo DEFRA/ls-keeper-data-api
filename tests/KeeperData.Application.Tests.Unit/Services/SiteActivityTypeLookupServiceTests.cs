@@ -115,4 +115,26 @@ public class SiteActivityTypeLookupServiceTests
         result.siteActivityTypeId.Should().BeNull();
         result.siteActivityTypeName.Should().BeNull();
     }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task GetByIdAsync_WhenIdMissing_ReturnsNull(string? id)
+    {
+        var result = await _sut.GetByIdAsync(id, CancellationToken.None);
+
+        result.Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task GetByCodeAsync_WhenCodeMissing_ReturnsNull(string? code)
+    {
+        var result = await _sut.GetByCodeAsync(code, CancellationToken.None);
+
+        result.Should().BeNull();
+    }
 }

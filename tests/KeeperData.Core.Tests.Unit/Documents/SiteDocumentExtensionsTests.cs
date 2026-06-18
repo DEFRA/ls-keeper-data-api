@@ -38,6 +38,59 @@ public class SiteDocumentExtensionsTests
     }
 
     [Fact]
+    public void ToDto_WithAssociatedHoldings_ShouldMapMainAndCommonLandHoldings()
+    {
+        // Arrange
+        var siteDocument = new SiteDocument
+        {
+            Id = "site-123",
+            Name = "Test Site",
+            StartDate = DateTime.UtcNow,
+            LastUpdatedDate = DateTime.UtcNow,
+            Identifiers = [],
+            Parties = [],
+            Species = [],
+            Marks = [],
+            Activities = [],
+            AssociatedMainHoldings =
+            [
+                new AssociatedHoldingDocument
+                {
+                    HoldingIdentifier = "12/345/6789",
+                    ContiguousFlag = true,
+                    StartDate = "2023-01-01",
+                    EndDate = "2024-01-01"
+                }
+            ],
+            AssociatedCommonLands =
+            [
+                new AssociatedHoldingDocument
+                {
+                    HoldingIdentifier = "98/765/4321",
+                    ContiguousFlag = false,
+                    StartDate = "2022-06-01",
+                    EndDate = null
+                }
+            ]
+        };
+
+        // Act
+        var result = siteDocument.ToDto();
+
+        // Assert
+        result.AssociatedMainHoldings.Should().ContainSingle();
+        result.AssociatedMainHoldings[0].HoldingIdentifier.Should().Be("12/345/6789");
+        result.AssociatedMainHoldings[0].ContiguousFlag.Should().BeTrue();
+        result.AssociatedMainHoldings[0].StartDate.Should().Be("2023-01-01");
+        result.AssociatedMainHoldings[0].EndDate.Should().Be("2024-01-01");
+
+        result.AssociatedCommonLands.Should().ContainSingle();
+        result.AssociatedCommonLands[0].HoldingIdentifier.Should().Be("98/765/4321");
+        result.AssociatedCommonLands[0].ContiguousFlag.Should().BeFalse();
+        result.AssociatedCommonLands[0].EndDate.Should().BeNull();
+    }
+
+    [Fact]
     public void ToDto_WithMinimalSiteDocument_ShouldHandleNullCollections()
     {
         // Arrange
