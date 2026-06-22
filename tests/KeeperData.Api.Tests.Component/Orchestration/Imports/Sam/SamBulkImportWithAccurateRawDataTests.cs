@@ -51,6 +51,15 @@ public class SamBulkImportWithAccurateRawDataTests(AppTestFixture appTestFixture
         VerifyGoldSiteGroupMarks(updateResult.GoldSiteGroupMarks!, updateScenarioData.ExpectedGoldSiteGroupMarks!);
     }
 
+    [Fact]
+    public async Task GivenACommonLandHolding_WhenExecutingTheBulkImportStrategy_ShouldUseCommonLandAddressDetails()
+    {
+        var scenarioData = SamTestScenarios.Scenario_CommonLandOnly;
+        var result = await RunDefaultScenarioAsync(scenarioData);
+
+        VerifyGoldSite(result.GoldSite!, scenarioData.ExpectedGoldSite!);
+    }
+
     private async Task<SamHoldingImportContext> RunDefaultScenarioAsync(SamTestScenarioData scenarioData, SamHoldingImportContext? existingContext = null)
     {
         var partyIds = scenarioData.RawParties.Select(x => x.PARTY_ID).Union(scenarioData.RawHolders.Select(x => x.PARTY_ID)).Distinct().ToList();

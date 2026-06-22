@@ -987,7 +987,7 @@ public class SamHoldingMapperToGoldTests
             Id = GoldSiteId,
             Name = "",
             Source = "SAM",
-            HoldingType = string.Empty,
+            HoldingType = null,
             Location = new LocationDocument()
             {
                 IdentifierId = "any-guid",

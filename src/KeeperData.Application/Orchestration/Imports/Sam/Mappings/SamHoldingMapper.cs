@@ -289,6 +289,9 @@ public static class SamHoldingMapper
                 cancellationToken);
         }
 
+        // If no derived mapping resolved a site type, fall back to the explicit site type code on the representative
+        derivedSiteType ??= await ResolveSiteTypeAsync(representative.SiteTypeCode, getSiteTypeByCode, cancellationToken);
+
         return (allDerivedActivities, derivedSiteType);
     }
 
@@ -391,7 +394,7 @@ public static class SamHoldingMapper
             null,
             representative.Deleted,
             isPermanentLandHolding ? null : representative.SecondaryCph,
-            representative.CphTypeIdentifier,
+            string.IsNullOrEmpty(representative.CphTypeIdentifier) ? null : representative.CphTypeIdentifier,
             siteType,
             location,
             isPermanentLandHolding ? representative.SecondaryCph : null);
@@ -427,7 +430,7 @@ public static class SamHoldingMapper
             null,
             representative.Deleted,
             isPermanentLandHolding ? null : representative.SecondaryCph,
-            representative.CphTypeIdentifier,
+            string.IsNullOrEmpty(representative.CphTypeIdentifier) ? null : representative.CphTypeIdentifier,
             isPermanentLandHolding ? representative.SecondaryCph : null);
 
         var (updatedAddress, updatedCommunication) = await ResolveLocationPartsAsync(addressSource, getCountryById, cancellationToken);
