@@ -203,18 +203,18 @@ public static class SamHoldingMapper
 
     public static SamHoldingDocument SelectAddressSource(List<SamHoldingDocument> silverHoldings, ILogger? logger = null)
     {
-        const string commonLandBusinessUsage = "Common Land";
-
-        // Common land address takes precedence — use the most recently updated common land if present
+        // Prefer the document that came directly from the common lands API endpoint — it is the
+        // authoritative address source. A holding document can also carry
+        // SourceFacilitySubBusinessActivityCode == "Common Land" but its address originates from
+        // the SAM holdings table, which must not override the common land address.
         var commonLand = silverHoldings
-            .Where(x => x.SourceFacilitySubBusinessActivityCode == commonLandBusinessUsage)
-            .OrderByDescending(h => h.LastUpdatedDate)
+            .Where(x => x.IsFromCommonLandSource)
             .FirstOrDefault();
 
         if (commonLand != null)
         {
             logger?.LogInformation(
-                "SelectAddressSource: using Common Land address for CPH {Cph}: AddressLine={AddressLine}, Street={Street}, Town={Town}, PostCode={PostCode}",
+                "SelectAddressSource: using Common Land source address for CPH {Cph}: AddressLine={AddressLine}, Street={Street}, Town={Town}, PostCode={PostCode}",
                 commonLand.CountyParishHoldingNumber,
                 commonLand.Location?.Address?.AddressLine,
                 commonLand.Location?.Address?.AddressStreet,
@@ -224,7 +224,7 @@ public static class SamHoldingMapper
         }
 
         logger?.LogInformation(
-            "SelectAddressSource: no Common Land found for CPH {Cph}, falling back to representative holding",
+            "SelectAddressSource: no Common Land source found for CPH {Cph}, falling back to representative holding",
             silverHoldings.FirstOrDefault()?.CountyParishHoldingNumber);
         return SelectRepresentativeHolding(silverHoldings, logger);
     }

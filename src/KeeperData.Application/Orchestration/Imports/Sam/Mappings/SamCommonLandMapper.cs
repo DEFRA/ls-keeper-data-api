@@ -20,21 +20,32 @@ public static class SamCommonLandMapper
 
         var result = new List<SamHoldingDocument>();
 
-        foreach (var representative in rawCommonLands.Where(r => !string.IsNullOrWhiteSpace(r.COMMON_CPH)))
-        {
-            var commonCph = representative.COMMON_CPH!;
+        var groups = rawCommonLands
+            .Where(r => !string.IsNullOrWhiteSpace(r.COMMON_CPH))
+            .GroupBy(r => r.COMMON_CPH);
 
-            var associatedMainHoldings = new List<AssociatedHoldingRelationship>();
-            if (representative.IsMainCphPopulated)
-            {
-                associatedMainHoldings.Add(new AssociatedHoldingRelationship
+        foreach (var group in groups)
+        {
+            var commonCph = group.Key!;
+
+            // Use the most recently updated row as the source for address and metadata.
+            // All rows in the group share the same physical common land, so the address
+            // fields are equivalent; this just ensures we use the freshest record.
+            var representative = group
+                .OrderByDescending(r => r.UpdatedAtUtc ?? DateTime.MinValue)
+                .First();
+
+            // Collect every main-CPH relationship from all rows in the group into one list.
+            var associatedMainHoldings = group
+                .Where(r => r.IsMainCphPopulated)
+                .Select(r => new AssociatedHoldingRelationship
                 {
-                    HoldingIdentifier = representative.MAIN_CPH,
-                    ContiguousFlag = string.Equals(representative.CONTIGUOUS_COMMON, "Yes", StringComparison.OrdinalIgnoreCase),
-                    StartDate = NormaliseDate(representative.START_DATE),
-                    EndDate = NormaliseDate(representative.END_DATE)
-                });
-            }
+                    HoldingIdentifier = r.MAIN_CPH,
+                    ContiguousFlag = string.Equals(r.CONTIGUOUS_COMMON, "Yes", StringComparison.OrdinalIgnoreCase),
+                    StartDate = NormaliseDate(r.START_DATE),
+                    EndDate = NormaliseDate(r.END_DATE)
+                })
+                .ToList();
 
             var (countryId, countryCode, _) = await resolveCountry(representative.COUNTRY, null, cancellationToken);
 
@@ -45,6 +56,7 @@ public static class SamCommonLandMapper
                 LastUpdatedDate = representative.UpdatedAtUtc ?? DateTime.UtcNow,
                 Deleted = representative.IsDeleted ?? false,
 
+                IsFromCommonLandSource = true,
                 SourceFacilitySubBusinessActivityCode = CommonLandBusinessUsage,
 
                 CountyParishHoldingNumber = commonCph,
