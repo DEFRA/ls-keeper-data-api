@@ -620,4 +620,90 @@ public static class ExpectedGoldSite
             Activities = []
             //Activities = [.. DefaultExpectedSite.Activities.Where(x => x.Type.Code == "RM")]
         };
+
+    public static SiteDocument ExpectedSite_CommonLandOnly =>
+        new()
+        {
+            Id = Guid.NewGuid().ToString(),
+            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0),
+            LastUpdatedDate = new DateTime(2025, 11, 13, 0, 0, 0),
+            Type = new SiteTypeSummaryDocument
+            {
+                IdentifierId = "cl-site-type-id",
+                Code = "CL",
+                Name = "Common Land"
+            },
+            Name = "Premises 22",
+            State = HoldingStatusType.Active.GetDescription(),
+            StartDate = default,
+            EndDate = null,
+            Source = SourceSystemType.SAM.ToString(),
+            DestroyIdentityDocumentsFlag = null,
+            Deleted = false,
+
+            Location = new LocationDocument
+            {
+                IdentifierId = Guid.NewGuid().ToString(),
+                Easting = null,
+                Northing = null,
+                OsMapReference = null,
+
+                Address = new AddressDocument
+                {
+                    IdentifierId = Guid.NewGuid().ToString(),
+                    AddressLine1 = "Holding Street 22",
+                    AddressLine2 = "Town22",
+                    PostTown = "Locality22",
+                    Postcode = "CPH22 222",
+                    LastUpdatedDate = new DateTime(2025, 11, 13, 0, 0, 0)
+                },
+
+                Communication =
+                [
+                    new()
+                    {
+                        IdentifierId = Guid.NewGuid().ToString(),
+                        Email = null,
+                        Mobile = null,
+                        Landline = null,
+                        PrimaryContactFlag = false,
+                        LastUpdatedDate = new DateTime(2025, 11, 13, 0, 0, 0)
+                    }
+                ],
+
+                LastUpdatedDate = new DateTime(2025, 11, 13, 0, 0, 0)
+            },
+
+            Identifiers =
+            [
+                new()
+                {
+                    IdentifierId = Guid.NewGuid().ToString(),
+                    Identifier = "00/000/8267",
+                    Type = new SiteIdentifierSummaryDocument
+                    {
+                        IdentifierId = Guid.NewGuid().ToString(),
+                        Code = HoldingIdentifierType.CPHN.ToString(),
+                        Name = HoldingIdentifierType.CPHN.GetDescription()!,
+                        LastUpdatedDate = new DateTime(2025, 11, 13, 0, 0, 0)
+                    },
+                    LastUpdatedDate = new DateTime(2025, 11, 13, 0, 0, 0)
+                }
+            ],
+
+            Parties = [],
+            Species = [],
+            Marks = [],
+            Activities = [],
+            AssociatedMainHoldings =
+            [
+                new()
+                {
+                    HoldingIdentifier = "17/050/0003",
+                    ContiguousFlag = false,
+                    StartDate = null,
+                    EndDate = null
+                }
+            ]
+        };
 }
