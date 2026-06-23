@@ -208,8 +208,7 @@ public static class SamHoldingMapper
         // SourceFacilitySubBusinessActivityCode == "Common Land" but its address originates from
         // the SAM holdings table, which must not override the common land address.
         var commonLand = silverHoldings
-            .Where(x => x.IsFromCommonLandSource)
-            .FirstOrDefault();
+            .FirstOrDefault(x => x.IsFromCommonLandSource);
 
         if (commonLand != null)
         {
