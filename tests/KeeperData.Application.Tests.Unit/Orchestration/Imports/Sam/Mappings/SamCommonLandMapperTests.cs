@@ -228,9 +228,12 @@ public class SamCommonLandMapperTests
         // Act
         var result = await SamCommonLandMapper.ToSilver(rawCommonLands, NoopResolveCountry, CancellationToken.None);
 
-        // Assert
-        result[1].AssociatedMainHoldings[0].StartDate.Should().BeNull();
-        result[1].AssociatedMainHoldings[0].EndDate.Should().BeNull();
+        // Assert — both rows share the same COMMON_CPH so they are merged into one document
+        result.Should().HaveCount(1);
+        var holding = result[0];
+        holding.AssociatedMainHoldings.Should().HaveCount(1);
+        holding.AssociatedMainHoldings[0].StartDate.Should().BeNull();
+        holding.AssociatedMainHoldings[0].EndDate.Should().BeNull();
     }
 
     [Fact]
