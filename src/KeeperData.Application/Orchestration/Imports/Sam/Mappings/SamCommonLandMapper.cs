@@ -1,7 +1,6 @@
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Sites.Formatters;
-using Microsoft.Extensions.Logging;
 using System.Globalization;
 
 namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
@@ -14,8 +13,7 @@ public static class SamCommonLandMapper
     public static async Task<List<SamHoldingDocument>> ToSilver(
         List<SamCommonLand> rawCommonLands,
         Func<string?, string?, CancellationToken, Task<(string? countryId, string? countryCode, string? countryName)>> resolveCountry,
-        CancellationToken cancellationToken,
-        ILogger? logger = null)
+        CancellationToken cancellationToken)
     {
         if (rawCommonLands == null || rawCommonLands.Count == 0)
             return [];
@@ -48,14 +46,6 @@ public static class SamCommonLandMapper
                     EndDate = NormaliseDate(r.END_DATE)
                 })
                 .ToList();
-
-            logger?.LogInformation(
-                "SamCommonLandMapper: CPH {Cph} representative row — AddressLine1={AddressLine1}, AddressLine2={AddressLine2}, Locality={Locality}, PostCode={PostCode}",
-                commonCph,
-                representative.ADDRESS_LINE_1,
-                representative.ADDRESS_LINE_2,
-                representative.ADDRESS_LINE_3,
-                representative.POSTCODE);
 
             var (countryId, countryCode, _) = await resolveCountry(representative.COUNTRY, null, cancellationToken);
 
