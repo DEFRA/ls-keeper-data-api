@@ -225,6 +225,11 @@ public static class SamHoldingMapper
         return SelectRepresentativeHolding(silverHoldings, logger);
     }
 
+    private static string ResolveSiteName(SamHoldingDocument representative, SamHoldingDocument addressSource)
+        => addressSource.IsFromCommonLandSource
+            ? addressSource.LocationName ?? string.Empty
+            : representative.LocationName ?? string.Empty;
+
     public static async Task<SiteDocument?> ToGold(
         string goldSiteId,
         SiteDocument? existingSite,
@@ -460,7 +465,7 @@ public static class SamHoldingMapper
             goldSiteId,
             representative.CreatedDate,
             representative.LastUpdatedDate,
-            representative.LocationName ?? string.Empty,
+            ResolveSiteName(representative, addressSource),
             representative.HoldingStartDate,
             representative.HoldingEndDate,
             representative.HoldingStatus,
@@ -502,7 +507,7 @@ public static class SamHoldingMapper
 
         site.Update(
             representative.LastUpdatedDate,
-            representative.LocationName ?? string.Empty,
+            ResolveSiteName(representative, addressSource),
             representative.HoldingStartDate,
             representative.HoldingEndDate,
             representative.HoldingStatus,
