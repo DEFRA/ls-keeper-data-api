@@ -28,10 +28,12 @@ public class SamHoldingImportAggregationStepTests
         var herd = new SamHerd { OWNER_PARTY_IDS = "P1", KEEPER_PARTY_IDS = "P2" };
         var party1 = new SamParty { PARTY_ID = "P1" };
         var party2 = new SamParty { PARTY_ID = "P2" };
+        var showground = new SamShowground { CPH = "12/345/6789" };
 
         _clientMock.Setup(x => x.GetSamHoldingsAsync(context.Cph, It.IsAny<CancellationToken>())).ReturnsAsync([holding]);
         _clientMock.Setup(x => x.GetSamHoldersByCphAsync(context.Cph, It.IsAny<CancellationToken>())).ReturnsAsync([holder]);
         _clientMock.Setup(x => x.GetSamHerdsAsync(context.Cph, It.IsAny<CancellationToken>())).ReturnsAsync([herd]);
+        _clientMock.Setup(x => x.GetSamShowgroundsByCphAsync(context.Cph, It.IsAny<CancellationToken>())).ReturnsAsync([showground]);
 
         _clientMock.Setup(x => x.GetSamPartiesAsync(
             It.Is<IEnumerable<string>>(ids => ids.Contains("P1") && ids.Contains("P2")),
@@ -44,6 +46,7 @@ public class SamHoldingImportAggregationStepTests
         context.RawHolders.Should().Contain(holder);
         context.RawHerds.Should().Contain(herd);
         context.RawParties.Should().HaveCount(2);
+        context.RawShowgrounds.Should().Contain(showground);
     }
 
     [Fact]

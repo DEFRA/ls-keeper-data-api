@@ -47,7 +47,7 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         var ports = new List<SamPort>();
         var commonLands = new List<SamCommonLand>();
 
-        var (holdingsUri, herdsUri, holdersUri, partiesUri, commonLandsUri, portsUri) = GetAllQueryUris(holdingIdentifier, parties.Select(x => x.PARTY_ID));
+        var (holdingsUri, herdsUri, holdersUri, partiesUri, commonLandsUri, portsUri, showgroundsUri) = GetAllQueryUris(holdingIdentifier, parties.Select(x => x.PARTY_ID));
 
         SetupRepositoryMocks();
         SetupLookupServiceMocks();
@@ -58,6 +58,7 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, partiesUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(parties));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, portsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(ports));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, commonLandsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(commonLands));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, showgroundsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(new List<KeeperData.Core.ApiClients.DataBridgeApi.Contracts.SamShowground>()));
 
         var result = await ExecuteTestAsync(_appTestFixture.AppWebApplicationFactory, holdingIdentifier);
 
@@ -115,7 +116,7 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         var ports = new List<SamPort>();
         var commonLands = new List<SamCommonLand>();
 
-        var (holdingsUri, herdsUri, holdersUri, partiesUri, commonLandsUri, portsUri) = GetAllQueryUris(cph, []);
+        var (holdingsUri, herdsUri, holdersUri, partiesUri, commonLandsUri, portsUri, showgroundsUri) = GetAllQueryUris(cph, []);
 
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holdings));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, herdsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(herds));
@@ -123,6 +124,7 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, partiesUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(parties));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, portsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(ports));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, commonLandsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(commonLands));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, showgroundsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(new List<KeeperData.Core.ApiClients.DataBridgeApi.Contracts.SamShowground>()));
 
         // Act
         await ExecuteTestAsync(_appTestFixture.AppWebApplicationFactory, cph);
@@ -240,7 +242,7 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         }
     }
 
-    private static (string holdingsUri, string herdsUri, string holdersUri, string partiesUri, string commonLandsUri, string portsUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)
+    private static (string holdingsUri, string herdsUri, string holdersUri, string partiesUri, string commonLandsUri, string portsUri, string showgroundsUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)
     {
         var holdingsUri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamHoldings,
@@ -272,7 +274,12 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
             new { },
             DataBridgeQueries.SamPortsByCph(holdingIdentifier));
 
-        return (holdingsUri, herdsUri, holdersUri, partiesUri, commonLandsUri, portsUri);
+        var showgroundsUri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamShowgrounds,
+            new { },
+            DataBridgeQueries.SamShowgroundsByCph(holdingIdentifier));
+
+        return (holdingsUri, herdsUri, holdersUri, partiesUri, commonLandsUri, portsUri, showgroundsUri);
     }
 
     private void SetupRepositoryMocks(

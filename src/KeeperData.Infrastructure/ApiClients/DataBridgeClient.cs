@@ -454,6 +454,45 @@ public class DataBridgeClient(
         return result.Data;
     }
 
+    public async Task<List<SamShowground>> GetSamShowgroundsByCphAsync(string cph, CancellationToken cancellationToken)
+    {
+        var query = DataBridgeQueries.SamShowgroundsByCph(cph);
+        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamShowgrounds, new { }, query);
+
+        var result = await GetFromApiAsync<SamShowground>(
+            uri,
+            $"Sam showgrounds for CPH '{cph}'",
+            cancellationToken);
+
+        return result.Data;
+    }
+
+    public async Task<DataBridgeResponse<T>?> GetSamShowgroundsAsync<T>(
+    int top,
+    int skip,
+    string? selectFields = null,
+    DateTime? updatedSinceDateTime = null,
+    string? orderBy = null,
+    CancellationToken cancellationToken = default)
+    {
+        var _samShowgroundsEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamShowgroundsEnabled");
+        if (!_samShowgroundsEnabled) return null;
+
+        return await ExecutePagedRequestWithMetricsAsync<T>(
+            "sam_showgrounds",
+            top,
+            async () =>
+            {
+                var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
+                var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamShowgrounds, new { }, query);
+
+                return await GetFromApiAsync<T>(
+                    uri,
+                    $"Sam paged showgrounds for top '{top}', skip '{skip}'",
+                    cancellationToken);
+            });
+    }
+
     private async Task<DataBridgeResponse<T>?> ExecutePagedRequestWithMetricsAsync<T>(
         string collectionName,
         int batchSize,

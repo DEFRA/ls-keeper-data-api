@@ -159,6 +159,18 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     [JsonPropertyName("associatedCommonLands")]
     public List<AssociatedHoldingDocument> AssociatedCommonLands { get; set; } = [];
 
+    [BsonElement("effectiveFromDate")]
+    [JsonPropertyName("effectiveFromDate")]
+    public DateTime? EffectiveFromDate { get; set; }
+
+    [BsonElement("effectiveToDate")]
+    [JsonPropertyName("effectiveToDate")]
+    public DateTime? EffectiveToDate { get; set; }
+
+    [BsonElement("approvalCurrentFlag")]
+    [JsonPropertyName("approvalCurrentFlag")]
+    public bool? ApprovalCurrentFlag { get; set; }
+
     public static SiteDocument FromDomain(Site m) => new()
     {
         Id = m.Id,
@@ -180,7 +192,10 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         Activities = [.. m.Activities.Select(SiteActivityDocument.FromDomain)],
         ParentSiteIdentifier = m.ParentSiteIdentifier,
         HoldingType = m.HoldingType,
-        PermanentLandHoldingIdentifier = m.PermanentLandHoldingIdentifier
+        PermanentLandHoldingIdentifier = m.PermanentLandHoldingIdentifier,
+        EffectiveFromDate = m.EffectiveFromDate,
+        EffectiveToDate = m.EffectiveToDate,
+        ApprovalCurrentFlag = m.ApprovalCurrentFlag
     };
 
     public Site ToDomain()
@@ -200,7 +215,10 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
             Location?.ToDomain(),
             ParentSiteIdentifier,
             HoldingType,
-            PermanentLandHoldingIdentifier
+            PermanentLandHoldingIdentifier,
+            EffectiveFromDate,
+            EffectiveToDate,
+            ApprovalCurrentFlag
         );
 
         foreach (var si in Identifiers)
