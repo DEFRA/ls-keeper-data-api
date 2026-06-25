@@ -265,6 +265,7 @@ public class AppWebApplicationFactory(
         Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamPartiesEnabled", "true");
         Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamPortsEnabled", "true");
         Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamCommonLandsEnabled", "true");
+        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamShowgroundsEnabled", "true");
         Environment.SetEnvironmentVariable("BulkScanEndpointsEnabled", "false");
         Environment.SetEnvironmentVariable("DailyScanEndpointsEnabled", "false");
         Environment.SetEnvironmentVariable("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicName", "ls_keeper_data_import_complete");

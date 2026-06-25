@@ -510,8 +510,8 @@ public static class SamHoldingMapper
             null,
             representative.Deleted,
             isPermanentLandHolding ? null : representative.SecondaryCph,
-            representative.CphTypeIdentifier,
-            representative.CphRelationshipType.IsPermanentLandHolding() ? representative.SecondaryCph : null,
+            string.IsNullOrEmpty(representative.CphTypeIdentifier) ? null : representative.CphTypeIdentifier,
+            isPermanentLandHolding ? representative.SecondaryCph : null,
             effectiveFromDate,
             effectiveToDate,
             approvalCurrentFlag);

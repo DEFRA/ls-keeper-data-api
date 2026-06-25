@@ -1018,7 +1018,7 @@ public class SamHoldingMapperToGoldTests
             Id = GoldSiteId,
             Name = "",
             Source = "SAM",
-            HoldingType = string.Empty,
+            HoldingType = null,
             ApprovalCurrentFlag = null,
             Location = new LocationDocument()
             {
