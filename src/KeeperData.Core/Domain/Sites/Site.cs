@@ -22,6 +22,9 @@ public class Site : IAggregateRoot
     public string? ParentSiteIdentifier { get; private set; }
     public string? HoldingType { get; private set; }
     public string? PermanentLandHoldingIdentifier { get; private set; }
+    public DateTime? EffectiveFromDate { get; private set; }
+    public DateTime? EffectiveToDate { get; private set; }
+    public bool? ApprovalCurrentFlag { get; private set; }
 
     private readonly List<SiteIdentifier> _identifiers = [];
     public IReadOnlyCollection<SiteIdentifier> Identifiers => _identifiers.AsReadOnly();
@@ -60,7 +63,10 @@ public class Site : IAggregateRoot
         Location? location,
         string? parentSiteIdentifier,
         string? holdingType,
-        string? permanentLandHoldingIdentifier)
+        string? permanentLandHoldingIdentifier,
+        DateTime? effectiveFromDate = null,
+        DateTime? effectiveToDate = null,
+        bool? approvalCurrentFlag = null)
     {
         Id = id;
         CreatedDate = createdDate;
@@ -77,6 +83,9 @@ public class Site : IAggregateRoot
         ParentSiteIdentifier = parentSiteIdentifier;
         HoldingType = holdingType;
         PermanentLandHoldingIdentifier = permanentLandHoldingIdentifier;
+        EffectiveFromDate = effectiveFromDate;
+        EffectiveToDate = effectiveToDate;
+        ApprovalCurrentFlag = approvalCurrentFlag;
     }
 
     public static Site Create(
@@ -94,7 +103,10 @@ public class Site : IAggregateRoot
         string? holdingType,
         SiteType? type = null,
         Location? location = null,
-        string? permanentLandHoldingIdentifier = null)
+        string? permanentLandHoldingIdentifier = null,
+        DateTime? effectiveFromDate = null,
+        DateTime? effectiveToDate = null,
+        bool? approvalCurrentFlag = null)
     {
         var site = new Site(
             id,
@@ -111,7 +123,10 @@ public class Site : IAggregateRoot
             location,
             parentSiteIdentifier,
             holdingType,
-            permanentLandHoldingIdentifier);
+            permanentLandHoldingIdentifier,
+            effectiveFromDate,
+            effectiveToDate,
+            approvalCurrentFlag);
 
         site._domainEvents.Add(new SiteCreatedDomainEvent(site.Id));
         return site;
@@ -128,7 +143,10 @@ public class Site : IAggregateRoot
         bool deleted,
         string? parentSiteIdentifier,
         string? holdingType,
-        string? permanentLandHoldingIdentifier)
+        string? permanentLandHoldingIdentifier,
+        DateTime? effectiveFromDate = null,
+        DateTime? effectiveToDate = null,
+        bool? approvalCurrentFlag = null)
     {
         var changed = false;
 
@@ -142,6 +160,9 @@ public class Site : IAggregateRoot
         changed |= Change(ParentSiteIdentifier, parentSiteIdentifier, v => ParentSiteIdentifier = v, lastUpdatedDate);
         changed |= Change(HoldingType, holdingType, v => HoldingType = v, lastUpdatedDate);
         changed |= Change(PermanentLandHoldingIdentifier, permanentLandHoldingIdentifier, v => PermanentLandHoldingIdentifier = v, lastUpdatedDate);
+        changed |= Change(EffectiveFromDate, effectiveFromDate, v => EffectiveFromDate = v, lastUpdatedDate);
+        changed |= Change(EffectiveToDate, effectiveToDate, v => EffectiveToDate = v, lastUpdatedDate);
+        changed |= Change(ApprovalCurrentFlag, approvalCurrentFlag, v => ApprovalCurrentFlag = v, lastUpdatedDate);
 
         if (changed)
         {

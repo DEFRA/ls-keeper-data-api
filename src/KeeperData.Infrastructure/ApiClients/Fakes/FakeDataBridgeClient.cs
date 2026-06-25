@@ -254,6 +254,31 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult(GetSamCommonLands(commonCph: cph));
     }
 
+    public Task<DataBridgeResponse<T>?> GetSamShowgroundsAsync<T>(
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
+        CancellationToken cancellationToken = default)
+    {
+        var data = Enumerable.Range(0, top).Select(_ => GetSamShowground()).SelectMany(x => x).ToList();
+
+        if (updatedSinceDateTime.HasValue)
+        {
+            data = data.Where(x => (x.UpdatedAtUtc >= updatedSinceDateTime) || (x.CreatedAtUtc >= updatedSinceDateTime)).ToList();
+        }
+
+        var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
+        var response = GetDataBridgeResponse(objects!, top, skip);
+        return Task.FromResult<DataBridgeResponse<T>?>(response);
+    }
+
+    public Task<List<SamShowground>> GetSamShowgroundsByCphAsync(string cph, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(GetSamShowground(cph));
+    }
+
     private Task<DataBridgeResponse<T>?> GenerateFakeCtsAgentOrKeeperResponseAsync<T>(int top, int skip)
     {
         var data = Enumerable.Range(0, top).Select(_ => GetCtsAgentOrKeeper()).SelectMany(x => x).ToList();
@@ -461,6 +486,20 @@ public class FakeDataBridgeClient : IDataBridgeClient
                 NORTHING = "569204",
                 LINK_ID = "-1",
                 CONTIGUOUS_COMMON = "No"
+            }];
+    }
+    private List<SamShowground> GetSamShowground(string? id = null)
+    {
+        return [
+            new SamShowground {
+                BATCH_ID = 1,
+                CHANGE_TYPE = "I",
+                IsDeleted = false,
+                UpdatedAtUtc = DateTime.UtcNow,
+                CreatedAtUtc = DateTime.UtcNow,
+                CPH = id ?? $"{_random.Next(10, 99)}/{_random.Next(100, 999)}/{_random.Next(1000, 9999)}",
+                START_DATE = DateTime.Today.AddDays(-10),
+                END_DATE = null
             }];
     }
 }

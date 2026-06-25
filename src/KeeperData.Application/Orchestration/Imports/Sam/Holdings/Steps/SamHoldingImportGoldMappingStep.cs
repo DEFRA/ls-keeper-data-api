@@ -60,6 +60,7 @@ public class SamHoldingImportGoldMappingStep(
                 context.SilverHoldings,
                 context.GoldSiteGroupMarks,
                 context.GoldParties,
+                context.RawShowgrounds,
                 countryIdentifierLookupService.GetByIdAsync,
                 siteTypeLookupService.GetByCodeAsync,
                 siteIdentifierTypeLookupService.GetByCodeAsync,

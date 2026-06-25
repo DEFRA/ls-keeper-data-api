@@ -32,7 +32,10 @@ public static class SiteDocumentExtensions
         PermanentLandHoldingIdentifier = doc.PermanentLandHoldingIdentifier,
         LocalAuthorityName = doc.LocalAuthorityName,
         AssociatedMainHoldings = doc.AssociatedMainHoldings?.Select(h => h.ToDto()).ToList() ?? [],
-        AssociatedCommonLands = doc.AssociatedCommonLands?.Select(h => h.ToDto()).ToList() ?? []
+        AssociatedCommonLands = doc.AssociatedCommonLands?.Select(h => h.ToDto()).ToList() ?? [],
+        EffectiveFromDate = doc.EffectiveFromDate,
+        EffectiveToDate = doc.EffectiveToDate,
+        ApprovalCurrentFlag = doc.ApprovalCurrentFlag
     };
 
     private static AssociatedHoldingDto ToDto(this AssociatedHoldingDocument doc) => new()

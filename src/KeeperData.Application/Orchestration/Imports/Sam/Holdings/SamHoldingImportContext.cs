@@ -34,4 +34,5 @@ public class SamHoldingImportContext
 
     public List<SitePartyRoleRelationship> PartiesWithNoRelationshipToSiteToClean { get; set; } = [];
     public List<SamPort> RawPorts { get; set; } = [];
+    public List<SamShowground> RawShowgrounds { get; set; } = [];
 }

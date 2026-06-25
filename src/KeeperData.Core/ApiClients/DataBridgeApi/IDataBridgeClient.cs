@@ -93,4 +93,13 @@ public interface IDataBridgeClient
         string? orderBy = null,
         CancellationToken cancellationToken = default);
     Task<List<SamCommonLand>> GetSamCommonLandsByCommonCphAsync(string cph, CancellationToken cancellationToken);
+
+    Task<DataBridgeResponse<T>?> GetSamShowgroundsAsync<T>(
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
+        CancellationToken cancellationToken = default);
+    Task<List<SamShowground>> GetSamShowgroundsByCphAsync(string cph, CancellationToken cancellationToken);
 }
