@@ -1,6 +1,7 @@
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
+using Microsoft.Extensions.Logging;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Domain.Sites;
@@ -126,7 +127,7 @@ public static class SamHoldingMapper
         return result;
     }
 
-    internal static SamHoldingDocument SelectRepresentativeHolding(List<SamHoldingDocument> silverHoldings)
+    internal static SamHoldingDocument SelectRepresentativeHolding(List<SamHoldingDocument> silverHoldings, ILogger? logger = null)
     {
         const string commonLandBusinessUsage = "Common Land";
         var activeStatus = HoldingStatusType.Active.GetDescription();
@@ -138,7 +139,16 @@ public static class SamHoldingMapper
             .FirstOrDefault();
 
         if (activeSamHolding != null)
+        {
+            logger?.LogInformation(
+                "SelectRepresentativeHolding: Priority 1 (active, not Common Land) selected for CPH {Cph}: AddressLine={AddressLine}, Street={Street}, Town={Town}, PostCode={PostCode}",
+                activeSamHolding.CountyParishHoldingNumber,
+                activeSamHolding.Location?.Address?.AddressLine,
+                activeSamHolding.Location?.Address?.AddressStreet,
+                activeSamHolding.Location?.Address?.AddressTown,
+                activeSamHolding.Location?.Address?.AddressPostCode);
             return activeSamHolding;
+        }
 
         // Priority 2: Any SAM Holding (not Common Land)
         var samHolding = silverHoldings
@@ -147,7 +157,16 @@ public static class SamHoldingMapper
             .FirstOrDefault();
 
         if (samHolding != null)
+        {
+            logger?.LogInformation(
+                "SelectRepresentativeHolding: Priority 2 (any, not Common Land) selected for CPH {Cph}: AddressLine={AddressLine}, Street={Street}, Town={Town}, PostCode={PostCode}",
+                samHolding.CountyParishHoldingNumber,
+                samHolding.Location?.Address?.AddressLine,
+                samHolding.Location?.Address?.AddressStreet,
+                samHolding.Location?.Address?.AddressTown,
+                samHolding.Location?.Address?.AddressPostCode);
             return samHolding;
+        }
 
         // Priority 3: Active Common Land
         var activeCommonLand = silverHoldings
@@ -156,23 +175,54 @@ public static class SamHoldingMapper
             .FirstOrDefault();
 
         if (activeCommonLand != null)
+        {
+            logger?.LogInformation(
+                "SelectRepresentativeHolding: Priority 3 (active Common Land) selected for CPH {Cph}: AddressLine={AddressLine}, Street={Street}, Town={Town}, PostCode={PostCode}",
+                activeCommonLand.CountyParishHoldingNumber,
+                activeCommonLand.Location?.Address?.AddressLine,
+                activeCommonLand.Location?.Address?.AddressStreet,
+                activeCommonLand.Location?.Address?.AddressTown,
+                activeCommonLand.Location?.Address?.AddressPostCode);
             return activeCommonLand;
+        }
 
         // Priority 4: Any holding (fallback)
-        return silverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
+        var fallback = silverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
+        logger?.LogInformation(
+            "SelectRepresentativeHolding: Priority 4 (fallback) selected for CPH {Cph}: AddressLine={AddressLine}, Street={Street}, Town={Town}, PostCode={PostCode}",
+            fallback.CountyParishHoldingNumber,
+            fallback.Location?.Address?.AddressLine,
+            fallback.Location?.Address?.AddressStreet,
+            fallback.Location?.Address?.AddressTown,
+            fallback.Location?.Address?.AddressPostCode);
+        return fallback;
     }
 
-    public static SamHoldingDocument SelectAddressSource(List<SamHoldingDocument> silverHoldings)
+    public static SamHoldingDocument SelectAddressSource(List<SamHoldingDocument> silverHoldings, ILogger? logger = null)
     {
-        const string commonLandBusinessUsage = "Common Land";
-
-        // Common land address takes precedence — use the most recently updated common land if present
+        // Prefer the document that came directly from the common lands API endpoint — it is the
+        // authoritative address source. A holding document can also carry
+        // SourceFacilitySubBusinessActivityCode == "Common Land" but its address originates from
+        // the SAM holdings table, which must not override the common land address.
         var commonLand = silverHoldings
-            .Where(x => x.SourceFacilitySubBusinessActivityCode == commonLandBusinessUsage)
-            .OrderByDescending(h => h.LastUpdatedDate)
-            .FirstOrDefault();
+            .FirstOrDefault(x => x.IsFromCommonLandSource);
 
-        return commonLand ?? SelectRepresentativeHolding(silverHoldings);
+        if (commonLand != null)
+        {
+            logger?.LogInformation(
+                "SelectAddressSource: using Common Land source address for CPH {Cph}: AddressLine={AddressLine}, Street={Street}, Town={Town}, PostCode={PostCode}",
+                commonLand.CountyParishHoldingNumber,
+                commonLand.Location?.Address?.AddressLine,
+                commonLand.Location?.Address?.AddressStreet,
+                commonLand.Location?.Address?.AddressTown,
+                commonLand.Location?.Address?.AddressPostCode);
+            return commonLand;
+        }
+
+        logger?.LogInformation(
+            "SelectAddressSource: no Common Land source found for CPH {Cph}, falling back to representative holding",
+            silverHoldings.FirstOrDefault()?.CountyParishHoldingNumber);
+        return SelectRepresentativeHolding(silverHoldings, logger);
     }
 
     public static async Task<SiteDocument?> ToGold(
@@ -188,16 +238,17 @@ public static class SamHoldingMapper
         Func<string?, CancellationToken, Task<(string? speciesTypeId, string? speciesTypeName)>> findSpecies,
         Func<string?, CancellationToken, Task<SiteActivityTypeDocument?>> getSiteActivityTypeByCode,
         ISiteTypeDerivedCodeLookupService derivedCodeLookupService,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        ILogger? logger = null)
     {
         if (silverHoldings == null || silverHoldings.Count == 0)
             return null;
 
         // Prefer SAM Holding over Common Land when selecting representative
-        var representative = SelectRepresentativeHolding(silverHoldings);
+        var representative = SelectRepresentativeHolding(silverHoldings, logger);
 
         // Common land address takes precedence over site address for location data
-        var addressSource = SelectAddressSource(silverHoldings);
+        var addressSource = SelectAddressSource(silverHoldings, logger);
 
         var distinctSpecies = await GetDistinctReferenceDataAsync(
             silverHoldings.Select(h => h.SpeciesTypeCode),
@@ -309,6 +360,9 @@ public static class SamHoldingMapper
                 cancellationToken);
         }
 
+        // If no derived mapping resolved a site type, fall back to the explicit site type code on the representative
+        derivedSiteType ??= await ResolveSiteTypeAsync(representative.SiteTypeCode, getSiteTypeByCode, cancellationToken);
+
         return (allDerivedActivities, derivedSiteType);
     }
 
@@ -414,7 +468,7 @@ public static class SamHoldingMapper
             null,
             representative.Deleted,
             isPermanentLandHolding ? null : representative.SecondaryCph,
-            representative.CphTypeIdentifier,
+            string.IsNullOrEmpty(representative.CphTypeIdentifier) ? null : representative.CphTypeIdentifier,
             siteType,
             location,
             representative.CphRelationshipType.IsPermanentLandHolding() ? representative.SecondaryCph : null,

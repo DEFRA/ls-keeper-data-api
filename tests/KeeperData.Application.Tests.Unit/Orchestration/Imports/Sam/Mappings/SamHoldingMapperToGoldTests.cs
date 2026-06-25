@@ -825,6 +825,7 @@ public class SamHoldingMapperToGoldTests
         var commonLand = new SamHoldingDocument
         {
             SourceFacilitySubBusinessActivityCode = "Common Land",
+            IsFromCommonLandSource = true,
             HoldingStatus = "Active",
             LastUpdatedDate = DateTime.UtcNow.AddDays(-1)
         };
@@ -850,22 +851,24 @@ public class SamHoldingMapperToGoldTests
     }
 
     [Fact]
-    public void SelectAddressSource_WithMultipleCommonLands_ShouldReturnMostRecent()
+    public void SelectAddressSource_WithCommonLandSourceDocument_ShouldPreferItOverHoldingWithSameActivityCode()
     {
-        var olderCommonLand = new SamHoldingDocument
+        var holdingWithCommonLandCode = new SamHoldingDocument
         {
             SourceFacilitySubBusinessActivityCode = "Common Land",
-            LastUpdatedDate = DateTime.UtcNow.AddDays(-5)
-        };
-        var newerCommonLand = new SamHoldingDocument
-        {
-            SourceFacilitySubBusinessActivityCode = "Common Land",
+            IsFromCommonLandSource = false, // came from the holdings API endpoint, not the common lands endpoint
             LastUpdatedDate = DateTime.UtcNow
         };
+        var commonLandSource = new SamHoldingDocument
+        {
+            SourceFacilitySubBusinessActivityCode = "Common Land",
+            IsFromCommonLandSource = true, // came from the common lands API endpoint — authoritative address
+            LastUpdatedDate = DateTime.UtcNow.AddDays(-5)
+        };
 
-        var result = SamHoldingMapper.SelectAddressSource([olderCommonLand, newerCommonLand]);
+        var result = SamHoldingMapper.SelectAddressSource([holdingWithCommonLandCode, commonLandSource]);
 
-        result.Should().BeSameAs(newerCommonLand);
+        result.Should().BeSameAs(commonLandSource);
     }
 
     [Fact]
@@ -891,6 +894,7 @@ public class SamHoldingMapperToGoldTests
         var commonLand = new SamHoldingDocument
         {
             SourceFacilitySubBusinessActivityCode = "Common Land",
+            IsFromCommonLandSource = true,
             HoldingStatus = "Active",
             LastUpdatedDate = DateTime.UtcNow.AddDays(-1),
             Location = new Core.Documents.Silver.LocationDocument
@@ -941,6 +945,7 @@ public class SamHoldingMapperToGoldTests
         var commonLand = new SamHoldingDocument
         {
             SourceFacilitySubBusinessActivityCode = "Common Land",
+            IsFromCommonLandSource = true,
             HoldingStatus = "Active",
             LastUpdatedDate = DateTime.UtcNow.AddDays(-1),
             Location = new Core.Documents.Silver.LocationDocument

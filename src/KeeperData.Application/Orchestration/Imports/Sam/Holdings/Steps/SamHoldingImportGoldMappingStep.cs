@@ -29,7 +29,7 @@ public class SamHoldingImportGoldMappingStep(
         if (context.SilverHoldings.Count > 0)
         {
             // Prefer SAM Holding over Common Land when selecting representative
-            var representative = SamHoldingMapper.SelectRepresentativeHolding(context.SilverHoldings);
+            var representative = SamHoldingMapper.SelectRepresentativeHolding(context.SilverHoldings, logger);
 
             var existingHoldingFilter = Builders<SiteDocument>.Filter.ElemMatch(
                 x => x.Identifiers,
@@ -67,7 +67,8 @@ public class SamHoldingImportGoldMappingStep(
                 speciesTypeLookupService.FindAsync,
                 siteActivityTypeLookupService.GetByCodeAsync,
                 siteTypeDerivedCodeLookupService,
-                cancellationToken);
+                cancellationToken,
+                logger);
 
             await EnrichWithCommonLandDataAsync(context, context.SilverHoldings, cancellationToken);
 
