@@ -387,6 +387,7 @@ public class SamHoldingMapperTests
             [activeSamHolding, activeCommonLand],
             [],
             [],
+            [],
             (_, _) => Task.FromResult<CountryDocument?>(null),
             (_, _) => Task.FromResult<SiteTypeDocument?>(null),
             (code, _) => Task.FromResult<SiteIdentifierTypeDocument?>(
