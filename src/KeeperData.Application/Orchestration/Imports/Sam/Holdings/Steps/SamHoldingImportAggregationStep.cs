@@ -27,7 +27,8 @@ public class SamHoldingImportAggregationStep(
             getHoldersTask,
             getHerdsTask,
             getPortsTask,
-            getCommonLandsByCommonCphTask);
+            getCommonLandsByCommonCphTask,
+            getShowgroundsTask);
 
         context.RawHoldings = getHoldingsTask.Result;
 
