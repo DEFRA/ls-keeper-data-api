@@ -345,6 +345,58 @@ public class SamHoldingMapperTests
     }
 
     [Fact]
+    public async Task ToGold_WithCommonLandSource_ShouldUseCommonLandLocationName()
+    {
+        var activeSamHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "CPH-1",
+            SourceFacilitySubBusinessActivityCode = "Sheep Farm",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow,
+            LocationName = "Feature 22",
+            SpeciesTypeCode = "SHE"
+        };
+
+        var activeCommonLand = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "CPH-1",
+            IsFromCommonLandSource = true,
+            SourceFacilitySubBusinessActivityCode = "Common Land",
+            HoldingStatus = "Active",
+            LastUpdatedDate = DateTime.UtcNow.AddDays(1),
+            LocationName = "Premises 22",
+            SpeciesTypeCode = null
+        };
+
+        var siteIdentifierType = new SiteIdentifierTypeDocument
+        {
+            IdentifierId = "type-id",
+            Code = "CPHN",
+            Name = "CPH Number",
+            LastModifiedDate = DateTime.UtcNow
+        };
+
+        var result = await SamHoldingMapper.ToGold(
+            "gold-site-id",
+            null,
+            [activeSamHolding, activeCommonLand],
+            [],
+            [],
+            (_, _) => Task.FromResult<CountryDocument?>(null),
+            (_, _) => Task.FromResult<SiteTypeDocument?>(null),
+            (code, _) => Task.FromResult<SiteIdentifierTypeDocument?>(
+                code == "CPHN" ? siteIdentifierType : null),
+            (code, _) => Task.FromResult<(string?, string?)>(code == "SHE" ? ("species-id", "Sheep") : (null, null)),
+            (_, _) => Task.FromResult<SiteActivityTypeDocument?>(null),
+            Mock.Of<ISiteTypeDerivedCodeLookupService>(),
+            CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.Name.Should().Be("Premises 22");
+        result.Species.Should().ContainSingle(s => s.Code == "SHE");
+    }
+
+    [Fact]
     public async Task ToGold_SelectsCommonLand_WhenOnlyCommonLandPresent()
     {
         var activeCommonLand = new SamHoldingDocument
