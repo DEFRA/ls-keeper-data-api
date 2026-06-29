@@ -277,8 +277,8 @@ public static class SamHoldingMapper
             representative,
             cancellationToken);
 
-        var identifierTypeCode = !string.IsNullOrWhiteSpace(representative.CphTypeIdentifier)
-            ? representative.CphTypeIdentifier
+        var identifierTypeCode = Enum.TryParse<HoldingIdentifierType>(representative.CphTypeIdentifier, out var parsedType)
+            ? parsedType.ToString()
             : HoldingIdentifierType.CPHN.ToString();
 
         logger?.LogInformation(
