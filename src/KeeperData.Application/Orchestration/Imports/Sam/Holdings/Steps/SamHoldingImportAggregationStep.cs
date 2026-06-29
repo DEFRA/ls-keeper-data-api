@@ -37,6 +37,7 @@ public class SamHoldingImportAggregationStep(
         context.RawHolders = getHoldersTask.Result;
 
         context.RawPorts = getPortsTask.Result;
+        logger.LogInformation("Fetched {Count} raw port(s) for CPH {Cph}", context.RawPorts?.Count ?? 0, context.Cph);
 
         context.RawCommonLandsByCommonCph = getCommonLandsByCommonCphTask.Result;
 

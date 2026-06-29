@@ -277,9 +277,26 @@ public static class SamHoldingMapper
             representative,
             cancellationToken);
 
+        var identifierTypeCode = !string.IsNullOrWhiteSpace(representative.CphTypeIdentifier)
+            ? representative.CphTypeIdentifier
+            : HoldingIdentifierType.CPHN.ToString();
+
+        logger?.LogInformation(
+            "Resolving site identifier type {IdentifierTypeCode} for CPH {Cph}",
+            identifierTypeCode,
+            representative.CountyParishHoldingNumber);
+
         var cphnSiteIdentifierTypeDocument = await getSiteIdentifierTypeByCode(
-            HoldingIdentifierType.CPHN.ToString(),
+            identifierTypeCode,
             cancellationToken);
+
+        if (cphnSiteIdentifierTypeDocument == null)
+        {
+            logger?.LogWarning(
+                "Site identifier type {IdentifierTypeCode} not found in reference data for CPH {Cph}",
+                identifierTypeCode,
+                representative.CountyParishHoldingNumber);
+        }
 
         var cphnSiteIdentifierType = cphnSiteIdentifierTypeDocument == null ? null : new SiteIdentifierType(
             cphnSiteIdentifierTypeDocument.IdentifierId,
