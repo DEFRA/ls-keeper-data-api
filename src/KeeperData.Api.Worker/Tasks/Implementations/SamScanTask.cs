@@ -41,16 +41,23 @@ public class SamScanTask(
             UpdatedSinceDateTime = null,
             PageSize = DataBridgeScanConfiguration.QueryPageSize,
             Holdings = new(),
-            Holders = new()
+            Holders = new(),
+            Showgrounds = new(),
+            CommonLands = new(),
+            Ports = new()
         };
 
         await bulkOrchestrator.ExecuteAsync(context, linkedCts.Token);
 
         Metrics.RecordCount("scan_items_found", context.Holdings.CurrentSkip, ("scan_type", "SAM"), ("entity", "Holdings"), ("scan_mode", "bulk"));
         Metrics.RecordCount("scan_items_found", context.Holders.CurrentSkip, ("scan_type", "SAM"), ("entity", "Holders"), ("scan_mode", "bulk"));
+        Metrics.RecordCount("scan_items_found", context.Showgrounds.CurrentSkip, ("scan_type", "SAM"), ("entity", "Showgrounds"), ("scan_mode", "bulk"));
+        Metrics.RecordCount("scan_items_found", context.CommonLands.CurrentSkip, ("scan_type", "SAM"), ("entity", "CommonLands"), ("scan_mode", "bulk"));
+        Metrics.RecordCount("scan_items_found", context.Ports.CurrentSkip, ("scan_type", "SAM"), ("entity", "Ports"), ("scan_mode", "bulk"));
         Metrics.RecordCount("scan_completed", 1, ("scan_type", "SAM"), ("scan_mode", "bulk"));
 
-        return context.Holdings.CurrentSkip + context.Holders.CurrentSkip;
+        return context.Holdings.CurrentSkip + context.Holders.CurrentSkip
+            + context.Showgrounds.CurrentSkip + context.CommonLands.CurrentSkip + context.Ports.CurrentSkip;
     }
 
     protected override async Task<int> ExecuteDailyScanAsync(Guid scanCorrelationId, ScanMode scanMode, CancellationTokenSource linkedCts)
