@@ -54,8 +54,13 @@ public class SamHoldingImportSilverMappingStep(
             speciesTypeLookupService.FindAsync,
             cancellationToken);
 
-        context.SilverHoldings.AddRange(await SamPortMapper.ToSilver(context.RawPorts,
+        var silverPorts = await SamPortMapper.ToSilver(context.RawPorts,
             countryIdentifierLookupService.FindAsync,
-            cancellationToken));
+            cancellationToken);
+        if (silverPorts.Count > 0)
+        {
+            logger.LogInformation("Mapped {Count} port(s) to silver for CPH {Cph}", silverPorts.Count, context.Cph);
+        }
+        context.SilverHoldings.AddRange(silverPorts);
     }
 }
