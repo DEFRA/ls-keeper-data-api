@@ -8,6 +8,8 @@ namespace KeeperData.Application.Orchestration.Imports.Sam.Mappings;
 
 public static class SamPortMapper
 {
+    private const string PortSiteTypeCode = "PO";
+    private const string PortBusinessUsage = "Port";
     public static async Task<List<SamHoldingDocument>> ToSilver(
         List<SamPort> rawPorts,
         Func<string?, string?, CancellationToken, Task<(string? countryId, string? countryCode, string? countryName)>> resolveCountry,
@@ -66,13 +68,13 @@ public static class SamPortMapper
 
             SourceFacilityTypeCode = null,
             SourceFacilityBusinessActivityCode = null,
-            SourceFacilitySubBusinessActivityCode = null,
+            SourceFacilitySubBusinessActivityCode = PortBusinessUsage,
 
             SiteActivityTypeId = null,
             SiteActivityTypeCode = null,
 
             SiteTypeIdentifier = null,
-            SiteTypeCode = null,
+            SiteTypeCode = PortSiteTypeCode,
 
             SpeciesTypeCode = null,
             ProductionUsageCodeList = [],
