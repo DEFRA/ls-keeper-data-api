@@ -219,7 +219,7 @@ public class SamPortMapperTests
         result.AlternativeHoldingIdentifier.Should().BeNull();
         result.SourceFacilityTypeCode.Should().BeNull();
         result.SourceFacilityBusinessActivityCode.Should().BeNull();
-        result.SourceFacilitySubBusinessActivityCode.Should().BeNull();
+        result.SourceFacilitySubBusinessActivityCode.Should().Be("Port");
         result.SpeciesTypeCode.Should().BeNull();
         result.ProductionUsageCodeList.Should().BeEmpty();
         result.DiseaseType.Should().BeNull();
@@ -329,5 +329,23 @@ public class SamPortMapperTests
 
         activeResult.HoldingStatus.Should().Be(HoldingStatusType.Active.GetDescription());
         deletedResult.HoldingStatus.Should().Be(HoldingStatusType.Inactive.GetDescription());
+    }
+
+    [Fact]
+    public async Task GivenRawPort_WhenCallingToSilver_ShouldSetSiteTypeCodeToPO()
+    {
+        var rawPort = new SamPort
+        {
+            CPH = "12/345/6789",
+            PREMISES_NAME = "Test Port"
+        };
+
+        var result = await SamPortMapper.ToSilver(
+            rawPort,
+            (_, _, _) => Task.FromResult<(string?, string?, string?)>((null, null, null)),
+            CancellationToken.None);
+
+        result.SiteTypeCode.Should().Be("PO");
+        result.SourceFacilitySubBusinessActivityCode.Should().Be("Port");
     }
 }
