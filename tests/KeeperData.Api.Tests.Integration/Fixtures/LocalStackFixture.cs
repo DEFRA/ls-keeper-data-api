@@ -53,6 +53,7 @@ public class LocalStackFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         DockerNetworkHelper.EnsureNetworkExists(NetworkName);
+        await DockerContainerHelper.EnsureContainerRemovedAsync(_containerName);
 
         LocalStackContainer = new LocalStackBuilder("localstack/localstack:3.0.2")
             .WithName(_containerName)

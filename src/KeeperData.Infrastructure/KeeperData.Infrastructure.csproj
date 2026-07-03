@@ -36,6 +36,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="KeeperData.Infrastructure.Tests.Unit" />
+    <InternalsVisibleTo Include="KeeperData.Api.Tests.Integration" />
   </ItemGroup>
 
   <ItemGroup>
