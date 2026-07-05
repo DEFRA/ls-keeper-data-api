@@ -23,6 +23,7 @@ public class CphSqliteCacheService : ICphSqliteCacheService, IHostedService, IDi
     private DateTime? _lastRefreshedAt;
     private DateTime? _dataTimestamp;
     private Timer? _refreshTimer;
+    private bool _disposed;
 
     public bool IsLoaded => _isLoaded;
     public DateTime? LastRefreshedAt => _lastRefreshedAt;
@@ -118,7 +119,7 @@ public class CphSqliteCacheService : ICphSqliteCacheService, IHostedService, IDi
 
             if (oldPath is not null)
             {
-                await Task.Delay(5000, cancellationToken);
+                await Task.Delay(_config.CleanupDelayMs, cancellationToken);
                 CleanupOldCacheFiles(localPath);
             }
         }
@@ -209,10 +210,23 @@ public class CphSqliteCacheService : ICphSqliteCacheService, IHostedService, IDi
         }
     }
 
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
+
+        if (disposing)
+        {
+            _refreshTimer?.Dispose();
+            _refreshLock.Dispose();
+        }
+
+        _disposed = true;
+    }
+
     public void Dispose()
     {
-        _refreshTimer?.Dispose();
-        _refreshLock.Dispose();
+        Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
 }

@@ -37,7 +37,8 @@ public class CphSqliteCacheServiceTests : IDisposable
             CachePath = _tempDir,
             S3Prefix = "views/",
             FilePattern = "cphs_",
-            RefreshIntervalHours = 24
+            RefreshIntervalHours = 24,
+            CleanupDelayMs = 0
         };
 
         _service = new CphSqliteCacheService(
@@ -179,6 +180,227 @@ public class CphSqliteCacheServiceTests : IDisposable
         cmd.CommandText = "SELECT COUNT(*) FROM cphs";
         var count = Convert.ToInt32(cmd.ExecuteScalar());
         count.Should().Be(3);
+    }
+
+    [Fact]
+    public async Task StartAsync_WhenDisabled_DoesNotCallS3AndRemainsUnloaded()
+    {
+        using var service = new CphSqliteCacheService(
+            _mockFactory.Object,
+            _config with { Enabled = false },
+            Mock.Of<ILogger<CphSqliteCacheService>>());
+
+        await service.StartAsync(CancellationToken.None);
+
+        service.IsLoaded.Should().BeFalse();
+        _mockS3.Verify(s => s.ListObjectsV2Async(
+            It.IsAny<ListObjectsV2Request>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task StartAsync_WhenEnabled_LoadsCacheAndStartsTimer()
+    {
+        var sqlitePath = CreateTestSqliteFile("cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
+        SetupS3ListAndGet("views/cphs_20260630T120000Z.sqlite", sqlitePath);
+
+        await _service.StartAsync(CancellationToken.None);
+
+        _service.IsLoaded.Should().BeTrue();
+        _service.CachedFileName.Should().Be("cphs_20260630T120000Z.sqlite");
+
+        await _service.StopAsync(CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task StartAsync_WhenEnabled_CreatesCacheDirectoryIfNotExists()
+    {
+        var newCacheDir = Path.Combine(_tempDir, "subdir_cache");
+        using var service = new CphSqliteCacheService(
+            _mockFactory.Object,
+            _config with { CachePath = newCacheDir },
+            Mock.Of<ILogger<CphSqliteCacheService>>());
+
+        _mockS3.Setup(s => s.ListObjectsV2Async(
+                It.IsAny<ListObjectsV2Request>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ListObjectsV2Response { S3Objects = [] });
+
+        Directory.Exists(newCacheDir).Should().BeFalse();
+
+        await service.StartAsync(CancellationToken.None);
+
+        Directory.Exists(newCacheDir).Should().BeTrue();
+
+        await service.StopAsync(CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task StopAsync_BeforeStart_DoesNotThrow()
+    {
+        var act = async () => await _service.StopAsync(CancellationToken.None);
+        await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task StopAsync_AfterStart_DoesNotThrow()
+    {
+        var sqlitePath = CreateTestSqliteFile("cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
+        SetupS3ListAndGet("views/cphs_20260630T120000Z.sqlite", sqlitePath);
+        await _service.StartAsync(CancellationToken.None);
+
+        var act = async () => await _service.StopAsync(CancellationToken.None);
+
+        await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public void Dispose_CalledTwice_DoesNotThrow()
+    {
+        using var service = new CphSqliteCacheService(
+            _mockFactory.Object,
+            _config,
+            Mock.Of<ILogger<CphSqliteCacheService>>());
+
+        service.Dispose();
+
+        var act = () => service.Dispose();
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public async Task RefreshCache_WhenFilesDoNotMatchPattern_RemainsUnloaded()
+    {
+        _mockS3.Setup(s => s.ListObjectsV2Async(
+                It.IsAny<ListObjectsV2Request>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ListObjectsV2Response
+            {
+                S3Objects =
+                [
+                    new S3Object { Key = "views/sites_20260630T120000Z.sqlite" },
+                    new S3Object { Key = "views/holdings_20260630T120000Z.sqlite" }
+                ]
+            });
+
+        await _service.RefreshCacheAsync(CancellationToken.None);
+
+        _service.IsLoaded.Should().BeFalse();
+        _mockS3.Verify(s => s.GetObjectAsync(
+            It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RefreshCache_WhenOnlyNonSqliteFilesExist_RemainsUnloaded()
+    {
+        _mockS3.Setup(s => s.ListObjectsV2Async(
+                It.IsAny<ListObjectsV2Request>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ListObjectsV2Response
+            {
+                S3Objects =
+                [
+                    new S3Object { Key = "views/cphs_20260630T120000Z.csv" },
+                    new S3Object { Key = "views/cphs_20260630T120000Z.parquet" }
+                ]
+            });
+
+        await _service.RefreshCacheAsync(CancellationToken.None);
+
+        _service.IsLoaded.Should().BeFalse();
+        _mockS3.Verify(s => s.GetObjectAsync(
+            It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RefreshCache_SameFile_UpdatesLastRefreshedAt()
+    {
+        var sqlitePath = CreateTestSqliteFile("cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
+        SetupS3ListAndGet("views/cphs_20260630T120000Z.sqlite", sqlitePath);
+
+        await _service.RefreshCacheAsync(CancellationToken.None);
+        var firstRefreshedAt = _service.LastRefreshedAt;
+
+        await Task.Delay(50);
+
+        await _service.RefreshCacheAsync(CancellationToken.None);
+
+        _service.LastRefreshedAt.Should().BeAfter(firstRefreshedAt!.Value,
+            "LastRefreshedAt should update even when the file download is skipped");
+    }
+
+    [Fact]
+    public async Task RefreshCache_SwapToNewerFile_UpdatesDataTimestampAndFileName()
+    {
+        var oldSqlite = CreateTestSqliteFile("cphs_20260101T120000Z.sqlite", ["01/001/0001"]);
+        var newSqlite = CreateTestSqliteFile("cphs_20260630T120000Z.sqlite", ["02/002/0002"]);
+
+        SetupS3ListAndGet("views/cphs_20260101T120000Z.sqlite", oldSqlite);
+        await _service.RefreshCacheAsync(CancellationToken.None);
+
+        _service.CachedFileName.Should().Be("cphs_20260101T120000Z.sqlite");
+        _service.DataTimestamp.Should().Be(new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc));
+
+        _mockS3.Setup(s => s.ListObjectsV2Async(
+                It.IsAny<ListObjectsV2Request>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ListObjectsV2Response
+            {
+                S3Objects = [new S3Object { Key = "views/cphs_20260630T120000Z.sqlite", Size = 100 }]
+            });
+        SetupS3GetForKey("views/cphs_20260630T120000Z.sqlite", newSqlite);
+
+        await _service.RefreshCacheAsync(CancellationToken.None);
+
+        _service.CachedFileName.Should().Be("cphs_20260630T120000Z.sqlite");
+        _service.DataTimestamp.Should().Be(new DateTime(2026, 6, 30, 12, 0, 0, DateTimeKind.Utc));
+        _service.IsLoaded.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task RefreshCache_WhenFilenameTimestampIsUnparseable_DataTimestampIsNull()
+    {
+        var sqlitePath = CreateTestSqliteFile("cphs_not_a_date.sqlite", ["01/001/0001"]);
+        SetupS3ListAndGet("views/cphs_not_a_date.sqlite", sqlitePath);
+
+        await _service.RefreshCacheAsync(CancellationToken.None);
+
+        _service.IsLoaded.Should().BeTrue("the file should still load even with an unparseable timestamp");
+        _service.DataTimestamp.Should().BeNull("an unparseable filename should yield a null DataTimestamp");
+    }
+
+    [Fact]
+    public async Task RefreshCache_Concurrent_SerializesAccessAndDownloadsOnce()
+    {
+        var downloadStarted = new TaskCompletionSource();
+        var responseTcs = new TaskCompletionSource<GetObjectResponse>();
+        var sqlitePath = CreateTestSqliteFile("cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
+        var getObjectCallCount = 0;
+
+        _mockS3.Setup(s => s.ListObjectsV2Async(
+                It.IsAny<ListObjectsV2Request>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ListObjectsV2Response
+            {
+                S3Objects = [new S3Object { Key = "views/cphs_20260630T120000Z.sqlite", Size = 100 }]
+            });
+
+        _mockS3.Setup(s => s.GetObjectAsync(
+                It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()))
+            .Returns((GetObjectRequest req, CancellationToken ct) =>
+            {
+                Interlocked.Increment(ref getObjectCallCount);
+                downloadStarted.TrySetResult();
+                return responseTcs.Task;
+            });
+
+        var task1 = Task.Run(() => _service.RefreshCacheAsync(CancellationToken.None));
+
+        await downloadStarted.Task; // task1 holds the semaphore and is awaiting GetObjectAsync
+
+        var task2 = Task.Run(() => _service.RefreshCacheAsync(CancellationToken.None));
+
+        responseTcs.SetResult(new GetObjectResponse { ResponseStream = File.OpenRead(sqlitePath) });
+
+        await Task.WhenAll(task1, task2);
+
+        getObjectCallCount.Should().Be(1,
+            "the semaphore serializes access; task2 sees the already-cached filename and skips download");
+        _service.IsLoaded.Should().BeTrue();
     }
 
     private string CreateTestSqliteFile(string fileName, List<string> cphs)
