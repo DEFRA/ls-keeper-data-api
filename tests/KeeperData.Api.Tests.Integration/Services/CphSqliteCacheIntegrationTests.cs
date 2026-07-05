@@ -257,7 +257,8 @@ public class CphSqliteCacheIntegrationTests : IAsyncLifetime
 
         var objects = await _localStackFixture.S3Client.ListObjectsV2Async(new ListObjectsV2Request
         {
-            BucketName = TestBucket, Prefix = S3Prefix
+            BucketName = TestBucket,
+            Prefix = S3Prefix
         });
         foreach (var obj in objects.S3Objects)
         {
