@@ -17,7 +17,7 @@ using Xunit.Abstractions;
 
 namespace KeeperData.Api.Tests.Integration.Services;
 
-[Collection("LocalStack"), Trait("Dependence", "testcontainers")]
+[Collection("Integration"), Trait("Dependence", "testcontainers")]
 public class CphSqliteCacheIntegrationTests : IAsyncLifetime
 {
     private readonly ITestOutputHelper _output;
@@ -257,8 +257,7 @@ public class CphSqliteCacheIntegrationTests : IAsyncLifetime
 
         var objects = await _localStackFixture.S3Client.ListObjectsV2Async(new ListObjectsV2Request
         {
-            BucketName = TestBucket,
-            Prefix = S3Prefix
+            BucketName = TestBucket, Prefix = S3Prefix
         });
         foreach (var obj in objects.S3Objects)
         {
