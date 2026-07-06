@@ -318,6 +318,9 @@ public static class SamHoldingMapper
             approvalCurrentFlag =
                 (effectiveFromDate == null || now >= effectiveFromDate.Value)
                 && (effectiveToDate == null || now <= effectiveToDate.Value);
+
+            derivedSiteType = await ResolveSiteTypeAsync("SG", getSiteTypeByCode, cancellationToken)
+                ?? derivedSiteType;
         }
 
         var site = existingSite is not null

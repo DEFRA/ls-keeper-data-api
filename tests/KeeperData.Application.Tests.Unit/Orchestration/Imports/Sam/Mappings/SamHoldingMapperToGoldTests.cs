@@ -45,7 +45,8 @@ public class SamHoldingMapperToGoldTests
     [
         new SiteTypeDocument { IdentifierId = "prem-1-id", Code = "prem1code", Name = "prem1name" },
         new SiteTypeDocument { IdentifierId = "prem-2-id", Code = "prem2code", Name = "prem2name" },
-        new SiteTypeDocument { IdentifierId = "prem-3-id", Code = "prem3code", Name = "prem3name" }
+        new SiteTypeDocument { IdentifierId = "prem-3-id", Code = "prem3code", Name = "prem3name" },
+        new SiteTypeDocument { IdentifierId = "sg-id", Code = "SG", Name = "Showground" }
     ];
 
     private List<SiteActivityTypeDocument> _activityData =
@@ -811,6 +812,53 @@ public class SamHoldingMapperToGoldTests
         result!.EffectiveFromDate.Should().Be(rawShowgrounds[0].START_DATE);
         result.EffectiveToDate.Should().Be(rawShowgrounds[0].END_DATE);
         result.ApprovalCurrentFlag.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task WhenMappingShowgroundData_ShouldSetSiteTypeToSG()
+    {
+        // Arrange
+        var inputHolding = new SamHoldingDocument { CountyParishHoldingNumber = "12/345/6789" };
+        var rawShowgrounds = new List<SamShowground>
+        {
+            new SamShowground
+            {
+                CPH = "12/345/6789",
+                START_DATE = DateTime.UtcNow.AddDays(-10),
+                END_DATE = DateTime.UtcNow.AddDays(10)
+            }
+        };
+
+        // Act
+        var result = await WhenIMapSilverSiteToGold(inputHolding, null, null, rawShowgrounds);
+
+        // Assert
+        result!.Type!.Code.Should().Be("SG");
+        result.Type.Name.Should().Be("Showground");
+        result.Type.IdentifierId.Should().Be("sg-id");
+    }
+
+    [Fact]
+    public async Task WhenMappingShowgroundData_AndSGSiteTypeNotInReferenceData_ShouldFallBackToDerivedSiteType()
+    {
+        // Arrange
+        var inputHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "12/345/6789",
+            SourceFacilitySubBusinessActivityCode = "FAC1"
+        };
+        var rawShowgrounds = new List<SamShowground>
+        {
+            new SamShowground { CPH = "12/345/6789" }
+        };
+        _getSiteTypeByCode = (key, token) =>
+            Task.FromResult<SiteTypeDocument?>(key == "SG" ? null : _siteTypeData.SingleOrDefault(x => x.Code == key));
+
+        // Act
+        var result = await WhenIMapSilverSiteToGold(inputHolding, null, null, rawShowgrounds);
+
+        // Assert
+        result!.Type!.Code.Should().Be("prem1code");
     }
 
     [Fact]
