@@ -1,5 +1,6 @@
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings.Steps;
 using KeeperData.Application.Orchestration.Imports.Sam.Holdings;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Repositories;
@@ -431,5 +432,78 @@ public class SamHoldingImportGoldMappingStepTests
         Assert.Equal("MAIN-1", mainHolding.HoldingIdentifier);
         // Should prefer the most recent StartDate (2024-03-01)
         Assert.Equal("2024-03-01", mainHolding.StartDate);
+    }
+
+    [Fact]
+    public async Task WhenNoSilverHoldingsButShowgroundExists_ShouldProduceGoldSite()
+    {
+        var goldSiteRepoMock = new Mock<IGenericRepository<SiteDocument>>();
+        var partiesRepoMock = new Mock<IPartiesRepository>();
+
+        goldSiteRepoMock
+            .Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SiteDocument?)null);
+
+        var context = new SamHoldingImportContext
+        {
+            Cph = "02/073/8101",
+            SilverHoldings = [],
+            SilverHerds = [],
+            SilverParties = [],
+            RawShowgrounds =
+            [
+                new SamShowground
+                {
+                    CPH = "02/073/8101",
+                    START_DATE = new DateTime(2024, 1, 1),
+                    END_DATE = new DateTime(2025, 1, 1)
+                }
+            ]
+        };
+
+        var mappingStep = CreateStep(goldSiteRepoMock, partiesRepoMock);
+
+        await mappingStep.ExecuteAsync(context, CancellationToken.None);
+
+        Assert.NotNull(context.GoldSite);
+        Assert.NotEmpty(context.GoldSiteId);
+    }
+
+    [Fact]
+    public async Task WhenNoSilverHoldingsAndNoShowgrounds_ShouldNotProduceGoldSite()
+    {
+        var goldSiteRepoMock = new Mock<IGenericRepository<SiteDocument>>();
+        var partiesRepoMock = new Mock<IPartiesRepository>();
+
+        var context = new SamHoldingImportContext
+        {
+            Cph = "02/073/8101",
+            SilverHoldings = [],
+            SilverHerds = [],
+            SilverParties = [],
+            RawShowgrounds = []
+        };
+
+        var mappingStep = CreateStep(goldSiteRepoMock, partiesRepoMock);
+
+        await mappingStep.ExecuteAsync(context, CancellationToken.None);
+
+        Assert.Null(context.GoldSite);
+    }
+
+    private static SamHoldingImportGoldMappingStep CreateStep(
+        Mock<IGenericRepository<SiteDocument>> goldSiteRepoMock,
+        Mock<IPartiesRepository> partiesRepoMock)
+    {
+        return new SamHoldingImportGoldMappingStep(
+            Mock.Of<KeeperData.Core.Services.ICountryIdentifierLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISpeciesTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteActivityTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteIdentifierTypeLookupService>(),
+            Mock.Of<KeeperData.Core.Services.ISiteTypeDerivedCodeLookupService>(),
+            goldSiteRepoMock.Object,
+            partiesRepoMock.Object,
+            new Mock<ILogger<SamHoldingImportGoldMappingStep>>().Object);
     }
 }

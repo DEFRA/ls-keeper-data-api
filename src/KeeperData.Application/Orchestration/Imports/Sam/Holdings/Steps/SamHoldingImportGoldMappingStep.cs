@@ -1,4 +1,5 @@
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
@@ -26,10 +27,23 @@ public class SamHoldingImportGoldMappingStep(
 {
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
     {
-        if (context.SilverHoldings.Count > 0)
+        logger.LogInformation("Gold mapping: {Count} silver holding(s) available for CPH {Cph}", context.SilverHoldings.Count, context.Cph);
+
+        var effectiveHoldings = context.SilverHoldings;
+
+        if (effectiveHoldings.Count == 0 && context.RawShowgrounds.Count > 0)
+        {
+            logger.LogInformation(
+                "Gold mapping: no silver holdings for CPH {Cph} but {Count} showground(s) found — synthesising holding from showground",
+                context.Cph, context.RawShowgrounds.Count);
+
+            effectiveHoldings = [BuildSyntheticShowgroundHolding(context.Cph, context.RawShowgrounds[0])];
+        }
+
+        if (effectiveHoldings.Count > 0)
         {
             // Prefer SAM Holding over Common Land when selecting representative
-            var representative = SamHoldingMapper.SelectRepresentativeHolding(context.SilverHoldings, logger);
+            var representative = SamHoldingMapper.SelectRepresentativeHolding(effectiveHoldings, logger);
 
             var existingHoldingFilter = Builders<SiteDocument>.Filter.ElemMatch(
                 x => x.Identifiers,
@@ -57,7 +71,7 @@ public class SamHoldingImportGoldMappingStep(
             context.GoldSite = await SamHoldingMapper.ToGold(
                 context.GoldSiteId,
                 context.ExistingGoldSite,
-                context.SilverHoldings,
+                effectiveHoldings,
                 context.GoldSiteGroupMarks,
                 context.GoldParties,
                 context.RawShowgrounds,
@@ -70,7 +84,10 @@ public class SamHoldingImportGoldMappingStep(
                 cancellationToken,
                 logger);
 
-            await EnrichWithCommonLandDataAsync(context, context.SilverHoldings, cancellationToken);
+            logger.LogInformation("Gold mapping: ToGold produced {Result} for CPH {Cph}",
+                context.GoldSite != null ? "a site document" : "null (no site)", context.Cph);
+
+            await EnrichWithCommonLandDataAsync(context, effectiveHoldings, cancellationToken);
 
             logger.LogInformation("Associated main sites queued for update: {Count} for CPH {Cph}",
                 context.AssociatedMainSites?.Count ?? 0, context.Cph);
@@ -85,6 +102,21 @@ public class SamHoldingImportGoldMappingStep(
                 context.GoldParties,
                 context.GoldSite);
         }
+    }
+
+    private static SamHoldingDocument BuildSyntheticShowgroundHolding(string cph, SamShowground showground)
+    {
+        var now = DateTime.UtcNow;
+        return new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = cph,
+            HoldingStartDate = showground.START_DATE ?? now,
+            HoldingEndDate = showground.END_DATE,
+            HoldingStatus = KeeperData.Core.Domain.Sites.Formatters.HoldingStatusFormatters.FormatHoldingStatus(false),
+            CreatedDate = now,
+            LastUpdatedDate = now,
+            Deleted = false
+        };
     }
 
     private async Task EnrichWithCommonLandDataAsync(SamHoldingImportContext context, List<SamHoldingDocument> silverHoldings, CancellationToken cancellationToken)
