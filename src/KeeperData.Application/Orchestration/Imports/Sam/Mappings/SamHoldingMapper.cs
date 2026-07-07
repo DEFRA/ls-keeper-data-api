@@ -311,6 +311,12 @@ public static class SamHoldingMapper
 
         if (showground != null)
         {
+            logger?.LogInformation(
+                "ToGold: showground record found for CPH {Cph}, START_DATE={StartDate}, END_DATE={EndDate}",
+                representative.CountyParishHoldingNumber,
+                showground.START_DATE,
+                showground.END_DATE);
+
             effectiveFromDate = showground.START_DATE;
             effectiveToDate = showground.END_DATE;
             var now = DateTime.UtcNow;
@@ -319,9 +325,39 @@ public static class SamHoldingMapper
                 (effectiveFromDate == null || now >= effectiveFromDate.Value)
                 && (effectiveToDate == null || now <= effectiveToDate.Value);
 
-            derivedSiteType = await ResolveSiteTypeAsync("SG", getSiteTypeByCode, cancellationToken)
-                ?? derivedSiteType;
+            var sgSiteType = await ResolveSiteTypeAsync("SG", getSiteTypeByCode, cancellationToken);
+
+            if (sgSiteType != null)
+            {
+                logger?.LogInformation(
+                    "ToGold: resolved SG site type for CPH {Cph}: Id={SiteTypeId}, Code={SiteTypeCode}, Description={SiteTypeDescription}",
+                    representative.CountyParishHoldingNumber,
+                    sgSiteType.Id,
+                    sgSiteType.Code,
+                    sgSiteType.Description);
+            }
+            else
+            {
+                logger?.LogWarning(
+                    "ToGold: SG site type not found in reference data for CPH {Cph}, retaining previously derived site type: {FallbackSiteTypeCode}",
+                    representative.CountyParishHoldingNumber,
+                    derivedSiteType?.Code ?? "(none)");
+            }
+
+            derivedSiteType = sgSiteType ?? derivedSiteType;
         }
+        else
+        {
+            logger?.LogInformation(
+                "ToGold: no showground record found for CPH {Cph}, showground site type override skipped",
+                representative.CountyParishHoldingNumber);
+        }
+
+        logger?.LogInformation(
+            "ToGold: final site type for CPH {Cph}: {SiteTypeCode} ({SiteTypeId})",
+            representative.CountyParishHoldingNumber,
+            derivedSiteType?.Code ?? "(none)",
+            derivedSiteType?.Id ?? "(none)");
 
         var site = existingSite is not null
             ? await UpdateSiteAsync(
