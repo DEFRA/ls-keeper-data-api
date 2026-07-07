@@ -21,7 +21,7 @@ public class SamHoldingImportSilverMappingStep(
         logger.LogInformation("Silver mapping: {Count} raw holding(s) received for CPH {Cph}", context.RawHoldings?.Count ?? 0, context.Cph);
 
         context.SilverHoldings = await SamHoldingMapper.ToSilver(
-            context.RawHoldings,
+            context.RawHoldings ?? [],
             siteActivityTypeLookupService.FindAsync,
             siteTypeLookupService.FindAsync,
             countryIdentifierLookupService.FindAsync,
