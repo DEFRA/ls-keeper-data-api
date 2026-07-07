@@ -18,8 +18,10 @@ public class SamHoldingImportSilverMappingStep(
 {
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
     {
+        logger.LogInformation("Silver mapping: {Count} raw holding(s) received for CPH {Cph}", context.RawHoldings?.Count ?? 0, context.Cph);
+
         context.SilverHoldings = await SamHoldingMapper.ToSilver(
-            context.RawHoldings,
+            context.RawHoldings ?? [],
             siteActivityTypeLookupService.FindAsync,
             siteTypeLookupService.FindAsync,
             countryIdentifierLookupService.FindAsync,
@@ -62,5 +64,7 @@ public class SamHoldingImportSilverMappingStep(
             logger.LogInformation("Mapped {Count} port(s) to silver for CPH {Cph}", silverPorts.Count, context.Cph);
         }
         context.SilverHoldings.AddRange(silverPorts);
+
+        logger.LogInformation("Silver mapping: {Count} silver holding(s) produced for CPH {Cph}", context.SilverHoldings.Count, context.Cph);
     }
 }
