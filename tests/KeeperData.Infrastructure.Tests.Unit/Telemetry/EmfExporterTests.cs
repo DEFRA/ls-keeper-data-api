@@ -201,7 +201,7 @@ public class EmfExporterTests
 
         // Act
         counter.Add(1, tags);
-        await Task.Delay(200);
+        await (EmfExporter.LastCloudWatchTask ?? Task.CompletedTask);
 
         // Assert
         mockCloudWatch.Verify(c => c.PutMetricDataAsync(
@@ -229,7 +229,7 @@ public class EmfExporterTests
 
         // Act
         counter.Add(1);
-        await Task.Delay(200);
+        await (EmfExporter.LastCloudWatchTask ?? Task.CompletedTask);
 
         // Assert
         _mockLogger.Verify(
@@ -257,7 +257,7 @@ public class EmfExporterTests
 
         // Act
         counter.Add(1);
-        await Task.Delay(200);
+        await (EmfExporter.LastCloudWatchTask ?? Task.CompletedTask);
 
         // Assert
         _mockLogger.Verify(
