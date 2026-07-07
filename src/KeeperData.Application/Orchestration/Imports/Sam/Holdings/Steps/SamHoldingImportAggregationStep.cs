@@ -43,7 +43,9 @@ public class SamHoldingImportAggregationStep(
 
         var parties = await GetSamPartiesAsync(context, cancellationToken);
         context.RawParties = SamPartyMapper.AggregatePartyAndHolder(parties, context.RawHolders);
+
         context.RawShowgrounds = getShowgroundsTask.Result;
+        logger.LogInformation("Fetched {Count} showground(s) for CPH {Cph}", context.RawShowgrounds?.Count ?? 0, context.Cph);
     }
 
     private async Task<List<SamParty>> GetSamPartiesAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
