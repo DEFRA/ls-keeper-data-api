@@ -225,10 +225,15 @@ public static class SamHoldingMapper
         return SelectRepresentativeHolding(silverHoldings, logger);
     }
 
-    private static string ResolveSiteName(SamHoldingDocument representative, SamHoldingDocument addressSource)
-        => addressSource.IsFromCommonLandSource
+    private static string ResolveSiteName(SamHoldingDocument representative, SamHoldingDocument addressSource, string? showgroundName = null)
+    {
+        if (!string.IsNullOrWhiteSpace(showgroundName))
+            return showgroundName;
+
+        return addressSource.IsFromCommonLandSource
             ? addressSource.LocationName ?? string.Empty
             : representative.LocationName ?? string.Empty;
+    }
 
     public static async Task<SiteDocument?> ToGold(
         string goldSiteId,
@@ -308,6 +313,8 @@ public static class SamHoldingMapper
         DateTime? effectiveFromDate = null;
         DateTime? effectiveToDate = null;
         bool? approvalCurrentFlag = null;
+        Core.Documents.Silver.AddressDocument? showgroundAddressDocument = null;
+        string? showgroundName = null;
 
         if (showground != null)
         {
@@ -324,6 +331,27 @@ public static class SamHoldingMapper
             approvalCurrentFlag =
                 (effectiveFromDate == null || now >= effectiveFromDate.Value)
                 && (effectiveToDate == null || now <= effectiveToDate.Value);
+
+            var addressName = AddressFormatters.FormatAddressRange(
+                showground.SAON_START_NUMBER, showground.SAON_START_NUMBER_SUFFIX,
+                showground.SAON_END_NUMBER, showground.SAON_END_NUMBER_SUFFIX,
+                showground.PAON_START_NUMBER, showground.PAON_START_NUMBER_SUFFIX,
+                showground.PAON_END_NUMBER, showground.PAON_END_NUMBER_SUFFIX,
+                showground.SAON_DESCRIPTION, showground.PAON_DESCRIPTION);
+
+            showgroundAddressDocument = new Core.Documents.Silver.AddressDocument
+            {
+                IdentifierId = Guid.NewGuid().ToString(),
+                AddressLine = addressName,
+                AddressStreet = showground.STREET,
+                AddressLocality = showground.LOCALITY,
+                AddressTown = showground.TOWN,
+                CountrySubDivision = showground.UK_INTERNAL_CODE,
+                AddressPostCode = showground.POSTCODE,
+                CountryCode = showground.COUNTRY_CODE
+            };
+
+            showgroundName = showground.PAON_DESCRIPTION;
 
             var sgSiteType = await ResolveSiteTypeAsync("SG", getSiteTypeByCode, cancellationToken);
 
@@ -374,6 +402,8 @@ public static class SamHoldingMapper
                 effectiveFromDate,
                 effectiveToDate,
                 approvalCurrentFlag,
+                showgroundAddressDocument,
+                showgroundName,
                 cancellationToken)
             : await CreateSiteAsync(
                 goldSiteId,
@@ -389,6 +419,8 @@ public static class SamHoldingMapper
                 effectiveFromDate,
                 effectiveToDate,
                 approvalCurrentFlag,
+                showgroundAddressDocument,
+                showgroundName,
                 cancellationToken);
 
         return SiteDocument.FromDomain(site);
@@ -505,9 +537,11 @@ public static class SamHoldingMapper
         DateTime? effectiveFromDate,
         DateTime? effectiveToDate,
         bool? approvalCurrentFlag,
+        Core.Documents.Silver.AddressDocument? showgroundAddress,
+        string? showgroundName,
         CancellationToken cancellationToken)
     {
-        var (address, communication) = await ResolveLocationPartsAsync(addressSource, getCountryById, cancellationToken);
+        var (address, communication) = await ResolveLocationPartsAsync(addressSource, getCountryById, cancellationToken, showgroundAddress);
         var isPermanentLandHolding = representative.CphRelationshipType.IsPermanentLandHolding();
 
         var location = Location.Create(
@@ -521,7 +555,7 @@ public static class SamHoldingMapper
             goldSiteId,
             representative.CreatedDate,
             representative.LastUpdatedDate,
-            ResolveSiteName(representative, addressSource),
+            ResolveSiteName(representative, addressSource, showgroundName),
             representative.HoldingStartDate,
             representative.HoldingEndDate,
             representative.HoldingStatus,
@@ -556,6 +590,8 @@ public static class SamHoldingMapper
         DateTime? effectiveFromDate,
         DateTime? effectiveToDate,
         bool? approvalCurrentFlag,
+        Core.Documents.Silver.AddressDocument? showgroundAddress,
+        string? showgroundName,
         CancellationToken cancellationToken)
     {
         var isPermanentLandHolding = representative.CphRelationshipType.IsPermanentLandHolding();
@@ -563,7 +599,7 @@ public static class SamHoldingMapper
 
         site.Update(
             representative.LastUpdatedDate,
-            ResolveSiteName(representative, addressSource),
+            ResolveSiteName(representative, addressSource, showgroundName),
             representative.HoldingStartDate,
             representative.HoldingEndDate,
             representative.HoldingStatus,
@@ -577,7 +613,7 @@ public static class SamHoldingMapper
             effectiveToDate,
             approvalCurrentFlag);
 
-        var (updatedAddress, updatedCommunication) = await ResolveLocationPartsAsync(addressSource, getCountryById, cancellationToken);
+        var (updatedAddress, updatedCommunication) = await ResolveLocationPartsAsync(addressSource, getCountryById, cancellationToken, showgroundAddress);
 
         // Always set the derived site type (may be null if no mapping found).
         site.SetSiteType(siteType, representative.LastUpdatedDate);
@@ -599,9 +635,11 @@ public static class SamHoldingMapper
     private static async Task<(Address address, Communication communication)> ResolveLocationPartsAsync(
         SamHoldingDocument representative,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Core.Documents.Silver.AddressDocument? addressOverride = null)
     {
-        var address = await LocationMapper.AddressToGold(representative.Location?.Address, getCountryById, cancellationToken);
+        var addressDoc = addressOverride ?? representative.Location?.Address;
+        var address = await LocationMapper.AddressToGold(addressDoc, getCountryById, cancellationToken);
         var communication = LocationMapper.CommunicationToGold(representative.Communication);
         return (address, communication);
     }

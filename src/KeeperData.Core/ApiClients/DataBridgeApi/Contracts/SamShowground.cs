@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 
-public class SamShowground : BronzeBase
+public class SamShowground : SamAddressBase
 {
     [JsonPropertyName("CPH")]
     public string CPH { get; set; } = string.Empty;
