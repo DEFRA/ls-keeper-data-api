@@ -862,6 +862,311 @@ public class SamHoldingMapperToGoldTests
     }
 
     [Fact]
+    public async Task WhenMappingShowgroundData_WithAddressFields_NewSite_ShouldUseShowgroundAddress()
+    {
+        // Arrange
+        var inputHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "12/345/6789",
+            Location = new Core.Documents.Silver.LocationDocument
+            {
+                IdentifierId = "holding-loc",
+                Address = new Core.Documents.Silver.AddressDocument
+                {
+                    IdentifierId = "holding-addr",
+                    AddressLine = "Holding Farm",
+                    AddressStreet = "Holding Lane",
+                    AddressTown = "Holdingtown",
+                    AddressLocality = "Holdingshire",
+                    AddressPostCode = "H1 1AA"
+                }
+            }
+        };
+        var rawShowgrounds = new List<SamShowground>
+        {
+            new SamShowground
+            {
+                CPH = "12/345/6789",
+                SAON_START_NUMBER = 1,
+                SAON_END_NUMBER = 3,
+                PAON_START_NUMBER = 10,
+                PAON_END_NUMBER = 12,
+                STREET = "Show Street",
+                LOCALITY = "Show Locality",
+                TOWN = "Showtown",
+                UK_INTERNAL_CODE = "ENGLAND",
+                POSTCODE = "SG1 1SG",
+                COUNTRY_CODE = "GB",
+                START_DATE = DateTime.UtcNow.AddDays(-10),
+                END_DATE = DateTime.UtcNow.AddDays(10)
+            }
+        };
+
+        // Act
+        var result = await WhenIMapSilverSiteToGold(inputHolding, null, null, rawShowgrounds);
+
+        // Assert
+        result!.Location!.Address!.AddressLine1.Should().Be("1-3, 10-12");
+        result.Location.Address.AddressLine2.Should().Be("Show Street");
+        result.Location.Address.PostTown.Should().Be("Showtown");
+        result.Location.Address.County.Should().Be("Show Locality");
+        result.Location.Address.Postcode.Should().Be("SG1 1SG");
+    }
+
+    [Fact]
+    public async Task WhenMappingShowgroundData_WithAddressFields_ExistingSite_ShouldUseShowgroundAddress()
+    {
+        // Arrange
+        var inputHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "12/345/6789",
+            Location = new Core.Documents.Silver.LocationDocument
+            {
+                IdentifierId = "holding-loc",
+                Address = new Core.Documents.Silver.AddressDocument
+                {
+                    IdentifierId = "holding-addr",
+                    AddressLine = "Holding Farm",
+                    AddressPostCode = "H1 1AA"
+                }
+            }
+        };
+        var existingSite = new SiteDocument { Id = GoldSiteId };
+        var rawShowgrounds = new List<SamShowground>
+        {
+            new SamShowground
+            {
+                CPH = "12/345/6789",
+                SAON_DESCRIPTION = "The Pavilion",
+                PAON_DESCRIPTION = "Main Arena",
+                STREET = "Show Street",
+                LOCALITY = "Show Locality",
+                TOWN = "Showtown",
+                POSTCODE = "SG1 1SG",
+                START_DATE = DateTime.UtcNow.AddDays(-10),
+                END_DATE = DateTime.UtcNow.AddDays(10)
+            }
+        };
+
+        // Act
+        var result = await WhenIMapSilverSiteToGold(inputHolding, existingSite, null, rawShowgrounds);
+
+        // Assert
+        result!.Location!.Address!.AddressLine1.Should().Be("The Pavilion, Main Arena");
+        result.Location.Address.AddressLine2.Should().Be("Show Street");
+        result.Location.Address.PostTown.Should().Be("Showtown");
+        result.Location.Address.County.Should().Be("Show Locality");
+        result.Location.Address.Postcode.Should().Be("SG1 1SG");
+    }
+
+    [Fact]
+    public async Task WhenMappingShowgroundData_WithPaonDescription_NewSite_ShouldUsePaonDescriptionAsSiteName()
+    {
+        // Arrange
+        var inputHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "12/345/6789",
+            LocationName = "Holding Farm Name"
+        };
+        var rawShowgrounds = new List<SamShowground>
+        {
+            new SamShowground
+            {
+                CPH = "12/345/6789",
+                PAON_DESCRIPTION = "Westmorland County Showground",
+                POSTCODE = "SG1 1SG"
+            }
+        };
+
+        // Act
+        var result = await WhenIMapSilverSiteToGold(inputHolding, null, null, rawShowgrounds);
+
+        // Assert
+        result!.Name.Should().Be("Westmorland County Showground");
+    }
+
+    [Fact]
+    public async Task WhenMappingShowgroundData_WithPaonDescription_ExistingSite_ShouldUsePaonDescriptionAsSiteName()
+    {
+        // Arrange
+        var inputHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "12/345/6789",
+            LocationName = "Holding Farm Name"
+        };
+        var existingSite = new SiteDocument { Id = GoldSiteId };
+        var rawShowgrounds = new List<SamShowground>
+        {
+            new SamShowground
+            {
+                CPH = "12/345/6789",
+                PAON_DESCRIPTION = "Westmorland County Showground",
+                POSTCODE = "SG1 1SG"
+            }
+        };
+
+        // Act
+        var result = await WhenIMapSilverSiteToGold(inputHolding, existingSite, null, rawShowgrounds);
+
+        // Assert
+        result!.Name.Should().Be("Westmorland County Showground");
+    }
+
+    [Fact]
+    public async Task WhenMappingShowgroundData_WithNullPaonDescription_ShouldFallBackToHoldingLocationName()
+    {
+        // Arrange
+        var inputHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "12/345/6789",
+            LocationName = "Holding Farm Name"
+        };
+        var rawShowgrounds = new List<SamShowground>
+        {
+            new SamShowground
+            {
+                CPH = "12/345/6789",
+                PAON_DESCRIPTION = null,
+                POSTCODE = "SG1 1SG"
+            }
+        };
+
+        // Act
+        var result = await WhenIMapSilverSiteToGold(inputHolding, null, null, rawShowgrounds);
+
+        // Assert
+        result!.Name.Should().Be("Holding Farm Name");
+    }
+
+    [Fact]
+    public async Task WhenMappingShowgroundData_WithSaonPaonNumbers_ShouldFormatAddressNameFromNumbers()
+    {
+        // Arrange
+        var inputHolding = new SamHoldingDocument { CountyParishHoldingNumber = "12/345/6789" };
+        var rawShowgrounds = new List<SamShowground>
+        {
+            new SamShowground
+            {
+                CPH = "12/345/6789",
+                SAON_START_NUMBER = 2,
+                SAON_START_NUMBER_SUFFIX = 'A',
+                SAON_END_NUMBER = 4,
+                SAON_END_NUMBER_SUFFIX = 'B',
+                PAON_START_NUMBER = 20,
+                PAON_END_NUMBER = 20,
+                POSTCODE = "SG1 1SG"
+            }
+        };
+
+        // Act
+        var result = await WhenIMapSilverSiteToGold(inputHolding, null, null, rawShowgrounds);
+
+        // Assert
+        result!.Location!.Address!.AddressLine1.Should().Be("2A-4B, 20");
+    }
+
+    [Fact]
+    public async Task WhenMappingShowgroundData_WithSaonPaonDescriptions_ShouldFormatAddressNameFromDescriptions()
+    {
+        // Arrange
+        var inputHolding = new SamHoldingDocument { CountyParishHoldingNumber = "12/345/6789" };
+        var rawShowgrounds = new List<SamShowground>
+        {
+            new SamShowground
+            {
+                CPH = "12/345/6789",
+                SAON_DESCRIPTION = "Gate House",
+                PAON_DESCRIPTION = "Showground Central",
+                POSTCODE = "SG1 1SG"
+            }
+        };
+
+        // Act
+        var result = await WhenIMapSilverSiteToGold(inputHolding, null, null, rawShowgrounds);
+
+        // Assert
+        result!.Location!.Address!.AddressLine1.Should().Be("Gate House, Showground Central");
+    }
+
+    [Fact]
+    public async Task WhenMappingShowgroundData_WithEndDateInPast_ShouldSetApprovalCurrentFlagFalse()
+    {
+        // Arrange
+        var inputHolding = new SamHoldingDocument { CountyParishHoldingNumber = "12/345/6789" };
+        var rawShowgrounds = new List<SamShowground>
+        {
+            new SamShowground
+            {
+                CPH = "12/345/6789",
+                START_DATE = DateTime.UtcNow.AddDays(-20),
+                END_DATE = DateTime.UtcNow.AddDays(-1)
+            }
+        };
+
+        // Act
+        var result = await WhenIMapSilverSiteToGold(inputHolding, null, null, rawShowgrounds);
+
+        // Assert
+        result!.ApprovalCurrentFlag.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task WhenMappingShowgroundData_WithNullEndDate_ShouldSetApprovalCurrentFlagTrue()
+    {
+        // Arrange
+        var inputHolding = new SamHoldingDocument { CountyParishHoldingNumber = "12/345/6789" };
+        var rawShowgrounds = new List<SamShowground>
+        {
+            new SamShowground
+            {
+                CPH = "12/345/6789",
+                START_DATE = DateTime.UtcNow.AddDays(-10),
+                END_DATE = null
+            }
+        };
+
+        // Act
+        var result = await WhenIMapSilverSiteToGold(inputHolding, null, null, rawShowgrounds);
+
+        // Assert
+        result!.ApprovalCurrentFlag.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task WhenNoShowgroundData_ShouldUseHoldingAddress()
+    {
+        // Arrange
+        var inputHolding = new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = "12/345/6789",
+            Location = new Core.Documents.Silver.LocationDocument
+            {
+                IdentifierId = "holding-loc",
+                Address = new Core.Documents.Silver.AddressDocument
+                {
+                    IdentifierId = "holding-addr",
+                    AddressLine = "Holding Farm",
+                    AddressStreet = "Holding Lane",
+                    AddressTown = "Holdingtown",
+                    AddressPostCode = "H1 1AA",
+                    CountryIdentifier = "en123"
+                }
+            }
+        };
+
+        // Act
+        var result = await WhenIMapSilverSiteToGold(inputHolding, null, null, rawShowgrounds: null);
+
+        // Assert
+        result!.Location!.Address!.AddressLine1.Should().Be("Holding Farm");
+        result.Location.Address.AddressLine2.Should().Be("Holding Lane");
+        result.Location.Address.PostTown.Should().Be("Holdingtown");
+        result.Location.Address.Postcode.Should().Be("H1 1AA");
+        result.Location.Address.Country!.Code.Should().Be("GB-ENG");
+        result.ApprovalCurrentFlag.Should().BeNull();
+    }
+
+    [Fact]
     public void SelectAddressSource_WhenCommonLandAndSiteHoldingPresent_ShouldReturnCommonLand()
     {
         var siteHolding = new SamHoldingDocument
