@@ -1,6 +1,8 @@
 using Amazon;
 using Amazon.S3;
+using KeeperData.Core.Services;
 using KeeperData.Core.Storage;
+using KeeperData.Infrastructure.Services;
 using KeeperData.Infrastructure.Storage.Clients;
 using KeeperData.Infrastructure.Storage.Configuration;
 using KeeperData.Infrastructure.Storage.Factories;
@@ -8,6 +10,7 @@ using KeeperData.Infrastructure.Storage.Factories.Implementations;
 using KeeperData.Infrastructure.Storage.Readers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using System.Diagnostics.CodeAnalysis;
 
 namespace KeeperData.Infrastructure.Storage.Setup;
@@ -38,6 +41,23 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IS3ClientFactory>(factory);
 
         services.AddTransient<IStorageReader<ComparisonReportsStorageClient>, ComparisonReportsStorageReader>();
+
+        if (!string.IsNullOrWhiteSpace(storageConfiguration.CphSqliteStorage.BucketName) &&
+            !storageConfiguration.CphSqliteStorage.BucketName.StartsWith("Set in"))
+        {
+            factory.AddClient<CphSqliteStorageClient>(
+                storageConfiguration.CphSqliteStorage.BucketName,
+                defaultAmazonS3Config);
+        }
+
+        var cphCacheConfig = configuration
+            .GetSection(CphSqliteCacheConfiguration.SectionName)
+            .Get<CphSqliteCacheConfiguration>() ?? new CphSqliteCacheConfiguration();
+        services.AddSingleton(cphCacheConfig);
+
+        services.AddSingleton<CphSqliteCacheService>();
+        services.AddSingleton<ICphSqliteCacheService>(sp => sp.GetRequiredService<CphSqliteCacheService>());
+        services.AddHostedService(sp => sp.GetRequiredService<CphSqliteCacheService>());
     }
 
     private static AmazonS3Config GetDefaultAmazonS3Config(IConfiguration configuration)
