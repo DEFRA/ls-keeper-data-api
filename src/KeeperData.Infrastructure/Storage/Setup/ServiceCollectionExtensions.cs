@@ -58,6 +58,15 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<CphSqliteCacheService>();
         services.AddSingleton<ICphSqliteCacheService>(sp => sp.GetRequiredService<CphSqliteCacheService>());
         services.AddHostedService(sp => sp.GetRequiredService<CphSqliteCacheService>());
+
+        var readModelCacheConfig = configuration
+            .GetSection(ReadModelSqliteCacheConfiguration.SectionName)
+            .Get<ReadModelSqliteCacheConfiguration>() ?? new ReadModelSqliteCacheConfiguration();
+        services.AddSingleton(readModelCacheConfig);
+
+        services.AddSingleton<ReadModelSqliteCacheService>();
+        services.AddSingleton<IReadModelSqliteCacheService>(sp => sp.GetRequiredService<ReadModelSqliteCacheService>());
+        services.AddHostedService(sp => sp.GetRequiredService<ReadModelSqliteCacheService>());
     }
 
     private static AmazonS3Config GetDefaultAmazonS3Config(IConfiguration configuration)
