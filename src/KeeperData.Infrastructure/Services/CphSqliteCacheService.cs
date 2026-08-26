@@ -1,23 +1,24 @@
 using KeeperData.Core.Services;
-using KeeperData.Infrastructure.Storage.Clients;
+using KeeperData.Core.Storage.Sqlite;
 using KeeperData.Infrastructure.Storage.Configuration;
-using KeeperData.Infrastructure.Storage.Factories;
 using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Infrastructure.Services;
 
-public class CphSqliteCacheService : S3SqliteCacheService<CphSqliteStorageClient>, ICphSqliteCacheService
+public class CphSqliteCacheService : SqliteCacheService, ICphSqliteCacheService
 {
     private readonly CphSqliteCacheConfiguration _config;
 
     public CphSqliteCacheService(
-        IS3ClientFactory s3ClientFactory,
+        ISqliteArtifactSource artifactSource,
         CphSqliteCacheConfiguration config,
         ILogger<CphSqliteCacheService> logger)
-        : base(s3ClientFactory, config, logger)
+        : base(artifactSource, config, logger)
     {
         _config = config;
     }
+
+    protected override string LatestArtifactRoute => _config.LatestArtifactRoute;
 
     protected override string FilePattern => _config.FilePattern;
 

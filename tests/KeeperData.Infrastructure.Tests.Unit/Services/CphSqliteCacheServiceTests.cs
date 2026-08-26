@@ -1,10 +1,7 @@
-using Amazon.S3;
-using Amazon.S3.Model;
 using FluentAssertions;
+using KeeperData.Core.Storage.Sqlite;
 using KeeperData.Infrastructure.Services;
-using KeeperData.Infrastructure.Storage.Clients;
 using KeeperData.Infrastructure.Storage.Configuration;
-using KeeperData.Infrastructure.Storage.Factories;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -14,8 +11,7 @@ namespace KeeperData.Infrastructure.Tests.Unit.Services;
 
 public class CphSqliteCacheServiceTests : IDisposable
 {
-    private readonly Mock<IS3ClientFactory> _mockFactory;
-    private readonly Mock<IAmazonS3> _mockS3;
+    private readonly Mock<ISqliteArtifactSource> _mockArtifactSource;
     private readonly CphSqliteCacheConfiguration _config;
     private readonly CphSqliteCacheService _service;
     private readonly string _tempDir;
@@ -25,24 +21,20 @@ public class CphSqliteCacheServiceTests : IDisposable
         _tempDir = Path.Combine(Path.GetTempPath(), $"cph-cache-test-{Guid.NewGuid():N}");
         Directory.CreateDirectory(_tempDir);
 
-        _mockFactory = new Mock<IS3ClientFactory>();
-        _mockS3 = new Mock<IAmazonS3>();
-
-        _mockFactory.Setup(f => f.GetClient<CphSqliteStorageClient>()).Returns(_mockS3.Object);
-        _mockFactory.Setup(f => f.GetClientBucketName<CphSqliteStorageClient>()).Returns("test-bucket");
+        _mockArtifactSource = new Mock<ISqliteArtifactSource>();
 
         _config = new CphSqliteCacheConfiguration
         {
             Enabled = true,
             CachePath = _tempDir,
-            S3Prefix = "views/",
             FilePattern = "cphs_",
+            LatestArtifactRoute = "api/etl/sqlite/cphs/latest",
             RefreshIntervalHours = 24,
             CleanupDelayMs = 0
         };
 
         _service = new CphSqliteCacheService(
-            _mockFactory.Object,
+            _mockArtifactSource.Object,
             _config,
             Mock.Of<ILogger<CphSqliteCacheService>>());
     }
@@ -68,23 +60,35 @@ public class CphSqliteCacheServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task RefreshCache_WhenNoFilesInS3_RemainsUnloaded()
+    public async Task RefreshCache_WhenBridgeHasNoArtifact_RemainsUnloaded()
     {
-        _mockS3.Setup(s => s.ListObjectsV2Async(It.IsAny<ListObjectsV2Request>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ListObjectsV2Response { S3Objects = [] });
+        _mockArtifactSource
+            .Setup(s => s.GetLatestAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SqliteArtifact?)null);
 
         await _service.RefreshCacheAsync(CancellationToken.None);
 
         _service.IsLoaded.Should().BeFalse();
         _service.GetCurrentDbPath().Should().BeNull();
+        _mockArtifactSource.Verify(s => s.DownloadAsync(
+            It.IsAny<SqliteArtifact>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RefreshCache_RequestsTheConfiguredBridgeRoute()
+    {
+        SetupArtifact("views/cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
+
+        await _service.RefreshCacheAsync(CancellationToken.None);
+
+        _mockArtifactSource.Verify(s => s.GetLatestAsync(
+            "api/etl/sqlite/cphs/latest", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task RefreshCache_DownloadsAndLoadsFile()
     {
-        var sqlitePath = CreateTestSqliteFile("cphs_20260630T120000Z.sqlite", ["01/001/0001", "02/002/0002"]);
-
-        SetupS3ListAndGet("views/cphs_20260630T120000Z.sqlite", sqlitePath);
+        SetupArtifact("views/cphs_20260630T120000Z.sqlite", ["01/001/0001", "02/002/0002"]);
 
         await _service.RefreshCacheAsync(CancellationToken.None);
 
@@ -92,15 +96,13 @@ public class CphSqliteCacheServiceTests : IDisposable
         _service.CachedFileName.Should().Be("cphs_20260630T120000Z.sqlite");
         _service.DataTimestamp.Should().Be(new DateTime(2026, 6, 30, 12, 0, 0, DateTimeKind.Utc));
         _service.LastRefreshedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
-        _service.GetCurrentDbPath().Should().NotBeNull();
         _service.GetCurrentDbPath().Should().EndWith("cphs_20260630T120000Z.sqlite");
     }
 
     [Fact]
     public async Task GetCurrentDbPath_AfterRefresh_ReturnsValidPath()
     {
-        var sqlitePath = CreateTestSqliteFile("cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
-        SetupS3ListAndGet("views/cphs_20260630T120000Z.sqlite", sqlitePath);
+        SetupArtifact("views/cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
 
         await _service.RefreshCacheAsync(CancellationToken.None);
 
@@ -112,51 +114,27 @@ public class CphSqliteCacheServiceTests : IDisposable
     [Fact]
     public async Task RefreshCache_WhenSameFile_SkipsDownload()
     {
-        var sqlitePath = CreateTestSqliteFile("cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
-        SetupS3ListAndGet("views/cphs_20260630T120000Z.sqlite", sqlitePath);
+        SetupArtifact("views/cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
 
         await _service.RefreshCacheAsync(CancellationToken.None);
         _service.IsLoaded.Should().BeTrue();
 
         await _service.RefreshCacheAsync(CancellationToken.None);
 
-        _mockS3.Verify(s => s.GetObjectAsync(It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockArtifactSource.Verify(s => s.DownloadAsync(
+            It.IsAny<SqliteArtifact>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task RefreshCache_PicksLatestFileByKey()
+    public async Task RefreshCache_WhenBridgeLookupFails_ContinuesServingOldData()
     {
-        var oldPath = CreateTestSqliteFile("cphs_20260101T120000Z.sqlite", ["old"]);
-        var newPath = CreateTestSqliteFile("cphs_20260630T120000Z.sqlite", ["new"]);
-
-        _mockS3.Setup(s => s.ListObjectsV2Async(It.IsAny<ListObjectsV2Request>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ListObjectsV2Response
-            {
-                S3Objects =
-                [
-                    new S3Object { Key = "views/cphs_20260101T120000Z.sqlite", Size = 100 },
-                    new S3Object { Key = "views/cphs_20260630T120000Z.sqlite", Size = 100 },
-                    new S3Object { Key = "views/other_file.sqlite", Size = 100 }
-                ]
-            });
-
-        SetupS3GetForKey("views/cphs_20260630T120000Z.sqlite", newPath);
-
-        await _service.RefreshCacheAsync(CancellationToken.None);
-
-        _service.CachedFileName.Should().Be("cphs_20260630T120000Z.sqlite");
-    }
-
-    [Fact]
-    public async Task RefreshCache_OnError_ContinuesServingOldData()
-    {
-        var sqlitePath = CreateTestSqliteFile("cphs_20260101T120000Z.sqlite", ["01/001/0001"]);
-        SetupS3ListAndGet("views/cphs_20260101T120000Z.sqlite", sqlitePath);
+        SetupArtifact("views/cphs_20260101T120000Z.sqlite", ["01/001/0001"]);
         await _service.RefreshCacheAsync(CancellationToken.None);
         _service.IsLoaded.Should().BeTrue();
 
-        _mockS3.Setup(s => s.ListObjectsV2Async(It.IsAny<ListObjectsV2Request>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new AmazonS3Exception("Network error"));
+        _mockArtifactSource
+            .Setup(s => s.GetLatestAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Bridge unavailable"));
 
         await _service.RefreshCacheAsync(CancellationToken.None);
 
@@ -166,10 +144,49 @@ public class CphSqliteCacheServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task RefreshCache_WhenDownloadFails_ContinuesServingOldData()
+    {
+        SetupArtifact("views/cphs_20260101T120000Z.sqlite", ["01/001/0001"]);
+        await _service.RefreshCacheAsync(CancellationToken.None);
+
+        SetupArtifactMetadata("views/cphs_20260630T120000Z.sqlite");
+        _mockArtifactSource
+            .Setup(s => s.DownloadAsync(
+                It.IsAny<SqliteArtifact>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Presigned URL expired"));
+
+        await _service.RefreshCacheAsync(CancellationToken.None);
+
+        _service.IsLoaded.Should().BeTrue();
+        _service.CachedFileName.Should().Be("cphs_20260101T120000Z.sqlite");
+    }
+
+    [Fact]
+    public async Task RefreshCache_WhenDownloadedFileHasWrongSchema_ContinuesServingOldData()
+    {
+        SetupArtifact("views/cphs_20260101T120000Z.sqlite", ["01/001/0001"]);
+        await _service.RefreshCacheAsync(CancellationToken.None);
+
+        SetupArtifactMetadata("views/cphs_20260630T120000Z.sqlite");
+        _mockArtifactSource
+            .Setup(s => s.DownloadAsync(
+                It.IsAny<SqliteArtifact>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns((SqliteArtifact _, string localPath, CancellationToken __) =>
+            {
+                File.WriteAllText(localPath, "not a sqlite database");
+                return Task.CompletedTask;
+            });
+
+        await _service.RefreshCacheAsync(CancellationToken.None);
+
+        _service.CachedFileName.Should().Be("cphs_20260101T120000Z.sqlite");
+        _service.GetCurrentDbPath().Should().EndWith("cphs_20260101T120000Z.sqlite");
+    }
+
+    [Fact]
     public async Task RefreshCache_DbPathPointsToDownloadedFile()
     {
-        var sqlitePath = CreateTestSqliteFile("cphs_20260630T120000Z.sqlite", ["01/001/0001", "02/002/0002", "03/003/0003"]);
-        SetupS3ListAndGet("views/cphs_20260630T120000Z.sqlite", sqlitePath);
+        SetupArtifact("views/cphs_20260630T120000Z.sqlite", ["01/001/0001", "02/002/0002", "03/003/0003"]);
 
         await _service.RefreshCacheAsync(CancellationToken.None);
 
@@ -183,25 +200,24 @@ public class CphSqliteCacheServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task StartAsync_WhenDisabled_DoesNotCallS3AndRemainsUnloaded()
+    public async Task StartAsync_WhenDisabled_DoesNotCallBridgeAndRemainsUnloaded()
     {
         using var service = new CphSqliteCacheService(
-            _mockFactory.Object,
+            _mockArtifactSource.Object,
             _config with { Enabled = false },
             Mock.Of<ILogger<CphSqliteCacheService>>());
 
         await service.StartAsync(CancellationToken.None);
 
         service.IsLoaded.Should().BeFalse();
-        _mockS3.Verify(s => s.ListObjectsV2Async(
-            It.IsAny<ListObjectsV2Request>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockArtifactSource.Verify(s => s.GetLatestAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task StartAsync_WhenEnabled_LoadsCacheAndStartsTimer()
     {
-        var sqlitePath = CreateTestSqliteFile("cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
-        SetupS3ListAndGet("views/cphs_20260630T120000Z.sqlite", sqlitePath);
+        SetupArtifact("views/cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
 
         await _service.StartAsync(CancellationToken.None);
 
@@ -216,13 +232,13 @@ public class CphSqliteCacheServiceTests : IDisposable
     {
         var newCacheDir = Path.Combine(_tempDir, "subdir_cache");
         using var service = new CphSqliteCacheService(
-            _mockFactory.Object,
+            _mockArtifactSource.Object,
             _config with { CachePath = newCacheDir },
             Mock.Of<ILogger<CphSqliteCacheService>>());
 
-        _mockS3.Setup(s => s.ListObjectsV2Async(
-                It.IsAny<ListObjectsV2Request>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ListObjectsV2Response { S3Objects = [] });
+        _mockArtifactSource
+            .Setup(s => s.GetLatestAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SqliteArtifact?)null);
 
         Directory.Exists(newCacheDir).Should().BeFalse();
 
@@ -243,8 +259,7 @@ public class CphSqliteCacheServiceTests : IDisposable
     [Fact]
     public async Task StopAsync_AfterStart_DoesNotThrow()
     {
-        var sqlitePath = CreateTestSqliteFile("cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
-        SetupS3ListAndGet("views/cphs_20260630T120000Z.sqlite", sqlitePath);
+        SetupArtifact("views/cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
         await _service.StartAsync(CancellationToken.None);
 
         var act = async () => await _service.StopAsync(CancellationToken.None);
@@ -256,7 +271,7 @@ public class CphSqliteCacheServiceTests : IDisposable
     public void Dispose_CalledTwice_DoesNotThrow()
     {
         using var service = new CphSqliteCacheService(
-            _mockFactory.Object,
+            _mockArtifactSource.Object,
             _config,
             Mock.Of<ILogger<CphSqliteCacheService>>());
 
@@ -267,52 +282,21 @@ public class CphSqliteCacheServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task RefreshCache_WhenFilesDoNotMatchPattern_RemainsUnloaded()
+    public async Task RefreshCache_WhenArtifactDoesNotMatchPattern_RemainsUnloaded()
     {
-        _mockS3.Setup(s => s.ListObjectsV2Async(
-                It.IsAny<ListObjectsV2Request>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ListObjectsV2Response
-            {
-                S3Objects =
-                [
-                    new S3Object { Key = "views/sites_20260630T120000Z.sqlite" },
-                    new S3Object { Key = "views/holdings_20260630T120000Z.sqlite" }
-                ]
-            });
+        SetupArtifactMetadata("views/krds-db_20260630120000.sqlite");
 
         await _service.RefreshCacheAsync(CancellationToken.None);
 
         _service.IsLoaded.Should().BeFalse();
-        _mockS3.Verify(s => s.GetObjectAsync(
-            It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task RefreshCache_WhenOnlyNonSqliteFilesExist_RemainsUnloaded()
-    {
-        _mockS3.Setup(s => s.ListObjectsV2Async(
-                It.IsAny<ListObjectsV2Request>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ListObjectsV2Response
-            {
-                S3Objects =
-                [
-                    new S3Object { Key = "views/cphs_20260630T120000Z.csv" },
-                    new S3Object { Key = "views/cphs_20260630T120000Z.parquet" }
-                ]
-            });
-
-        await _service.RefreshCacheAsync(CancellationToken.None);
-
-        _service.IsLoaded.Should().BeFalse();
-        _mockS3.Verify(s => s.GetObjectAsync(
-            It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockArtifactSource.Verify(s => s.DownloadAsync(
+            It.IsAny<SqliteArtifact>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task RefreshCache_SameFile_UpdatesLastRefreshedAt()
     {
-        var sqlitePath = CreateTestSqliteFile("cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
-        SetupS3ListAndGet("views/cphs_20260630T120000Z.sqlite", sqlitePath);
+        SetupArtifact("views/cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
 
         await _service.RefreshCacheAsync(CancellationToken.None);
         var firstRefreshedAt = _service.LastRefreshedAt;
@@ -328,22 +312,13 @@ public class CphSqliteCacheServiceTests : IDisposable
     [Fact]
     public async Task RefreshCache_SwapToNewerFile_UpdatesDataTimestampAndFileName()
     {
-        var oldSqlite = CreateTestSqliteFile("cphs_20260101T120000Z.sqlite", ["01/001/0001"]);
-        var newSqlite = CreateTestSqliteFile("cphs_20260630T120000Z.sqlite", ["02/002/0002"]);
-
-        SetupS3ListAndGet("views/cphs_20260101T120000Z.sqlite", oldSqlite);
+        SetupArtifact("views/cphs_20260101T120000Z.sqlite", ["01/001/0001"]);
         await _service.RefreshCacheAsync(CancellationToken.None);
 
         _service.CachedFileName.Should().Be("cphs_20260101T120000Z.sqlite");
         _service.DataTimestamp.Should().Be(new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc));
 
-        _mockS3.Setup(s => s.ListObjectsV2Async(
-                It.IsAny<ListObjectsV2Request>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ListObjectsV2Response
-            {
-                S3Objects = [new S3Object { Key = "views/cphs_20260630T120000Z.sqlite", Size = 100 }]
-            });
-        SetupS3GetForKey("views/cphs_20260630T120000Z.sqlite", newSqlite);
+        SetupArtifact("views/cphs_20260630T120000Z.sqlite", ["02/002/0002"]);
 
         await _service.RefreshCacheAsync(CancellationToken.None);
 
@@ -355,8 +330,7 @@ public class CphSqliteCacheServiceTests : IDisposable
     [Fact]
     public async Task RefreshCache_WhenFilenameTimestampIsUnparseable_DataTimestampIsNull()
     {
-        var sqlitePath = CreateTestSqliteFile("cphs_not_a_date.sqlite", ["01/001/0001"]);
-        SetupS3ListAndGet("views/cphs_not_a_date.sqlite", sqlitePath);
+        SetupArtifact("views/cphs_not_a_date.sqlite", ["01/001/0001"]);
 
         await _service.RefreshCacheAsync(CancellationToken.None);
 
@@ -368,39 +342,68 @@ public class CphSqliteCacheServiceTests : IDisposable
     public async Task RefreshCache_Concurrent_SerializesAccessAndDownloadsOnce()
     {
         var downloadStarted = new TaskCompletionSource();
-        var responseTcs = new TaskCompletionSource<GetObjectResponse>();
-        var sqlitePath = CreateTestSqliteFile("cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
-        var getObjectCallCount = 0;
+        var downloadCompletion = new TaskCompletionSource();
+        var sourcePath = CreateTestSqliteFile("cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
+        var downloadCallCount = 0;
 
-        _mockS3.Setup(s => s.ListObjectsV2Async(
-                It.IsAny<ListObjectsV2Request>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ListObjectsV2Response
-            {
-                S3Objects = [new S3Object { Key = "views/cphs_20260630T120000Z.sqlite", Size = 100 }]
-            });
+        SetupArtifactMetadata("views/cphs_20260630T120000Z.sqlite");
 
-        _mockS3.Setup(s => s.GetObjectAsync(
-                It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()))
-            .Returns((GetObjectRequest req, CancellationToken ct) =>
+        _mockArtifactSource
+            .Setup(s => s.DownloadAsync(
+                It.IsAny<SqliteArtifact>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(async (SqliteArtifact _, string localPath, CancellationToken __) =>
             {
-                Interlocked.Increment(ref getObjectCallCount);
+                Interlocked.Increment(ref downloadCallCount);
                 downloadStarted.TrySetResult();
-                return responseTcs.Task;
+                await downloadCompletion.Task;
+                File.Copy(sourcePath, localPath, overwrite: true);
             });
 
         var task1 = Task.Run(() => _service.RefreshCacheAsync(CancellationToken.None));
 
-        await downloadStarted.Task; // task1 holds the semaphore and is awaiting GetObjectAsync
+        await downloadStarted.Task; // task1 holds the semaphore and is awaiting the download
 
         var task2 = Task.Run(() => _service.RefreshCacheAsync(CancellationToken.None));
 
-        responseTcs.SetResult(new GetObjectResponse { ResponseStream = File.OpenRead(sqlitePath) });
+        downloadCompletion.SetResult();
 
         await Task.WhenAll(task1, task2);
 
-        getObjectCallCount.Should().Be(1,
+        downloadCallCount.Should().Be(1,
             "the semaphore serializes access; task2 sees the already-cached filename and skips download");
         _service.IsLoaded.Should().BeTrue();
+    }
+
+    private void SetupArtifact(string objectKey, List<string> cphs)
+    {
+        var sourcePath = CreateTestSqliteFile(objectKey.Split('/').Last(), cphs);
+
+        SetupArtifactMetadata(objectKey);
+
+        _mockArtifactSource
+            .Setup(s => s.DownloadAsync(
+                It.Is<SqliteArtifact>(a => a.ObjectKey == objectKey),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .Returns((SqliteArtifact _, string localPath, CancellationToken __) =>
+            {
+                File.Copy(sourcePath, localPath, overwrite: true);
+                return Task.CompletedTask;
+            });
+    }
+
+    private void SetupArtifactMetadata(string objectKey)
+    {
+        _mockArtifactSource
+            .Setup(s => s.GetLatestAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SqliteArtifact
+            {
+                ObjectKey = objectKey,
+                DownloadUrl = $"https://bridge-bucket.example/{objectKey}?X-Amz-Signature=stub",
+                Size = 1024,
+                LastModified = DateTimeOffset.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(60)
+            });
     }
 
     private string CreateTestSqliteFile(string fileName, List<string> cphs)
@@ -425,31 +428,5 @@ public class CphSqliteCacheServiceTests : IDisposable
 
         SqliteConnection.ClearAllPools();
         return path;
-    }
-
-    private void SetupS3ListAndGet(string key, string localPath)
-    {
-        _mockS3.Setup(s => s.ListObjectsV2Async(It.IsAny<ListObjectsV2Request>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ListObjectsV2Response
-            {
-                S3Objects = [new S3Object { Key = key, Size = new FileInfo(localPath).Length }]
-            });
-
-        SetupS3GetForKey(key, localPath);
-    }
-
-    private void SetupS3GetForKey(string key, string localPath)
-    {
-        _mockS3.Setup(s => s.GetObjectAsync(
-                It.Is<GetObjectRequest>(r => r.Key == key),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((GetObjectRequest req, CancellationToken _) =>
-            {
-                var response = new GetObjectResponse
-                {
-                    ResponseStream = File.OpenRead(localPath)
-                };
-                return response;
-            });
     }
 }

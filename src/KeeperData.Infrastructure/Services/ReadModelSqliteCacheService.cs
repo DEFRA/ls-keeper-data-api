@@ -1,7 +1,6 @@
 using KeeperData.Core.Services;
-using KeeperData.Infrastructure.Storage.Clients;
+using KeeperData.Core.Storage.Sqlite;
 using KeeperData.Infrastructure.Storage.Configuration;
-using KeeperData.Infrastructure.Storage.Factories;
 using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Infrastructure.Services;
@@ -10,18 +9,20 @@ namespace KeeperData.Infrastructure.Services;
 /// Caches the normalised SAM read model (Party, Holding, PartyRole, Herd, HoldingAnimalProfile)
 /// published by the data bridge, which is the source of a user's current CPH associations.
 /// </summary>
-public class ReadModelSqliteCacheService : S3SqliteCacheService<CphSqliteStorageClient>, IReadModelSqliteCacheService
+public class ReadModelSqliteCacheService : SqliteCacheService, IReadModelSqliteCacheService
 {
     private readonly ReadModelSqliteCacheConfiguration _config;
 
     public ReadModelSqliteCacheService(
-        IS3ClientFactory s3ClientFactory,
+        ISqliteArtifactSource artifactSource,
         ReadModelSqliteCacheConfiguration config,
         ILogger<ReadModelSqliteCacheService> logger)
-        : base(s3ClientFactory, config, logger)
+        : base(artifactSource, config, logger)
     {
         _config = config;
     }
+
+    protected override string LatestArtifactRoute => _config.LatestArtifactRoute;
 
     protected override string FilePattern => _config.FilePattern;
 
