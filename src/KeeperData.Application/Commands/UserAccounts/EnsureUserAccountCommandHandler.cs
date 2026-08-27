@@ -52,7 +52,7 @@ public class EnsureUserAccountCommandHandler(
     {
         var account = await repository.FindBySubjectAsync(request.Subject, cancellationToken);
 
-        if (account is not null) 
+        if (account is not null)
             return (account, false);
 
         var adoptable = await repository.FindByEmailAsync(request.Email, cancellationToken);
@@ -94,7 +94,7 @@ public class EnsureUserAccountCommandHandler(
 
     private async Task PersistAsync(UserAccountDocument account, bool created, CancellationToken cancellationToken)
     {
-        if (created) 
+        if (created)
             await repository.AddAsync(account, cancellationToken);
         else
             await repository.UpdateAsync(account, cancellationToken);
