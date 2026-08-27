@@ -11,6 +11,33 @@ public static class ContainerLoggingUtility
         return logs.Contains(entryToMatch);
     }
 
+    public static async Task<bool> WaitForContainerLogEntryAsync(
+        IContainer container,
+        string entryToMatch,
+        TimeSpan? timeout = null,
+        TimeSpan? pollInterval = null,
+        CancellationToken cancellationToken = default)
+    {
+        var effectiveTimeout = timeout ?? TimeSpan.FromSeconds(60);
+        var effectivePollInterval = pollInterval ?? TimeSpan.FromSeconds(1);
+        var deadline = DateTime.UtcNow.Add(effectiveTimeout);
+
+        while (true)
+        {
+            if (await FindContainerLogEntryAsync(container, entryToMatch))
+            {
+                return true;
+            }
+
+            if (DateTime.UtcNow >= deadline)
+            {
+                return false;
+            }
+
+            await Task.Delay(effectivePollInterval, cancellationToken);
+        }
+    }
+
     public static async Task<List<string>> FindContainerLogEntriesAsync(IContainer container, string entryFragment)
     {
         var (stdout, stderr) = await container.GetLogsAsync();
