@@ -58,7 +58,7 @@ public class EnsureUserAccountCommandHandler(
         var adoptable = await repository.FindByEmailAsync(request.Email, cancellationToken);
 
         if (adoptable is not null && adoptable.Subject is null)
-            return StampSubject(adoptable, request.Subject, now);
+            return AdoptExistingAccount(adoptable, request.Subject);
 
         var newAccount = new UserAccountDocument
         {
@@ -71,7 +71,7 @@ public class EnsureUserAccountCommandHandler(
         return (newAccount, true);
     }
 
-    private (UserAccountDocument Account, bool Created) StampSubject(UserAccountDocument adoptable, string subject, DateTime now)
+    private static (UserAccountDocument Account, bool Created) AdoptExistingAccount(UserAccountDocument adoptable, string subject)
     {
         adoptable.Subject = subject;
         return (adoptable, false);
