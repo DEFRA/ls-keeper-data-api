@@ -1,8 +1,9 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using KeeperData.Application.Queries.Parties;
 using KeeperData.Application.Queries.Parties.Builders;
 using KeeperData.Core.Documents;
 using MongoDB.Bson;
+using MongoDB.Driver;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 
@@ -29,7 +30,7 @@ public class PartySortBuilderTests
         var query = new GetPartiesQuery { Order = order, Sort = sort };
         var sortDefinition = PartySortBuilder.Build(query);
 
-        var renderedSort = sortDefinition.Render(BsonSerializer.SerializerRegistry.GetSerializer<PartyDocument>(), BsonSerializer.SerializerRegistry);
+        var renderedSort = sortDefinition.Render(new RenderArgs<PartyDocument>(BsonSerializer.SerializerRegistry.GetSerializer<PartyDocument>(), BsonSerializer.SerializerRegistry));
 
         renderedSort.Should().BeEquivalentTo(BsonDocument.Parse(expected));
     }

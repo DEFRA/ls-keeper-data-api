@@ -1,4 +1,4 @@
-using KeeperData.Core.Documents.Silver;
+﻿using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Repositories;
@@ -18,6 +18,8 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Driver;
+using MongoDB.Driver.Authentication.AWS;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
@@ -93,6 +95,10 @@ public static class ServiceCollectionExtensions
                     ConventionRegistry.Register("CamelCase", new ConventionPack { new CamelCaseElementNameConvention() }, _ => true);
 
                     RegisterAllDocumentsFromAssembly(typeof(INestedEntity).Assembly);
+
+                    // Deployed environments authenticate to DocumentDB with authMechanism=MONGODB-AWS, which
+                    // driver 3.x only supports once this opt-in runs. The registry throws on a second call.
+                    MongoClientSettings.Extensions.AddAWSAuthentication();
 
                     s_mongoSerializersRegistered = true;
                 }

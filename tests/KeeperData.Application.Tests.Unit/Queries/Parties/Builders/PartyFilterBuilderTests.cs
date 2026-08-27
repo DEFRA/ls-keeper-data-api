@@ -1,8 +1,9 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using KeeperData.Application.Queries.Parties;
 using KeeperData.Application.Queries.Parties.Builders;
 using KeeperData.Core.Documents;
 using MongoDB.Bson;
+using MongoDB.Driver;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 
@@ -21,7 +22,7 @@ public class PartyFilterBuilderTests
     {
         var query = new GetPartiesQuery();
         var filter = PartyFilterBuilder.Build(query);
-        var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<PartyDocument>(), BsonSerializer.SerializerRegistry);
+        var renderedFilter = filter.Render(new RenderArgs<PartyDocument>(BsonSerializer.SerializerRegistry.GetSerializer<PartyDocument>(), BsonSerializer.SerializerRegistry));
 
         var expectedBson = BsonDocument.Parse(@"
             {
@@ -36,7 +37,7 @@ public class PartyFilterBuilderTests
     {
         var query = new GetPartiesQuery { FirstName = "Trevor" };
         var filter = PartyFilterBuilder.Build(query);
-        var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<PartyDocument>(), BsonSerializer.SerializerRegistry);
+        var renderedFilter = filter.Render(new RenderArgs<PartyDocument>(BsonSerializer.SerializerRegistry.GetSerializer<PartyDocument>(), BsonSerializer.SerializerRegistry));
 
         renderedFilter["firstName"].AsString.Should().BeEquivalentTo("Trevor");
     }
@@ -46,7 +47,7 @@ public class PartyFilterBuilderTests
     {
         var query = new GetPartiesQuery { LastName = "Smith" };
         var filter = PartyFilterBuilder.Build(query);
-        var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<PartyDocument>(), BsonSerializer.SerializerRegistry);
+        var renderedFilter = filter.Render(new RenderArgs<PartyDocument>(BsonSerializer.SerializerRegistry.GetSerializer<PartyDocument>(), BsonSerializer.SerializerRegistry));
 
         renderedFilter["lastName"].AsString.Should().BeEquivalentTo("Smith");
     }
@@ -60,9 +61,9 @@ public class PartyFilterBuilderTests
 
         // Act
         var filter = PartyFilterBuilder.Build(query);
-        var renderedFilter = filter.Render(
+        var renderedFilter = filter.Render(new RenderArgs<PartyDocument>(
             BsonSerializer.SerializerRegistry.GetSerializer<PartyDocument>(),
-            BsonSerializer.SerializerRegistry);
+            BsonSerializer.SerializerRegistry));
 
         // Assert
         var expectedBson = BsonDocument.Parse($@"
