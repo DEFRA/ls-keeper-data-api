@@ -4,13 +4,22 @@ using DotNet.Testcontainers.Containers;
 
 public static class ContainerLoggingUtility
 {
-    public static async Task<bool> FindContainerLogEntryAsync(IContainer container, string entryToMatch)
+    private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan DefaultPollInterval = TimeSpan.FromSeconds(1);
+
+    public static async Task<bool> FindContainerLogEntryAsync(
+        IContainer container,
+        string entryToMatch,
+        CancellationToken cancellationToken = default)
     {
-        var (stdout, stderr) = await container.GetLogsAsync();
-        var logs = $"{stdout}\n{stderr}";
+        var logs = await GetLogsAsync(container, cancellationToken);
         return logs.Contains(entryToMatch);
     }
 
+    /// <summary>
+    /// Polls the container logs until the entry is found or the timeout elapses.
+    /// Guaranteed to return within the timeout, even if the container log fetch stalls.
+    /// </summary>
     public static async Task<bool> WaitForContainerLogEntryAsync(
         IContainer container,
         string entryToMatch,
@@ -18,36 +27,51 @@ public static class ContainerLoggingUtility
         TimeSpan? pollInterval = null,
         CancellationToken cancellationToken = default)
     {
-        var effectiveTimeout = timeout ?? TimeSpan.FromSeconds(60);
-        var effectivePollInterval = pollInterval ?? TimeSpan.FromSeconds(1);
-        var deadline = DateTime.UtcNow.Add(effectiveTimeout);
+        var effectiveTimeout = timeout ?? DefaultTimeout;
+        var effectivePollInterval = pollInterval ?? DefaultPollInterval;
 
-        while (true)
+        using var timeoutSource = new CancellationTokenSource(effectiveTimeout);
+        using var linkedSource = CancellationTokenSource.CreateLinkedTokenSource(
+            timeoutSource.Token, cancellationToken);
+
+        var token = linkedSource.Token;
+
+        try
         {
-            if (await FindContainerLogEntryAsync(container, entryToMatch))
+            while (!token.IsCancellationRequested)
             {
-                return true;
-            }
+                if (await FindContainerLogEntryAsync(container, entryToMatch, token))
+                {
+                    return true;
+                }
 
-            if (DateTime.UtcNow >= deadline)
-            {
-                return false;
+                await Task.Delay(effectivePollInterval, token);
             }
-
-            await Task.Delay(effectivePollInterval, cancellationToken);
         }
+        catch (OperationCanceledException) when (timeoutSource.IsCancellationRequested)
+        {
+            // Timed out, treated as not found so the assertion reports the real failure.
+        }
+
+        return false;
     }
 
-    public static async Task<List<string>> FindContainerLogEntriesAsync(IContainer container, string entryFragment)
+    public static async Task<List<string>> FindContainerLogEntriesAsync(
+        IContainer container,
+        string entryFragment,
+        CancellationToken cancellationToken = default)
     {
-        var (stdout, stderr) = await container.GetLogsAsync();
-        var logs = $"{stdout}\n{stderr}";
+        var logs = await GetLogsAsync(container, cancellationToken);
 
-        var matchingLines = logs
+        return logs
             .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
             .Where(line => line.Contains(entryFragment))
             .ToList();
+    }
 
-        return matchingLines;
+    private static async Task<string> GetLogsAsync(IContainer container, CancellationToken cancellationToken)
+    {
+        var (stdout, stderr) = await container.GetLogsAsync(ct: cancellationToken);
+        return $"{stdout}\n{stderr}";
     }
 }
