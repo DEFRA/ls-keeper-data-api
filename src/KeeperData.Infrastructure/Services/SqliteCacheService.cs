@@ -100,6 +100,7 @@ public abstract class SqliteCacheService : IHostedService, IDisposable
             if (artifact is null)
             {
                 _logger.LogWarning("No {CacheName} SQLite file available from {Route}", CacheName, LatestArtifactRoute);
+                _lastRefreshedAt = DateTime.UtcNow;
                 return;
             }
 
@@ -110,6 +111,7 @@ public abstract class SqliteCacheService : IHostedService, IDisposable
                 _logger.LogWarning(
                     "{Route} returned {FileName}, which is not a {CacheName} database (expected prefix {FilePattern})",
                     LatestArtifactRoute, fileName, CacheName, FilePattern);
+                _lastRefreshedAt = DateTime.UtcNow;
                 return;
             }
 
@@ -147,6 +149,7 @@ public abstract class SqliteCacheService : IHostedService, IDisposable
         {
             _logger.LogError(ex,
                 "Failed to refresh {CacheName} SQLite cache. Continuing with previously cached file", CacheName);
+            _lastRefreshedAt = DateTime.UtcNow;
         }
         finally
         {

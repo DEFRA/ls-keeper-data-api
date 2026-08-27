@@ -111,7 +111,8 @@ public class LocalStackFixture : IAsyncLifetime
         S3Client = new AmazonS3Client("test", "test", new AmazonS3Config
         {
             ServiceURL = serviceUrl,
-            ForcePathStyle = true
+            ForcePathStyle = true,
+            UseHttp = true
         });
 
         // SQS

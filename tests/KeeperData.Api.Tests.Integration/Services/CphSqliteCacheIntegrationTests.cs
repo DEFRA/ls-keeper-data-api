@@ -446,7 +446,8 @@ public class CphSqliteCacheIntegrationTests : IAsyncLifetime
             BucketName = TestBucket,
             Key = latest.Key,
             Verb = HttpVerb.GET,
-            Expires = expiresAt
+            Expires = expiresAt,
+            Protocol = Protocol.HTTP
         });
 
         return new SqliteArtifactLatestResponse
