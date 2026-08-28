@@ -29,7 +29,7 @@ public class QueueConsumerTests(
         var foundMessageProcesseEntryInLogs = await ContainerLoggingUtility.WaitForContainerLogEntryAsync(
             _apiContainerFixture.ApiContainer,
             $"Handled message with correlationId: \"{correlationId}\"",
-            TimeSpan.FromSeconds(60));
+            TimeSpan.FromSeconds(15));
 
         foundMessageProcesseEntryInLogs.Should().BeTrue();
     }
@@ -47,7 +47,7 @@ public class QueueConsumerTests(
         var foundMessageProcesseEntryInLogs = await ContainerLoggingUtility.WaitForContainerLogEntryAsync(
             _apiContainerFixture.ApiContainer,
             $"Handled message with correlationId: \"{correlationId}\"",
-            TimeSpan.FromSeconds(60));
+            TimeSpan.FromSeconds(15));
 
         foundMessageProcesseEntryInLogs.Should().BeTrue();
     }
