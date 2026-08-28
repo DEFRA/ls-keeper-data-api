@@ -25,12 +25,11 @@ public class QueueConsumerTests(
 
         await ExecuteTopicTest(correlationId, message);
 
-        // Wait briefly to allow processing
-        await Task.Delay(TimeSpan.FromSeconds(5));
-
-        var foundMessageProcesseEntryInLogs = await ContainerLoggingUtility.FindContainerLogEntryAsync(
+        // Poll the container logs until the message is handled, or we time out
+        var foundMessageProcesseEntryInLogs = await ContainerLoggingUtility.WaitForContainerLogEntryAsync(
             _apiContainerFixture.ApiContainer,
-            $"Handled message with correlationId: \"{correlationId}\"");
+            $"Handled message with correlationId: \"{correlationId}\"",
+            TimeSpan.FromSeconds(60));
 
         foundMessageProcesseEntryInLogs.Should().BeTrue();
     }
@@ -44,12 +43,11 @@ public class QueueConsumerTests(
 
         await ExecuteQueueTest(correlationId, message);
 
-        // Wait briefly to allow processing
-        await Task.Delay(TimeSpan.FromSeconds(5));
-
-        var foundMessageProcesseEntryInLogs = await ContainerLoggingUtility.FindContainerLogEntryAsync(
+        // Poll the container logs until the message is handled, or we time out
+        var foundMessageProcesseEntryInLogs = await ContainerLoggingUtility.WaitForContainerLogEntryAsync(
             _apiContainerFixture.ApiContainer,
-            $"Handled message with correlationId: \"{correlationId}\"");
+            $"Handled message with correlationId: \"{correlationId}\"",
+            TimeSpan.FromSeconds(60));
 
         foundMessageProcesseEntryInLogs.Should().BeTrue();
     }
