@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Extensions;

@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using KeeperData.Application.Queries.Parties;
 using KeeperData.Application.Queries.Parties.Builders;
 using KeeperData.Core.Documents;

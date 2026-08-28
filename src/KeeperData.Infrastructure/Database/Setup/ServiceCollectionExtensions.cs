@@ -1,4 +1,4 @@
-﻿using KeeperData.Core.Documents.Silver;
+using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
 using KeeperData.Core.Locking;
 using KeeperData.Core.Repositories;
