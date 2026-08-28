@@ -72,6 +72,7 @@ public class AppWebApplicationFactory(
     public readonly Mock<IRoleRepository> _roleRepositoryMock = new();
     public readonly Mock<ICountryRepository> _countryRepositoryMock = new();
     public readonly Mock<IScanStateRepository> _scanStateRepositoryMock = new();
+    public readonly Mock<IUserAccountsRepository> _userAccountsRepositoryMock = new();
 
     public readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
     public readonly Mock<ISiteActivityTypeLookupService> _siteActivityTypeLookupServiceMock = new();
@@ -345,6 +346,8 @@ public class AppWebApplicationFactory(
 
         OverrideServiceAsSingleton(_scanStateRepositoryMock.Object);
 
+        OverrideServiceAsScoped(_userAccountsRepositoryMock.Object);
+
         OverrideServiceAsSingleton(_referenceDataCacheMock.Object);
 
         ConfigureDefaultRepositoryBehavior();
@@ -388,6 +391,7 @@ public class AppWebApplicationFactory(
         _countryRepositoryMock.Reset();
 
         _scanStateRepositoryMock.Reset();
+        _userAccountsRepositoryMock.Reset();
     }
 
     private void ConfigureTransientServices()

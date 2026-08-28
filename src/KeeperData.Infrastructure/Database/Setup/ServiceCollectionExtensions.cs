@@ -47,6 +47,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
         services.AddScoped<ICphRepository, CphRepository>();
+        services.AddScoped<ICphAssociationsRepository, CphAssociationsRepository>();
         services.AddScoped<ICountryRepository, CountryRepository>();
         services.AddScoped<ISpeciesRepository, SpeciesRepository>();
         services.AddScoped<IFacilityBusinessActivityMapRepository, FacilityBusinessActivityMapRepository>();
@@ -58,6 +59,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISiteTypeMapRepository, SiteTypeMapRepository>();
         services.AddScoped<ISitesRepository, SitesRepository>();
         services.AddScoped<IPartiesRepository, PartiesRepository>();
+        services.AddScoped<IUserAccountsRepository, UserAccountsRepository>();
         services.AddScoped<IGoldSitePartyRoleRelationshipRepository, GoldSitePartyRoleRelationshipRepository>();
         services.AddSingleton<IScanStateRepository, ScanStateRepository>();
 

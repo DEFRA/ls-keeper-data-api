@@ -41,6 +41,8 @@ tags:
     description: Reference data related to sites (countries)
   - name: party
     description: Operations related to parties (keepers, organisations)
+  - name: user account
+    description: Operations related to user accounts and their CPH associations
   - name: housekeeping
     description: Health checks and system status
 
@@ -956,6 +958,107 @@ components:
       required:
         - detail
 
+    CphAssociation:
+      type: object
+      description: An association between a user account and a CPH, snapshotted from the normalised SAM read model.
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The read model identifier of the party role which granted the association.
+        cphNumber:
+          type: string
+          description: The CPH number the user is associated with.
+          example: "57/103/2335"
+        role:
+          type: string
+          description: The role the user holds on the holding.
+          enum: [owner, holder, keeper]
+          example: "owner"
+        partyId:
+          type: string
+          format: uuid
+          description: The SAM identifier of the party which grants the association.
+        holdingId:
+          type: string
+          format: uuid
+          description: The read model identifier of the holding the CPH number belongs to.
+        holdingName:
+          type: string
+          description: The name of the holding, where the source carries one.
+
+    UserAccount:
+      type: object
+      description: A user account with the CPH association snapshot captured at the last logon.
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The unique identifier of the user account.
+        subject:
+          type: string
+          nullable: true
+          description: The identity provider subject claim. Null until the user has logged on for the first time.
+          example: "9f3a1c2e-0b6d-4f4e-9d2a-7c8b1e5f0a3d"
+        email:
+          type: string
+          format: email
+          description: The email address of the user.
+          example: "jane.farmer@example.com"
+        firstName:
+          type: string
+          description: The first name of the user.
+          example: "Jane"
+        lastName:
+          type: string
+          description: The last name of the user.
+          example: "Farmer"
+        displayName:
+          type: string
+          description: The display name of the user.
+          example: "Jane Farmer"
+        cphAssociations:
+          type: array
+          description: The CPH associations held by the user at the time of the last refresh.
+          items:
+            $ref: '#/components/schemas/CphAssociation'
+        associationsRefreshedDate:
+          type: string
+          format: date-time
+          description: The timestamp of the last time the CPH associations were rebuilt from master data.
+        lastUpdatedDate:
+          type: string
+          format: date-time
+          description: The timestamp of the last time the user account was updated.
+
+    EnsureUserAccountRequest:
+      type: object
+      description: The identity provider claims captured after a successful OIDC ceremony.
+      properties:
+        sub:
+          type: string
+          maxLength: 256
+          description: The identity provider subject claim.
+          example: "9f3a1c2e-0b6d-4f4e-9d2a-7c8b1e5f0a3d"
+        email:
+          type: string
+          format: email
+          description: The email address claim.
+          example: "jane.farmer@example.com"
+        given_name:
+          type: string
+          description: The given name claim.
+          example: "Jane"
+        family_name:
+          type: string
+          description: The family name claim.
+          example: "Farmer"
+      required:
+        - sub
+        - email
+        - given_name
+        - family_name
+
   responses:
     BadRequest:
       description: "The request was malformed or could not be processed."
@@ -1002,6 +1105,15 @@ components:
           examples:
             serverError:
               $ref: '#/components/examples/server-error'
+    UnprocessableEntity:
+      description: "The request body failed validation."
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            unprocessableEntity:
+              $ref: '#/components/examples/unprocessable-entity'
     ServiceUnavailable:
       description: "The service requested is unavailable"
       content:
@@ -1048,6 +1160,12 @@ components:
         title: "Server Error"
         detail: "The server encountered an unexpected error"
         status: 500
+    unprocessable-entity:
+      value:
+        type: "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.21"
+        title: "Unprocessable Content"
+        detail: "One or more validation errors occurred. See the 'errors' field for details."
+        status: 422
     service-unavailable:
       value:
         type: "https://datatracker.ietf.org/doc/html/rfc9110#section-15.6.4"
@@ -1865,3 +1983,87 @@ paths:
           $ref: '#/components/responses/ServerError'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
+
+  # ═══════════════════════════════════════════════════════════════════
+  # USER ACCOUNTS
+  # ═══════════════════════════════════════════════════════════════════
+  /api/v2/user-accounts:
+    post:
+      tags:
+        - user account
+      summary: Ensure a user account exists for the supplied identity provider claims.
+      description: |-
+        Called on every successful logon. Resolves the account by subject, otherwise adopts an account which matches on email and has no subject bound yet (the subject is stamped once and never overwritten), otherwise creates a new account.
+
+        Profile fields are overwritten from the claims and the CPH association graph is rebuilt from the normalised SAM read model, matching on the party's email (case insensitively) and scoped to the configured party roles (owner by default). An empty association result is valid and empties the snapshot, but a cold read model cache returns 503 and leaves the stored snapshot untouched.
+      operationId: ensureUserAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnsureUserAccountRequest'
+      responses:
+        '200':
+          description: OK - The existing account was refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAccount'
+        '201':
+          description: Created - A new account was created
+          headers:
+            Location:
+              description: The location of the created user account.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAccount'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v2/user-accounts/{subject}:
+    get:
+      tags:
+        - user account
+      summary: Retrieve a user account by identity provider subject.
+      description: Read only session lookup. The CPH associations returned are those captured by the most recent ensure call; no master data refresh is performed.
+      operationId: getUserAccountBySubject
+      parameters:
+        - name: subject
+          in: path
+          required: true
+          description: The identity provider subject claim, percent encoded in the path.
+          schema:
+            type: string
+            maxLength: 256
+            example: "9f3a1c2e-0b6d-4f4e-9d2a-7c8b1e5f0a3d"
+      responses:
+        '200':
+          description: OK - Successful request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAccount'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/ServerError'

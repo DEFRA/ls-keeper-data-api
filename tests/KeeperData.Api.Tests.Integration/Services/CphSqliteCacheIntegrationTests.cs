@@ -2,17 +2,22 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Fixtures;
+using KeeperData.Core.ApiClients.DataBridgeApi;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
+using KeeperData.Core.Storage.Sqlite;
 using KeeperData.Infrastructure.Database.Repositories;
 using KeeperData.Infrastructure.Services;
-using KeeperData.Infrastructure.Storage.Clients;
 using KeeperData.Infrastructure.Storage.Configuration;
-using KeeperData.Infrastructure.Storage.Factories;
-using KeeperData.Infrastructure.Storage.Factories.Implementations;
+using KeeperData.Infrastructure.Storage.Sources;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Net;
+using System.Text;
+using System.Text.Json;
 using Xunit.Abstractions;
 
 namespace KeeperData.Api.Tests.Integration.Services;
@@ -383,18 +388,23 @@ public class CphSqliteCacheIntegrationTests : IAsyncLifetime
     {
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.AddConsole());
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
 
-        var s3ClientFactory = new S3ClientFactory();
-        s3ClientFactory.RegisterMockClient<CphSqliteStorageClient>(
-            TestBucket, _localStackFixture.S3Client);
-        services.AddSingleton<IS3ClientFactory>(s3ClientFactory);
+        services.AddHttpClient(
+                DataBridgeSqliteArtifactSource.MetadataClientName,
+                client => client.BaseAddress = new Uri("https://data-bridge.test/"))
+            .ConfigurePrimaryHttpMessageHandler(() => new LatestSqliteStubHandler(GetLatestPresignedArtifactAsync));
+
+        services.AddHttpClient(DataBridgeSqliteArtifactSource.DownloadClientName);
+
+        services.AddSingleton<ISqliteArtifactSource, DataBridgeSqliteArtifactSource>();
 
         var cacheConfig = new CphSqliteCacheConfiguration
         {
             Enabled = true,
             CachePath = _cachePath,
-            S3Prefix = S3Prefix,
             FilePattern = "cphs_",
+            LatestArtifactRoute = DataBridgeApiRoutes.GetLatestCphSqlite,
             RefreshIntervalHours = 24
         };
         services.AddSingleton(cacheConfig);
@@ -404,5 +414,70 @@ public class CphSqliteCacheIntegrationTests : IAsyncLifetime
         services.AddScoped<ICphRepository, CphRepository>();
 
         return services.BuildServiceProvider();
+    }
+
+    /// <summary>
+    /// Stands in for the data bridge, presigning the newest CPH database in the bucket exactly as
+    /// GET api/etl/sqlite/cphs/latest does.
+    /// </summary>
+    private async Task<SqliteArtifactLatestResponse?> GetLatestPresignedArtifactAsync()
+    {
+        var objects = await _localStackFixture.S3Client.ListObjectsV2Async(new ListObjectsV2Request
+        {
+            BucketName = TestBucket,
+            Prefix = S3Prefix
+        });
+
+        var latest = objects.S3Objects
+            .Where(o => o.Key.Split('/').Last().StartsWith("cphs_", StringComparison.Ordinal)
+                        && o.Key.EndsWith(".sqlite", StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(o => o.Key, StringComparer.Ordinal)
+            .FirstOrDefault();
+
+        if (latest is null)
+        {
+            return null;
+        }
+
+        var expiresAt = DateTime.UtcNow.AddMinutes(60);
+
+        var downloadUrl = await _localStackFixture.S3Client.GetPreSignedURLAsync(new GetPreSignedUrlRequest
+        {
+            BucketName = TestBucket,
+            Key = latest.Key,
+            Verb = HttpVerb.GET,
+            Expires = expiresAt,
+            Protocol = Protocol.HTTP
+        });
+
+        return new SqliteArtifactLatestResponse
+        {
+            ObjectKey = latest.Key,
+            DownloadUrl = downloadUrl,
+            Size = latest.Size ?? 0,
+            LastModified = latest.LastModified ?? DateTime.UtcNow,
+            ExpiresAt = expiresAt
+        };
+    }
+
+    private sealed class LatestSqliteStubHandler(Func<Task<SqliteArtifactLatestResponse?>> resolveLatest)
+        : HttpMessageHandler
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var artifact = await resolveLatest();
+
+            if (artifact is null)
+            {
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    JsonSerializer.Serialize(artifact), Encoding.UTF8, "application/json")
+            };
+        }
     }
 }

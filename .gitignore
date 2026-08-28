@@ -48,6 +48,10 @@ project.lock.json
 project.fragment.lock.json
 artifacts/
 
+# Patch files
+*.patch
+*.diff
+
 *_i.c
 *_p.c
 *_i.h
