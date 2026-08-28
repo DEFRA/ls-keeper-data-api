@@ -2,6 +2,7 @@ using FluentAssertions;
 using KeeperData.Application.Commands.UserAccounts;
 using KeeperData.Application.Services.UserAccounts;
 using KeeperData.Core.Documents;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Repositories;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -89,7 +90,7 @@ public class EnsureUserAccountCommandHandlerTests
     }
 
     [Fact]
-    public async Task GivenAnAccountWithADifferentSubjectMatchingOnEmail_WhenEnsuring_ThenTheSubjectIsNotOverwritten()
+    public async Task GivenAnAccountWithADifferentSubjectMatchingOnEmail_WhenEnsuring_ThenAConflictIsThrown()
     {
         SetupExistingAccountByEmail(new UserAccountDocument
         {
@@ -98,11 +99,38 @@ public class EnsureUserAccountCommandHandlerTests
             Email = Email
         });
 
-        var result = await _sut.Handle(Command(), _token);
+        var act = () => _sut.Handle(Command(), _token);
 
-        result.Created.Should().BeTrue();
-        result.Account.Id.Should().NotBe("other-account-id");
-        result.Account.Subject.Should().Be(Subject);
+        await act.Should().ThrowAsync<ConflictException>();
+
+        _repository.Verify(x => x.AddAsync(It.IsAny<UserAccountDocument>(), It.IsAny<CancellationToken>()), Times.Never);
+        _repository.Verify(x => x.UpdateAsync(It.IsAny<UserAccountDocument>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GivenAKnownSubject_WhenTheClaimsEmailBelongsToADifferentAccount_ThenAConflictIsThrown()
+    {
+        SetupExistingAccountBySubject(new UserAccountDocument
+        {
+            Id = "account-id",
+            Subject = Subject,
+            Email = "stale@example.com"
+        });
+
+        _repository
+            .Setup(x => x.FindByEmailAsync(Email, _token))
+            .ReturnsAsync(new UserAccountDocument
+            {
+                Id = "other-account-id",
+                Subject = "another-subject",
+                Email = Email
+            });
+
+        var act = () => _sut.Handle(Command(), _token);
+
+        await act.Should().ThrowAsync<ConflictException>();
+
+        _repository.Verify(x => x.UpdateAsync(It.IsAny<UserAccountDocument>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

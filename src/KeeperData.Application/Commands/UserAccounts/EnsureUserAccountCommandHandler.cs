@@ -1,5 +1,6 @@
 using KeeperData.Application.Services.UserAccounts;
 using KeeperData.Core.Documents;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Repositories;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -53,12 +54,21 @@ public class EnsureUserAccountCommandHandler(
         var account = await repository.FindBySubjectAsync(request.Subject, cancellationToken);
 
         if (account is not null)
+        {
+            await EnsureEmailIsNotTakenByAnotherAccountAsync(request, account, cancellationToken);
             return (account, false);
+        }
 
         var adoptable = await repository.FindByEmailAsync(request.Email, cancellationToken);
 
-        if (adoptable is not null && adoptable.Subject is null)
-            return AdoptExistingAccount(adoptable, request.Subject);
+        if (adoptable is not null)
+        {
+            if (adoptable.Subject is null)
+                return AdoptExistingAccount(adoptable, request.Subject);
+
+            throw new ConflictException(
+                $"Email '{request.Email}' is already associated with a different account.");
+        }
 
         var newAccount = new UserAccountDocument
         {
@@ -69,6 +79,28 @@ public class EnsureUserAccountCommandHandler(
         };
 
         return (newAccount, true);
+    }
+
+    /// <summary>
+    /// Guards against overwriting the resolved account's email with one already claimed by a
+    /// different subject. This is a permanent business rule violation, not a transient race, so it
+    /// is surfaced as a 409 Conflict rather than falling through to a duplicate key retry.
+    /// </summary>
+    private async Task EnsureEmailIsNotTakenByAnotherAccountAsync(
+        EnsureUserAccountCommand request,
+        UserAccountDocument account,
+        CancellationToken cancellationToken)
+    {
+        if (string.Equals(account.Email, request.Email, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var emailOwner = await repository.FindByEmailAsync(request.Email, cancellationToken);
+
+        if (emailOwner is not null && emailOwner.Id != account.Id)
+        {
+            throw new ConflictException(
+                $"Email '{request.Email}' is already associated with a different account.");
+        }
     }
 
     private static (UserAccountDocument Account, bool Created) AdoptExistingAccount(UserAccountDocument adoptable, string subject)

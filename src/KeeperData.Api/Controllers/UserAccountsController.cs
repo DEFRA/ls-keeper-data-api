@@ -39,6 +39,7 @@ namespace KeeperData.Api.Controllers
         /// <response code="201">Created - A new account was created.</response>
         /// <response code="401">Access token is not set or invalid.</response>
         /// <response code="403">The requestor is not authorized to perform this operation on the resource.</response>
+        /// <response code="409">The supplied email is already associated with a different account.</response>
         /// <response code="422">The request body failed validation.</response>
         /// <response code="503">The SAM read model cache is not yet available, so associations cannot be refreshed.</response>
         /// <response code="500">The server encountered an unexpected error</response>
@@ -47,6 +48,7 @@ namespace KeeperData.Api.Controllers
         [ProducesResponseType(typeof(UserAccountDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
