@@ -27,6 +27,7 @@ public class CphAssociationsController(IRequestExecutor executor) : ControllerBa
     /// Asks KRDS which CPHs an email address is associated with, and in what role.
     /// </remarks>
     /// <param name="request">The request containing the email to query.</param>
+    /// <param name="readModelCache">The SQLite cache service for the read model.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">OK - Array of association objects, deduplicated.</response>
     /// <response code="400">Missing/blank/malformed email, or business error.</response>
