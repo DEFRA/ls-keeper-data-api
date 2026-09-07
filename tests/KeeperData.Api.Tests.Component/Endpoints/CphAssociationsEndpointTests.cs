@@ -46,7 +46,7 @@ public class CphAssociationsEndpointTests : IClassFixture<AppTestFixture>
         _mockCache.Setup(c => c.IsLoaded).Returns(false);
 
         // Act
-        var response = await _client.GetAsync("/cph-associations?email=test@test.com");
+        var response = await _client.GetAsync("/api/cph-associations?email=test@test.com");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -63,7 +63,7 @@ public class CphAssociationsEndpointTests : IClassFixture<AppTestFixture>
         _mockCache.Setup(c => c.IsLoaded).Returns(true);
 
         // Act
-        var response = await _client.GetAsync("/cph-associations?email=not-an-email");
+        var response = await _client.GetAsync("/api/cph-associations?email=not-an-email");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -80,7 +80,7 @@ public class CphAssociationsEndpointTests : IClassFixture<AppTestFixture>
         _mockCache.Setup(c => c.IsLoaded).Returns(true);
 
         // Act
-        var response = await _client.GetAsync("/cph-associations");
+        var response = await _client.GetAsync("/api/cph-associations");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -104,7 +104,7 @@ public class CphAssociationsEndpointTests : IClassFixture<AppTestFixture>
             });
 
         // Act
-        var response = await _client.GetAsync("/cph-associations?email=test@test.com");
+        var response = await _client.GetAsync("/api/cph-associations?email=test@test.com");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -126,7 +126,7 @@ public class CphAssociationsEndpointTests : IClassFixture<AppTestFixture>
             .ReturnsAsync(new List<CphAssociationResult>());
 
         // Act
-        var response = await _client.GetAsync("/cph-associations?email=test@test.com");
+        var response = await _client.GetAsync("/api/cph-associations?email=test@test.com");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);

@@ -12,7 +12,7 @@ namespace KeeperData.Api.Controllers;
 /// </summary>
 [Authorize(Policy = "BasicOrBearer")]
 [ApiController]
-[Route("cph-associations")]
+[Route("api/cph-associations")]
 [ApiExplorerSettings(GroupName = "public")]
 [Produces("application/json")]
 [Tags("user-accounts")]

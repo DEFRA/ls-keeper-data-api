@@ -31,8 +31,8 @@ public class PiiMaskingEnricherTests
     {
         var urlProperties = new[]
         {
-            new LogEventProperty("full", new ScalarValue("http://localhost/cph-associations?email=secret@test.com")),
-            new LogEventProperty("original", new ScalarValue("/cph-associations?email=secret@test.com")),
+            new LogEventProperty("full", new ScalarValue("http://localhost/api/cph-associations?email=secret@test.com")),
+            new LogEventProperty("original", new ScalarValue("/api/cph-associations?email=secret@test.com")),
             new LogEventProperty("query", new ScalarValue("?email=secret@test.com"))
         };
 
@@ -54,10 +54,10 @@ public class PiiMaskingEnricherTests
         modifiedUrl.Should().NotBeNull();
 
         var full = modifiedUrl!.Properties.Single(p => p.Name == "full").Value as ScalarValue;
-        full!.Value.Should().Be("http://localhost/cph-associations?email=***");
+        full!.Value.Should().Be("http://localhost/api/cph-associations?email=***");
 
         var original = modifiedUrl!.Properties.Single(p => p.Name == "original").Value as ScalarValue;
-        original!.Value.Should().Be("/cph-associations?email=***");
+        original!.Value.Should().Be("/api/cph-associations?email=***");
 
         var query = modifiedUrl!.Properties.Single(p => p.Name == "query").Value as ScalarValue;
         query!.Value.Should().Be("?email=***");
@@ -69,7 +69,7 @@ public class PiiMaskingEnricherTests
         var context = new DefaultHttpContext();
         context.Request.Scheme = "https";
         context.Request.Host = new HostString("krds.example");
-        context.Request.Path = "/cph-associations";
+        context.Request.Path = "/api/cph-associations";
         context.Request.QueryString = new QueryString("?email=secret@example.com");
 
         var accessor = new HttpContextAccessor { HttpContext = context };
