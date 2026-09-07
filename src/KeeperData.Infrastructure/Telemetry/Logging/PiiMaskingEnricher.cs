@@ -10,7 +10,10 @@ public class PiiMaskingEnricher : ILogEventEnricher
     // formatter expands it later, including the raw query string, so it cannot be safely redacted
     // by walking Serilog property values.
     private const string EcsHttpContextPropertyName = "HttpContext";
-    private static readonly Regex EmailRegex = new Regex(@"(?<=email=)[^&]+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex EmailRegex = new Regex(
+        @"(?<=email=)[^&]+",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled,
+        TimeSpan.FromMilliseconds(250));
     private readonly Microsoft.AspNetCore.Http.IHttpContextAccessor? _httpContextAccessor;
 
     public PiiMaskingEnricher(Microsoft.AspNetCore.Http.IHttpContextAccessor? httpContextAccessor = null)
@@ -53,66 +56,86 @@ public class PiiMaskingEnricher : ILogEventEnricher
     private bool RequestContainsEmailQueryParameter() =>
         _httpContextAccessor?.HttpContext?.Request.Query.ContainsKey("email") == true;
 
-    private static LogEventPropertyValue MaskValue(LogEventPropertyValue value)
-    {
-        switch (value)
+    private static LogEventPropertyValue MaskValue(LogEventPropertyValue value) =>
+        value switch
         {
-            case ScalarValue scalar when scalar.Value is string s && s.Contains("email=", StringComparison.OrdinalIgnoreCase):
-                return new ScalarValue(EmailRegex.Replace(s, "***"));
+            ScalarValue scalar => MaskScalar(scalar),
+            StructureValue structure => MaskStructure(structure),
+            DictionaryValue dictionary => MaskDictionary(dictionary),
+            SequenceValue sequence => MaskSequence(sequence),
+            _ => value
+        };
 
-            case StructureValue structure:
-                var properties = structure.Properties;
-                var newProperties = new LogEventProperty[properties.Count];
-                var mutatedStructure = false;
-                for (var i = 0; i < properties.Count; i++)
-                {
-                    var p = properties[i];
-                    var maskedPValue = MaskValue(p.Value);
-                    if (!ReferenceEquals(maskedPValue, p.Value))
-                    {
-                        mutatedStructure = true;
-                        newProperties[i] = new LogEventProperty(p.Name, maskedPValue);
-                    }
-                    else
-                    {
-                        newProperties[i] = p;
-                    }
-                }
-                return mutatedStructure ? new StructureValue(newProperties, structure.TypeTag) : value;
-
-            case DictionaryValue dictionary:
-                var elements = dictionary.Elements;
-                var newElements = new List<KeyValuePair<ScalarValue, LogEventPropertyValue>>();
-                var mutatedDict = false;
-                foreach (var kvp in elements)
-                {
-                    var maskedKey = MaskValue(kvp.Key) as ScalarValue ?? kvp.Key;
-                    var maskedValue = MaskValue(kvp.Value);
-                    if (!ReferenceEquals(maskedKey, kvp.Key) || !ReferenceEquals(maskedValue, kvp.Value))
-                    {
-                        mutatedDict = true;
-                    }
-                    newElements.Add(new KeyValuePair<ScalarValue, LogEventPropertyValue>(maskedKey, maskedValue));
-                }
-                return mutatedDict ? new DictionaryValue(newElements) : value;
-
-            case SequenceValue sequence:
-                var seqElements = sequence.Elements;
-                var newSeqElements = new LogEventPropertyValue[seqElements.Count];
-                var mutatedSeq = false;
-                for (var i = 0; i < seqElements.Count; i++)
-                {
-                    var maskedElem = MaskValue(seqElements[i]);
-                    if (!ReferenceEquals(maskedElem, seqElements[i]))
-                    {
-                        mutatedSeq = true;
-                    }
-                    newSeqElements[i] = maskedElem;
-                }
-                return mutatedSeq ? new SequenceValue(newSeqElements) : value;
-
-            default:
-                return value;
+    private static LogEventPropertyValue MaskScalar(ScalarValue scalar)
+    {
+        if (scalar.Value is string s && s.Contains("email=", StringComparison.OrdinalIgnoreCase))
+        {
+            return new ScalarValue(EmailRegex.Replace(s, "***"));
         }
+
+        return scalar;
+    }
+
+    private static LogEventPropertyValue MaskStructure(StructureValue structure)
+    {
+        var properties = structure.Properties;
+        var newProperties = new LogEventProperty[properties.Count];
+        var mutated = false;
+
+        for (var i = 0; i < properties.Count; i++)
+        {
+            var p = properties[i];
+            var maskedPValue = MaskValue(p.Value);
+            if (!ReferenceEquals(maskedPValue, p.Value))
+            {
+                mutated = true;
+                newProperties[i] = new LogEventProperty(p.Name, maskedPValue);
+            }
+            else
+            {
+                newProperties[i] = p;
+            }
+        }
+
+        return mutated ? new StructureValue(newProperties, structure.TypeTag) : structure;
+    }
+
+    private static LogEventPropertyValue MaskDictionary(DictionaryValue dictionary)
+    {
+        var elements = dictionary.Elements;
+        var newElements = new List<KeyValuePair<ScalarValue, LogEventPropertyValue>>(elements.Count);
+        var mutated = false;
+
+        foreach (var kvp in elements)
+        {
+            var maskedKey = MaskValue(kvp.Key) as ScalarValue ?? kvp.Key;
+            var maskedValue = MaskValue(kvp.Value);
+            if (!ReferenceEquals(maskedKey, kvp.Key) || !ReferenceEquals(maskedValue, kvp.Value))
+            {
+                mutated = true;
+            }
+            newElements.Add(new KeyValuePair<ScalarValue, LogEventPropertyValue>(maskedKey, maskedValue));
+        }
+
+        return mutated ? new DictionaryValue(newElements) : dictionary;
+    }
+
+    private static LogEventPropertyValue MaskSequence(SequenceValue sequence)
+    {
+        var seqElements = sequence.Elements;
+        var newSeqElements = new LogEventPropertyValue[seqElements.Count];
+        var mutated = false;
+
+        for (var i = 0; i < seqElements.Count; i++)
+        {
+            var maskedElem = MaskValue(seqElements[i]);
+            if (!ReferenceEquals(maskedElem, seqElements[i]))
+            {
+                mutated = true;
+            }
+            newSeqElements[i] = maskedElem;
+        }
+
+        return mutated ? new SequenceValue(newSeqElements) : sequence;
     }
 }

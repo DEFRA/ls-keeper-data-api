@@ -125,6 +125,31 @@ public class PiiMaskingEnricherTests
     }
 
     [Fact]
+    public void Enrich_MasksInSequence()
+    {
+        var elements = new LogEventPropertyValue[]
+        {
+            new ScalarValue("https://api.example.com?email=hello@world.com"),
+            new ScalarValue("https://api.example.com?id=123")
+        };
+
+        var seq = new SequenceValue(elements);
+        var logEvent = CreateLogEvent(new LogEventProperty("RequestUrls", seq));
+
+        _enricher.Enrich(logEvent, new PropertyFactory());
+
+        var modifiedSeq = logEvent.Properties["RequestUrls"] as SequenceValue;
+        modifiedSeq.Should().NotBeNull();
+        modifiedSeq!.Elements.Should().HaveCount(2);
+
+        var first = modifiedSeq.Elements[0] as ScalarValue;
+        first!.Value.Should().Be("https://api.example.com?email=***");
+
+        var second = modifiedSeq.Elements[1] as ScalarValue;
+        second!.Value.Should().Be("https://api.example.com?id=123");
+    }
+
+    [Fact]
     public void Enrich_DoesNotModifySafeValues()
     {
         var logEvent = CreateLogEvent(new LogEventProperty("RequestPath", new ScalarValue("/api/test?user=123")));
