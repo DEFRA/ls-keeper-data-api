@@ -35,7 +35,7 @@ public class CphAssociationsEndpointTests : IClassFixture<AppTestFixture>
                 services.AddSingleton(_mockExecutor.Object);
             });
         }).CreateClient();
-        
+
         _client.AddBasicApiKey("ApiKey", "integration-test-secret");
     }
 
@@ -50,7 +50,7 @@ public class CphAssociationsEndpointTests : IClassFixture<AppTestFixture>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
-        
+
         var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         problemDetails.Should().NotBeNull();
         problemDetails!.Status.Should().Be(503);
@@ -67,7 +67,7 @@ public class CphAssociationsEndpointTests : IClassFixture<AppTestFixture>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        
+
         var problemDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
         problemDetails.Should().NotBeNull();
         problemDetails!.Status.Should().Be(400);
@@ -84,7 +84,7 @@ public class CphAssociationsEndpointTests : IClassFixture<AppTestFixture>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        
+
         var problemDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
         problemDetails.Should().NotBeNull();
         problemDetails!.Status.Should().Be(400);
@@ -98,9 +98,9 @@ public class CphAssociationsEndpointTests : IClassFixture<AppTestFixture>
         _mockCache.Setup(c => c.IsLoaded).Returns(true);
         _mockExecutor
             .Setup(x => x.ExecuteQuery(It.IsAny<GetCphAssociationsQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<CphAssociationResult> 
-            { 
-                new CphAssociationResult { Cph = "12/345/6789", Role = "owner" } 
+            .ReturnsAsync(new List<CphAssociationResult>
+            {
+                new CphAssociationResult { Cph = "12/345/6789", Role = "owner" }
             });
 
         // Act
@@ -108,7 +108,7 @@ public class CphAssociationsEndpointTests : IClassFixture<AppTestFixture>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var associations = await response.Content.ReadFromJsonAsync<List<CphAssociationResponse>>();
         associations.Should().NotBeNull();
         associations.Should().HaveCount(1);
@@ -130,7 +130,7 @@ public class CphAssociationsEndpointTests : IClassFixture<AppTestFixture>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var associations = await response.Content.ReadFromJsonAsync<List<CphAssociationResponse>>();
         associations.Should().NotBeNull();
         associations.Should().BeEmpty();

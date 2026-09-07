@@ -58,7 +58,7 @@ public class CphAssociationsController(IRequestExecutor executor) : ControllerBa
         };
 
         var result = await _executor.ExecuteQuery(query, cancellationToken);
-        
+
         var response = result.Select(r => new CphAssociationResponse
         {
             Cph = r.Cph,

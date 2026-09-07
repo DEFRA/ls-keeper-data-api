@@ -49,7 +49,7 @@ public class PiiMaskingEnricherTests
 
         var modifiedHttpContext = logEvent.Properties["RequestMetadata"] as StructureValue;
         modifiedHttpContext.Should().NotBeNull();
-        
+
         var modifiedUrl = modifiedHttpContext!.Properties.Single(p => p.Name == "url").Value as StructureValue;
         modifiedUrl.Should().NotBeNull();
 
@@ -103,7 +103,7 @@ public class PiiMaskingEnricherTests
 
         logEvent.Properties.Should().ContainKey("HttpContext");
     }
-    
+
     [Fact]
     public void Enrich_MasksInDictionary()
     {
@@ -119,7 +119,7 @@ public class PiiMaskingEnricherTests
 
         var modifiedDict = logEvent.Properties["RequestData"] as DictionaryValue;
         modifiedDict.Should().NotBeNull();
-        
+
         var modifiedValue = modifiedDict!.Elements.Single().Value as ScalarValue;
         modifiedValue!.Value.Should().Be("https://api.example.com?email=***");
     }
