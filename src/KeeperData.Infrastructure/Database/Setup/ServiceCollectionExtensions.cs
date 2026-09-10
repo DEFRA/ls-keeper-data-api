@@ -50,6 +50,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<ICphRepository, CphRepository>();
         services.AddScoped<ICphAssociationsRepository, CphAssociationsRepository>();
+        services.AddScoped<IHoldingDetailRepository, HoldingDetailRepository>();
         services.AddScoped<ICountryRepository, CountryRepository>();
         services.AddScoped<ISpeciesRepository, SpeciesRepository>();
         services.AddScoped<IFacilityBusinessActivityMapRepository, FacilityBusinessActivityMapRepository>();
