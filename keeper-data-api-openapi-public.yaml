@@ -43,6 +43,8 @@ tags:
     description: Operations related to parties (keepers, organisations)
   - name: user account
     description: Operations related to user accounts and their CPH associations
+  - name: holdings
+    description: Operations related to holding details served from the cached SAM read model
   - name: housekeeping
     description: Health checks and system status
 
@@ -1059,6 +1061,202 @@ components:
         - given_name
         - family_name
 
+    # ─── Holding Detail ───────────────────────────────────────────────
+    HoldingDetail:
+      type: object
+      description: Detailed holding information served from the cached SAM read model.
+      properties:
+        identifier:
+          type: string
+          example: "13/169/0007"
+          description: CPH identifier for the holding.
+        holdingType:
+          type: string
+          nullable: true
+          example: "permanent"
+          description: Type of holding (e.g. permanent, temporary, emergency).
+        name:
+          type: string
+          nullable: true
+          example: "Land At Test Farm 06"
+          description: Feature name of the holding.
+        startDate:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-03-09T00:00:00Z"
+          description: Start date of the holding in ISO-8601 UTC.
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+          description: End date of the holding in ISO-8601 UTC.
+        location:
+          $ref: '#/components/schemas/HoldingLocation'
+        associations:
+          type: array
+          items:
+            $ref: '#/components/schemas/HoldingAssociation'
+        allowedSpecies:
+          type: array
+          items:
+            type: string
+          example: ["CHK", "CTT", "PG", "SHP"]
+        marks:
+          type: array
+          items:
+            $ref: '#/components/schemas/HoldingMark'
+      required:
+        - identifier
+        - location
+        - associations
+        - allowedSpecies
+        - marks
+
+    HoldingLocation:
+      type: object
+      description: Geographic and address location details for the holding.
+      properties:
+        osMapReference:
+          type: string
+          nullable: true
+          example: "TL9560015900"
+        easting:
+          type: integer
+          nullable: true
+          example: 595600
+        northing:
+          type: integer
+          nullable: true
+          example: 215900
+        address:
+          $ref: '#/components/schemas/HoldingAddress'
+      required:
+        - address
+
+    HoldingAddress:
+      type: object
+      description: Address details for the holding.
+      properties:
+        udprn:
+          type: string
+          nullable: true
+          example: null
+        addressLine1:
+          type: string
+          nullable: true
+          example: "Test Farm 06"
+        addressLine2:
+          type: string
+          nullable: true
+          example: "Layer Road"
+        postTown:
+          type: string
+          nullable: true
+          example: "COLCHESTER"
+        locality:
+          type: string
+          nullable: true
+          example: "Great Wigborough"
+        postcode:
+          type: string
+          nullable: true
+          example: "CO5 7RR"
+        country:
+          type: string
+          nullable: true
+          example: "England"
+
+    HoldingAssociation:
+      type: object
+      description: Party associated with the holding and their roles.
+      properties:
+        customerNumber:
+          type: string
+          example: "C161215"
+        title:
+          type: string
+          nullable: true
+          example: "MRS"
+        firstName:
+          type: string
+          nullable: true
+          example: "Sheila"
+        lastName:
+          type: string
+          nullable: true
+          example: "Keeper-Six"
+        name:
+          type: string
+          nullable: true
+          example: "MRS Sheila F Keeper-Six"
+        partyType:
+          type: string
+          example: "person"
+        email:
+          type: string
+          nullable: true
+          example: "krds-test06@livestockinformationb2cqa.onmicrosoft.com"
+        mobile:
+          type: string
+          nullable: true
+          example: null
+        telephone:
+          type: string
+          nullable: true
+          example: "01206 999999"
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/HoldingRole'
+      required:
+        - customerNumber
+        - partyType
+        - roles
+
+    HoldingRole:
+      type: object
+      description: Role held by a party at the holding.
+      properties:
+        code:
+          type: string
+          example: "keeper"
+        species:
+          type: array
+          items:
+            type: string
+          example: ["CTT"]
+      required:
+        - code
+        - species
+
+    HoldingMark:
+      type: object
+      description: Herd mark registered at the holding.
+      properties:
+        mark:
+          type: string
+          example: "240728"
+        startDate:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2008-07-16T00:00:00Z"
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        species:
+          type: array
+          items:
+            type: string
+          example: ["CTT"]
+      required:
+        - mark
+        - species
+
   responses:
     BadRequest:
       description: "The request was malformed or could not be processed."
@@ -2067,3 +2265,55 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '500':
           $ref: '#/components/responses/ServerError'
+
+  /api/holdings/{county}/{parish}/{holding}:
+    get:
+      tags:
+        - holdings
+      summary: Retrieve detailed holding information by CPH.
+      description: Serves holding detail for a CPH from the cached SAM read model.
+      operationId: getHoldingDetail
+      parameters:
+        - name: county
+          in: path
+          required: true
+          description: The 2-digit county segment of the CPH.
+          schema:
+            type: string
+            pattern: '^\d{2}$'
+            example: "13"
+        - name: parish
+          in: path
+          required: true
+          description: The 3-digit parish segment of the CPH.
+          schema:
+            type: string
+            pattern: '^\d{3}$'
+            example: "169"
+        - name: holding
+          in: path
+          required: true
+          description: The 4-digit holding segment of the CPH.
+          schema:
+            type: string
+            pattern: '^\d{4}$'
+            example: "0007"
+      responses:
+        '200':
+          description: OK - Holding detail found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldingDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
