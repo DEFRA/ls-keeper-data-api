@@ -203,16 +203,18 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
             var displayName = AssembleDisplayName(organisationName, personTitle, givenName, initials, familyName);
             var partyType = !string.IsNullOrWhiteSpace(organisationName) ? "organisation" : "person";
 
-            accumulator = new PartyAccumulator(
-                sourcePartyId,
-                personTitle,
-                givenName,
-                familyName,
-                displayName,
-                partyType,
-                email,
-                mobile,
-                telephone);
+            accumulator = new PartyAccumulator
+            {
+                CustomerNumber = sourcePartyId,
+                Title = personTitle,
+                FirstName = givenName,
+                LastName = familyName,
+                Name = displayName,
+                PartyType = partyType,
+                Email = email,
+                Mobile = mobile,
+                Telephone = telephone
+            };
             partyMap[sourcePartyId] = accumulator;
         }
 
@@ -406,17 +408,18 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
         DateTimeOffset? EndDate,
         HoldingLocation Location);
 
-    private sealed class PartyAccumulator(
-        string customerNumber,
-        string? title,
-        string? firstName,
-        string? lastName,
-        string? name,
-        string partyType,
-        string? email,
-        string? mobile,
-        string? telephone)
+    private sealed class PartyAccumulator
     {
+        public required string CustomerNumber { get; init; }
+        public string? Title { get; init; }
+        public string? FirstName { get; init; }
+        public string? LastName { get; init; }
+        public string? Name { get; init; }
+        public required string PartyType { get; init; }
+        public string? Email { get; init; }
+        public string? Mobile { get; init; }
+        public string? Telephone { get; init; }
+
         private readonly Dictionary<string, HashSet<string>> _roles = new(StringComparer.OrdinalIgnoreCase);
 
         public void AddRoleSpecies(string role, string? species)
@@ -443,15 +446,15 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
             )).ToList();
 
             return new HoldingAssociation(
-                CustomerNumber: customerNumber,
-                Title: title,
-                FirstName: firstName,
-                LastName: lastName,
-                Name: name,
-                PartyType: partyType,
-                Email: email,
-                Mobile: mobile,
-                Telephone: telephone,
+                CustomerNumber: CustomerNumber,
+                Title: Title,
+                FirstName: FirstName,
+                LastName: LastName,
+                Name: Name,
+                PartyType: PartyType,
+                Email: Email,
+                Mobile: Mobile,
+                Telephone: Telephone,
                 Roles: roleList);
         }
     }
