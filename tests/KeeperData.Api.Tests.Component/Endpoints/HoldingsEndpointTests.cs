@@ -52,7 +52,7 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
         _mockCache.Setup(c => c.IsLoaded).Returns(false);
 
         // Act
-        var response = await _client.GetAsync("/api/holdings/13/169/0007");
+        var response = await _client.GetAsync("/api/v2/holdings/13/169/0007");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -82,7 +82,7 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
         _mockCache.Setup(c => c.IsLoaded).Returns(true);
 
         // Act
-        var response = await _client.GetAsync($"/api/holdings/{county}/{parish}/{holding}");
+        var response = await _client.GetAsync($"/api/v2/holdings/{county}/{parish}/{holding}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -151,7 +151,7 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
             .ReturnsAsync(expectedDetail);
 
         // Act
-        var response = await _client.GetAsync("/api/holdings/13/169/0007");
+        var response = await _client.GetAsync("/api/v2/holdings/13/169/0007");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -180,7 +180,7 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
             .ThrowsAsync(new NotFoundException("Holding with CPH '13/169/0007' was not found."));
 
         // Act
-        var response = await _client.GetAsync("/api/holdings/13/169/0007");
+        var response = await _client.GetAsync("/api/v2/holdings/13/169/0007");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -190,7 +190,7 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
     public async Task GetHoldingDetail_WhenUnauthenticated_Returns401Unauthorized()
     {
         // Act
-        var response = await _unauthenticatedClient.GetAsync("/api/holdings/13/169/0007");
+        var response = await _unauthenticatedClient.GetAsync("/api/v2/holdings/13/169/0007");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
