@@ -12,8 +12,8 @@ namespace KeeperData.Api.Controllers;
 /// </summary>
 [Authorize(Policy = "BasicOrBearer")]
 [ApiController]
-[Route("api/cph-associations")]
-[ApiExplorerSettings(GroupName = "public")]
+[Route("api/v2/cph-associations")]
+[ApiExplorerSettings(GroupName = "v2")]
 [Produces("application/json")]
 [Tags("user-accounts")]
 public class CphAssociationsController(IRequestExecutor executor) : ControllerBase

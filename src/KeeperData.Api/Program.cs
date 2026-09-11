@@ -3,21 +3,45 @@ using KeeperData.Api.Utils;
 using KeeperData.Infrastructure.Telemetry.Logging;
 using Serilog;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using KeeperData.Infrastructure.Services;
 
-var app = CreateWebApplication(args);
+var isOpenApiGeneration = string.Equals(
+    Assembly.GetEntryAssembly()?.GetName().Name,
+    "GetDocument.Insider",
+    StringComparison.Ordinal);
+var app = CreateWebApplication(args, isOpenApiGeneration);
 await app.RunAsync();
 return;
 
 [ExcludeFromCodeCoverage]
-static WebApplication CreateWebApplication(string[] args)
+static WebApplication CreateWebApplication(string[] args, bool isOpenApiGeneration)
 {
-    var builder = WebApplication.CreateBuilder(args);
-    ConfigureBuilder(builder);
+    var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+    {
+        Args = args,
+        ApplicationName = typeof(Program).Assembly.GetName().Name
+    });
+
+    if (isOpenApiGeneration)
+    {
+        builder.Services.ConfigureOpenApiGeneration();
+    }
+    else
+    {
+        ConfigureBuilder(builder);
+    }
 
     var app = builder.Build();
 
-    app.ConfigureRequestPipeline();
+    if (isOpenApiGeneration)
+    {
+        app.ConfigureOpenApiGenerationPipeline();
+    }
+    else
+    {
+        app.ConfigureRequestPipeline();
+    }
 
     return app;
 }

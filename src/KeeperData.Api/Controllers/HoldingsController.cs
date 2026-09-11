@@ -13,8 +13,8 @@ namespace KeeperData.Api.Controllers;
 /// </summary>
 [Authorize(Policy = "BasicOrBearer")]
 [ApiController]
-[Route("api/holdings")]
-[ApiExplorerSettings(GroupName = "public")]
+[Route("api/v2/holdings")]
+[ApiExplorerSettings(GroupName = "v2")]
 [Produces("application/json")]
 [Tags("holdings")]
 public class HoldingsController(IRequestExecutor executor, IReadModelSqliteCacheService readModelCache) : ControllerBase
