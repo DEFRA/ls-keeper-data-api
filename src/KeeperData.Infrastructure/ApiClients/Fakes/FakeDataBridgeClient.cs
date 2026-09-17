@@ -132,6 +132,31 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult(ids.Select(GetSamParty).ToList());
     }
 
+    public Task<DataBridgeResponse<T>?> GetSamPortsAsync<T>(
+            int top,
+            int skip,
+            string? selectFields = null,
+            DateTime? updatedSinceDateTime = null,
+            string? orderBy = null,
+            CancellationToken cancellationToken = default)
+    {
+        var data = Enumerable.Range(0, top).Select(_ => GetSamPort()).SelectMany(x => x).ToList();
+
+        if (updatedSinceDateTime.HasValue)
+        {
+            data = data.Where(x => (x.UpdatedAtUtc >= updatedSinceDateTime) || (x.CreatedAtUtc >= updatedSinceDateTime)).ToList();
+        }
+
+        var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
+        var response = GetDataBridgeResponse(objects!, top, skip);
+        return Task.FromResult<DataBridgeResponse<T>?>(response);
+    }
+
+    public Task<List<SamPort>> GetSamPortsAsync(string id, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(GetSamPort(id));
+    }
+
     public Task<DataBridgeResponse<T>?> GetCtsHoldingsAsync<T>(
         int top,
         int skip,
@@ -210,6 +235,50 @@ public class FakeDataBridgeClient : IDataBridgeClient
         return Task.FromResult<CtsAgentOrKeeper?>(null);
     }
 
+    public Task<DataBridgeResponse<T>?> GetSamCommonLandsAsync<T>(
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
+        CancellationToken cancellationToken = default)
+    {
+        var data = GetSamCommonLands();
+        var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
+        var response = GetDataBridgeResponse(objects!, top, skip);
+        return Task.FromResult<DataBridgeResponse<T>?>(response);
+    }
+
+    public Task<List<SamCommonLand>> GetSamCommonLandsByCommonCphAsync(string cph, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(GetSamCommonLands(commonCph: cph));
+    }
+
+    public Task<DataBridgeResponse<T>?> GetSamShowgroundsAsync<T>(
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
+        CancellationToken cancellationToken = default)
+    {
+        var data = Enumerable.Range(0, top).Select(_ => GetSamShowground()).SelectMany(x => x).ToList();
+
+        if (updatedSinceDateTime.HasValue)
+        {
+            data = data.Where(x => (x.UpdatedAtUtc >= updatedSinceDateTime) || (x.CreatedAtUtc >= updatedSinceDateTime)).ToList();
+        }
+
+        var objects = JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(data));
+        var response = GetDataBridgeResponse(objects!, top, skip);
+        return Task.FromResult<DataBridgeResponse<T>?>(response);
+    }
+
+    public Task<List<SamShowground>> GetSamShowgroundsByCphAsync(string cph, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(GetSamShowground(cph));
+    }
+
     private Task<DataBridgeResponse<T>?> GenerateFakeCtsAgentOrKeeperResponseAsync<T>(int top, int skip)
     {
         var data = Enumerable.Range(0, top).Select(_ => GetCtsAgentOrKeeper()).SelectMany(x => x).ToList();
@@ -235,17 +304,47 @@ public class FakeDataBridgeClient : IDataBridgeClient
     private List<SamCphHolding> GetSamCphHolding(string? id = null)
     {
         return [
-            new SamCphHolding {
+            new SamCphHolding
+            {
+                ANIMAL_PRODUCTION_USAGE_CODE = "MEAT",
+                ANIMAL_SPECIES_CODE = "CTT",
                 BATCH_ID = 1,
                 CHANGE_TYPE = "I",
-                IsDeleted = false,
-                UpdatedAtUtc = DateTime.UtcNow,
-                CreatedAtUtc = DateTime.UtcNow,
-                CPH = id ?? $"{_random.Next(10, 99)}{_random.Next(100, 999)}{_random.Next(1000, 9999)}",
-                FEATURE_NAME = Guid.NewGuid().ToString(),
+                COUNTRY_CODE = "GB",
+                CPH = id ?? $"{_random.Next(10, 99)}/{_random.Next(100, 999):000}/{_random.Next(1000, 9999)}",
+                CPH_RELATIONSHIP_TYPE = "MAIN",
                 CPH_TYPE = "PERMANENT",
+                CreatedAtUtc = DateTime.UtcNow,
+                DISEASE_TYPE = null,
+                EASTING = 400022,
+                FACILITY_BUSINSS_ACTVTY_CODE = "FACACT",
+                FACILITY_TYPE_CODE = "CL",
+                FCLTY_SUB_BSNSS_ACTVTY_CODE = "FACSUB",
                 FEATURE_ADDRESS_FROM_DATE = DateTime.Today.AddDays(-1),
-                FCLTY_SUB_BSNSS_ACTVTY_CODE = "SLG-RM-NA"
+                FEATURE_ADDRESS_TO_DATE = null,
+                FEATURE_NAME = "Feature 22",
+                INTERVAL = 12m,
+                INTERVAL_UNIT_OF_TIME = "Months",
+                IsDeleted = false,
+                LOCALITY = "Locality22",
+                MOVEMENT_RSTRCTN_RSN_CODE = null,
+                NORTHING = 500022,
+                OS_MAP_REFERENCE = null,
+                PAON_END_NUMBER = 20,
+                PAON_END_NUMBER_SUFFIX = 'D',
+                PAON_START_NUMBER = 2,
+                PAON_START_NUMBER_SUFFIX = 'C',
+                POSTCODE = "CPH22 222",
+                SAON_END_NUMBER = 10,
+                SAON_END_NUMBER_SUFFIX = 'B',
+                SAON_START_NUMBER = 1,
+                SAON_START_NUMBER_SUFFIX = 'A',
+                SECONDARY_CPH = "00/000/9267",
+                STREET = "Holding Street 22",
+                TOWN = "Town22",
+                UDPRN = "25000022",
+                UK_INTERNAL_CODE = "ENGLAND",
+                UpdatedAtUtc = DateTime.UtcNow
             }];
     }
 
@@ -315,6 +414,27 @@ public class FakeDataBridgeClient : IDataBridgeClient
             }];
     }
 
+    private List<SamPort> GetSamPort(string? id = null)
+    {
+        return [
+            new SamPort {
+                BATCH_ID = 1,
+                CHANGE_TYPE = "I",
+                IsDeleted = false,
+                UpdatedAtUtc = DateTime.UtcNow,
+                CreatedAtUtc = DateTime.UtcNow,
+                CPH = id ?? $"{_random.Next(10, 99)}/{_random.Next(100, 999)}/{_random.Next(1000, 9999)}",
+                PREMISES_NAME = "Test Port",
+                ADDRESS_LINE_1 = "Harbour Office",
+                ADDRESS_LINE_2 = "Port Road",
+                ADDRESS_LINE_3 = "Portstown",
+                POSTCODE = "PT1 1PT",
+                MAP_REFERENCE = $"AB{_random.Next(100000, 999999)}",
+                EASTING = _random.Next(100000, 600000),
+                NORTHING = _random.Next(100000, 600000)
+            }];
+    }
+
     private List<CtsCphHolding> GetCtsCphHolding(string? id = null)
     {
         return [
@@ -340,6 +460,46 @@ public class FakeDataBridgeClient : IDataBridgeClient
                 PAR_SURNAME = Guid.NewGuid().ToString(),
                 ADR_NAME = Guid.NewGuid().ToString(),
                 LPR_EFFECTIVE_FROM_DATE = DateTime.Today.AddDays(-1)
+            }];
+    }
+
+    private static List<SamCommonLand> GetSamCommonLands(string? commonCph = null)
+    {
+        var cph = commonCph ?? "00/000/0001";
+        return [
+            new SamCommonLand
+            {
+                BATCH_ID = 1,
+                CHANGE_TYPE = "I",
+                IsDeleted = false,
+                UpdatedAtUtc = DateTime.UtcNow,
+                CreatedAtUtc = DateTime.UtcNow,
+                COMMON_CPH = cph,
+                MAIN_CPH = "-",
+                COMMON_LAND_PREMISE_ID = "546196",
+                BUSINESS_USAGE = "Common Land",
+                PREMISES_NAME = "-",
+                ADDRESS_LINE_1 = "Land off Fawdon Park Road",
+                LOCAL_AUTH_NAME = "TEST COUNCIL",
+                COUNTRY = "England",
+                EASTING = "422473",
+                NORTHING = "569204",
+                LINK_ID = "-1",
+                CONTIGUOUS_COMMON = "No"
+            }];
+    }
+    private List<SamShowground> GetSamShowground(string? id = null)
+    {
+        return [
+            new SamShowground {
+                BATCH_ID = 1,
+                CHANGE_TYPE = "I",
+                IsDeleted = false,
+                UpdatedAtUtc = DateTime.UtcNow,
+                CreatedAtUtc = DateTime.UtcNow,
+                CPH = id ?? $"{_random.Next(10, 99)}/{_random.Next(100, 999)}/{_random.Next(1000, 9999)}",
+                START_DATE = DateTime.Today.AddDays(-10),
+                END_DATE = null
             }];
     }
 }

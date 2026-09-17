@@ -19,6 +19,13 @@ public class Site : IAggregateRoot
     public bool? DestroyIdentityDocumentsFlag { get; private set; }
     public bool Deleted { get; private set; }
 
+    public string? ParentSiteIdentifier { get; private set; }
+    public string? HoldingType { get; private set; }
+    public string? PermanentLandHoldingIdentifier { get; private set; }
+    public DateTime? EffectiveFromDate { get; private set; }
+    public DateTime? EffectiveToDate { get; private set; }
+    public bool? ApprovalCurrentFlag { get; private set; }
+
     private readonly List<SiteIdentifier> _identifiers = [];
     public IReadOnlyCollection<SiteIdentifier> Identifiers => _identifiers.AsReadOnly();
 
@@ -53,7 +60,13 @@ public class Site : IAggregateRoot
         bool? destroyIdentityDocumentsFlag,
         bool deleted,
         SiteType? type,
-        Location? location)
+        Location? location,
+        string? parentSiteIdentifier,
+        string? holdingType,
+        string? permanentLandHoldingIdentifier,
+        DateTime? effectiveFromDate = null,
+        DateTime? effectiveToDate = null,
+        bool? approvalCurrentFlag = null)
     {
         Id = id;
         CreatedDate = createdDate;
@@ -67,6 +80,12 @@ public class Site : IAggregateRoot
         Deleted = deleted;
         Type = type;
         _location = location;
+        ParentSiteIdentifier = parentSiteIdentifier;
+        HoldingType = holdingType;
+        PermanentLandHoldingIdentifier = permanentLandHoldingIdentifier;
+        EffectiveFromDate = effectiveFromDate;
+        EffectiveToDate = effectiveToDate;
+        ApprovalCurrentFlag = approvalCurrentFlag;
     }
 
     public static Site Create(
@@ -80,8 +99,14 @@ public class Site : IAggregateRoot
         string? source,
         bool? destroyIdentityDocumentsFlag,
         bool deleted,
+        string? parentSiteIdentifier,
+        string? holdingType,
         SiteType? type = null,
-        Location? location = null)
+        Location? location = null,
+        string? permanentLandHoldingIdentifier = null,
+        DateTime? effectiveFromDate = null,
+        DateTime? effectiveToDate = null,
+        bool? approvalCurrentFlag = null)
     {
         var site = new Site(
             id,
@@ -95,7 +120,13 @@ public class Site : IAggregateRoot
             destroyIdentityDocumentsFlag,
             deleted,
             type,
-            location);
+            location,
+            parentSiteIdentifier,
+            holdingType,
+            permanentLandHoldingIdentifier,
+            effectiveFromDate,
+            effectiveToDate,
+            approvalCurrentFlag);
 
         site._domainEvents.Add(new SiteCreatedDomainEvent(site.Id));
         return site;
@@ -109,7 +140,13 @@ public class Site : IAggregateRoot
         string? state,
         string? source,
         bool? destroyIdentityDocumentsFlag,
-        bool deleted)
+        bool deleted,
+        string? parentSiteIdentifier,
+        string? holdingType,
+        string? permanentLandHoldingIdentifier,
+        DateTime? effectiveFromDate = null,
+        DateTime? effectiveToDate = null,
+        bool? approvalCurrentFlag = null)
     {
         var changed = false;
 
@@ -120,6 +157,12 @@ public class Site : IAggregateRoot
         changed |= Change(Source, source, v => Source = v, lastUpdatedDate);
         changed |= Change(DestroyIdentityDocumentsFlag, destroyIdentityDocumentsFlag, v => DestroyIdentityDocumentsFlag = v, lastUpdatedDate);
         changed |= Change(Deleted, deleted, v => Deleted = v, lastUpdatedDate);
+        changed |= Change(ParentSiteIdentifier, parentSiteIdentifier, v => ParentSiteIdentifier = v, lastUpdatedDate);
+        changed |= Change(HoldingType, holdingType, v => HoldingType = v, lastUpdatedDate);
+        changed |= Change(PermanentLandHoldingIdentifier, permanentLandHoldingIdentifier, v => PermanentLandHoldingIdentifier = v, lastUpdatedDate);
+        changed |= Change(EffectiveFromDate, effectiveFromDate, v => EffectiveFromDate = v, lastUpdatedDate);
+        changed |= Change(EffectiveToDate, effectiveToDate, v => EffectiveToDate = v, lastUpdatedDate);
+        changed |= Change(ApprovalCurrentFlag, approvalCurrentFlag, v => ApprovalCurrentFlag = v, lastUpdatedDate);
 
         if (changed)
         {

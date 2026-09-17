@@ -115,4 +115,68 @@ public class SiteTypeLookupServiceTests
         result.siteTypeId.Should().BeNull();
         result.siteTypeName.Should().BeNull();
     }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task GetByIdAsync_WhenIdMissing_ReturnsNull(string? id)
+    {
+        var result = await _sut.GetByIdAsync(id, CancellationToken.None);
+
+        result.Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task GetByCodeAsync_WhenCodeMissing_ReturnsNull(string? code)
+    {
+        var result = await _sut.GetByCodeAsync(code, CancellationToken.None);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetByCodeAsync_WhenMatchExists_ReturnsSiteType()
+    {
+        var doc = new SiteTypeDocument
+        {
+            IdentifierId = "AC",
+            Code = "AC",
+            Name = "Assembly Centre",
+            IsActive = true,
+            SortOrder = 0,
+            EffectiveStartDate = DateTime.UtcNow,
+            CreatedDate = DateTime.UtcNow
+        };
+        _mockCache.Setup(c => c.SiteTypes).Returns(new[] { doc });
+
+        var result = await _sut.GetByCodeAsync("ac", CancellationToken.None);
+
+        result.Should().Be(doc);
+    }
+
+    [Fact]
+    public async Task GetByCodeAsync_WhenNotFound_ReturnsNull()
+    {
+        _mockCache.Setup(c => c.SiteTypes).Returns(Array.Empty<SiteTypeDocument>());
+
+        var result = await _sut.GetByCodeAsync("missing", CancellationToken.None);
+
+        result.Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task FindAsync_WhenLookupValueMissing_ReturnsNullTuple(string? lookupValue)
+    {
+        var result = await _sut.FindAsync(lookupValue, CancellationToken.None);
+
+        result.siteTypeId.Should().BeNull();
+        result.siteTypeName.Should().BeNull();
+    }
 }

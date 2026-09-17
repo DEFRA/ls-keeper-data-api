@@ -8,6 +8,8 @@ public static class MetricNames
     public const string DataBridge = "keeperdata.databridge";
     public const string Queue = "keeperdata.queue";
     public const string Orchestrator = "keeperdata.orchestrator";
+    public const string ScanItemsFound = "scan_items_found";
+    public const string ScanCompleted = "scan_completed";
 
     public static class CommonTags
     {
@@ -19,6 +21,15 @@ public static class MetricNames
         public const string ErrorType = "error_type";
         public const string BatchSize = "batch_size";
         public const string UpdateType = "update_type";
+        public const string ScanType = "scan_type";
+        public const string Entity = "entity";
+        public const string ScanMode = "scan_mode";
+    }
+
+    public static class ScanModes
+    {
+        public const string Bulk = "bulk";
+        public const string Daily = "daily";
     }
 
     public static class Operations

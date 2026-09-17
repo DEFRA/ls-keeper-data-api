@@ -65,7 +65,9 @@ public class CtsImportHoldingMessageTests(
     {
         var verifyHoldingIdentifier = holdingIdentifier.LidIdentifierToCph();
 
-        var silverCtsHoldingFilter = Builders<CtsHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, verifyHoldingIdentifier);
+        var silverCtsHoldingFilter = Builders<CtsHoldingDocument>.Filter.And(
+            Builders<CtsHoldingDocument>.Filter.Eq(x => x.CountyParishHoldingNumber, verifyHoldingIdentifier),
+            Builders<CtsHoldingDocument>.Filter.Ne(x => x.CphTypeIdentifier, "PRTN"));
         var silverCtsHoldings = await _mongoDbFixture.MongoVerifier.FindDocumentsAsync("ctsHoldings", silverCtsHoldingFilter);
         silverCtsHoldings.Should().NotBeNull().And.HaveCount(1);
 

@@ -9,6 +9,7 @@ using System.Text.Json.Serialization;
 namespace KeeperData.Core.Documents;
 
 [CollectionName("sites")]
+[BsonIgnoreExtraElements]
 public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
 {
     /// <summary>
@@ -79,6 +80,18 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     [AutoIndexed]
     public string? Source { get; set; }
 
+    [BsonElement("parentSiteIdentifier")]
+    [JsonPropertyName("parentSiteIdentifier")]
+    public string? ParentSiteIdentifier { get; set; }
+
+    [BsonElement("holdingType")]
+    [JsonPropertyName("holdingType")]
+    public string? HoldingType { get; set; }
+
+    [BsonElement("permanentLandHoldingIdentifier")]
+    [JsonPropertyName("permanentLandHoldingIdentifier")]
+    public string? PermanentLandHoldingIdentifier { get; set; }
+
     /// <summary>
     /// Indicates whether identity documents should be destroyed for this site.
     /// </summary>
@@ -134,6 +147,30 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
     [JsonPropertyName("activities")]
     public List<SiteActivityDocument> Activities { get; set; } = [];
 
+    [BsonElement("localAuthorityName")]
+    [JsonPropertyName("localAuthorityName")]
+    public string? LocalAuthorityName { get; set; }
+
+    [BsonElement("associatedMainHoldings")]
+    [JsonPropertyName("associatedMainHoldings")]
+    public List<AssociatedHoldingDocument> AssociatedMainHoldings { get; set; } = [];
+
+    [BsonElement("associatedCommonLands")]
+    [JsonPropertyName("associatedCommonLands")]
+    public List<AssociatedHoldingDocument> AssociatedCommonLands { get; set; } = [];
+
+    [BsonElement("effectiveFromDate")]
+    [JsonPropertyName("effectiveFromDate")]
+    public DateTime? EffectiveFromDate { get; set; }
+
+    [BsonElement("effectiveToDate")]
+    [JsonPropertyName("effectiveToDate")]
+    public DateTime? EffectiveToDate { get; set; }
+
+    [BsonElement("approvalCurrentFlag")]
+    [JsonPropertyName("approvalCurrentFlag")]
+    public bool? ApprovalCurrentFlag { get; set; }
+
     public static SiteDocument FromDomain(Site m) => new()
     {
         Id = m.Id,
@@ -152,7 +189,13 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
         Parties = [.. m.Parties.Select(SitePartyDocument.FromDomain)],
         Species = [.. m.Species.Select(SpeciesSummaryDocument.FromDomain)],
         Marks = [.. m.Marks.Select(GroupMarkDocument.FromDomain)],
-        Activities = [.. m.Activities.Select(SiteActivityDocument.FromDomain)]
+        Activities = [.. m.Activities.Select(SiteActivityDocument.FromDomain)],
+        ParentSiteIdentifier = m.ParentSiteIdentifier,
+        HoldingType = m.HoldingType,
+        PermanentLandHoldingIdentifier = m.PermanentLandHoldingIdentifier,
+        EffectiveFromDate = m.EffectiveFromDate,
+        EffectiveToDate = m.EffectiveToDate,
+        ApprovalCurrentFlag = m.ApprovalCurrentFlag
     };
 
     public Site ToDomain()
@@ -169,7 +212,13 @@ public class SiteDocument : IEntity, IDeletableEntity, IContainsIndexes
             DestroyIdentityDocumentsFlag,
             Deleted,
             Type?.ToDomain(),
-            Location?.ToDomain()
+            Location?.ToDomain(),
+            ParentSiteIdentifier,
+            HoldingType,
+            PermanentLandHoldingIdentifier,
+            EffectiveFromDate,
+            EffectiveToDate,
+            ApprovalCurrentFlag
         );
 
         foreach (var si in Identifiers)

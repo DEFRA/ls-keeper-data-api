@@ -20,7 +20,8 @@ public static class SerilogLoggingExtensions
             .ReadFrom.Configuration(ctx.Configuration)
             .Enrich.WithEcsHttpContext(httpAccessor!)
             .Enrich.FromLogContext()
-            .Enrich.WithProperty("service.version", serviceVersion);
+            .Enrich.WithProperty("service.version", serviceVersion)
+            .Enrich.With(new PiiMaskingEnricher(httpAccessor));
 
         if (traceIdHeader != null)
         {

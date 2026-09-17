@@ -19,7 +19,8 @@ public class GetReferenceActivityByIdQueryHandler(IReferenceDataCache cache) : I
         {
             Id = item.IdentifierId,
             Code = item.Code,
-            Name = item.Name
+            Name = item.Name,
+            LastUpdatedDate = item.LastModifiedDate
         };
 
         return Task.FromResult(dto);

@@ -11,10 +11,12 @@ using KeeperData.Application.Orchestration.Updates.Cts.Holdings;
 using KeeperData.Application.Orchestration.Updates.Cts.Holdings.Steps;
 using KeeperData.Application.Providers;
 using KeeperData.Application.Queries.Countries.Adapters;
+using KeeperData.Application.Queries.Cphs.Adapters;
 using KeeperData.Application.Queries.Parties.Adapters;
 using KeeperData.Application.Queries.Sites.Adapters;
 using KeeperData.Application.Services;
 using KeeperData.Application.Services.BatchCompletion;
+using KeeperData.Application.Services.UserAccounts;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Providers;
 using KeeperData.Core.Services;
@@ -39,9 +41,13 @@ public static class ServiceCollectionExtensions
         services.AddValidatorsFromAssemblyContaining<IRequestExecutor>();
 
         services.AddScoped<CountriesQueryAdapter>();
+        services.AddScoped<CphsQueryAdapter>();
         services.AddScoped<SitesQueryAdapter>();
         services.AddScoped<PartiesQueryAdapter>();
         services.AddTransient<IDelayProvider, RealDelayProvider>();
+
+        services.Configure<UserAccountAssociationConfig>(configuration.GetSection(UserAccountAssociationConfig.SectionName));
+        services.AddScoped<IUserAccountAssociationBuilder, UserAccountAssociationBuilder>();
 
         RegisterImportOrchestrators(services, typeof(SamHoldingImportOrchestrator).Assembly);
         RegisterImportSteps(services, typeof(SamHoldingImportAggregationStep).Assembly);

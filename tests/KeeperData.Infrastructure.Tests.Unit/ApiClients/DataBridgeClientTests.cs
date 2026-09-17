@@ -48,6 +48,7 @@ public class DataBridgeClientTests
                 { "DataBridgeCollectionFlags:SamHoldersEnabled", "true" },
                 { "DataBridgeCollectionFlags:SamHerdsEnabled", "true" },
                 { "DataBridgeCollectionFlags:SamPartiesEnabled", "true" },
+                { "DataBridgeCollectionFlags:SamPortsEnabled", "true" },
             })
             .Build();
 
@@ -286,6 +287,201 @@ public class DataBridgeClientTests
     }
 
     [Fact]
+    public async Task GetSamPortsAsPagedResponseAsync_ShouldReturnPorts_WhenApiReturnsSuccess()
+    {
+        var expectedResponse = MockSamData.GetSamPortsStringContentResponse(10, 0);
+
+        var uri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamPorts,
+            new { },
+            DataBridgeQueries.PagedRecords(10, 0));
+
+        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
+            .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
+
+        var result = await _client.GetSamPortsAsync<SamPort>(10, 0, cancellationToken: CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.Data.Should().NotBeNull().And.HaveCount(10);
+        result.Data[0].CPH.Should().NotBe(result.Data[1].CPH);
+    }
+
+    [Fact]
+    public async Task GetSamPortsAsync_ShouldReturnPorts_WhenApiReturnsSuccess()
+    {
+        var cph = CphGenerator.GenerateFormattedCph();
+        var expectedResponse = MockSamData.GetSamPortsStringContentResponse(cph);
+
+        var uri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamPorts,
+            new { },
+            DataBridgeQueries.SamPortsByCph(cph));
+
+        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
+            .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
+
+        var result = await _client.GetSamPortsAsync(cph, CancellationToken.None);
+
+        result.Should().NotBeNull().And.HaveCount(1);
+        result[0].CPH.Should().Be(cph);
+    }
+
+    [Fact]
+    public async Task GetSamPortsAsync_WhenPortsDisabled_ShouldReturnEmptyList()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { "ApiClients:DataBridgeApi:ServiceName", "" },
+                { "DataBridgeCollectionFlags:SamPortsEnabled", "false" },
+            })
+            .Build();
+
+        var client = new DataBridgeClient(
+            _httpClientFactoryMock.Object,
+            config,
+            _loggerMock.Object,
+            _metricsMock.Object);
+
+        var result = await client.GetSamPortsAsync("12/345/6789", CancellationToken.None);
+
+        result.Should().NotBeNull().And.BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetSamPortsAsPagedResponseAsync_WhenPortsDisabled_ShouldReturnNull()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { "ApiClients:DataBridgeApi:ServiceName", "" },
+                { "DataBridgeCollectionFlags:SamPortsEnabled", "false" },
+            })
+            .Build();
+
+        var client = new DataBridgeClient(
+            _httpClientFactoryMock.Object,
+            config,
+            _loggerMock.Object,
+            _metricsMock.Object);
+
+        var result = await client.GetSamPortsAsync<SamPort>(10, 0, cancellationToken: CancellationToken.None);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetSamPortsAsync_ShouldRecordMetrics_WhenApiReturnsSuccess()
+    {
+        var expectedResponse = MockSamData.GetSamPortsStringContentResponse(10, 0);
+
+        var uri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamPorts,
+            new { },
+            DataBridgeQueries.PagedRecords(10, 0));
+
+        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
+            .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
+
+        await _client.GetSamPortsAsync<SamPort>(10, 0, cancellationToken: CancellationToken.None);
+
+        _metricsMock.Verify(m => m.RecordCount(
+            MetricNames.DataBridge,
+            1,
+            It.Is<(string, string)>(t => t.Item1 == MetricNames.CommonTags.Operation && t.Item2 == MetricNames.Operations.PagedRequestStarted),
+            It.Is<(string, string)>(t => t.Item1 == MetricNames.CommonTags.Collection && t.Item2 == "sam_ports"),
+            It.Is<(string, string)>(t => t.Item1 == MetricNames.CommonTags.BatchSize && t.Item2 == "10")), Times.Once);
+
+        _metricsMock.Verify(m => m.RecordValue(
+            MetricNames.DataBridge,
+            It.IsAny<double>(),
+            It.Is<(string, string)>(t => t.Item1 == MetricNames.CommonTags.Operation && t.Item2 == MetricNames.Operations.PagedRequestDuration)), Times.Once);
+
+        _metricsMock.Verify(m => m.RecordCount(
+            MetricNames.DataBridge,
+            10,
+            It.Is<(string, string)>(t => t.Item1 == MetricNames.CommonTags.Operation && t.Item2 == MetricNames.Operations.PagedRequestRecords)), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetSamPortsAsync_WhenApiReturnsServerError_ShouldThrowRetryableException()
+    {
+        var cph = CphGenerator.GenerateFormattedCph();
+
+        var uri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamPorts,
+            new { },
+            DataBridgeQueries.SamPortsByCph(cph));
+
+        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
+            .ReturnsResponse(HttpStatusCode.InternalServerError, new StringContent("Server error"));
+
+        var act = () => _client.GetSamPortsAsync(cph, CancellationToken.None);
+
+        await act.Should().ThrowAsync<RetryableException>()
+            .WithMessage("*Transient failure*");
+    }
+
+    [Fact]
+    public async Task GetSamPortsAsync_WhenApiReturnsNotFound_ShouldThrowNonRetryableException()
+    {
+        var cph = CphGenerator.GenerateFormattedCph();
+
+        var uri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamPorts,
+            new { },
+            DataBridgeQueries.SamPortsByCph(cph));
+
+        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
+            .ReturnsResponse(HttpStatusCode.NotFound, new StringContent("Not found"));
+
+        var act = () => _client.GetSamPortsAsync(cph, CancellationToken.None);
+
+        await act.Should().ThrowAsync<NonRetryableException>()
+            .WithMessage("*Permanent failure*");
+    }
+
+    [Fact]
+    public async Task GetSamPortsAsPagedResponseAsync_WithOptionalParameters_ShouldHandleAllParameters()
+    {
+        var updatedSinceDateTime = DateTime.UtcNow.AddDays(-1);
+        var expectedResponse = MockSamData.GetSamPortsStringContentResponse(5, 0);
+
+        var uri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamPorts,
+            new { },
+            DataBridgeQueries.PagedRecords(5, 0, "CPH,PREMISES_NAME", updatedSinceDateTime, "CPH asc"));
+
+        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
+            .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
+
+        var result = await _client.GetSamPortsAsync<SamPort>(5, 0, "CPH,PREMISES_NAME", updatedSinceDateTime, "CPH asc", CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.Data.Should().HaveCount(5);
+    }
+
+    [Fact]
+    public async Task GetSamPortsAsync_WhenCancellationRequested_ShouldRespectCancellation()
+    {
+        var cph = CphGenerator.GenerateFormattedCph();
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var uri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamPorts,
+            new { },
+            DataBridgeQueries.SamPortsByCph(cph));
+
+        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
+            .ThrowsAsync(new OperationCanceledException());
+
+        var act = () => _client.GetSamPortsAsync(cph, cts.Token);
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    [Fact]
     public async Task GetCtsHoldingsAsPagedResponseAsync_ShouldReturnHoldings_WhenApiReturnsSuccess()
     {
         var expectedResponse = MockCtsData.GetCtsHoldingsStringContentResponse(10, 0);
@@ -479,5 +675,118 @@ public class DataBridgeClientTests
 
         await act.Should().ThrowAsync<NonRetryableException>()
             .WithMessage("*Deserialization error*");
+    }
+
+    [Fact]
+    public async Task GetSamCommonLandsAsPagedResponseAsync_ShouldReturnCommonLands_WhenApiReturnsSuccess()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { "ApiClients:DataBridgeApi:ServiceName", "" },
+                { "DataBridgeCollectionFlags:SamCommonLandsEnabled", "true" }
+            })
+            .Build();
+
+        var client = new DataBridgeClient(
+            _httpClientFactoryMock.Object,
+            configuration,
+            _loggerMock.Object,
+            _metricsMock.Object);
+
+        var expectedResponse = MockSamData.GetSamCommonLandsStringContentResponse(10, 0);
+
+        var uri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamCommonLands,
+            new { },
+            DataBridgeQueries.PagedRecords(10, 0));
+
+        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
+            .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
+
+        var result = await client.GetSamCommonLandsAsync<SamCommonLand>(10, 0, cancellationToken: CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.Data.Should().NotBeNull().And.HaveCount(10);
+    }
+
+    [Fact]
+    public async Task GetSamCommonLandsByCommonCphAsync_ShouldReturnCommonLands_WhenApiReturnsSuccess()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { "ApiClients:DataBridgeApi:ServiceName", "" },
+                { "DataBridgeCollectionFlags:SamCommonLandsEnabled", "true" }
+            })
+            .Build();
+
+        var client = new DataBridgeClient(
+            _httpClientFactoryMock.Object,
+            configuration,
+            _loggerMock.Object,
+            _metricsMock.Object);
+
+        var cph = "00/000/0001";
+        var expectedResponse = MockSamData.GetSamCommonLandsStringContentResponse(cph);
+
+        var uri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamCommonLands,
+            new { },
+            DataBridgeQueries.SamCommonLandsByCommonCph(cph));
+
+        _httpMessageHandlerMock.SetupRequest(HttpMethod.Get, $"{DataBridgeApiBaseUrl}/{uri}")
+            .ReturnsResponse(HttpStatusCode.OK, expectedResponse);
+
+        var result = await client.GetSamCommonLandsByCommonCphAsync(cph, CancellationToken.None);
+
+        result.Should().NotBeNull().And.HaveCount(2);
+        result[0].COMMON_CPH.Should().Be(cph);
+        result[1].COMMON_CPH.Should().Be(cph);
+    }
+
+    [Fact]
+    public async Task GetSamCommonLandsAsync_WhenDisabled_ShouldReturnNull()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { "ApiClients:DataBridgeApi:ServiceName", "" },
+                { "DataBridgeCollectionFlags:SamCommonLandsEnabled", "false" }
+            })
+            .Build();
+
+        var client = new DataBridgeClient(
+            _httpClientFactoryMock.Object,
+            configuration,
+            _loggerMock.Object,
+            _metricsMock.Object);
+
+        var result = await client.GetSamCommonLandsAsync<SamCommonLand>(10, 0, cancellationToken: CancellationToken.None);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetSamCommonLandsByCommonCphAsync_WhenDisabled_ShouldReturnEmptyList()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { "ApiClients:DataBridgeApi:ServiceName", "" },
+                { "DataBridgeCollectionFlags:SamCommonLandsEnabled", "false" }
+            })
+            .Build();
+
+        var client = new DataBridgeClient(
+            _httpClientFactoryMock.Object,
+            configuration,
+            _loggerMock.Object,
+            _metricsMock.Object);
+
+        var result = await client.GetSamCommonLandsByCommonCphAsync("00/000/0001", CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.Should().BeEmpty();
     }
 }

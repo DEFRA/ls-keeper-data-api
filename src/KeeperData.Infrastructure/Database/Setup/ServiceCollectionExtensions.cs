@@ -18,6 +18,8 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Driver;
+using MongoDB.Driver.Authentication.AWS;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
@@ -46,6 +48,9 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
+        services.AddScoped<ICphRepository, CphRepository>();
+        services.AddScoped<ICphAssociationsRepository, CphAssociationsRepository>();
+        services.AddScoped<IHoldingDetailRepository, HoldingDetailRepository>();
         services.AddScoped<ICountryRepository, CountryRepository>();
         services.AddScoped<ISpeciesRepository, SpeciesRepository>();
         services.AddScoped<IFacilityBusinessActivityMapRepository, FacilityBusinessActivityMapRepository>();
@@ -57,6 +62,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISiteTypeMapRepository, SiteTypeMapRepository>();
         services.AddScoped<ISitesRepository, SitesRepository>();
         services.AddScoped<IPartiesRepository, PartiesRepository>();
+        services.AddScoped<IUserAccountsRepository, UserAccountsRepository>();
         services.AddScoped<IGoldSitePartyRoleRelationshipRepository, GoldSitePartyRoleRelationshipRepository>();
         services.AddSingleton<IScanStateRepository, ScanStateRepository>();
 
@@ -92,6 +98,10 @@ public static class ServiceCollectionExtensions
                     ConventionRegistry.Register("CamelCase", new ConventionPack { new CamelCaseElementNameConvention() }, _ => true);
 
                     RegisterAllDocumentsFromAssembly(typeof(INestedEntity).Assembly);
+
+                    // Deployed environments authenticate to DocumentDB with authMechanism=MONGODB-AWS, which
+                    // driver 3.x only supports once this opt-in runs. The registry throws on a second call.
+                    MongoClientSettings.Extensions.AddAWSAuthentication();
 
                     s_mongoSerializersRegistered = true;
                 }

@@ -36,6 +36,7 @@ public static class EmfExporter
     private static ILogger log = null!;
     private static string awsNamespace = string.Empty;
     private static IAmazonCloudWatch? _cloudWatchClient; // For local grafana, null in other environments
+    internal static Task? LastCloudWatchTask; // exposed for deterministic testing
 
     public static void Init(ILogger logger, string? awsNamespace, IAmazonCloudWatch? cloudWatchClient = null)
     {
@@ -113,7 +114,7 @@ public static class EmfExporter
                     ]
                 };
 
-                Task.Run(async () =>
+                LastCloudWatchTask = Task.Run(async () =>
                 {
                     try
                     {

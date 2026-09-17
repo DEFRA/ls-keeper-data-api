@@ -3,6 +3,7 @@ using KeeperData.Application.Queries.Sites;
 using KeeperData.Application.Queries.Sites.Builders;
 using KeeperData.Core.Documents;
 using MongoDB.Bson;
+using MongoDB.Driver;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 
@@ -21,7 +22,7 @@ public class SiteFilterBuilderTests
     {
         var query = new GetSitesQuery();
         var filter = SiteFilterBuilder.Build(query);
-        var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry);
+        var renderedFilter = filter.Render(new RenderArgs<SiteDocument>(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry));
 
         var expectedBson = BsonDocument.Parse(@"
             {
@@ -36,7 +37,7 @@ public class SiteFilterBuilderTests
     {
         var query = new GetSitesQuery { SiteIdentifier = "CPH123" };
         var filter = SiteFilterBuilder.Build(query);
-        var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry);
+        var renderedFilter = filter.Render(new RenderArgs<SiteDocument>(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry));
 
         var expectedBson = BsonDocument.Parse(@"
             {
@@ -52,7 +53,7 @@ public class SiteFilterBuilderTests
     {
         var query = new GetSitesQuery { SiteIdentifiers = ["CPH123", "CPH456"] };
         var filter = SiteFilterBuilder.Build(query);
-        var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry);
+        var renderedFilter = filter.Render(new RenderArgs<SiteDocument>(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry));
 
         var expectedBson = BsonDocument.Parse(@"
             {
@@ -69,7 +70,7 @@ public class SiteFilterBuilderTests
         var siteId = Guid.NewGuid();
         var query = new GetSitesQuery { SiteId = siteId };
         var filter = SiteFilterBuilder.Build(query);
-        var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry);
+        var renderedFilter = filter.Render(new RenderArgs<SiteDocument>(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry));
         renderedFilter["_id"].AsString.Should().Be(siteId.ToString());
     }
 
@@ -82,9 +83,9 @@ public class SiteFilterBuilderTests
 
         // Act
         var filter = SiteFilterBuilder.Build(query);
-        var renderedFilter = filter.Render(
+        var renderedFilter = filter.Render(new RenderArgs<SiteDocument>(
             BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(),
-            BsonSerializer.SerializerRegistry);
+            BsonSerializer.SerializerRegistry));
 
         // Assert
         var expectedBson = BsonDocument.Parse($@"
@@ -109,9 +110,9 @@ public class SiteFilterBuilderTests
 
         // Act
         var filter = SiteFilterBuilder.Build(query);
-        var renderedFilter = filter.Render(
+        var renderedFilter = filter.Render(new RenderArgs<SiteDocument>(
             BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(),
-            BsonSerializer.SerializerRegistry);
+            BsonSerializer.SerializerRegistry));
 
         // Assert
         var expectedBson = BsonDocument.Parse($@"
@@ -129,7 +130,7 @@ public class SiteFilterBuilderTests
     {
         var query = new GetSitesQuery { Type = ["type1", "type2"] };
         var filter = SiteFilterBuilder.Build(query);
-        var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry);
+        var renderedFilter = filter.Render(new RenderArgs<SiteDocument>(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry));
 
         renderedFilter["type.code"]["$in"].AsBsonArray.Select(v => v.AsString)
             .Should().BeEquivalentTo(["type1", "type2"]);
@@ -140,7 +141,7 @@ public class SiteFilterBuilderTests
     {
         var query = new GetSitesQuery { SiteIdentifier = "CPH123", Type = ["type1"] };
         var filter = SiteFilterBuilder.Build(query);
-        var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry);
+        var renderedFilter = filter.Render(new RenderArgs<SiteDocument>(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry));
 
         var expectedBson = BsonDocument.Parse(@"
         {
@@ -160,7 +161,7 @@ public class SiteFilterBuilderTests
         var siteId2 = Guid.NewGuid();
         var query = new GetSitesQuery { SiteIds = [siteId1, siteId2] };
         var filter = SiteFilterBuilder.Build(query);
-        var renderedFilter = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry);
+        var renderedFilter = filter.Render(new RenderArgs<SiteDocument>(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry));
 
         var expectedIds = new[] { siteId1.ToString(), siteId2.ToString() };
 

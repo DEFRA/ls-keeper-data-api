@@ -30,6 +30,8 @@ public class DataBridgeClient(
     private readonly bool _samHoldersEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamHoldersEnabled");
     private readonly bool _samHerdsEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamHerdsEnabled");
     private readonly bool _samPartiesEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamPartiesEnabled");
+    private readonly bool _samPortsEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamPortsEnabled");
+    private readonly bool _samCommonLandsEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamCommonLandsEnabled");
 
     private const string ClientName = "DataBridgeApi";
 
@@ -234,6 +236,46 @@ public class DataBridgeClient(
         return result.Data;
     }
 
+    public async Task<DataBridgeResponse<T>?> GetSamPortsAsync<T>(
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_samPortsEnabled) return null;
+
+        return await ExecutePagedRequestWithMetricsAsync<T>(
+            "sam_ports",
+            top,
+            async () =>
+            {
+                var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
+                var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamPorts, new { }, query);
+
+                return await GetFromApiAsync<T>(
+                    uri,
+                    $"Sam paged ports for top '{top}', skip '{skip}'",
+                    cancellationToken);
+            });
+    }
+
+    public async Task<List<SamPort>> GetSamPortsAsync(string id, CancellationToken cancellationToken)
+    {
+        if (!_samPortsEnabled) return [];
+
+        var query = DataBridgeQueries.SamPortsByCph(id);
+        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamPorts, new { }, query);
+
+        var result = await GetFromApiAsync<SamPort>(
+            uri,
+            $"Sam ports for CPH '{id}'",
+            cancellationToken);
+
+        return result.Data;
+    }
+
     public async Task<DataBridgeResponse<T>?> GetCtsHoldingsAsync<T>(
         int top,
         int skip,
@@ -370,6 +412,85 @@ public class DataBridgeClient(
             cancellationToken);
 
         return result.Data.FirstOrDefault();
+    }
+
+    public async Task<DataBridgeResponse<T>?> GetSamCommonLandsAsync<T>(
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_samCommonLandsEnabled) return null;
+
+        return await ExecutePagedRequestWithMetricsAsync<T>(
+            "sam_common_lands",
+            top,
+            async () =>
+            {
+                var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
+                var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamCommonLands, new { }, query);
+
+                return await GetFromApiAsync<T>(
+                    uri,
+                    $"Sam paged common lands for top '{top}', skip '{skip}'",
+                    cancellationToken);
+            });
+    }
+
+    public async Task<List<SamCommonLand>> GetSamCommonLandsByCommonCphAsync(string cph, CancellationToken cancellationToken)
+    {
+        if (!_samCommonLandsEnabled) return [];
+
+        var query = DataBridgeQueries.SamCommonLandsByCommonCph(cph);
+        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamCommonLands, new { }, query);
+
+        var result = await GetFromApiAsync<SamCommonLand>(
+            uri,
+            $"Sam common lands for COMMON_CPH '{cph}'",
+            cancellationToken);
+
+        return result.Data;
+    }
+
+    public async Task<List<SamShowground>> GetSamShowgroundsByCphAsync(string cph, CancellationToken cancellationToken)
+    {
+        var query = DataBridgeQueries.SamShowgroundsByCph(cph);
+        var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamShowgrounds, new { }, query);
+
+        var result = await GetFromApiAsync<SamShowground>(
+            uri,
+            $"Sam showgrounds for CPH '{cph}'",
+            cancellationToken);
+
+        return result.Data;
+    }
+
+    public async Task<DataBridgeResponse<T>?> GetSamShowgroundsAsync<T>(
+    int top,
+    int skip,
+    string? selectFields = null,
+    DateTime? updatedSinceDateTime = null,
+    string? orderBy = null,
+    CancellationToken cancellationToken = default)
+    {
+        var _samShowgroundsEnabled = configuration.GetValue<bool>("DataBridgeCollectionFlags:SamShowgroundsEnabled");
+        if (!_samShowgroundsEnabled) return null;
+
+        return await ExecutePagedRequestWithMetricsAsync<T>(
+            "sam_showgrounds",
+            top,
+            async () =>
+            {
+                var query = DataBridgeQueries.PagedRecords(top, skip, selectFields, updatedSinceDateTime, orderBy);
+                var uri = UriTemplate.Resolve(DataBridgeApiRoutes.GetSamShowgrounds, new { }, query);
+
+                return await GetFromApiAsync<T>(
+                    uri,
+                    $"Sam paged showgrounds for top '{top}', skip '{skip}'",
+                    cancellationToken);
+            });
     }
 
     private async Task<DataBridgeResponse<T>?> ExecutePagedRequestWithMetricsAsync<T>(

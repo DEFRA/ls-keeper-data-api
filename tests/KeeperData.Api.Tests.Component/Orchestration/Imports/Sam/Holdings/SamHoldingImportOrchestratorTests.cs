@@ -44,7 +44,10 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
             herdCount: 1,
             partyCount: 1);
 
-        var (holdingsUri, herdsUri, holdersUri, partiesUri) = GetAllQueryUris(holdingIdentifier, parties.Select(x => x.PARTY_ID));
+        var ports = new List<SamPort>();
+        var commonLands = new List<SamCommonLand>();
+
+        var (holdingsUri, herdsUri, holdersUri, partiesUri, commonLandsUri, portsUri, showgroundsUri) = GetAllQueryUris(holdingIdentifier, parties.Select(x => x.PARTY_ID));
 
         SetupRepositoryMocks();
         SetupLookupServiceMocks();
@@ -53,6 +56,9 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, herdsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(herds));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, holdersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holders));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, partiesUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(parties));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, portsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(ports));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, commonLandsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(commonLands));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, showgroundsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(new List<KeeperData.Core.ApiClients.DataBridgeApi.Contracts.SamShowground>()));
 
         var result = await ExecuteTestAsync(_appTestFixture.AppWebApplicationFactory, holdingIdentifier);
 
@@ -60,6 +66,8 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         VerifyDataBridgeApiEndpointCalled(_appTestFixture.AppWebApplicationFactory, herdsUri, Times.Once());
         VerifyDataBridgeApiEndpointCalled(_appTestFixture.AppWebApplicationFactory, holdersUri, Times.Once());
         VerifyDataBridgeApiEndpointCalled(_appTestFixture.AppWebApplicationFactory, partiesUri, Times.Once());
+        VerifyDataBridgeApiEndpointCalled(_appTestFixture.AppWebApplicationFactory, portsUri, Times.Once());
+        VerifyDataBridgeApiEndpointCalled(_appTestFixture.AppWebApplicationFactory, commonLandsUri, Times.Once());
 
         VerifyRawDataTypes(result, holdingIdentifier, holders[0].PARTY_ID, parties[0].PARTY_ID);
         VerifySilverDataTypes(result, holdingIdentifier);
@@ -105,13 +113,18 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
 
         var herds = new List<SamHerd>();
         var parties = new List<SamParty>();
+        var ports = new List<SamPort>();
+        var commonLands = new List<SamCommonLand>();
 
-        var (holdingsUri, herdsUri, holdersUri, partiesUri) = GetAllQueryUris(cph, []);
+        var (holdingsUri, herdsUri, holdersUri, partiesUri, commonLandsUri, portsUri, showgroundsUri) = GetAllQueryUris(cph, []);
 
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, holdingsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holdings));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, herdsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(herds));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, holdersUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(holders));
         SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, partiesUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(parties));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, portsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(ports));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, commonLandsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(commonLands));
+        SetupDataBridgeApiRequest(_appTestFixture.AppWebApplicationFactory, showgroundsUri, HttpStatusCode.OK, HttpContentUtility.CreateResponseContentWithEnvelope(new List<KeeperData.Core.ApiClients.DataBridgeApi.Contracts.SamShowground>()));
 
         // Act
         await ExecuteTestAsync(_appTestFixture.AppWebApplicationFactory, cph);
@@ -169,6 +182,8 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         context.RawParties.Should().NotBeNull().And.HaveCount(2);
         context.RawParties.Count(x => x.PARTY_ID == samPartyId).Should().Be(1);
         context.RawParties.Count(x => x.PARTY_ID == samHolderPartyId).Should().Be(1);
+
+        context.RawPorts.Should().NotBeNull();
     }
 
     private static void VerifySilverDataTypes(SamHoldingImportContext context, string holdingIdentifier)
@@ -227,7 +242,7 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         }
     }
 
-    private static (string holdingsUri, string herdsUri, string holdersUri, string partiesUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)
+    private static (string holdingsUri, string herdsUri, string holdersUri, string partiesUri, string commonLandsUri, string portsUri, string showgroundsUri) GetAllQueryUris(string holdingIdentifier, IEnumerable<string> partyIds)
     {
         var holdingsUri = RequestUriUtilities.GetQueryUri(
             DataBridgeApiRoutes.GetSamHoldings,
@@ -249,7 +264,22 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
             new { },
             DataBridgeQueries.SamPartiesByPartyIds(partyIds));
 
-        return (holdingsUri, herdsUri, holdersUri, partiesUri);
+        var commonLandsUri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamCommonLands,
+            new { },
+            DataBridgeQueries.SamCommonLandsByCommonCph(holdingIdentifier));
+
+        var portsUri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamPorts,
+            new { },
+            DataBridgeQueries.SamPortsByCph(holdingIdentifier));
+
+        var showgroundsUri = RequestUriUtilities.GetQueryUri(
+            DataBridgeApiRoutes.GetSamShowgrounds,
+            new { },
+            DataBridgeQueries.SamShowgroundsByCph(holdingIdentifier));
+
+        return (holdingsUri, herdsUri, holdersUri, partiesUri, commonLandsUri, portsUri, showgroundsUri);
     }
 
     private void SetupRepositoryMocks(
@@ -278,8 +308,6 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         // Gold
         CommonRepositoryMocks.SetupDefaultGoldRepositoryMocks(_appTestFixture.AppWebApplicationFactory);
 
-        // Overrides
-
         // Gold Site
         _appTestFixture.AppWebApplicationFactory._goldSiteRepositoryMock
             .Setup(r => r.FindOneByFilterAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()))
@@ -299,6 +327,15 @@ public class SamHoldingImportOrchestratorTests : IClassFixture<AppTestFixture>
         _appTestFixture.AppWebApplicationFactory._siteTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string? input, CancellationToken token) => (Guid.NewGuid().ToString(), input));
+
+        _appTestFixture.AppWebApplicationFactory._siteTypeLookupServiceMock.Setup(x => x.GetByCodeAsync("CL", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SiteTypeDocument
+            {
+                IdentifierId = "cl-site-type-id",
+                Code = "CL",
+                Name = "Common Land",
+                IsActive = true
+            });
 
         _appTestFixture.AppWebApplicationFactory._productionTypeLookupServiceMock
             .Setup(x => x.FindAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))

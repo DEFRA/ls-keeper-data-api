@@ -19,6 +19,15 @@ public class EmfExporterTests
         _mockLogger = new Mock<ILogger>();
     }
 
+    private static async Task AwaitCloudWatchTaskAsync()
+    {
+        var taskAssigned = SpinWait.SpinUntil(() => EmfExporter.LastCloudWatchTask != null, TimeSpan.FromSeconds(2));
+        if (taskAssigned)
+        {
+            await EmfExporter.LastCloudWatchTask!;
+        }
+    }
+
     [Fact]
     public void Init_WhenCalled_ShouldInitializeMeterListenerSuccessfully()
     {
@@ -200,8 +209,9 @@ public class EmfExporterTests
         var tags = new TagList { { "test_key", "test_value" } };
 
         // Act
+        EmfExporter.LastCloudWatchTask = null;
         counter.Add(1, tags);
-        await Task.Delay(200);
+        await AwaitCloudWatchTaskAsync();
 
         // Assert
         mockCloudWatch.Verify(c => c.PutMetricDataAsync(
@@ -228,8 +238,9 @@ public class EmfExporterTests
         var counter = meter.CreateCounter<long>("test_cloudwatch_fail");
 
         // Act
+        EmfExporter.LastCloudWatchTask = null;
         counter.Add(1);
-        await Task.Delay(200);
+        await AwaitCloudWatchTaskAsync();
 
         // Assert
         _mockLogger.Verify(
@@ -237,7 +248,7 @@ public class EmfExporterTests
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("LocalStack CloudWatch rejected metric")),
-                It.IsAny<Exception>(),
+                It.IsAny<Exception?>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.AtLeastOnce);
     }
@@ -256,8 +267,9 @@ public class EmfExporterTests
         var counter = meter.CreateCounter<long>("test_cloudwatch_exception");
 
         // Act
+        EmfExporter.LastCloudWatchTask = null;
         counter.Add(1);
-        await Task.Delay(200);
+        await AwaitCloudWatchTaskAsync();
 
         // Assert
         _mockLogger.Verify(

@@ -18,12 +18,24 @@ public class SamHoldingImportSilverMappingStep(
 {
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
     {
+        logger.LogInformation("Silver mapping: {Count} raw holding(s) received for CPH {Cph}", context.RawHoldings?.Count ?? 0, context.Cph);
+
         context.SilverHoldings = await SamHoldingMapper.ToSilver(
-            context.RawHoldings,
+            context.RawHoldings ?? [],
             siteActivityTypeLookupService.FindAsync,
             siteTypeLookupService.FindAsync,
             countryIdentifierLookupService.FindAsync,
             cancellationToken);
+
+        var commonLandHoldings = await SamCommonLandMapper.ToSilver(
+            context.RawCommonLandsByCommonCph,
+            countryIdentifierLookupService.FindAsync,
+            cancellationToken,
+            logger);
+        if (commonLandHoldings.Count > 0)
+        {
+            context.SilverHoldings.AddRange(commonLandHoldings);
+        }
 
         context.SilverParties = [
             .. await SamPartyMapper.ToSilver(
@@ -43,5 +55,16 @@ public class SamHoldingImportSilverMappingStep(
             productionUsageLookupService.FindAsync,
             speciesTypeLookupService.FindAsync,
             cancellationToken);
+
+        var silverPorts = await SamPortMapper.ToSilver(context.RawPorts,
+            countryIdentifierLookupService.FindAsync,
+            cancellationToken);
+        if (silverPorts.Count > 0)
+        {
+            logger.LogInformation("Mapped {Count} port(s) to silver for CPH {Cph}", silverPorts.Count, context.Cph);
+        }
+        context.SilverHoldings.AddRange(silverPorts);
+
+        logger.LogInformation("Silver mapping: {Count} silver holding(s) produced for CPH {Cph}", context.SilverHoldings.Count, context.Cph);
     }
 }

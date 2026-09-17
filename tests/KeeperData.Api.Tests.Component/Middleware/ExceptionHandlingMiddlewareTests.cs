@@ -206,6 +206,22 @@ public class ExceptionHandlingMiddlewareTests
     }
 
     [Fact]
+    public async Task ConflictException_returns_409()
+    {
+        var context = CreateHttpContext();
+        var middleware = CreateMiddleware(_ => throw new ConflictException("Email already associated with a different account."));
+
+        await middleware.InvokeAsync(context);
+
+        context.Response.StatusCode.Should().Be(409);
+
+        var problem = await GetProblemDetailsFromResponse(context);
+        problem.Status.Should().Be(409);
+        problem.Title.Should().Be("Conflict");
+        problem.Detail.Should().Contain("Email already associated with a different account.");
+    }
+
+    [Fact]
     public async Task Response_has_correct_content_type()
     {
         var context = CreateHttpContext();

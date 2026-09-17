@@ -54,6 +54,12 @@ public sealed class ExceptionHandlingMiddleware(
             await HandleExceptionAsync(context, ex, correlationId, 404);
             RecordExceptionMetrics(ex, 404, endpoint, stopwatch.ElapsedMilliseconds, "not_found");
         }
+        catch (ConflictException ex)
+        {
+            stopwatch.Stop();
+            await HandleExceptionAsync(context, ex, correlationId, 409);
+            RecordExceptionMetrics(ex, 409, endpoint, stopwatch.ElapsedMilliseconds, "conflict");
+        }
         catch (DomainException ex)
         {
             stopwatch.Stop();

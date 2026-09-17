@@ -73,10 +73,19 @@ public class ApiContainerFixture : IAsyncLifetime
               .WithNetwork(NetworkName)
               .WithNetworkAliases(_enableAnonymization ? "keeperdata_api_anon" : "keeperdata_api")
               .WithWaitStrategy(Wait.ForUnixContainer()
-                  .UntilHttpRequestIsSucceeded(req => req.ForPort((ushort)_containerPort).ForPath("/health"), o => o.WithTimeout(TimeSpan.FromSeconds(25))))
+                  .UntilHttpRequestIsSucceeded(req => req.ForPort((ushort)_containerPort).ForPath("/health"), o => o.WithTimeout(TimeSpan.FromSeconds(60))))
               .Build();
 
-        await ApiContainer.StartAsync();
+        try
+        {
+            await ApiContainer.StartAsync();
+        }
+        catch (Exception ex)
+        {
+            var (stdout, stderr) = await ApiContainer.GetLogsAsync();
+            throw new InvalidOperationException(
+                $"Failed to start API container. Container logs:\n--- stdout ---\n{stdout}\n--- stderr ---\n{stderr}", ex);
+        }
 
         HttpClient = new HttpClient { BaseAddress = new Uri($"http://localhost:{ApiContainer.GetMappedPublicPort(_containerPort)}") };
         HttpClient.AddBasicApiKey(BasicApiKey, BasicSecret);

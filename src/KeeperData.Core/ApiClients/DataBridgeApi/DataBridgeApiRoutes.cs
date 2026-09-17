@@ -10,4 +10,13 @@ public static class DataBridgeApiRoutes
     public const string GetSamHolders = "api/query/sam_cph_holder";
     public const string GetSamParties = "api/query/sam_party";
     public const string GetSamHerds = "api/query/sam_herd";
+    public const string GetSamPorts = "api/query/amls2_port";
+    public const string GetSamCommonLands = "api/query/amls2_common_land";
+    public const string GetSamShowgrounds = "api/query/sam_showground";
+
+    /// <summary>The legacy single-column CPH list, published as views/cphs_yyyyMMddTHHmmssZ.sqlite.</summary>
+    public const string GetLatestCphSqlite = "api/etl/sqlite/cphs/latest";
+
+    /// <summary>The normalised read model, published as views/krds-db_yyyyMMddHHmmss.sqlite.</summary>
+    public const string GetLatestSqliteReadModel = "api/etl/staging/sqlite/latest";
 }

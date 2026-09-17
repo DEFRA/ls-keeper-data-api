@@ -21,7 +21,8 @@ public class GetReferenceActivitiesQueryHandler(IReferenceDataCache cache) : IQu
             {
                 Id = a.IdentifierId,
                 Code = a.Code,
-                Name = a.Name
+                Name = a.Name,
+                LastUpdatedDate = a.LastModifiedDate
             })
             .ToList();
 

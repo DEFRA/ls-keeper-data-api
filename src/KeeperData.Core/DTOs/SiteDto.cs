@@ -98,4 +98,30 @@ public class SiteDto
     /// </summary>
     [JsonPropertyName("activities")]
     public List<SiteActivityDto> Activities { get; set; } = [];
+
+    [JsonPropertyName("parentSiteIdentifier")]
+    public string? ParentSiteIdentifier { get; set; }
+
+    [JsonPropertyName("holdingType")]
+    public string? HoldingType { get; set; }
+
+    [JsonPropertyName("localAuthorityName")]
+    public string? LocalAuthorityName { get; set; }
+
+    [JsonPropertyName("associatedMainHoldings")]
+    public List<AssociatedHoldingDto> AssociatedMainHoldings { get; set; } = [];
+
+    [JsonPropertyName("associatedCommonLands")]
+    public List<AssociatedHoldingDto> AssociatedCommonLands { get; set; } = [];
+    [JsonPropertyName("permanentLandHoldingIdentifier")]
+    public string? PermanentLandHoldingIdentifier { get; set; }
+
+    [JsonPropertyName("effectiveFromDate")]
+    public DateTime? EffectiveFromDate { get; set; }
+
+    [JsonPropertyName("effectiveToDate")]
+    public DateTime? EffectiveToDate { get; set; }
+
+    [JsonPropertyName("approvalCurrentFlag")]
+    public bool? ApprovalCurrentFlag { get; set; }
 }

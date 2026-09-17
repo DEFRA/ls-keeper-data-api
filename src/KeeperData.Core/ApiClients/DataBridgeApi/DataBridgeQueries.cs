@@ -144,4 +144,28 @@ public static class DataBridgeQueries
             [FilterKey] = filter
         };
     }
+
+    public static Dictionary<string, string> SamCommonLandsByCommonCph(string id)
+    {
+        return new Dictionary<string, string>
+        {
+            [FilterKey] = $"COMMON_CPH eq '{id}'"
+        };
+    }
+
+
+    public static Dictionary<string, string> SamPortsByCph(string id)
+    {
+        return new Dictionary<string, string>
+        {
+            [FilterKey] = $"CPH eq '{id}'"
+        };
+    }
+    public static Dictionary<string, string> SamShowgroundsByCph(string id)
+    {
+        return new Dictionary<string, string>
+        {
+            [FilterKey] = $"CPH eq '{id}'"
+        };
+    }
 }

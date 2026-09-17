@@ -10,4 +10,7 @@ public class SamBulkScanContext : ScanContext, IBulkScanContext
     public int PageSize { get; init; } = 100;
     public EntityScanContext Holders { get; init; } = new();
     public EntityScanContext Holdings { get; init; } = new();
+    public EntityScanContext Showgrounds { get; init; } = new();
+    public EntityScanContext CommonLands { get; init; } = new();
+    public EntityScanContext Ports { get; init; } = new();
 }

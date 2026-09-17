@@ -47,6 +47,15 @@ public interface IDataBridgeClient
         CancellationToken cancellationToken = default);
     Task<List<SamParty>> GetSamPartiesAsync(IEnumerable<string> ids, CancellationToken cancellationToken);
 
+    Task<DataBridgeResponse<T>?> GetSamPortsAsync<T>(
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
+        CancellationToken cancellationToken = default);
+    Task<List<SamPort>> GetSamPortsAsync(string id, CancellationToken cancellationToken);
+
     Task<DataBridgeResponse<T>?> GetCtsHoldingsAsync<T>(
         int top,
         int skip,
@@ -75,4 +84,22 @@ public interface IDataBridgeClient
         CancellationToken cancellationToken = default);
     Task<List<CtsAgentOrKeeper>> GetCtsKeepersAsync(string id, CancellationToken cancellationToken);
     Task<CtsAgentOrKeeper?> GetCtsKeeperByPartyIdAsync(string partyId, CancellationToken cancellationToken);
+
+    Task<DataBridgeResponse<T>?> GetSamCommonLandsAsync<T>(
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
+        CancellationToken cancellationToken = default);
+    Task<List<SamCommonLand>> GetSamCommonLandsByCommonCphAsync(string cph, CancellationToken cancellationToken);
+
+    Task<DataBridgeResponse<T>?> GetSamShowgroundsAsync<T>(
+        int top,
+        int skip,
+        string? selectFields = null,
+        DateTime? updatedSinceDateTime = null,
+        string? orderBy = null,
+        CancellationToken cancellationToken = default);
+    Task<List<SamShowground>> GetSamShowgroundsByCphAsync(string cph, CancellationToken cancellationToken);
 }

@@ -1,6 +1,7 @@
 using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Silver;
+using Microsoft.Extensions.Logging;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Domain.Sites;
@@ -56,7 +57,6 @@ public static class SamHoldingMapper
         var result = new SamHoldingDocument
         {
             // Id - Leave to support upsert assigning Id
-
             LastUpdatedBatchId = h.BATCH_ID,
             CreatedDate = h.CreatedAtUtc ?? DateTime.UtcNow,
             LastUpdatedDate = h.UpdatedAtUtc ?? DateTime.UtcNow,
@@ -92,7 +92,7 @@ public static class SamHoldingMapper
             SiteTypeCode = null,
 
             SpeciesTypeCode = h.AnimalSpeciesCodeUnwrapped,
-            ProductionUsageCodeList = [.. h.AnimalProductionUsageCodeList.Select(ProductionUsageCodeFormatters.TrimProductionUsageCodeHolding)],
+            ProductionUsageCodeList = [.. h.AnimalProductionUsageCodeList.Select(ProductionUsageCodeFormatters.TrimProductionUsageCodeHolding).Distinct()],
 
             Location = new Core.Documents.Silver.LocationDocument
             {
@@ -109,10 +109,8 @@ public static class SamHoldingMapper
                     AddressTown = h.TOWN,
                     AddressPostCode = h.POSTCODE,
                     CountrySubDivision = h.UK_INTERNAL_CODE,
-
                     CountryIdentifier = countryId,
                     CountryCode = countryCode,
-
                     UniquePropertyReferenceNumber = h.UDPRN
                 }
             },
@@ -129,26 +127,138 @@ public static class SamHoldingMapper
         return result;
     }
 
+    internal static SamHoldingDocument SelectRepresentativeHolding(List<SamHoldingDocument> silverHoldings, ILogger? logger = null)
+    {
+        const string commonLandBusinessUsage = "Common Land";
+        var activeStatus = HoldingStatusType.Active.GetDescription();
+
+        // Priority 1: Active SAM Holding (not Common Land)
+        var activeSamHolding = silverHoldings
+            .Where(x => x.HoldingStatus == activeStatus && x.SourceFacilitySubBusinessActivityCode != commonLandBusinessUsage)
+            .OrderByDescending(h => h.LastUpdatedDate)
+            .FirstOrDefault();
+
+        if (activeSamHolding != null)
+        {
+            logger?.LogInformation(
+                "SelectRepresentativeHolding: Priority 1 (active, not Common Land) selected for CPH {Cph}: AddressLine={AddressLine}, Street={Street}, Town={Town}, PostCode={PostCode}",
+                activeSamHolding.CountyParishHoldingNumber,
+                activeSamHolding.Location?.Address?.AddressLine,
+                activeSamHolding.Location?.Address?.AddressStreet,
+                activeSamHolding.Location?.Address?.AddressTown,
+                activeSamHolding.Location?.Address?.AddressPostCode);
+            return activeSamHolding;
+        }
+
+        // Priority 2: Any SAM Holding (not Common Land)
+        var samHolding = silverHoldings
+            .Where(x => x.SourceFacilitySubBusinessActivityCode != commonLandBusinessUsage)
+            .OrderByDescending(h => h.LastUpdatedDate)
+            .FirstOrDefault();
+
+        if (samHolding != null)
+        {
+            logger?.LogInformation(
+                "SelectRepresentativeHolding: Priority 2 (any, not Common Land) selected for CPH {Cph}: AddressLine={AddressLine}, Street={Street}, Town={Town}, PostCode={PostCode}",
+                samHolding.CountyParishHoldingNumber,
+                samHolding.Location?.Address?.AddressLine,
+                samHolding.Location?.Address?.AddressStreet,
+                samHolding.Location?.Address?.AddressTown,
+                samHolding.Location?.Address?.AddressPostCode);
+            return samHolding;
+        }
+
+        // Priority 3: Active Common Land
+        var activeCommonLand = silverHoldings
+            .Where(x => x.HoldingStatus == activeStatus)
+            .OrderByDescending(h => h.LastUpdatedDate)
+            .FirstOrDefault();
+
+        if (activeCommonLand != null)
+        {
+            logger?.LogInformation(
+                "SelectRepresentativeHolding: Priority 3 (active Common Land) selected for CPH {Cph}: AddressLine={AddressLine}, Street={Street}, Town={Town}, PostCode={PostCode}",
+                activeCommonLand.CountyParishHoldingNumber,
+                activeCommonLand.Location?.Address?.AddressLine,
+                activeCommonLand.Location?.Address?.AddressStreet,
+                activeCommonLand.Location?.Address?.AddressTown,
+                activeCommonLand.Location?.Address?.AddressPostCode);
+            return activeCommonLand;
+        }
+
+        // Priority 4: Any holding (fallback)
+        var fallback = silverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
+        logger?.LogInformation(
+            "SelectRepresentativeHolding: Priority 4 (fallback) selected for CPH {Cph}: AddressLine={AddressLine}, Street={Street}, Town={Town}, PostCode={PostCode}",
+            fallback.CountyParishHoldingNumber,
+            fallback.Location?.Address?.AddressLine,
+            fallback.Location?.Address?.AddressStreet,
+            fallback.Location?.Address?.AddressTown,
+            fallback.Location?.Address?.AddressPostCode);
+        return fallback;
+    }
+
+    public static SamHoldingDocument SelectAddressSource(List<SamHoldingDocument> silverHoldings, ILogger? logger = null)
+    {
+        // Prefer the document that came directly from the common lands API endpoint — it is the
+        // authoritative address source. A holding document can also carry
+        // SourceFacilitySubBusinessActivityCode == "Common Land" but its address originates from
+        // the SAM holdings table, which must not override the common land address.
+        var commonLand = silverHoldings
+            .FirstOrDefault(x => x.IsFromCommonLandSource);
+
+        if (commonLand != null)
+        {
+            logger?.LogInformation(
+                "SelectAddressSource: using Common Land source address for CPH {Cph}: AddressLine={AddressLine}, Street={Street}, Town={Town}, PostCode={PostCode}",
+                commonLand.CountyParishHoldingNumber,
+                commonLand.Location?.Address?.AddressLine,
+                commonLand.Location?.Address?.AddressStreet,
+                commonLand.Location?.Address?.AddressTown,
+                commonLand.Location?.Address?.AddressPostCode);
+            return commonLand;
+        }
+
+        logger?.LogInformation(
+            "SelectAddressSource: no Common Land source found for CPH {Cph}, falling back to representative holding",
+            silverHoldings.FirstOrDefault()?.CountyParishHoldingNumber);
+        return SelectRepresentativeHolding(silverHoldings, logger);
+    }
+
+    private static string ResolveSiteName(SamHoldingDocument representative, SamHoldingDocument addressSource, string? showgroundName = null)
+    {
+        if (!string.IsNullOrWhiteSpace(showgroundName))
+            return showgroundName;
+
+        return addressSource.IsFromCommonLandSource
+            ? addressSource.LocationName ?? string.Empty
+            : representative.LocationName ?? string.Empty;
+    }
+
     public static async Task<SiteDocument?> ToGold(
         string goldSiteId,
         SiteDocument? existingSite,
         List<SamHoldingDocument> silverHoldings,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         List<PartyDocument> goldParties,
+        List<SamShowground> rawShowgrounds,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
         Func<string?, CancellationToken, Task<SiteTypeDocument?>> getSiteTypeByCode,
         Func<string?, CancellationToken, Task<SiteIdentifierTypeDocument?>> getSiteIdentifierTypeByCode,
         Func<string?, CancellationToken, Task<(string? speciesTypeId, string? speciesTypeName)>> findSpecies,
         Func<string?, CancellationToken, Task<SiteActivityTypeDocument?>> getSiteActivityTypeByCode,
         ISiteTypeDerivedCodeLookupService derivedCodeLookupService,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        ILogger? logger = null)
     {
         if (silverHoldings == null || silverHoldings.Count == 0)
             return null;
 
-        var representative = silverHoldings.Any(x => x.HoldingStatus == HoldingStatusType.Active.GetDescription())
-            ? silverHoldings.Where(x => x.HoldingStatus == HoldingStatusType.Active.GetDescription()).OrderByDescending(h => h.LastUpdatedDate).First()
-            : silverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
+        // Prefer SAM Holding over Common Land when selecting representative
+        var representative = SelectRepresentativeHolding(silverHoldings, logger);
+
+        // Common land address takes precedence over site address for location data
+        var addressSource = SelectAddressSource(silverHoldings, logger);
 
         var distinctSpecies = await GetDistinctReferenceDataAsync(
             silverHoldings.Select(h => h.SpeciesTypeCode),
@@ -172,9 +282,26 @@ public static class SamHoldingMapper
             representative,
             cancellationToken);
 
+        var identifierTypeCode = Enum.TryParse<HoldingIdentifierType>(representative.CphTypeIdentifier, out var parsedType)
+            ? parsedType.ToString()
+            : HoldingIdentifierType.CPHN.ToString();
+
+        logger?.LogInformation(
+            "Resolving site identifier type {IdentifierTypeCode} for CPH {Cph}",
+            identifierTypeCode,
+            representative.CountyParishHoldingNumber);
+
         var cphnSiteIdentifierTypeDocument = await getSiteIdentifierTypeByCode(
-            HoldingIdentifierType.CPHN.ToString(),
+            identifierTypeCode,
             cancellationToken);
+
+        if (cphnSiteIdentifierTypeDocument == null)
+        {
+            logger?.LogWarning(
+                "Site identifier type {IdentifierTypeCode} not found in reference data for CPH {Cph}",
+                identifierTypeCode,
+                representative.CountyParishHoldingNumber);
+        }
 
         var cphnSiteIdentifierType = cphnSiteIdentifierTypeDocument == null ? null : new SiteIdentifierType(
             cphnSiteIdentifierTypeDocument.IdentifierId,
@@ -182,9 +309,88 @@ public static class SamHoldingMapper
             cphnSiteIdentifierTypeDocument.Name,
             cphnSiteIdentifierTypeDocument.LastModifiedDate);
 
+        var showground = rawShowgrounds?.FirstOrDefault();
+        DateTime? effectiveFromDate = null;
+        DateTime? effectiveToDate = null;
+        bool? approvalCurrentFlag = null;
+        Core.Documents.Silver.AddressDocument? showgroundAddressDocument = null;
+        string? showgroundName = null;
+
+        if (showground != null)
+        {
+            logger?.LogInformation(
+                "ToGold: showground record found for CPH {Cph}, START_DATE={StartDate}, END_DATE={EndDate}",
+                representative.CountyParishHoldingNumber,
+                showground.START_DATE,
+                showground.END_DATE);
+
+            effectiveFromDate = showground.START_DATE;
+            effectiveToDate = showground.END_DATE;
+            var now = DateTime.UtcNow;
+
+            approvalCurrentFlag =
+                (effectiveFromDate == null || now >= effectiveFromDate.Value)
+                && (effectiveToDate == null || now <= effectiveToDate.Value);
+
+            var addressName = AddressFormatters.FormatAddressRange(
+                showground.SAON_START_NUMBER, showground.SAON_START_NUMBER_SUFFIX,
+                showground.SAON_END_NUMBER, showground.SAON_END_NUMBER_SUFFIX,
+                showground.PAON_START_NUMBER, showground.PAON_START_NUMBER_SUFFIX,
+                showground.PAON_END_NUMBER, showground.PAON_END_NUMBER_SUFFIX,
+                showground.SAON_DESCRIPTION, showground.PAON_DESCRIPTION);
+
+            showgroundAddressDocument = new Core.Documents.Silver.AddressDocument
+            {
+                IdentifierId = Guid.NewGuid().ToString(),
+                AddressLine = addressName,
+                AddressStreet = showground.STREET,
+                AddressLocality = showground.LOCALITY,
+                AddressTown = showground.TOWN,
+                CountrySubDivision = showground.UK_INTERNAL_CODE,
+                AddressPostCode = showground.POSTCODE,
+                CountryCode = showground.COUNTRY_CODE
+            };
+
+            showgroundName = showground.PAON_DESCRIPTION;
+
+            var sgSiteType = await ResolveSiteTypeAsync("SG", getSiteTypeByCode, cancellationToken);
+
+            if (sgSiteType != null)
+            {
+                logger?.LogInformation(
+                    "ToGold: resolved SG site type for CPH {Cph}: Id={SiteTypeId}, Code={SiteTypeCode}, Description={SiteTypeDescription}",
+                    representative.CountyParishHoldingNumber,
+                    sgSiteType.Id,
+                    sgSiteType.Code,
+                    sgSiteType.Description);
+            }
+            else
+            {
+                logger?.LogWarning(
+                    "ToGold: SG site type not found in reference data for CPH {Cph}, retaining previously derived site type: {FallbackSiteTypeCode}",
+                    representative.CountyParishHoldingNumber,
+                    derivedSiteType?.Code ?? "(none)");
+            }
+
+            derivedSiteType = sgSiteType ?? derivedSiteType;
+        }
+        else
+        {
+            logger?.LogInformation(
+                "ToGold: no showground record found for CPH {Cph}, showground site type override skipped",
+                representative.CountyParishHoldingNumber);
+        }
+
+        logger?.LogInformation(
+            "ToGold: final site type for CPH {Cph}: {SiteTypeCode} ({SiteTypeId})",
+            representative.CountyParishHoldingNumber,
+            derivedSiteType?.Code ?? "(none)",
+            derivedSiteType?.Id ?? "(none)");
+
         var site = existingSite is not null
             ? await UpdateSiteAsync(
                 representative,
+                addressSource,
                 existingSite,
                 goldSiteGroupMarks,
                 goldParties,
@@ -193,10 +399,16 @@ public static class SamHoldingMapper
                 allDerivedActivities,
                 derivedSiteType,
                 cphnSiteIdentifierType,
+                effectiveFromDate,
+                effectiveToDate,
+                approvalCurrentFlag,
+                showgroundAddressDocument,
+                showgroundName,
                 cancellationToken)
             : await CreateSiteAsync(
                 goldSiteId,
                 representative,
+                addressSource,
                 goldSiteGroupMarks,
                 goldParties,
                 getCountryById,
@@ -204,6 +416,11 @@ public static class SamHoldingMapper
                 allDerivedActivities,
                 derivedSiteType,
                 cphnSiteIdentifierType,
+                effectiveFromDate,
+                effectiveToDate,
+                approvalCurrentFlag,
+                showgroundAddressDocument,
+                showgroundName,
                 cancellationToken);
 
         return SiteDocument.FromDomain(site);
@@ -235,6 +452,9 @@ public static class SamHoldingMapper
                 representative,
                 cancellationToken);
         }
+
+        // If no derived mapping resolved a site type, fall back to the explicit site type code on the representative
+        derivedSiteType ??= await ResolveSiteTypeAsync(representative.SiteTypeCode, getSiteTypeByCode, cancellationToken);
 
         return (allDerivedActivities, derivedSiteType);
     }
@@ -306,6 +526,7 @@ public static class SamHoldingMapper
     private static async Task<Site> CreateSiteAsync(
         string goldSiteId,
         SamHoldingDocument representative,
+        SamHoldingDocument addressSource,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         List<PartyDocument> goldParties,
         Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
@@ -313,59 +534,51 @@ public static class SamHoldingMapper
         List<SiteActivity> activities,
         SiteType? siteType,
         SiteIdentifierType? siteIdentifierType,
+        DateTime? effectiveFromDate,
+        DateTime? effectiveToDate,
+        bool? approvalCurrentFlag,
+        Core.Documents.Silver.AddressDocument? showgroundAddress,
+        string? showgroundName,
         CancellationToken cancellationToken)
     {
-        var address = await LocationMapper.AddressToGold(representative.Location?.Address, getCountryById, cancellationToken);
-        var communication = LocationMapper.CommunicationToGold(representative.Communication);
+        var (address, communication) = await ResolveLocationPartsAsync(addressSource, getCountryById, cancellationToken, showgroundAddress);
+        var isPermanentLandHolding = representative.CphRelationshipType.IsPermanentLandHolding();
 
         var location = Location.Create(
-            representative.Location?.OsMapReference,
-            representative.Location?.Easting,
-            representative.Location?.Northing,
+            addressSource.Location?.OsMapReference,
+            addressSource.Location?.Easting,
+            addressSource.Location?.Northing,
             address,
             communication: [communication]);
-
-        var groupMarks = ToGroupMarks(goldSiteGroupMarks);
-
-        var siteParties = goldParties
-            .Where(p => !p.Deleted && !string.IsNullOrWhiteSpace(p.CustomerNumber))
-            .Select(p => p.ToSitePartyDomain(representative.LastUpdatedDate))
-            .ToList();
 
         var site = Site.Create(
             goldSiteId,
             representative.CreatedDate,
             representative.LastUpdatedDate,
-            representative.LocationName ?? string.Empty,
+            ResolveSiteName(representative, addressSource, showgroundName),
             representative.HoldingStartDate,
             representative.HoldingEndDate,
             representative.HoldingStatus,
             SourceSystemType.SAM.ToString(),
             null,
             representative.Deleted,
+            isPermanentLandHolding ? null : representative.SecondaryCph,
+            string.IsNullOrEmpty(representative.CphTypeIdentifier) ? null : representative.CphTypeIdentifier,
             siteType,
-            location);
+            location,
+            representative.CphRelationshipType.IsPermanentLandHolding() ? representative.SecondaryCph : null,
+            effectiveFromDate,
+            effectiveToDate,
+            approvalCurrentFlag);
 
-        if (siteIdentifierType != null)
-        {
-            site.SetSiteIdentifier(
-                identifierLastUpdatedDate: representative.LastUpdatedDate,
-                identifier: representative.CountyParishHoldingNumber,
-                type: siteIdentifierType,
-                id: null,
-                siteLastUpdatedDate: representative.LastUpdatedDate);
-        }
-
-        site.SetSpecies(species, representative.LastUpdatedDate);
-        site.SetActivities(activities, representative.LastUpdatedDate);
-        site.SetGroupMarks(groupMarks, representative.LastUpdatedDate);
-        site.SetSiteParties(goldSiteId, siteParties, representative.LastUpdatedDate);
+        ApplySiteData(site, goldSiteId, representative, goldSiteGroupMarks, goldParties, species, activities, siteIdentifierType);
 
         return site;
     }
 
     private static async Task<Site> UpdateSiteAsync(
         SamHoldingDocument representative,
+        SamHoldingDocument addressSource,
         SiteDocument existing,
         List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
         List<PartyDocument> goldParties,
@@ -374,59 +587,62 @@ public static class SamHoldingMapper
         List<SiteActivity> activities,
         SiteType? siteType,
         SiteIdentifierType? siteIdentifierType,
+        DateTime? effectiveFromDate,
+        DateTime? effectiveToDate,
+        bool? approvalCurrentFlag,
+        Core.Documents.Silver.AddressDocument? showgroundAddress,
+        string? showgroundName,
         CancellationToken cancellationToken)
     {
+        var isPermanentLandHolding = representative.CphRelationshipType.IsPermanentLandHolding();
         var site = existing.ToDomain();
-
-        var groupMarks = ToGroupMarks(goldSiteGroupMarks);
-
-        var siteParties = goldParties
-            .Where(p => !p.Deleted && !string.IsNullOrWhiteSpace(p.CustomerNumber))
-            .Select(p => p.ToSitePartyDomain(representative.LastUpdatedDate))
-            .ToList();
 
         site.Update(
             representative.LastUpdatedDate,
-            representative.LocationName ?? string.Empty,
+            ResolveSiteName(representative, addressSource, showgroundName),
             representative.HoldingStartDate,
             representative.HoldingEndDate,
             representative.HoldingStatus,
             SourceSystemType.SAM.ToString(),
             null,
-            representative.Deleted);
+            representative.Deleted,
+            isPermanentLandHolding ? null : representative.SecondaryCph,
+            string.IsNullOrEmpty(representative.CphTypeIdentifier) ? null : representative.CphTypeIdentifier,
+            isPermanentLandHolding ? representative.SecondaryCph : null,
+            effectiveFromDate,
+            effectiveToDate,
+            approvalCurrentFlag);
 
-        var updatedAddress = await LocationMapper.AddressToGold(representative.Location?.Address, getCountryById, cancellationToken);
-        var updatedCommunication = LocationMapper.CommunicationToGold(representative.Communication);
+        var (updatedAddress, updatedCommunication) = await ResolveLocationPartsAsync(addressSource, getCountryById, cancellationToken, showgroundAddress);
 
         // Always set the derived site type (may be null if no mapping found).
         site.SetSiteType(siteType, representative.LastUpdatedDate);
 
         site.SetLocation(
             representative.LastUpdatedDate,
-            representative.Location?.OsMapReference,
-            representative.Location?.Easting,
-            representative.Location?.Northing,
+            addressSource.Location?.OsMapReference,
+            addressSource.Location?.Easting,
+            addressSource.Location?.Northing,
             updatedAddress,
             [updatedCommunication]);
 
-        if (siteIdentifierType != null)
-        {
-            site.SetSiteIdentifier(
-                identifierLastUpdatedDate: representative.LastUpdatedDate,
-                identifier: representative.CountyParishHoldingNumber,
-                type: siteIdentifierType,
-                id: null,
-                siteLastUpdatedDate: representative.LastUpdatedDate);
-        }
-
-        site.SetSpecies(species, representative.LastUpdatedDate);
-        site.SetActivities(activities, representative.LastUpdatedDate);
-        site.SetGroupMarks(groupMarks, representative.LastUpdatedDate);
-        site.SetSiteParties(existing.Id, siteParties, representative.LastUpdatedDate);
+        ApplySiteData(site, existing.Id, representative, goldSiteGroupMarks, goldParties, species, activities, siteIdentifierType);
 
         return site;
     }
 
+
+    private static async Task<(Address address, Communication communication)> ResolveLocationPartsAsync(
+        SamHoldingDocument representative,
+        Func<string?, CancellationToken, Task<CountryDocument?>> getCountryById,
+        CancellationToken cancellationToken,
+        Core.Documents.Silver.AddressDocument? addressOverride = null)
+    {
+        var addressDoc = addressOverride ?? representative.Location?.Address;
+        var address = await LocationMapper.AddressToGold(addressDoc, getCountryById, cancellationToken);
+        var communication = LocationMapper.CommunicationToGold(representative.Communication);
+        return (address, communication);
+    }
 
     private static async Task<List<(string searchValue, string? typeId, string? typeName)>> GetDistinctReferenceDataAsync(
         IEnumerable<string?> rawCodes,
@@ -447,6 +663,38 @@ public static class SamHoldingMapper
 
         var results = await Task.WhenAll(tasks);
         return [.. results];
+    }
+
+    private static void ApplySiteData(
+        Site site,
+        string siteId,
+        SamHoldingDocument representative,
+        List<SiteGroupMarkRelationshipDocument> goldSiteGroupMarks,
+        List<PartyDocument> goldParties,
+        List<Species> species,
+        List<SiteActivity> activities,
+        SiteIdentifierType? siteIdentifierType)
+    {
+        var groupMarks = ToGroupMarks(goldSiteGroupMarks);
+        var siteParties = goldParties
+            .Where(p => !p.Deleted && !string.IsNullOrWhiteSpace(p.CustomerNumber))
+            .Select(p => p.ToSitePartyDomain(representative.LastUpdatedDate))
+            .ToList();
+
+        if (siteIdentifierType != null)
+        {
+            site.SetSiteIdentifier(
+                identifierLastUpdatedDate: representative.LastUpdatedDate,
+                identifier: representative.CountyParishHoldingNumber,
+                type: siteIdentifierType,
+                id: null,
+                siteLastUpdatedDate: representative.LastUpdatedDate);
+        }
+
+        site.SetSpecies(species, representative.LastUpdatedDate);
+        site.SetActivities(activities, representative.LastUpdatedDate);
+        site.SetGroupMarks(groupMarks, representative.LastUpdatedDate);
+        site.SetSiteParties(siteId, siteParties, representative.LastUpdatedDate);
     }
 
     private static List<GroupMark> ToGroupMarks(List<SiteGroupMarkRelationshipDocument> relationships)

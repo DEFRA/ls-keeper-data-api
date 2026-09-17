@@ -41,7 +41,8 @@ public static class CountryData
     public static (string? id, string? code, string? name) Find(string code, string? internalCode)
     {
         var searchCode = DetermineSearchKey(code, internalCode);
-        var type = GetByCode(searchCode!);
+        if (searchCode == null) return (null, null, null);
+        var type = GetByCode(searchCode);
         if (type == null) return (null, null, null);
         return (type.IdentifierId, type.Code, type.Name);
     }

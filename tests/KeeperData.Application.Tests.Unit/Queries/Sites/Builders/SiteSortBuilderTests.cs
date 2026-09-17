@@ -3,6 +3,7 @@ using KeeperData.Application.Queries.Sites;
 using KeeperData.Application.Queries.Sites.Builders;
 using KeeperData.Core.Documents;
 using MongoDB.Bson;
+using MongoDB.Driver;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 
@@ -32,7 +33,7 @@ public class SiteSortBuilderTests
         var query = new GetSitesQuery { Order = order, Sort = sort };
         var sortDefinition = SiteSortBuilder.Build(query);
 
-        var renderedSort = sortDefinition.Render(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry);
+        var renderedSort = sortDefinition.Render(new RenderArgs<SiteDocument>(BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry));
 
         renderedSort.Should().BeEquivalentTo(BsonDocument.Parse(expected));
     }

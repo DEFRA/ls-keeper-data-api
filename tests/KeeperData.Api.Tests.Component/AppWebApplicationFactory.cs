@@ -72,6 +72,7 @@ public class AppWebApplicationFactory(
     public readonly Mock<IRoleRepository> _roleRepositoryMock = new();
     public readonly Mock<ICountryRepository> _countryRepositoryMock = new();
     public readonly Mock<IScanStateRepository> _scanStateRepositoryMock = new();
+    public readonly Mock<IUserAccountsRepository> _userAccountsRepositoryMock = new();
 
     public readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
     public readonly Mock<ISiteActivityTypeLookupService> _siteActivityTypeLookupServiceMock = new();
@@ -259,6 +260,13 @@ public class AppWebApplicationFactory(
         Environment.SetEnvironmentVariable("ApiClients__DataBridgeApi__BridgeApiSubscriptionKey", "XYZ");
         Environment.SetEnvironmentVariable("ServiceBusSenderConfiguration__IntakeEventQueue__QueueUrl", "http://localhost:4566/000000000000/test-queue");
         Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__CtsAgentsEnabled", "true");
+        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamHoldingsEnabled", "true");
+        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamHoldersEnabled", "true");
+        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamHerdsEnabled", "true");
+        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamPartiesEnabled", "true");
+        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamPortsEnabled", "true");
+        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamCommonLandsEnabled", "true");
+        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamShowgroundsEnabled", "true");
         Environment.SetEnvironmentVariable("BulkScanEndpointsEnabled", "false");
         Environment.SetEnvironmentVariable("DailyScanEndpointsEnabled", "false");
         Environment.SetEnvironmentVariable("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicName", "ls_keeper_data_import_complete");
@@ -338,6 +346,8 @@ public class AppWebApplicationFactory(
 
         OverrideServiceAsSingleton(_scanStateRepositoryMock.Object);
 
+        OverrideServiceAsScoped(_userAccountsRepositoryMock.Object);
+
         OverrideServiceAsSingleton(_referenceDataCacheMock.Object);
 
         ConfigureDefaultRepositoryBehavior();
@@ -381,6 +391,7 @@ public class AppWebApplicationFactory(
         _countryRepositoryMock.Reset();
 
         _scanStateRepositoryMock.Reset();
+        _userAccountsRepositoryMock.Reset();
     }
 
     private void ConfigureTransientServices()

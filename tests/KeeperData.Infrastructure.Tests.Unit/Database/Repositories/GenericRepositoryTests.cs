@@ -218,19 +218,20 @@ public class GenericRepositoryTests
             // Render the actual update document
             var serializer = BsonSerializer.SerializerRegistry.GetSerializer<TestEntity>();
             var registry = BsonSerializer.SerializerRegistry;
+            var renderArgs = new RenderArgs<TestEntity>(serializer, registry);
 
-            var actualUpdate = u.Update.Render(serializer, registry);
+            var actualUpdate = u.Update.Render(renderArgs);
 
             // Find the matching expected update
             var (Filter, Entity) = items.FirstOrDefault(i =>
-                i.Filter.Render(serializer, registry).ToString() ==
-                u.Filter.Render(serializer, registry).ToString());
+                i.Filter.Render(renderArgs).ToString() ==
+                u.Filter.Render(renderArgs).ToString());
 
             if (Entity == null)
                 return false;
 
             // Render the expected update
-            var expectedUpdate = Entity.Render(serializer, registry);
+            var expectedUpdate = Entity.Render(renderArgs);
 
             // Compare the $set documents
             var actualSet = actualUpdate["$set"].AsBsonDocument;

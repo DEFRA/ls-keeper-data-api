@@ -20,6 +20,7 @@ public static class SamTestScenarios
     }
 
     private static readonly string s_cphNumber = "12/345/6789";
+    private static readonly string s_commonLandCph = "00/000/8267";
 
     public static SamTestScenarioData DefaultScenario => new()
     {
@@ -40,6 +41,8 @@ public static class SamTestScenarios
             SamParty_C1000001,
             SamParty_C1000002
         ],
+        RawCommonLandsByCommonCph = [],
+        RawPorts = [],
         ExpectedGoldSite = ExpectedGoldSite.DefaultExpectedSite,
         ExpectedGoldParties = ExpectedGoldParties.DefaultExpectedParties,
         ExpectedGoldSitePartyRoles = ExpectedGoldSitePartyRoles.DefaultExpectedSitePartyRoles,
@@ -72,12 +75,26 @@ public static class SamTestScenarios
                 p1_updated,
                 SamParty_C1000005
             ],
+            RawPorts = [],
+            RawCommonLandsByCommonCph = [],
             ExpectedGoldSite = ExpectedGoldSite.ExpectedSite_UpdatedHolderAndParties,
             ExpectedGoldParties = ExpectedGoldParties.ExpectedParties_UpdatedHolderAndParties,
             ExpectedGoldSitePartyRoles = ExpectedGoldSitePartyRoles.ExpectedSitePartyRoles_UpdatedHolderAndParties,
             ExpectedGoldSiteGroupMarks = ExpectedGoldSiteGroupMarks.ExpectedSiteGroupMarks_UpdatedHolderAndParties
         };
     }
+
+    public static SamTestScenarioData Scenario_CommonLandOnly => new()
+    {
+        Cph = s_commonLandCph,
+        RawHoldings = [],
+        RawHerds = [],
+        RawHolders = [],
+        RawParties = [],
+        RawCommonLandsByCommonCph = [SamCommonLand_22],
+        RawPorts = [],
+        ExpectedGoldSite = ExpectedGoldSite.ExpectedSite_CommonLandOnly
+    };
 
     public class SamTestScenarioData
     {
@@ -87,6 +104,8 @@ public static class SamTestScenarios
         public List<SamHerd> RawHerds { get; set; } = [];
         public List<SamCphHolder> RawHolders { get; set; } = [];
         public List<SamParty> RawParties { get; set; } = [];
+        public List<SamCommonLand> RawCommonLandsByCommonCph { get; set; } = [];
+        public List<SamPort> RawPorts { get; set; } = [];
 
         public SiteDocument? ExpectedGoldSite { get; set; }
         public List<PartyDocument> ExpectedGoldParties { get; set; } = [];
@@ -558,5 +577,30 @@ public static class SamTestScenarios
         PAON_START_NUMBER_SUFFIX = null,
         PAON_END_NUMBER_SUFFIX = null,
         PAON_DESCRIPTION = null
+    };
+
+    private static SamCommonLand SamCommonLand_22 => new()
+    {
+        BATCH_ID = 1,
+        CHANGE_TYPE = "I",
+        CreatedAtUtc = new DateTime(2025, 1, 1, 0, 0, 0),
+        UpdatedAtUtc = new DateTime(2025, 11, 13, 0, 0, 0),
+        IsDeleted = false,
+
+        COMMON_LAND_PREMISE_ID = "554454",
+        MAIN_CPH = "17/050/0003",
+        COMMON_CPH = s_commonLandCph,
+        PREMISES_NAME = "Premises 22",
+        ADDRESS_LINE_1 = "Holding Street 22",
+        ADDRESS_LINE_2 = "Town22",
+        ADDRESS_LINE_3 = "Locality22",
+        POSTCODE = "CPH22 222",
+        LOCAL_AUTH_NAME = null,
+        COUNTRY = null,
+        EASTING = null,
+        NORTHING = null,
+        CONTIGUOUS_COMMON = null,
+        START_DATE = null,
+        END_DATE = null
     };
 }

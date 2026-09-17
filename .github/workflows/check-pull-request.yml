@@ -17,17 +17,38 @@ jobs:
     name: Run Pull Request Checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-dotnet@v3
+      - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'    
+          dotnet-version: '10.0.x'
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: working-dir    
       - name: Restore
         run: dotnet restore ./working-dir/KeeperData.Api.sln  
       - name: Build
         run: dotnet build ./working-dir/KeeperData.Api.sln --configuration Release --no-restore -warnaserror  
+      - name: Check OpenAPI contract was generated
+        shell: bash
+        run: |
+          spec=./working-dir/src/KeeperData.Api/obj/openapi/keeper-data-api-openapi_v2.json
+          test -f "$spec" || { echo "OpenAPI contract was not generated at $spec"; exit 1; }
+          jq -e '
+            (.openapi | startswith("3.1.")) and
+            ((.paths | type) == "object") and
+            ((.paths | length) > 0) and
+            all(.paths | keys[]; startswith("/api/v2/")) and
+            all(.paths[];
+              ([.get, .put, .post, .delete, .options, .head, .patch, .trace]
+                | map(select(. != null))
+                | length) > 0
+            ) and
+            (.components.securitySchemes.Bearer.scheme == "bearer") and
+            (.components.securitySchemes.Basic.scheme == "basic")
+          ' "$spec" > /dev/null || {
+            echo "OpenAPI contract must be a non-empty v2-only document with the expected security schemes"
+            exit 1
+          }
       - name: Verify format
         run: dotnet format ./working-dir/KeeperData.Api.sln --verify-no-changes --verbosity diagnostic
       - name: Test (unit and component)
@@ -68,11 +89,11 @@ jobs:
       TESTCONTAINERS_RYUK_DISABLED: true
       TESTCONTAINERS_CHECKS_DISABLE: true
     steps:
-      - uses: actions/setup-dotnet@v3
+      - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: working-dir
       - name: Build keeperdata_api image

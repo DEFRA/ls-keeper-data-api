@@ -1,13 +1,18 @@
 using Amazon;
 using Amazon.S3;
+using KeeperData.Core.Services;
 using KeeperData.Core.Storage;
+using KeeperData.Core.Storage.Sqlite;
+using KeeperData.Infrastructure.Services;
 using KeeperData.Infrastructure.Storage.Clients;
 using KeeperData.Infrastructure.Storage.Configuration;
 using KeeperData.Infrastructure.Storage.Factories;
 using KeeperData.Infrastructure.Storage.Factories.Implementations;
 using KeeperData.Infrastructure.Storage.Readers;
+using KeeperData.Infrastructure.Storage.Sources;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using System.Diagnostics.CodeAnalysis;
 
 namespace KeeperData.Infrastructure.Storage.Setup;
@@ -15,6 +20,9 @@ namespace KeeperData.Infrastructure.Storage.Setup;
 [ExcludeFromCodeCoverage]
 public static class ServiceCollectionExtensions
 {
+    /// <summary>The read model runs to hundreds of megabytes, so it needs longer than the default 100s.</summary>
+    private static readonly TimeSpan SqliteArtifactDownloadTimeout = TimeSpan.FromMinutes(10);
+
     public static void AddStorageDependencies(this IServiceCollection services, IConfiguration configuration)
     {
         var storageConfiguration = configuration.GetSection(nameof(StorageConfiguration)).Get<StorageConfiguration>()!;
@@ -38,6 +46,32 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IS3ClientFactory>(factory);
 
         services.AddTransient<IStorageReader<ComparisonReportsStorageClient>, ComparisonReportsStorageReader>();
+
+        services.AddHttpClient(DataBridgeSqliteArtifactSource.DownloadClientName, client =>
+            {
+                client.Timeout = SqliteArtifactDownloadTimeout;
+            })
+            .ConfigurePrimaryHttpMessageHandler(() => new SqliteArtifactDownloadHandler());
+
+        services.AddSingleton<ISqliteArtifactSource, DataBridgeSqliteArtifactSource>();
+
+        var cphCacheConfig = configuration
+            .GetSection(CphSqliteCacheConfiguration.SectionName)
+            .Get<CphSqliteCacheConfiguration>() ?? new CphSqliteCacheConfiguration();
+        services.AddSingleton(cphCacheConfig);
+
+        services.AddSingleton<CphSqliteCacheService>();
+        services.AddSingleton<ICphSqliteCacheService>(sp => sp.GetRequiredService<CphSqliteCacheService>());
+        services.AddHostedService(sp => sp.GetRequiredService<CphSqliteCacheService>());
+
+        var readModelCacheConfig = configuration
+            .GetSection(ReadModelSqliteCacheConfiguration.SectionName)
+            .Get<ReadModelSqliteCacheConfiguration>() ?? new ReadModelSqliteCacheConfiguration();
+        services.AddSingleton(readModelCacheConfig);
+
+        services.AddSingleton<ReadModelSqliteCacheService>();
+        services.AddSingleton<IReadModelSqliteCacheService>(sp => sp.GetRequiredService<ReadModelSqliteCacheService>());
+        services.AddHostedService(sp => sp.GetRequiredService<ReadModelSqliteCacheService>());
     }
 
     private static AmazonS3Config GetDefaultAmazonS3Config(IConfiguration configuration)

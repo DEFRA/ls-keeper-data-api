@@ -1,6 +1,8 @@
 using KeeperData.Application.Orchestration.Imports.Sam.Mappings;
+using KeeperData.Core.ApiClients.DataBridgeApi.Contracts;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents;
+using KeeperData.Core.Documents.Silver;
 using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Extensions;
 using KeeperData.Core.Repositories;
@@ -25,11 +27,23 @@ public class SamHoldingImportGoldMappingStep(
 {
     protected override async Task ExecuteCoreAsync(SamHoldingImportContext context, CancellationToken cancellationToken)
     {
-        if (context.SilverHoldings.Count > 0)
+        logger.LogInformation("Gold mapping: {Count} silver holding(s) available for CPH {Cph}", context.SilverHoldings.Count, context.Cph);
+
+        var effectiveHoldings = context.SilverHoldings;
+
+        if (effectiveHoldings.Count == 0 && context.RawShowgrounds.Count > 0)
         {
-            var representative = context.SilverHoldings.Any(x => x.HoldingStatus == HoldingStatusType.Active.GetDescription())
-            ? context.SilverHoldings.Where(x => x.HoldingStatus == HoldingStatusType.Active.GetDescription()).OrderByDescending(h => h.LastUpdatedDate).First()
-            : context.SilverHoldings.OrderByDescending(h => h.LastUpdatedDate).First();
+            logger.LogInformation(
+                "Gold mapping: no silver holdings for CPH {Cph} but {Count} showground(s) found — synthesising holding from showground",
+                context.Cph, context.RawShowgrounds.Count);
+
+            effectiveHoldings = [BuildSyntheticShowgroundHolding(context.Cph, context.RawShowgrounds[0])];
+        }
+
+        if (effectiveHoldings.Count > 0)
+        {
+            // Prefer SAM Holding over Common Land when selecting representative
+            var representative = SamHoldingMapper.SelectRepresentativeHolding(effectiveHoldings, logger);
 
             var existingHoldingFilter = Builders<SiteDocument>.Filter.ElemMatch(
                 x => x.Identifiers,
@@ -57,16 +71,26 @@ public class SamHoldingImportGoldMappingStep(
             context.GoldSite = await SamHoldingMapper.ToGold(
                 context.GoldSiteId,
                 context.ExistingGoldSite,
-                context.SilverHoldings,
+                effectiveHoldings,
                 context.GoldSiteGroupMarks,
                 context.GoldParties,
+                context.RawShowgrounds,
                 countryIdentifierLookupService.GetByIdAsync,
                 siteTypeLookupService.GetByCodeAsync,
                 siteIdentifierTypeLookupService.GetByCodeAsync,
                 speciesTypeLookupService.FindAsync,
                 siteActivityTypeLookupService.GetByCodeAsync,
                 siteTypeDerivedCodeLookupService,
-                cancellationToken);
+                cancellationToken,
+                logger);
+
+            logger.LogInformation("Gold mapping: ToGold produced {Result} for CPH {Cph}",
+                context.GoldSite != null ? "a site document" : "null (no site)", context.Cph);
+
+            await EnrichWithCommonLandDataAsync(context, effectiveHoldings, cancellationToken);
+
+            logger.LogInformation("Associated main sites queued for update: {Count} for CPH {Cph}",
+                context.AssociatedMainSites?.Count ?? 0, context.Cph);
 
             context.GoldSitePartyRoles = SitePartyRoleMapper.ToGold(
                 context.GoldParties,
@@ -77,6 +101,103 @@ public class SamHoldingImportGoldMappingStep(
             SamPartyMapper.EnrichPartyRoleWithSiteInformation(
                 context.GoldParties,
                 context.GoldSite);
+        }
+    }
+
+    private static SamHoldingDocument BuildSyntheticShowgroundHolding(string cph, SamShowground showground)
+    {
+        var now = DateTime.UtcNow;
+        return new SamHoldingDocument
+        {
+            CountyParishHoldingNumber = cph,
+            HoldingStartDate = showground.START_DATE ?? now,
+            HoldingEndDate = showground.END_DATE,
+            HoldingStatus = KeeperData.Core.Domain.Sites.Formatters.HoldingStatusFormatters.FormatHoldingStatus(false),
+            CreatedDate = now,
+            LastUpdatedDate = now,
+            Deleted = false
+        };
+    }
+
+    private async Task EnrichWithCommonLandDataAsync(SamHoldingImportContext context, List<SamHoldingDocument> silverHoldings, CancellationToken cancellationToken)
+    {
+        var goldSite = context.GoldSite;
+        if (goldSite == null) return;
+
+        // Merge LocalAuthorityName - prefer non-null value from any holding
+        goldSite.LocalAuthorityName = silverHoldings
+            .Select(h => h.LocalAuthorityName)
+            .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name));
+
+        // Merge AssociatedMainHoldings from all holdings, removing duplicates
+        var allMainHoldings = silverHoldings
+            .SelectMany(h => h.AssociatedMainHoldings)
+            .GroupBy(r => r.HoldingIdentifier)
+            .Select(g => g.OrderByDescending(r => r.StartDate).First())
+            .Select(r => new AssociatedHoldingDocument
+            {
+                HoldingIdentifier = r.HoldingIdentifier,
+                ContiguousFlag = r.ContiguousFlag,
+                StartDate = r.StartDate,
+                EndDate = r.EndDate
+            })
+            .ToList();
+
+        goldSite.AssociatedMainHoldings = allMainHoldings;
+
+        if (goldSite.AssociatedMainHoldings?.Count > 0)
+        {
+            // Get the CPH from any holding (they all have the same CPH)
+            var cph = silverHoldings.First().CountyParishHoldingNumber;
+            await FindAndUpdateMainSiteIfExists(context, cph, goldSite.AssociatedMainHoldings, cancellationToken);
+        }
+    }
+
+    private async Task FindAndUpdateMainSiteIfExists(SamHoldingImportContext context, string commonCph, List<AssociatedHoldingDocument> mainHoldings, CancellationToken cancellationToken)
+    {
+        foreach (var mainHolding in mainHoldings)
+        {
+            if (string.IsNullOrWhiteSpace(mainHolding.HoldingIdentifier))
+                continue;
+
+            var filter = Builders<SiteDocument>.Filter.ElemMatch(
+                x => x.Identifiers,
+                i => i.Identifier == mainHolding.HoldingIdentifier);
+
+            var mainSite = await goldSiteRepository.FindOneByFilterAsync(filter, cancellationToken);
+
+            if (mainSite is null)
+            {
+                logger.LogDebug("No main site found for identifier {Identifier}", mainHolding.HoldingIdentifier);
+                continue;
+            }
+
+            logger.LogInformation("Found main site {SiteId} for identifier {Identifier}", mainSite.Id, mainHolding.HoldingIdentifier);
+
+            var commonForMain = new AssociatedHoldingDocument
+            {
+                HoldingIdentifier = commonCph,
+                ContiguousFlag = mainHolding.ContiguousFlag,
+                StartDate = mainHolding.StartDate,
+                EndDate = mainHolding.EndDate
+            };
+
+            // Ensure the main site's AssociatedCommonLands list exists
+            mainSite.AssociatedCommonLands ??= new List<AssociatedHoldingDocument>();
+
+            // Only add the common land entry if it does not already exist
+            if (!mainSite.AssociatedCommonLands.Any(a => a.HoldingIdentifier == commonForMain.HoldingIdentifier))
+            {
+                mainSite.AssociatedCommonLands.Add(commonForMain);
+            }
+
+            // Ensure the main site is present in the context so the persistence step can operate on it
+            context.AssociatedMainSites ??= new List<SiteDocument>();
+            var existingIndex = context.AssociatedMainSites.FindIndex(s => s.Id == mainSite.Id);
+            if (existingIndex >= 0)
+                context.AssociatedMainSites[existingIndex] = mainSite;
+            else
+                context.AssociatedMainSites.Add(mainSite);
         }
     }
 }
