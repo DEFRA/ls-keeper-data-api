@@ -67,6 +67,16 @@ public static class WebApplicationExtensions
         app.UseHeaderPropagation();
         app.UseRouting();
 
+        app.Use(async (context, next) =>
+        {
+            if (!adminEndpointsEnabled && context.Request.Path.Equals("/api/admin/sqlite-cache/refresh", StringComparison.OrdinalIgnoreCase))
+            {
+                context.Response.StatusCode = StatusCodes.Status404NotFound;
+                return;
+            }
+            await next(context);
+        });
+
         app.UseAuthentication();
         app.UseAuthorization();
 

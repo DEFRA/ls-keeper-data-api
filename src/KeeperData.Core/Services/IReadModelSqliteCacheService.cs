@@ -11,4 +11,5 @@ public interface IReadModelSqliteCacheService
     string? CachedFileName { get; }
 
     string? GetCurrentDbPath();
+    Task<CacheRefreshResult> ForceRefreshAsync(bool force, CancellationToken cancellationToken = default);
 }
