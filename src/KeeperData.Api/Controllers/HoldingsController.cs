@@ -1,6 +1,7 @@
 using KeeperData.Api.Controllers.RequestDtos.Holdings;
 using KeeperData.Application;
 using KeeperData.Application.Queries.Holdings;
+using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.DTOs;
 using KeeperData.Core.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -21,6 +22,51 @@ public class HoldingsController(IRequestExecutor executor, IReadModelSqliteCache
 {
     private readonly IRequestExecutor _executor = executor;
     private readonly IReadModelSqliteCacheService _readModelCache = readModelCache;
+
+    /// <summary>
+    /// Retrieve a paginated list of holding details from the cached SAM read model.
+    /// </summary>
+    /// <remarks>
+    /// Serves holding details from the locally cached SAM read model.
+    /// Returns 503 if the cache has not yet loaded.
+    /// </remarks>
+    /// <param name="request">Query parameters for pagination and sorting.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">OK - Paginated list of holding details.</response>
+    /// <response code="400">The request was malformed or could not be processed.</response>
+    /// <response code="401">Access token is not set or invalid.</response>
+    /// <response code="403">The requestor is not authorized to perform this operation on the resource.</response>
+    /// <response code="503">SQLite read model cache is not yet available.</response>
+    /// <response code="500">The server encountered an unexpected error.</response>
+    [HttpGet]
+    [ProducesResponseType(typeof(PaginatedResult<HoldingDetail>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetHoldings(
+        [FromQuery] GetHoldingsRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!_readModelCache.IsLoaded)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                detail: "The SAM read model is not cached locally, so holding details cannot be resolved.");
+        }
+
+        var query = new GetHoldingsQuery
+        {
+            Page = request.Page ?? 1,
+            PageSize = Math.Clamp(request.PageSize ?? 10, 1, 100),
+            Sort = request.Sort,
+            Order = request.Order
+        };
+
+        var result = await _executor.ExecuteQuery(query, cancellationToken);
+        return Ok(result);
+    }
 
     /// <summary>
     /// Retrieve detailed holding information by CPH.

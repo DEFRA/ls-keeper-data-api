@@ -11,4 +11,14 @@ public interface IHoldingDetailRepository
     /// Retrieves holding detail for the specified CPH, or null if not found.
     /// </summary>
     Task<HoldingDetail?> GetHoldingDetailByCphAsync(string cph, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a paginated list of holding details.
+    /// </summary>
+    Task<(List<HoldingDetail> Items, int TotalCount)> GetPagedHoldingsAsync(
+        int page,
+        int pageSize,
+        string? sort,
+        string? order,
+        CancellationToken cancellationToken = default);
 }
