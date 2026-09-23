@@ -1,0 +1,839 @@
+[
+  {
+    "HoldingId": "holding-10-024-0247",
+    "Cph": "10/024/0247",
+    "CphType": "permanent",
+    "StartDate": 1310515200,
+    "Street": "The Street",
+    "Town": "WORCESTER",
+    "Locality": "Some Location",
+    "Postcode": "TT5 2UU",
+    "UkInternalCode": "England",
+    "Easting": "000000",
+    "Northing": "000000",
+    "OsMapReference": "SS0000000200",
+    "Party": {
+      "PartyId": "party-10-024-0247",
+      "SourcePartyId": "C000000",
+      "PersonTitle": "MISS",
+      "Initials": "J",
+      "FamilyName": "Example",
+      "Telephone": "01234 567890"
+    },
+    "Herds": [
+      {
+        "HerdId": "herd-10-024-0247-1",
+        "Herdmark": "360396",
+        "FromDate": 1216166400,
+        "ToDate": null,
+        "Species": "CTT"
+      },
+      {
+        "HerdId": "herd-10-024-0247-2",
+        "Herdmark": "372893",
+        "FromDate": 1216166400,
+        "ToDate": null,
+        "Species": "SHP"
+      },
+      {
+        "HerdId": "herd-10-024-0247-3",
+        "Herdmark": "373074",
+        "FromDate": 1216166400,
+        "ToDate": null,
+        "Species": "SHP"
+      }
+    ],
+    "Roles": [
+      {
+        "RoleId": "pr-10-024-0247-1",
+        "HerdId": null,
+        "Role": "holder"
+      },
+      {
+        "RoleId": "pr-10-024-0247-2",
+        "HerdId": "herd-10-024-0247-1",
+        "Role": "keeper"
+      },
+      {
+        "RoleId": "pr-10-024-0247-3",
+        "HerdId": "herd-10-024-0247-2",
+        "Role": "keeper"
+      },
+      {
+        "RoleId": "pr-10-024-0247-4",
+        "HerdId": "herd-10-024-0247-1",
+        "Role": "owner"
+      },
+      {
+        "RoleId": "pr-10-024-0247-5",
+        "HerdId": "herd-10-024-0247-2",
+        "Role": "owner"
+      }
+    ],
+    "AllowedSpecies": [
+      "CTT",
+      "SHP"
+    ]
+  },
+  {
+    "HoldingId": "holding-13-169-0007",
+    "Cph": "13/169/0007",
+    "FeatureName": "Land At Test Farm 06",
+    "CphType": "permanent",
+    "StartDate": 1773014400,
+    "PaonDescription": "Test Farm 06",
+    "Street": "Layer Road",
+    "Town": "COLCHESTER",
+    "Locality": "Great Wigborough",
+    "Postcode": "CO5 7RR",
+    "UkInternalCode": "England",
+    "Easting": "595600",
+    "Northing": "215900",
+    "OsMapReference": "TL9560015900",
+    "Party": {
+      "PartyId": "party-13-169-0007",
+      "SourcePartyId": "C131690007",
+      "OrganisationName": "Green Fields Farming Ltd",
+      "Email": "contact@greenfields.co.uk",
+      "Telephone": "01206 123456"
+    },
+    "Herds": [
+      {
+        "HerdId": "herd-13-169-0007-1",
+        "Herdmark": "131690",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "CTT"
+      },
+      {
+        "HerdId": "herd-13-169-0007-2",
+        "Herdmark": "131691",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "SHP"
+      }
+    ],
+    "Roles": [
+      {
+        "RoleId": "pr-13-169-0007-1",
+        "HerdId": null,
+        "Role": "holder"
+      },
+      {
+        "RoleId": "pr-13-169-0007-2",
+        "HerdId": "herd-13-169-0007-1",
+        "Role": "keeper"
+      },
+      {
+        "RoleId": "pr-13-169-0007-3",
+        "HerdId": "herd-13-169-0007-2",
+        "Role": "keeper"
+      }
+    ],
+    "AllowedSpecies": [
+      "CTT",
+      "SHP"
+    ]
+  },
+  {
+    "HoldingId": "holding-15-001-0001",
+    "Cph": "15/001/0001",
+    "FeatureName": "Meadow View Holding",
+    "CphType": "permanent",
+    "StartDate": 1609459200,
+    "Udprn": "10001234",
+    "PaonDescription": "Meadow View",
+    "Street": "High Street",
+    "Town": "CHELMSFORD",
+    "Locality": "Broomfield",
+    "Postcode": "CM1 7XX",
+    "UkInternalCode": "England",
+    "Easting": "570000",
+    "Northing": "207000",
+    "OsMapReference": "TL7000007000",
+    "Party": {
+      "PartyId": "party-15-001-0001",
+      "SourcePartyId": "C150010001",
+      "PersonTitle": "Mr",
+      "GivenName": "Arthur",
+      "Initials": "A",
+      "FamilyName": "Dent",
+      "Email": "arthur.dent@example.com",
+      "Mobile": "07700 900123"
+    },
+    "Herds": [
+      {
+        "HerdId": "herd-15-001-0001-1",
+        "Herdmark": "150011",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "CTT"
+      }
+    ],
+    "Roles": [
+      {
+        "RoleId": "pr-15-001-0001-1",
+        "HerdId": null,
+        "Role": "holder"
+      },
+      {
+        "RoleId": "pr-15-001-0001-2",
+        "HerdId": "herd-15-001-0001-1",
+        "Role": "keeper"
+      }
+    ],
+    "AllowedSpecies": [
+      "CTT"
+    ]
+  },
+  {
+    "HoldingId": "holding-22-100-0001",
+    "Cph": "22/100/0001",
+    "FeatureName": "Oak Ridge Farm",
+    "CphType": "permanent",
+    "StartDate": 1609459200,
+    "PaonDescription": "Oak Ridge Farmhouse",
+    "Street": "Valley Road",
+    "Town": "NORWICH",
+    "Locality": "Cringleford",
+    "Postcode": "NR4 7AA",
+    "UkInternalCode": "England",
+    "Easting": "618000",
+    "Northing": "305000",
+    "OsMapReference": "TG1800005000",
+    "Party": {
+      "PartyId": "party-22-100-0001",
+      "SourcePartyId": "C221000001",
+      "OrganisationName": "Oak Ridge Livestock Co",
+      "Email": "info@oakridgelf.co.uk",
+      "Telephone": "01603 555001"
+    },
+    "Herds": [
+      {
+        "HerdId": "herd-22-100-0001-1",
+        "Herdmark": "221001",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "CTT"
+      },
+      {
+        "HerdId": "herd-22-100-0001-2",
+        "Herdmark": "221002",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "PIG"
+      }
+    ],
+    "Roles": [
+      {
+        "RoleId": "pr-22-100-0001-1",
+        "HerdId": null,
+        "Role": "holder"
+      },
+      {
+        "RoleId": "pr-22-100-0001-2",
+        "HerdId": "herd-22-100-0001-1",
+        "Role": "keeper"
+      },
+      {
+        "RoleId": "pr-22-100-0001-3",
+        "HerdId": "herd-22-100-0001-2",
+        "Role": "keeper"
+      }
+    ],
+    "AllowedSpecies": [
+      "CTT",
+      "PIG"
+    ]
+  },
+  {
+    "HoldingId": "holding-22-100-0002",
+    "Cph": "22/100/0002",
+    "FeatureName": "Willow Brook Pastures",
+    "CphType": "permanent",
+    "StartDate": 1609459200,
+    "PaonDescription": "Willow Brook",
+    "Street": "Mill Lane",
+    "Town": "IPSWICH",
+    "Locality": "Kesgrave",
+    "Postcode": "IP1 1BB",
+    "UkInternalCode": "England",
+    "Easting": "622000",
+    "Northing": "245000",
+    "OsMapReference": "TM2200045000",
+    "Party": {
+      "PartyId": "party-22-100-0002",
+      "SourcePartyId": "C221000002",
+      "PersonTitle": "Mrs",
+      "GivenName": "Sarah",
+      "Initials": "S",
+      "FamilyName": "Jenkins",
+      "Email": "sarah@willowbrook.co.uk",
+      "Telephone": "01473 555002"
+    },
+    "Herds": [
+      {
+        "HerdId": "herd-22-100-0002-1",
+        "Herdmark": "221003",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "SHP"
+      }
+    ],
+    "Roles": [
+      {
+        "RoleId": "pr-22-100-0002-1",
+        "HerdId": null,
+        "Role": "holder"
+      },
+      {
+        "RoleId": "pr-22-100-0002-2",
+        "HerdId": "herd-22-100-0002-1",
+        "Role": "keeper"
+      }
+    ],
+    "AllowedSpecies": [
+      "SHP"
+    ]
+  },
+  {
+    "HoldingId": "holding-22-100-0003",
+    "Cph": "22/100/0003",
+    "FeatureName": "Hilltop Sheep Station",
+    "CphType": "permanent",
+    "StartDate": 1609459200,
+    "Street": "Church Road",
+    "Town": "BURY ST EDMUNDS",
+    "Locality": "Rougham",
+    "Postcode": "IP33 3CC",
+    "UkInternalCode": "England",
+    "Easting": "588000",
+    "Northing": "264000",
+    "OsMapReference": "TL8800064000",
+    "Party": {
+      "PartyId": "party-22-100-0003",
+      "SourcePartyId": "C221000003",
+      "PersonTitle": "Mr",
+      "GivenName": "David",
+      "Initials": "D",
+      "FamilyName": "Miller",
+      "Mobile": "07700 900223"
+    },
+    "Herds": [
+      {
+        "HerdId": "herd-22-100-0003-1",
+        "Herdmark": "221004",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "SHP"
+      },
+      {
+        "HerdId": "herd-22-100-0003-2",
+        "Herdmark": "221005",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "CAP"
+      }
+    ],
+    "Roles": [
+      {
+        "RoleId": "pr-22-100-0003-1",
+        "HerdId": null,
+        "Role": "holder"
+      },
+      {
+        "RoleId": "pr-22-100-0003-2",
+        "HerdId": "herd-22-100-0003-1",
+        "Role": "keeper"
+      },
+      {
+        "RoleId": "pr-22-100-0003-3",
+        "HerdId": "herd-22-100-0003-2",
+        "Role": "keeper"
+      }
+    ],
+    "AllowedSpecies": [
+      "CAP",
+      "SHP"
+    ]
+  },
+  {
+    "HoldingId": "holding-34-200-0010",
+    "Cph": "34/200/0010",
+    "FeatureName": "Sunnyside Farm",
+    "CphType": "permanent",
+    "StartDate": 1609459200,
+    "PaonDescription": "Sunnyside",
+    "Street": "Gloucester Road",
+    "Town": "GLOUCESTER",
+    "Locality": "Churchdown",
+    "Postcode": "GL1 2DD",
+    "UkInternalCode": "England",
+    "Easting": "386000",
+    "Northing": "219000",
+    "OsMapReference": "SO8600019000",
+    "Party": {
+      "PartyId": "party-34-200-0010",
+      "SourcePartyId": "C342000010",
+      "OrganisationName": "Sunnyside Agriculture Ltd",
+      "Email": "admin@sunnyside.co.uk",
+      "Telephone": "01452 555010"
+    },
+    "Herds": [
+      {
+        "HerdId": "herd-34-200-0010-1",
+        "Herdmark": "342001",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "CTT"
+      }
+    ],
+    "Roles": [
+      {
+        "RoleId": "pr-34-200-0010-1",
+        "HerdId": null,
+        "Role": "holder"
+      },
+      {
+        "RoleId": "pr-34-200-0010-2",
+        "HerdId": "herd-34-200-0010-1",
+        "Role": "keeper"
+      }
+    ],
+    "AllowedSpecies": [
+      "CTT"
+    ]
+  },
+  {
+    "HoldingId": "holding-34-200-0011",
+    "Cph": "34/200/0011",
+    "FeatureName": "Brookfield Dairy Farm",
+    "CphType": "permanent",
+    "StartDate": 1609459200,
+    "PaonStartNumber": "12",
+    "Street": "Brookfield Way",
+    "Town": "CHELTENHAM",
+    "Locality": "Prestbury",
+    "Postcode": "GL50 3EE",
+    "UkInternalCode": "England",
+    "Easting": "395000",
+    "Northing": "223000",
+    "OsMapReference": "SO9500023000",
+    "Party": {
+      "PartyId": "party-34-200-0011",
+      "SourcePartyId": "C342000011",
+      "PersonTitle": "Mr",
+      "GivenName": "James",
+      "Initials": "J",
+      "FamilyName": "Wilson",
+      "Email": "j.wilson@brookfielddairy.co.uk"
+    },
+    "Herds": [
+      {
+        "HerdId": "herd-34-200-0011-1",
+        "Herdmark": "342002",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "CTT"
+      }
+    ],
+    "Roles": [
+      {
+        "RoleId": "pr-34-200-0011-1",
+        "HerdId": null,
+        "Role": "holder"
+      },
+      {
+        "RoleId": "pr-34-200-0011-2",
+        "HerdId": "herd-34-200-0011-1",
+        "Role": "keeper"
+      }
+    ],
+    "AllowedSpecies": [
+      "CTT"
+    ]
+  },
+  {
+    "HoldingId": "holding-45-300-0100",
+    "Cph": "45/300/0100",
+    "FeatureName": "Redwood Estate",
+    "CphType": "permanent",
+    "StartDate": 1609459200,
+    "PaonDescription": "Redwood House",
+    "Street": "Estate Drive",
+    "Town": "EXETER",
+    "Locality": "Topsham",
+    "Postcode": "EX1 1FF",
+    "UkInternalCode": "England",
+    "Easting": "296000",
+    "Northing": "088000",
+    "OsMapReference": "SX9600088000",
+    "Party": {
+      "PartyId": "party-45-300-0100",
+      "SourcePartyId": "C453000100",
+      "OrganisationName": "Redwood Farming Trust",
+      "Email": "trustees@redwoodestate.co.uk",
+      "Telephone": "01392 555100"
+    },
+    "Herds": [
+      {
+        "HerdId": "herd-45-300-0100-1",
+        "Herdmark": "453001",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "CTT"
+      },
+      {
+        "HerdId": "herd-45-300-0100-2",
+        "Herdmark": "453002",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "SHP"
+      }
+    ],
+    "Roles": [
+      {
+        "RoleId": "pr-45-300-0100-1",
+        "HerdId": null,
+        "Role": "holder"
+      },
+      {
+        "RoleId": "pr-45-300-0100-2",
+        "HerdId": "herd-45-300-0100-1",
+        "Role": "keeper"
+      },
+      {
+        "RoleId": "pr-45-300-0100-3",
+        "HerdId": "herd-45-300-0100-2",
+        "Role": "keeper"
+      }
+    ],
+    "AllowedSpecies": [
+      "CTT",
+      "SHP"
+    ]
+  },
+  {
+    "HoldingId": "holding-45-300-0101",
+    "Cph": "45/300/0101",
+    "FeatureName": "Dartmoor Grazing Lands",
+    "CphType": "temporary",
+    "StartDate": 1672531200,
+    "EndDate": 1735689600,
+    "Street": "Moorland Track",
+    "Town": "PLYMOUTH",
+    "Locality": "Yelverton",
+    "Postcode": "PL1 2GG",
+    "UkInternalCode": "England",
+    "Easting": "253000",
+    "Northing": "067000",
+    "OsMapReference": "SX5300067000",
+    "Party": {
+      "PartyId": "party-45-300-0101",
+      "SourcePartyId": "C453000101",
+      "PersonTitle": "Ms",
+      "GivenName": "Emma",
+      "Initials": "E",
+      "FamilyName": "Watson",
+      "Mobile": "07700 900334"
+    },
+    "Herds": [
+      {
+        "HerdId": "herd-45-300-0101-1",
+        "Herdmark": "453003",
+        "FromDate": 1672531200,
+        "ToDate": 1735689600,
+        "Species": "SHP"
+      }
+    ],
+    "Roles": [
+      {
+        "RoleId": "pr-45-300-0101-1",
+        "HerdId": null,
+        "Role": "holder"
+      },
+      {
+        "RoleId": "pr-45-300-0101-2",
+        "HerdId": "herd-45-300-0101-1",
+        "Role": "keeper"
+      }
+    ],
+    "AllowedSpecies": [
+      "SHP"
+    ]
+  },
+  {
+    "HoldingId": "holding-45-300-0102",
+    "Cph": "45/300/0102",
+    "FeatureName": "Highland View Farm",
+    "CphType": "permanent",
+    "StartDate": 1609459200,
+    "PaonDescription": "Highland View",
+    "Street": "Bridgwater Road",
+    "Town": "TAUNTON",
+    "Locality": "Monkton Heathfield",
+    "Postcode": "TA1 3HH",
+    "UkInternalCode": "England",
+    "Easting": "325000",
+    "Northing": "126000",
+    "OsMapReference": "ST2500026000",
+    "Party": {
+      "PartyId": "party-45-300-0102",
+      "SourcePartyId": "C453000102",
+      "OrganisationName": "Highland Pastures Ltd",
+      "Email": "contact@highlandpastures.co.uk"
+    },
+    "Herds": [
+      {
+        "HerdId": "herd-45-300-0102-1",
+        "Herdmark": "453004",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "CTT"
+      }
+    ],
+    "Roles": [
+      {
+        "RoleId": "pr-45-300-0102-1",
+        "HerdId": null,
+        "Role": "holder"
+      },
+      {
+        "RoleId": "pr-45-300-0102-2",
+        "HerdId": "herd-45-300-0102-1",
+        "Role": "keeper"
+      }
+    ],
+    "AllowedSpecies": [
+      "CTT"
+    ]
+  },
+  {
+    "HoldingId": "holding-56-400-0001",
+    "Cph": "56/400/0001",
+    "FeatureName": "Cotswold Heritage Farm",
+    "CphType": "permanent",
+    "StartDate": 1609459200,
+    "Street": "Fosse Way",
+    "Town": "CIRENCESTER",
+    "Locality": "North Cerney",
+    "Postcode": "GL7 1JJ",
+    "UkInternalCode": "England",
+    "Easting": "402000",
+    "Northing": "207000",
+    "OsMapReference": "SP0200007000",
+    "Party": {
+      "PartyId": "party-56-400-0001",
+      "SourcePartyId": "C564000001",
+      "PersonTitle": "Mr",
+      "GivenName": "George",
+      "Initials": "G",
+      "FamilyName": "Baker",
+      "Telephone": "01285 555001"
+    },
+    "Herds": [
+      {
+        "HerdId": "herd-56-400-0001-1",
+        "Herdmark": "564001",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "SHP"
+      },
+      {
+        "HerdId": "herd-56-400-0001-2",
+        "Herdmark": "564002",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "PIG"
+      }
+    ],
+    "Roles": [
+      {
+        "RoleId": "pr-56-400-0001-1",
+        "HerdId": null,
+        "Role": "holder"
+      },
+      {
+        "RoleId": "pr-56-400-0001-2",
+        "HerdId": "herd-56-400-0001-1",
+        "Role": "keeper"
+      },
+      {
+        "RoleId": "pr-56-400-0001-3",
+        "HerdId": "herd-56-400-0001-2",
+        "Role": "keeper"
+      }
+    ],
+    "AllowedSpecies": [
+      "PIG",
+      "SHP"
+    ]
+  },
+  {
+    "HoldingId": "holding-67-500-0001",
+    "Cph": "67/500/0001",
+    "FeatureName": "Pennine Valley Rearing",
+    "CphType": "permanent",
+    "StartDate": 1609459200,
+    "Street": "Otley Road",
+    "Town": "LEEDS",
+    "Locality": "Guiseley",
+    "Postcode": "LS1 4KK",
+    "UkInternalCode": "England",
+    "Easting": "419000",
+    "Northing": "442000",
+    "OsMapReference": "SE1900042000",
+    "Party": {
+      "PartyId": "party-67-500-0001",
+      "SourcePartyId": "C675000001",
+      "OrganisationName": "Pennine Livestock Group",
+      "Email": "info@penninelivestock.co.uk",
+      "Telephone": "0113 555001"
+    },
+    "Herds": [
+      {
+        "HerdId": "herd-67-500-0001-1",
+        "Herdmark": "675001",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "CTT"
+      },
+      {
+        "HerdId": "herd-67-500-0001-2",
+        "Herdmark": "675002",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "SHP"
+      }
+    ],
+    "Roles": [
+      {
+        "RoleId": "pr-67-500-0001-1",
+        "HerdId": null,
+        "Role": "holder"
+      },
+      {
+        "RoleId": "pr-67-500-0001-2",
+        "HerdId": "herd-67-500-0001-1",
+        "Role": "keeper"
+      },
+      {
+        "RoleId": "pr-67-500-0001-3",
+        "HerdId": "herd-67-500-0001-2",
+        "Role": "keeper"
+      }
+    ],
+    "AllowedSpecies": [
+      "CTT",
+      "SHP"
+    ]
+  },
+  {
+    "HoldingId": "holding-78-600-0001",
+    "Cph": "78/600/0001",
+    "FeatureName": "Waveney Valley Grazing",
+    "CphType": "temporary",
+    "StartDate": 1672531200,
+    "EndDate": 1735689600,
+    "Street": "Low Road",
+    "Town": "DISS",
+    "Locality": "Scole",
+    "Postcode": "IP22 4LL",
+    "UkInternalCode": "England",
+    "Easting": "614000",
+    "Northing": "278000",
+    "OsMapReference": "TM1400078000",
+    "Party": {
+      "PartyId": "party-78-600-0001",
+      "SourcePartyId": "C786000001",
+      "PersonTitle": "Mr",
+      "GivenName": "Robert",
+      "Initials": "R",
+      "FamilyName": "Taylor",
+      "Mobile": "07700 900556"
+    },
+    "Herds": [
+      {
+        "HerdId": "herd-78-600-0001-1",
+        "Herdmark": "786001",
+        "FromDate": 1672531200,
+        "ToDate": 1735689600,
+        "Species": "CTT"
+      }
+    ],
+    "Roles": [
+      {
+        "RoleId": "pr-78-600-0001-1",
+        "HerdId": null,
+        "Role": "holder"
+      },
+      {
+        "RoleId": "pr-78-600-0001-2",
+        "HerdId": "herd-78-600-0001-1",
+        "Role": "keeper"
+      }
+    ],
+    "AllowedSpecies": [
+      "CTT"
+    ]
+  },
+  {
+    "HoldingId": "holding-89-700-0001",
+    "Cph": "89/700/0001",
+    "FeatureName": "Solway Firth Pastures",
+    "CphType": "permanent",
+    "StartDate": 1609459200,
+    "Street": "Wigton Road",
+    "Town": "CARLISLE",
+    "Locality": "Kirkbampton",
+    "Postcode": "CA1 1MM",
+    "UkInternalCode": "England",
+    "Easting": "330000",
+    "Northing": "555000",
+    "OsMapReference": "NY3000055000",
+    "Party": {
+      "PartyId": "party-89-700-0001",
+      "SourcePartyId": "C897000001",
+      "OrganisationName": "Solway Agri Ltd",
+      "Email": "enquiries@solwayagri.co.uk",
+      "Telephone": "01228 555001"
+    },
+    "Herds": [
+      {
+        "HerdId": "herd-89-700-0001-1",
+        "Herdmark": "897001",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "CTT"
+      },
+      {
+        "HerdId": "herd-89-700-0001-2",
+        "Herdmark": "897002",
+        "FromDate": 1609459200,
+        "ToDate": null,
+        "Species": "SHP"
+      }
+    ],
+    "Roles": [
+      {
+        "RoleId": "pr-89-700-0001-1",
+        "HerdId": null,
+        "Role": "holder"
+      },
+      {
+        "RoleId": "pr-89-700-0001-2",
+        "HerdId": "herd-89-700-0001-1",
+        "Role": "keeper"
+      },
+      {
+        "RoleId": "pr-89-700-0001-3",
+        "HerdId": "herd-89-700-0001-2",
+        "Role": "keeper"
+      }
+    ],
+    "AllowedSpecies": [
+      "CTT",
+      "SHP"
+    ]
+  }
+]

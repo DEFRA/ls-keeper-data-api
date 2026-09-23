@@ -3,6 +3,7 @@ using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
 using Microsoft.Data.Sqlite;
 using System.Data.Common;
+using System.Text.Json;
 
 namespace KeeperData.Infrastructure.Database.Repositories;
 
@@ -75,17 +76,17 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
         var safePage = Math.Max(1, page);
         var safePageSize = Math.Max(1, pageSize);
         var offset = ((long)safePage - 1) * safePageSize;
-        var sortDirection = string.Equals(sort, "desc", StringComparison.OrdinalIgnoreCase) ? "DESC" : "ASC";
+        var sortDirection = string.Equals(sort, "desc", StringComparison.OrdinalIgnoreCase) ? "desc" : "asc";
         var sortColumn = order?.ToLowerInvariant() switch
         {
-            "name" => "h.FeatureName",
-            "holdingtype" => "h.CphType",
-            "startdate" => "h.StartDate",
-            "enddate" => "h.EndDate",
-            _ => "h.Cph"
+            "name" => "name",
+            "holdingtype" => "holdingtype",
+            "startdate" => "startdate",
+            "enddate" => "enddate",
+            _ => "cph"
         };
 
-        var sql = $"""
+        const string sql = """
             SELECT
                 h.Id,
                 h.Cph,
@@ -108,12 +109,24 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
                 h.Northing,
                 h.OsMapReference
             FROM Holding AS h
-            ORDER BY {sortColumn} {sortDirection}, h.Cph {sortDirection}
+            ORDER BY
+                CASE WHEN $order = 'name' AND $sort = 'asc' THEN h.FeatureName END ASC,
+                CASE WHEN $order = 'name' AND $sort = 'desc' THEN h.FeatureName END DESC,
+                CASE WHEN $order = 'holdingtype' AND $sort = 'asc' THEN h.CphType END ASC,
+                CASE WHEN $order = 'holdingtype' AND $sort = 'desc' THEN h.CphType END DESC,
+                CASE WHEN $order = 'startdate' AND $sort = 'asc' THEN h.StartDate END ASC,
+                CASE WHEN $order = 'startdate' AND $sort = 'desc' THEN h.StartDate END DESC,
+                CASE WHEN $order = 'enddate' AND $sort = 'asc' THEN h.EndDate END ASC,
+                CASE WHEN $order = 'enddate' AND $sort = 'desc' THEN h.EndDate END DESC,
+                CASE WHEN $sort = 'asc' THEN h.Cph END ASC,
+                CASE WHEN $sort = 'desc' THEN h.Cph END DESC
             LIMIT $pageSize OFFSET $offset;
             """;
 
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
+        command.Parameters.Add(new SqliteParameter("$order", sortColumn));
+        command.Parameters.Add(new SqliteParameter("$sort", sortDirection));
         command.Parameters.Add(new SqliteParameter("$pageSize", safePageSize));
         command.Parameters.Add(new SqliteParameter("$offset", offset));
 
@@ -423,29 +436,12 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
         accumulator.AddRow(fromDate, toDate, species);
     }
 
-    private static (string InClause, List<SqliteParameter> Parameters) BuildInClause(
-        IReadOnlyList<string> ids,
-        string prefix)
-    {
-        var paramNames = new string[ids.Count];
-        var parameters = new List<SqliteParameter>(ids.Count);
-        for (var i = 0; i < ids.Count; i++)
-        {
-            var paramName = $"${prefix}{i}";
-            paramNames[i] = paramName;
-            parameters.Add(new SqliteParameter(paramName, ids[i]));
-        }
-
-        return (string.Join(", ", paramNames), parameters);
-    }
-
     private static async Task<Dictionary<string, List<HoldingAssociation>>> ReadBatchAssociationsAsync(
         SqliteConnection connection,
         IReadOnlyList<string> holdingIds,
         CancellationToken cancellationToken)
     {
-        var (inClause, parameters) = BuildInClause(holdingIds, "h");
-        var sql = $"""
+        const string sql = """
             SELECT
                 r.HoldingId,
                 p.SourcePartyId,
@@ -462,16 +458,13 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
             FROM PartyRole AS r
             JOIN Party AS p ON p.Id = r.PartyId
             LEFT JOIN Herd AS d ON d.Id = r.HerdId
-            WHERE r.HoldingId IN ({inClause})
+            WHERE r.HoldingId IN (SELECT value FROM json_each($holdingIds))
             ORDER BY r.HoldingId, p.SourcePartyId, r.Role, d.AnimalSpeciesCode;
             """;
 
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
-        foreach (var p in parameters)
-        {
-            command.Parameters.Add(p);
-        }
+        command.Parameters.Add(new SqliteParameter("$holdingIds", JsonSerializer.Serialize(holdingIds)));
 
         var resultMap = new Dictionary<string, Dictionary<string, PartyAccumulator>>(StringComparer.OrdinalIgnoreCase);
 
@@ -499,20 +492,16 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
         IReadOnlyList<string> holdingIds,
         CancellationToken cancellationToken)
     {
-        var (inClause, parameters) = BuildInClause(holdingIds, "s");
-        var sql = $"""
+        const string sql = """
             SELECT DISTINCT a.HoldingId, a.AnimalSpeciesCode
             FROM HoldingAnimalProfile AS a
-            WHERE a.HoldingId IN ({inClause})
+            WHERE a.HoldingId IN (SELECT value FROM json_each($holdingIds))
             ORDER BY a.HoldingId, a.AnimalSpeciesCode;
             """;
 
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
-        foreach (var p in parameters)
-        {
-            command.Parameters.Add(p);
-        }
+        command.Parameters.Add(new SqliteParameter("$holdingIds", JsonSerializer.Serialize(holdingIds)));
 
         var resultMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
@@ -539,8 +528,7 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
         IReadOnlyList<string> holdingIds,
         CancellationToken cancellationToken)
     {
-        var (inClause, parameters) = BuildInClause(holdingIds, "m");
-        var sql = $"""
+        const string sql = """
             SELECT
                 d.HoldingId,
                 d.Herdmark,
@@ -548,16 +536,13 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
                 d.AnimalGroupToDate,
                 d.AnimalSpeciesCode
             FROM Herd AS d
-            WHERE d.HoldingId IN ({inClause})
+            WHERE d.HoldingId IN (SELECT value FROM json_each($holdingIds))
             ORDER BY d.HoldingId, d.Herdmark, d.AnimalSpeciesCode;
             """;
 
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
-        foreach (var p in parameters)
-        {
-            command.Parameters.Add(p);
-        }
+        command.Parameters.Add(new SqliteParameter("$holdingIds", JsonSerializer.Serialize(holdingIds)));
 
         var resultMap = new Dictionary<string, Dictionary<string, MarkAccumulator>>(StringComparer.OrdinalIgnoreCase);
 

@@ -35,6 +35,8 @@ public class FakeSqliteArtifactSourceTests : IDisposable
         {
             // Best effort cleanup in tests
         }
+
+        GC.SuppressFinalize(this);
     }
 
     [Fact]

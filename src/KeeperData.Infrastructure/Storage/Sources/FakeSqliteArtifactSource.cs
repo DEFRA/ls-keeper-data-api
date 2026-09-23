@@ -2,6 +2,7 @@ using KeeperData.Core.Storage.Sqlite;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 
 namespace KeeperData.Infrastructure.Storage.Sources;
 
@@ -12,6 +13,19 @@ namespace KeeperData.Infrastructure.Storage.Sources;
 [ExcludeFromCodeCoverage]
 public class FakeSqliteArtifactSource : ISqliteArtifactSource
 {
+    private static readonly Action<ILogger, string, Exception?> s_logCphArtifact = LoggerMessage.Define<string>(
+        LogLevel.Information, new EventId(1, nameof(GetLatestAsync)),
+        "FakeSqliteArtifactSource returning fake CPH artifact {FileName}");
+    private static readonly Action<ILogger, string, Exception?> s_logReadModelArtifact = LoggerMessage.Define<string>(
+        LogLevel.Information, new EventId(2, nameof(GetLatestAsync)),
+        "FakeSqliteArtifactSource returning fake ReadModel artifact {FileName}");
+    private static readonly Action<ILogger, string, Exception?> s_logCphSeeded = LoggerMessage.Define<string>(
+        LogLevel.Information, new EventId(3, nameof(DownloadAsync)),
+        "FakeSqliteArtifactSource seeded CPH database to {LocalPath}");
+    private static readonly Action<ILogger, string, Exception?> s_logReadModelSeeded = LoggerMessage.Define<string>(
+        LogLevel.Information, new EventId(4, nameof(DownloadAsync)),
+        "FakeSqliteArtifactSource seeded ReadModel database to {LocalPath}");
+
     private readonly ILogger<FakeSqliteArtifactSource> _logger;
     private readonly string _cphsFileName;
     private readonly string _readModelFileName;
@@ -28,7 +42,7 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
     {
         if (latestArtifactRoute.Contains("cphs", StringComparison.OrdinalIgnoreCase))
         {
-            _logger.LogInformation("FakeSqliteArtifactSource returning fake CPH artifact {FileName}", _cphsFileName);
+            s_logCphArtifact(_logger, _cphsFileName, null);
             return Task.FromResult<SqliteArtifact?>(new SqliteArtifact
             {
                 ObjectKey = _cphsFileName,
@@ -43,7 +57,7 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
             latestArtifactRoute.Contains("readmodel", StringComparison.OrdinalIgnoreCase) ||
             latestArtifactRoute.Contains("krds", StringComparison.OrdinalIgnoreCase))
         {
-            _logger.LogInformation("FakeSqliteArtifactSource returning fake ReadModel artifact {FileName}", _readModelFileName);
+            s_logReadModelArtifact(_logger, _readModelFileName, null);
             return Task.FromResult<SqliteArtifact?>(new SqliteArtifact
             {
                 ObjectKey = _readModelFileName,
@@ -74,14 +88,14 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
         if (artifact.FileName.StartsWith("cphs_", StringComparison.OrdinalIgnoreCase))
         {
             await SeedCphsDatabaseAsync(localPath, cancellationToken);
-            _logger.LogInformation("FakeSqliteArtifactSource seeded CPH database to {LocalPath}", localPath);
+            s_logCphSeeded(_logger, localPath, null);
             return;
         }
 
         if (artifact.FileName.StartsWith("krds-db_", StringComparison.OrdinalIgnoreCase))
         {
             await SeedReadModelDatabaseAsync(localPath, cancellationToken);
-            _logger.LogInformation("FakeSqliteArtifactSource seeded ReadModel database to {LocalPath}", localPath);
+            s_logReadModelSeeded(_logger, localPath, null);
             return;
         }
 
@@ -103,7 +117,7 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
             await command.ExecuteNonQueryAsync(cancellationToken);
         }
 
-        await using (var transaction = connection.BeginTransaction())
+        await using (var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken))
         {
             foreach (var cph in SeedHoldings.Select(h => h.Cph))
             {
@@ -191,7 +205,7 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
             await schemaCmd.ExecuteNonQueryAsync(cancellationToken);
         }
 
-        await using (var transaction = connection.BeginTransaction())
+        await using (var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken))
         {
             foreach (var h in SeedHoldings)
             {
@@ -362,670 +376,15 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
         string? HerdId,
         string Role);
 
-    private static readonly IReadOnlyList<SeedHoldingRecord> SeedHoldings =
-    [
-        new(
-            HoldingId: "holding-10-024-0247",
-            Cph: "10/024/0247",
-            FeatureName: null,
-            CphType: "permanent",
-            StartDate: 1310515200,
-            EndDate: null,
-            Udprn: null,
-            PaonDescription: null,
-            PaonStartNumber: null,
-            PaonStartNumberSuffix: null,
-            PaonEndNumber: null,
-            PaonEndNumberSuffix: null,
-            Street: "The Street",
-            Town: "WORCESTER",
-            Locality: "Some Location",
-            Postcode: "TT5 2UU",
-            UkInternalCode: "England",
-            Easting: "000000",
-            Northing: "000000",
-            OsMapReference: "SS0000000200",
-            Party: new(
-                PartyId: "party-10-024-0247",
-                SourcePartyId: "C000000",
-                PersonTitle: "MISS",
-                GivenName: null,
-                Initials: "J",
-                FamilyName: "Example",
-                OrganisationName: null,
-                Email: null,
-                Mobile: null,
-                Telephone: "01234 567890"),
-            Herds:
-            [
-                new("herd-10-024-0247-1", "360396", 1216166400, null, "CTT"),
-                new("herd-10-024-0247-2", "372893", 1216166400, null, "SHP"),
-                new("herd-10-024-0247-3", "373074", 1216166400, null, "SHP")
-            ],
-            Roles:
-            [
-                new("pr-10-024-0247-1", null, "holder"),
-                new("pr-10-024-0247-2", "herd-10-024-0247-1", "keeper"),
-                new("pr-10-024-0247-3", "herd-10-024-0247-2", "keeper"),
-                new("pr-10-024-0247-4", "herd-10-024-0247-1", "owner"),
-                new("pr-10-024-0247-5", "herd-10-024-0247-2", "owner")
-            ],
-            AllowedSpecies: ["CTT", "SHP"]),
+    private static readonly IReadOnlyList<SeedHoldingRecord> SeedHoldings = LoadSeedHoldings();
 
-        new(
-            HoldingId: "holding-13-169-0007",
-            Cph: "13/169/0007",
-            FeatureName: "Land At Test Farm 06",
-            CphType: "permanent",
-            StartDate: 1773014400,
-            EndDate: null,
-            Udprn: null,
-            PaonDescription: "Test Farm 06",
-            PaonStartNumber: null,
-            PaonStartNumberSuffix: null,
-            PaonEndNumber: null,
-            PaonEndNumberSuffix: null,
-            Street: "Layer Road",
-            Town: "COLCHESTER",
-            Locality: "Great Wigborough",
-            Postcode: "CO5 7RR",
-            UkInternalCode: "England",
-            Easting: "595600",
-            Northing: "215900",
-            OsMapReference: "TL9560015900",
-            Party: new(
-                PartyId: "party-13-169-0007",
-                SourcePartyId: "C131690007",
-                PersonTitle: null,
-                GivenName: null,
-                Initials: null,
-                FamilyName: null,
-                OrganisationName: "Green Fields Farming Ltd",
-                Email: "contact@greenfields.co.uk",
-                Mobile: null,
-                Telephone: "01206 123456"),
-            Herds:
-            [
-                new("herd-13-169-0007-1", "131690", 1609459200, null, "CTT"),
-                new("herd-13-169-0007-2", "131691", 1609459200, null, "SHP")
-            ],
-            Roles:
-            [
-                new("pr-13-169-0007-1", null, "holder"),
-                new("pr-13-169-0007-2", "herd-13-169-0007-1", "keeper"),
-                new("pr-13-169-0007-3", "herd-13-169-0007-2", "keeper")
-            ],
-            AllowedSpecies: ["CTT", "SHP"]),
+    private static IReadOnlyList<SeedHoldingRecord> LoadSeedHoldings()
+    {
+        using var stream = typeof(FakeSqliteArtifactSource).Assembly
+            .GetManifestResourceStream("FakeSqliteHoldings.json")
+            ?? throw new InvalidOperationException("Fake SQLite holding seed data is missing.");
 
-        new(
-            HoldingId: "holding-15-001-0001",
-            Cph: "15/001/0001",
-            FeatureName: "Meadow View Holding",
-            CphType: "permanent",
-            StartDate: 1609459200,
-            EndDate: null,
-            Udprn: "10001234",
-            PaonDescription: "Meadow View",
-            PaonStartNumber: null,
-            PaonStartNumberSuffix: null,
-            PaonEndNumber: null,
-            PaonEndNumberSuffix: null,
-            Street: "High Street",
-            Town: "CHELMSFORD",
-            Locality: "Broomfield",
-            Postcode: "CM1 7XX",
-            UkInternalCode: "England",
-            Easting: "570000",
-            Northing: "207000",
-            OsMapReference: "TL7000007000",
-            Party: new(
-                PartyId: "party-15-001-0001",
-                SourcePartyId: "C150010001",
-                PersonTitle: "Mr",
-                GivenName: "Arthur",
-                Initials: "A",
-                FamilyName: "Dent",
-                OrganisationName: null,
-                Email: "arthur.dent@example.com",
-                Mobile: "07700 900123",
-                Telephone: null),
-            Herds:
-            [
-                new("herd-15-001-0001-1", "150011", 1609459200, null, "CTT")
-            ],
-            Roles:
-            [
-                new("pr-15-001-0001-1", null, "holder"),
-                new("pr-15-001-0001-2", "herd-15-001-0001-1", "keeper")
-            ],
-            AllowedSpecies: ["CTT"]),
-
-        new(
-            HoldingId: "holding-22-100-0001",
-            Cph: "22/100/0001",
-            FeatureName: "Oak Ridge Farm",
-            CphType: "permanent",
-            StartDate: 1609459200,
-            EndDate: null,
-            Udprn: null,
-            PaonDescription: "Oak Ridge Farmhouse",
-            PaonStartNumber: null,
-            PaonStartNumberSuffix: null,
-            PaonEndNumber: null,
-            PaonEndNumberSuffix: null,
-            Street: "Valley Road",
-            Town: "NORWICH",
-            Locality: "Cringleford",
-            Postcode: "NR4 7AA",
-            UkInternalCode: "England",
-            Easting: "618000",
-            Northing: "305000",
-            OsMapReference: "TG1800005000",
-            Party: new(
-                PartyId: "party-22-100-0001",
-                SourcePartyId: "C221000001",
-                PersonTitle: null,
-                GivenName: null,
-                Initials: null,
-                FamilyName: null,
-                OrganisationName: "Oak Ridge Livestock Co",
-                Email: "info@oakridgelf.co.uk",
-                Mobile: null,
-                Telephone: "01603 555001"),
-            Herds:
-            [
-                new("herd-22-100-0001-1", "221001", 1609459200, null, "CTT"),
-                new("herd-22-100-0001-2", "221002", 1609459200, null, "PIG")
-            ],
-            Roles:
-            [
-                new("pr-22-100-0001-1", null, "holder"),
-                new("pr-22-100-0001-2", "herd-22-100-0001-1", "keeper"),
-                new("pr-22-100-0001-3", "herd-22-100-0001-2", "keeper")
-            ],
-            AllowedSpecies: ["CTT", "PIG"]),
-
-        new(
-            HoldingId: "holding-22-100-0002",
-            Cph: "22/100/0002",
-            FeatureName: "Willow Brook Pastures",
-            CphType: "permanent",
-            StartDate: 1609459200,
-            EndDate: null,
-            Udprn: null,
-            PaonDescription: "Willow Brook",
-            PaonStartNumber: null,
-            PaonStartNumberSuffix: null,
-            PaonEndNumber: null,
-            PaonEndNumberSuffix: null,
-            Street: "Mill Lane",
-            Town: "IPSWICH",
-            Locality: "Kesgrave",
-            Postcode: "IP1 1BB",
-            UkInternalCode: "England",
-            Easting: "622000",
-            Northing: "245000",
-            OsMapReference: "TM2200045000",
-            Party: new(
-                PartyId: "party-22-100-0002",
-                SourcePartyId: "C221000002",
-                PersonTitle: "Mrs",
-                GivenName: "Sarah",
-                Initials: "S",
-                FamilyName: "Jenkins",
-                OrganisationName: null,
-                Email: "sarah@willowbrook.co.uk",
-                Mobile: null,
-                Telephone: "01473 555002"),
-            Herds:
-            [
-                new("herd-22-100-0002-1", "221003", 1609459200, null, "SHP")
-            ],
-            Roles:
-            [
-                new("pr-22-100-0002-1", null, "holder"),
-                new("pr-22-100-0002-2", "herd-22-100-0002-1", "keeper")
-            ],
-            AllowedSpecies: ["SHP"]),
-
-        new(
-            HoldingId: "holding-22-100-0003",
-            Cph: "22/100/0003",
-            FeatureName: "Hilltop Sheep Station",
-            CphType: "permanent",
-            StartDate: 1609459200,
-            EndDate: null,
-            Udprn: null,
-            PaonDescription: null,
-            PaonStartNumber: null,
-            PaonStartNumberSuffix: null,
-            PaonEndNumber: null,
-            PaonEndNumberSuffix: null,
-            Street: "Church Road",
-            Town: "BURY ST EDMUNDS",
-            Locality: "Rougham",
-            Postcode: "IP33 3CC",
-            UkInternalCode: "England",
-            Easting: "588000",
-            Northing: "264000",
-            OsMapReference: "TL8800064000",
-            Party: new(
-                PartyId: "party-22-100-0003",
-                SourcePartyId: "C221000003",
-                PersonTitle: "Mr",
-                GivenName: "David",
-                Initials: "D",
-                FamilyName: "Miller",
-                OrganisationName: null,
-                Email: null,
-                Mobile: "07700 900223",
-                Telephone: null),
-            Herds:
-            [
-                new("herd-22-100-0003-1", "221004", 1609459200, null, "SHP"),
-                new("herd-22-100-0003-2", "221005", 1609459200, null, "CAP")
-            ],
-            Roles:
-            [
-                new("pr-22-100-0003-1", null, "holder"),
-                new("pr-22-100-0003-2", "herd-22-100-0003-1", "keeper"),
-                new("pr-22-100-0003-3", "herd-22-100-0003-2", "keeper")
-            ],
-            AllowedSpecies: ["CAP", "SHP"]),
-
-        new(
-            HoldingId: "holding-34-200-0010",
-            Cph: "34/200/0010",
-            FeatureName: "Sunnyside Farm",
-            CphType: "permanent",
-            StartDate: 1609459200,
-            EndDate: null,
-            Udprn: null,
-            PaonDescription: "Sunnyside",
-            PaonStartNumber: null,
-            PaonStartNumberSuffix: null,
-            PaonEndNumber: null,
-            PaonEndNumberSuffix: null,
-            Street: "Gloucester Road",
-            Town: "GLOUCESTER",
-            Locality: "Churchdown",
-            Postcode: "GL1 2DD",
-            UkInternalCode: "England",
-            Easting: "386000",
-            Northing: "219000",
-            OsMapReference: "SO8600019000",
-            Party: new(
-                PartyId: "party-34-200-0010",
-                SourcePartyId: "C342000010",
-                PersonTitle: null,
-                GivenName: null,
-                Initials: null,
-                FamilyName: null,
-                OrganisationName: "Sunnyside Agriculture Ltd",
-                Email: "admin@sunnyside.co.uk",
-                Mobile: null,
-                Telephone: "01452 555010"),
-            Herds:
-            [
-                new("herd-34-200-0010-1", "342001", 1609459200, null, "CTT")
-            ],
-            Roles:
-            [
-                new("pr-34-200-0010-1", null, "holder"),
-                new("pr-34-200-0010-2", "herd-34-200-0010-1", "keeper")
-            ],
-            AllowedSpecies: ["CTT"]),
-
-        new(
-            HoldingId: "holding-34-200-0011",
-            Cph: "34/200/0011",
-            FeatureName: "Brookfield Dairy Farm",
-            CphType: "permanent",
-            StartDate: 1609459200,
-            EndDate: null,
-            Udprn: null,
-            PaonDescription: null,
-            PaonStartNumber: "12",
-            PaonStartNumberSuffix: null,
-            PaonEndNumber: null,
-            PaonEndNumberSuffix: null,
-            Street: "Brookfield Way",
-            Town: "CHELTENHAM",
-            Locality: "Prestbury",
-            Postcode: "GL50 3EE",
-            UkInternalCode: "England",
-            Easting: "395000",
-            Northing: "223000",
-            OsMapReference: "SO9500023000",
-            Party: new(
-                PartyId: "party-34-200-0011",
-                SourcePartyId: "C342000011",
-                PersonTitle: "Mr",
-                GivenName: "James",
-                Initials: "J",
-                FamilyName: "Wilson",
-                OrganisationName: null,
-                Email: "j.wilson@brookfielddairy.co.uk",
-                Mobile: null,
-                Telephone: null),
-            Herds:
-            [
-                new("herd-34-200-0011-1", "342002", 1609459200, null, "CTT")
-            ],
-            Roles:
-            [
-                new("pr-34-200-0011-1", null, "holder"),
-                new("pr-34-200-0011-2", "herd-34-200-0011-1", "keeper")
-            ],
-            AllowedSpecies: ["CTT"]),
-
-        new(
-            HoldingId: "holding-45-300-0100",
-            Cph: "45/300/0100",
-            FeatureName: "Redwood Estate",
-            CphType: "permanent",
-            StartDate: 1609459200,
-            EndDate: null,
-            Udprn: null,
-            PaonDescription: "Redwood House",
-            PaonStartNumber: null,
-            PaonStartNumberSuffix: null,
-            PaonEndNumber: null,
-            PaonEndNumberSuffix: null,
-            Street: "Estate Drive",
-            Town: "EXETER",
-            Locality: "Topsham",
-            Postcode: "EX1 1FF",
-            UkInternalCode: "England",
-            Easting: "296000",
-            Northing: "088000",
-            OsMapReference: "SX9600088000",
-            Party: new(
-                PartyId: "party-45-300-0100",
-                SourcePartyId: "C453000100",
-                PersonTitle: null,
-                GivenName: null,
-                Initials: null,
-                FamilyName: null,
-                OrganisationName: "Redwood Farming Trust",
-                Email: "trustees@redwoodestate.co.uk",
-                Mobile: null,
-                Telephone: "01392 555100"),
-            Herds:
-            [
-                new("herd-45-300-0100-1", "453001", 1609459200, null, "CTT"),
-                new("herd-45-300-0100-2", "453002", 1609459200, null, "SHP")
-            ],
-            Roles:
-            [
-                new("pr-45-300-0100-1", null, "holder"),
-                new("pr-45-300-0100-2", "herd-45-300-0100-1", "keeper"),
-                new("pr-45-300-0100-3", "herd-45-300-0100-2", "keeper")
-            ],
-            AllowedSpecies: ["CTT", "SHP"]),
-
-        new(
-            HoldingId: "holding-45-300-0101",
-            Cph: "45/300/0101",
-            FeatureName: "Dartmoor Grazing Lands",
-            CphType: "temporary",
-            StartDate: 1672531200,
-            EndDate: 1735689600,
-            Udprn: null,
-            PaonDescription: null,
-            PaonStartNumber: null,
-            PaonStartNumberSuffix: null,
-            PaonEndNumber: null,
-            PaonEndNumberSuffix: null,
-            Street: "Moorland Track",
-            Town: "PLYMOUTH",
-            Locality: "Yelverton",
-            Postcode: "PL1 2GG",
-            UkInternalCode: "England",
-            Easting: "253000",
-            Northing: "067000",
-            OsMapReference: "SX5300067000",
-            Party: new(
-                PartyId: "party-45-300-0101",
-                SourcePartyId: "C453000101",
-                PersonTitle: "Ms",
-                GivenName: "Emma",
-                Initials: "E",
-                FamilyName: "Watson",
-                OrganisationName: null,
-                Email: null,
-                Mobile: "07700 900334",
-                Telephone: null),
-            Herds:
-            [
-                new("herd-45-300-0101-1", "453003", 1672531200, 1735689600, "SHP")
-            ],
-            Roles:
-            [
-                new("pr-45-300-0101-1", null, "holder"),
-                new("pr-45-300-0101-2", "herd-45-300-0101-1", "keeper")
-            ],
-            AllowedSpecies: ["SHP"]),
-
-        new(
-            HoldingId: "holding-45-300-0102",
-            Cph: "45/300/0102",
-            FeatureName: "Highland View Farm",
-            CphType: "permanent",
-            StartDate: 1609459200,
-            EndDate: null,
-            Udprn: null,
-            PaonDescription: "Highland View",
-            PaonStartNumber: null,
-            PaonStartNumberSuffix: null,
-            PaonEndNumber: null,
-            PaonEndNumberSuffix: null,
-            Street: "Bridgwater Road",
-            Town: "TAUNTON",
-            Locality: "Monkton Heathfield",
-            Postcode: "TA1 3HH",
-            UkInternalCode: "England",
-            Easting: "325000",
-            Northing: "126000",
-            OsMapReference: "ST2500026000",
-            Party: new(
-                PartyId: "party-45-300-0102",
-                SourcePartyId: "C453000102",
-                PersonTitle: null,
-                GivenName: null,
-                Initials: null,
-                FamilyName: null,
-                OrganisationName: "Highland Pastures Ltd",
-                Email: "contact@highlandpastures.co.uk",
-                Mobile: null,
-                Telephone: null),
-            Herds:
-            [
-                new("herd-45-300-0102-1", "453004", 1609459200, null, "CTT")
-            ],
-            Roles:
-            [
-                new("pr-45-300-0102-1", null, "holder"),
-                new("pr-45-300-0102-2", "herd-45-300-0102-1", "keeper")
-            ],
-            AllowedSpecies: ["CTT"]),
-
-        new(
-            HoldingId: "holding-56-400-0001",
-            Cph: "56/400/0001",
-            FeatureName: "Cotswold Heritage Farm",
-            CphType: "permanent",
-            StartDate: 1609459200,
-            EndDate: null,
-            Udprn: null,
-            PaonDescription: null,
-            PaonStartNumber: null,
-            PaonStartNumberSuffix: null,
-            PaonEndNumber: null,
-            PaonEndNumberSuffix: null,
-            Street: "Fosse Way",
-            Town: "CIRENCESTER",
-            Locality: "North Cerney",
-            Postcode: "GL7 1JJ",
-            UkInternalCode: "England",
-            Easting: "402000",
-            Northing: "207000",
-            OsMapReference: "SP0200007000",
-            Party: new(
-                PartyId: "party-56-400-0001",
-                SourcePartyId: "C564000001",
-                PersonTitle: "Mr",
-                GivenName: "George",
-                Initials: "G",
-                FamilyName: "Baker",
-                OrganisationName: null,
-                Email: null,
-                Mobile: null,
-                Telephone: "01285 555001"),
-            Herds:
-            [
-                new("herd-56-400-0001-1", "564001", 1609459200, null, "SHP"),
-                new("herd-56-400-0001-2", "564002", 1609459200, null, "PIG")
-            ],
-            Roles:
-            [
-                new("pr-56-400-0001-1", null, "holder"),
-                new("pr-56-400-0001-2", "herd-56-400-0001-1", "keeper"),
-                new("pr-56-400-0001-3", "herd-56-400-0001-2", "keeper")
-            ],
-            AllowedSpecies: ["PIG", "SHP"]),
-
-        new(
-            HoldingId: "holding-67-500-0001",
-            Cph: "67/500/0001",
-            FeatureName: "Pennine Valley Rearing",
-            CphType: "permanent",
-            StartDate: 1609459200,
-            EndDate: null,
-            Udprn: null,
-            PaonDescription: null,
-            PaonStartNumber: null,
-            PaonStartNumberSuffix: null,
-            PaonEndNumber: null,
-            PaonEndNumberSuffix: null,
-            Street: "Otley Road",
-            Town: "LEEDS",
-            Locality: "Guiseley",
-            Postcode: "LS1 4KK",
-            UkInternalCode: "England",
-            Easting: "419000",
-            Northing: "442000",
-            OsMapReference: "SE1900042000",
-            Party: new(
-                PartyId: "party-67-500-0001",
-                SourcePartyId: "C675000001",
-                PersonTitle: null,
-                GivenName: null,
-                Initials: null,
-                FamilyName: null,
-                OrganisationName: "Pennine Livestock Group",
-                Email: "info@penninelivestock.co.uk",
-                Mobile: null,
-                Telephone: "0113 555001"),
-            Herds:
-            [
-                new("herd-67-500-0001-1", "675001", 1609459200, null, "CTT"),
-                new("herd-67-500-0001-2", "675002", 1609459200, null, "SHP")
-            ],
-            Roles:
-            [
-                new("pr-67-500-0001-1", null, "holder"),
-                new("pr-67-500-0001-2", "herd-67-500-0001-1", "keeper"),
-                new("pr-67-500-0001-3", "herd-67-500-0001-2", "keeper")
-            ],
-            AllowedSpecies: ["CTT", "SHP"]),
-
-        new(
-            HoldingId: "holding-78-600-0001",
-            Cph: "78/600/0001",
-            FeatureName: "Waveney Valley Grazing",
-            CphType: "temporary",
-            StartDate: 1672531200,
-            EndDate: 1735689600,
-            Udprn: null,
-            PaonDescription: null,
-            PaonStartNumber: null,
-            PaonStartNumberSuffix: null,
-            PaonEndNumber: null,
-            PaonEndNumberSuffix: null,
-            Street: "Low Road",
-            Town: "DISS",
-            Locality: "Scole",
-            Postcode: "IP22 4LL",
-            UkInternalCode: "England",
-            Easting: "614000",
-            Northing: "278000",
-            OsMapReference: "TM1400078000",
-            Party: new(
-                PartyId: "party-78-600-0001",
-                SourcePartyId: "C786000001",
-                PersonTitle: "Mr",
-                GivenName: "Robert",
-                Initials: "R",
-                FamilyName: "Taylor",
-                OrganisationName: null,
-                Email: null,
-                Mobile: "07700 900556",
-                Telephone: null),
-            Herds:
-            [
-                new("herd-78-600-0001-1", "786001", 1672531200, 1735689600, "CTT")
-            ],
-            Roles:
-            [
-                new("pr-78-600-0001-1", null, "holder"),
-                new("pr-78-600-0001-2", "herd-78-600-0001-1", "keeper")
-            ],
-            AllowedSpecies: ["CTT"]),
-
-        new(
-            HoldingId: "holding-89-700-0001",
-            Cph: "89/700/0001",
-            FeatureName: "Solway Firth Pastures",
-            CphType: "permanent",
-            StartDate: 1609459200,
-            EndDate: null,
-            Udprn: null,
-            PaonDescription: null,
-            PaonStartNumber: null,
-            PaonStartNumberSuffix: null,
-            PaonEndNumber: null,
-            PaonEndNumberSuffix: null,
-            Street: "Wigton Road",
-            Town: "CARLISLE",
-            Locality: "Kirkbampton",
-            Postcode: "CA1 1MM",
-            UkInternalCode: "England",
-            Easting: "330000",
-            Northing: "555000",
-            OsMapReference: "NY3000055000",
-            Party: new(
-                PartyId: "party-89-700-0001",
-                SourcePartyId: "C897000001",
-                PersonTitle: null,
-                GivenName: null,
-                Initials: null,
-                FamilyName: null,
-                OrganisationName: "Solway Agri Ltd",
-                Email: "enquiries@solwayagri.co.uk",
-                Mobile: null,
-                Telephone: "01228 555001"),
-            Herds:
-            [
-                new("herd-89-700-0001-1", "897001", 1609459200, null, "CTT"),
-                new("herd-89-700-0001-2", "897002", 1609459200, null, "SHP")
-            ],
-            Roles:
-            [
-                new("pr-89-700-0001-1", null, "holder"),
-                new("pr-89-700-0001-2", "herd-89-700-0001-1", "keeper"),
-                new("pr-89-700-0001-3", "herd-89-700-0001-2", "keeper")
-            ],
-            AllowedSpecies: ["CTT", "SHP"])
-    ];
+        return JsonSerializer.Deserialize<List<SeedHoldingRecord>>(stream)
+            ?? throw new InvalidOperationException("Fake SQLite holding seed data is invalid.");
+    }
 }
