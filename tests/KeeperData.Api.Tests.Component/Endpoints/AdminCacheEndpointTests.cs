@@ -1,6 +1,8 @@
 using FluentAssertions;
+using KeeperData.Api.Controllers.Admin;
 using KeeperData.Core.Services;
 using KeeperData.Tests.Common.Utilities;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using System.Net;
 using System.Net.Http.Json;
@@ -85,6 +87,25 @@ public class AdminCacheEndpointTests
         using var response = await client.PostAsync(Route, null);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Disabled_WhenControllerIsInvokedDirectly_ReturnsNotFound()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["AdminEndpointsEnabled"] = "false"
+            })
+            .Build();
+        var controller = new AdminCacheController(
+            Mock.Of<ICphSqliteCacheService>(),
+            Mock.Of<IReadModelSqliteCacheService>(),
+            configuration);
+
+        var result = await controller.Refresh();
+
+        result.Should().BeOfType<Microsoft.AspNetCore.Mvc.NotFoundResult>();
     }
 
     [Fact]

@@ -101,107 +101,138 @@ public abstract class SqliteCacheService : IHostedService, IDisposable
 
     private async Task<CacheRefreshResult> RefreshAsync(bool force, CancellationToken cancellationToken)
     {
-        var stopwatch = Stopwatch.StartNew();
-        string? downloadDirectory = null;
+        var attempt = new RefreshAttempt();
         await _refreshLock.WaitAsync(cancellationToken);
         try
         {
-            if (!_config.Enabled)
-                return Result("Failed", stopwatch, "SQLite cache is disabled");
-
-            _logger.LogInformation("Asking the data bridge for the latest {CacheName} SQLite file...", CacheName);
-
-            using var lookupTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            lookupTimeout.CancelAfter(TimeSpan.FromSeconds(_config.ArtifactLookupTimeoutSeconds));
-            SqliteArtifact? artifact;
-            try
-            {
-                artifact = await _artifactSource.GetLatestAsync(LatestArtifactRoute, lookupTimeout.Token);
-            }
-            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested && lookupTimeout.IsCancellationRequested)
-            {
-                _logger.LogWarning("Data Bridge artifact lookup timed out for {CacheName}", CacheName);
-                _lastRefreshedAt = DateTime.UtcNow;
-                return Result("Failed", stopwatch, "Data Bridge artifact lookup timed out");
-            }
-
-            if (artifact is null)
-            {
-                _logger.LogWarning("No {CacheName} SQLite file available from {Route}", CacheName, LatestArtifactRoute);
-                _lastRefreshedAt = DateTime.UtcNow;
-                return Result("Failed", stopwatch, "Data Bridge has no SQLite artifact available");
-            }
-
-            var fileName = artifact.FileName;
-
-            if (!fileName.StartsWith(FilePattern, StringComparison.Ordinal))
-            {
-                _logger.LogWarning(
-                    "{Route} returned {FileName}, which is not a {CacheName} database (expected prefix {FilePattern})",
-                    LatestArtifactRoute, fileName, CacheName, FilePattern);
-                _lastRefreshedAt = DateTime.UtcNow;
-                return Result("Failed", stopwatch, $"Data Bridge returned an unexpected artifact: {fileName}");
-            }
-
-            if (!force && fileName == _cachedFileName)
-            {
-                _logger.LogInformation("{CacheName} SQLite cache is already up to date: {FileName}", CacheName, fileName);
-                _lastRefreshedAt = DateTime.UtcNow;
-                return Result("Unchanged", stopwatch);
-            }
-
-            // A unique directory keeps the current file intact while an artifact with the same
-            // name is downloaded and validated. Readers already using the old path remain safe.
-            downloadDirectory = Path.Combine(_config.CachePath, $"{FilePattern}refresh-{Guid.NewGuid():N}");
-            Directory.CreateDirectory(downloadDirectory);
-            var localPath = Path.Combine(downloadDirectory, fileName);
-            await _artifactSource.DownloadAsync(artifact, localPath, cancellationToken);
-
-            var rowCount = GetRowCount(localPath);
-            var timestamp = ExtractTimestampFromFileName(fileName);
-
-            var oldPath = _currentDbPath;
-            _currentDbPath = localPath;
-            _cachedFileName = fileName;
-            _dataTimestamp = timestamp;
-            _rowCount = rowCount;
-            _lastRefreshedAt = DateTime.UtcNow;
-            _isLoaded = true;
-            downloadDirectory = null;
-
-            _logger.LogInformation(
-                "{CacheName} SQLite cache loaded: {FileName}, {RowCount} rows, size: {Size}",
-                CacheName, fileName, rowCount, new FileInfo(localPath).Length);
-
-            if (oldPath is not null)
-                await Task.Delay(_config.CleanupDelayMs, cancellationToken);
-            CleanupOldCacheFiles(localPath);
-            return Result("Reloaded", stopwatch);
+            return await RefreshWhileLockedAsync(force, attempt, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            if (downloadDirectory is not null)
-            {
-                try { Directory.Delete(downloadDirectory, recursive: true); }
-                catch (Exception cleanupEx) { _logger.LogWarning(cleanupEx, "Failed to clean up cancelled SQLite download"); }
-            }
+            CleanupDownloadDirectory(attempt.DownloadDirectory, "cancelled");
             throw;
         }
         catch (Exception ex)
         {
-            if (downloadDirectory is not null)
-            {
-                try { Directory.Delete(downloadDirectory, recursive: true); }
-                catch (Exception cleanupEx) { _logger.LogWarning(cleanupEx, "Failed to clean up incomplete SQLite download"); }
-            }
+            CleanupDownloadDirectory(attempt.DownloadDirectory, "incomplete");
             _logger.LogError(ex,
                 "Failed to refresh {CacheName} SQLite cache. Continuing with previously cached file", CacheName);
             _lastRefreshedAt = DateTime.UtcNow;
-            return Result("Failed", stopwatch, ex.Message);
+            return Result("Failed", attempt.Stopwatch, ex.Message);
         }
         finally
         {
             _refreshLock.Release();
+        }
+    }
+
+    private async Task<CacheRefreshResult> RefreshWhileLockedAsync(
+        bool force,
+        RefreshAttempt attempt,
+        CancellationToken cancellationToken)
+    {
+        if (!_config.Enabled)
+            return Result("Failed", attempt.Stopwatch, "SQLite cache is disabled");
+
+        _logger.LogInformation("Asking the data bridge for the latest {CacheName} SQLite file...", CacheName);
+        var (artifact, lookupError) = await GetLatestArtifactAsync(cancellationToken);
+
+        if (lookupError is not null)
+            return FailedResult(attempt.Stopwatch, lookupError);
+
+        if (artifact is null)
+        {
+            _logger.LogWarning("No {CacheName} SQLite file available from {Route}", CacheName, LatestArtifactRoute);
+            return FailedResult(attempt.Stopwatch, "Data Bridge has no SQLite artifact available");
+        }
+
+        var fileName = artifact.FileName;
+        if (!fileName.StartsWith(FilePattern, StringComparison.Ordinal))
+        {
+            _logger.LogWarning(
+                "{Route} returned {FileName}, which is not a {CacheName} database (expected prefix {FilePattern})",
+                LatestArtifactRoute, fileName, CacheName, FilePattern);
+            return FailedResult(attempt.Stopwatch, $"Data Bridge returned an unexpected artifact: {fileName}");
+        }
+
+        if (!force && fileName == _cachedFileName)
+        {
+            _logger.LogInformation("{CacheName} SQLite cache is already up to date: {FileName}", CacheName, fileName);
+            _lastRefreshedAt = DateTime.UtcNow;
+            return Result("Unchanged", attempt.Stopwatch);
+        }
+
+        return await DownloadAndLoadAsync(artifact, attempt, cancellationToken);
+    }
+
+    private async Task<(SqliteArtifact? Artifact, string? Error)> GetLatestArtifactAsync(
+        CancellationToken cancellationToken)
+    {
+        using var lookupTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        lookupTimeout.CancelAfter(TimeSpan.FromSeconds(_config.ArtifactLookupTimeoutSeconds));
+
+        try
+        {
+            return (await _artifactSource.GetLatestAsync(LatestArtifactRoute, lookupTimeout.Token), null);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested && lookupTimeout.IsCancellationRequested)
+        {
+            _logger.LogWarning("Data Bridge artifact lookup timed out for {CacheName}", CacheName);
+            return (null, "Data Bridge artifact lookup timed out");
+        }
+    }
+
+    private async Task<CacheRefreshResult> DownloadAndLoadAsync(
+        SqliteArtifact artifact,
+        RefreshAttempt attempt,
+        CancellationToken cancellationToken)
+    {
+        // A unique directory keeps the current file intact while an artifact with the same
+        // name is downloaded and validated. Readers already using the old path remain safe.
+        attempt.DownloadDirectory = Path.Combine(_config.CachePath, $"{FilePattern}refresh-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(attempt.DownloadDirectory);
+        var localPath = Path.Combine(attempt.DownloadDirectory, artifact.FileName);
+        await _artifactSource.DownloadAsync(artifact, localPath, cancellationToken);
+
+        var rowCount = GetRowCount(localPath);
+        var oldPath = _currentDbPath;
+        _currentDbPath = localPath;
+        _cachedFileName = artifact.FileName;
+        _dataTimestamp = ExtractTimestampFromFileName(artifact.FileName);
+        _rowCount = rowCount;
+        _lastRefreshedAt = DateTime.UtcNow;
+        _isLoaded = true;
+        attempt.DownloadDirectory = null;
+
+        _logger.LogInformation(
+            "{CacheName} SQLite cache loaded: {FileName}, {RowCount} rows, size: {Size}",
+            CacheName, artifact.FileName, rowCount, new FileInfo(localPath).Length);
+
+        if (oldPath is not null)
+            await Task.Delay(_config.CleanupDelayMs, cancellationToken);
+
+        CleanupOldCacheFiles(localPath);
+        return Result("Reloaded", attempt.Stopwatch);
+    }
+
+    private CacheRefreshResult FailedResult(Stopwatch stopwatch, string error)
+    {
+        _lastRefreshedAt = DateTime.UtcNow;
+        return Result("Failed", stopwatch, error);
+    }
+
+    private void CleanupDownloadDirectory(string? downloadDirectory, string state)
+    {
+        if (downloadDirectory is null)
+            return;
+
+        try
+        {
+            Directory.Delete(downloadDirectory, recursive: true);
+        }
+        catch (Exception cleanupEx)
+        {
+            _logger.LogWarning(cleanupEx, "Failed to clean up {State} SQLite download", state);
         }
     }
 
@@ -275,5 +306,11 @@ public abstract class SqliteCacheService : IHostedService, IDisposable
     {
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
+    }
+
+    private sealed class RefreshAttempt
+    {
+        public Stopwatch Stopwatch { get; } = Stopwatch.StartNew();
+        public string? DownloadDirectory { get; set; }
     }
 }
