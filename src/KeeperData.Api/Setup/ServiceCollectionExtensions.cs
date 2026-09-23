@@ -319,6 +319,15 @@ public static class ServiceCollectionExtensions
                     policy.AddAuthenticationSchemes("Bearer");
                 }
                 policy.RequireAuthenticatedUser();
+            })
+            .AddPolicy("AdminScopeOrApiKey", policy =>
+            {
+                if (authConfig.EnableApiKey) policy.AddAuthenticationSchemes("Basic");
+                if (authConfig.ApiGatewayExists) policy.AddAuthenticationSchemes("Bearer");
+                policy.RequireAssertion(context => context.User.Identities.Any(identity =>
+                    identity.IsAuthenticated && (identity.AuthenticationType == "Basic" ||
+                    identity.Claims.Any(claim => claim.Type == "scope" &&
+                        claim.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Contains("admin", StringComparer.OrdinalIgnoreCase)))));
             });
     }
 
