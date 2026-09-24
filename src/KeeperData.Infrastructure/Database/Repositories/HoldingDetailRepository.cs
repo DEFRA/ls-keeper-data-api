@@ -76,21 +76,7 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
         var safePage = Math.Max(1, page);
         var safePageSize = Math.Max(1, pageSize);
         var offset = ((long)safePage - 1) * safePageSize;
-        var sortDirection = string.Equals(sort, "desc", StringComparison.OrdinalIgnoreCase) ? "DESC" : "ASC";
-        var sortColumn = order?.ToLowerInvariant() switch
-        {
-            "name" => "h.FeatureName",
-            "holdingtype" => "h.CphType",
-            "startdate" => "h.StartDate",
-            "enddate" => "h.EndDate",
-            _ => "h.Cph"
-        };
-        var cphTieBreaker = sortColumn == "h.Cph" ? string.Empty : $", h.Cph {sortDirection}";
-
-        // The interpolated fragments are selected exclusively from the hard-coded allowlists above.
-        // Keeping the ORDER BY as plain columns allows SQLite to use matching indexes for large snapshots.
-#pragma warning disable S3649
-        var sql = $"""
+        const string selectSql = """
             SELECT
                 h.Id,
                 h.Cph,
@@ -113,10 +99,34 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
                 h.Northing,
                 h.OsMapReference
             FROM Holding AS h
-            ORDER BY {sortColumn} {sortDirection}{cphTieBreaker}
-            LIMIT $pageSize OFFSET $offset;
             """;
-#pragma warning restore S3649
+
+        // Each query is constant, so SQLite can use an index for the chosen sort column.
+        // A unique CPH provides stable ordering when the selected values are equal.
+        const string cphAscSql = selectSql + " ORDER BY h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+        const string cphDescSql = selectSql + " ORDER BY h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+        const string nameAscSql = selectSql + " ORDER BY h.FeatureName ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+        const string nameDescSql = selectSql + " ORDER BY h.FeatureName DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+        const string holdingTypeAscSql = selectSql + " ORDER BY h.CphType ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+        const string holdingTypeDescSql = selectSql + " ORDER BY h.CphType DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+        const string startDateAscSql = selectSql + " ORDER BY h.StartDate ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+        const string startDateDescSql = selectSql + " ORDER BY h.StartDate DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+        const string endDateAscSql = selectSql + " ORDER BY h.EndDate ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+        const string endDateDescSql = selectSql + " ORDER BY h.EndDate DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+        var descending = string.Equals(sort, "desc", StringComparison.OrdinalIgnoreCase);
+        var sql = (order?.ToLowerInvariant(), descending) switch
+        {
+            ("name", false) => nameAscSql,
+            ("name", true) => nameDescSql,
+            ("holdingtype", false) => holdingTypeAscSql,
+            ("holdingtype", true) => holdingTypeDescSql,
+            ("startdate", false) => startDateAscSql,
+            ("startdate", true) => startDateDescSql,
+            ("enddate", false) => endDateAscSql,
+            ("enddate", true) => endDateDescSql,
+            (_, false) => cphAscSql,
+            _ => cphDescSql
+        };
 
         await using var command = connection.CreateCommand();
         command.CommandText = sql;

@@ -10,6 +10,8 @@ namespace KeeperData.Infrastructure.Tests.Unit.Database.Repositories;
 
 public class HoldingDetailRepositoryTests : IDisposable
 {
+    private static readonly string[] s_singleHoldingCph = ["10/001/0001"];
+
     private readonly Mock<IReadModelSqliteCacheService> _mockCacheService = new();
     private readonly HoldingDetailRepository _repository;
     private readonly string _tempDir;
@@ -571,7 +573,7 @@ public class HoldingDetailRepositoryTests : IDisposable
         result.DataTimestamp.Should().Be(timestamp);
         result.TotalCount.Should().Be(seedHolding ? 1 : 0);
         result.Items.Select(x => x.Identifier).Should().Equal(
-            seedHolding && page == 1 ? new[] { "10/001/0001" } : Array.Empty<string>());
+            seedHolding && page == 1 ? s_singleHoldingCph : Array.Empty<string>());
         _mockCacheService.Verify(x => x.GetCurrentSnapshot(), Times.Once);
         _mockCacheService.VerifyGet(x => x.DataTimestamp, Times.Never);
     }

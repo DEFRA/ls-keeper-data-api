@@ -376,9 +376,9 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
         string? HerdId,
         string Role);
 
-    private static readonly IReadOnlyList<SeedHoldingRecord> SeedHoldings = LoadSeedHoldings();
+    private static readonly List<SeedHoldingRecord> SeedHoldings = LoadSeedHoldings();
 
-    private static IReadOnlyList<SeedHoldingRecord> LoadSeedHoldings()
+    private static List<SeedHoldingRecord> LoadSeedHoldings()
     {
         using var stream = typeof(FakeSqliteArtifactSource).Assembly
             .GetManifestResourceStream("FakeSqliteHoldings.json")
