@@ -126,6 +126,137 @@ public class CphSqliteCacheServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ForceRefreshAsync_WhenSameFile_RedownloadsAndReportsRows()
+    {
+        SetupArtifact("views/cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
+        await _service.RefreshCacheAsync(CancellationToken.None);
+        var previousPath = _service.GetCurrentDbPath();
+
+        var result = await _service.ForceRefreshAsync(true);
+
+        result.Status.Should().Be("Reloaded");
+        result.FileName.Should().Be("cphs_20260630T120000Z.sqlite");
+        result.RowCount.Should().Be(1);
+        result.DataTimestamp.Should().Be(new DateTime(2026, 6, 30, 12, 0, 0, DateTimeKind.Utc));
+        _service.GetCurrentDbPath().Should().NotBe(previousPath);
+        _mockArtifactSource.Verify(s => s.DownloadAsync(
+            It.IsAny<SqliteArtifact>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task ForceRefreshAsync_WhenForceFalseAndSameFile_ReturnsUnchanged()
+    {
+        SetupArtifact("views/cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
+        await _service.RefreshCacheAsync(CancellationToken.None);
+
+        var result = await _service.ForceRefreshAsync(false);
+
+        result.Status.Should().Be("Unchanged");
+        result.RowCount.Should().Be(1);
+        _mockArtifactSource.Verify(s => s.DownloadAsync(
+            It.IsAny<SqliteArtifact>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ForceRefreshAsync_WhenBridgeFails_ReturnsFailureAndRetainsCurrentFile()
+    {
+        SetupArtifact("views/cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
+        await _service.RefreshCacheAsync(CancellationToken.None);
+        var previousPath = _service.GetCurrentDbPath();
+        _mockArtifactSource.Setup(s => s.GetLatestAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Bridge unavailable"));
+
+        var result = await _service.ForceRefreshAsync(true);
+
+        result.Status.Should().Be("Failed");
+        result.Error.Should().Contain("Bridge unavailable");
+        _service.GetCurrentDbPath().Should().Be(previousPath);
+        File.Exists(previousPath).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ForceRefreshAsync_WhenBridgeLookupStalls_ReturnsFailureBeforeClientTimeout()
+    {
+        using var service = new CphSqliteCacheService(
+            _mockArtifactSource.Object,
+            _config with { ArtifactLookupTimeoutSeconds = 1 },
+            Mock.Of<ILogger<CphSqliteCacheService>>());
+        _mockArtifactSource.Setup(s => s.GetLatestAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(async (string _, CancellationToken token) =>
+            {
+                await Task.Delay(Timeout.InfiniteTimeSpan, token);
+                return (SqliteArtifact?)null;
+            });
+
+        var result = await service.ForceRefreshAsync(true);
+
+        result.Status.Should().Be("Failed");
+        result.Error.Should().Contain("timed out");
+    }
+
+    [Fact]
+    public async Task ForceRefreshAsync_WhenCacheIsDisabled_ReturnsFailureWithoutCallingBridge()
+    {
+        using var service = new CphSqliteCacheService(
+            _mockArtifactSource.Object,
+            _config with { Enabled = false },
+            Mock.Of<ILogger<CphSqliteCacheService>>());
+
+        var result = await service.ForceRefreshAsync(true);
+
+        result.Status.Should().Be("Failed");
+        result.Error.Should().Be("SQLite cache is disabled");
+        _mockArtifactSource.Verify(s => s.GetLatestAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ForceRefreshAsync_WhenDownloadIsCancelled_RemovesIncompleteDownload()
+    {
+        var downloadStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        SetupArtifactMetadata("views/cphs_20260630T120000Z.sqlite");
+        _mockArtifactSource.Setup(s => s.DownloadAsync(
+                It.IsAny<SqliteArtifact>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(async (SqliteArtifact _, string localPath, CancellationToken token) =>
+            {
+                File.WriteAllText(localPath, "incomplete");
+                downloadStarted.SetResult();
+                await Task.Delay(Timeout.InfiniteTimeSpan, token);
+            });
+        using var cancellation = new CancellationTokenSource();
+
+        var refresh = _service.ForceRefreshAsync(true, cancellation.Token);
+        await downloadStarted.Task;
+        cancellation.Cancel();
+
+        Func<Task> act = async () => await refresh;
+        await act.Should().ThrowAsync<OperationCanceledException>();
+        Directory.GetDirectories(_tempDir, "cphs_refresh-*").Should().BeEmpty();
+        _service.IsLoaded.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ForceRefreshAsync_WhenSameNamedDownloadIsInvalid_RetainsCurrentFile()
+    {
+        SetupArtifact("views/cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
+        await _service.RefreshCacheAsync(CancellationToken.None);
+        var previousPath = _service.GetCurrentDbPath();
+        _mockArtifactSource.Setup(s => s.DownloadAsync(
+                It.IsAny<SqliteArtifact>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns((SqliteArtifact _, string path, CancellationToken __) =>
+            {
+                File.WriteAllText(path, "invalid database");
+                return Task.CompletedTask;
+            });
+
+        var result = await _service.ForceRefreshAsync(true);
+
+        result.Status.Should().Be("Failed");
+        _service.GetCurrentDbPath().Should().Be(previousPath);
+        File.Exists(previousPath).Should().BeTrue();
+    }
+
+    [Fact]
     public async Task RefreshCache_WhenBridgeLookupFails_ContinuesServingOldData()
     {
         SetupArtifact("views/cphs_20260101T120000Z.sqlite", ["01/001/0001"]);
@@ -325,6 +456,19 @@ public class CphSqliteCacheServiceTests : IDisposable
         _service.CachedFileName.Should().Be("cphs_20260630T120000Z.sqlite");
         _service.DataTimestamp.Should().Be(new DateTime(2026, 6, 30, 12, 0, 0, DateTimeKind.Utc));
         _service.IsLoaded.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task RefreshCache_AfterSuccessfulDownload_RemovesLegacyCacheFile()
+    {
+        var legacyPath = Path.Combine(_tempDir, "cphs_20250101T000000Z.sqlite");
+        File.WriteAllText(legacyPath, "legacy");
+        SetupArtifact("views/cphs_20260630T120000Z.sqlite", ["01/001/0001"]);
+
+        await _service.RefreshCacheAsync(CancellationToken.None);
+
+        File.Exists(legacyPath).Should().BeFalse();
+        File.Exists(_service.GetCurrentDbPath()).Should().BeTrue();
     }
 
     [Fact]
