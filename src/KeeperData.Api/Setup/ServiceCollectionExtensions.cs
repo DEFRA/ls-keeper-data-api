@@ -34,6 +34,8 @@ public static class ServiceCollectionExtensions
 
     public static void ConfigureApi(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
+        EnsureFakeClientsAreDevelopmentOnly(configuration, environment);
+
         services.ConfigureAuthentication(configuration);
 
         services.ConfigureControllers();
@@ -67,6 +69,18 @@ public static class ServiceCollectionExtensions
             });
 
         services.ConfigurePiiAnonymization(configuration);
+    }
+
+    private static void EnsureFakeClientsAreDevelopmentOnly(
+        IConfiguration configuration,
+        IHostEnvironment environment)
+    {
+        if (configuration.GetValue<bool>("ApiClients:DataBridgeApi:UseFakeClient") &&
+            !environment.IsDevelopment())
+        {
+            throw new InvalidOperationException(
+                "ApiClients:DataBridgeApi:UseFakeClient can only be enabled in the Development environment.");
+        }
     }
 
     private static void ConfigureControllers(this IServiceCollection services)

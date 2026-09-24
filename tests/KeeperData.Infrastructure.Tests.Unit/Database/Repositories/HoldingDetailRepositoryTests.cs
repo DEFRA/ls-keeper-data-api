@@ -1,5 +1,6 @@
 using FluentAssertions;
 using KeeperData.Core.Services;
+using KeeperData.Core.Storage.Sqlite;
 using KeeperData.Infrastructure.Database.Repositories;
 using Microsoft.Data.Sqlite;
 using Moq;
@@ -9,6 +10,8 @@ namespace KeeperData.Infrastructure.Tests.Unit.Database.Repositories;
 
 public class HoldingDetailRepositoryTests : IDisposable
 {
+    private static readonly string[] s_singleHoldingCph = ["10/001/0001"];
+
     private readonly Mock<IReadModelSqliteCacheService> _mockCacheService = new();
     private readonly HoldingDetailRepository _repository;
     private readonly string _tempDir;
@@ -23,6 +26,7 @@ public class HoldingDetailRepositoryTests : IDisposable
         InitializeDatabase(_dbPath);
 
         _mockCacheService.Setup(x => x.GetCurrentDbPath()).Returns(_dbPath);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null));
         _repository = new HoldingDetailRepository(_mockCacheService.Object);
     }
 
@@ -276,7 +280,7 @@ public class HoldingDetailRepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task GivenMarkSpanningMultipleRows_WhenGettingHoldingDetail_ThenAggregatesMinStartMaxEndAndDistinctSpecies()
+    public async Task GivenMarkWithAnOpenEndedHerd_WhenGettingHoldingDetail_ThenMarkRemainsOpenEnded()
     {
         using var connection = new SqliteConnection($"Data Source={_dbPath}");
         connection.Open();
@@ -297,8 +301,281 @@ public class HoldingDetailRepositoryTests : IDisposable
         var mark = result.Marks[0];
         mark.Mark.Should().Be("MARK10");
         mark.StartDate.Should().Be(DateTimeOffset.FromUnixTimeSeconds(1100000000));
-        mark.EndDate.Should().Be(DateTimeOffset.FromUnixTimeSeconds(1400000000));
+        mark.EndDate.Should().BeNull();
         mark.Species.Should().BeEquivalentTo(["CTT", "SHP", "PG"]);
+    }
+
+    [Fact]
+    public async Task GivenMarkWithOnlyClosedHerds_WhenGettingHoldingDetail_ThenUsesLatestEndDate()
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        connection.Open();
+
+        Execute(connection, """
+            INSERT INTO Holding (Id, Cph) VALUES ('closed-mark-holding', '99/888/6666');
+            INSERT INTO Herd (Id, HoldingId, Herdmark, AnimalGroupFromDate, AnimalGroupToDate, AnimalSpeciesCode)
+            VALUES
+                ('closed-herd-a', 'closed-mark-holding', 'MARK20', 1200000000, 1300000000, 'CTT'),
+                ('closed-herd-b', 'closed-mark-holding', 'MARK20', 1100000000, 1400000000, 'SHP');
+            """);
+
+        var result = await _repository.GetHoldingDetailByCphAsync("99/888/6666");
+
+        result.Should().NotBeNull();
+        result!.Marks.Should().ContainSingle();
+        result.Marks[0].StartDate.Should().Be(DateTimeOffset.FromUnixTimeSeconds(1100000000));
+        result.Marks[0].EndDate.Should().Be(DateTimeOffset.FromUnixTimeSeconds(1400000000));
+    }
+
+    [Fact]
+    public async Task GivenNoCachedReadModel_WhenGettingPagedHoldings_ThenThrowsInvalidOperationException()
+    {
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns((SqliteSnapshot?)null);
+
+        var act = async () => await _repository.GetPagedHoldingsAsync(1, 10, "asc", "cph");
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("The SAM read model is not cached locally, so holding details cannot be resolved.");
+    }
+
+    [Fact]
+    public async Task GivenEmptyDatabase_WhenGettingPagedHoldings_ThenReturnsEmptyAndZeroTotalCount()
+    {
+        var (items, totalCount, _) = await _repository.GetPagedHoldingsAsync(1, 10, "asc", "cph");
+
+        items.Should().BeEmpty();
+        totalCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GivenMultipleHoldings_WhenGettingPagedHoldings_ThenPaginatesAndSortsAscending()
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        connection.Open();
+
+        for (var i = 1; i <= 5; i++)
+        {
+            Execute(connection, $"""
+                INSERT INTO Holding (Id, Cph, FeatureName, CphType)
+                VALUES ('h-{i}', '10/001/000{i}', 'Farm {i}', 'permanent');
+                """);
+        }
+
+        // Page 1 (2 items)
+        var page1 = await _repository.GetPagedHoldingsAsync(1, 2, "asc", "cph");
+        page1.TotalCount.Should().Be(5);
+        page1.Items.Should().HaveCount(2);
+        page1.Items[0].Identifier.Should().Be("10/001/0001");
+        page1.Items[1].Identifier.Should().Be("10/001/0002");
+
+        // Page 2 (2 items)
+        var page2 = await _repository.GetPagedHoldingsAsync(2, 2, "asc", "cph");
+        page2.TotalCount.Should().Be(5);
+        page2.Items.Should().HaveCount(2);
+        page2.Items[0].Identifier.Should().Be("10/001/0003");
+        page2.Items[1].Identifier.Should().Be("10/001/0004");
+
+        // Page 3 (1 item)
+        var page3 = await _repository.GetPagedHoldingsAsync(3, 2, "asc", "cph");
+        page3.TotalCount.Should().Be(5);
+        page3.Items.Should().HaveCount(1);
+        page3.Items[0].Identifier.Should().Be("10/001/0005");
+    }
+
+    [Fact]
+    public async Task GivenMultipleHoldings_WhenGettingPagedHoldingsDescending_ThenSortsDescending()
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        connection.Open();
+
+        for (var i = 1; i <= 3; i++)
+        {
+            Execute(connection, $"""
+                INSERT INTO Holding (Id, Cph)
+                VALUES ('h-desc-{i}', '10/001/000{i}');
+                """);
+        }
+
+        var result = await _repository.GetPagedHoldingsAsync(1, 3, "desc", "cph");
+        result.TotalCount.Should().Be(3);
+        result.Items.Should().HaveCount(3);
+        result.Items[0].Identifier.Should().Be("10/001/0003");
+        result.Items[1].Identifier.Should().Be("10/001/0002");
+        result.Items[2].Identifier.Should().Be("10/001/0001");
+    }
+
+    [Theory]
+    [InlineData("cph", "asc", "10/001/0001")]
+    [InlineData("identifier", "asc", "10/001/0001")]
+    [InlineData("name", "asc", "10/001/0002")]
+    [InlineData("name", "desc", "10/001/0001")]
+    [InlineData("holdingType", "asc", "10/001/0003")]
+    [InlineData("startDate", "asc", "10/001/0002")]
+    [InlineData("endDate", "asc", "10/001/0003")]
+    public async Task GivenDifferentOrderFields_WhenGettingPagedHoldings_ThenOrdersByRequestedField(string order, string sort, string expectedFirstCph)
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        connection.Open();
+        Execute(connection, """
+            INSERT INTO Holding (Id, Cph, FeatureName, CphType, StartDate, EndDate)
+            VALUES
+                ('h-1', '10/001/0001', 'Zed', 'temporary', 300, 300),
+                ('h-2', '10/001/0002', 'Alpha', 'permanent', 100, 200),
+                ('h-3', '10/001/0003', 'Middle', 'common', 200, 100);
+            """);
+
+        var result = await _repository.GetPagedHoldingsAsync(1, 2, sort, order);
+
+        result.TotalCount.Should().Be(3);
+        result.Items.Should().HaveCount(2);
+        result.Items[0].Identifier.Should().Be(expectedFirstCph);
+    }
+
+    [Fact]
+    public async Task GivenEqualSortValues_WhenGettingPages_ThenUsesCphAsTieBreaker()
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        connection.Open();
+        Execute(connection, """
+            INSERT INTO Holding (Id, Cph, FeatureName)
+            VALUES
+                ('h-2', '10/001/0002', 'Same'),
+                ('h-1', '10/001/0001', 'Same');
+            """);
+
+        var firstPage = await _repository.GetPagedHoldingsAsync(1, 1, "asc", "name");
+        var secondPage = await _repository.GetPagedHoldingsAsync(2, 1, "asc", "name");
+
+        firstPage.Items[0].Identifier.Should().Be("10/001/0001");
+        secondPage.Items[0].Identifier.Should().Be("10/001/0002");
+    }
+
+    [Fact]
+    public async Task GivenMaximumPage_WhenGettingPagedHoldings_ThenReturnsEmptyPage()
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        connection.Open();
+        Execute(connection, "INSERT INTO Holding (Id, Cph) VALUES ('h-1', '10/001/0001');");
+
+        var result = await _repository.GetPagedHoldingsAsync(int.MaxValue, 100, "asc", "cph");
+
+        result.TotalCount.Should().Be(1);
+        result.Items.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GivenMultipleHoldingsWithChildCollections_WhenGettingPagedHoldings_ThenBatchedQueriesPopulateCorrectly()
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        connection.Open();
+
+        // 2 Holdings
+        Execute(connection, """
+            INSERT INTO Holding (Id, Cph, FeatureName, CphType)
+            VALUES
+                ('h-batch-1', '20/001/0001', 'Batch Farm 1', 'permanent'),
+                ('h-batch-2', '20/001/0002', 'Batch Farm 2', 'temporary');
+            """);
+
+        // Parties & Roles
+        Execute(connection, """
+            INSERT INTO Party (Id, SourcePartyId, PersonTitle, GivenName, FamilyName)
+            VALUES
+                ('p-1', 'C000001', 'MR', 'Alice', 'KeeperOne'),
+                ('p-2', 'C000002', 'MS', 'Bob', 'KeeperTwo');
+
+            INSERT INTO PartyRole (Id, PartyId, HoldingId, Role)
+            VALUES
+                ('pr-1', 'p-1', 'h-batch-1', 'keeper'),
+                ('pr-2', 'p-2', 'h-batch-2', 'owner');
+            """);
+
+        // Allowed Species
+        Execute(connection, """
+            INSERT INTO HoldingAnimalProfile (Id, HoldingId, AnimalSpeciesCode)
+            VALUES
+                ('hap-1', 'h-batch-1', 'CTT'),
+                ('hap-2', 'h-batch-2', 'PG'),
+                ('hap-3', 'h-batch-2', 'SHP');
+            """);
+
+        // Herds & Marks
+        Execute(connection, """
+            INSERT INTO Herd (Id, HoldingId, Herdmark, AnimalGroupFromDate, AnimalSpeciesCode)
+            VALUES
+                ('herd-1', 'h-batch-1', 'MARK-A', 1200000000, 'CTT'),
+                ('herd-2', 'h-batch-2', 'MARK-B', 1300000000, 'SHP');
+            """);
+
+        var result = await _repository.GetPagedHoldingsAsync(1, 10, "asc", "cph");
+
+        result.TotalCount.Should().Be(2);
+        result.Items.Should().HaveCount(2);
+
+        var holding1 = result.Items.First(h => h.Identifier == "20/001/0001");
+        holding1.Name.Should().Be("Batch Farm 1");
+        holding1.HoldingType.Should().Be("permanent");
+        holding1.Associations.Should().ContainSingle(a => a.CustomerNumber == "C000001");
+        holding1.AllowedSpecies.Should().BeEquivalentTo(["CTT"]);
+        holding1.Marks.Should().ContainSingle(m => m.Mark == "MARK-A");
+
+        var holding2 = result.Items.First(h => h.Identifier == "20/001/0002");
+        holding2.Name.Should().Be("Batch Farm 2");
+        holding2.HoldingType.Should().Be("temporary");
+        holding2.Associations.Should().ContainSingle(a => a.CustomerNumber == "C000002");
+        holding2.AllowedSpecies.Should().BeEquivalentTo(["PG", "SHP"]);
+        holding2.Marks.Should().ContainSingle(m => m.Mark == "MARK-B");
+    }
+
+    [Fact]
+    public async Task GivenPageOutOfBounds_WhenGettingPagedHoldings_ThenReturnsEmptyWithTotalCount()
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        connection.Open();
+
+        Execute(connection, """
+            INSERT INTO Holding (Id, Cph)
+            VALUES ('h-oob-1', '30/001/0001');
+            """);
+
+        var result = await _repository.GetPagedHoldingsAsync(10, 10, "asc", "cph");
+
+        result.TotalCount.Should().Be(1);
+        result.Items.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData(false, 1)]
+    [InlineData(true, 1)]
+    [InlineData(true, 2)]
+    public async Task GivenCacheChangesAfterSnapshotCapture_WhenGettingPage_ThenReturnsCapturedDataAndTimestamp(bool seedHolding, int page)
+    {
+        if (seedHolding)
+        {
+            using var connection = new SqliteConnection($"Data Source={_dbPath}");
+            connection.Open();
+            Execute(connection, "INSERT INTO Holding (Id, Cph) VALUES ('snapshot-holding', '10/001/0001');");
+        }
+
+        var timestamp = new DateTime(2026, 6, 30, 12, 0, 0, DateTimeKind.Utc);
+        var originalSnapshot = new SqliteSnapshot(_dbPath, timestamp);
+        var currentSnapshot = originalSnapshot;
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(() =>
+        {
+            var captured = currentSnapshot;
+            currentSnapshot = new SqliteSnapshot("new-snapshot.sqlite", timestamp.AddDays(1));
+            return captured;
+        });
+        _mockCacheService.SetupGet(x => x.DataTimestamp).Returns(() => currentSnapshot.DataTimestamp);
+
+        var result = await _repository.GetPagedHoldingsAsync(page, 10, "asc", "cph");
+
+        result.DataTimestamp.Should().Be(timestamp);
+        result.TotalCount.Should().Be(seedHolding ? 1 : 0);
+        result.Items.Select(x => x.Identifier).Should().Equal(
+            seedHolding && page == 1 ? s_singleHoldingCph : Array.Empty<string>());
+        _mockCacheService.Verify(x => x.GetCurrentSnapshot(), Times.Once);
+        _mockCacheService.VerifyGet(x => x.DataTimestamp, Times.Never);
     }
 
     private static void InitializeDatabase(string path)

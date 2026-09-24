@@ -3,6 +3,7 @@ using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
 using Microsoft.Data.Sqlite;
 using System.Data.Common;
+using System.Text.Json;
 
 namespace KeeperData.Infrastructure.Database.Repositories;
 
@@ -46,6 +47,137 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
             Associations: associations,
             AllowedSpecies: allowedSpecies,
             Marks: marks);
+    }
+
+    public async Task<(List<HoldingDetail> Items, int TotalCount, DateTime? DataTimestamp)> GetPagedHoldingsAsync(
+        int page,
+        int pageSize,
+        string? sort,
+        string? order,
+        CancellationToken cancellationToken = default)
+    {
+        var snapshot = _cacheService.GetCurrentSnapshot()
+            ?? throw new InvalidOperationException("The SAM read model is not cached locally, so holding details cannot be resolved.");
+
+        await using var connection = new SqliteConnection($"Data Source={snapshot.DbPath};Mode=ReadOnly");
+        await connection.OpenAsync(cancellationToken);
+
+        // 1 — Total count
+        await using var countCommand = connection.CreateCommand();
+        countCommand.CommandText = "SELECT COUNT(*) FROM Holding;";
+        var totalCount = Convert.ToInt32(await countCommand.ExecuteScalarAsync(cancellationToken));
+
+        if (totalCount == 0)
+        {
+            return ([], 0, snapshot.DataTimestamp);
+        }
+
+        // 2 — Paged holdings
+        var safePage = Math.Max(1, page);
+        var safePageSize = Math.Max(1, pageSize);
+        var offset = ((long)safePage - 1) * safePageSize;
+        const string selectSql = """
+            SELECT
+                h.Id,
+                h.Cph,
+                h.FeatureName,
+                h.CphType,
+                h.StartDate,
+                h.EndDate,
+                h.Udprn,
+                h.PaonDescription,
+                h.PaonStartNumber,
+                h.PaonStartNumberSuffix,
+                h.PaonEndNumber,
+                h.PaonEndNumberSuffix,
+                h.Street,
+                h.Town,
+                h.Locality,
+                h.Postcode,
+                h.UkInternalCode,
+                h.Easting,
+                h.Northing,
+                h.OsMapReference
+            FROM Holding AS h
+            """;
+
+        // Each query is constant, so SQLite can use an index for the chosen sort column.
+        // A unique CPH provides stable ordering when the selected values are equal.
+        const string cphAscSql = selectSql + " ORDER BY h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+        const string cphDescSql = selectSql + " ORDER BY h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+        const string nameAscSql = selectSql + " ORDER BY h.FeatureName ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+        const string nameDescSql = selectSql + " ORDER BY h.FeatureName DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+        const string holdingTypeAscSql = selectSql + " ORDER BY h.CphType ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+        const string holdingTypeDescSql = selectSql + " ORDER BY h.CphType DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+        const string startDateAscSql = selectSql + " ORDER BY h.StartDate ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+        const string startDateDescSql = selectSql + " ORDER BY h.StartDate DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+        const string endDateAscSql = selectSql + " ORDER BY h.EndDate ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+        const string endDateDescSql = selectSql + " ORDER BY h.EndDate DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+        var descending = string.Equals(sort, "desc", StringComparison.OrdinalIgnoreCase);
+        var sql = (order?.ToLowerInvariant(), descending) switch
+        {
+            ("name", false) => nameAscSql,
+            ("name", true) => nameDescSql,
+            ("holdingtype", false) => holdingTypeAscSql,
+            ("holdingtype", true) => holdingTypeDescSql,
+            ("startdate", false) => startDateAscSql,
+            ("startdate", true) => startDateDescSql,
+            ("enddate", false) => endDateAscSql,
+            ("enddate", true) => endDateDescSql,
+            (_, false) => cphAscSql,
+            _ => cphDescSql
+        };
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.Add(new SqliteParameter("$pageSize", safePageSize));
+        command.Parameters.Add(new SqliteParameter("$offset", offset));
+
+        var holdingRows = new List<HoldingRowData>();
+        await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+        {
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                holdingRows.Add(MapHoldingRow(reader));
+            }
+        }
+
+        if (holdingRows.Count == 0)
+        {
+            return ([], totalCount, snapshot.DataTimestamp);
+        }
+
+        var holdingIds = holdingRows.Select(h => h.HoldingId).ToList();
+
+        // 3 — Batched Associations
+        var associationsMap = await ReadBatchAssociationsAsync(connection, holdingIds, cancellationToken);
+
+        // 4 — Batched Allowed Species
+        var speciesMap = await ReadBatchAllowedSpeciesAsync(connection, holdingIds, cancellationToken);
+
+        // 5 — Batched Marks
+        var marksMap = await ReadBatchMarksAsync(connection, holdingIds, cancellationToken);
+
+        var items = new List<HoldingDetail>(holdingRows.Count);
+        foreach (var row in holdingRows)
+        {
+            var associations = associationsMap.GetValueOrDefault(row.HoldingId) ?? [];
+            var allowedSpecies = speciesMap.GetValueOrDefault(row.HoldingId) ?? [];
+            var marks = marksMap.GetValueOrDefault(row.HoldingId) ?? [];
+
+            items.Add(new HoldingDetail(
+                Identifier: row.Cph,
+                HoldingType: row.CphType,
+                Name: row.Name,
+                StartDate: row.StartDate,
+                EndDate: row.EndDate,
+                Location: row.Location,
+                Associations: associations,
+                AllowedSpecies: allowedSpecies,
+                Marks: marks));
+        }
+
+        return (items, totalCount, snapshot.DataTimestamp);
     }
 
     private static async Task<HoldingRowData?> ReadHoldingAsync(
@@ -184,19 +316,20 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
 
     private static void ProcessAssociationRow(
         DbDataReader reader,
-        Dictionary<string, PartyAccumulator> partyMap)
+        Dictionary<string, PartyAccumulator> partyMap,
+        int offset = 0)
     {
-        var sourcePartyId = reader.GetString(0);
-        var personTitle = GetNullableString(reader, 1);
-        var givenName = GetNullableString(reader, 2);
-        var initials = GetNullableString(reader, 3);
-        var familyName = GetNullableString(reader, 4);
-        var organisationName = GetNullableString(reader, 5);
-        var email = GetNullableString(reader, 6);
-        var mobile = GetNullableString(reader, 7);
-        var telephone = GetNullableString(reader, 8);
-        var roleCode = reader.GetString(9);
-        var speciesCode = GetNullableString(reader, 10);
+        var sourcePartyId = reader.GetString(0 + offset);
+        var personTitle = GetNullableString(reader, 1 + offset);
+        var givenName = GetNullableString(reader, 2 + offset);
+        var initials = GetNullableString(reader, 3 + offset);
+        var familyName = GetNullableString(reader, 4 + offset);
+        var organisationName = GetNullableString(reader, 5 + offset);
+        var email = GetNullableString(reader, 6 + offset);
+        var mobile = GetNullableString(reader, 7 + offset);
+        var telephone = GetNullableString(reader, 8 + offset);
+        var roleCode = reader.GetString(9 + offset);
+        var speciesCode = GetNullableString(reader, 10 + offset);
 
         if (!partyMap.TryGetValue(sourcePartyId, out var accumulator))
         {
@@ -284,17 +417,18 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
 
     private static void ProcessMarkRow(
         DbDataReader reader,
-        Dictionary<string, MarkAccumulator> markMap)
+        Dictionary<string, MarkAccumulator> markMap,
+        int offset = 0)
     {
-        if (reader.IsDBNull(0))
+        if (reader.IsDBNull(0 + offset))
         {
             return;
         }
 
-        var herdmark = reader.GetString(0);
-        var fromDate = GetNullableInt64(reader, 1);
-        var toDate = GetNullableInt64(reader, 2);
-        var species = GetNullableString(reader, 3);
+        var herdmark = reader.GetString(0 + offset);
+        var fromDate = GetNullableInt64(reader, 1 + offset);
+        var toDate = GetNullableInt64(reader, 2 + offset);
+        var species = GetNullableString(reader, 3 + offset);
 
         if (!markMap.TryGetValue(herdmark, out var accumulator))
         {
@@ -303,6 +437,135 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
         }
 
         accumulator.AddRow(fromDate, toDate, species);
+    }
+
+    private static async Task<Dictionary<string, List<HoldingAssociation>>> ReadBatchAssociationsAsync(
+        SqliteConnection connection,
+        IReadOnlyList<string> holdingIds,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+            SELECT
+                r.HoldingId,
+                p.SourcePartyId,
+                p.PersonTitle,
+                p.GivenName,
+                p.Initials,
+                p.FamilyName,
+                p.OrganisationName,
+                p.Email,
+                p.Mobile,
+                p.Telephone,
+                r.Role,
+                d.AnimalSpeciesCode
+            FROM PartyRole AS r
+            JOIN Party AS p ON p.Id = r.PartyId
+            LEFT JOIN Herd AS d ON d.Id = r.HerdId
+            WHERE r.HoldingId IN (SELECT value FROM json_each($holdingIds))
+            ORDER BY r.HoldingId, p.SourcePartyId, r.Role, d.AnimalSpeciesCode;
+            """;
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.Add(new SqliteParameter("$holdingIds", JsonSerializer.Serialize(holdingIds)));
+
+        var resultMap = new Dictionary<string, Dictionary<string, PartyAccumulator>>(StringComparer.OrdinalIgnoreCase);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var holdingId = reader.GetString(0);
+            if (!resultMap.TryGetValue(holdingId, out var partyMap))
+            {
+                partyMap = new Dictionary<string, PartyAccumulator>(StringComparer.OrdinalIgnoreCase);
+                resultMap[holdingId] = partyMap;
+            }
+
+            ProcessAssociationRow(reader, partyMap, offset: 1);
+        }
+
+        return resultMap.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value.Values.Select(p => p.ToHoldingAssociation()).ToList(),
+            StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static async Task<Dictionary<string, List<string>>> ReadBatchAllowedSpeciesAsync(
+        SqliteConnection connection,
+        IReadOnlyList<string> holdingIds,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+            SELECT DISTINCT a.HoldingId, a.AnimalSpeciesCode
+            FROM HoldingAnimalProfile AS a
+            WHERE a.HoldingId IN (SELECT value FROM json_each($holdingIds))
+            ORDER BY a.HoldingId, a.AnimalSpeciesCode;
+            """;
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.Add(new SqliteParameter("$holdingIds", JsonSerializer.Serialize(holdingIds)));
+
+        var resultMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var holdingId = reader.GetString(0);
+            if (!reader.IsDBNull(1))
+            {
+                if (!resultMap.TryGetValue(holdingId, out var speciesList))
+                {
+                    speciesList = new List<string>();
+                    resultMap[holdingId] = speciesList;
+                }
+                speciesList.Add(reader.GetString(1));
+            }
+        }
+
+        return resultMap;
+    }
+
+    private static async Task<Dictionary<string, List<HoldingMark>>> ReadBatchMarksAsync(
+        SqliteConnection connection,
+        IReadOnlyList<string> holdingIds,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+            SELECT
+                d.HoldingId,
+                d.Herdmark,
+                d.AnimalGroupFromDate,
+                d.AnimalGroupToDate,
+                d.AnimalSpeciesCode
+            FROM Herd AS d
+            WHERE d.HoldingId IN (SELECT value FROM json_each($holdingIds))
+            ORDER BY d.HoldingId, d.Herdmark, d.AnimalSpeciesCode;
+            """;
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.Add(new SqliteParameter("$holdingIds", JsonSerializer.Serialize(holdingIds)));
+
+        var resultMap = new Dictionary<string, Dictionary<string, MarkAccumulator>>(StringComparer.OrdinalIgnoreCase);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var holdingId = reader.GetString(0);
+            if (!resultMap.TryGetValue(holdingId, out var markMap))
+            {
+                markMap = new Dictionary<string, MarkAccumulator>(StringComparer.OrdinalIgnoreCase);
+                resultMap[holdingId] = markMap;
+            }
+
+            ProcessMarkRow(reader, markMap, offset: 1);
+        }
+
+        return resultMap.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value.Values.Select(m => m.ToHoldingMark()).ToList(),
+            StringComparer.OrdinalIgnoreCase);
     }
 
     private static (string? AddressLine1, string? AddressLine2) AssembleAddressLines(
@@ -463,6 +726,7 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
     {
         private long? _minStartDate;
         private long? _maxEndDate;
+        private bool _hasOpenEndedRow;
         private readonly HashSet<string> _species = new(StringComparer.OrdinalIgnoreCase);
 
         public void AddRow(long? fromDate, long? toDate, string? species)
@@ -476,6 +740,10 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
             {
                 _maxEndDate = _maxEndDate.HasValue ? Math.Max(_maxEndDate.Value, toDate.Value) : toDate.Value;
             }
+            else
+            {
+                _hasOpenEndedRow = true;
+            }
 
             if (!string.IsNullOrWhiteSpace(species))
             {
@@ -486,7 +754,9 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
         public HoldingMark ToHoldingMark()
         {
             var startDate = _minStartDate.HasValue ? DateTimeOffset.FromUnixTimeSeconds(_minStartDate.Value) : (DateTimeOffset?)null;
-            var endDate = _maxEndDate.HasValue ? DateTimeOffset.FromUnixTimeSeconds(_maxEndDate.Value) : (DateTimeOffset?)null;
+            var endDate = !_hasOpenEndedRow && _maxEndDate.HasValue
+                ? DateTimeOffset.FromUnixTimeSeconds(_maxEndDate.Value)
+                : (DateTimeOffset?)null;
 
             return new HoldingMark(
                 Mark: mark,

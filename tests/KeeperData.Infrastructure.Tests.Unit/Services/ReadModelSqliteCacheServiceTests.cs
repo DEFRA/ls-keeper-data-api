@@ -59,6 +59,27 @@ public class ReadModelSqliteCacheServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task RefreshCache_PublishesPathAndTimestampTogetherWithoutChangingCapturedSnapshot()
+    {
+        _service.GetCurrentSnapshot().Should().BeNull();
+        SetupArtifact("views/krds-db_20260821070003.sqlite", withPartyTable: true);
+        await _service.RefreshCacheAsync(CancellationToken.None);
+        var original = _service.GetCurrentSnapshot();
+
+        SetupArtifact("views/krds-db_20260822080004.sqlite", withPartyTable: true);
+        await _service.RefreshCacheAsync(CancellationToken.None);
+        var current = _service.GetCurrentSnapshot();
+
+        original.Should().NotBeNull();
+        original!.DbPath.Should().EndWith("krds-db_20260821070003.sqlite");
+        original.DataTimestamp.Should().Be(new DateTime(2026, 8, 21, 7, 0, 3, DateTimeKind.Utc));
+        current.Should().NotBeNull().And.NotBeSameAs(original);
+        current!.DbPath.Should().Be(_service.GetCurrentDbPath()).And.EndWith("krds-db_20260822080004.sqlite");
+        current.DataTimestamp.Should().Be(_service.DataTimestamp)
+            .And.Be(new DateTime(2026, 8, 22, 8, 0, 4, DateTimeKind.Utc));
+    }
+
+    [Fact]
     public async Task RefreshCache_WhenTheReadModelLacksTheExpectedSchema_RemainsUnloaded()
     {
         SetupArtifact("views/krds-db_20260821070003.sqlite", withPartyTable: false);
