@@ -51,14 +51,14 @@ public class UserAccountAssociationBuilderTests
     }
 
     [Fact]
-    public async Task GivenDefaultConfiguration_WhenBuilding_ThenOnlyOwnerRolesAreRequested()
+    public async Task GivenDefaultConfiguration_WhenBuilding_ThenHolderAndOwnerRolesAreRequested()
     {
         SetupAssociations([]);
 
         await _sut.BuildForEmailAsync(Email, _token);
 
         _associationsRepository.Verify(
-            x => x.FindByEmailAsync(Email, It.Is<IReadOnlyCollection<string>>(roles => roles.SequenceEqual(new[] { "owner" })), _token),
+            x => x.FindByEmailAsync(Email, It.Is<IReadOnlyCollection<string>>(roles => roles.SequenceEqual(new[] { "holder", "owner" })), _token),
             Times.Once);
     }
 
