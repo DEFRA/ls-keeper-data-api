@@ -65,6 +65,12 @@ public class HoldingsController(IRequestExecutor executor, IReadModelSqliteCache
         };
 
         var result = await _executor.ExecuteQuery(query, cancellationToken);
+
+        if (result.DataTimestamp is { } dataTimestamp)
+        {
+            Response.Headers["X-Data-Timestamp"] = dataTimestamp.ToString("o");
+        }
+
         return Ok(result);
     }
 

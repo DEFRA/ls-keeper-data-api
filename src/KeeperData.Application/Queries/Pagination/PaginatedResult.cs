@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace KeeperData.Application.Queries.Pagination;
 
 /// <summary>
@@ -6,6 +8,10 @@ namespace KeeperData.Application.Queries.Pagination;
 /// <typeparam name="T">The type of items in the result.</typeparam>
 public class PaginatedResult<T>
 {
+    /// <summary>Timestamp of the queried snapshot, for response headers only.</summary>
+    [JsonIgnore]
+    public DateTime? DataTimestamp { get; set; }
+
     /// <summary>
     /// Number of items on the current page.
     /// </summary>
@@ -57,6 +63,7 @@ public class PaginatedResult<T>
         Values = Values.Select(mapper).ToList(),
         Page = Page,
         PageSize = PageSize,
-        NextCursor = NextCursor
+        NextCursor = NextCursor,
+        DataTimestamp = DataTimestamp
     };
 }

@@ -20,18 +20,17 @@ public abstract class SqliteCacheService : IHostedService, IDisposable
     private readonly ILogger _logger;
     private readonly SemaphoreSlim _refreshLock = new(1, 1);
 
-    private volatile string? _currentDbPath;
+    private volatile SqliteSnapshot? _currentSnapshot;
     private volatile bool _isLoaded;
     private volatile string? _cachedFileName;
     private DateTime? _lastRefreshedAt;
-    private DateTime? _dataTimestamp;
     private long? _rowCount;
     private Timer? _refreshTimer;
     private bool _disposed;
 
     public bool IsLoaded => _isLoaded;
     public DateTime? LastRefreshedAt => _lastRefreshedAt;
-    public DateTime? DataTimestamp => _dataTimestamp;
+    public DateTime? DataTimestamp => _currentSnapshot?.DataTimestamp;
     public string? CachedFileName => _cachedFileName;
 
     protected SqliteCacheService(
@@ -59,7 +58,9 @@ public abstract class SqliteCacheService : IHostedService, IDisposable
     /// <summary>Names the cache in log messages.</summary>
     protected abstract string CacheName { get; }
 
-    public string? GetCurrentDbPath() => _currentDbPath;
+    public string? GetCurrentDbPath() => _currentSnapshot?.DbPath;
+
+    public SqliteSnapshot? GetCurrentSnapshot() => _currentSnapshot;
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
@@ -195,10 +196,9 @@ public abstract class SqliteCacheService : IHostedService, IDisposable
         await _artifactSource.DownloadAsync(artifact, localPath, cancellationToken);
 
         var rowCount = GetRowCount(localPath);
-        var oldPath = _currentDbPath;
-        _currentDbPath = localPath;
+        var oldPath = GetCurrentDbPath();
+        _currentSnapshot = new SqliteSnapshot(localPath, ExtractTimestampFromFileName(artifact.FileName));
         _cachedFileName = artifact.FileName;
-        _dataTimestamp = ExtractTimestampFromFileName(artifact.FileName);
         _rowCount = rowCount;
         _lastRefreshedAt = DateTime.UtcNow;
         _isLoaded = true;
@@ -237,7 +237,7 @@ public abstract class SqliteCacheService : IHostedService, IDisposable
     }
 
     private CacheRefreshResult Result(string status, Stopwatch stopwatch, string? error = null) =>
-        new(CacheName, status, _cachedFileName, _rowCount, _dataTimestamp, stopwatch.ElapsedMilliseconds, error);
+        new(CacheName, status, _cachedFileName, _rowCount, DataTimestamp, stopwatch.ElapsedMilliseconds, error);
 
     private long GetRowCount(string dbPath)
     {

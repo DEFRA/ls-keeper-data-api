@@ -49,17 +49,17 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
             Marks: marks);
     }
 
-    public async Task<(List<HoldingDetail> Items, int TotalCount)> GetPagedHoldingsAsync(
+    public async Task<(List<HoldingDetail> Items, int TotalCount, DateTime? DataTimestamp)> GetPagedHoldingsAsync(
         int page,
         int pageSize,
         string? sort,
         string? order,
         CancellationToken cancellationToken = default)
     {
-        var dbPath = _cacheService.GetCurrentDbPath()
+        var snapshot = _cacheService.GetCurrentSnapshot()
             ?? throw new InvalidOperationException("The SAM read model is not cached locally, so holding details cannot be resolved.");
 
-        await using var connection = new SqliteConnection($"Data Source={dbPath};Mode=ReadOnly");
+        await using var connection = new SqliteConnection($"Data Source={snapshot.DbPath};Mode=ReadOnly");
         await connection.OpenAsync(cancellationToken);
 
         // 1 — Total count
@@ -69,24 +69,28 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
 
         if (totalCount == 0)
         {
-            return ([], 0);
+            return ([], 0, snapshot.DataTimestamp);
         }
 
         // 2 — Paged holdings
         var safePage = Math.Max(1, page);
         var safePageSize = Math.Max(1, pageSize);
         var offset = ((long)safePage - 1) * safePageSize;
-        var sortDirection = string.Equals(sort, "desc", StringComparison.OrdinalIgnoreCase) ? "desc" : "asc";
+        var sortDirection = string.Equals(sort, "desc", StringComparison.OrdinalIgnoreCase) ? "DESC" : "ASC";
         var sortColumn = order?.ToLowerInvariant() switch
         {
-            "name" => "name",
-            "holdingtype" => "holdingtype",
-            "startdate" => "startdate",
-            "enddate" => "enddate",
-            _ => "cph"
+            "name" => "h.FeatureName",
+            "holdingtype" => "h.CphType",
+            "startdate" => "h.StartDate",
+            "enddate" => "h.EndDate",
+            _ => "h.Cph"
         };
+        var cphTieBreaker = sortColumn == "h.Cph" ? string.Empty : $", h.Cph {sortDirection}";
 
-        const string sql = """
+        // The interpolated fragments are selected exclusively from the hard-coded allowlists above.
+        // Keeping the ORDER BY as plain columns allows SQLite to use matching indexes for large snapshots.
+#pragma warning disable S3649
+        var sql = $"""
             SELECT
                 h.Id,
                 h.Cph,
@@ -109,24 +113,13 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
                 h.Northing,
                 h.OsMapReference
             FROM Holding AS h
-            ORDER BY
-                CASE WHEN $order = 'name' AND $sort = 'asc' THEN h.FeatureName END ASC,
-                CASE WHEN $order = 'name' AND $sort = 'desc' THEN h.FeatureName END DESC,
-                CASE WHEN $order = 'holdingtype' AND $sort = 'asc' THEN h.CphType END ASC,
-                CASE WHEN $order = 'holdingtype' AND $sort = 'desc' THEN h.CphType END DESC,
-                CASE WHEN $order = 'startdate' AND $sort = 'asc' THEN h.StartDate END ASC,
-                CASE WHEN $order = 'startdate' AND $sort = 'desc' THEN h.StartDate END DESC,
-                CASE WHEN $order = 'enddate' AND $sort = 'asc' THEN h.EndDate END ASC,
-                CASE WHEN $order = 'enddate' AND $sort = 'desc' THEN h.EndDate END DESC,
-                CASE WHEN $sort = 'asc' THEN h.Cph END ASC,
-                CASE WHEN $sort = 'desc' THEN h.Cph END DESC
+            ORDER BY {sortColumn} {sortDirection}{cphTieBreaker}
             LIMIT $pageSize OFFSET $offset;
             """;
+#pragma warning restore S3649
 
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
-        command.Parameters.Add(new SqliteParameter("$order", sortColumn));
-        command.Parameters.Add(new SqliteParameter("$sort", sortDirection));
         command.Parameters.Add(new SqliteParameter("$pageSize", safePageSize));
         command.Parameters.Add(new SqliteParameter("$offset", offset));
 
@@ -141,7 +134,7 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
 
         if (holdingRows.Count == 0)
         {
-            return ([], totalCount);
+            return ([], totalCount, snapshot.DataTimestamp);
         }
 
         var holdingIds = holdingRows.Select(h => h.HoldingId).ToList();
@@ -174,7 +167,7 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
                 Marks: marks));
         }
 
-        return (items, totalCount);
+        return (items, totalCount, snapshot.DataTimestamp);
     }
 
     private static async Task<HoldingRowData?> ReadHoldingAsync(
@@ -723,6 +716,7 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
     {
         private long? _minStartDate;
         private long? _maxEndDate;
+        private bool _hasOpenEndedRow;
         private readonly HashSet<string> _species = new(StringComparer.OrdinalIgnoreCase);
 
         public void AddRow(long? fromDate, long? toDate, string? species)
@@ -736,6 +730,10 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
             {
                 _maxEndDate = _maxEndDate.HasValue ? Math.Max(_maxEndDate.Value, toDate.Value) : toDate.Value;
             }
+            else
+            {
+                _hasOpenEndedRow = true;
+            }
 
             if (!string.IsNullOrWhiteSpace(species))
             {
@@ -746,7 +744,9 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
         public HoldingMark ToHoldingMark()
         {
             var startDate = _minStartDate.HasValue ? DateTimeOffset.FromUnixTimeSeconds(_minStartDate.Value) : (DateTimeOffset?)null;
-            var endDate = _maxEndDate.HasValue ? DateTimeOffset.FromUnixTimeSeconds(_maxEndDate.Value) : (DateTimeOffset?)null;
+            var endDate = !_hasOpenEndedRow && _maxEndDate.HasValue
+                ? DateTimeOffset.FromUnixTimeSeconds(_maxEndDate.Value)
+                : (DateTimeOffset?)null;
 
             return new HoldingMark(
                 Mark: mark,

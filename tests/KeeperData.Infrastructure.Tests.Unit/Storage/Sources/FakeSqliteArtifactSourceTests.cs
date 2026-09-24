@@ -164,10 +164,12 @@ public class FakeSqliteArtifactSourceTests : IDisposable
         var mockCache = new Mock<KeeperData.Core.Services.IReadModelSqliteCacheService>();
         mockCache.Setup(c => c.GetCurrentDbPath()).Returns(dbPath);
 
+        mockCache.Setup(c => c.GetCurrentSnapshot()).Returns(new SqliteSnapshot(dbPath, null));
+
         var repo = new KeeperData.Infrastructure.Database.Repositories.HoldingDetailRepository(mockCache.Object);
 
         // 1. GetPagedHoldingsAsync
-        var (items, totalCount) = await repo.GetPagedHoldingsAsync(1, 10, "asc", "cph");
+        var (items, totalCount, _) = await repo.GetPagedHoldingsAsync(1, 10, "asc", "cph");
         totalCount.Should().Be(15);
         items.Should().HaveCount(10);
         items[0].Identifier.Should().Be("10/024/0247");

@@ -1,25 +1,34 @@
 using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.DTOs;
 using KeeperData.Core.Repositories;
+using MediatR;
 
 namespace KeeperData.Application.Queries.Holdings;
 
 public class GetHoldingsQueryHandler(IHoldingDetailRepository repository)
-    : PagedQueryHandler<GetHoldingsQuery, HoldingDetail>
+    : IRequestHandler<GetHoldingsQuery, PaginatedResult<HoldingDetail>>
 {
     private readonly IHoldingDetailRepository _repository = repository;
 
-    protected override async Task<(List<HoldingDetail> Items, int TotalCount, string? NextCursor)> FetchAsync(
+    public async Task<PaginatedResult<HoldingDetail>> Handle(
         GetHoldingsQuery request,
         CancellationToken cancellationToken)
     {
-        var (items, totalCount) = await _repository.GetPagedHoldingsAsync(
+        var (items, totalCount, dataTimestamp) = await _repository.GetPagedHoldingsAsync(
             request.Page,
             request.PageSize,
             request.Sort,
             request.Order,
             cancellationToken);
 
-        return (items, totalCount, null);
+        return new PaginatedResult<HoldingDetail>
+        {
+            Values = items,
+            Count = items.Count,
+            TotalCount = totalCount,
+            Page = request.Page,
+            PageSize = request.PageSize,
+            DataTimestamp = dataTimestamp
+        };
     }
 }

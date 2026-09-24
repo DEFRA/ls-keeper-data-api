@@ -39,9 +39,10 @@ public class GetHoldingsQueryHandlerTests
                 Marks: [])
         };
 
+        var dataTimestamp = new DateTime(2026, 6, 30, 12, 0, 0, DateTimeKind.Utc);
         _repository
             .Setup(r => r.GetPagedHoldingsAsync(1, 10, "asc", "cph", _token))
-            .ReturnsAsync((items, 25));
+            .ReturnsAsync((items, 25, (DateTime?)dataTimestamp));
 
         var handler = new GetHoldingsQueryHandler(_repository.Object);
         var query = new GetHoldingsQuery
@@ -62,6 +63,7 @@ public class GetHoldingsQueryHandlerTests
         result.HasNextPage.Should().BeTrue();
         result.HasPreviousPage.Should().BeFalse();
         result.Values.Should().BeEquivalentTo(items);
+        result.DataTimestamp.Should().Be(dataTimestamp);
 
         _repository.Verify(r => r.GetPagedHoldingsAsync(1, 10, "asc", "cph", _token), Times.Once);
     }
@@ -71,7 +73,7 @@ public class GetHoldingsQueryHandlerTests
     {
         _repository
             .Setup(r => r.GetPagedHoldingsAsync(2, 5, "desc", "name", _token))
-            .ReturnsAsync(([], 10));
+            .ReturnsAsync(([], 10, (DateTime?)null));
 
         var handler = new GetHoldingsQueryHandler(_repository.Object);
         var query = new GetHoldingsQuery

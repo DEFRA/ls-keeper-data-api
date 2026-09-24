@@ -1,5 +1,6 @@
 using FluentAssertions;
 using KeeperData.Core.Services;
+using KeeperData.Core.Storage.Sqlite;
 using KeeperData.Infrastructure.Database.Repositories;
 using Microsoft.Data.Sqlite;
 using Moq;
@@ -23,6 +24,7 @@ public class HoldingDetailRepositoryTests : IDisposable
         InitializeDatabase(_dbPath);
 
         _mockCacheService.Setup(x => x.GetCurrentDbPath()).Returns(_dbPath);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null));
         _repository = new HoldingDetailRepository(_mockCacheService.Object);
     }
 
@@ -276,7 +278,7 @@ public class HoldingDetailRepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task GivenMarkSpanningMultipleRows_WhenGettingHoldingDetail_ThenAggregatesMinStartMaxEndAndDistinctSpecies()
+    public async Task GivenMarkWithAnOpenEndedHerd_WhenGettingHoldingDetail_ThenMarkRemainsOpenEnded()
     {
         using var connection = new SqliteConnection($"Data Source={_dbPath}");
         connection.Open();
@@ -297,14 +299,36 @@ public class HoldingDetailRepositoryTests : IDisposable
         var mark = result.Marks[0];
         mark.Mark.Should().Be("MARK10");
         mark.StartDate.Should().Be(DateTimeOffset.FromUnixTimeSeconds(1100000000));
-        mark.EndDate.Should().Be(DateTimeOffset.FromUnixTimeSeconds(1400000000));
+        mark.EndDate.Should().BeNull();
         mark.Species.Should().BeEquivalentTo(["CTT", "SHP", "PG"]);
+    }
+
+    [Fact]
+    public async Task GivenMarkWithOnlyClosedHerds_WhenGettingHoldingDetail_ThenUsesLatestEndDate()
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        connection.Open();
+
+        Execute(connection, """
+            INSERT INTO Holding (Id, Cph) VALUES ('closed-mark-holding', '99/888/6666');
+            INSERT INTO Herd (Id, HoldingId, Herdmark, AnimalGroupFromDate, AnimalGroupToDate, AnimalSpeciesCode)
+            VALUES
+                ('closed-herd-a', 'closed-mark-holding', 'MARK20', 1200000000, 1300000000, 'CTT'),
+                ('closed-herd-b', 'closed-mark-holding', 'MARK20', 1100000000, 1400000000, 'SHP');
+            """);
+
+        var result = await _repository.GetHoldingDetailByCphAsync("99/888/6666");
+
+        result.Should().NotBeNull();
+        result!.Marks.Should().ContainSingle();
+        result.Marks[0].StartDate.Should().Be(DateTimeOffset.FromUnixTimeSeconds(1100000000));
+        result.Marks[0].EndDate.Should().Be(DateTimeOffset.FromUnixTimeSeconds(1400000000));
     }
 
     [Fact]
     public async Task GivenNoCachedReadModel_WhenGettingPagedHoldings_ThenThrowsInvalidOperationException()
     {
-        _mockCacheService.Setup(x => x.GetCurrentDbPath()).Returns((string?)null);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns((SqliteSnapshot?)null);
 
         var act = async () => await _repository.GetPagedHoldingsAsync(1, 10, "asc", "cph");
 
@@ -315,7 +339,7 @@ public class HoldingDetailRepositoryTests : IDisposable
     [Fact]
     public async Task GivenEmptyDatabase_WhenGettingPagedHoldings_ThenReturnsEmptyAndZeroTotalCount()
     {
-        var (items, totalCount) = await _repository.GetPagedHoldingsAsync(1, 10, "asc", "cph");
+        var (items, totalCount, _) = await _repository.GetPagedHoldingsAsync(1, 10, "asc", "cph");
 
         items.Should().BeEmpty();
         totalCount.Should().Be(0);
@@ -516,6 +540,40 @@ public class HoldingDetailRepositoryTests : IDisposable
 
         result.TotalCount.Should().Be(1);
         result.Items.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData(false, 1)]
+    [InlineData(true, 1)]
+    [InlineData(true, 2)]
+    public async Task GivenCacheChangesAfterSnapshotCapture_WhenGettingPage_ThenReturnsCapturedDataAndTimestamp(bool seedHolding, int page)
+    {
+        if (seedHolding)
+        {
+            using var connection = new SqliteConnection($"Data Source={_dbPath}");
+            connection.Open();
+            Execute(connection, "INSERT INTO Holding (Id, Cph) VALUES ('snapshot-holding', '10/001/0001');");
+        }
+
+        var timestamp = new DateTime(2026, 6, 30, 12, 0, 0, DateTimeKind.Utc);
+        var originalSnapshot = new SqliteSnapshot(_dbPath, timestamp);
+        var currentSnapshot = originalSnapshot;
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(() =>
+        {
+            var captured = currentSnapshot;
+            currentSnapshot = new SqliteSnapshot("new-snapshot.sqlite", timestamp.AddDays(1));
+            return captured;
+        });
+        _mockCacheService.SetupGet(x => x.DataTimestamp).Returns(() => currentSnapshot.DataTimestamp);
+
+        var result = await _repository.GetPagedHoldingsAsync(page, 10, "asc", "cph");
+
+        result.DataTimestamp.Should().Be(timestamp);
+        result.TotalCount.Should().Be(seedHolding ? 1 : 0);
+        result.Items.Select(x => x.Identifier).Should().Equal(
+            seedHolding && page == 1 ? new[] { "10/001/0001" } : Array.Empty<string>());
+        _mockCacheService.Verify(x => x.GetCurrentSnapshot(), Times.Once);
+        _mockCacheService.VerifyGet(x => x.DataTimestamp, Times.Never);
     }
 
     private static void InitializeDatabase(string path)

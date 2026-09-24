@@ -259,6 +259,8 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
     {
         // Arrange
         _mockCache.Setup(c => c.IsLoaded).Returns(true);
+        var dataTimestamp = new DateTime(2026, 6, 30, 12, 0, 0, DateTimeKind.Utc);
+        _mockCache.Setup(c => c.DataTimestamp).Returns(dataTimestamp);
 
         var sampleValues = Enumerable.Range(1, 10).Select(i => new HoldingDetail(
             Identifier: $"13/169/{i:D4}",
@@ -276,6 +278,7 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
         {
             Count = 10,
             TotalCount = 15420,
+            DataTimestamp = dataTimestamp,
             Page = 1,
             PageSize = 10,
             Values = sampleValues
@@ -292,6 +295,7 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Headers.GetValues("X-Data-Timestamp").Should().ContainSingle().Which.Should().Be(dataTimestamp.ToString("o"));
 
         var result = await response.Content.ReadFromJsonAsync<PaginatedResult<HoldingDetail>>();
         result.Should().NotBeNull();
@@ -305,6 +309,49 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
         result.Values.Should().HaveCount(10);
         result.Values[0].Identifier.Should().Be("13/169/0001");
         result.Values[9].Identifier.Should().Be("13/169/0010");
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task GetHoldings_WhenCacheRefreshesDuringQuery_UsesOnlyTheQueriedSnapshotTimestamp(bool hasTimestamp)
+    {
+        _mockCache.Setup(c => c.IsLoaded).Returns(true);
+        var timestamp = new DateTime(2026, 6, 30, 12, 0, 0, DateTimeKind.Utc);
+        _mockCache.Setup(c => c.DataTimestamp).Returns(timestamp);
+        var queryStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var queryResult = new TaskCompletionSource<PaginatedResult<HoldingDetail>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _mockExecutor
+            .Setup(x => x.ExecuteQuery(It.IsAny<GetHoldingsQuery>(), It.IsAny<CancellationToken>()))
+            .Returns(() =>
+            {
+                queryStarted.SetResult();
+                return queryResult.Task;
+            });
+
+        var responseTask = _client.GetAsync("/api/v2/holdings");
+        await queryStarted.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        _mockCache.Setup(c => c.DataTimestamp).Returns(timestamp.AddDays(1));
+        queryResult.SetResult(new PaginatedResult<HoldingDetail>
+        {
+            Page = 1,
+            PageSize = 10,
+            DataTimestamp = hasTimestamp ? timestamp : null
+        });
+        var response = await responseTask;
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        if (hasTimestamp)
+        {
+            response.Headers.GetValues("X-Data-Timestamp").Should().Equal(timestamp.ToString("o"));
+        }
+        else
+        {
+            response.Headers.Contains("X-Data-Timestamp").Should().BeFalse();
+        }
+        var json = await response.Content.ReadAsStringAsync();
+        json.Should().NotContain("dataTimestamp");
+        _mockCache.VerifyGet(c => c.DataTimestamp, Times.Never);
     }
 
     [Fact]
