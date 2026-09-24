@@ -24,8 +24,75 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build and Publish
         uses: DEFRA/cdp-build-action/build@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-openapi:
+    name: Publish OpenAPI contract
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Generate OpenAPI contract
+        run: dotnet build ./src/KeeperData.Api/KeeperData.Api.csproj --configuration Release
+      - name: Verify OpenAPI contract
+        shell: bash
+        run: |
+          asset=./src/KeeperData.Api/obj/openapi/keeper-data-api-openapi_v2.json
+          test -f "$asset" || { echo "OpenAPI contract was not generated at $asset"; exit 1; }
+          jq -e '
+            (.openapi | startswith("3.1.")) and
+            ((.paths | type) == "object") and
+            ((.paths | length) > 0) and
+            all(.paths | keys[]; startswith("/api/v2/")) and
+            all(.paths[];
+              ([.get, .put, .post, .delete, .options, .head, .patch, .trace]
+                | map(select(. != null))
+                | length) > 0
+            ) and
+            (.components.securitySchemes.Bearer.scheme == "bearer") and
+            (.components.securitySchemes.Basic.scheme == "basic")
+          ' "$asset" > /dev/null || {
+            echo "OpenAPI contract must be a non-empty v2-only document with the expected security schemes"
+            exit 1
+          }
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: |
+          git fetch --tags --force
+          tag="$(git tag --points-at HEAD | awk '/^[0-9]+\.[0-9]+\.[0-9]+$/ { print }' | sort -V | tail -n1)"
+          if [ -z "$tag" ]; then
+            echo "No SemVer release tag points at $(git rev-parse HEAD)."
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      - name: Attach contract to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.tag }}
+          ASSET: ./src/KeeperData.Api/obj/openapi/keeper-data-api-openapi_v2.json
+        shell: bash
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" "$ASSET" --clobber
+          else
+            gh release create "$TAG" "$ASSET" \
+              --title "$TAG" \
+              --notes "OpenAPI 3.1 contract for the Livestock Keeper Data API released in \`$TAG\`." \
+              --latest
+          fi

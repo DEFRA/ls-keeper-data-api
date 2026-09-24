@@ -15,7 +15,7 @@ namespace KeeperData.Api.Controllers
     [Authorize(Policy = "BasicOrBearer")]
     [ApiController]
     [Route("api/v2/user-accounts")]
-    [ApiExplorerSettings(GroupName = "public")]
+    [ApiExplorerSettings(GroupName = "v2")]
     [Produces("application/json")]
     [Tags("user-accounts")]
     public class UserAccountsController(IRequestExecutor executor, IReadModelSqliteCacheService readModelCache) : ControllerBase

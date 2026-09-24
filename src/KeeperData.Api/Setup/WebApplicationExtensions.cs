@@ -25,6 +25,12 @@ public static class WebApplicationExtensions
 {
     private const string InternalGroupName = "internal";
 
+    public static void ConfigureOpenApiGenerationPipeline(this WebApplication app)
+    {
+        app.MapControllers();
+        app.MapOpenApi();
+    }
+
     [ExcludeFromCodeCoverage]
     public static void ConfigureRequestPipeline(this WebApplication app)
     {
@@ -50,6 +56,7 @@ public static class WebApplicationExtensions
         app.UseSwagger();
         app.UseSwaggerUI(options =>
         {
+            options.SwaggerEndpoint("/swagger/v2/swagger.json", "V2 API");
             options.SwaggerEndpoint("/swagger/public/swagger.json", "Public API");
             options.SwaggerEndpoint("/swagger/internal/swagger.json", "Internal API");
             options.RoutePrefix = "swagger";
@@ -60,10 +67,21 @@ public static class WebApplicationExtensions
         app.UseHeaderPropagation();
         app.UseRouting();
 
+        app.Use(async (context, next) =>
+        {
+            if (!adminEndpointsEnabled && context.Request.Path.Equals("/api/admin/sqlite-cache/refresh", StringComparison.OrdinalIgnoreCase))
+            {
+                context.Response.StatusCode = StatusCodes.Status404NotFound;
+                return;
+            }
+            await next(context);
+        });
+
         app.UseAuthentication();
         app.UseAuthorization();
 
         app.MapControllers();
+        app.MapOpenApi();
 
         app.MapHealthChecks("/health", new HealthCheckOptions()
         {

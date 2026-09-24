@@ -47,13 +47,20 @@ public static class ServiceCollectionExtensions
 
         services.AddTransient<IStorageReader<ComparisonReportsStorageClient>, ComparisonReportsStorageReader>();
 
-        services.AddHttpClient(DataBridgeSqliteArtifactSource.DownloadClientName, client =>
-            {
-                client.Timeout = SqliteArtifactDownloadTimeout;
-            })
-            .ConfigurePrimaryHttpMessageHandler(() => new SqliteArtifactDownloadHandler());
+        if (configuration.GetValue<bool>("ApiClients:DataBridgeApi:UseFakeClient"))
+        {
+            services.AddSingleton<ISqliteArtifactSource, FakeSqliteArtifactSource>();
+        }
+        else
+        {
+            services.AddHttpClient(DataBridgeSqliteArtifactSource.DownloadClientName, client =>
+                {
+                    client.Timeout = SqliteArtifactDownloadTimeout;
+                })
+                .ConfigurePrimaryHttpMessageHandler(() => new SqliteArtifactDownloadHandler());
 
-        services.AddSingleton<ISqliteArtifactSource, DataBridgeSqliteArtifactSource>();
+            services.AddSingleton<ISqliteArtifactSource, DataBridgeSqliteArtifactSource>();
+        }
 
         var cphCacheConfig = configuration
             .GetSection(CphSqliteCacheConfiguration.SectionName)

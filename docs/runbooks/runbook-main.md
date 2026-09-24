@@ -318,12 +318,12 @@ Rollbacks are handled be redeploying the previous version through the CDP Portal
 ## Appendices
 
 ### API Specifications
-- **OpenAPI/Swagger**: Available at `/swagger` (development)
+- **OpenAPI/Swagger**: Swagger UI is available at `/swagger`; the generated v2 OpenAPI 3.1 contract is available at `/openapi/v2.json` and as `keeper-data-api-openapi_v2.json` on each GitHub Release from `main`.
 - **Endpoints**:
-  - `GET /api/parties` - Search parties/keepers
-  - `GET /api/parties/{id}` - Get party by ID
-  - `GET /api/sites` - Search sites/holdings
-  - `GET /api/sites/{id}` - Get site by ID
+  - `GET /api/v2/cph-associations` - Retrieve CPH associations by email
+  - `GET /api/v2/holdings/{county}/{parish}/{holding}` - Retrieve holding details by CPH
+  - `POST /api/v2/user-accounts` - Ensure a user account exists
+  - `GET /api/v2/user-accounts/{subject}` - Retrieve a user account by subject
 
 ### Known Quirks & Tribal Knowledge
 
