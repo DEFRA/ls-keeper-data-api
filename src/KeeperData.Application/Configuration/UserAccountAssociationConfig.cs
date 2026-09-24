@@ -9,7 +9,8 @@ public class UserAccountAssociationConfig
 
     /// <summary>
     /// The read model party roles which grant a CPH association. The read model constrains roles to
-    /// owner, holder and keeper; owner is the equivalent of the LIVESTOCKOWNER scope.
+    /// owner, holder and keeper; owner is the equivalent of the LIVESTOCKOWNER scope and holder the
+    /// CPHHOLDER scope. Either grants the association.
     /// </summary>
-    public string[] Roles { get; set; } = ["owner"];
+    public string[] Roles { get; set; } = ["holder", "owner"];
 }
