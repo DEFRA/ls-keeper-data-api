@@ -64,7 +64,7 @@ namespace KeeperData.Api.Controllers
 
             var command = new EnsureUserAccountCommand(
                 Subject: request.Sub ?? string.Empty,
-                Email: request.Email ?? string.Empty,
+                Email: request.Email?.Trim() ?? string.Empty,
                 GivenName: request.GivenName ?? string.Empty,
                 FamilyName: request.FamilyName ?? string.Empty);
 

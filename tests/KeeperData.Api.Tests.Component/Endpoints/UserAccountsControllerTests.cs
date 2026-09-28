@@ -90,6 +90,23 @@ public class UserAccountsControllerTests
     }
 
     [Fact]
+    public async Task EnsureUserAccount_WhenEmailIsPaddedWithWhitespace_TrimsItBeforeDispatch()
+    {
+        SetupEnsureResult(created: false);
+
+        var request = ClaimsRequest();
+        request.Email = $"  {Email}  ";
+
+        await _controller.EnsureUserAccount(request, CancellationToken.None);
+
+        _mockExecutor.Verify(
+            x => x.ExecuteCommand(
+                It.Is<EnsureUserAccountCommand>(command => command.Email == Email),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
     public async Task GetUserAccountBySubject_Returns200AndDoesNotReadTheReadModel()
     {
         _mockExecutor
