@@ -64,7 +64,7 @@ namespace KeeperData.Api.Controllers
 
             var command = new EnsureUserAccountCommand(
                 Subject: request.Sub ?? string.Empty,
-                Email: request.Email ?? string.Empty,
+                Email: request.Email?.Trim() ?? string.Empty,
                 GivenName: request.GivenName ?? string.Empty,
                 FamilyName: request.FamilyName ?? string.Empty);
 
@@ -93,7 +93,7 @@ namespace KeeperData.Api.Controllers
         /// <response code="404">The subject is not recognised.</response>
         /// <response code="422">The subject failed validation.</response>
         /// <response code="500">The server encountered an unexpected error</response>
-        [HttpGet("{subject}")]
+        [HttpGet("{*subject}")]
         [ProducesResponseType(typeof(UserAccountDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -102,7 +102,7 @@ namespace KeeperData.Api.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetUserAccountBySubject([FromRoute] string subject, CancellationToken cancellationToken)
         {
-            var result = await _executor.ExecuteQuery(new GetUserAccountBySubjectQuery(subject), cancellationToken);
+            var result = await _executor.ExecuteQuery(new GetUserAccountBySubjectQuery(Uri.UnescapeDataString(subject)), cancellationToken);
 
             return Ok(result);
         }
