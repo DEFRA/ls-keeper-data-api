@@ -232,7 +232,7 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
         var cphType = GetNullableString(reader, 3);
         var startDate = ReadEpoch(reader, 4);
         var endDate = ReadEpoch(reader, 5);
-        var udprn = GetNullableString(reader, 6);
+        var udprn = GetNullableInt64(reader, 6);
 
         var paonDescription = GetNullableString(reader, 7);
         var paonStartNumber = GetNullableString(reader, 8);
@@ -651,11 +651,8 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
     private static long? GetNullableInt64(DbDataReader reader, int ordinal) =>
         reader.IsDBNull(ordinal) ? null : reader.GetInt64(ordinal);
 
-    private static int? GetNullableInt32(DbDataReader reader, int ordinal)
-    {
-        var value = GetNullableString(reader, ordinal);
-        return int.TryParse(value, out var parsed) ? parsed : null;
-    }
+    private static int? GetNullableInt32(DbDataReader reader, int ordinal) =>
+        reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
 
     private static DateTimeOffset? ReadEpoch(DbDataReader reader, int ordinal) =>
         reader.IsDBNull(ordinal)
