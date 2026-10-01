@@ -70,7 +70,7 @@ public class HoldingDetailRepositoryTests : IDisposable
             ) VALUES (
                 'holding-10-024-0247', '10/024/0247', NULL, 'permanent', 1310515200, NULL, NULL,
                 NULL, NULL, NULL, NULL, NULL,
-                'The Street', 'WORCESTER', 'Some Location', 'TT5 2UU', 'England', '000000', '000000', 'SS0000000200'
+                'The Street', 'WORCESTER', 'Some Location', 'TT5 2UU', 'England', 0, 0, 'SS0000000200'
             );
             """);
 
@@ -214,7 +214,7 @@ public class HoldingDetailRepositoryTests : IDisposable
             ) VALUES (
                 'addr-holding-1', '13/169/0007', 'Land At Test Farm 06', 'permanent', 1773014400, NULL, NULL,
                 'Test Farm 06', NULL, NULL, NULL, NULL,
-                'Layer Road', 'COLCHESTER', 'Great Wigborough', 'CO5 7RR', 'England', '595600', '215900', 'TL9560015900'
+                'Layer Road', 'COLCHESTER', 'Great Wigborough', 'CO5 7RR', 'England', 595600, 215900, 'TL9560015900'
             );
             """);
 
@@ -228,6 +228,25 @@ public class HoldingDetailRepositoryTests : IDisposable
         result.Location.Address.Locality.Should().Be("Great Wigborough");
         result.Location.Address.Postcode.Should().Be("CO5 7RR");
         result.Location.Address.Country.Should().Be("England");
+    }
+
+    [Fact]
+    public async Task GivenTypedColumns_WhenGettingHoldingDetail_ThenNumericFieldsAreReadAsIntegers()
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        connection.Open();
+
+        Execute(connection, """
+            INSERT INTO Holding (Id, Cph, Udprn, Easting, Northing)
+            VALUES ('typed-holding', '44/555/6666', 10001234, 595600, 215900);
+            """);
+
+        var result = await _repository.GetHoldingDetailByCphAsync("44/555/6666");
+
+        result.Should().NotBeNull();
+        result!.Location.Address.Udprn.Should().Be(10001234);
+        result.Location.Easting.Should().Be(595600);
+        result.Location.Northing.Should().Be(215900);
     }
 
     [Fact]
@@ -591,7 +610,7 @@ public class HoldingDetailRepositoryTests : IDisposable
                 CphType TEXT,
                 StartDate INTEGER,
                 EndDate INTEGER,
-                Udprn TEXT,
+                Udprn INTEGER,
                 PaonDescription TEXT,
                 PaonStartNumber TEXT,
                 PaonStartNumberSuffix TEXT,
@@ -602,8 +621,8 @@ public class HoldingDetailRepositoryTests : IDisposable
                 Locality TEXT,
                 Postcode TEXT,
                 UkInternalCode TEXT,
-                Easting TEXT,
-                Northing TEXT,
+                Easting INTEGER,
+                Northing INTEGER,
                 OsMapReference TEXT
             );
 

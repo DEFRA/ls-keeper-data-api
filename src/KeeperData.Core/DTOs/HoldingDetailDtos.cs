@@ -18,7 +18,7 @@ public sealed record HoldingLocation(
     HoldingAddress Address);
 
 public sealed record HoldingAddress(
-    string? Udprn,
+    long? Udprn,
     string? AddressLine1,
     string? AddressLine2,
     string? PostTown,
