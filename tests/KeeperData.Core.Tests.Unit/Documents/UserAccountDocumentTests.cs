@@ -78,7 +78,7 @@ public class UserAccountDocumentTests
         var indexNames = result.Select(x => x.Options.Name).ToList();
 
         indexNames.Should().Contain("uidx_subject");
-        indexNames.Should().Contain("uidx_email");
+        indexNames.Should().Contain("idx_email");
         indexNames.Should().Contain("idxv2_lastUpdatedDate");
         indexNames.Should().Contain("idxv2_deleted");
     }
@@ -95,13 +95,13 @@ public class UserAccountDocumentTests
     }
 
     [Fact]
-    public void GetIndexModels_EmailIndex_ShouldBeUniqueWithCaseInsensitiveCollation()
+    public void GetIndexModels_EmailIndex_ShouldBeNonUniqueWithCaseInsensitiveCollation()
     {
         var result = UserAccountDocument.GetIndexModels().ToList();
 
-        var emailIndex = result.Single(x => x.Options.Name == "uidx_email");
+        var emailIndex = result.Single(x => x.Options.Name == "idx_email");
 
-        emailIndex.Options.Unique.Should().BeTrue();
+        emailIndex.Options.Unique.Should().NotBe(true);
         emailIndex.Options.Collation.Should().NotBeNull();
     }
 }
