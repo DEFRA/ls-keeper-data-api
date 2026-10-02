@@ -58,6 +58,8 @@ public abstract class SqliteCacheService : IHostedService, IDisposable
     /// <summary>Names the cache in log messages.</summary>
     protected abstract string CacheName { get; }
 
+    protected virtual bool RequiresSearchIndex => false;
+
     public string? GetCurrentDbPath() => _currentSnapshot?.DbPath;
 
     public SqliteSnapshot? GetCurrentSnapshot() => _currentSnapshot;
@@ -156,7 +158,8 @@ public abstract class SqliteCacheService : IHostedService, IDisposable
             return FailedResult(attempt.Stopwatch, $"Data Bridge returned an unexpected artifact: {fileName}");
         }
 
-        if (!force && fileName == _cachedFileName)
+        if (!force && fileName == _cachedFileName &&
+            !(RequiresSearchIndex && _currentSnapshot?.SearchIndexPath is null))
         {
             _logger.LogInformation("{CacheName} SQLite cache is already up to date: {FileName}", CacheName, fileName);
             _lastRefreshedAt = DateTime.UtcNow;
@@ -196,8 +199,9 @@ public abstract class SqliteCacheService : IHostedService, IDisposable
         await _artifactSource.DownloadAsync(artifact, localPath, cancellationToken);
 
         var rowCount = GetRowCount(localPath);
+        var searchIndexPath = await BuildSearchIndexAsync(localPath, cancellationToken);
         var oldPath = GetCurrentDbPath();
-        _currentSnapshot = new SqliteSnapshot(localPath, ExtractTimestampFromFileName(artifact.FileName));
+        _currentSnapshot = new SqliteSnapshot(localPath, ExtractTimestampFromFileName(artifact.FileName), searchIndexPath);
         _cachedFileName = artifact.FileName;
         _rowCount = rowCount;
         _lastRefreshedAt = DateTime.UtcNow;
@@ -214,6 +218,9 @@ public abstract class SqliteCacheService : IHostedService, IDisposable
         CleanupOldCacheFiles(localPath);
         return Result("Reloaded", attempt.Stopwatch);
     }
+
+    protected virtual Task<string?> BuildSearchIndexAsync(string dbPath, CancellationToken cancellationToken) =>
+        Task.FromResult<string?>(null);
 
     private CacheRefreshResult FailedResult(Stopwatch stopwatch, string error)
     {

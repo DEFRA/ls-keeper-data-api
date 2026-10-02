@@ -189,6 +189,27 @@ public class FakeSqliteArtifactSourceTests : IDisposable
         holding.Marks.Should().HaveCount(2);
     }
 
+    [Theory]
+    [InlineData("green fields", "13/169/0007")]
+    [InlineData("CO5 7RR", "13/169/0007")]
+    [InlineData("131690007", "13/169/0007")]
+    public async Task GivenSeededReadModel_WhenSearchIndexIsBuilt_ThenSearchesTheArtifact(string search, string expectedCph)
+    {
+        var artifact = await _source.GetLatestAsync("api/etl/staging/sqlite/latest", CancellationToken.None);
+        var dbPath = Path.Combine(_tempDir, artifact!.FileName);
+        await _source.DownloadAsync(artifact, dbPath, CancellationToken.None);
+        var (indexPath, documentCount) = await KeeperData.Infrastructure.Services.HoldingSearchIndex.BuildAsync(dbPath, CancellationToken.None);
+        documentCount.Should().Be(15);
+
+        var mockCache = new Mock<KeeperData.Core.Services.IReadModelSqliteCacheService>();
+        mockCache.Setup(c => c.GetCurrentSnapshot()).Returns(new SqliteSnapshot(dbPath, null, indexPath));
+        var repo = new KeeperData.Infrastructure.Database.Repositories.HoldingDetailRepository(mockCache.Object);
+
+        var result = await repo.SearchHoldingsAsync(1, 10, "asc", "cph", search);
+
+        result.Items.Should().Contain(x => x.Identifier == expectedCph);
+    }
+
     [Fact]
     public async Task GivenSeededCphsDatabase_WhenCphRepositoryQueries_ThenReturnsPagedCphs()
     {
