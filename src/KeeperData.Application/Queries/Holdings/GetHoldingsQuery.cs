@@ -14,7 +14,7 @@ public class GetHoldingsQuery : IPagedQuery<HoldingDetail>
     public string? Search { get; set; }
 }
 
-public class GetHoldingsQueryValidator : AbstractValidator<GetHoldingsQuery>
+public partial class GetHoldingsQueryValidator : AbstractValidator<GetHoldingsQuery>
 {
     public GetHoldingsQueryValidator()
     {
@@ -22,7 +22,7 @@ public class GetHoldingsQueryValidator : AbstractValidator<GetHoldingsQuery>
         RuleFor(x => x.PageSize).InclusiveBetween(1, 100);
         RuleFor(x => x.Search).MaximumLength(200)
             .Matches(@"^[\p{L}\p{N}\s/'@.+(),&-]*$")
-            .Must(search => search is null || string.IsNullOrWhiteSpace(search) || Regex.IsMatch(search, @"[\p{L}\p{N}]"))
+            .Must(search => search is null || string.IsNullOrWhiteSpace(search) || LetterOrDigitRegex().IsMatch(search))
             .WithMessage("Search must contain at least one letter or digit.")
             .When(x => !string.IsNullOrWhiteSpace(x.Search));
         RuleFor(x => x.Sort)
@@ -33,4 +33,7 @@ public class GetHoldingsQueryValidator : AbstractValidator<GetHoldingsQuery>
                 .Contains(order, StringComparer.OrdinalIgnoreCase))
             .When(x => !string.IsNullOrEmpty(x.Order));
     }
+
+    [GeneratedRegex(@"[\p{L}\p{N}]")]
+    private static partial Regex LetterOrDigitRegex();
 }

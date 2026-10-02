@@ -43,8 +43,11 @@ public class ReadModelSqliteCacheService : SqliteCacheService, IReadModelSqliteC
         try
         {
             var indexPath = await HoldingSearchIndex.BuildAsync(dbPath, cancellationToken);
-            _logger.LogInformation("Holding search index created in {DurationMs}ms with {DocumentCount} documents",
-                stopwatch.ElapsedMilliseconds, indexPath.DocumentCount);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Holding search index created in {DurationMs}ms with {DocumentCount} documents",
+                    stopwatch.ElapsedMilliseconds, indexPath.DocumentCount);
+            }
             return indexPath.Path;
         }
         catch (OperationCanceledException)
