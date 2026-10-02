@@ -5,6 +5,7 @@ using KeeperData.Core.Storage.Sqlite;
 using KeeperData.Infrastructure.Database.Repositories;
 using KeeperData.Infrastructure.Services;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -15,6 +16,7 @@ public class HoldingDetailRepositoryTests : IDisposable
     private static readonly string[] s_singleHoldingCph = ["10/001/0001"];
 
     private readonly Mock<IReadModelSqliteCacheService> _mockCacheService = new();
+    private readonly Mock<ILogger<HoldingDetailRepository>> _mockLogger = new();
     private readonly HoldingDetailRepository _repository;
     private readonly string _tempDir;
     private readonly string _dbPath;
@@ -27,9 +29,10 @@ public class HoldingDetailRepositoryTests : IDisposable
 
         InitializeDatabase(_dbPath);
 
+        _mockLogger.Setup(x => x.IsEnabled(LogLevel.Information)).Returns(true);
         _mockCacheService.Setup(x => x.GetCurrentDbPath()).Returns(_dbPath);
         _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null));
-        _repository = new HoldingDetailRepository(_mockCacheService.Object);
+        _repository = new HoldingDetailRepository(_mockCacheService.Object, _mockLogger.Object);
     }
 
     public void Dispose()
@@ -465,6 +468,40 @@ public class HoldingDetailRepositoryTests : IDisposable
         second.Items.Select(x => x.Name).Should().Equal("Green Fields Farm");
     }
 
+    [Theory]
+    [InlineData("cph", "asc")]
+    [InlineData("cph", "desc")]
+    [InlineData("name", "asc")]
+    [InlineData("name", "desc")]
+    [InlineData("holdingType", "asc")]
+    [InlineData("holdingType", "desc")]
+    [InlineData("startDate", "asc")]
+    [InlineData("startDate", "desc")]
+    [InlineData("endDate", "asc")]
+    [InlineData("endDate", "desc")]
+    public async Task SearchHoldings_WithDifferentOrderFields_OrdersByRequestedField(string order, string sort)
+    {
+        SeedSearchHoldings();
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, sort, order, "green");
+        result.TotalCount.Should().Be(2);
+        result.Items.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task SearchHoldings_WhenPageExceedsResults_ReturnsEmptyListAndPreservesTotalCount()
+    {
+        SeedSearchHoldings();
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(10, 10, "asc", "cph", "green");
+        result.TotalCount.Should().Be(2);
+        result.Items.Should().BeEmpty();
+    }
+
     [Fact]
     public async Task SearchHoldings_NoMatches_ReturnsEmptyPage()
     {
@@ -615,12 +652,16 @@ public class HoldingDetailRepositoryTests : IDisposable
 
     [Theory]
     [InlineData("cph", "asc", "10/001/0001")]
+    [InlineData("cph", "desc", "10/001/0003")]
     [InlineData("identifier", "asc", "10/001/0001")]
     [InlineData("name", "asc", "10/001/0002")]
     [InlineData("name", "desc", "10/001/0001")]
     [InlineData("holdingType", "asc", "10/001/0003")]
+    [InlineData("holdingType", "desc", "10/001/0001")]
     [InlineData("startDate", "asc", "10/001/0002")]
+    [InlineData("startDate", "desc", "10/001/0001")]
     [InlineData("endDate", "asc", "10/001/0003")]
+    [InlineData("endDate", "desc", "10/001/0001")]
     public async Task GivenDifferentOrderFields_WhenGettingPagedHoldings_ThenOrdersByRequestedField(string order, string sort, string expectedFirstCph)
     {
         using var connection = new SqliteConnection($"Data Source={_dbPath}");

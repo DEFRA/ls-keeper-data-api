@@ -12,6 +12,7 @@ namespace KeeperData.Infrastructure.Tests.Unit.Services;
 public class ReadModelSqliteCacheServiceTests : IDisposable
 {
     private readonly Mock<ISqliteArtifactSource> _mockArtifactSource = new();
+    private readonly Mock<ILogger<ReadModelSqliteCacheService>> _mockLogger = new();
     private readonly ReadModelSqliteCacheConfiguration _config;
     private readonly ReadModelSqliteCacheService _service;
     private readonly string _tempDir;
@@ -31,10 +32,12 @@ public class ReadModelSqliteCacheServiceTests : IDisposable
             CleanupDelayMs = 0
         };
 
+        _mockLogger.Setup(l => l.IsEnabled(LogLevel.Information)).Returns(true);
+
         _service = new ReadModelSqliteCacheService(
             _mockArtifactSource.Object,
             _config,
-            Mock.Of<ILogger<ReadModelSqliteCacheService>>());
+            _mockLogger.Object);
     }
 
     public void Dispose()
@@ -142,6 +145,38 @@ public class ReadModelSqliteCacheServiceTests : IDisposable
         _service.IsLoaded.Should().BeFalse();
         _mockArtifactSource.Verify(s => s.DownloadAsync(
             It.IsAny<SqliteArtifact>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RefreshCache_WhenCancelledDuringIndexBuild_ThrowsOperationCanceledException()
+    {
+        const string artifact = "views/krds-db_20260821070003.sqlite";
+        using var cts = new CancellationTokenSource();
+        var sourcePath = CreateReadModelFile("krds-db_20260821070003.sqlite", withPartyTable: true, withHoldingTable: true);
+
+        _mockArtifactSource
+            .Setup(s => s.GetLatestAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SqliteArtifact
+            {
+                ObjectKey = artifact,
+                DownloadUrl = $"https://bridge-bucket.example/{artifact}?X-Amz-Signature=stub",
+                Size = 2048,
+                LastModified = DateTimeOffset.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(60)
+            });
+
+        _mockArtifactSource
+            .Setup(s => s.DownloadAsync(It.IsAny<SqliteArtifact>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns((SqliteArtifact _, string localPath, CancellationToken __) =>
+            {
+                File.Copy(sourcePath, localPath, overwrite: true);
+                cts.Cancel();
+                return Task.CompletedTask;
+            });
+
+        var act = async () => await _service.RefreshCacheAsync(cts.Token);
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
     }
 
     private void SetupArtifact(string objectKey, bool withPartyTable, bool withHoldingTable = true, bool blockIndexCreation = false)
