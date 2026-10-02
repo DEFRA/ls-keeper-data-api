@@ -21,4 +21,8 @@ public interface IHoldingDetailRepository
         string? sort,
         string? order,
         CancellationToken cancellationToken = default);
+
+    Task<(List<HoldingDetail> Items, int TotalCount, DateTime? DataTimestamp)> SearchHoldingsAsync(
+        int page, int pageSize, string? sort, string? order, string search,
+        CancellationToken cancellationToken = default);
 }

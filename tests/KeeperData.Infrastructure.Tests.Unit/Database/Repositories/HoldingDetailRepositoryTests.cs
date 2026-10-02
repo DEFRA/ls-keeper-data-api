@@ -1,7 +1,9 @@
 using FluentAssertions;
 using KeeperData.Core.Services;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Storage.Sqlite;
 using KeeperData.Infrastructure.Database.Repositories;
+using KeeperData.Infrastructure.Services;
 using Microsoft.Data.Sqlite;
 using Moq;
 using Xunit;
@@ -336,6 +338,213 @@ public class HoldingDetailRepositoryTests : IDisposable
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("The SAM read model is not cached locally, so holding details cannot be resolved.");
+    }
+
+    [Theory]
+    [InlineData("green fields", 2)]
+    [InlineData("GREEN", 2)]
+    [InlineData("13/169/0007", 1)]
+    [InlineData("  13/169/0007  ", 1)]
+    [InlineData("131690007", 1)]
+    [InlineData("CO5 7RR", 1)]
+    [InlineData("co57rr", 1)]
+    [InlineData("farming ltd", 1)]
+    [InlineData("12345678", 1)]
+    [InlineData("MRS", 1)]
+    [InlineData("Sheila", 1)]
+    [InlineData("X", 1)]
+    [InlineData("Keeper-Six", 1)]
+    [InlineData("100023456789", 1)]
+    [InlineData("alice@example.com", 1)]
+    [InlineData("+44 (0)7700 900123", 1)]
+    [InlineData("4407700900123", 1)]
+    [InlineData("01234 567890", 1)]
+    [InlineData("01234567890", 1)]
+    public async Task SearchHoldings_MatchesIndexedFields(string search, int expectedCount)
+    {
+        SeedSearchHoldings();
+        var (indexPath, documentCount) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        documentCount.Should().Be(3);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", search);
+
+        result.TotalCount.Should().Be(expectedCount);
+        result.Items.Should().HaveCount(expectedCount);
+    }
+
+    [Theory]
+    [InlineData("10A")]
+    [InlineData("12B")]
+    [InlineData("10A-12B High Street")]
+    public async Task SearchHoldings_MatchesFormattedStreetNumber(string search)
+    {
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, PaonStartNumber, PaonStartNumberSuffix,
+                    PaonEndNumber, PaonEndNumberSuffix, Street)
+                VALUES ('range-holding', '12/345/6789', '10', 'A', '12', 'B', 'High Street');
+                """);
+        }
+
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", search);
+
+        result.TotalCount.Should().Be(1);
+        result.Items.Should().ContainSingle().Which.Location.Address.AddressLine1.Should().Be("10A-12B High Street");
+    }
+
+    [Theory]
+    [InlineData("12")]
+    [InlineData("B")]
+    public async Task SearchHoldings_MatchesStandaloneEndNumberAndSuffix(string search)
+    {
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, PaonEndNumber, PaonEndNumberSuffix)
+                VALUES ('end-only', '99/345/6789', '12', 'B');
+                """);
+        }
+
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", search);
+        result.Items.Should().ContainSingle().Which.Identifier.Should().Be("99/345/6789");
+    }
+
+    [Fact]
+    public async Task BuildSearchIndex_ReleasesTheIndexFile()
+    {
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+
+        using var exclusiveRead = new FileStream(indexPath, FileMode.Open, FileAccess.Read, FileShare.None);
+        exclusiveRead.CanRead.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task BuildSearchIndex_WhenIndexAlreadyExists_RebuildsFromCurrentHoldings()
+    {
+        var (indexPath, initialCount) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        initialCount.Should().Be(0);
+
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            Execute(connection, "INSERT INTO Holding (Id, Cph, FeatureName) VALUES ('new-holding', '12/345/6789', 'New Farm');");
+        }
+
+        var (rebuiltPath, rebuiltCount) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        rebuiltPath.Should().Be(indexPath);
+        rebuiltCount.Should().Be(1);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, rebuiltPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "New Farm");
+        result.Items.Should().ContainSingle().Which.Identifier.Should().Be("12/345/6789");
+    }
+
+    [Fact]
+    public async Task SearchHoldings_PaginatesAndRespectsExistingSort()
+    {
+        SeedSearchHoldings();
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var first = await _repository.SearchHoldingsAsync(1, 1, "desc", "name", "green");
+        var second = await _repository.SearchHoldingsAsync(2, 1, "desc", "name", "green");
+
+        first.TotalCount.Should().Be(2);
+        first.Items.Select(x => x.Name).Should().Equal("Land At Test Farm");
+        second.TotalCount.Should().Be(2);
+        second.Items.Select(x => x.Name).Should().Equal("Green Fields Farm");
+    }
+
+    [Fact]
+    public async Task SearchHoldings_NoMatches_ReturnsEmptyPage()
+    {
+        SeedSearchHoldings();
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "nonexistent");
+
+        result.TotalCount.Should().Be(0);
+        result.Items.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("---")]
+    [InlineData("!?/ ")]
+    [InlineData("   ")]
+    public async Task SearchHoldings_WithoutSearchTerms_ReturnsEmptyPage(string search)
+    {
+        var timestamp = new DateTime(2026, 6, 30, 12, 0, 0, DateTimeKind.Utc);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, timestamp));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", search);
+
+        result.Items.Should().BeEmpty();
+        result.TotalCount.Should().Be(0);
+        result.DataTimestamp.Should().Be(timestamp);
+    }
+
+    [Fact]
+    public async Task SearchHoldings_WithoutIndex_ThrowsUnavailable()
+    {
+        var act = async () => await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "green");
+        await act.Should().ThrowAsync<SearchIndexUnavailableException>().WithMessage("The holding search index is not available.");
+    }
+
+    [Fact]
+    public async Task SearchHoldings_WhenIndexFileIsCorrupt_ThrowsUnavailable()
+    {
+        var indexPath = Path.Combine(Path.GetDirectoryName(_dbPath)!, "holdings-search.sqlite");
+        await File.WriteAllTextAsync(indexPath, "not a SQLite database");
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var act = async () => await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "green");
+
+        var assertion = await act.Should().ThrowAsync<SearchIndexUnavailableException>();
+        assertion.Which.InnerException.Should().BeOfType<SqliteException>();
+    }
+
+    [Fact]
+    public async Task SearchHoldings_WhenIndexHasNoSearchTable_ThrowsUnavailable()
+    {
+        var indexPath = Path.Combine(Path.GetDirectoryName(_dbPath)!, "holdings-search.sqlite");
+        using (var connection = new SqliteConnection($"Data Source={indexPath}"))
+            connection.Open();
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var act = async () => await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "green");
+
+        var assertion = await act.Should().ThrowAsync<SearchIndexUnavailableException>();
+        assertion.Which.InnerException.Should().BeOfType<SqliteException>();
+    }
+
+    private void SeedSearchHoldings()
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        connection.Open();
+        Execute(connection, """
+            INSERT INTO Holding (Id, Cph, FeatureName, CphType, Udprn, Postcode)
+            VALUES ('h-1', '13/169/0007', 'Land At Test Farm', 'permanent', '100023456789', 'CO5 7RR'),
+                   ('h-2', '13/169/0008', 'Green Fields Farm', 'permanent', null, 'AA1 1AA'),
+                   ('h-3', '13/169/0009', 'Other Place', 'temporary', null, 'BB1 1BB');
+            INSERT INTO Party (Id, SourcePartyId, OrganisationName, PersonTitle, GivenName, Initials, FamilyName, Email, Mobile, Telephone)
+            VALUES ('p-1', '12345678', 'Green Fields Farming Ltd', null, null, null, null, 'alice@example.com', '+44 (0)7700 900123', '01234 567890'),
+                   ('p-2', 'C161215', null, 'MRS', 'Sheila', 'X', 'Keeper-Six', null, null, null);
+            INSERT INTO PartyRole (Id, PartyId, HoldingId, Role)
+            VALUES ('r-1', 'p-1', 'h-1', 'holder'),
+                   ('r-2', 'p-1', 'h-1', 'keeper'),
+                   ('r-3', 'p-2', 'h-1', 'owner');
+            """);
     }
 
     [Fact]

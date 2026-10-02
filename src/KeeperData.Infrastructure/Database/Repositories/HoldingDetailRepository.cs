@@ -1,13 +1,17 @@
 using KeeperData.Core.DTOs;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
 using Microsoft.Data.Sqlite;
 using System.Data.Common;
 using System.Text.Json;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Infrastructure.Database.Repositories;
 
-public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) : IHoldingDetailRepository
+public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheService, ILogger<HoldingDetailRepository>? logger = null) : IHoldingDetailRepository
 {
     private readonly IReadModelSqliteCacheService _cacheService = cacheService;
 
@@ -55,20 +59,72 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
         string? sort,
         string? order,
         CancellationToken cancellationToken = default)
+        => await GetPagedHoldingsCoreAsync(page, pageSize, sort, order, null, cancellationToken);
+
+    public async Task<(List<HoldingDetail> Items, int TotalCount, DateTime? DataTimestamp)> SearchHoldingsAsync(
+        int page, int pageSize, string? sort, string? order, string search,
+        CancellationToken cancellationToken = default)
     {
+        try
+        {
+            return await GetPagedHoldingsCoreAsync(page, pageSize, sort, order, search, cancellationToken);
+        }
+        catch (SqliteException ex)
+        {
+            logger?.LogError(ex, "Holding search index could not be read");
+            throw new SearchIndexUnavailableException("The holding search index is not available.", ex);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger?.LogError(ex, "Holding search failed");
+            throw;
+        }
+    }
+
+    private async Task<(List<HoldingDetail> Items, int TotalCount, DateTime? DataTimestamp)> GetPagedHoldingsCoreAsync(
+        int page, int pageSize, string? sort, string? order, string? search, CancellationToken cancellationToken)
+    {
+        var stopwatch = Stopwatch.StartNew();
         var snapshot = _cacheService.GetCurrentSnapshot()
             ?? throw new InvalidOperationException("The SAM read model is not cached locally, so holding details cannot be resolved.");
 
-        await using var connection = new SqliteConnection($"Data Source={snapshot.DbPath};Mode=ReadOnly");
+        var isSearch = search is not null;
+        var match = isSearch ? ToFtsQuery(search!) : null;
+        if (isSearch && string.IsNullOrEmpty(match))
+            return ([], 0, snapshot.DataTimestamp);
+
+        if (isSearch && (snapshot.SearchIndexPath is null || !File.Exists(snapshot.SearchIndexPath)))
+            throw new SearchIndexUnavailableException();
+
+        // Search connections are not pooled because ATTACH persists on pooled SQLite connections
+        // and could hold locks or expose an index from an older snapshot.
+        var connectionString = new SqliteConnectionStringBuilder
+        {
+            DataSource = snapshot.DbPath,
+            Mode = SqliteOpenMode.ReadOnly,
+            Pooling = !isSearch
+        };
+        await using var connection = new SqliteConnection(connectionString.ToString());
         await connection.OpenAsync(cancellationToken);
+        if (isSearch)
+        {
+            await using var attach = connection.CreateCommand();
+            attach.CommandText = "ATTACH DATABASE $indexPath AS search_index";
+            attach.Parameters.AddWithValue("$indexPath", snapshot.SearchIndexPath!);
+            await attach.ExecuteNonQueryAsync(cancellationToken);
+        }
 
         // 1 — Total count
         await using var countCommand = connection.CreateCommand();
-        countCommand.CommandText = "SELECT COUNT(*) FROM Holding;";
+        countCommand.CommandText = isSearch
+            ? "SELECT COUNT(*) FROM search_index.HoldingSearch WHERE SearchText MATCH $match;"
+            : "SELECT COUNT(*) FROM Holding;";
+        if (isSearch) countCommand.Parameters.Add(new SqliteParameter("$match", match!));
         var totalCount = Convert.ToInt32(await countCommand.ExecuteScalarAsync(cancellationToken));
 
         if (totalCount == 0)
         {
+            if (isSearch) logger?.LogInformation("Holding search completed in {DurationMs}ms with {MatchCount} matches", stopwatch.ElapsedMilliseconds, totalCount);
             return ([], 0, snapshot.DataTimestamp);
         }
 
@@ -100,21 +156,24 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
                 h.OsMapReference
             FROM Holding AS h
             """;
+        var searchJoin = isSearch
+            ? " JOIN search_index.HoldingSearch AS s ON s.HoldingId = h.Id WHERE s.SearchText MATCH $match"
+            : "";
 
         // Each query is constant, so SQLite can use an index for the chosen sort column.
         // A unique CPH provides stable ordering when the selected values are equal.
-        const string cphAscSql = selectSql + " ORDER BY h.Cph ASC LIMIT $pageSize OFFSET $offset;";
-        const string cphDescSql = selectSql + " ORDER BY h.Cph DESC LIMIT $pageSize OFFSET $offset;";
-        const string nameAscSql = selectSql + " ORDER BY h.FeatureName ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
-        const string nameDescSql = selectSql + " ORDER BY h.FeatureName DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
-        const string holdingTypeAscSql = selectSql + " ORDER BY h.CphType ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
-        const string holdingTypeDescSql = selectSql + " ORDER BY h.CphType DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
-        const string startDateAscSql = selectSql + " ORDER BY h.StartDate ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
-        const string startDateDescSql = selectSql + " ORDER BY h.StartDate DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
-        const string endDateAscSql = selectSql + " ORDER BY h.EndDate ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
-        const string endDateDescSql = selectSql + " ORDER BY h.EndDate DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+        const string cphAscSql = " ORDER BY h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+        const string cphDescSql = " ORDER BY h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+        const string nameAscSql = " ORDER BY h.FeatureName ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+        const string nameDescSql = " ORDER BY h.FeatureName DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+        const string holdingTypeAscSql = " ORDER BY h.CphType ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+        const string holdingTypeDescSql = " ORDER BY h.CphType DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+        const string startDateAscSql = " ORDER BY h.StartDate ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+        const string startDateDescSql = " ORDER BY h.StartDate DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+        const string endDateAscSql = " ORDER BY h.EndDate ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+        const string endDateDescSql = " ORDER BY h.EndDate DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
         var descending = string.Equals(sort, "desc", StringComparison.OrdinalIgnoreCase);
-        var sql = (order?.ToLowerInvariant(), descending) switch
+        var orderBySql = (order?.ToLowerInvariant(), descending) switch
         {
             ("name", false) => nameAscSql,
             ("name", true) => nameDescSql,
@@ -129,9 +188,10 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
         };
 
         await using var command = connection.CreateCommand();
-        command.CommandText = sql;
+        command.CommandText = selectSql + searchJoin + orderBySql;
         command.Parameters.Add(new SqliteParameter("$pageSize", safePageSize));
         command.Parameters.Add(new SqliteParameter("$offset", offset));
+        if (isSearch) command.Parameters.Add(new SqliteParameter("$match", match!));
 
         var holdingRows = new List<HoldingRowData>();
         await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
@@ -144,6 +204,7 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
 
         if (holdingRows.Count == 0)
         {
+            if (isSearch) logger?.LogInformation("Holding search completed in {DurationMs}ms with {MatchCount} matches", stopwatch.ElapsedMilliseconds, totalCount);
             return ([], totalCount, snapshot.DataTimestamp);
         }
 
@@ -177,8 +238,31 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
                 Marks: marks));
         }
 
+        if (isSearch) logger?.LogInformation("Holding search completed in {DurationMs}ms with {MatchCount} matches", stopwatch.ElapsedMilliseconds, totalCount);
         return (items, totalCount, snapshot.DataTimestamp);
     }
+
+    private static string ToFtsQuery(string search)
+    {
+        search = search.Trim();
+        if (CphWithSlashesRegex().IsMatch(search))
+            return $"\"{search.Replace("/", "", StringComparison.Ordinal)}\"";
+        if (CphNineDigitsRegex().IsMatch(search))
+            return $"\"{search}\"";
+
+        var terms = SearchTermsRegex().Matches(search)
+            .Select(match => $"\"{match.Value}\"*");
+        return string.Join(" AND ", terms);
+    }
+
+    [GeneratedRegex(@"^\d{2}/\d{3}/\d{4}$")]
+    private static partial Regex CphWithSlashesRegex();
+
+    [GeneratedRegex(@"^\d{9}$")]
+    private static partial Regex CphNineDigitsRegex();
+
+    [GeneratedRegex(@"[\p{L}\p{N}]+")]
+    private static partial Regex SearchTermsRegex();
 
     private static async Task<HoldingRowData?> ReadHoldingAsync(
         SqliteConnection connection,

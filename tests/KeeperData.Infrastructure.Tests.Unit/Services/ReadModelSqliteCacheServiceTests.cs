@@ -91,6 +91,42 @@ public class ReadModelSqliteCacheServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task RefreshCache_WhenReplacementIndexCannotBuild_KeepsExistingSnapshot()
+    {
+        SetupArtifact("views/krds-db_20260821070003.sqlite", withPartyTable: true);
+        await _service.RefreshCacheAsync(CancellationToken.None);
+        var original = _service.GetCurrentSnapshot();
+
+        SetupArtifact("views/krds-db_20260822080004.sqlite", withPartyTable: true, withHoldingTable: false);
+        var result = await _service.ForceRefreshAsync(false);
+
+        result.Status.Should().Be("Failed");
+        _service.GetCurrentSnapshot().Should().BeSameAs(original);
+        File.Exists(original!.SearchIndexPath).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task RefreshCache_WhenInitialIndexCannotBuild_LoadsReadModelAndRetriesIndex()
+    {
+        const string artifact = "views/krds-db_20260821070003.sqlite";
+        SetupArtifact(artifact, withPartyTable: true, blockIndexCreation: true);
+
+        var firstRefresh = await _service.ForceRefreshAsync(false);
+
+        firstRefresh.Status.Should().Be("Reloaded");
+        _service.IsLoaded.Should().BeTrue();
+        var firstSnapshot = _service.GetCurrentSnapshot();
+        firstSnapshot!.SearchIndexPath.Should().BeNull();
+
+        SetupArtifact(artifact, withPartyTable: true);
+        var retry = await _service.ForceRefreshAsync(false);
+
+        retry.Status.Should().Be("Reloaded");
+        _service.GetCurrentSnapshot()!.SearchIndexPath.Should().NotBeNull();
+        File.Exists(_service.GetCurrentSnapshot()!.SearchIndexPath).Should().BeTrue();
+    }
+
+    [Fact]
     public async Task RefreshCache_WhenTheBridgeReturnsTheLegacyCphDatabase_RemainsUnloaded()
     {
         _mockArtifactSource
@@ -108,9 +144,9 @@ public class ReadModelSqliteCacheServiceTests : IDisposable
             It.IsAny<SqliteArtifact>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    private void SetupArtifact(string objectKey, bool withPartyTable)
+    private void SetupArtifact(string objectKey, bool withPartyTable, bool withHoldingTable = true, bool blockIndexCreation = false)
     {
-        var sourcePath = CreateReadModelFile(objectKey.Split('/').Last(), withPartyTable);
+        var sourcePath = CreateReadModelFile(objectKey.Split('/').Last(), withPartyTable, withHoldingTable);
 
         _mockArtifactSource
             .Setup(s => s.GetLatestAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -129,21 +165,34 @@ public class ReadModelSqliteCacheServiceTests : IDisposable
             .Returns((SqliteArtifact _, string localPath, CancellationToken __) =>
             {
                 File.Copy(sourcePath, localPath, overwrite: true);
+                if (blockIndexCreation)
+                    Directory.CreateDirectory(Path.Combine(Path.GetDirectoryName(localPath)!, "holdings-search.sqlite"));
                 return Task.CompletedTask;
             });
     }
 
-    private string CreateReadModelFile(string fileName, bool withPartyTable)
+    private string CreateReadModelFile(string fileName, bool withPartyTable, bool withHoldingTable)
     {
         var path = Path.Combine(_tempDir, $"source_{fileName}");
+        if (File.Exists(path))
+            File.Delete(path);
 
         using (var connection = new SqliteConnection($"Data Source={path}"))
         {
             connection.Open();
             using var cmd = connection.CreateCommand();
-            cmd.CommandText = withPartyTable
-                ? "CREATE TABLE Party (Id TEXT NOT NULL, Email TEXT)"
-                : "CREATE TABLE Something (Id TEXT NOT NULL)";
+            cmd.CommandText = withPartyTable && withHoldingTable
+                ? """
+                  CREATE TABLE Party (Id TEXT NOT NULL, SourcePartyId TEXT, OrganisationName TEXT, PersonTitle TEXT, GivenName TEXT, Initials TEXT, FamilyName TEXT, Email TEXT, Mobile TEXT, Telephone TEXT);
+                  CREATE TABLE PartyRole (Id TEXT NOT NULL, PartyId TEXT, HoldingId TEXT);
+                  CREATE TABLE Holding (Id TEXT NOT NULL, Cph TEXT, FeatureName TEXT, CphType TEXT, Udprn TEXT,
+                      PaonDescription TEXT, PaonStartNumber TEXT, PaonStartNumberSuffix TEXT,
+                      PaonEndNumber TEXT, PaonEndNumberSuffix TEXT, Street TEXT, Locality TEXT,
+                      Town TEXT, Postcode TEXT, OsMapReference TEXT);
+                  """
+                : withPartyTable
+                    ? "CREATE TABLE Party (Id TEXT NOT NULL)"
+                    : "CREATE TABLE Something (Id TEXT NOT NULL)";
             cmd.ExecuteNonQuery();
         }
 
