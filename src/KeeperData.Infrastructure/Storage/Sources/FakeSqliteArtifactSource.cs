@@ -176,7 +176,14 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
                     OrganisationName TEXT,
                     Email TEXT,
                     Mobile TEXT,
-                    Telephone TEXT
+                    Telephone TEXT,
+                    AddressLine1 TEXT,
+                    AddressStreet TEXT,
+                    AddressTown TEXT,
+                    AddressLocality TEXT,
+                    AddressNation TEXT,
+                    AddressPostcode TEXT,
+                    AddressCountryCode TEXT
                 );
 
                 CREATE TABLE IF NOT EXISTS Herd (
@@ -251,9 +258,11 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
                 partyCmd.Transaction = transaction;
                 partyCmd.CommandText = """
                     INSERT INTO Party (
-                        Id, SourcePartyId, PersonTitle, GivenName, Initials, FamilyName, OrganisationName, Email, Mobile, Telephone
+                        Id, SourcePartyId, PersonTitle, GivenName, Initials, FamilyName, OrganisationName, Email, Mobile, Telephone,
+                        AddressLine1, AddressStreet, AddressTown, AddressLocality, AddressNation, AddressPostcode, AddressCountryCode
                     ) VALUES (
-                        $Id, $SourcePartyId, $PersonTitle, $GivenName, $Initials, $FamilyName, $OrganisationName, $Email, $Mobile, $Telephone
+                        $Id, $SourcePartyId, $PersonTitle, $GivenName, $Initials, $FamilyName, $OrganisationName, $Email, $Mobile, $Telephone,
+                        $AddressLine1, $AddressStreet, $AddressTown, $AddressLocality, $AddressNation, $AddressPostcode, $AddressCountryCode
                     );
                     """;
                 partyCmd.Parameters.Add(new SqliteParameter("$Id", p.PartyId));
@@ -266,6 +275,13 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
                 partyCmd.Parameters.Add(new SqliteParameter("$Email", (object?)p.Email ?? DBNull.Value));
                 partyCmd.Parameters.Add(new SqliteParameter("$Mobile", (object?)p.Mobile ?? DBNull.Value));
                 partyCmd.Parameters.Add(new SqliteParameter("$Telephone", (object?)p.Telephone ?? DBNull.Value));
+                partyCmd.Parameters.Add(new SqliteParameter("$AddressLine1", (object?)p.AddressLine1 ?? DBNull.Value));
+                partyCmd.Parameters.Add(new SqliteParameter("$AddressStreet", (object?)p.AddressStreet ?? DBNull.Value));
+                partyCmd.Parameters.Add(new SqliteParameter("$AddressTown", (object?)p.AddressTown ?? DBNull.Value));
+                partyCmd.Parameters.Add(new SqliteParameter("$AddressLocality", (object?)p.AddressLocality ?? DBNull.Value));
+                partyCmd.Parameters.Add(new SqliteParameter("$AddressNation", (object?)p.AddressNation ?? DBNull.Value));
+                partyCmd.Parameters.Add(new SqliteParameter("$AddressPostcode", (object?)p.AddressPostcode ?? DBNull.Value));
+                partyCmd.Parameters.Add(new SqliteParameter("$AddressCountryCode", (object?)p.AddressCountryCode ?? DBNull.Value));
                 await partyCmd.ExecuteNonQueryAsync(cancellationToken);
 
                 // 3. Insert Herds
@@ -362,7 +378,14 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
         string? OrganisationName,
         string? Email,
         string? Mobile,
-        string? Telephone);
+        string? Telephone,
+        string? AddressLine1,
+        string? AddressStreet,
+        string? AddressTown,
+        string? AddressLocality,
+        string? AddressNation,
+        string? AddressPostcode,
+        string? AddressCountryCode);
 
     private sealed record SeedHerdRecord(
         string HerdId,

@@ -18,7 +18,14 @@
       "PersonTitle": "MISS",
       "Initials": "J",
       "FamilyName": "Example",
-      "Telephone": "01234 567890"
+      "Telephone": "01234 567890",
+      "AddressLine1": "Example Farm",
+      "AddressStreet": "The Street",
+      "AddressTown": "WORCESTER",
+      "AddressLocality": "Some Location",
+      "AddressNation": "England",
+      "AddressPostcode": "TT5 2UU",
+      "AddressCountryCode": "GB"
     },
     "Herds": [
       {
