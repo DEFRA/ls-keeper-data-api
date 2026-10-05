@@ -8,6 +8,7 @@ using Moq;
 
 namespace KeeperData.Infrastructure.Tests.Unit.Telemetry;
 
+[Collection("EmfExporter")]
 public class EmfExportExtensionsTests
 {
     [Fact]

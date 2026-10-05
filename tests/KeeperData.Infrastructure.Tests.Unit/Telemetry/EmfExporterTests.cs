@@ -10,6 +10,7 @@ using Amazon.CloudWatch.Model;
 
 namespace KeeperData.Infrastructure.Tests.Unit.Telemetry;
 
+[Collection("EmfExporter")]
 public class EmfExporterTests
 {
     private readonly Mock<ILogger> _mockLogger;
