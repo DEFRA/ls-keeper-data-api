@@ -100,6 +100,25 @@ public class CphAssociationsRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task GivenAHolderRole_WhenHolderIsRequested_ThenTheHoldingIsReturned()
+    {
+        SetupReadModel(
+            parties: [("party-1", "source-party-1", Email)],
+            holdings: [("holding-1", "57/103/2335", "Test Holding"), ("holding-2", "12/345/6789", "Other Holding")],
+            partyRoles:
+            [
+                ("role-1", "party-1", "holding-1", null, "holder"),
+                ("role-2", "party-1", "holding-2", null, "keeper")
+            ]);
+
+        var result = await _repository.FindByEmailAsync(Email, ["holder", "owner"]);
+
+        result.Should().HaveCount(1);
+        result[0].CphNumber.Should().Be("57/103/2335");
+        result[0].Role.Should().Be("holder");
+    }
+
+    [Fact]
     public async Task GivenConfiguredRoles_WhenFinding_ThenAllRequestedRolesAreReturnedInOrder()
     {
         SetupReadModel(

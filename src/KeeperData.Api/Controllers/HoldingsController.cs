@@ -1,7 +1,9 @@
 using KeeperData.Api.Controllers.RequestDtos.Holdings;
 using KeeperData.Application;
 using KeeperData.Application.Queries.Holdings;
+using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.DTOs;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,6 +23,74 @@ public class HoldingsController(IRequestExecutor executor, IReadModelSqliteCache
 {
     private readonly IRequestExecutor _executor = executor;
     private readonly IReadModelSqliteCacheService _readModelCache = readModelCache;
+
+    /// <summary>
+    /// Retrieve a paginated list of holding details from the cached SAM read model.
+    /// </summary>
+    /// <remarks>
+    /// Serves holding details from the locally cached SAM read model.
+    /// Returns 503 if the cache has not yet loaded.
+    /// </remarks>
+    /// <param name="request">Query parameters for pagination, sorting and optional search. Search matches word prefixes, case-insensitively; all words must occur somewhere in the holding or its associated parties. CPH may be written with slashes or as nine digits.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">OK - Paginated list of holding details.</response>
+    /// <response code="400">The request was malformed or could not be processed.</response>
+    /// <response code="401">Access token is not set or invalid.</response>
+    /// <response code="403">The requestor is not authorized to perform this operation on the resource.</response>
+    /// <response code="503">SQLite read model cache is not yet available.</response>
+    /// <response code="500">The server encountered an unexpected error.</response>
+    [HttpGet]
+    [ProducesResponseType(typeof(PaginatedResult<HoldingDetail>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetHoldings(
+        [FromQuery] GetHoldingsRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!_readModelCache.IsLoaded)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                detail: "The SAM read model is not cached locally, so holding details cannot be resolved.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Search) &&
+            _readModelCache.GetCurrentSnapshot()?.SearchIndexPath is null)
+        {
+            return Problem(statusCode: StatusCodes.Status503ServiceUnavailable,
+                detail: "The holding search index is not available.");
+        }
+
+        var query = new GetHoldingsQuery
+        {
+            Page = request.Page ?? 1,
+            PageSize = Math.Clamp(request.PageSize ?? 10, 1, 100),
+            Sort = request.Sort,
+            Order = request.Order,
+            Search = request.Search
+        };
+
+        PaginatedResult<HoldingDetail> result;
+        try
+        {
+            result = await _executor.ExecuteQuery(query, cancellationToken);
+        }
+        catch (SearchIndexUnavailableException)
+        {
+            return Problem(statusCode: StatusCodes.Status503ServiceUnavailable,
+                detail: "The holding search index is not available.");
+        }
+
+        if (result.DataTimestamp is { } dataTimestamp)
+        {
+            Response.Headers["X-Data-Timestamp"] = dataTimestamp.ToString("o");
+        }
+
+        return Ok(result);
+    }
 
     /// <summary>
     /// Retrieve detailed holding information by CPH.

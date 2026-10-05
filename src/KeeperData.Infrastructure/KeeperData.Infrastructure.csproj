@@ -77,4 +77,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>  
+  <ItemGroup>
+    <EmbeddedResource Include="Storage\Sources\FakeSqliteHoldings.json" LogicalName="FakeSqliteHoldings.json" />
+  </ItemGroup>
 </Project>

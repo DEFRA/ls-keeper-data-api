@@ -34,6 +34,8 @@ public static class ServiceCollectionExtensions
 
     public static void ConfigureApi(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
+        EnsureFakeClientsAreDevelopmentOnly(configuration, environment);
+
         services.ConfigureAuthentication(configuration);
 
         services.ConfigureControllers();
@@ -67,6 +69,18 @@ public static class ServiceCollectionExtensions
             });
 
         services.ConfigurePiiAnonymization(configuration);
+    }
+
+    private static void EnsureFakeClientsAreDevelopmentOnly(
+        IConfiguration configuration,
+        IHostEnvironment environment)
+    {
+        if (configuration.GetValue<bool>("ApiClients:DataBridgeApi:UseFakeClient") &&
+            !environment.IsDevelopment())
+        {
+            throw new InvalidOperationException(
+                "ApiClients:DataBridgeApi:UseFakeClient can only be enabled in the Development environment.");
+        }
     }
 
     private static void ConfigureControllers(this IServiceCollection services)
@@ -319,6 +333,15 @@ public static class ServiceCollectionExtensions
                     policy.AddAuthenticationSchemes("Bearer");
                 }
                 policy.RequireAuthenticatedUser();
+            })
+            .AddPolicy("AdminScopeOrApiKey", policy =>
+            {
+                if (authConfig.EnableApiKey) policy.AddAuthenticationSchemes("Basic");
+                if (authConfig.ApiGatewayExists) policy.AddAuthenticationSchemes("Bearer");
+                policy.RequireAssertion(context => context.User.Identities.Any(identity =>
+                    identity.IsAuthenticated && (identity.AuthenticationType == "Basic" ||
+                    identity.Claims.Any(claim => claim.Type == "scope" &&
+                        claim.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Contains("admin", StringComparer.OrdinalIgnoreCase)))));
             });
     }
 

@@ -1,3 +1,5 @@
+using KeeperData.Core.Storage.Sqlite;
+
 namespace KeeperData.Core.Services;
 
 /// <summary>
@@ -11,4 +13,9 @@ public interface IReadModelSqliteCacheService
     string? CachedFileName { get; }
 
     string? GetCurrentDbPath();
+
+    /// <summary>Captures the database path and timestamp from the same cache generation.</summary>
+    SqliteSnapshot? GetCurrentSnapshot();
+
+    Task<CacheRefreshResult> ForceRefreshAsync(bool force, CancellationToken cancellationToken = default);
 }

@@ -1,12 +1,18 @@
 using KeeperData.Core.DTOs;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
+using KeeperData.Core.Storage.Sqlite;
 using Microsoft.Data.Sqlite;
 using System.Data.Common;
+using System.Text.Json;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 namespace KeeperData.Infrastructure.Database.Repositories;
 
-public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) : IHoldingDetailRepository
+public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheService, ILogger<HoldingDetailRepository>? logger = null) : IHoldingDetailRepository
 {
     private readonly IReadModelSqliteCacheService _cacheService = cacheService;
 
@@ -47,6 +53,318 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
             AllowedSpecies: allowedSpecies,
             Marks: marks);
     }
+
+    private const string SelectHoldingColumns = """
+        SELECT
+            h.Id,
+            h.Cph,
+            h.FeatureName,
+            h.CphType,
+            h.StartDate,
+            h.EndDate,
+            h.Udprn,
+            h.PaonDescription,
+            h.PaonStartNumber,
+            h.PaonStartNumberSuffix,
+            h.PaonEndNumber,
+            h.PaonEndNumberSuffix,
+            h.Street,
+            h.Town,
+            h.Locality,
+            h.Postcode,
+            h.UkInternalCode,
+            h.Easting,
+            h.Northing,
+            h.OsMapReference
+        FROM Holding AS h
+        """;
+
+    private const string SearchJoinClause = " JOIN search_index.HoldingSearch AS s ON s.HoldingId = h.Id WHERE s.SearchText MATCH $match";
+    private const string BaseHoldingsQuery = SelectHoldingColumns;
+    private const string BaseSearchQuery = SelectHoldingColumns + SearchJoinClause;
+
+    // Holdings queries
+    private const string HoldingsByCphAsc = BaseHoldingsQuery + " ORDER BY h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+    private const string HoldingsByCphDesc = BaseHoldingsQuery + " ORDER BY h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+    private const string HoldingsByNameAsc = BaseHoldingsQuery + " ORDER BY h.FeatureName ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+    private const string HoldingsByNameDesc = BaseHoldingsQuery + " ORDER BY h.FeatureName DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+    private const string HoldingsByTypeAsc = BaseHoldingsQuery + " ORDER BY h.CphType ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+    private const string HoldingsByTypeDesc = BaseHoldingsQuery + " ORDER BY h.CphType DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+    private const string HoldingsByStartDateAsc = BaseHoldingsQuery + " ORDER BY h.StartDate ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+    private const string HoldingsByStartDateDesc = BaseHoldingsQuery + " ORDER BY h.StartDate DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+    private const string HoldingsByEndDateAsc = BaseHoldingsQuery + " ORDER BY h.EndDate ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+    private const string HoldingsByEndDateDesc = BaseHoldingsQuery + " ORDER BY h.EndDate DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+
+    // Search queries
+    private const string SearchByCphAsc = BaseSearchQuery + " ORDER BY h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+    private const string SearchByCphDesc = BaseSearchQuery + " ORDER BY h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+    private const string SearchByNameAsc = BaseSearchQuery + " ORDER BY h.FeatureName ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+    private const string SearchByNameDesc = BaseSearchQuery + " ORDER BY h.FeatureName DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+    private const string SearchByTypeAsc = BaseSearchQuery + " ORDER BY h.CphType ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+    private const string SearchByTypeDesc = BaseSearchQuery + " ORDER BY h.CphType DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+    private const string SearchByStartDateAsc = BaseSearchQuery + " ORDER BY h.StartDate ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+    private const string SearchByStartDateDesc = BaseSearchQuery + " ORDER BY h.StartDate DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+    private const string SearchByEndDateAsc = BaseSearchQuery + " ORDER BY h.EndDate ASC, h.Cph ASC LIMIT $pageSize OFFSET $offset;";
+    private const string SearchByEndDateDesc = BaseSearchQuery + " ORDER BY h.EndDate DESC, h.Cph DESC LIMIT $pageSize OFFSET $offset;";
+
+    public async Task<(List<HoldingDetail> Items, int TotalCount, DateTime? DataTimestamp)> GetPagedHoldingsAsync(
+        int page,
+        int pageSize,
+        string? sort,
+        string? order,
+        CancellationToken cancellationToken = default)
+    {
+        var snapshot = _cacheService.GetCurrentSnapshot()
+            ?? throw new InvalidOperationException("The SAM read model is not cached locally, so holding details cannot be resolved.");
+
+        var connectionString = new SqliteConnectionStringBuilder
+        {
+            DataSource = snapshot.DbPath,
+            Mode = SqliteOpenMode.ReadOnly,
+            Pooling = true
+        };
+        await using var connection = new SqliteConnection(connectionString.ToString());
+        await connection.OpenAsync(cancellationToken);
+
+        await using var countCommand = connection.CreateCommand();
+        countCommand.CommandText = "SELECT COUNT(*) FROM Holding;";
+        var totalCount = Convert.ToInt32(await countCommand.ExecuteScalarAsync(cancellationToken));
+        if (totalCount == 0)
+        {
+            return ([], 0, snapshot.DataTimestamp);
+        }
+
+        var (safePageSize, offset) = CalculatePaging(page, pageSize);
+        var descending = string.Equals(sort, "desc", StringComparison.OrdinalIgnoreCase);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = ResolveHoldingsSql(order, descending);
+        command.Parameters.Add(new SqliteParameter("$pageSize", safePageSize));
+        command.Parameters.Add(new SqliteParameter("$offset", offset));
+
+        var holdingRows = await ReadHoldingRowsAsync(command, cancellationToken);
+        if (holdingRows.Count == 0)
+        {
+            return ([], totalCount, snapshot.DataTimestamp);
+        }
+
+        var items = await HydrateHoldingDetailsAsync(connection, holdingRows, cancellationToken);
+        return (items, totalCount, snapshot.DataTimestamp);
+    }
+
+    public async Task<(List<HoldingDetail> Items, int TotalCount, DateTime? DataTimestamp)> SearchHoldingsAsync(
+        int page, int pageSize, string? sort, string? order, string search,
+        CancellationToken cancellationToken = default)
+    {
+        var snapshot = _cacheService.GetCurrentSnapshot()
+            ?? throw new InvalidOperationException("The SAM read model is not cached locally, so holding details cannot be resolved.");
+
+        var match = ToFtsQuery(search);
+        if (string.IsNullOrEmpty(match))
+        {
+            return ([], 0, snapshot.DataTimestamp);
+        }
+
+        if (snapshot.SearchIndexPath is null || !File.Exists(snapshot.SearchIndexPath))
+        {
+            throw new SearchIndexUnavailableException();
+        }
+
+        try
+        {
+            return await ExecuteSearchHoldingsAsync(snapshot, match, page, pageSize, sort, order, cancellationToken);
+        }
+        catch (SqliteException ex)
+        {
+            logger?.LogError(ex, "Holding search index could not be read");
+            throw new SearchIndexUnavailableException("The holding search index is not available.", ex);
+        }
+    }
+
+    private async Task<(List<HoldingDetail> Items, int TotalCount, DateTime? DataTimestamp)> ExecuteSearchHoldingsAsync(
+        SqliteSnapshot snapshot,
+        string match,
+        int page,
+        int pageSize,
+        string? sort,
+        string? order,
+        CancellationToken cancellationToken)
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        // Search connections are not pooled because ATTACH persists on pooled SQLite connections
+        // and could hold locks or expose an index from an older snapshot.
+        var connectionString = new SqliteConnectionStringBuilder
+        {
+            DataSource = snapshot.DbPath,
+            Mode = SqliteOpenMode.ReadOnly,
+            Pooling = false
+        };
+        await using var connection = new SqliteConnection(connectionString.ToString());
+        await connection.OpenAsync(cancellationToken);
+
+        await AttachSearchIndexAsync(connection, snapshot.SearchIndexPath!, cancellationToken);
+
+        await using var countCommand = connection.CreateCommand();
+        countCommand.CommandText = "SELECT COUNT(*) FROM search_index.HoldingSearch WHERE SearchText MATCH $match;";
+        countCommand.Parameters.Add(new SqliteParameter("$match", match));
+        var totalCount = Convert.ToInt32(await countCommand.ExecuteScalarAsync(cancellationToken));
+
+        if (totalCount == 0)
+        {
+            LogSearchCompleted(stopwatch, totalCount);
+            return ([], 0, snapshot.DataTimestamp);
+        }
+
+        var (safePageSize, offset) = CalculatePaging(page, pageSize);
+        var descending = string.Equals(sort, "desc", StringComparison.OrdinalIgnoreCase);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = ResolveSearchSql(order, descending);
+        command.Parameters.Add(new SqliteParameter("$pageSize", safePageSize));
+        command.Parameters.Add(new SqliteParameter("$offset", offset));
+        command.Parameters.Add(new SqliteParameter("$match", match));
+
+        var holdingRows = await ReadHoldingRowsAsync(command, cancellationToken);
+        if (holdingRows.Count == 0)
+        {
+            LogSearchCompleted(stopwatch, totalCount);
+            return ([], totalCount, snapshot.DataTimestamp);
+        }
+
+        var items = await HydrateHoldingDetailsAsync(connection, holdingRows, cancellationToken);
+        LogSearchCompleted(stopwatch, totalCount);
+        return (items, totalCount, snapshot.DataTimestamp);
+    }
+
+    private static (int PageSize, long Offset) CalculatePaging(int page, int pageSize)
+    {
+        var safePage = Math.Max(1, page);
+        var safePageSize = Math.Max(1, pageSize);
+        var offset = ((long)safePage - 1) * safePageSize;
+        return (safePageSize, offset);
+    }
+
+    private static async Task AttachSearchIndexAsync(
+        SqliteConnection connection,
+        string searchIndexPath,
+        CancellationToken cancellationToken)
+    {
+        await using var attach = connection.CreateCommand();
+        attach.CommandText = "ATTACH DATABASE $indexPath AS search_index";
+        attach.Parameters.AddWithValue("$indexPath", searchIndexPath);
+        await attach.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static async Task<List<HoldingRowData>> ReadHoldingRowsAsync(
+        SqliteCommand command,
+        CancellationToken cancellationToken)
+    {
+        var holdingRows = new List<HoldingRowData>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            holdingRows.Add(MapHoldingRow(reader));
+        }
+
+        return holdingRows;
+    }
+
+    private static async Task<List<HoldingDetail>> HydrateHoldingDetailsAsync(
+        SqliteConnection connection,
+        List<HoldingRowData> holdingRows,
+        CancellationToken cancellationToken)
+    {
+        var holdingIds = holdingRows.Select(h => h.HoldingId).ToList();
+
+        var associationsMap = await ReadBatchAssociationsAsync(connection, holdingIds, cancellationToken);
+        var speciesMap = await ReadBatchAllowedSpeciesAsync(connection, holdingIds, cancellationToken);
+        var marksMap = await ReadBatchMarksAsync(connection, holdingIds, cancellationToken);
+
+        var items = new List<HoldingDetail>(holdingRows.Count);
+        foreach (var row in holdingRows)
+        {
+            var associations = associationsMap.GetValueOrDefault(row.HoldingId) ?? [];
+            var allowedSpecies = speciesMap.GetValueOrDefault(row.HoldingId) ?? [];
+            var marks = marksMap.GetValueOrDefault(row.HoldingId) ?? [];
+
+            items.Add(new HoldingDetail(
+                Identifier: row.Cph,
+                HoldingType: row.CphType,
+                Name: row.Name,
+                StartDate: row.StartDate,
+                EndDate: row.EndDate,
+                Location: row.Location,
+                Associations: associations,
+                AllowedSpecies: allowedSpecies,
+                Marks: marks));
+        }
+
+        return items;
+    }
+
+    private void LogSearchCompleted(Stopwatch stopwatch, int matchCount)
+    {
+        if (logger?.IsEnabled(LogLevel.Information) == true)
+        {
+            logger.LogInformation(
+                "Holding search completed in {DurationMs}ms with {MatchCount} matches",
+                stopwatch.ElapsedMilliseconds,
+                matchCount);
+        }
+    }
+
+    private static string ResolveHoldingsSql(string? order, bool descending) =>
+        (order?.ToLowerInvariant(), descending) switch
+        {
+            ("name", false) => HoldingsByNameAsc,
+            ("name", true) => HoldingsByNameDesc,
+            ("holdingtype", false) => HoldingsByTypeAsc,
+            ("holdingtype", true) => HoldingsByTypeDesc,
+            ("startdate", false) => HoldingsByStartDateAsc,
+            ("startdate", true) => HoldingsByStartDateDesc,
+            ("enddate", false) => HoldingsByEndDateAsc,
+            ("enddate", true) => HoldingsByEndDateDesc,
+            (_, false) => HoldingsByCphAsc,
+            _ => HoldingsByCphDesc
+        };
+
+    private static string ResolveSearchSql(string? order, bool descending) =>
+        (order?.ToLowerInvariant(), descending) switch
+        {
+            ("name", false) => SearchByNameAsc,
+            ("name", true) => SearchByNameDesc,
+            ("holdingtype", false) => SearchByTypeAsc,
+            ("holdingtype", true) => SearchByTypeDesc,
+            ("startdate", false) => SearchByStartDateAsc,
+            ("startdate", true) => SearchByStartDateDesc,
+            ("enddate", false) => SearchByEndDateAsc,
+            ("enddate", true) => SearchByEndDateDesc,
+            (_, false) => SearchByCphAsc,
+            _ => SearchByCphDesc
+        };
+
+    private static string ToFtsQuery(string search)
+    {
+        search = search.Trim();
+        if (CphWithSlashesRegex().IsMatch(search))
+            return $"\"{search.Replace("/", "", StringComparison.Ordinal)}\"";
+        if (CphNineDigitsRegex().IsMatch(search))
+            return $"\"{search}\"";
+
+        var terms = SearchTermsRegex().Matches(search)
+            .Select(match => $"\"{match.Value}\"*");
+        return string.Join(" AND ", terms);
+    }
+
+    [GeneratedRegex(@"^\d{2}/\d{3}/\d{4}$")]
+    private static partial Regex CphWithSlashesRegex();
+
+    [GeneratedRegex(@"^\d{9}$")]
+    private static partial Regex CphNineDigitsRegex();
+
+    [GeneratedRegex(@"[\p{L}\p{N}]+")]
+    private static partial Regex SearchTermsRegex();
 
     private static async Task<HoldingRowData?> ReadHoldingAsync(
         SqliteConnection connection,
@@ -100,7 +418,7 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
         var cphType = GetNullableString(reader, 3);
         var startDate = ReadEpoch(reader, 4);
         var endDate = ReadEpoch(reader, 5);
-        var udprn = GetNullableString(reader, 6);
+        var udprn = GetNullableInt64(reader, 6);
 
         var paonDescription = GetNullableString(reader, 7);
         var paonStartNumber = GetNullableString(reader, 8);
@@ -158,6 +476,13 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
                 p.Email,
                 p.Mobile,
                 p.Telephone,
+                p.AddressLine1,
+                p.AddressStreet,
+                p.AddressTown,
+                p.AddressLocality,
+                p.AddressNation,
+                p.AddressPostcode,
+                p.AddressCountryCode,
                 r.Role,
                 d.AnimalSpeciesCode
             FROM PartyRole AS r
@@ -184,19 +509,27 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
 
     private static void ProcessAssociationRow(
         DbDataReader reader,
-        Dictionary<string, PartyAccumulator> partyMap)
+        Dictionary<string, PartyAccumulator> partyMap,
+        int offset = 0)
     {
-        var sourcePartyId = reader.GetString(0);
-        var personTitle = GetNullableString(reader, 1);
-        var givenName = GetNullableString(reader, 2);
-        var initials = GetNullableString(reader, 3);
-        var familyName = GetNullableString(reader, 4);
-        var organisationName = GetNullableString(reader, 5);
-        var email = GetNullableString(reader, 6);
-        var mobile = GetNullableString(reader, 7);
-        var telephone = GetNullableString(reader, 8);
-        var roleCode = reader.GetString(9);
-        var speciesCode = GetNullableString(reader, 10);
+        var sourcePartyId = reader.GetString(0 + offset);
+        var personTitle = GetNullableString(reader, 1 + offset);
+        var givenName = GetNullableString(reader, 2 + offset);
+        var initials = GetNullableString(reader, 3 + offset);
+        var familyName = GetNullableString(reader, 4 + offset);
+        var organisationName = GetNullableString(reader, 5 + offset);
+        var email = GetNullableString(reader, 6 + offset);
+        var mobile = GetNullableString(reader, 7 + offset);
+        var telephone = GetNullableString(reader, 8 + offset);
+        var addressLine1 = GetNullableString(reader, 9 + offset);
+        var addressLine2 = GetNullableString(reader, 10 + offset);
+        var addressTown = GetNullableString(reader, 11 + offset);
+        var addressLocality = GetNullableString(reader, 12 + offset);
+        var addressNation = GetNullableString(reader, 13 + offset);
+        var addressPostcode = GetNullableString(reader, 14 + offset);
+        var addressCountryCode = GetNullableString(reader, 15 + offset);
+        var roleCode = reader.GetString(16 + offset);
+        var speciesCode = GetNullableString(reader, 17 + offset);
 
         if (!partyMap.TryGetValue(sourcePartyId, out var accumulator))
         {
@@ -213,7 +546,15 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
                 PartyType = partyType,
                 Email = email,
                 Mobile = mobile,
-                Telephone = telephone
+                Telephone = telephone,
+                Address = new PartyAddress(
+                    AddressLine1: addressLine1,
+                    AddressLine2: addressLine2,
+                    AddressTown: addressTown,
+                    AddressLocality: addressLocality,
+                    AddressNation: addressNation,
+                    AddressPostcode: addressPostcode,
+                    AddressCountryCode: addressCountryCode)
             };
             partyMap[sourcePartyId] = accumulator;
         }
@@ -284,17 +625,18 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
 
     private static void ProcessMarkRow(
         DbDataReader reader,
-        Dictionary<string, MarkAccumulator> markMap)
+        Dictionary<string, MarkAccumulator> markMap,
+        int offset = 0)
     {
-        if (reader.IsDBNull(0))
+        if (reader.IsDBNull(0 + offset))
         {
             return;
         }
 
-        var herdmark = reader.GetString(0);
-        var fromDate = GetNullableInt64(reader, 1);
-        var toDate = GetNullableInt64(reader, 2);
-        var species = GetNullableString(reader, 3);
+        var herdmark = reader.GetString(0 + offset);
+        var fromDate = GetNullableInt64(reader, 1 + offset);
+        var toDate = GetNullableInt64(reader, 2 + offset);
+        var species = GetNullableString(reader, 3 + offset);
 
         if (!markMap.TryGetValue(herdmark, out var accumulator))
         {
@@ -303,6 +645,142 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
         }
 
         accumulator.AddRow(fromDate, toDate, species);
+    }
+
+    private static async Task<Dictionary<string, List<HoldingAssociation>>> ReadBatchAssociationsAsync(
+        SqliteConnection connection,
+        IReadOnlyList<string> holdingIds,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+            SELECT
+                r.HoldingId,
+                p.SourcePartyId,
+                p.PersonTitle,
+                p.GivenName,
+                p.Initials,
+                p.FamilyName,
+                p.OrganisationName,
+                p.Email,
+                p.Mobile,
+                p.Telephone,
+                p.AddressLine1,
+                p.AddressStreet,
+                p.AddressTown,
+                p.AddressLocality,
+                p.AddressNation,
+                p.AddressPostcode,
+                p.AddressCountryCode,
+                r.Role,
+                d.AnimalSpeciesCode
+            FROM PartyRole AS r
+            JOIN Party AS p ON p.Id = r.PartyId
+            LEFT JOIN Herd AS d ON d.Id = r.HerdId
+            WHERE r.HoldingId IN (SELECT value FROM json_each($holdingIds))
+            ORDER BY r.HoldingId, p.SourcePartyId, r.Role, d.AnimalSpeciesCode;
+            """;
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.Add(new SqliteParameter("$holdingIds", JsonSerializer.Serialize(holdingIds)));
+
+        var resultMap = new Dictionary<string, Dictionary<string, PartyAccumulator>>(StringComparer.OrdinalIgnoreCase);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var holdingId = reader.GetString(0);
+            if (!resultMap.TryGetValue(holdingId, out var partyMap))
+            {
+                partyMap = new Dictionary<string, PartyAccumulator>(StringComparer.OrdinalIgnoreCase);
+                resultMap[holdingId] = partyMap;
+            }
+
+            ProcessAssociationRow(reader, partyMap, offset: 1);
+        }
+
+        return resultMap.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value.Values.Select(p => p.ToHoldingAssociation()).ToList(),
+            StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static async Task<Dictionary<string, List<string>>> ReadBatchAllowedSpeciesAsync(
+        SqliteConnection connection,
+        IReadOnlyList<string> holdingIds,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+            SELECT DISTINCT a.HoldingId, a.AnimalSpeciesCode
+            FROM HoldingAnimalProfile AS a
+            WHERE a.HoldingId IN (SELECT value FROM json_each($holdingIds))
+            ORDER BY a.HoldingId, a.AnimalSpeciesCode;
+            """;
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.Add(new SqliteParameter("$holdingIds", JsonSerializer.Serialize(holdingIds)));
+
+        var resultMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var holdingId = reader.GetString(0);
+            if (!reader.IsDBNull(1))
+            {
+                if (!resultMap.TryGetValue(holdingId, out var speciesList))
+                {
+                    speciesList = new List<string>();
+                    resultMap[holdingId] = speciesList;
+                }
+                speciesList.Add(reader.GetString(1));
+            }
+        }
+
+        return resultMap;
+    }
+
+    private static async Task<Dictionary<string, List<HoldingMark>>> ReadBatchMarksAsync(
+        SqliteConnection connection,
+        IReadOnlyList<string> holdingIds,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+            SELECT
+                d.HoldingId,
+                d.Herdmark,
+                d.AnimalGroupFromDate,
+                d.AnimalGroupToDate,
+                d.AnimalSpeciesCode
+            FROM Herd AS d
+            WHERE d.HoldingId IN (SELECT value FROM json_each($holdingIds))
+            ORDER BY d.HoldingId, d.Herdmark, d.AnimalSpeciesCode;
+            """;
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.Add(new SqliteParameter("$holdingIds", JsonSerializer.Serialize(holdingIds)));
+
+        var resultMap = new Dictionary<string, Dictionary<string, MarkAccumulator>>(StringComparer.OrdinalIgnoreCase);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var holdingId = reader.GetString(0);
+            if (!resultMap.TryGetValue(holdingId, out var markMap))
+            {
+                markMap = new Dictionary<string, MarkAccumulator>(StringComparer.OrdinalIgnoreCase);
+                resultMap[holdingId] = markMap;
+            }
+
+            ProcessMarkRow(reader, markMap, offset: 1);
+        }
+
+        return resultMap.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value.Values.Select(m => m.ToHoldingMark()).ToList(),
+            StringComparer.OrdinalIgnoreCase);
     }
 
     private static (string? AddressLine1, string? AddressLine2) AssembleAddressLines(
@@ -388,11 +866,8 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
     private static long? GetNullableInt64(DbDataReader reader, int ordinal) =>
         reader.IsDBNull(ordinal) ? null : reader.GetInt64(ordinal);
 
-    private static int? GetNullableInt32(DbDataReader reader, int ordinal)
-    {
-        var value = GetNullableString(reader, ordinal);
-        return int.TryParse(value, out var parsed) ? parsed : null;
-    }
+    private static int? GetNullableInt32(DbDataReader reader, int ordinal) =>
+        reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
 
     private static DateTimeOffset? ReadEpoch(DbDataReader reader, int ordinal) =>
         reader.IsDBNull(ordinal)
@@ -419,6 +894,7 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
         public string? Email { get; init; }
         public string? Mobile { get; init; }
         public string? Telephone { get; init; }
+        public required PartyAddress Address { get; init; }
 
         private readonly Dictionary<string, HashSet<string>> _roles = new(StringComparer.OrdinalIgnoreCase);
 
@@ -455,6 +931,7 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
                 Email: Email,
                 Mobile: Mobile,
                 Telephone: Telephone,
+                Address: Address,
                 Roles: roleList);
         }
     }
@@ -463,6 +940,7 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
     {
         private long? _minStartDate;
         private long? _maxEndDate;
+        private bool _hasOpenEndedRow;
         private readonly HashSet<string> _species = new(StringComparer.OrdinalIgnoreCase);
 
         public void AddRow(long? fromDate, long? toDate, string? species)
@@ -476,6 +954,10 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
             {
                 _maxEndDate = _maxEndDate.HasValue ? Math.Max(_maxEndDate.Value, toDate.Value) : toDate.Value;
             }
+            else
+            {
+                _hasOpenEndedRow = true;
+            }
 
             if (!string.IsNullOrWhiteSpace(species))
             {
@@ -486,7 +968,9 @@ public class HoldingDetailRepository(IReadModelSqliteCacheService cacheService) 
         public HoldingMark ToHoldingMark()
         {
             var startDate = _minStartDate.HasValue ? DateTimeOffset.FromUnixTimeSeconds(_minStartDate.Value) : (DateTimeOffset?)null;
-            var endDate = _maxEndDate.HasValue ? DateTimeOffset.FromUnixTimeSeconds(_maxEndDate.Value) : (DateTimeOffset?)null;
+            var endDate = !_hasOpenEndedRow && _maxEndDate.HasValue
+                ? DateTimeOffset.FromUnixTimeSeconds(_maxEndDate.Value)
+                : (DateTimeOffset?)null;
 
             return new HoldingMark(
                 Mark: mark,

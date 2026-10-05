@@ -1,9 +1,11 @@
 using FluentAssertions;
 using KeeperData.Application;
 using KeeperData.Application.Queries.Holdings;
+using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.DTOs;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Services;
+using KeeperData.Core.Storage.Sqlite;
 using KeeperData.Tests.Common.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.TestHost;
@@ -131,6 +133,14 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
                     Email: "krds-test06@livestockinformationb2cqa.onmicrosoft.com",
                     Mobile: null,
                     Telephone: "01206 999999",
+                    Address: new PartyAddress(
+                        AddressLine1: "Test Farm 06",
+                        AddressLine2: "Layer Road",
+                        AddressTown: "COLCHESTER",
+                        AddressLocality: "Great Wigborough",
+                        AddressNation: "England",
+                        AddressPostcode: "CO5 7RR",
+                        AddressCountryCode: "GB"),
                     Roles:
                     [
                         new HoldingRole("holder", []),
@@ -194,5 +204,297 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetHoldings_WhenCacheNotLoaded_Returns503ProblemDetails()
+    {
+        // Arrange
+        _mockCache.Setup(c => c.IsLoaded).Returns(false);
+
+        // Act
+        var response = await _client.GetAsync("/api/v2/holdings");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+
+        var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        problemDetails.Should().NotBeNull();
+        problemDetails!.Status.Should().Be(503);
+        problemDetails.Detail.Should().Be("The SAM read model is not cached locally, so holding details cannot be resolved.");
+
+        _mockExecutor.Verify(x => x.ExecuteQuery(It.IsAny<GetHoldingsQuery>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetHoldings_WhenUnauthenticated_Returns401Unauthorized()
+    {
+        // Act
+        var response = await _unauthenticatedClient.GetAsync("/api/v2/holdings");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetHoldings_SearchWithoutIndex_Returns503()
+    {
+        _mockCache.Setup(c => c.IsLoaded).Returns(true);
+        _mockCache.Setup(c => c.GetCurrentSnapshot()).Returns(new SqliteSnapshot("read-model.sqlite", null));
+
+        var response = await _client.GetAsync("/api/v2/holdings?search=green");
+
+        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+        _mockExecutor.Verify(x => x.ExecuteQuery(It.IsAny<GetHoldingsQuery>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetHoldings_SearchForwardsSearchAndPaging()
+    {
+        _mockCache.Setup(c => c.IsLoaded).Returns(true);
+        _mockCache.Setup(c => c.GetCurrentSnapshot()).Returns(new SqliteSnapshot("read-model.sqlite", null, "index.sqlite"));
+        _mockExecutor.Setup(x => x.ExecuteQuery(It.IsAny<GetHoldingsQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PaginatedResult<HoldingDetail> { Page = 2, PageSize = 5 });
+
+        var response = await _client.GetAsync("/api/v2/holdings?search=green%20fields&page=2&pageSize=5&sort=desc&order=name");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        _mockExecutor.Verify(x => x.ExecuteQuery(
+            It.Is<GetHoldingsQuery>(q => q.Search == "green fields" && q.Page == 2 && q.PageSize == 5 && q.Sort == "desc" && q.Order == "name"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Theory]
+    [InlineData("alice%40example.com", "alice@example.com")]
+    [InlineData("%2B44%20%280%297700%20900123", "+44 (0)7700 900123")]
+    [InlineData("Smith%20%26%20Sons", "Smith & Sons")]
+    [InlineData("High%20St%2C%20Chelmsford", "High St, Chelmsford")]
+    public async Task GetHoldings_AcceptsContactSearch(string encodedSearch, string expectedSearch)
+    {
+        _mockCache.Setup(c => c.IsLoaded).Returns(true);
+        _mockCache.Setup(c => c.GetCurrentSnapshot()).Returns(new SqliteSnapshot("read-model.sqlite", null, "index.sqlite"));
+        _mockExecutor.Setup(x => x.ExecuteQuery(It.IsAny<GetHoldingsQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PaginatedResult<HoldingDetail>());
+
+        var response = await _client.GetAsync($"/api/v2/holdings?search={encodedSearch}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        _mockExecutor.Verify(x => x.ExecuteQuery(
+            It.Is<GetHoldingsQuery>(q => q.Search == expectedSearch), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetHoldings_WhenIndexDisappearsDuringSearch_Returns503()
+    {
+        _mockCache.Setup(c => c.IsLoaded).Returns(true);
+        _mockCache.Setup(c => c.GetCurrentSnapshot()).Returns(new SqliteSnapshot("read-model.sqlite", null, "index.sqlite"));
+        _mockExecutor.Setup(x => x.ExecuteQuery(It.IsAny<GetHoldingsQuery>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new KeeperData.Core.Exceptions.SearchIndexUnavailableException());
+
+        var response = await _client.GetAsync("/api/v2/holdings?search=green");
+
+        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    }
+
+    [Theory]
+    [InlineData("?page=-1&pageSize=0", "page")]
+    [InlineData("?page=-1&pageSize=0", "pageSize")]
+    [InlineData("?page=0", "page")]
+    [InlineData("?pageSize=0", "pageSize")]
+    [InlineData("?pageSize=200", "pageSize")]
+    [InlineData("?sort=invalid", "sort")]
+    [InlineData("?order=unsupported", "order")]
+    [InlineData("?search=green*", "search")]
+    [InlineData("?search=%22green%22", "search")]
+    [InlineData("?search=---", "search")]
+    public async Task GetHoldings_WhenInvalidParameters_Returns400ValidationProblemDetails(string queryString, string expectedErrorField)
+    {
+        // Arrange
+        _mockCache.Setup(c => c.IsLoaded).Returns(true);
+
+        // Act
+        var response = await _client.GetAsync($"/api/v2/holdings{queryString}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var problemDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        problemDetails.Should().NotBeNull();
+        problemDetails!.Status.Should().Be(400);
+        problemDetails.Errors.Should().ContainKey(expectedErrorField);
+
+        _mockExecutor.Verify(x => x.ExecuteQuery(It.IsAny<GetHoldingsQuery>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetHoldings_WhenSearchHasOnlyPunctuation_ReturnsClearValidationMessage()
+    {
+        _mockCache.Setup(c => c.IsLoaded).Returns(true);
+
+        var response = await _client.GetAsync("/api/v2/holdings?search=---");
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var problemDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        problemDetails!.Errors["search"].Should().Contain("Search must contain at least one letter or digit.");
+        _mockExecutor.Verify(x => x.ExecuteQuery(It.IsAny<GetHoldingsQuery>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetHoldings_WhenSearchIsTooLong_Returns400()
+    {
+        _mockCache.Setup(c => c.IsLoaded).Returns(true);
+        var response = await _client.GetAsync($"/api/v2/holdings?search={new string('a', 201)}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var problemDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        problemDetails!.Errors.Should().ContainKey("search");
+    }
+
+    [Fact]
+    public async Task GetHoldings_DefaultFirstPage_Returns200WithPaginatedResult()
+    {
+        // Arrange
+        _mockCache.Setup(c => c.IsLoaded).Returns(true);
+        var dataTimestamp = new DateTime(2026, 6, 30, 12, 0, 0, DateTimeKind.Utc);
+        _mockCache.Setup(c => c.DataTimestamp).Returns(dataTimestamp);
+
+        var sampleValues = Enumerable.Range(1, 10).Select(i => new HoldingDetail(
+            Identifier: $"13/169/{i:D4}",
+            HoldingType: "permanent",
+            Name: $"Farm {i}",
+            StartDate: DateTimeOffset.Parse("2026-03-09T00:00:00Z"),
+            EndDate: null,
+            Location: new HoldingLocation(null, null, null, new HoldingAddress(null, null, null, null, null, null, null)),
+            Associations: [],
+            AllowedSpecies: ["CTT"],
+            Marks: []
+        )).ToList();
+
+        var paginatedResult = new PaginatedResult<HoldingDetail>
+        {
+            Count = 10,
+            TotalCount = 15420,
+            DataTimestamp = dataTimestamp,
+            Page = 1,
+            PageSize = 10,
+            Values = sampleValues
+        };
+
+        _mockExecutor
+            .Setup(x => x.ExecuteQuery(
+                It.Is<GetHoldingsQuery>(q => q.Page == 1 && q.PageSize == 10 && q.Sort == "asc" && q.Order == "cph"),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(paginatedResult);
+
+        // Act
+        var response = await _client.GetAsync("/api/v2/holdings");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Headers.GetValues("X-Data-Timestamp").Should().ContainSingle().Which.Should().Be(dataTimestamp.ToString("o"));
+
+        var result = await response.Content.ReadFromJsonAsync<PaginatedResult<HoldingDetail>>();
+        result.Should().NotBeNull();
+        result!.Count.Should().Be(10);
+        result.TotalCount.Should().Be(15420);
+        result.Page.Should().Be(1);
+        result.PageSize.Should().Be(10);
+        result.TotalPages.Should().Be(1542);
+        result.HasNextPage.Should().BeTrue();
+        result.HasPreviousPage.Should().BeFalse();
+        result.Values.Should().HaveCount(10);
+        result.Values[0].Identifier.Should().Be("13/169/0001");
+        result.Values[9].Identifier.Should().Be("13/169/0010");
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task GetHoldings_WhenCacheRefreshesDuringQuery_UsesOnlyTheQueriedSnapshotTimestamp(bool hasTimestamp)
+    {
+        _mockCache.Setup(c => c.IsLoaded).Returns(true);
+        var timestamp = new DateTime(2026, 6, 30, 12, 0, 0, DateTimeKind.Utc);
+        _mockCache.Setup(c => c.DataTimestamp).Returns(timestamp);
+        var queryStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var queryResult = new TaskCompletionSource<PaginatedResult<HoldingDetail>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _mockExecutor
+            .Setup(x => x.ExecuteQuery(It.IsAny<GetHoldingsQuery>(), It.IsAny<CancellationToken>()))
+            .Returns(() =>
+            {
+                queryStarted.SetResult();
+                return queryResult.Task;
+            });
+
+        var responseTask = _client.GetAsync("/api/v2/holdings");
+        await queryStarted.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        _mockCache.Setup(c => c.DataTimestamp).Returns(timestamp.AddDays(1));
+        queryResult.SetResult(new PaginatedResult<HoldingDetail>
+        {
+            Page = 1,
+            PageSize = 10,
+            DataTimestamp = hasTimestamp ? timestamp : null
+        });
+        var response = await responseTask;
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        if (hasTimestamp)
+        {
+            response.Headers.GetValues("X-Data-Timestamp").Should().Equal(timestamp.ToString("o"));
+        }
+        else
+        {
+            response.Headers.Contains("X-Data-Timestamp").Should().BeFalse();
+        }
+        var json = await response.Content.ReadAsStringAsync();
+        json.Should().NotContain("dataTimestamp");
+        _mockCache.VerifyGet(c => c.DataTimestamp, Times.Never);
+    }
+
+    [Fact]
+    public async Task GetHoldings_CustomPageAndSort_Returns200WithCustomPagination()
+    {
+        // Arrange
+        _mockCache.Setup(c => c.IsLoaded).Returns(true);
+
+        var sampleValues = Enumerable.Range(1, 5).Select(i => new HoldingDetail(
+            Identifier: $"13/169/{10 - i:D4}",
+            HoldingType: "permanent",
+            Name: $"Farm {10 - i}",
+            StartDate: null,
+            EndDate: null,
+            Location: new HoldingLocation(null, null, null, new HoldingAddress(null, null, null, null, null, null, null)),
+            Associations: [],
+            AllowedSpecies: [],
+            Marks: []
+        )).ToList();
+
+        var paginatedResult = new PaginatedResult<HoldingDetail>
+        {
+            Count = 5,
+            TotalCount = 20,
+            Page = 2,
+            PageSize = 5,
+            Values = sampleValues
+        };
+
+        _mockExecutor
+            .Setup(x => x.ExecuteQuery(
+                It.Is<GetHoldingsQuery>(q => q.Page == 2 && q.PageSize == 5 && q.Sort == "desc" && q.Order == "name"),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(paginatedResult);
+
+        // Act
+        var response = await _client.GetAsync("/api/v2/holdings?page=2&pageSize=5&sort=desc&order=name");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var result = await response.Content.ReadFromJsonAsync<PaginatedResult<HoldingDetail>>();
+        result.Should().NotBeNull();
+        result!.Page.Should().Be(2);
+        result.PageSize.Should().Be(5);
+        result.Values.Should().HaveCount(5);
+        result.HasPreviousPage.Should().BeTrue();
+        result.HasNextPage.Should().BeTrue();
     }
 }

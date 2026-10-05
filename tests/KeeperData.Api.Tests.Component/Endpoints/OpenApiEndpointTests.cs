@@ -39,11 +39,13 @@ public sealed class OpenApiEndpointTests : IDisposable
         paths.EnumerateObject().Select(path => path.Name).Should().BeEquivalentTo(
         [
             "/api/v2/cph-associations",
+            "/api/v2/holdings",
             "/api/v2/holdings/{county}/{parish}/{holding}",
             "/api/v2/user-accounts",
             "/api/v2/user-accounts/{subject}"
         ]);
         paths.GetProperty("/api/v2/cph-associations").EnumerateObject().Select(operation => operation.Name).Should().Equal("get");
+        paths.GetProperty("/api/v2/holdings").EnumerateObject().Select(operation => operation.Name).Should().Equal("get");
         paths.GetProperty("/api/v2/holdings/{county}/{parish}/{holding}").EnumerateObject().Select(operation => operation.Name).Should().Equal("get");
         paths.GetProperty("/api/v2/user-accounts").EnumerateObject().Select(operation => operation.Name).Should().Equal("post");
         paths.GetProperty("/api/v2/user-accounts/{subject}").EnumerateObject().Select(operation => operation.Name).Should().Equal("get");

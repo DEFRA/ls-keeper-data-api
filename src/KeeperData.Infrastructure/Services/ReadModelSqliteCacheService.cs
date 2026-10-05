@@ -2,6 +2,7 @@ using KeeperData.Core.Services;
 using KeeperData.Core.Storage.Sqlite;
 using KeeperData.Infrastructure.Storage.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace KeeperData.Infrastructure.Services;
 
@@ -12,6 +13,7 @@ namespace KeeperData.Infrastructure.Services;
 public class ReadModelSqliteCacheService : SqliteCacheService, IReadModelSqliteCacheService
 {
     private readonly ReadModelSqliteCacheConfiguration _config;
+    private readonly ILogger<ReadModelSqliteCacheService> _logger;
 
     public ReadModelSqliteCacheService(
         ISqliteArtifactSource artifactSource,
@@ -20,6 +22,7 @@ public class ReadModelSqliteCacheService : SqliteCacheService, IReadModelSqliteC
         : base(artifactSource, config, logger)
     {
         _config = config;
+        _logger = logger;
     }
 
     protected override string LatestArtifactRoute => _config.LatestArtifactRoute;
@@ -31,4 +34,34 @@ public class ReadModelSqliteCacheService : SqliteCacheService, IReadModelSqliteC
     protected override string RowCountSql => "SELECT COUNT(*) FROM Party";
 
     protected override string CacheName => "Read model";
+
+    protected override bool RequiresSearchIndex => true;
+
+    protected override async Task<string?> BuildSearchIndexAsync(string dbPath, CancellationToken cancellationToken)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        try
+        {
+            var indexPath = await HoldingSearchIndex.BuildAsync(dbPath, cancellationToken);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Holding search index created in {DurationMs}ms with {DocumentCount} documents",
+                    stopwatch.ElapsedMilliseconds, indexPath.DocumentCount);
+            }
+            return indexPath.Path;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Holding search index creation failed after {DurationMs}ms", stopwatch.ElapsedMilliseconds);
+            if (GetCurrentSnapshot() is not null)
+                throw;
+
+            // The validated read model can still serve requests that do not search.
+            return null;
+        }
+    }
 }
