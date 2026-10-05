@@ -5,6 +5,7 @@ using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.DTOs;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Services;
+using KeeperData.Core.Storage.Sqlite;
 using KeeperData.Tests.Common.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.TestHost;
@@ -227,6 +228,66 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    [Fact]
+    public async Task GetHoldings_SearchWithoutIndex_Returns503()
+    {
+        _mockCache.Setup(c => c.IsLoaded).Returns(true);
+        _mockCache.Setup(c => c.GetCurrentSnapshot()).Returns(new SqliteSnapshot("read-model.sqlite", null));
+
+        var response = await _client.GetAsync("/api/v2/holdings?search=green");
+
+        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+        _mockExecutor.Verify(x => x.ExecuteQuery(It.IsAny<GetHoldingsQuery>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetHoldings_SearchForwardsSearchAndPaging()
+    {
+        _mockCache.Setup(c => c.IsLoaded).Returns(true);
+        _mockCache.Setup(c => c.GetCurrentSnapshot()).Returns(new SqliteSnapshot("read-model.sqlite", null, "index.sqlite"));
+        _mockExecutor.Setup(x => x.ExecuteQuery(It.IsAny<GetHoldingsQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PaginatedResult<HoldingDetail> { Page = 2, PageSize = 5 });
+
+        var response = await _client.GetAsync("/api/v2/holdings?search=green%20fields&page=2&pageSize=5&sort=desc&order=name");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        _mockExecutor.Verify(x => x.ExecuteQuery(
+            It.Is<GetHoldingsQuery>(q => q.Search == "green fields" && q.Page == 2 && q.PageSize == 5 && q.Sort == "desc" && q.Order == "name"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Theory]
+    [InlineData("alice%40example.com", "alice@example.com")]
+    [InlineData("%2B44%20%280%297700%20900123", "+44 (0)7700 900123")]
+    [InlineData("Smith%20%26%20Sons", "Smith & Sons")]
+    [InlineData("High%20St%2C%20Chelmsford", "High St, Chelmsford")]
+    public async Task GetHoldings_AcceptsContactSearch(string encodedSearch, string expectedSearch)
+    {
+        _mockCache.Setup(c => c.IsLoaded).Returns(true);
+        _mockCache.Setup(c => c.GetCurrentSnapshot()).Returns(new SqliteSnapshot("read-model.sqlite", null, "index.sqlite"));
+        _mockExecutor.Setup(x => x.ExecuteQuery(It.IsAny<GetHoldingsQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PaginatedResult<HoldingDetail>());
+
+        var response = await _client.GetAsync($"/api/v2/holdings?search={encodedSearch}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        _mockExecutor.Verify(x => x.ExecuteQuery(
+            It.Is<GetHoldingsQuery>(q => q.Search == expectedSearch), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetHoldings_WhenIndexDisappearsDuringSearch_Returns503()
+    {
+        _mockCache.Setup(c => c.IsLoaded).Returns(true);
+        _mockCache.Setup(c => c.GetCurrentSnapshot()).Returns(new SqliteSnapshot("read-model.sqlite", null, "index.sqlite"));
+        _mockExecutor.Setup(x => x.ExecuteQuery(It.IsAny<GetHoldingsQuery>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new KeeperData.Core.Exceptions.SearchIndexUnavailableException());
+
+        var response = await _client.GetAsync("/api/v2/holdings?search=green");
+
+        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    }
+
     [Theory]
     [InlineData("?page=-1&pageSize=0", "page")]
     [InlineData("?page=-1&pageSize=0", "pageSize")]
@@ -235,6 +296,9 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
     [InlineData("?pageSize=200", "pageSize")]
     [InlineData("?sort=invalid", "sort")]
     [InlineData("?order=unsupported", "order")]
+    [InlineData("?search=green*", "search")]
+    [InlineData("?search=%22green%22", "search")]
+    [InlineData("?search=---", "search")]
     public async Task GetHoldings_WhenInvalidParameters_Returns400ValidationProblemDetails(string queryString, string expectedErrorField)
     {
         // Arrange
@@ -252,6 +316,30 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
         problemDetails.Errors.Should().ContainKey(expectedErrorField);
 
         _mockExecutor.Verify(x => x.ExecuteQuery(It.IsAny<GetHoldingsQuery>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetHoldings_WhenSearchHasOnlyPunctuation_ReturnsClearValidationMessage()
+    {
+        _mockCache.Setup(c => c.IsLoaded).Returns(true);
+
+        var response = await _client.GetAsync("/api/v2/holdings?search=---");
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var problemDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        problemDetails!.Errors["search"].Should().Contain("Search must contain at least one letter or digit.");
+        _mockExecutor.Verify(x => x.ExecuteQuery(It.IsAny<GetHoldingsQuery>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetHoldings_WhenSearchIsTooLong_Returns400()
+    {
+        _mockCache.Setup(c => c.IsLoaded).Returns(true);
+        var response = await _client.GetAsync($"/api/v2/holdings?search={new string('a', 201)}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var problemDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        problemDetails!.Errors.Should().ContainKey("search");
     }
 
     [Fact]
