@@ -267,9 +267,10 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
     {
         var holdingRows = new List<HoldingRowData>();
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var row = new RowAccessor(reader);
         while (await reader.ReadAsync(cancellationToken))
         {
-            holdingRows.Add(MapHoldingRow(reader));
+            holdingRows.Add(MapHoldingRow(row));
         }
 
         return holdingRows;
@@ -417,53 +418,40 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
             return null;
         }
 
-        return MapHoldingRow(reader);
+        return MapHoldingRow(new RowAccessor(reader));
     }
 
-    private static HoldingRowData MapHoldingRow(DbDataReader reader)
+    private static HoldingRowData MapHoldingRow(RowAccessor row)
     {
-        var holdingId = reader.GetString(0);
-        var holdingCph = reader.GetString(1);
-        var name = GetNullableString(reader, 2);
-        var cphType = GetNullableString(reader, 3);
-        var startDate = ReadEpoch(reader, 4);
-        var endDate = ReadEpoch(reader, 5);
-        var udprn = GetNullableInt64(reader, 6);
+        var holdingId = row.GetString("Id");
+        var holdingCph = row.GetString("Cph");
+        var name = row.GetNullableString("FeatureName");
+        var cphType = row.GetNullableString("CphType");
+        var startDate = row.GetEpoch("StartDate");
+        var endDate = row.GetEpoch("EndDate");
+        var udprn = row.GetNullableInt64("Udprn");
 
-        var saonDescription = GetNullableString(reader, 7);
-        var saonStartNumber = GetNullableString(reader, 8);
-        var saonStartNumberSuffix = GetNullableString(reader, 9);
-        var saonEndNumber = GetNullableString(reader, 10);
-        var saonEndNumberSuffix = GetNullableString(reader, 11);
+        var postTown = row.GetNullableString("Town");
+        var locality = row.GetNullableString("Locality");
+        var postcode = row.GetNullableString("Postcode");
+        var country = row.GetNullableString("UkInternalCode");
 
-        var paonDescription = GetNullableString(reader, 12);
-        var paonStartNumber = GetNullableString(reader, 13);
-        var paonStartNumberSuffix = GetNullableString(reader, 14);
-        var paonEndNumber = GetNullableString(reader, 15);
-        var paonEndNumberSuffix = GetNullableString(reader, 16);
-        var street = GetNullableString(reader, 17);
-
-        var postTown = GetNullableString(reader, 18);
-        var locality = GetNullableString(reader, 19);
-        var postcode = GetNullableString(reader, 20);
-        var country = GetNullableString(reader, 21);
-
-        var easting = GetNullableInt32(reader, 22);
-        var northing = GetNullableInt32(reader, 23);
-        var osMapReference = GetNullableString(reader, 24);
+        var easting = row.GetNullableInt32("Easting");
+        var northing = row.GetNullableInt32("Northing");
+        var osMapReference = row.GetNullableString("OsMapReference");
 
         var (addressLine1, addressLine2) = AssembleAddressLines(
-            saonDescription,
-            saonStartNumber,
-            saonStartNumberSuffix,
-            saonEndNumber,
-            saonEndNumberSuffix,
-            paonDescription,
-            paonStartNumber,
-            paonStartNumberSuffix,
-            paonEndNumber,
-            paonEndNumberSuffix,
-            street);
+            row.GetNullableString("SaonDescription"),
+            row.GetNullableString("SaonStartNumber"),
+            row.GetNullableString("SaonStartNumberSuffix"),
+            row.GetNullableString("SaonEndNumber"),
+            row.GetNullableString("SaonEndNumberSuffix"),
+            row.GetNullableString("PaonDescription"),
+            row.GetNullableString("PaonStartNumber"),
+            row.GetNullableString("PaonStartNumberSuffix"),
+            row.GetNullableString("PaonEndNumber"),
+            row.GetNullableString("PaonEndNumberSuffix"),
+            row.GetNullableString("Street"));
 
         var location = new HoldingLocation(
             OsMapReference: osMapReference,
@@ -518,39 +506,39 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         command.Parameters.Add(new SqliteParameter("$holdingId", holdingId));
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var row = new RowAccessor(reader);
         var partyMap = new Dictionary<string, PartyAccumulator>(StringComparer.OrdinalIgnoreCase);
 
         while (await reader.ReadAsync(cancellationToken))
         {
-            ProcessAssociationRow(reader, partyMap);
+            ProcessAssociationRow(row, partyMap);
         }
 
         return partyMap.Values.Select(p => p.ToHoldingAssociation()).ToList();
     }
 
     private static void ProcessAssociationRow(
-        DbDataReader reader,
-        Dictionary<string, PartyAccumulator> partyMap,
-        int offset = 0)
+        RowAccessor row,
+        Dictionary<string, PartyAccumulator> partyMap)
     {
-        var sourcePartyId = reader.GetString(0 + offset);
-        var personTitle = GetNullableString(reader, 1 + offset);
-        var givenName = GetNullableString(reader, 2 + offset);
-        var initials = GetNullableString(reader, 3 + offset);
-        var familyName = GetNullableString(reader, 4 + offset);
-        var organisationName = GetNullableString(reader, 5 + offset);
-        var email = GetNullableString(reader, 6 + offset);
-        var mobile = GetNullableString(reader, 7 + offset);
-        var telephone = GetNullableString(reader, 8 + offset);
-        var addressLine1 = GetNullableString(reader, 9 + offset);
-        var addressLine2 = GetNullableString(reader, 10 + offset);
-        var addressTown = GetNullableString(reader, 11 + offset);
-        var addressLocality = GetNullableString(reader, 12 + offset);
-        var addressNation = GetNullableString(reader, 13 + offset);
-        var addressPostcode = GetNullableString(reader, 14 + offset);
-        var addressCountryCode = GetNullableString(reader, 15 + offset);
-        var roleCode = reader.GetString(16 + offset);
-        var speciesCode = GetNullableString(reader, 17 + offset);
+        var sourcePartyId = row.GetString("SourcePartyId");
+        var personTitle = row.GetNullableString("PersonTitle");
+        var givenName = row.GetNullableString("GivenName");
+        var initials = row.GetNullableString("Initials");
+        var familyName = row.GetNullableString("FamilyName");
+        var organisationName = row.GetNullableString("OrganisationName");
+        var email = row.GetNullableString("Email");
+        var mobile = row.GetNullableString("Mobile");
+        var telephone = row.GetNullableString("Telephone");
+        var addressLine1 = row.GetNullableString("AddressLine1");
+        var addressLine2 = row.GetNullableString("AddressStreet");
+        var addressTown = row.GetNullableString("AddressTown");
+        var addressLocality = row.GetNullableString("AddressLocality");
+        var addressNation = row.GetNullableString("AddressNation");
+        var addressPostcode = row.GetNullableString("AddressPostcode");
+        var addressCountryCode = row.GetNullableString("AddressCountryCode");
+        var roleCode = row.GetString("Role");
+        var speciesCode = row.GetNullableString("AnimalSpeciesCode");
 
         if (!partyMap.TryGetValue(sourcePartyId, out var accumulator))
         {
@@ -600,13 +588,15 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         command.Parameters.Add(new SqliteParameter("$holdingId", holdingId));
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var row = new RowAccessor(reader);
         var speciesList = new List<string>();
 
         while (await reader.ReadAsync(cancellationToken))
         {
-            if (!reader.IsDBNull(0))
+            var species = row.GetNullableString("AnimalSpeciesCode");
+            if (species is not null)
             {
-                speciesList.Add(reader.GetString(0));
+                speciesList.Add(species);
             }
         }
 
@@ -634,30 +624,30 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         command.Parameters.Add(new SqliteParameter("$holdingId", holdingId));
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var row = new RowAccessor(reader);
         var markMap = new Dictionary<string, MarkAccumulator>(StringComparer.OrdinalIgnoreCase);
 
         while (await reader.ReadAsync(cancellationToken))
         {
-            ProcessMarkRow(reader, markMap);
+            ProcessMarkRow(row, markMap);
         }
 
         return markMap.Values.Select(m => m.ToHoldingMark()).ToList();
     }
 
     private static void ProcessMarkRow(
-        DbDataReader reader,
-        Dictionary<string, MarkAccumulator> markMap,
-        int offset = 0)
+        RowAccessor row,
+        Dictionary<string, MarkAccumulator> markMap)
     {
-        if (reader.IsDBNull(0 + offset))
+        var herdmark = row.GetNullableString("Herdmark");
+        if (herdmark is null)
         {
             return;
         }
 
-        var herdmark = reader.GetString(0 + offset);
-        var fromDate = GetNullableInt64(reader, 1 + offset);
-        var toDate = GetNullableInt64(reader, 2 + offset);
-        var species = GetNullableString(reader, 3 + offset);
+        var fromDate = row.GetNullableInt64("AnimalGroupFromDate");
+        var toDate = row.GetNullableInt64("AnimalGroupToDate");
+        var species = row.GetNullableString("AnimalSpeciesCode");
 
         if (!markMap.TryGetValue(herdmark, out var accumulator))
         {
@@ -708,16 +698,17 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         var resultMap = new Dictionary<string, Dictionary<string, PartyAccumulator>>(StringComparer.OrdinalIgnoreCase);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var row = new RowAccessor(reader);
         while (await reader.ReadAsync(cancellationToken))
         {
-            var holdingId = reader.GetString(0);
+            var holdingId = row.GetString("HoldingId");
             if (!resultMap.TryGetValue(holdingId, out var partyMap))
             {
                 partyMap = new Dictionary<string, PartyAccumulator>(StringComparer.OrdinalIgnoreCase);
                 resultMap[holdingId] = partyMap;
             }
 
-            ProcessAssociationRow(reader, partyMap, offset: 1);
+            ProcessAssociationRow(row, partyMap);
         }
 
         return resultMap.ToDictionary(
@@ -745,18 +736,23 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         var resultMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var row = new RowAccessor(reader);
         while (await reader.ReadAsync(cancellationToken))
         {
-            var holdingId = reader.GetString(0);
-            if (!reader.IsDBNull(1))
+            var holdingId = row.GetString("HoldingId");
+            var species = row.GetNullableString("AnimalSpeciesCode");
+            if (species is null)
             {
-                if (!resultMap.TryGetValue(holdingId, out var speciesList))
-                {
-                    speciesList = new List<string>();
-                    resultMap[holdingId] = speciesList;
-                }
-                speciesList.Add(reader.GetString(1));
+                continue;
             }
+
+            if (!resultMap.TryGetValue(holdingId, out var speciesList))
+            {
+                speciesList = new List<string>();
+                resultMap[holdingId] = speciesList;
+            }
+
+            speciesList.Add(species);
         }
 
         return resultMap;
@@ -786,16 +782,17 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         var resultMap = new Dictionary<string, Dictionary<string, MarkAccumulator>>(StringComparer.OrdinalIgnoreCase);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var row = new RowAccessor(reader);
         while (await reader.ReadAsync(cancellationToken))
         {
-            var holdingId = reader.GetString(0);
+            var holdingId = row.GetString("HoldingId");
             if (!resultMap.TryGetValue(holdingId, out var markMap))
             {
                 markMap = new Dictionary<string, MarkAccumulator>(StringComparer.OrdinalIgnoreCase);
                 resultMap[holdingId] = markMap;
             }
 
-            ProcessMarkRow(reader, markMap, offset: 1);
+            ProcessMarkRow(row, markMap);
         }
 
         return resultMap.ToDictionary(
@@ -925,19 +922,59 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         return parts.Length > 0 ? string.Join(" ", parts) : null;
     }
 
-    private static string? GetNullableString(DbDataReader reader, int ordinal) =>
-        reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+    /// <summary>
+    /// Reads columns by name so that changing the column order in a query cannot silently
+    /// misalign the mapping. Ordinals are resolved once per reader, not per row.
+    /// </summary>
+    private sealed class RowAccessor(DbDataReader reader)
+    {
+        private Dictionary<string, int>? _ordinals;
 
-    private static long? GetNullableInt64(DbDataReader reader, int ordinal) =>
-        reader.IsDBNull(ordinal) ? null : reader.GetInt64(ordinal);
+        private int Ordinal(string name)
+        {
+            // Resolved lazily because the column list is only reliably available once a row is read.
+            if (_ordinals is null)
+            {
+                _ordinals = new Dictionary<string, int>(reader.FieldCount, StringComparer.OrdinalIgnoreCase);
+                for (var i = 0; i < reader.FieldCount; i++)
+                {
+                    _ordinals[reader.GetName(i)] = i;
+                }
+            }
 
-    private static int? GetNullableInt32(DbDataReader reader, int ordinal) =>
-        reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
+            return _ordinals.TryGetValue(name, out var ordinal)
+                ? ordinal
+                : throw new InvalidOperationException($"The query result does not contain a column named '{name}'.");
+        }
 
-    private static DateTimeOffset? ReadEpoch(DbDataReader reader, int ordinal) =>
-        reader.IsDBNull(ordinal)
-            ? null
-            : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(ordinal));
+        public string GetString(string name) => reader.GetString(Ordinal(name));
+
+        public string? GetNullableString(string name)
+        {
+            var ordinal = Ordinal(name);
+            return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+        }
+
+        public long? GetNullableInt64(string name)
+        {
+            var ordinal = Ordinal(name);
+            return reader.IsDBNull(ordinal) ? null : reader.GetInt64(ordinal);
+        }
+
+        public int? GetNullableInt32(string name)
+        {
+            var ordinal = Ordinal(name);
+            return reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
+        }
+
+        public DateTimeOffset? GetEpoch(string name)
+        {
+            var ordinal = Ordinal(name);
+            return reader.IsDBNull(ordinal)
+                ? null
+                : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(ordinal));
+        }
+    }
 
     private readonly record struct HoldingRowData(
         string HoldingId,
