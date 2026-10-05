@@ -63,6 +63,11 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
             h.StartDate,
             h.EndDate,
             h.Udprn,
+            h.SaonDescription,
+            h.SaonStartNumber,
+            h.SaonStartNumberSuffix,
+            h.SaonEndNumber,
+            h.SaonEndNumberSuffix,
             h.PaonDescription,
             h.PaonStartNumber,
             h.PaonStartNumberSuffix,
@@ -380,6 +385,11 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
                 h.StartDate,
                 h.EndDate,
                 h.Udprn,
+                h.SaonDescription,
+                h.SaonStartNumber,
+                h.SaonStartNumberSuffix,
+                h.SaonEndNumber,
+                h.SaonEndNumberSuffix,
                 h.PaonDescription,
                 h.PaonStartNumber,
                 h.PaonStartNumberSuffix,
@@ -420,23 +430,34 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         var endDate = ReadEpoch(reader, 5);
         var udprn = GetNullableInt64(reader, 6);
 
-        var paonDescription = GetNullableString(reader, 7);
-        var paonStartNumber = GetNullableString(reader, 8);
-        var paonStartNumberSuffix = GetNullableString(reader, 9);
-        var paonEndNumber = GetNullableString(reader, 10);
-        var paonEndNumberSuffix = GetNullableString(reader, 11);
-        var street = GetNullableString(reader, 12);
+        var saonDescription = GetNullableString(reader, 7);
+        var saonStartNumber = GetNullableString(reader, 8);
+        var saonStartNumberSuffix = GetNullableString(reader, 9);
+        var saonEndNumber = GetNullableString(reader, 10);
+        var saonEndNumberSuffix = GetNullableString(reader, 11);
 
-        var postTown = GetNullableString(reader, 13);
-        var locality = GetNullableString(reader, 14);
-        var postcode = GetNullableString(reader, 15);
-        var country = GetNullableString(reader, 16);
+        var paonDescription = GetNullableString(reader, 12);
+        var paonStartNumber = GetNullableString(reader, 13);
+        var paonStartNumberSuffix = GetNullableString(reader, 14);
+        var paonEndNumber = GetNullableString(reader, 15);
+        var paonEndNumberSuffix = GetNullableString(reader, 16);
+        var street = GetNullableString(reader, 17);
 
-        var easting = GetNullableInt32(reader, 17);
-        var northing = GetNullableInt32(reader, 18);
-        var osMapReference = GetNullableString(reader, 19);
+        var postTown = GetNullableString(reader, 18);
+        var locality = GetNullableString(reader, 19);
+        var postcode = GetNullableString(reader, 20);
+        var country = GetNullableString(reader, 21);
+
+        var easting = GetNullableInt32(reader, 22);
+        var northing = GetNullableInt32(reader, 23);
+        var osMapReference = GetNullableString(reader, 24);
 
         var (addressLine1, addressLine2) = AssembleAddressLines(
+            saonDescription,
+            saonStartNumber,
+            saonStartNumberSuffix,
+            saonEndNumber,
+            saonEndNumberSuffix,
             paonDescription,
             paonStartNumber,
             paonStartNumberSuffix,
@@ -784,6 +805,11 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
     }
 
     private static (string? AddressLine1, string? AddressLine2) AssembleAddressLines(
+        string? saonDescription,
+        string? saonStartNumber,
+        string? saonStartNumberSuffix,
+        string? saonEndNumber,
+        string? saonEndNumberSuffix,
         string? paonDescription,
         string? paonStartNumber,
         string? paonStartNumberSuffix,
@@ -791,48 +817,87 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         string? paonEndNumberSuffix,
         string? street)
     {
-        var number = FormatStreetNumber(paonStartNumber, paonStartNumberSuffix, paonEndNumber, paonEndNumberSuffix);
-        var trimmedStreet = street?.Trim();
-        var streetParts = new List<string>();
-        if (!string.IsNullOrEmpty(number))
+        var saonLine = FormatAon(
+            saonDescription,
+            saonStartNumber,
+            saonStartNumberSuffix,
+            saonEndNumber,
+            saonEndNumberSuffix);
+
+        var paonNumber = FormatNumberRange(paonStartNumber, paonStartNumberSuffix, paonEndNumber, paonEndNumberSuffix);
+        var paonDescriptionLine = Trimmed(paonDescription);
+        var streetName = Trimmed(street);
+
+        // The PAON number belongs with the thoroughfare; when Street is empty the source carries
+        // the thoroughfare in PaonDescription instead, so the number binds to that.
+        string? buildingLine;
+        string? streetLine;
+        if (streetName is not null)
         {
-            streetParts.Add(number);
+            buildingLine = paonDescriptionLine;
+            streetLine = JoinWithSpace(paonNumber, streetName);
         }
-        if (!string.IsNullOrEmpty(trimmedStreet))
+        else
         {
-            streetParts.Add(trimmedStreet);
+            buildingLine = null;
+            streetLine = JoinWithSpace(paonNumber, paonDescriptionLine);
         }
 
-        var streetLine = streetParts.Count > 0 ? string.Join(" ", streetParts).Trim() : null;
-        if (string.IsNullOrWhiteSpace(streetLine))
+        var lines = new[] { saonLine, buildingLine, streetLine }
+            .Where(line => line is not null)
+            .ToArray();
+
+        return lines.Length switch
         {
-            streetLine = null;
-        }
-
-        var paonDesc = string.IsNullOrWhiteSpace(paonDescription) ? null : paonDescription.Trim();
-
-        var addressLine1 = paonDesc ?? streetLine;
-        var addressLine2 = paonDesc is null ? null : streetLine;
-
-        return (addressLine1, addressLine2);
+            0 => (null, null),
+            1 => (lines[0], null),
+            // Fold any overflow into line 1 so the thoroughfare always lands in the last populated line.
+            _ => (string.Join(", ", lines[..^1]), lines[^1])
+        };
     }
 
-    private static string? FormatStreetNumber(
-        string? paonStartNumber,
-        string? paonStartNumberSuffix,
-        string? paonEndNumber,
-        string? paonEndNumberSuffix)
+    private static string? FormatAon(
+        string? description,
+        string? startNumber,
+        string? startNumberSuffix,
+        string? endNumber,
+        string? endNumberSuffix)
     {
-        var start = Combine(paonStartNumber, paonStartNumberSuffix);
-        var end = Combine(paonEndNumber, paonEndNumberSuffix);
+        var number = FormatNumberRange(startNumber, startNumberSuffix, endNumber, endNumberSuffix);
+        return JoinWithSpace(Trimmed(description), number);
+    }
 
-        if (!string.IsNullOrEmpty(start) && !string.IsNullOrEmpty(end))
+    private static string? FormatNumberRange(
+        string? startNumber,
+        string? startNumberSuffix,
+        string? endNumber,
+        string? endNumberSuffix)
+    {
+        var start = Combine(startNumber, startNumberSuffix);
+        var end = Combine(endNumber, endNumberSuffix);
+
+        if (start is null)
         {
-            return $"{start}-{end}";
+            return end;
         }
 
-        return !string.IsNullOrEmpty(start) ? start : end;
+        return end is null || string.Equals(start, end, StringComparison.OrdinalIgnoreCase)
+            ? start
+            : $"{start}-{end}";
     }
+
+    private static string? JoinWithSpace(string? first, string? second)
+    {
+        if (first is null)
+        {
+            return second;
+        }
+
+        return second is null ? first : $"{first} {second}";
+    }
+
+    private static string? Trimmed(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private static string? Combine(string? a, string? b)
     {
