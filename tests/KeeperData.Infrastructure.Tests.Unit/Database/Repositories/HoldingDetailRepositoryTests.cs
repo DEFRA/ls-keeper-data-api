@@ -82,9 +82,11 @@ public class HoldingDetailRepositoryTests : IDisposable
         // 2. Insert Party
         Execute(connection, """
             INSERT INTO Party (
-                Id, SourcePartyId, PersonTitle, GivenName, Initials, FamilyName, OrganisationName, Email, Mobile, Telephone
+                Id, SourcePartyId, PersonTitle, GivenName, Initials, FamilyName, OrganisationName, Email, Mobile, Telephone,
+                AddressLine1, AddressStreet, AddressTown, AddressLocality, AddressNation, AddressPostcode, AddressCountryCode
             ) VALUES (
-                'party-1', 'C000000', 'MISS', NULL, 'J', 'Example', NULL, NULL, NULL, '01234 567890'
+                'party-1', 'C000000', 'MISS', NULL, 'J', 'Example', NULL, NULL, NULL, '01234 567890',
+                'Example Farm', 'The Street', 'WORCESTER', 'Some Location', 'England', 'TT5 2UU', 'GB'
             );
             """);
 
@@ -147,6 +149,14 @@ public class HoldingDetailRepositoryTests : IDisposable
         assoc.Email.Should().BeNull();
         assoc.Mobile.Should().BeNull();
         assoc.Telephone.Should().Be("01234 567890");
+
+        assoc.Address.AddressLine1.Should().Be("Example Farm");
+        assoc.Address.AddressLine2.Should().Be("The Street");
+        assoc.Address.AddressTown.Should().Be("WORCESTER");
+        assoc.Address.AddressLocality.Should().Be("Some Location");
+        assoc.Address.AddressNation.Should().Be("England");
+        assoc.Address.AddressPostcode.Should().Be("TT5 2UU");
+        assoc.Address.AddressCountryCode.Should().Be("GB");
 
         assoc.Roles.Should().HaveCount(3);
         var holderRole = assoc.Roles.First(r => r.Code == "holder");
@@ -301,6 +311,34 @@ public class HoldingDetailRepositoryTests : IDisposable
         assoc.PartyType.Should().Be("organisation");
         assoc.Name.Should().Be("Farming Co Ltd");
         assoc.Roles.Should().ContainSingle(r => r.Code == "owner");
+    }
+
+    [Fact]
+    public async Task GivenPartyWithoutAddressColumns_WhenGettingHoldingDetail_ThenAddressIsPresentWithNullMembers()
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        connection.Open();
+
+        Execute(connection, """
+            INSERT INTO Holding (Id, Cph) VALUES ('no-address-holding', '33/444/5555');
+            INSERT INTO Party (Id, SourcePartyId, GivenName, FamilyName)
+            VALUES ('party-no-address', 'C888888', 'Jane', 'Doe');
+            INSERT INTO PartyRole (Id, PartyId, HoldingId, Role)
+            VALUES ('role-no-address', 'party-no-address', 'no-address-holding', 'holder');
+            """);
+
+        var result = await _repository.GetHoldingDetailByCphAsync("33/444/5555");
+
+        result.Should().NotBeNull();
+        var address = result!.Associations.Should().ContainSingle().Subject.Address;
+        address.Should().NotBeNull();
+        address.AddressLine1.Should().BeNull();
+        address.AddressLine2.Should().BeNull();
+        address.AddressTown.Should().BeNull();
+        address.AddressLocality.Should().BeNull();
+        address.AddressNation.Should().BeNull();
+        address.AddressPostcode.Should().BeNull();
+        address.AddressCountryCode.Should().BeNull();
     }
 
     [Fact]
@@ -886,7 +924,14 @@ public class HoldingDetailRepositoryTests : IDisposable
                 OrganisationName TEXT,
                 Email TEXT,
                 Mobile TEXT,
-                Telephone TEXT
+                Telephone TEXT,
+                AddressLine1 TEXT,
+                AddressStreet TEXT,
+                AddressTown TEXT,
+                AddressLocality TEXT,
+                AddressNation TEXT,
+                AddressPostcode TEXT,
+                AddressCountryCode TEXT
             );
 
             CREATE TABLE Herd (

@@ -19,13 +19,29 @@ public class EmfExporterTests
         _mockLogger = new Mock<ILogger>();
     }
 
-    private static async Task AwaitCloudWatchTaskAsync()
+    private static readonly TimeSpan SignalTimeout = TimeSpan.FromSeconds(10);
+
+    // The exporter pushes to CloudWatch on a background task, so wait for the observable side effect.
+    private ManualResetEventSlim SignalOnLog(LogLevel level, string messageFragment)
     {
-        var taskAssigned = SpinWait.SpinUntil(() => EmfExporter.LastCloudWatchTask != null, TimeSpan.FromSeconds(2));
-        if (taskAssigned)
-        {
-            await EmfExporter.LastCloudWatchTask!;
-        }
+        var signal = new ManualResetEventSlim();
+
+        _mockLogger
+            .Setup(x => x.Log(
+                level,
+                It.IsAny<EventId>(),
+                It.IsAny<It.IsAnyType>(),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()))
+            .Callback(new InvocationAction(invocation =>
+            {
+                if (invocation.Arguments[2]?.ToString()?.Contains(messageFragment, StringComparison.Ordinal) == true)
+                {
+                    signal.Set();
+                }
+            }));
+
+        return signal;
     }
 
     [Fact]
@@ -194,11 +210,19 @@ public class EmfExporterTests
         act.Should().NotThrow();
     }
     [Fact]
-    public async Task OnMeasurementRecorded_WithCloudWatchClient_ShouldPutMetricData()
+    public void OnMeasurementRecorded_WithCloudWatchClient_ShouldPutMetricData()
     {
         // Arrange
+        using var metricPut = new ManualResetEventSlim();
         var mockCloudWatch = new Mock<IAmazonCloudWatch>();
         mockCloudWatch.Setup(c => c.PutMetricDataAsync(It.IsAny<PutMetricDataRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<PutMetricDataRequest, CancellationToken>((request, _) =>
+            {
+                if (request.MetricData.Any(d => d.Dimensions.Any(dim => dim.Name == "test_key")))
+                {
+                    metricPut.Set();
+                }
+            })
             .ReturnsAsync(new PutMetricDataResponse { HttpStatusCode = System.Net.HttpStatusCode.OK });
 
         EmfExporter.Init(_mockLogger.Object, "test-namespace", mockCloudWatch.Object);
@@ -209,11 +233,11 @@ public class EmfExporterTests
         var tags = new TagList { { "test_key", "test_value" } };
 
         // Act
-        EmfExporter.LastCloudWatchTask = null;
         counter.Add(1, tags);
-        await AwaitCloudWatchTaskAsync();
 
         // Assert
+        metricPut.Wait(SignalTimeout).Should().BeTrue("the metric should be pushed to CloudWatch");
+
         mockCloudWatch.Verify(c => c.PutMetricDataAsync(
             It.Is<PutMetricDataRequest>(r =>
                 r.Namespace == "test-namespace" &&
@@ -225,12 +249,14 @@ public class EmfExporterTests
     }
 
     [Fact]
-    public async Task OnMeasurementRecorded_WithCloudWatchClient_LogsWarningOnFailure()
+    public void OnMeasurementRecorded_WithCloudWatchClient_LogsWarningOnFailure()
     {
         // Arrange
         var mockCloudWatch = new Mock<IAmazonCloudWatch>();
         mockCloudWatch.Setup(c => c.PutMetricDataAsync(It.IsAny<PutMetricDataRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PutMetricDataResponse { HttpStatusCode = System.Net.HttpStatusCode.BadRequest });
+
+        using var warningLogged = SignalOnLog(LogLevel.Warning, "LocalStack CloudWatch rejected metric");
 
         EmfExporter.Init(_mockLogger.Object, "test-namespace", mockCloudWatch.Object);
 
@@ -238,11 +264,11 @@ public class EmfExporterTests
         var counter = meter.CreateCounter<long>("test_cloudwatch_fail");
 
         // Act
-        EmfExporter.LastCloudWatchTask = null;
         counter.Add(1);
-        await AwaitCloudWatchTaskAsync();
 
         // Assert
+        warningLogged.Wait(SignalTimeout).Should().BeTrue("the CloudWatch rejection should be logged as a warning");
+
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Warning,
@@ -254,12 +280,14 @@ public class EmfExporterTests
     }
 
     [Fact]
-    public async Task OnMeasurementRecorded_WithCloudWatchClient_LogsErrorOnException()
+    public void OnMeasurementRecorded_WithCloudWatchClient_LogsErrorOnException()
     {
         // Arrange
         var mockCloudWatch = new Mock<IAmazonCloudWatch>();
         mockCloudWatch.Setup(c => c.PutMetricDataAsync(It.IsAny<PutMetricDataRequest>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Network error"));
+
+        using var errorLogged = SignalOnLog(LogLevel.Error, "Failed to push metric to LocalStack CloudWatch");
 
         EmfExporter.Init(_mockLogger.Object, "test-namespace", mockCloudWatch.Object);
 
@@ -267,11 +295,11 @@ public class EmfExporterTests
         var counter = meter.CreateCounter<long>("test_cloudwatch_exception");
 
         // Act
-        EmfExporter.LastCloudWatchTask = null;
         counter.Add(1);
-        await AwaitCloudWatchTaskAsync();
 
         // Assert
+        errorLogged.Wait(SignalTimeout).Should().BeTrue("the CloudWatch failure should be logged as an error");
+
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Error,

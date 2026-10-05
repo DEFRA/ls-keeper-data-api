@@ -218,7 +218,7 @@ public class ReadModelSqliteCacheServiceTests : IDisposable
             using var cmd = connection.CreateCommand();
             cmd.CommandText = withPartyTable && withHoldingTable
                 ? """
-                  CREATE TABLE Party (Id TEXT NOT NULL, SourcePartyId TEXT, OrganisationName TEXT, PersonTitle TEXT, GivenName TEXT, Initials TEXT, FamilyName TEXT, Email TEXT, Mobile TEXT, Telephone TEXT);
+                  CREATE TABLE Party (Id TEXT NOT NULL, SourcePartyId TEXT, OrganisationName TEXT, PersonTitle TEXT, GivenName TEXT, Initials TEXT, FamilyName TEXT, Email TEXT, Mobile TEXT, Telephone TEXT, AddressLine1 TEXT, AddressStreet TEXT, AddressTown TEXT, AddressLocality TEXT, AddressNation TEXT, AddressPostcode TEXT, AddressCountryCode TEXT);
                   CREATE TABLE PartyRole (Id TEXT NOT NULL, PartyId TEXT, HoldingId TEXT);
                   CREATE TABLE Holding (Id TEXT NOT NULL, Cph TEXT, FeatureName TEXT, CphType TEXT, Udprn TEXT,
                       PaonDescription TEXT, PaonStartNumber TEXT, PaonStartNumberSuffix TEXT,

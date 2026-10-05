@@ -133,6 +133,14 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
                     Email: "krds-test06@livestockinformationb2cqa.onmicrosoft.com",
                     Mobile: null,
                     Telephone: "01206 999999",
+                    Address: new PartyAddress(
+                        AddressLine1: "Test Farm 06",
+                        AddressLine2: "Layer Road",
+                        AddressTown: "COLCHESTER",
+                        AddressLocality: "Great Wigborough",
+                        AddressNation: "England",
+                        AddressPostcode: "CO5 7RR",
+                        AddressCountryCode: "GB"),
                     Roles:
                     [
                         new HoldingRole("holder", []),

@@ -476,6 +476,13 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
                 p.Email,
                 p.Mobile,
                 p.Telephone,
+                p.AddressLine1,
+                p.AddressStreet,
+                p.AddressTown,
+                p.AddressLocality,
+                p.AddressNation,
+                p.AddressPostcode,
+                p.AddressCountryCode,
                 r.Role,
                 d.AnimalSpeciesCode
             FROM PartyRole AS r
@@ -514,8 +521,15 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         var email = GetNullableString(reader, 6 + offset);
         var mobile = GetNullableString(reader, 7 + offset);
         var telephone = GetNullableString(reader, 8 + offset);
-        var roleCode = reader.GetString(9 + offset);
-        var speciesCode = GetNullableString(reader, 10 + offset);
+        var addressLine1 = GetNullableString(reader, 9 + offset);
+        var addressLine2 = GetNullableString(reader, 10 + offset);
+        var addressTown = GetNullableString(reader, 11 + offset);
+        var addressLocality = GetNullableString(reader, 12 + offset);
+        var addressNation = GetNullableString(reader, 13 + offset);
+        var addressPostcode = GetNullableString(reader, 14 + offset);
+        var addressCountryCode = GetNullableString(reader, 15 + offset);
+        var roleCode = reader.GetString(16 + offset);
+        var speciesCode = GetNullableString(reader, 17 + offset);
 
         if (!partyMap.TryGetValue(sourcePartyId, out var accumulator))
         {
@@ -532,7 +546,15 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
                 PartyType = partyType,
                 Email = email,
                 Mobile = mobile,
-                Telephone = telephone
+                Telephone = telephone,
+                Address = new PartyAddress(
+                    AddressLine1: addressLine1,
+                    AddressLine2: addressLine2,
+                    AddressTown: addressTown,
+                    AddressLocality: addressLocality,
+                    AddressNation: addressNation,
+                    AddressPostcode: addressPostcode,
+                    AddressCountryCode: addressCountryCode)
             };
             partyMap[sourcePartyId] = accumulator;
         }
@@ -642,6 +664,13 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
                 p.Email,
                 p.Mobile,
                 p.Telephone,
+                p.AddressLine1,
+                p.AddressStreet,
+                p.AddressTown,
+                p.AddressLocality,
+                p.AddressNation,
+                p.AddressPostcode,
+                p.AddressCountryCode,
                 r.Role,
                 d.AnimalSpeciesCode
             FROM PartyRole AS r
@@ -865,6 +894,7 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         public string? Email { get; init; }
         public string? Mobile { get; init; }
         public string? Telephone { get; init; }
+        public required PartyAddress Address { get; init; }
 
         private readonly Dictionary<string, HashSet<string>> _roles = new(StringComparer.OrdinalIgnoreCase);
 
@@ -901,6 +931,7 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
                 Email: Email,
                 Mobile: Mobile,
                 Telephone: Telephone,
+                Address: Address,
                 Roles: roleList);
         }
     }

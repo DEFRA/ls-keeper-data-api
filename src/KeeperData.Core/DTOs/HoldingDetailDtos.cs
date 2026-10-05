@@ -36,7 +36,17 @@ public sealed record HoldingAssociation(
     string? Email,
     string? Mobile,
     string? Telephone,
+    PartyAddress Address,
     IReadOnlyList<HoldingRole> Roles);
+
+public sealed record PartyAddress(
+    string? AddressLine1,
+    string? AddressLine2,
+    string? AddressTown,
+    string? AddressLocality,
+    string? AddressNation,
+    string? AddressPostcode,
+    string? AddressCountryCode);
 
 public sealed record HoldingRole(
     string Code,
