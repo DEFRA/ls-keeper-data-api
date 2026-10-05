@@ -62,6 +62,11 @@ internal static class HoldingSearchIndex
                     coalesce(h.Cph, '') || ' ' || replace(coalesce(h.Cph, ''), '/', '') || ' ' ||
                     coalesce(h.FeatureName, '') || ' ' || coalesce(h.CphType, '') || ' ' ||
                     coalesce(h.Udprn, '') || ' ' ||
+                    coalesce(h.SaonDescription, '') || ' ' || coalesce(h.SaonStartNumber, '') || ' ' ||
+                    coalesce(h.SaonStartNumberSuffix, '') || ' ' ||
+                    coalesce(h.SaonStartNumber, '') || coalesce(h.SaonStartNumberSuffix, '') || ' ' ||
+                    coalesce(h.SaonEndNumber, '') || ' ' || coalesce(h.SaonEndNumberSuffix, '') || ' ' ||
+                    coalesce(h.SaonEndNumber, '') || coalesce(h.SaonEndNumberSuffix, '') || ' ' ||
                     coalesce(h.PaonDescription, '') || ' ' || coalesce(h.PaonStartNumber, '') || ' ' ||
                     coalesce(h.PaonStartNumberSuffix, '') || ' ' ||
                     coalesce(h.PaonStartNumber, '') || coalesce(h.PaonStartNumberSuffix, '') || ' ' ||

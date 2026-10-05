@@ -289,6 +289,70 @@ public class HoldingDetailRepositoryTests : IDisposable
         result.Location.Address.AddressLine2.Should().BeNull();
     }
 
+    [Theory]
+    // Building name plus a numbered street.
+    [InlineData("addr-1", "61/111/1111", null, null, "East End Cottages", "1", "Wilton Road", "East End Cottages", "1 Wilton Road")]
+    // Street is empty, so the source carries the thoroughfare in PaonDescription.
+    [InlineData("addr-2", "61/222/2222", null, null, "Devon Road", "27", null, "27 Devon Road", null)]
+    // SAON plus a named PAON, no street.
+    [InlineData("addr-3", "61/333/3333", "The Farmhouse", null, "Padderbury Farm", null, null, "The Farmhouse", "Padderbury Farm")]
+    // SAON plus a numbered street.
+    [InlineData("addr-4", "61/444/4444", "The Dell", null, null, "34", "Church Lane", "The Dell", "34 Church Lane")]
+    // Three lines fold into two, keeping the thoroughfare last.
+    [InlineData("addr-5", "61/555/5555", "2nd Floor", null, "Colmore Court", null, "9 Colmore Row", "2nd Floor, Colmore Court", "9 Colmore Row")]
+    // Sub-unit number renders after its description.
+    [InlineData("addr-6", "61/666/6666", "Flat", "2", "Rose Court", "14", "High Street", "Flat 2, Rose Court", "14 High Street")]
+    // No addressable object at all.
+    [InlineData("addr-7", "61/777/7777", null, null, null, null, null, null, null)]
+    public async Task GivenSaonAndPaonCombinations_WhenGettingHoldingDetail_ThenAddressLinesFollowBs7666Order(
+        string holdingId,
+        string cph,
+        string? saonDescription,
+        string? saonStartNumber,
+        string? paonDescription,
+        string? paonStartNumber,
+        string? street,
+        string? expectedLine1,
+        string? expectedLine2)
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        connection.Open();
+
+        Execute(connection, $"""
+            INSERT INTO Holding (Id, Cph, SaonDescription, SaonStartNumber, PaonDescription, PaonStartNumber, Street)
+            VALUES (
+                '{holdingId}', '{cph}', {Quote(saonDescription)}, {Quote(saonStartNumber)},
+                {Quote(paonDescription)}, {Quote(paonStartNumber)}, {Quote(street)}
+            );
+            """);
+
+        var result = await _repository.GetHoldingDetailByCphAsync(cph);
+
+        result.Should().NotBeNull();
+        result!.Location.Address.AddressLine1.Should().Be(expectedLine1);
+        result.Location.Address.AddressLine2.Should().Be(expectedLine2);
+    }
+
+    [Fact]
+    public async Task GivenSaonWithDegenerateNumberRange_WhenGettingHoldingDetail_ThenRangeCollapsesToSingleNumber()
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        connection.Open();
+
+        Execute(connection, """
+            INSERT INTO Holding (Id, Cph, PaonStartNumber, PaonEndNumber, Street)
+            VALUES ('degenerate-range', '62/111/1111', '5', '5', 'Drumguish');
+            """);
+
+        var result = await _repository.GetHoldingDetailByCphAsync("62/111/1111");
+
+        result.Should().NotBeNull();
+        result!.Location.Address.AddressLine1.Should().Be("5 Drumguish");
+        result.Location.Address.AddressLine2.Should().BeNull();
+    }
+
+    private static string Quote(string? value) => value is null ? "NULL" : $"'{value.Replace("'", "''")}'";
+
     [Fact]
     public async Task GivenOrganisationParty_WhenGettingHoldingDetail_ThenPartyTypeIsOrganisationAndNameIsOrganisationName()
     {
@@ -899,6 +963,11 @@ public class HoldingDetailRepositoryTests : IDisposable
                 StartDate INTEGER,
                 EndDate INTEGER,
                 Udprn INTEGER,
+                SaonDescription TEXT,
+                SaonStartNumber TEXT,
+                SaonStartNumberSuffix TEXT,
+                SaonEndNumber TEXT,
+                SaonEndNumberSuffix TEXT,
                 PaonDescription TEXT,
                 PaonStartNumber TEXT,
                 PaonStartNumberSuffix TEXT,
