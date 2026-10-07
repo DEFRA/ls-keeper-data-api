@@ -1,6 +1,5 @@
 using KeeperData.Core.Documents.Reference;
 using KeeperData.Core.Repositories;
-using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -15,9 +14,8 @@ public abstract class ReferenceDataRepository<TDocument, TItem> : GenericReposit
 
     protected ReferenceDataRepository(
         IOptions<MongoConfig> mongoConfig,
-        IMongoClient client,
-        IUnitOfWork unitOfWork)
-        : base(mongoConfig, client, unitOfWork)
+        IMongoClient client)
+        : base(mongoConfig, client)
     {
         _itemsCache = new Lazy<Task<IReadOnlyCollection<TItem>>>(
             LoadItemsAsync, LazyThreadSafetyMode.ExecutionAndPublication);

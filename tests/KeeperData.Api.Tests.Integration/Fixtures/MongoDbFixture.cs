@@ -1,6 +1,5 @@
 using KeeperData.Api.Tests.Integration.Helpers;
 using KeeperData.Core.Documents;
-using KeeperData.Core.Documents.Silver;
 using MongoDB.Driver;
 using Testcontainers.MongoDb;
 
@@ -18,15 +17,11 @@ public class MongoDbFixture : IAsyncLifetime
     private readonly string _containerName;
     private readonly string _networkAlias;
 
-    public MongoDbFixture() : this(isAnonymization: false)
-    {
-    }
-
-    protected MongoDbFixture(bool isAnonymization)
+    public MongoDbFixture()
     {
         var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
-        _containerName = isAnonymization ? $"mongo_anon_{uniqueSuffix}" : $"mongo_{uniqueSuffix}";
-        _networkAlias = isAnonymization ? "mongo_anon" : "mongo";
+        _containerName = $"mongo_{uniqueSuffix}";
+        _networkAlias = "mongo";
     }
 
     public async Task InitializeAsync()
@@ -53,14 +48,7 @@ public class MongoDbFixture : IAsyncLifetime
     public async Task PurgeDataTables()
     {
         await Task.WhenAll([
-            MongoVerifier.DeleteAll<CtsHoldingDocument>(),
-            MongoVerifier.DeleteAll<CtsHoldingDocument>(),
-            MongoVerifier.DeleteAll<CtsPartyDocument>(),
             MongoVerifier.DeleteAll<PartyDocument>(),
-            MongoVerifier.DeleteAll<SamHerdDocument>(),
-            MongoVerifier.DeleteAll<SamHoldingDocument>(),
-            MongoVerifier.DeleteAll<SamPartyDocument>(),
-            MongoVerifier.DeleteAll<KeeperData.Core.Documents.SitePartyRoleRelationshipDocument>(),
             MongoVerifier.DeleteAll<SiteDocument>()
         ]);
     }

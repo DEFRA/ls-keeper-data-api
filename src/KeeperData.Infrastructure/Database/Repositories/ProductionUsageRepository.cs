@@ -1,7 +1,6 @@
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Reference;
 using KeeperData.Core.Repositories;
-using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -10,9 +9,8 @@ namespace KeeperData.Infrastructure.Database.Repositories;
 
 public class ProductionUsageRepository(
     IOptions<MongoConfig> config,
-    IMongoClient client,
-    IUnitOfWork unitOfWork)
-    : ReferenceDataRepository<ProductionUsageListDocument, ProductionUsageDocument>(config, client, unitOfWork),
+    IMongoClient client)
+    : ReferenceDataRepository<ProductionUsageListDocument, ProductionUsageDocument>(config, client),
         IProductionUsageRepository
 {
     public new async Task<ProductionUsageDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken = default)

@@ -1,5 +1,4 @@
 using KeeperData.Core.Attributes;
-using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -15,22 +14,16 @@ public class MockMongoDatabase
     private readonly Mock<IMongoClient> _mongoClientMock = new();
     private readonly Mock<IMongoDatabase> _mongoDatabaseMock = new();
     private readonly Dictionary<Type, object> _mongoCollectionMocks = new();
-    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IClientSessionHandle> _clientSessionHandleMock = new();
 
     public MockMongoDatabase()
     {
         _mongoConfigMock.Setup(x => x.Value).Returns(_mongoConfig);
         _mongoClientMock.Setup(x => x.GetDatabase(_mongoConfig.DatabaseName, null))
             .Returns(_mongoDatabaseMock.Object);
-
-        _clientSessionHandleMock.Setup(s => s.IsInTransaction).Returns(false);
-        _unitOfWorkMock.Setup(u => u.Session).Returns(_clientSessionHandleMock.Object);
     }
 
     public IOptions<MongoConfig> Config => _mongoConfigMock.Object;
     public IMongoClient Client => _mongoClientMock.Object;
-    public IUnitOfWork UnitOfWork => _unitOfWorkMock.Object;
 
     public void SetupCollection<T>(string? collectionName = null)
     {

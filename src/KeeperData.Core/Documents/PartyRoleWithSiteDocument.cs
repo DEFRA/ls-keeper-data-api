@@ -1,4 +1,3 @@
-using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
@@ -44,26 +43,4 @@ public class PartyRoleWithSiteDocument : INestedEntity
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime? LastUpdatedDate { get; set; }
-
-    public static PartyRoleWithSiteDocument FromDomain(PartyRole m) => new()
-    {
-        IdentifierId = m.Id,
-        Site = m.Site != null ? PartyRoleSiteDocument.FromDomain(m.Site) : null,
-        Role = PartyRoleRoleDocument.FromDomain(m.Role),
-        SpeciesManagedByRole = [.. m.SpeciesManagedByRole.Select(ManagedSpeciesDocument.FromDomain)],
-        LastUpdatedDate = m.LastUpdatedDate
-    };
-
-    public PartyRole ToDomain()
-    {
-        var species = SpeciesManagedByRole.Select(s => s.ToDomain());
-
-        return new PartyRole(
-            IdentifierId,
-            Site?.ToDomain(),
-            Role.ToDomain(),
-            species,
-            LastUpdatedDate
-        );
-    }
 }

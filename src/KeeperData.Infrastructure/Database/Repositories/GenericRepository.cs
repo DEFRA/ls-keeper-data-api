@@ -1,6 +1,5 @@
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Repositories;
-using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Core.Telemetry;
 using Microsoft.Extensions.Options;
@@ -15,20 +14,15 @@ public class GenericRepository<T> : IGenericRepository<T>
     where T : IEntity
 {
     protected readonly IMongoCollection<T> _collection;
-    private readonly IUnitOfWork _unitOfWork;
 
     public GenericRepository(
         IOptions<MongoConfig> mongoConfig,
-        IMongoClient client,
-        IUnitOfWork unitOfWork)
+        IMongoClient client)
     {
         var mongoDatabase = client.GetDatabase(mongoConfig.Value.DatabaseName);
         var collectionName = typeof(T).GetCustomAttribute<CollectionNameAttribute>()?.Name ?? typeof(T).Name;
         _collection = mongoDatabase.GetCollection<T>(collectionName);
-        _unitOfWork = unitOfWork;
     }
-
-    private IClientSessionHandle? Session => _unitOfWork?.Session;
 
     public async Task<T> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
@@ -53,13 +47,13 @@ public class GenericRepository<T> : IGenericRepository<T>
         _collection.Find(predicate).ToListAsync(cancellationToken);
 
     public Task AddAsync(T entity, CancellationToken cancellationToken = default) =>
-        _collection.InsertOneAsync(Session, entity, new InsertOneOptions { BypassDocumentValidation = true }, cancellationToken);
+        _collection.InsertOneAsync(entity, new InsertOneOptions { BypassDocumentValidation = true }, cancellationToken);
 
     public Task AddManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default) =>
-        _collection.InsertManyAsync(Session, entities, new InsertManyOptions { BypassDocumentValidation = true }, cancellationToken);
+        _collection.InsertManyAsync(entities, new InsertManyOptions { BypassDocumentValidation = true }, cancellationToken);
 
     public Task UpdateAsync(T entity, CancellationToken cancellationToken = default) =>
-        _collection.ReplaceOneAsync(Session, x => x.Id == entity.Id, entity, cancellationToken: cancellationToken);
+        _collection.ReplaceOneAsync(x => x.Id == entity.Id, entity, cancellationToken: cancellationToken);
 
     public Task BulkUpdateWithCustomFilterAsync(IEnumerable<(FilterDefinition<T> Filter, UpdateDefinition<T> Update)> items, CancellationToken cancellationToken = default)
     {
@@ -70,7 +64,6 @@ public class GenericRepository<T> : IGenericRepository<T>
             });
 
         return _collection.BulkWriteAsync(
-            Session,
             models.ToList(),
             cancellationToken: cancellationToken
         );
@@ -86,12 +79,11 @@ public class GenericRepository<T> : IGenericRepository<T>
                 IsUpsert = true
             });
 
-        return _collection.BulkWriteAsync(Session, models.ToList(), cancellationToken: cancellationToken);
+        return _collection.BulkWriteAsync(models.ToList(), cancellationToken: cancellationToken);
     }
 
     public Task DeleteManyAsync(FilterDefinition<T> filter, CancellationToken cancellationToken = default) =>
         _collection.DeleteManyAsync(
-            session: Session,
             filter: filter,
             cancellationToken: cancellationToken);
 }

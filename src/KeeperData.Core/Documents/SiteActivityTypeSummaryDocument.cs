@@ -1,4 +1,3 @@
-using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
@@ -39,18 +38,4 @@ public class SiteActivityTypeSummaryDocument : INestedEntity
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime? LastUpdatedDate { get; set; }
-
-    public static SiteActivityTypeSummaryDocument FromDomain(SiteActivityType m) => new()
-    {
-        IdentifierId = m.Id,
-        Code = m.Code,
-        Name = m.Name,
-        LastUpdatedDate = m.LastUpdatedDate
-    };
-
-    public SiteActivityType ToDomain() => new(
-        id: IdentifierId,
-        code: Code,
-        name: Name,
-        lastUpdatedDate: LastUpdatedDate);
 }
