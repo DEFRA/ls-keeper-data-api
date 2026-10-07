@@ -13,7 +13,7 @@ public class SpeciesRepositoryTests
     public SpeciesRepositoryTests()
     {
         _fixture = new ReferenceRepositoryTestFixture<SpeciesRepository, SpeciesListDocument, SpeciesDocument>();
-        _sut = _fixture.CreateSut((config, client, unitOfWork) => new SpeciesRepository(config, client, unitOfWork));
+        _sut = _fixture.CreateSut((config, client) => new SpeciesRepository(config, client));
     }
 
     [Fact]

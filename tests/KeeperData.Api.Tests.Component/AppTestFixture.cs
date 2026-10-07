@@ -17,9 +17,9 @@ public class AppTestFixture
     {
     }
 
-    protected AppTestFixture(bool useFakeAuth = false, bool useAnon = false)
+    protected AppTestFixture(bool useFakeAuth = false)
     {
-        AppWebApplicationFactory = new AppWebApplicationFactory(useFakeAuth: useFakeAuth, useAnon: useAnon);
+        AppWebApplicationFactory = new AppWebApplicationFactory(useFakeAuth: useFakeAuth);
         HttpClient = AppWebApplicationFactory.CreateClient();
 
         if (useFakeAuth)

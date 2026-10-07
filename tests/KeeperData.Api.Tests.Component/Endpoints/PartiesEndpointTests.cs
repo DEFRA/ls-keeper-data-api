@@ -1,7 +1,7 @@
 using FluentAssertions;
 using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.Documents;
-using KeeperData.Core.Domain.Enums;
+
 using KeeperData.Core.Extensions;
 using Moq;
 using System.Net;
@@ -102,7 +102,7 @@ public class PartiesEndpointTests(AppTestFixture appTestFixture) : IClassFixture
             FirstName = firstName,
             LastName = lastName,
             Name = $"{firstName} {lastName}",
-            State = PartyStatusType.Active.GetDescription()
+            State = "active"
         };
 
         return party;

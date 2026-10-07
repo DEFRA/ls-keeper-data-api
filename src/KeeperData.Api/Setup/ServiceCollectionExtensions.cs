@@ -1,10 +1,6 @@
 using KeeperData.Api.Utils;
-using KeeperData.Api.Worker.Setup;
 using KeeperData.Application.Configuration;
 using KeeperData.Application.Setup;
-using KeeperData.Core.ApiClients.DataBridgeApi;
-using KeeperData.Infrastructure.ApiClients;
-using KeeperData.Infrastructure.ApiClients.Decorators;
 using KeeperData.Core.Telemetry;
 using KeeperData.Infrastructure.ApiClients.Setup;
 using KeeperData.Infrastructure.Authentication.Configuration;
@@ -12,7 +8,6 @@ using KeeperData.Infrastructure.Authentication.Handlers;
 using KeeperData.Infrastructure.Config;
 using KeeperData.Infrastructure.Database.Setup;
 using KeeperData.Infrastructure.Extensions;
-using KeeperData.Infrastructure.Messaging.Setup;
 using KeeperData.Infrastructure.Storage.Setup;
 using KeeperData.Infrastructure.Telemetry;
 using Microsoft.AspNetCore.Authentication;
@@ -20,7 +15,6 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using System.Text.Json.Serialization;
-using Scrutor;
 
 namespace KeeperData.Api.Setup;
 
@@ -52,13 +46,9 @@ public static class ServiceCollectionExtensions
 
         services.AddDatabaseDependencies(configuration);
 
-        services.AddMessagingDependencies(configuration);
-
         services.AddStorageDependencies(configuration);
 
         services.AddApiClientDependencies(configuration);
-
-        services.AddBackgroundJobDependencies(configuration);
 
         services.AddKeeperDataMetrics(configuration);
 
@@ -67,8 +57,6 @@ public static class ServiceCollectionExtensions
             {
                 metrics.AddMeter(MetricNames.MeterName);
             });
-
-        services.ConfigurePiiAnonymization(configuration);
     }
 
     private static void EnsureFakeClientsAreDevelopmentOnly(
@@ -159,19 +147,6 @@ public static class ServiceCollectionExtensions
         });
     }
 
-    private static void ConfigurePiiAnonymization(
-        this IServiceCollection services,
-        IConfiguration configuration)
-    {
-        var options = configuration
-            .GetSection(PiiAnonymizationOptions.SectionName)
-            .Get<PiiAnonymizationOptions>();
-
-        if (options?.Enabled != true) return;
-
-        services.Decorate<IDataBridgeClient, DataBridgeClientAnonymizer>();
-    }
-
     private static readonly string ApiDescription = """
         The Livestock Keeper Data API is a reference data service that allows developers to build applications that connect with Defra's Livestock - Location and Party Data domain.
 
@@ -180,8 +155,8 @@ public static class ServiceCollectionExtensions
         * **Authenticate** with Defra's identity system using Bearer (JWT) or Basic authentication.
         * **Retrieve** location-based reference data such as Sites and its related data such as Parties, Species, Marks etc.
         * **Retrieve** reference data for Parties and related information.
-        * **Trigger** data import scans (internal, feature-gated).
-        * **Manage** dead letter queue messages (internal, feature-gated).
+
+        **Note:** the endpoints in this document are retired and disabled via `LegacyEndpointsEnabled`. They are retained in the codebase but serve stale data only; consumers should migrate to the V2 API backed by the new data ingest process.
 
         All list endpoints support **Change Data Capture (CDC)** via the `lastUpdatedDate` query parameter, returning only records updated since the provided timestamp.
 
@@ -235,7 +210,7 @@ public static class ServiceCollectionExtensions
             {
                 Title = "Livestock Keeper Data API (Internal)",
                 Version = "1.0.0",
-                Description = "Internal endpoints for data ingestion, scanning, and administration.",
+                Description = "Internal endpoints for cache administration.",
                 Contact = contactInfo,
                 License = licenseInfo
             });

@@ -27,22 +27,22 @@ Core delivery C# ASP.NET API providing RESTful data access for the Land Services
 
 This project provides an API that:
 - Integrates with MongoDB for data persistence
-- Leverages AWS services (S3, SQS, SNS) via LocalStack for local development
-- Triggers daily jobs to scan for data updates
-- Provides REST API endpoints for data import and querying
+- Downloads and caches SQLite read-model artifacts published by the data bridge, serving the `api/v2` endpoints from the local cache
+- Provides REST API endpoints for querying
 - Includes comprehensive unit, component, and integration tests
 
+> **Note:** The legacy in-process ETL pipeline (Quartz scan jobs, SQS intake consumer, data-bridge `api/query` scanning) was retired under LKPR-204. The Mongo-backed public endpoints (`/api/sites`, `/api/parties`, `/api/countries`, `/api/sitetypes`, `/api/species`, `/api/reference/*`) remain in the codebase but return `404` unless `LegacyEndpointsEnabled` is set to `true`.
+
 **Technology Stack:**
-- .NET 8
+- .NET 10
 - ASP.NET Core
 - MongoDB
-- Redis
-- AWS (LocalStack for local development)
+- SQLite (local read-model cache)
 - Docker & Docker Compose
 
 ## Prerequisites
 
-- **.NET 8 SDK** - [Download](https://dotnet.microsoft.com/download/dotnet/8.0)
+- **.NET 10 SDK** - [Download](https://dotnet.microsoft.com/download/dotnet/10.0)
 - **Docker & Docker Compose** - [Download](https://www.docker.com/products/docker-desktop)
 - **Git** - [Download](https://git-scm.com/)
 - **MongoDB CLI tools** (optional) - [mongosh](https://www.mongodb.com/docs/mongodb-shell/install/)
@@ -58,14 +58,12 @@ This project provides an API that:
 |   |__ runbooks/
 ├── src/
 │   ├── KeeperData.Api/                        # Main ASP.NET Core web application
-│   ├── KeeperData.Api.Worker/                 # Background worker service
 │   ├── KeeperData.Application/                # Application/use case logic
 │   ├── KeeperData.Core/                       # Core domain models and entities
 │   └── KeeperData.Infrastructure/             # Data access and external integrations
 ├── tests/
 │   ├── KeeperData.Api.Tests.Component/        # Component tests (covering 2 or more layers of code)
 │   ├── KeeperData.Api.Tests.Integration/      # Integration tests (running tests against temporary containers including the API and a Mongo instance)
-│   ├── KeeperData.Api.Worker.Tests.Unit/
 │   ├── KeeperData.Application.Tests.Unit/
 │   ├── KeeperData.Core.Tests.Unit/
 │   ├── KeeperData.Infrastructure.Tests.Unit/
@@ -108,8 +106,6 @@ This project provides an API that:
 
    This starts:
    - MongoDB
-   - Redis
-   - LocalStack (S3, SQS)
    - This service
      - root: `http://localhost:5555`
      - endpoints - see [Api Documentation](#api-documentation)
@@ -271,9 +267,12 @@ the [.github/example.dependabot.yml](.github/example.dependabot.yml) to `.github
 ### Api Documentation
 
 * healthcheck endpoint: `/health`
-* countries endpoint: `/api/countries`
-* sites endpoint: `/api/sites`
-* parties endpoint: `/api/parties`
+* CPHs endpoint: `/api/v2/cphs`
+* holdings endpoint: `/api/v2/holdings`
+* CPH associations endpoint: `/api/v2/cph-associations`
+* user accounts endpoint: `/api/v2/user-accounts`
+
+The legacy Mongo-backed endpoints (`/api/countries`, `/api/sites`, `/api/parties`, `/api/sitetypes`, `/api/species`, `/api/reference/*`) return `404` unless enabled via the `LegacyEndpointsEnabled` setting.
 
 For detailed API documentation, refer to the Open API definitions which can be found in the `docs/api-specs` folder.
 

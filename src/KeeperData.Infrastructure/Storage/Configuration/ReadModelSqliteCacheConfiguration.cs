@@ -1,4 +1,3 @@
-using KeeperData.Core.ApiClients.DataBridgeApi;
 
 namespace KeeperData.Infrastructure.Storage.Configuration;
 
@@ -12,5 +11,5 @@ public record ReadModelSqliteCacheConfiguration : SqliteCacheConfiguration
 
     public string FilePattern { get; init; } = "krds-db_";
 
-    public string LatestArtifactRoute { get; init; } = DataBridgeApiRoutes.GetLatestSqliteReadModel;
+    public string LatestArtifactRoute { get; init; } = "api/etl/staging/sqlite/latest";
 }

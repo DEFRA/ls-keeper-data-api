@@ -2,7 +2,6 @@ using FluentAssertions;
 using KeeperData.Api.Tests.Integration.Fixtures;
 using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.Documents;
-using KeeperData.Core.Domain.Enums;
 using KeeperData.Core.Extensions;
 using System.Net;
 using System.Net.Http.Json;
@@ -36,7 +35,7 @@ public class SitesEndpointTests(
                 {
                     Id = SiteAId,
                     Type = new SiteTypeSummaryDocument { IdentifierId = "t1", Code = "Business", Name = "Business Premise" },
-                    State = HoldingStatusType.Active.GetDescription(),
+                    State = "active",
                     Name = "Site A",
                     CreatedDate = new DateTime(2010,01,01),
                     LastUpdatedDate = new DateTime(2010,01,01),
@@ -48,7 +47,7 @@ public class SitesEndpointTests(
                 {
                     Id = SiteBId,
                     Type = new SiteTypeSummaryDocument { IdentifierId = "t2", Code = "Other", Name = "Other Premise" },
-                    State = HoldingStatusType.Active.GetDescription(),
+                    State = "active",
                     Name = "Site B",
                     CreatedDate = new DateTime(2011,01,01),
                     LastUpdatedDate = new DateTime(2011,01,01),
@@ -60,7 +59,7 @@ public class SitesEndpointTests(
                 {
                     Id = SiteCId,
                     Type = new SiteTypeSummaryDocument { IdentifierId = "t1", Code = "Business", Name = "Business Premise" },
-                    State = HoldingStatusType.Active.GetDescription(),
+                    State = "active",
                     Name = "Site C",
                     CreatedDate = new DateTime(2012,01,01),
                     LastUpdatedDate = new DateTime(2012,01,01),
@@ -78,8 +77,8 @@ public class SitesEndpointTests(
                     Type = new SiteIdentifierSummaryDocument
                     {
                         IdentifierId = Guid.NewGuid().ToString(),
-                        Code = HoldingIdentifierType.CPHN.ToString(),
-                        Name = HoldingIdentifierType.CPHN.GetDescription()!
+                        Code = "CPHN",
+                        Name = "CPH Number"
                     }
                 },
                 new SiteIdentifierDocument
@@ -89,8 +88,8 @@ public class SitesEndpointTests(
                     Type = new SiteIdentifierSummaryDocument
                     {
                         IdentifierId = Guid.NewGuid().ToString(),
-                        Code = HoldingIdentifierType.CPHN.ToString(),
-                        Name = HoldingIdentifierType.CPHN.GetDescription()!
+                        Code = "CPHN",
+                        Name = "CPH Number"
                     }
                 }
             ]);
@@ -103,8 +102,8 @@ public class SitesEndpointTests(
                     Type = new SiteIdentifierSummaryDocument
                     {
                         IdentifierId = Guid.NewGuid().ToString(),
-                        Code = HoldingIdentifierType.CPHN.ToString(),
-                        Name = HoldingIdentifierType.CPHN.GetDescription()!
+                        Code = "CPHN",
+                        Name = "CPH Number"
                     }
                 }
             ]);

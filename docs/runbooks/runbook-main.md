@@ -3,13 +3,14 @@
 ## Service Overview
 
 ### What the API does
-The Keeper Data API is a .NET 8 ASP.NET Core service that manages livestock keeper and site data for DEFRA. It provides REST endpoints for querying parties (keepers) and sites (holdings), handling data ingestion from external sources, and maintaining synchronization between different livestock management systems.
+The Keeper Data API is a .NET 10 ASP.NET Core service that manages livestock keeper and site data for DEFRA. It provides REST endpoints for querying holdings, CPHs, CPH associations and user accounts, and maintains reference data for livestock management.
 
 Key business functions:
-- **Data Query Services**: Provides paginated REST endpoints to search and retrieve party and site information
-- **Data Integration**: Consumes messages from AWS SQS queues to import data from CTS (Cattle Tracing System) and SAM (Sheep and Goat Identification Database)
-- **Data Synchronization**: Orchestrates bulk and incremental data scans from bridge services
-- **Event Processing**: Handles intake events for livestock data updates and maintains consistency across systems
+- **Data Query Services**: Provides paginated REST endpoints to search and retrieve party, site and holding information
+- **SQLite Read Model Caching**: Periodically downloads SQLite artifacts published by the data bridge and serves the `api/v2` endpoints from the local cache
+- **Reference Data**: Serves seeded MongoDB reference data (species, countries, roles, site types, production usages)
+
+> The legacy in-process ETL pipeline (Quartz scan jobs, SQS intake consumer, data-bridge `api/query` scanning, Mongo import orchestration) was retired under LKPR-204. The Mongo-backed public endpoints (`/api/sites`, `/api/parties`, `/api/countries`, `/api/sitetypes`, `/api/species`, `/api/reference/*`) remain in the codebase but return `404` unless `LegacyEndpointsEnabled` is set to `true`.
 
 ### High-level Architecture
 
@@ -24,18 +25,15 @@ Key business functions:
 ### Dependencies
 
 **Primary Dependencies:**
-- **MongoDB**: Database storing multiple types of livestock data:
-  - **Party Data**: Livestock keepers (parties, ctsParties, samParties)
-  - **Site Data**: Holdings and premises (sites, ctsHoldings, samHoldings)
+- **MongoDB**: Database storing livestock data:
+  - **Party Data**: Livestock keepers (parties)
+  - **Site Data**: Holdings and premises (sites)
   - **Reference Data**: Species, countries, roles, premises types, production usage, site identifier types
   - **Relationship Data**: Party-site relationships, group marks, communications
-  - **System Data**: Distributed locks, working collections
-- **AWS SQS**: Message queue for processing intake events (`ls_keeper_data_intake_queue`)
-- **AWS SNS**: Notification topics for event publishing (`ls_keeper_data_import_complete`)
-- **Data Bridge API**: External service for CTS/SAM data integration
+  - **User Accounts**: User account records
+- **Data Bridge API**: External service publishing the SQLite read-model artifacts consumed by the cache services
 
 **Infrastructure Dependencies:**
-- **Localstack**: AWS services emulation for local development
 - **Container Runtime**: Docker for containerized deployment
 
 ## Ownership & Contacts
@@ -59,23 +57,17 @@ Key business functions:
 
 **Expected Throughput:**
 - API: TBD
-- Queue Processing: Configurable via MaxNumberOfMessages and WaitTimeSeconds
-- Bulk Scans: TBD
+- SQLite cache refresh: configured via `CphSqliteCache`/`ReadModelSqliteCache` `RefreshIntervalHours`
 
 **Latency SLOs:**
 - API Queries: TBD
 - Health Checks: TBD
-- Queue Message Processing: TBD
 
 **Rate Limits:**
-- Queue polling: Configured via QueueConsumerOptions
 - API pagination: Default 10, max 500, Sites max 100
 
 **Scheduled Operations:**
-- CTS Bulk Scan: "0 0 4 * * ?" (4:00 AM daily) - currently disabled
-- SAM Bulk Scan: "0 0 6 * * ?" (6:00 AM daily) - currently disabled  
-- CTS Daily Scan: "0 0 4 * * ?" (4:00 AM daily) - currently disabled
-- SAM Daily Scan: "0 0 6 * * ?" (6:00 AM daily) - currently disabled
+- None — the Quartz scan jobs were retired with the ETL pipeline (LKPR-204). The SQLite caches refresh in-process on a timer.
 
 **Deployment:**
 All deployment operations driven through the CDP portal: https://portal.cdp-int.defra.cloud/services/ls-keeper-data-api
@@ -92,8 +84,7 @@ Each environment has 2 corresponding Grafana dashboards:
 
 **Custom Dashboard** - API-specific metrics:
 - Overall health status
-- Integration connectivity (MongoDB, SQS/SNS, Data Bridge API)
-- Queue status and processing rates
+- Integration connectivity (MongoDB, Data Bridge API)
 - Logged errors and warnings
 
 All dashboards are linked in the CDP portal.
@@ -108,9 +99,6 @@ All dashboards are linked in the CDP portal.
 
 **Health Check Metrics:**
 - `keeperdata.health.status`: Current health status (2=Healthy, 1=Degraded, 0=Unhealthy)
-
-**Queue Processing Metrics:**
-- All queue metrics available under `AWS/SQS` namespace in CDP's CloudWatch
 
 ### Log Locations
 
@@ -133,7 +121,6 @@ All dashboards are linked in the CDP portal.
 - Standard set of CDP platform alerts configured for all environments
 
 **Service-specific Alerts:**
-- `ls-keeper-data-api-sqs-dlq`: Triggered if any messages reach the dead letter queue
 - `ls-keeper-data-api-health-status`: Triggered if the healthcheck reports unhealthy
 
 ## Common Failure Modes & Incident Procedures
@@ -178,18 +165,6 @@ curl http://localhost:5555/health | jq '.'
 curl http://localhost:5555/
 ```
 
-### Queue Management
-```bash
-# Check queue status (LocalStack)
-aws --endpoint-url=http://localhost:4566 sqs get-queue-attributes \
-  --queue-url http://sqs.eu-west-2.localhost.localstack.cloud:4566/000000000000/ls_keeper_data_intake_queue \
-  --attribute-names All
-
-# Purge queue (CAUTION: Data loss)
-aws --endpoint-url=http://localhost:4566 sqs purge-queue \
-  --queue-url http://sqs.eu-west-2.localhost.localstack.cloud:4566/000000000000/ls_keeper_data_intake_queue
-```
-
 ### Service Restart
 ```bash
 # Docker Compose restart
@@ -222,18 +197,6 @@ curl http://localhost:8085/health | jq '.'
 curl http://localhost:8085/
 ```
 
-### Queue Management
-
-**Note:** Manual Queue procedures TBD
-
-### DLQ Redrive Process
-
-**Non-production environments:**
-- Follow the process outlined here: https://portal.cdp-int.defra.cloud/documentation/how-to/sqs-sns.md#how-do-i-re-drive-messages-on-the-dead-letter-queue-
-
-**Production environments:**
-- Make a request to the CDP team on the #cdp-support Slack channel
-
 ### Database Operations
 
 **Note:** Mongo procedures TBD
@@ -249,7 +212,7 @@ Rollbacks are handled be redeploying the previous version through the CDP Portal
 ### Validation Steps
 - Health check returns "Healthy"
 - API endpoints respond correctly
-- Queue processing resumed
+- SQLite caches load the latest artifacts
 - External integrations working
 - No error spike in logs
 
@@ -267,18 +230,28 @@ Rollbacks are handled be redeploying the previous version through the CDP Portal
     "DatabaseUri": "Connection string",
     "DatabaseName": "ls-keeper-data-api"
   },
-  "QueueConsumerOptions": {
-    "IntakeEventQueueOptions": {
-      "QueueUrl": "SQS queue URL",
-      "Disabled": false
-    }
+  "CphSqliteCache": {
+    "Enabled": true,
+    "CachePath": "data/cache",
+    "FilePattern": "cphs_",
+    "LatestArtifactRoute": "api/etl/sqlite/cphs/latest",
+    "RefreshIntervalHours": 24
+  },
+  "ReadModelSqliteCache": {
+    "Enabled": true,
+    "CachePath": "data/cache",
+    "FilePattern": "krds-db_",
+    "LatestArtifactRoute": "api/etl/staging/sqlite/latest",
+    "RefreshIntervalHours": 24
   },
   "ApiClients": {
     "DataBridgeApi": {
       "BaseUrl": "External API base URL",
       "BridgeApiSubscriptionKey": "API key"
     }
-  }
+  },
+  "AdminEndpointsEnabled": false,
+  "LegacyEndpointsEnabled": false
 }
 ```
 
@@ -306,7 +279,6 @@ Rollbacks are handled be redeploying the previous version through the CDP Portal
 
 ### Audit Logging
 - All API requests logged with correlation IDs
-- Queue message processing tracked
 - Health check executions recorded
 - Configuration changes audited
 
@@ -320,31 +292,28 @@ Rollbacks are handled be redeploying the previous version through the CDP Portal
 ### API Specifications
 - **OpenAPI/Swagger**: Swagger UI is available at `/swagger`; the generated v2 OpenAPI 3.1 contract is available at `/openapi/v2.json` and as `keeper-data-api-openapi_v2.json` on each GitHub Release from `main`.
 - **Endpoints**:
+  - `GET /api/v2/cphs` - Query CPHs from the SQLite cache
   - `GET /api/v2/cph-associations` - Retrieve CPH associations by email
   - `GET /api/v2/holdings/{county}/{parish}/{holding}` - Retrieve holding details by CPH
   - `POST /api/v2/user-accounts` - Ensure a user account exists
   - `GET /api/v2/user-accounts/{subject}` - Retrieve a user account by subject
+  - `POST /api/admin/sqlite-cache/refresh` - Force a cache refresh (requires `AdminEndpointsEnabled`)
+- **Legacy endpoints** (`/api/sites`, `/api/parties`, `/api/countries`, `/api/sitetypes`, `/api/species`, `/api/reference/*`): disabled by default; return `404` unless `LegacyEndpointsEnabled` is set to `true`. They only ever serve stale data now that ingest has moved to the data-bridge ETL.
 
 ### Known Quirks & Tribal Knowledge
 
-**Queue Processing:**
-- Messages are throttled with configurable delays between processing
-- Dead letter queue configured with 3 retry attempts
-- SNS/SQS integration requires specific IAM permissions
+**SQLite caches:**
+- Both cache services are hosted services; on start-up they download the latest artifact from the data bridge and refresh on `RefreshIntervalHours`
+- The `api/v2/cphs` endpoint returns `503` until the cache has loaded
+- The admin refresh endpoint (`api/admin/sqlite-cache/refresh`) can force a reload and is gated by `AdminEndpointsEnabled`
 
 **MongoDB:**
-- Transactions disabled by default in configuration
 - Connection pooling managed automatically
 - Health check uses simple ping command
-
-**Scheduled Jobs:**
-- All scheduled jobs currently disabled by default (EnabledFrom: 2030)
-- Jobs use Quartz scheduler with cron expressions
-- Concurrent execution prevented via `DisallowConcurrentExecution`
+- MongoDB transactions are not used
 
 **Development Environment:**
-- LocalStack containers must start before API
-- Redis configured but not actively used in current version
+- `ApiClients:DataBridgeApi:UseFakeClient` serves a fake artifact source for local development without the bridge
 - Different Docker Compose overrides for Mac ARM vs Intel
 
 ### Useful Queries & Commands
@@ -367,8 +336,8 @@ db.parties.find().sort({lastUpdatedDate: -1}).limit(10)
 # Find correlation ID traces
 grep "correlationId.*abc-123" <log-file>
 
-# Monitor queue processing
-grep "HandleMessageAsync" <log-file> | tail -f
+# Watch cache refresh activity
+grep "SqliteCache" <log-file> | tail -f
 
 # Check health check patterns
 grep "health.*check" <log-file>

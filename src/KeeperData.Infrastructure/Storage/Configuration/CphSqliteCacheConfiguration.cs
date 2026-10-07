@@ -1,4 +1,3 @@
-using KeeperData.Core.ApiClients.DataBridgeApi;
 
 namespace KeeperData.Infrastructure.Storage.Configuration;
 
@@ -8,5 +7,5 @@ public record CphSqliteCacheConfiguration : SqliteCacheConfiguration
 
     public string FilePattern { get; init; } = "cphs_";
 
-    public string LatestArtifactRoute { get; init; } = DataBridgeApiRoutes.GetLatestCphSqlite;
+    public string LatestArtifactRoute { get; init; } = "api/etl/sqlite/cphs/latest";
 }

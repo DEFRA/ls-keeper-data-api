@@ -14,7 +14,7 @@ public class SitesRepositoryTests
     public SitesRepositoryTests()
     {
         _mockDb.SetupCollection<SiteDocument>();
-        _sut = new SitesRepository(_mockDb.Config, _mockDb.Client, _mockDb.UnitOfWork);
+        _sut = new SitesRepository(_mockDb.Config, _mockDb.Client);
     }
 
     [Fact]
