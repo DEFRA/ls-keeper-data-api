@@ -3,6 +3,7 @@ using KeeperData.Application;
 using KeeperData.Application.Queries.Holdings;
 using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.DTOs;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -30,7 +31,7 @@ public class HoldingsController(IRequestExecutor executor, IReadModelSqliteCache
     /// Serves holding details from the locally cached SAM read model.
     /// Returns 503 if the cache has not yet loaded.
     /// </remarks>
-    /// <param name="request">Query parameters for pagination and sorting.</param>
+    /// <param name="request">Query parameters for pagination, sorting and optional search. Search matches word prefixes, case-insensitively; all words must occur somewhere in the holding or its associated parties. CPH may be written with slashes or as nine digits.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">OK - Paginated list of holding details.</response>
     /// <response code="400">The request was malformed or could not be processed.</response>
@@ -56,15 +57,32 @@ public class HoldingsController(IRequestExecutor executor, IReadModelSqliteCache
                 detail: "The SAM read model is not cached locally, so holding details cannot be resolved.");
         }
 
+        if (!string.IsNullOrWhiteSpace(request.Search) &&
+            _readModelCache.GetCurrentSnapshot()?.SearchIndexPath is null)
+        {
+            return Problem(statusCode: StatusCodes.Status503ServiceUnavailable,
+                detail: "The holding search index is not available.");
+        }
+
         var query = new GetHoldingsQuery
         {
             Page = request.Page ?? 1,
             PageSize = Math.Clamp(request.PageSize ?? 10, 1, 100),
             Sort = request.Sort,
-            Order = request.Order
+            Order = request.Order,
+            Search = request.Search
         };
 
-        var result = await _executor.ExecuteQuery(query, cancellationToken);
+        PaginatedResult<HoldingDetail> result;
+        try
+        {
+            result = await _executor.ExecuteQuery(query, cancellationToken);
+        }
+        catch (SearchIndexUnavailableException)
+        {
+            return Problem(statusCode: StatusCodes.Status503ServiceUnavailable,
+                detail: "The holding search index is not available.");
+        }
 
         if (result.DataTimestamp is { } dataTimestamp)
         {

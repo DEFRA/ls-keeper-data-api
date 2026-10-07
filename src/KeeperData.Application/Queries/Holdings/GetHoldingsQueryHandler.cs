@@ -14,12 +14,9 @@ public class GetHoldingsQueryHandler(IHoldingDetailRepository repository)
         GetHoldingsQuery request,
         CancellationToken cancellationToken)
     {
-        var (items, totalCount, dataTimestamp) = await _repository.GetPagedHoldingsAsync(
-            request.Page,
-            request.PageSize,
-            request.Sort,
-            request.Order,
-            cancellationToken);
+        var (items, totalCount, dataTimestamp) = string.IsNullOrWhiteSpace(request.Search)
+            ? await _repository.GetPagedHoldingsAsync(request.Page, request.PageSize, request.Sort, request.Order, cancellationToken)
+            : await _repository.SearchHoldingsAsync(request.Page, request.PageSize, request.Sort, request.Order, request.Search.Trim(), cancellationToken);
 
         return new PaginatedResult<HoldingDetail>
         {

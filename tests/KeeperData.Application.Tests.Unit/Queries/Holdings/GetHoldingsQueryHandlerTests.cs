@@ -13,6 +13,29 @@ public class GetHoldingsQueryHandlerTests
     private readonly CancellationToken _token = CancellationToken.None;
 
     [Fact]
+    public async Task GivenSearch_WhenHandling_ThenUsesSearchRepositoryAndPaginationMetadata()
+    {
+        _repository.Setup(r => r.SearchHoldingsAsync(2, 5, "desc", "name", "Green Fields", _token))
+            .ReturnsAsync(([], 11, (DateTime?)null));
+        var query = new GetHoldingsQuery
+        {
+            Page = 2,
+            PageSize = 5,
+            Sort = "desc",
+            Order = "name",
+            Search = " Green Fields "
+        };
+
+        var result = await new GetHoldingsQueryHandler(_repository.Object).Handle(query, _token);
+
+        result.TotalCount.Should().Be(11);
+        result.TotalPages.Should().Be(3);
+        result.HasNextPage.Should().BeTrue();
+        result.HasPreviousPage.Should().BeTrue();
+        _repository.Verify(r => r.SearchHoldingsAsync(2, 5, "desc", "name", "Green Fields", _token), Times.Once);
+    }
+
+    [Fact]
     public async Task GivenHoldingsExist_WhenHandling_ThenReturnsPaginatedResult()
     {
         var items = new List<HoldingDetail>
@@ -137,5 +160,26 @@ public class GetHoldingsQueryHandlerTests
         var result = new GetHoldingsQueryValidator().Validate(new GetHoldingsQuery { Order = order });
 
         result.IsValid.Should().Be(expectedValid);
+    }
+
+    [Fact]
+    public void Validator_SearchWithoutLettersOrDigits_HasClearMessage()
+    {
+        var result = new GetHoldingsQueryValidator().Validate(new GetHoldingsQuery { Search = "---" });
+
+        result.Errors.Should().ContainSingle(error =>
+            error.PropertyName == "Search" && error.ErrorMessage == "Search must contain at least one letter or digit.");
+    }
+
+    [Theory]
+    [InlineData("Smith & Sons")]
+    [InlineData("High St, Chelmsford")]
+    [InlineData("alice@example.com")]
+    [InlineData("+44 (0)7700 900123")]
+    public void Validator_SearchWithValidPunctuation_IsValid(string search)
+    {
+        var result = new GetHoldingsQueryValidator().Validate(new GetHoldingsQuery { Search = search });
+
+        result.IsValid.Should().BeTrue();
     }
 }

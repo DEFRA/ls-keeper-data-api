@@ -1,8 +1,11 @@
 using FluentAssertions;
 using KeeperData.Core.Services;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Storage.Sqlite;
 using KeeperData.Infrastructure.Database.Repositories;
+using KeeperData.Infrastructure.Services;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -13,6 +16,7 @@ public class HoldingDetailRepositoryTests : IDisposable
     private static readonly string[] s_singleHoldingCph = ["10/001/0001"];
 
     private readonly Mock<IReadModelSqliteCacheService> _mockCacheService = new();
+    private readonly Mock<ILogger<HoldingDetailRepository>> _mockLogger = new();
     private readonly HoldingDetailRepository _repository;
     private readonly string _tempDir;
     private readonly string _dbPath;
@@ -25,9 +29,10 @@ public class HoldingDetailRepositoryTests : IDisposable
 
         InitializeDatabase(_dbPath);
 
+        _mockLogger.Setup(x => x.IsEnabled(LogLevel.Information)).Returns(true);
         _mockCacheService.Setup(x => x.GetCurrentDbPath()).Returns(_dbPath);
         _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null));
-        _repository = new HoldingDetailRepository(_mockCacheService.Object);
+        _repository = new HoldingDetailRepository(_mockCacheService.Object, _mockLogger.Object);
     }
 
     public void Dispose()
@@ -77,9 +82,11 @@ public class HoldingDetailRepositoryTests : IDisposable
         // 2. Insert Party
         Execute(connection, """
             INSERT INTO Party (
-                Id, SourcePartyId, PersonTitle, GivenName, Initials, FamilyName, OrganisationName, Email, Mobile, Telephone
+                Id, SourcePartyId, PersonTitle, GivenName, Initials, FamilyName, OrganisationName, Email, Mobile, Telephone,
+                AddressLine1, AddressStreet, AddressTown, AddressLocality, AddressNation, AddressPostcode, AddressCountryCode
             ) VALUES (
-                'party-1', 'C000000', 'MISS', NULL, 'J', 'Example', NULL, NULL, NULL, '01234 567890'
+                'party-1', 'C000000', 'MISS', NULL, 'J', 'Example', NULL, NULL, NULL, '01234 567890',
+                'Example Farm', 'The Street', 'WORCESTER', 'Some Location', 'England', 'TT5 2UU', 'GB'
             );
             """);
 
@@ -142,6 +149,14 @@ public class HoldingDetailRepositoryTests : IDisposable
         assoc.Email.Should().BeNull();
         assoc.Mobile.Should().BeNull();
         assoc.Telephone.Should().Be("01234 567890");
+
+        assoc.Address.AddressLine1.Should().Be("Example Farm");
+        assoc.Address.AddressLine2.Should().Be("The Street");
+        assoc.Address.AddressTown.Should().Be("WORCESTER");
+        assoc.Address.AddressLocality.Should().Be("Some Location");
+        assoc.Address.AddressNation.Should().Be("England");
+        assoc.Address.AddressPostcode.Should().Be("TT5 2UU");
+        assoc.Address.AddressCountryCode.Should().Be("GB");
 
         assoc.Roles.Should().HaveCount(3);
         var holderRole = assoc.Roles.First(r => r.Code == "holder");
@@ -274,6 +289,70 @@ public class HoldingDetailRepositoryTests : IDisposable
         result.Location.Address.AddressLine2.Should().BeNull();
     }
 
+    [Theory]
+    // Building name plus a numbered street.
+    [InlineData("addr-1", "61/111/1111", null, null, "East End Cottages", "1", "Wilton Road", "East End Cottages", "1 Wilton Road")]
+    // Street is empty, so the source carries the thoroughfare in PaonDescription.
+    [InlineData("addr-2", "61/222/2222", null, null, "Devon Road", "27", null, "27 Devon Road", null)]
+    // SAON plus a named PAON, no street.
+    [InlineData("addr-3", "61/333/3333", "The Farmhouse", null, "Padderbury Farm", null, null, "The Farmhouse", "Padderbury Farm")]
+    // SAON plus a numbered street.
+    [InlineData("addr-4", "61/444/4444", "The Dell", null, null, "34", "Church Lane", "The Dell", "34 Church Lane")]
+    // Three lines fold into two, keeping the thoroughfare last.
+    [InlineData("addr-5", "61/555/5555", "2nd Floor", null, "Colmore Court", null, "9 Colmore Row", "2nd Floor, Colmore Court", "9 Colmore Row")]
+    // Sub-unit number renders after its description.
+    [InlineData("addr-6", "61/666/6666", "Flat", "2", "Rose Court", "14", "High Street", "Flat 2, Rose Court", "14 High Street")]
+    // No addressable object at all.
+    [InlineData("addr-7", "61/777/7777", null, null, null, null, null, null, null)]
+    public async Task GivenSaonAndPaonCombinations_WhenGettingHoldingDetail_ThenAddressLinesFollowBs7666Order(
+        string holdingId,
+        string cph,
+        string? saonDescription,
+        string? saonStartNumber,
+        string? paonDescription,
+        string? paonStartNumber,
+        string? street,
+        string? expectedLine1,
+        string? expectedLine2)
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        connection.Open();
+
+        Execute(connection, $"""
+            INSERT INTO Holding (Id, Cph, SaonDescription, SaonStartNumber, PaonDescription, PaonStartNumber, Street)
+            VALUES (
+                '{holdingId}', '{cph}', {Quote(saonDescription)}, {Quote(saonStartNumber)},
+                {Quote(paonDescription)}, {Quote(paonStartNumber)}, {Quote(street)}
+            );
+            """);
+
+        var result = await _repository.GetHoldingDetailByCphAsync(cph);
+
+        result.Should().NotBeNull();
+        result!.Location.Address.AddressLine1.Should().Be(expectedLine1);
+        result.Location.Address.AddressLine2.Should().Be(expectedLine2);
+    }
+
+    [Fact]
+    public async Task GivenSaonWithDegenerateNumberRange_WhenGettingHoldingDetail_ThenRangeCollapsesToSingleNumber()
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        connection.Open();
+
+        Execute(connection, """
+            INSERT INTO Holding (Id, Cph, PaonStartNumber, PaonEndNumber, Street)
+            VALUES ('degenerate-range', '62/111/1111', '5', '5', 'Drumguish');
+            """);
+
+        var result = await _repository.GetHoldingDetailByCphAsync("62/111/1111");
+
+        result.Should().NotBeNull();
+        result!.Location.Address.AddressLine1.Should().Be("5 Drumguish");
+        result.Location.Address.AddressLine2.Should().BeNull();
+    }
+
+    private static string Quote(string? value) => value is null ? "NULL" : $"'{value.Replace("'", "''")}'";
+
     [Fact]
     public async Task GivenOrganisationParty_WhenGettingHoldingDetail_ThenPartyTypeIsOrganisationAndNameIsOrganisationName()
     {
@@ -296,6 +375,34 @@ public class HoldingDetailRepositoryTests : IDisposable
         assoc.PartyType.Should().Be("organisation");
         assoc.Name.Should().Be("Farming Co Ltd");
         assoc.Roles.Should().ContainSingle(r => r.Code == "owner");
+    }
+
+    [Fact]
+    public async Task GivenPartyWithoutAddressColumns_WhenGettingHoldingDetail_ThenAddressIsPresentWithNullMembers()
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        connection.Open();
+
+        Execute(connection, """
+            INSERT INTO Holding (Id, Cph) VALUES ('no-address-holding', '33/444/5555');
+            INSERT INTO Party (Id, SourcePartyId, GivenName, FamilyName)
+            VALUES ('party-no-address', 'C888888', 'Jane', 'Doe');
+            INSERT INTO PartyRole (Id, PartyId, HoldingId, Role)
+            VALUES ('role-no-address', 'party-no-address', 'no-address-holding', 'holder');
+            """);
+
+        var result = await _repository.GetHoldingDetailByCphAsync("33/444/5555");
+
+        result.Should().NotBeNull();
+        var address = result!.Associations.Should().ContainSingle().Subject.Address;
+        address.Should().NotBeNull();
+        address.AddressLine1.Should().BeNull();
+        address.AddressLine2.Should().BeNull();
+        address.AddressTown.Should().BeNull();
+        address.AddressLocality.Should().BeNull();
+        address.AddressNation.Should().BeNull();
+        address.AddressPostcode.Should().BeNull();
+        address.AddressCountryCode.Should().BeNull();
     }
 
     [Fact]
@@ -355,6 +462,247 @@ public class HoldingDetailRepositoryTests : IDisposable
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("The SAM read model is not cached locally, so holding details cannot be resolved.");
+    }
+
+    [Theory]
+    [InlineData("green fields", 2)]
+    [InlineData("GREEN", 2)]
+    [InlineData("13/169/0007", 1)]
+    [InlineData("  13/169/0007  ", 1)]
+    [InlineData("131690007", 1)]
+    [InlineData("CO5 7RR", 1)]
+    [InlineData("co57rr", 1)]
+    [InlineData("farming ltd", 1)]
+    [InlineData("12345678", 1)]
+    [InlineData("MRS", 1)]
+    [InlineData("Sheila", 1)]
+    [InlineData("X", 1)]
+    [InlineData("Keeper-Six", 1)]
+    [InlineData("100023456789", 1)]
+    [InlineData("alice@example.com", 1)]
+    [InlineData("+44 (0)7700 900123", 1)]
+    [InlineData("4407700900123", 1)]
+    [InlineData("01234 567890", 1)]
+    [InlineData("01234567890", 1)]
+    public async Task SearchHoldings_MatchesIndexedFields(string search, int expectedCount)
+    {
+        SeedSearchHoldings();
+        var (indexPath, documentCount) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        documentCount.Should().Be(3);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", search);
+
+        result.TotalCount.Should().Be(expectedCount);
+        result.Items.Should().HaveCount(expectedCount);
+    }
+
+    [Theory]
+    [InlineData("10A")]
+    [InlineData("12B")]
+    [InlineData("10A-12B High Street")]
+    public async Task SearchHoldings_MatchesFormattedStreetNumber(string search)
+    {
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, PaonStartNumber, PaonStartNumberSuffix,
+                    PaonEndNumber, PaonEndNumberSuffix, Street)
+                VALUES ('range-holding', '12/345/6789', '10', 'A', '12', 'B', 'High Street');
+                """);
+        }
+
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", search);
+
+        result.TotalCount.Should().Be(1);
+        result.Items.Should().ContainSingle().Which.Location.Address.AddressLine1.Should().Be("10A-12B High Street");
+    }
+
+    [Theory]
+    [InlineData("12")]
+    [InlineData("B")]
+    public async Task SearchHoldings_MatchesStandaloneEndNumberAndSuffix(string search)
+    {
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, PaonEndNumber, PaonEndNumberSuffix)
+                VALUES ('end-only', '99/345/6789', '12', 'B');
+                """);
+        }
+
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", search);
+        result.Items.Should().ContainSingle().Which.Identifier.Should().Be("99/345/6789");
+    }
+
+    [Fact]
+    public async Task BuildSearchIndex_ReleasesTheIndexFile()
+    {
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+
+        using var exclusiveRead = new FileStream(indexPath, FileMode.Open, FileAccess.Read, FileShare.None);
+        exclusiveRead.CanRead.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task BuildSearchIndex_WhenIndexAlreadyExists_RebuildsFromCurrentHoldings()
+    {
+        var (indexPath, initialCount) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        initialCount.Should().Be(0);
+
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            Execute(connection, "INSERT INTO Holding (Id, Cph, FeatureName) VALUES ('new-holding', '12/345/6789', 'New Farm');");
+        }
+
+        var (rebuiltPath, rebuiltCount) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        rebuiltPath.Should().Be(indexPath);
+        rebuiltCount.Should().Be(1);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, rebuiltPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "New Farm");
+        result.Items.Should().ContainSingle().Which.Identifier.Should().Be("12/345/6789");
+    }
+
+    [Fact]
+    public async Task SearchHoldings_PaginatesAndRespectsExistingSort()
+    {
+        SeedSearchHoldings();
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var first = await _repository.SearchHoldingsAsync(1, 1, "desc", "name", "green");
+        var second = await _repository.SearchHoldingsAsync(2, 1, "desc", "name", "green");
+
+        first.TotalCount.Should().Be(2);
+        first.Items.Select(x => x.Name).Should().Equal("Land At Test Farm");
+        second.TotalCount.Should().Be(2);
+        second.Items.Select(x => x.Name).Should().Equal("Green Fields Farm");
+    }
+
+    [Theory]
+    [InlineData("cph", "asc")]
+    [InlineData("cph", "desc")]
+    [InlineData("name", "asc")]
+    [InlineData("name", "desc")]
+    [InlineData("holdingType", "asc")]
+    [InlineData("holdingType", "desc")]
+    [InlineData("startDate", "asc")]
+    [InlineData("startDate", "desc")]
+    [InlineData("endDate", "asc")]
+    [InlineData("endDate", "desc")]
+    public async Task SearchHoldings_WithDifferentOrderFields_OrdersByRequestedField(string order, string sort)
+    {
+        SeedSearchHoldings();
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, sort, order, "green");
+        result.TotalCount.Should().Be(2);
+        result.Items.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task SearchHoldings_WhenPageExceedsResults_ReturnsEmptyListAndPreservesTotalCount()
+    {
+        SeedSearchHoldings();
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(10, 10, "asc", "cph", "green");
+        result.TotalCount.Should().Be(2);
+        result.Items.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task SearchHoldings_NoMatches_ReturnsEmptyPage()
+    {
+        SeedSearchHoldings();
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "nonexistent");
+
+        result.TotalCount.Should().Be(0);
+        result.Items.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("---")]
+    [InlineData("!?/ ")]
+    [InlineData("   ")]
+    public async Task SearchHoldings_WithoutSearchTerms_ReturnsEmptyPage(string search)
+    {
+        var timestamp = new DateTime(2026, 6, 30, 12, 0, 0, DateTimeKind.Utc);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, timestamp));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", search);
+
+        result.Items.Should().BeEmpty();
+        result.TotalCount.Should().Be(0);
+        result.DataTimestamp.Should().Be(timestamp);
+    }
+
+    [Fact]
+    public async Task SearchHoldings_WithoutIndex_ThrowsUnavailable()
+    {
+        var act = async () => await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "green");
+        await act.Should().ThrowAsync<SearchIndexUnavailableException>().WithMessage("The holding search index is not available.");
+    }
+
+    [Fact]
+    public async Task SearchHoldings_WhenIndexFileIsCorrupt_ThrowsUnavailable()
+    {
+        var indexPath = Path.Combine(Path.GetDirectoryName(_dbPath)!, "holdings-search.sqlite");
+        await File.WriteAllTextAsync(indexPath, "not a SQLite database");
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var act = async () => await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "green");
+
+        var assertion = await act.Should().ThrowAsync<SearchIndexUnavailableException>();
+        assertion.Which.InnerException.Should().BeOfType<SqliteException>();
+    }
+
+    [Fact]
+    public async Task SearchHoldings_WhenIndexHasNoSearchTable_ThrowsUnavailable()
+    {
+        var indexPath = Path.Combine(Path.GetDirectoryName(_dbPath)!, "holdings-search.sqlite");
+        using (var connection = new SqliteConnection($"Data Source={indexPath}"))
+            connection.Open();
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var act = async () => await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "green");
+
+        var assertion = await act.Should().ThrowAsync<SearchIndexUnavailableException>();
+        assertion.Which.InnerException.Should().BeOfType<SqliteException>();
+    }
+
+    private void SeedSearchHoldings()
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        connection.Open();
+        Execute(connection, """
+            INSERT INTO Holding (Id, Cph, FeatureName, CphType, Udprn, Postcode)
+            VALUES ('h-1', '13/169/0007', 'Land At Test Farm', 'permanent', '100023456789', 'CO5 7RR'),
+                   ('h-2', '13/169/0008', 'Green Fields Farm', 'permanent', null, 'AA1 1AA'),
+                   ('h-3', '13/169/0009', 'Other Place', 'temporary', null, 'BB1 1BB');
+            INSERT INTO Party (Id, SourcePartyId, OrganisationName, PersonTitle, GivenName, Initials, FamilyName, Email, Mobile, Telephone)
+            VALUES ('p-1', '12345678', 'Green Fields Farming Ltd', null, null, null, null, 'alice@example.com', '+44 (0)7700 900123', '01234 567890'),
+                   ('p-2', 'C161215', null, 'MRS', 'Sheila', 'X', 'Keeper-Six', null, null, null);
+            INSERT INTO PartyRole (Id, PartyId, HoldingId, Role)
+            VALUES ('r-1', 'p-1', 'h-1', 'holder'),
+                   ('r-2', 'p-1', 'h-1', 'keeper'),
+                   ('r-3', 'p-2', 'h-1', 'owner');
+            """);
     }
 
     [Fact]
@@ -425,12 +773,16 @@ public class HoldingDetailRepositoryTests : IDisposable
 
     [Theory]
     [InlineData("cph", "asc", "10/001/0001")]
+    [InlineData("cph", "desc", "10/001/0003")]
     [InlineData("identifier", "asc", "10/001/0001")]
     [InlineData("name", "asc", "10/001/0002")]
     [InlineData("name", "desc", "10/001/0001")]
     [InlineData("holdingType", "asc", "10/001/0003")]
+    [InlineData("holdingType", "desc", "10/001/0001")]
     [InlineData("startDate", "asc", "10/001/0002")]
+    [InlineData("startDate", "desc", "10/001/0001")]
     [InlineData("endDate", "asc", "10/001/0003")]
+    [InlineData("endDate", "desc", "10/001/0001")]
     public async Task GivenDifferentOrderFields_WhenGettingPagedHoldings_ThenOrdersByRequestedField(string order, string sort, string expectedFirstCph)
     {
         using var connection = new SqliteConnection($"Data Source={_dbPath}");
@@ -611,6 +963,11 @@ public class HoldingDetailRepositoryTests : IDisposable
                 StartDate INTEGER,
                 EndDate INTEGER,
                 Udprn INTEGER,
+                SaonDescription TEXT,
+                SaonStartNumber TEXT,
+                SaonStartNumberSuffix TEXT,
+                SaonEndNumber TEXT,
+                SaonEndNumberSuffix TEXT,
                 PaonDescription TEXT,
                 PaonStartNumber TEXT,
                 PaonStartNumberSuffix TEXT,
@@ -636,7 +993,14 @@ public class HoldingDetailRepositoryTests : IDisposable
                 OrganisationName TEXT,
                 Email TEXT,
                 Mobile TEXT,
-                Telephone TEXT
+                Telephone TEXT,
+                AddressLine1 TEXT,
+                AddressStreet TEXT,
+                AddressTown TEXT,
+                AddressLocality TEXT,
+                AddressNation TEXT,
+                AddressPostcode TEXT,
+                AddressCountryCode TEXT
             );
 
             CREATE TABLE Herd (

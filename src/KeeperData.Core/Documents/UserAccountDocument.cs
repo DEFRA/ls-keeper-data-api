@@ -106,8 +106,7 @@ public class UserAccountDocument : IEntity, IDeletableEntity, IContainsIndexes
                 Builders<BsonDocument>.IndexKeys.Ascending("email"),
                 new CreateIndexOptions
                 {
-                    Name = "uidx_email",
-                    Unique = true,
+                    Name = "idx_email",
                     Collation = IndexDefaults.CollationCaseInsensitive
                 })
         ],
