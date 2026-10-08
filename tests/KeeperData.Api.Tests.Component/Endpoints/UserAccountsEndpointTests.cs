@@ -3,6 +3,7 @@ using KeeperData.Api.Controllers.RequestDtos.UserAccounts;
 using KeeperData.Application.Commands.UserAccounts;
 using KeeperData.Application.Queries.UserAccounts;
 using KeeperData.Core.DTOs;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Services;
 using KeeperData.Tests.Common.Utilities;
 using Microsoft.AspNetCore.TestHost;
@@ -90,5 +91,24 @@ public class UserAccountsEndpointTests : IClassFixture<AppTestFixture>
                 It.Is<EnsureUserAccountCommand>(command => command.Email == "jane.farmer@example.com"),
                 It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task EnsureUserAccount_WhenEmailIsBoundToADifferentSubject_Returns409()
+    {
+        _mockCache.Setup(c => c.IsLoaded).Returns(true);
+        _mockExecutor
+            .Setup(x => x.ExecuteCommand(It.IsAny<EnsureUserAccountCommand>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ConflictException("The email address is already associated with a different user account."));
+
+        var response = await _client.PostAsJsonAsync("/api/v2/user-accounts", new EnsureUserAccountRequest
+        {
+            Sub = "subject",
+            Email = "jane.farmer@example.com",
+            GivenName = "Jane",
+            FamilyName = "Farmer"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
     }
 }

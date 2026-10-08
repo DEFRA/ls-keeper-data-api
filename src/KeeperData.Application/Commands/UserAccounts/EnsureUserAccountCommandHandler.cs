@@ -1,5 +1,6 @@
 using KeeperData.Application.Services.UserAccounts;
 using KeeperData.Core.Documents;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Repositories;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -51,16 +52,20 @@ public class EnsureUserAccountCommandHandler(
         CancellationToken cancellationToken)
     {
         var account = await repository.FindBySubjectAsync(request.Subject, cancellationToken);
+        var emailMatch = await repository.FindByEmailAsync(request.Email, cancellationToken);
+
+        // An email may be associated with a single identity. If the email match is already bound to
+        // a different subject, binding it here would split the keeper across two accounts.
+        if (emailMatch?.Subject is not null && emailMatch.Subject != request.Subject)
+            throw new ConflictException("The email address is already associated with a different user account.");
 
         if (account is not null)
             return (account, false);
 
-        // Only adopt an account that has no subject bound yet. An account found by email that is
-        // already bound to a different subject is left untouched; a new account is created instead.
-        var adoptable = await repository.FindByEmailAsync(request.Email, cancellationToken);
-
-        if (adoptable is not null && adoptable.Subject is null)
-            return AdoptExistingAccount(adoptable, request.Subject);
+        // Only adopt an account that has no subject bound yet; the subject is stamped once and never
+        // overwritten.
+        if (emailMatch is not null)
+            return AdoptExistingAccount(emailMatch, request.Subject);
 
         var newAccount = new UserAccountDocument
         {
