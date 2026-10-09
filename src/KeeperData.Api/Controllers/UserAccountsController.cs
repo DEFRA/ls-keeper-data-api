@@ -28,7 +28,8 @@ namespace KeeperData.Api.Controllers
         /// <remarks>
         /// Called on every successful logon. Resolves the account by subject, otherwise adopts an account
         /// which matches on email and has no subject bound yet (the subject is stamped once and never
-        /// overwritten), otherwise creates a new account. Profile fields are overwritten from the claims and
+        /// overwritten), otherwise creates a new account. If the email is already bound to a different
+        /// subject the request is rejected with 409. Profile fields are overwritten from the claims and
         /// the CPH association graph is rebuilt from the SAM mastered read model. An empty association result
         /// is valid and empties the snapshot, but a cold read model cache returns 503 and leaves the stored
         /// snapshot untouched.
@@ -39,6 +40,7 @@ namespace KeeperData.Api.Controllers
         /// <response code="201">Created - A new account was created.</response>
         /// <response code="401">Access token is not set or invalid.</response>
         /// <response code="403">The requestor is not authorized to perform this operation on the resource.</response>
+        /// <response code="409">The email address is already associated with a different user account.</response>
         /// <response code="422">The request body failed validation.</response>
         /// <response code="503">The SAM read model cache is not yet available, so associations cannot be refreshed.</response>
         /// <response code="500">The server encountered an unexpected error</response>
@@ -47,6 +49,7 @@ namespace KeeperData.Api.Controllers
         [ProducesResponseType(typeof(UserAccountDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
