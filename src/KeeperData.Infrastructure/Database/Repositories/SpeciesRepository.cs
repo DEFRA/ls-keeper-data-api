@@ -1,7 +1,6 @@
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Reference;
 using KeeperData.Core.Repositories;
-using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -10,9 +9,8 @@ namespace KeeperData.Infrastructure.Database.Repositories;
 
 public class SpeciesRepository(
     IOptions<MongoConfig> mongoConfig,
-    IMongoClient client,
-    IUnitOfWork unitOfWork)
-    : ReferenceDataRepository<SpeciesListDocument, SpeciesDocument>(mongoConfig, client, unitOfWork), ISpeciesRepository
+    IMongoClient client)
+    : ReferenceDataRepository<SpeciesListDocument, SpeciesDocument>(mongoConfig, client), ISpeciesRepository
 {
     public new async Task<SpeciesDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken = default)
     {

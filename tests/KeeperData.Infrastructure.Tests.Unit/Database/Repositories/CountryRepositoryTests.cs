@@ -13,7 +13,7 @@ public class CountryRepositoryTests
     public CountryRepositoryTests()
     {
         _fixture = new ReferenceRepositoryTestFixture<CountryRepository, CountryListDocument, CountryDocument>();
-        _sut = _fixture.CreateSut((config, client, unitOfWork) => new CountryRepository(config, client, unitOfWork));
+        _sut = _fixture.CreateSut((config, client) => new CountryRepository(config, client));
     }
 
     [Fact]

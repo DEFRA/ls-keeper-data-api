@@ -1,6 +1,5 @@
 using KeeperData.Core.Documents;
 using KeeperData.Core.Repositories;
-using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -9,12 +8,10 @@ namespace KeeperData.Infrastructure.Database.Repositories;
 
 public class UserAccountsRepository(
     IOptions<MongoConfig> mongoConfig,
-    IMongoClient client,
-    IUnitOfWork unitOfWork)
+    IMongoClient client)
     : GenericRepository<UserAccountDocument>(
         mongoConfig,
-        client,
-        unitOfWork), IUserAccountsRepository
+        client), IUserAccountsRepository
 {
     public async Task<UserAccountDocument?> FindBySubjectAsync(string subject, CancellationToken cancellationToken = default)
     {

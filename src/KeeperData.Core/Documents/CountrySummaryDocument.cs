@@ -1,4 +1,3 @@
-using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
@@ -61,25 +60,4 @@ public class CountrySummaryDocument : INestedEntity
     [BsonElement("lastModifiedDate")]
     [JsonPropertyName("lastModifiedDate")]
     public DateTime? LastModifiedDate { get; set; }
-
-    public static CountrySummaryDocument FromDomain(Country country) => new()
-    {
-        IdentifierId = country.Id,
-        Code = country.Code,
-        Name = country.Name,
-        LongName = country.LongName,
-        EuTradeMemberFlag = country.EuTradeMemberFlag,
-        DevolvedAuthorityFlag = country.DevolvedAuthorityFlag,
-        LastModifiedDate = country.LastUpdatedDate
-    };
-
-    public Country ToDomain() => new(
-        IdentifierId,
-        Code,
-        Name,
-        LongName,
-        EuTradeMemberFlag,
-        DevolvedAuthorityFlag,
-        LastModifiedDate
-    );
 }

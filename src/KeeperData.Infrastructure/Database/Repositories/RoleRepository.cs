@@ -1,7 +1,6 @@
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Reference;
 using KeeperData.Core.Repositories;
-using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -10,9 +9,8 @@ namespace KeeperData.Infrastructure.Database.Repositories;
 
 public class RoleRepository(
     IOptions<MongoConfig> mongoConfig,
-    IMongoClient client,
-    IUnitOfWork unitOfWork)
-    : ReferenceDataRepository<RoleListDocument, RoleDocument>(mongoConfig, client, unitOfWork), IRoleRepository
+    IMongoClient client)
+    : ReferenceDataRepository<RoleListDocument, RoleDocument>(mongoConfig, client), IRoleRepository
 {
     public new async Task<RoleDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken = default)
     {

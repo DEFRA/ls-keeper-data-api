@@ -2,7 +2,6 @@ using FluentAssertions;
 using KeeperData.Core.Attributes;
 using KeeperData.Core.Documents.Reference;
 using KeeperData.Core.Repositories;
-using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Infrastructure.Database.Repositories;
 using Microsoft.Extensions.Options;
@@ -19,7 +18,7 @@ public class ReferenceDataRepositoryTests
     public ReferenceDataRepositoryTests()
     {
         _fixture = new ReferenceRepositoryTestFixture<TestReferenceRepository, TestReferenceListDocument, TestReferenceDocument>();
-        _sut = _fixture.CreateSut((config, client, unitOfWork) => new TestReferenceRepository(config, client, unitOfWork));
+        _sut = _fixture.CreateSut((config, client) => new TestReferenceRepository(config, client));
     }
 
     [Fact]
@@ -104,9 +103,8 @@ public class TestReferenceRepository : ReferenceDataRepository<TestReferenceList
 {
     public TestReferenceRepository(
         IOptions<MongoConfig> mongoConfig,
-        IMongoClient client,
-        IUnitOfWork unitOfWork)
-        : base(mongoConfig, client, unitOfWork)
+        IMongoClient client)
+        : base(mongoConfig, client)
     {
     }
 }

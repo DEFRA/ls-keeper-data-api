@@ -13,7 +13,7 @@ public class SiteTypeMapRepositoryTests
     public SiteTypeMapRepositoryTests()
     {
         _fixture = new ReferenceRepositoryTestFixture<SiteTypeMapRepository, SiteTypeMapListDocument, SiteTypeMapDocument>();
-        _sut = _fixture.CreateSut((config, client, unitOfWork) => new SiteTypeMapRepository(config, client, unitOfWork));
+        _sut = _fixture.CreateSut((config, client) => new SiteTypeMapRepository(config, client));
     }
 
     [Fact]

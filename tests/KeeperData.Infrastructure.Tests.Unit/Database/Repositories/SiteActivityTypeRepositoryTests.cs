@@ -13,7 +13,7 @@ public class SiteActivityTypeRepositoryTests
     public SiteActivityTypeRepositoryTests()
     {
         _fixture = new ReferenceRepositoryTestFixture<SiteActivityTypeRepository, SiteActivityTypeListDocument, SiteActivityTypeDocument>();
-        _sut = _fixture.CreateSut((config, client, unitOfWork) => new SiteActivityTypeRepository(config, client, unitOfWork));
+        _sut = _fixture.CreateSut((config, client) => new SiteActivityTypeRepository(config, client));
     }
 
     [Fact]

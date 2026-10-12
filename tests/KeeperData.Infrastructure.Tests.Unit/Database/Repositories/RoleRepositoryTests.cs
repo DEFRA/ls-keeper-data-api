@@ -13,7 +13,7 @@ public class RoleRepositoryTests
     public RoleRepositoryTests()
     {
         _fixture = new ReferenceRepositoryTestFixture<RoleRepository, RoleListDocument, RoleDocument>();
-        _sut = _fixture.CreateSut((config, client, unitOfWork) => new RoleRepository(config, client, unitOfWork));
+        _sut = _fixture.CreateSut((config, client) => new RoleRepository(config, client));
     }
 
     [Fact]
