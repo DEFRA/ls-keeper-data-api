@@ -1,6 +1,4 @@
 using KeeperData.Core.Attributes;
-using KeeperData.Core.Domain.Parties;
-using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
@@ -117,94 +115,6 @@ public class PartyDocument : IEntity, IDeletableEntity, IContainsIndexes
     [BsonElement("partyRoles")]
     [JsonPropertyName("partyRoles")]
     public List<PartyRoleWithSiteDocument> PartyRoles { get; set; } = [];
-
-    public static PartyDocument FromDomain(Party domain)
-    {
-        var addressDoc = domain.Address is not null
-            ? AddressDocument.FromDomain(domain.Address)
-            : null;
-
-        var communications = domain.Communications?.Select(CommunicationDocument.FromDomain).ToList() ?? [];
-        var roles = domain.Roles?.Select(PartyRoleWithSiteDocument.FromDomain).ToList() ?? [];
-
-        return new PartyDocument
-        {
-            Id = domain.Id,
-            CreatedDate = domain.CreatedDate,
-            LastUpdatedDate = domain.LastUpdatedDate,
-            Title = domain.Title,
-            FirstName = domain.FirstName,
-            LastName = domain.LastName,
-            Name = domain.Name,
-            CustomerNumber = domain.CustomerNumber,
-            PartyType = domain.PartyType,
-            State = domain.State,
-            Deleted = domain.Deleted,
-            CorrespondanceAddress = addressDoc,
-            Communication = communications,
-            PartyRoles = roles
-        };
-    }
-
-    public Party ToDomain()
-    {
-        var party = new Party(
-            Id,
-            CreatedDate,
-            LastUpdatedDate,
-            Title,
-            FirstName,
-            LastName,
-            Name,
-            CustomerNumber,
-            PartyType,
-            State,
-            Deleted,
-            CorrespondanceAddress?.ToDomain());
-
-        foreach (var comm in Communication)
-        {
-            party.AddOrUpdatePrimaryCommunication(LastUpdatedDate, comm.ToDomain());
-        }
-
-        party.SetRoles(PartyRoles.Select(r => r.ToDomain()));
-
-        return party;
-    }
-
-    public SiteParty ToSitePartyDomain(DateTime lastUpdatedDate)
-    {
-        return new SiteParty(
-            id: Id,
-            createdDate: CreatedDate,
-            lastUpdatedDate: lastUpdatedDate,
-            customerNumber: CustomerNumber,
-            title: Title,
-            firstName: FirstName,
-            lastName: LastName,
-            name: Name,
-            partyType: PartyType,
-            state: State,
-            correspondanceAddress: CorrespondanceAddress?.ToDomain(),
-            communication: Communication.Select(c => c.ToDomain()),
-            partyRole: PartyRoles.Select(r => r.ToDomain()));
-    }
-
-    public void UpdatePartyRoleSitesFromDomain(Party domain)
-    {
-        if (domain?.Roles == null || PartyRoles == null)
-            return;
-
-        var domainRolesById = domain.Roles.ToDictionary(r => r.Id);
-
-        foreach (var partyRole in PartyRoles)
-        {
-            if (partyRole == null) continue;
-
-            if (domainRolesById.TryGetValue(partyRole.IdentifierId, out var domainRole) && domainRole.Site != null)
-                partyRole.Site = PartyRoleSiteDocument.FromDomain(domainRole.Site);
-        }
-    }
 
     public static IEnumerable<CreateIndexModel<BsonDocument>> GetIndexModels()
     {

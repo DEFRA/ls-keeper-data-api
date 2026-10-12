@@ -1,7 +1,6 @@
 using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Reference;
 using KeeperData.Core.Repositories;
-using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -10,9 +9,8 @@ namespace KeeperData.Infrastructure.Database.Repositories;
 
 public class CountryRepository(
     IOptions<MongoConfig> mongoConfig,
-    IMongoClient client,
-    IUnitOfWork unitOfWork)
-    : ReferenceDataRepository<CountryListDocument, CountryDocument>(mongoConfig, client, unitOfWork), ICountryRepository
+    IMongoClient client)
+    : ReferenceDataRepository<CountryListDocument, CountryDocument>(mongoConfig, client), ICountryRepository
 {
     public new async Task<CountryDocument?> GetByIdAsync(string? id, CancellationToken cancellationToken = default)
     {

@@ -13,7 +13,7 @@ public class ProductionUsageRepositoryTests
     public ProductionUsageRepositoryTests()
     {
         _fixture = new ReferenceRepositoryTestFixture<ProductionUsageRepository, ProductionUsageListDocument, ProductionUsageDocument>();
-        _sut = _fixture.CreateSut((config, client, unitOfWork) => new ProductionUsageRepository(config, client, unitOfWork));
+        _sut = _fixture.CreateSut((config, client) => new ProductionUsageRepository(config, client));
     }
 
     [Fact]

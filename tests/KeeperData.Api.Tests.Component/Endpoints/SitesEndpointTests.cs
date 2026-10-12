@@ -1,7 +1,7 @@
 using FluentAssertions;
 using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.Documents;
-using KeeperData.Core.Domain.Enums;
+
 using KeeperData.Core.Extensions;
 using Moq;
 using System.Net;
@@ -162,7 +162,7 @@ public class SitesEndpointTests(AppTestFixture appTestFixture) : IClassFixture<A
                 Code = typeCode,
                 Name = $"{typeCode} Description"
             },
-            State = HoldingStatusType.Active.GetDescription()
+            State = "active"
         };
 
         site.Identifiers.Add(new SiteIdentifierDocument
@@ -172,8 +172,8 @@ public class SitesEndpointTests(AppTestFixture appTestFixture) : IClassFixture<A
             Type = new SiteIdentifierSummaryDocument()
             {
                 IdentifierId = Guid.NewGuid().ToString(),
-                Code = HoldingIdentifierType.CPHN.ToString(),
-                Name = HoldingIdentifierType.CPHN.GetDescription()!
+                Code = "CPHN",
+                Name = "CPH Number"
             },
             LastUpdatedDate = DateTime.UtcNow
         });

@@ -15,7 +15,7 @@ public class PartiesRepositoryTests
     public PartiesRepositoryTests()
     {
         _mockDb.SetupCollection<PartyDocument>();
-        _sut = new PartiesRepository(_mockDb.Config, _mockDb.Client, _mockDb.UnitOfWork);
+        _sut = new PartiesRepository(_mockDb.Config, _mockDb.Client);
     }
 
     [Fact]
