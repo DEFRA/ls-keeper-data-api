@@ -37,11 +37,44 @@ public class HoldingsEndpointTests(ApiContainerFixture fixture)
         result.Should().NotBeNull();
         result!.Page.Should().Be(2);
         result.PageSize.Should().Be(1);
-        result.TotalCount.Should().Be(7);
+        result.TotalCount.Should().Be(336);
         result.Count.Should().Be(1);
         result.HasNextPage.Should().BeTrue();
         result.HasPreviousPage.Should().BeTrue();
-        result.Values.Should().ContainSingle().Which.Identifier.Should().Be("22/100/0001");
+        result.Values.Should().ContainSingle().Which.Identifier.Should().Be("13/169/0007");
+    }
+
+    [Fact]
+    public async Task WhenThirtyFourHoldingsMatch_ReturnsTwoUniquePagesOfTwentyFiveAndNine()
+    {
+        var firstResponse = await _fixture.HttpClient.GetAsync("api/v2/holdings?search=QAThirtyFour&page=1&pageSize=25&order=cph&sort=asc");
+        var secondResponse = await _fixture.HttpClient.GetAsync("api/v2/holdings?search=QAThirtyFour&page=2&pageSize=25&order=cph&sort=asc");
+
+        firstResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        secondResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var first = (await firstResponse.Content.ReadFromJsonAsync<PaginatedResult<HoldingDetail>>())!;
+        var second = (await secondResponse.Content.ReadFromJsonAsync<PaginatedResult<HoldingDetail>>())!;
+
+        first.Count.Should().Be(25);
+        first.Values.Should().HaveCount(25);
+        first.Page.Should().Be(1);
+        first.PageSize.Should().Be(25);
+        first.TotalCount.Should().Be(34);
+        first.TotalPages.Should().Be(2);
+        first.HasPreviousPage.Should().BeFalse();
+        first.HasNextPage.Should().BeTrue();
+
+        second.Count.Should().Be(9);
+        second.Values.Should().HaveCount(9);
+        second.Page.Should().Be(2);
+        second.PageSize.Should().Be(25);
+        second.TotalCount.Should().Be(34);
+        second.TotalPages.Should().Be(2);
+        second.HasPreviousPage.Should().BeTrue();
+        second.HasNextPage.Should().BeFalse();
+
+        var identifiers = first.Values.Concat(second.Values).Select(holding => holding.Identifier);
+        identifiers.Should().OnlyHaveUniqueItems().And.BeInAscendingOrder().And.HaveCount(34);
     }
 
     [Fact]
@@ -60,7 +93,7 @@ public class HoldingsEndpointTests(ApiContainerFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<PaginatedResult<HoldingDetail>>();
         result.Should().NotBeNull();
-        result!.TotalCount.Should().Be(15);
+        result!.TotalCount.Should().Be(344);
         result.Values.Should().HaveCount(10);
     }
 }

@@ -473,17 +473,12 @@ public class HoldingDetailRepositoryTests : IDisposable
     [InlineData("CO5 7RR", 1)]
     [InlineData("co57rr", 1)]
     [InlineData("farming ltd", 1)]
-    [InlineData("12345678", 1)]
-    [InlineData("MRS", 1)]
-    [InlineData("Sheila", 1)]
-    [InlineData("X", 1)]
-    [InlineData("Keeper-Six", 1)]
-    [InlineData("100023456789", 1)]
-    [InlineData("alice@example.com", 1)]
-    [InlineData("+44 (0)7700 900123", 1)]
-    [InlineData("4407700900123", 1)]
-    [InlineData("01234 567890", 1)]
-    [InlineData("01234567890", 1)]
+    [InlineData("UK 123456", 1)]
+    [InlineData("UK123456", 1)]
+    [InlineData("uk123456", 1)]
+    [InlineData("123456", 1)]
+    [InlineData("360396", 1)]
+    [InlineData("UK 360396", 1)]
     public async Task SearchHoldings_MatchesIndexedFields(string search, int expectedCount)
     {
         SeedSearchHoldings();
@@ -495,6 +490,256 @@ public class HoldingDetailRepositoryTests : IDisposable
 
         result.TotalCount.Should().Be(expectedCount);
         result.Items.Should().HaveCount(expectedCount);
+    }
+
+    [Theory]
+    [InlineData("12345678")] // Party ID
+    [InlineData("MRS")] // PersonTitle
+    [InlineData("Sheila")] // GivenName
+    [InlineData("X")] // Initials
+    [InlineData("Keeper-Six")] // FamilyName
+    [InlineData("100023456789")] // Udprn
+    [InlineData("alice@example.com")] // Email
+    [InlineData("+44 (0)7700 900123")] // Mobile
+    [InlineData("4407700900123")] // Mobile normalized
+    [InlineData("01234 567890")] // Telephone
+    [InlineData("01234567890")] // Telephone normalized
+    [InlineData("permanent")] // HoldingType
+    [InlineData("temporary")] // HoldingType
+    public async Task SearchHoldings_ExcludedFields_ReturnZeroMatches(string search)
+    {
+        SeedSearchHoldings();
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", search);
+
+        result.TotalCount.Should().Be(0);
+        result.Items.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("47/215/0169")]
+    [InlineData("472150169")]
+    [InlineData("47 215 0169")]
+    [InlineData("0169")]
+    [InlineData("215/0169")]
+    public async Task SearchHoldings_CphFormatsAndPartialMatching(string search)
+    {
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            Execute(connection, "INSERT INTO Holding (Id, Cph, FeatureName) VALUES ('cph-test', '47/215/0169', 'Test CPH Holding');");
+        }
+
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", search);
+        result.TotalCount.Should().Be(1);
+        result.Items.Should().ContainSingle().Which.Identifier.Should().Be("47/215/0169");
+    }
+
+    [Fact]
+    public async Task SearchHoldings_ThreeFullCphFormatsReturnIdenticalResults()
+    {
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, FeatureName) VALUES ('cph-1', '47/215/0169', 'Holding One');
+                INSERT INTO Holding (Id, Cph, FeatureName, Street) VALUES ('cph-2', '01/001/0001', 'Holding Two', '47 Oak St');
+                """);
+        }
+
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var resSlashes = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "47/215/0169");
+        var resNoSlashes = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "472150169");
+        var resSpaces = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "47 215 0169");
+
+        resSlashes.TotalCount.Should().Be(1);
+        resNoSlashes.TotalCount.Should().Be(1);
+        resSpaces.TotalCount.Should().Be(1);
+
+        resSlashes.Items.Select(x => x.Identifier).Should().Equal(resNoSlashes.Items.Select(x => x.Identifier));
+        resSlashes.Items.Select(x => x.Identifier).Should().Equal(resSpaces.Items.Select(x => x.Identifier));
+    }
+
+    [Fact]
+    public async Task SearchHoldings_HoldingAndBusinessNames_FullAndPartial()
+    {
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            Execute(connection, "INSERT INTO Holding (Id, Cph, FeatureName) VALUES ('name-1', '11/111/1111', 'Low Wood Farm');");
+        }
+
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        foreach (var term in new[] { "Low Wood", "Low Wood Farm", "Wood Farm" })
+        {
+            var res = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", term);
+            res.TotalCount.Should().Be(1, $"term '{term}' should match 'Low Wood Farm'");
+            res.Items.Should().ContainSingle().Which.Identifier.Should().Be("11/111/1111");
+        }
+    }
+
+    [Fact]
+    public async Task SearchHoldings_BusinessNameStartingWithUk_MatchesBusinessName()
+    {
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph) VALUES ('h-uk-biz', '22/222/2222');
+                INSERT INTO Party (Id, SourcePartyId, OrganisationName) VALUES ('p-uk-biz', 'SRC-UK-BIZ', 'UK Farming Ltd');
+                INSERT INTO PartyRole (Id, PartyId, HoldingId, Role) VALUES ('pr-uk-biz', 'p-uk-biz', 'h-uk-biz', 'holder');
+                """);
+        }
+
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var res = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "UK Farming");
+        res.TotalCount.Should().Be(1);
+        res.Items.Should().ContainSingle().Which.Identifier.Should().Be("22/222/2222");
+    }
+
+    [Fact]
+    public async Task SearchHoldings_WholeTermMatchingWithinOneField()
+    {
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            // 1. Matches Low Wood Farm in address line 1
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, PaonDescription, Street)
+                VALUES ('h-match', '10/100/0001', 'Low Wood Farm', 'Main Road');
+                """);
+
+            // 2. Does NOT match Low Field in line 1 and Wood Farm in line 2
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, SaonDescription, PaonDescription, Street)
+                VALUES ('h-split', '10/100/0002', 'Low Field', 'Wood Farm', 'Main Road');
+                """);
+
+            // 3. Does NOT match Wood Low Farm
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, PaonDescription)
+                VALUES ('h-reversed', '10/100/0003', 'Wood Low Farm');
+                """);
+
+            // 4. Does NOT match Low Great Wood Farm
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, PaonDescription)
+                VALUES ('h-spaced', '10/100/0004', 'Low Great Wood Farm');
+                """);
+
+            // 5. Does NOT match separate associated business names of Low and Wood
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph) VALUES ('h-biz-split', '10/100/0005');
+                INSERT INTO Party (Id, SourcePartyId, OrganisationName) VALUES ('p-low', 'SRC-LOW', 'Low');
+                INSERT INTO Party (Id, SourcePartyId, OrganisationName) VALUES ('p-wood', 'SRC-WOOD', 'Wood');
+                INSERT INTO PartyRole (Id, PartyId, HoldingId, Role) VALUES ('pr-1', 'p-low', 'h-biz-split', 'holder');
+                INSERT INTO PartyRole (Id, PartyId, HoldingId, Role) VALUES ('pr-2', 'p-wood', 'h-biz-split', 'owner');
+                """);
+        }
+
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "Low Wood");
+
+        result.TotalCount.Should().Be(1);
+        result.Items.Should().ContainSingle().Which.Identifier.Should().Be("10/100/0001");
+    }
+
+    [Theory]
+    [InlineData("Low Wood", "60/001/0001")]
+    [InlineData("Low Wo", "60/001/0001")]
+    [InlineData("Low & Wood", "60/001/0002")]
+    [InlineData("  LOW & WO  ", "60/001/0002")]
+    [InlineData("Low-Wood", "60/001/0003")]
+    [InlineData("O'Connor", "60/001/0004")]
+    [InlineData("O Connor", "60/001/0005")]
+    public async Task SearchHoldings_PreservesPunctuationAndFinalWordPrefix(string search, string expectedCph)
+    {
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, FeatureName) VALUES
+                    ('plain', '60/001/0001', 'Low Wood Farm'),
+                    ('ampersand', '60/001/0002', 'Low & Wood Farm'),
+                    ('hyphen', '60/001/0003', 'Low-Wood Farm'),
+                    ('apostrophe', '60/001/0004', 'O''Connor Farm'),
+                    ('space', '60/001/0005', 'O Connor Farm');
+                """);
+        }
+
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", search);
+
+        result.TotalCount.Should().Be(1);
+        result.Items.Should().ContainSingle().Which.Identifier.Should().Be(expectedCph);
+    }
+
+    [Fact]
+    public async Task SearchHoldings_LiteralMatchInAnotherFieldCannotBypassWordBoundary()
+    {
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, FeatureName, Street)
+                VALUES ('boundary', '60/001/0001', 'Low & Wood Farm', 'Blow Wood Lane');
+                """);
+        }
+
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "Low Wood");
+
+        result.TotalCount.Should().Be(0);
+        result.Items.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task SearchHoldings_ConfigurableSearchFields_RestrictsSearchToConfiguredFields()
+    {
+        SeedSearchHoldings();
+
+        // Build index with only CPH enabled
+        var (cphOnlyPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, ["cph"], CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, cphOnlyPath));
+
+        var cphRes = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "13/169/0007");
+        cphRes.TotalCount.Should().Be(1);
+
+        var nameRes = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "Green Fields Farm");
+        nameRes.TotalCount.Should().Be(0);
+
+        var postcodeRes = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "CO5 7RR");
+        postcodeRes.TotalCount.Should().Be(0);
+
+        // Rebuild index with only HoldingName and Postcode enabled
+        var (namePostcodePath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, ["holdingName", "postcode"], CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, namePostcodePath));
+
+        var nameRes2 = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "Green Fields Farm");
+        nameRes2.TotalCount.Should().Be(1);
+
+        var postcodeRes2 = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "CO5 7RR");
+        postcodeRes2.TotalCount.Should().Be(1);
+
+        var cphRes2 = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "13/169/0007");
+        cphRes2.TotalCount.Should().Be(0);
     }
 
     [Theory]
@@ -542,6 +787,275 @@ public class HoldingDetailRepositoryTests : IDisposable
         var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", search);
         result.Items.Should().ContainSingle().Which.Identifier.Should().Be("99/345/6789");
     }
+
+    [Fact]
+    public async Task SearchHoldings_PreservesAddressBoundariesWhenAddingNumberAliases()
+    {
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, SaonDescription, PaonStartNumber, PaonStartNumberSuffix, Street)
+                VALUES ('addr-boundary', '20/001/0001', 'Flat 1', '10', 'A', 'High Street');
+                """);
+        }
+
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        // Alias "10" and street "High Street" should not form an artificial phrase "High Street 10", "10 A", or "A High Street"
+        var falsePhraseResult1 = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "High Street 10");
+        falsePhraseResult1.TotalCount.Should().Be(0);
+
+        var falsePhraseResult2 = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "10 A");
+        falsePhraseResult2.TotalCount.Should().Be(0);
+
+        var falsePhraseResult3 = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "A High Street");
+        falsePhraseResult3.TotalCount.Should().Be(0);
+
+        // Actual address line contents and individual aliases match
+        var streetResult = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "10A High Street");
+        streetResult.TotalCount.Should().Be(1);
+
+        var numResult = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "10");
+        numResult.TotalCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task SearchHoldings_UkHerdMarkSearch_DoesNotMatchAddressNumberWithoutHerdMark()
+    {
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            // Holding 1 has address containing 123456, but no herd mark
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, FeatureName, PaonDescription, Street)
+                VALUES ('h-addr-only', '30/001/0001', 'Test Farm', '123456', 'Main Street');
+                """);
+            // Holding 2 has herd mark 123456
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, FeatureName)
+                VALUES ('h-herd-only', '30/001/0002', 'Herd Farm');
+                INSERT INTO Herd (Id, HoldingId, Herdmark, AnimalSpeciesCode)
+                VALUES ('herd-test', 'h-herd-only', '123456', 'CTT');
+                """);
+        }
+
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        // Searching "UK 123456" normalizes to bare "123456" restricted to Herdmark, so only the holding with the herd mark matches
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "UK 123456");
+        result.TotalCount.Should().Be(1);
+        result.Items.Should().ContainSingle().Which.Identifier.Should().Be("30/001/0002");
+    }
+
+    [Fact]
+    public async Task SearchHoldings_UnspacedPostcode_IndexesInwardToken()
+    {
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, FeatureName, Postcode)
+                VALUES ('unspaced-pc', '40/001/0001', 'Unspaced Farm', 'CO57RR');
+                """);
+        }
+
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        // Searching inward token "7RR" should match the unspaced postcode "CO57RR"
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "7RR");
+        result.TotalCount.Should().Be(1);
+        result.Items.Should().ContainSingle().Which.Identifier.Should().Be("40/001/0001");
+
+        // Searching spaced format "CO5 7RR" should also match
+        var spacedResult = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "CO5 7RR");
+        spacedResult.TotalCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task BuildSearchIndex_ThrowsArgumentException_WhenSearchableFieldsContainsInvalidField()
+    {
+        var act = async () => await HoldingSearchIndex.BuildAsync(_dbPath, ["InvalidField"], CancellationToken.None);
+
+        await act.Should().ThrowAsync<ArgumentException>()
+            .WithMessage("*Invalid searchable field 'InvalidField'*");
+    }
+
+    [Fact]
+    public async Task BuildSearchIndex_ThrowsArgumentException_WhenSearchableFieldsContainsEmptyField()
+    {
+        var act = async () => await HoldingSearchIndex.BuildAsync(_dbPath, [" "], CancellationToken.None);
+
+        await act.Should().ThrowAsync<ArgumentException>()
+            .WithMessage("*Searchable fields configuration cannot contain empty values*");
+    }
+
+    [Theory]
+    [InlineData("xsep")]
+    [InlineData("_xsep_")]
+    [InlineData("  xsep  ")]
+    [InlineData("xs")]
+    [InlineData("xse")]
+    [InlineData("x")]
+    public async Task SearchHoldings_PreventSeparatorTokensFromBecomingSearchResults(string search)
+    {
+        SeedSearchHoldings();
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", search);
+
+        result.TotalCount.Should().Be(0);
+        result.Items.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("47/215/0169")]
+    [InlineData("47 215 0169")]
+    [InlineData("472150169")]
+    public async Task SearchHoldings_FullCphSearch_ReturnsIdenticalResultsAcrossFields(string search)
+    {
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            // Holding 1 matches on CPH
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, FeatureName)
+                VALUES ('cph-match', '47/215/0169', 'Alpha Farm');
+                """);
+            // Holding 2 matches on HoldingName with slash format
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, FeatureName)
+                VALUES ('name-match-slashed', '99/999/9999', 'Holding 47/215/0169 Branch');
+                """);
+            // Holding 3 matches on HoldingName with compact format
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, FeatureName)
+                VALUES ('name-match-compact', '99/999/8888', 'Holding 472150169 Depot');
+                """);
+        }
+
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", search);
+
+        result.TotalCount.Should().Be(3);
+        result.Items.Select(x => x.Identifier).Should().BeEquivalentTo(["47/215/0169", "99/999/9999", "99/999/8888"]);
+    }
+
+    [Fact]
+    public async Task SearchHoldings_UkHerdMarkSearch_PreservesLiteralMatchesAndScopesHerdNormalization()
+    {
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            // Holding 1 has business name literally containing "UK 123456 Ltd" (no herd mark)
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, FeatureName)
+                VALUES ('biz-literal', '50/001/0001', 'Test Place');
+                INSERT INTO Party (Id, SourcePartyId, OrganisationName)
+                VALUES ('p-biz-herd', 'P-HERD', 'UK 123456 Ltd');
+                INSERT INTO PartyRole (Id, PartyId, HoldingId, Role)
+                VALUES ('pr-herd-1', 'p-biz-herd', 'biz-literal', 'holder');
+                """);
+
+            // Holding 2 has herd mark "UK 123456"
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, FeatureName)
+                VALUES ('herd-match', '50/001/0002', 'Herd Place');
+                INSERT INTO Herd (Id, HoldingId, Herdmark, AnimalSpeciesCode)
+                VALUES ('herd-2', 'herd-match', 'UK 123456', 'CTT');
+                """);
+
+            // Holding 3 has holding name "123456 Farm" (no herd mark) - unrelated bare number
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, FeatureName)
+                VALUES ('bare-num-only', '50/001/0003', '123456 Farm');
+                """);
+
+            // Holding 4 has holding name "UK123456 Farm" (no herd mark) - unspaced without literal match
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, FeatureName)
+                VALUES ('unspaced-only', '50/001/0004', 'UK123456 Farm');
+                """);
+        }
+
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        // Searching "UK 123456":
+        // - Matches 'biz-literal' (business name literally contains phrase "UK 123456")
+        // - Matches 'herd-match' (herd mark "UK 123456")
+        // - Excludes 'bare-num-only' and 'unspaced-only' because normalized bare/unspaced alternatives are scoped to Herdmark
+        var spacedResult = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "UK 123456");
+        spacedResult.TotalCount.Should().Be(2);
+        spacedResult.Items.Select(x => x.Identifier).Should().BeEquivalentTo(["50/001/0001", "50/001/0002"]);
+
+        // Searching "UK123456":
+        // - Matches 'unspaced-only' (literal holding name "UK123456 Farm")
+        // - Matches 'herd-match' (herd mark normalization)
+        // - Excludes 'biz-literal' (literal is spaced) and 'bare-num-only'
+        var compactResult = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", "UK123456");
+        compactResult.TotalCount.Should().Be(2);
+        compactResult.Items.Select(x => x.Identifier).Should().BeEquivalentTo(["50/001/0002", "50/001/0004"]);
+    }
+
+    [Theory]
+    [InlineData("UK654321")]
+    [InlineData("UK 654321")]
+    [InlineData("UK  654321")]
+    [InlineData("UK   654321")]
+    public async Task SearchHoldings_UkHerdMarkSearch_AcceptsRepeatedWhitespaceAgainstBothCompactAndSpacedStoredMarks(string search)
+    {
+        using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            connection.Open();
+            // Holding 1 has compact stored herd mark "UK654321"
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, FeatureName)
+                VALUES ('h-compact', '60/001/0001', 'Compact Holding');
+                INSERT INTO Herd (Id, HoldingId, Herdmark, AnimalSpeciesCode)
+                VALUES ('herd-compact', 'h-compact', 'UK654321', 'CTT');
+                """);
+
+            // Holding 2 has spaced stored herd mark "UK 654321"
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, FeatureName)
+                VALUES ('h-spaced', '60/001/0002', 'Spaced Holding');
+                INSERT INTO Herd (Id, HoldingId, Herdmark, AnimalSpeciesCode)
+                VALUES ('herd-spaced', 'h-spaced', 'UK 654321', 'SHP');
+                """);
+
+            // Holding 3 has holding name literally containing "UK 654321 Farm" without a herd mark
+            Execute(connection, """
+                INSERT INTO Holding (Id, Cph, FeatureName)
+                VALUES ('h-lit-name', '60/001/0003', 'UK 654321 Farm');
+                """);
+        }
+
+        var (indexPath, _) = await HoldingSearchIndex.BuildAsync(_dbPath, CancellationToken.None);
+        _mockCacheService.Setup(x => x.GetCurrentSnapshot()).Returns(new SqliteSnapshot(_dbPath, null, indexPath));
+
+        var result = await _repository.SearchHoldingsAsync(1, 10, "asc", "cph", search);
+
+        if (search.StartsWith("UK "))
+        {
+            // Spaced searches match both herd holdings AND literal name holding
+            result.TotalCount.Should().Be(3);
+            result.Items.Select(x => x.Identifier).Should().BeEquivalentTo(["60/001/0001", "60/001/0002", "60/001/0003"]);
+        }
+        else
+        {
+            // Compact search matches both herd holdings via normalization (literal name is spaced)
+            result.TotalCount.Should().Be(2);
+            result.Items.Select(x => x.Identifier).Should().BeEquivalentTo(["60/001/0001", "60/001/0002"]);
+        }
+    }
+
 
     [Fact]
     public async Task BuildSearchIndex_ReleasesTheIndexFile()
@@ -702,6 +1216,9 @@ public class HoldingDetailRepositoryTests : IDisposable
             VALUES ('r-1', 'p-1', 'h-1', 'holder'),
                    ('r-2', 'p-1', 'h-1', 'keeper'),
                    ('r-3', 'p-2', 'h-1', 'owner');
+            INSERT INTO Herd (Id, HoldingId, Herdmark, AnimalSpeciesCode)
+            VALUES ('herd-1', 'h-1', 'UK 123456', 'CTT'),
+                   ('herd-2', 'h-2', '360396', 'SHP');
             """);
     }
 

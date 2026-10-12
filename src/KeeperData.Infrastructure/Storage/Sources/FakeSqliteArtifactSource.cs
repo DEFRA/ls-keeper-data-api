@@ -289,6 +289,26 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
                 partyCmd.Parameters.Add(new SqliteParameter("$AddressCountryCode", (object?)p.AddressCountryCode ?? DBNull.Value));
                 await partyCmd.ExecuteNonQueryAsync(cancellationToken);
 
+                // Separate organisations allow local fixtures to exercise cross-party phrase boundaries.
+                for (var i = 0; i < (h.AdditionalBusinessNames?.Count ?? 0); i++)
+                {
+                    var partyId = $"{h.HoldingId}-additional-party-{i}";
+                    await using var additionalPartyCmd = connection.CreateCommand();
+                    additionalPartyCmd.Transaction = transaction;
+                    additionalPartyCmd.CommandText = """
+                        INSERT INTO Party (Id, SourcePartyId, OrganisationName)
+                        VALUES ($Id, $SourcePartyId, $Name);
+                        INSERT INTO PartyRole (Id, PartyId, HoldingId, HerdId, Role)
+                        VALUES ($RoleId, $Id, $HoldingId, NULL, 'holder');
+                        """;
+                    additionalPartyCmd.Parameters.AddWithValue("$Id", partyId);
+                    additionalPartyCmd.Parameters.AddWithValue("$SourcePartyId", partyId);
+                    additionalPartyCmd.Parameters.AddWithValue("$Name", h.AdditionalBusinessNames![i]);
+                    additionalPartyCmd.Parameters.AddWithValue("$RoleId", $"{partyId}-role");
+                    additionalPartyCmd.Parameters.AddWithValue("$HoldingId", h.HoldingId);
+                    await additionalPartyCmd.ExecuteNonQueryAsync(cancellationToken);
+                }
+
                 // 3. Insert Herds
                 foreach (var herd in h.Herds)
                 {
@@ -371,7 +391,8 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
         SeedPartyRecord Party,
         IReadOnlyList<SeedHerdRecord> Herds,
         IReadOnlyList<SeedRoleRecord> Roles,
-        IReadOnlyList<string> AllowedSpecies);
+        IReadOnlyList<string> AllowedSpecies,
+        IReadOnlyList<string>? AdditionalBusinessNames = null);
 
     private sealed record SeedPartyRecord(
         string PartyId,
