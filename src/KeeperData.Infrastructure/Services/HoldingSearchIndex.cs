@@ -166,27 +166,26 @@ internal static class HoldingSearchIndex
     {
         var row = ReadSourceHoldingRow(reader);
         var (line1, line2) = HoldingDetailRepository.AssembleAddressLines(row.Saon, row.Paon, row.Street);
+        var item = new HoldingIndexItem(
+            row,
+            line1,
+            line2,
+            SplitEntries(row.BusinessNames),
+            SplitEntries(row.Herdmarks));
 
-        var businessList = SplitEntries(row.BusinessNames);
-        var herdList = SplitEntries(row.Herdmarks);
-
-        await writer.WritePrimaryRecordAsync(row, line1, line2, businessList, herdList, enabledFields, cancellationToken);
-        await IndexSecondaryEntriesAsync(writer, row, line1, line2, businessList, herdList, enabledFields, cancellationToken);
+        await writer.WritePrimaryRecordAsync(item, enabledFields, cancellationToken);
+        await IndexSecondaryEntriesAsync(writer, item, enabledFields, cancellationToken);
     }
 
     private static async Task IndexSecondaryEntriesAsync(
         HoldingIndexWriter writer,
-        SourceHoldingRow row,
-        string? line1,
-        string? line2,
-        string[] businessList,
-        string[] herdList,
+        HoldingIndexItem item,
         SearchableHoldingField enabledFields,
         CancellationToken cancellationToken)
     {
-        await IndexAdditionalBusinessesAsync(writer, businessList, enabledFields, cancellationToken);
-        await IndexAdditionalHerdmarksAsync(writer, herdList, enabledFields, cancellationToken);
-        await IndexAddressAliasesAsync(writer, row, line1, line2, enabledFields, cancellationToken);
+        await IndexAdditionalBusinessesAsync(writer, item.BusinessList, enabledFields, cancellationToken);
+        await IndexAdditionalHerdmarksAsync(writer, item.HerdList, enabledFields, cancellationToken);
+        await IndexAddressAliasesAsync(writer, item, enabledFields, cancellationToken);
     }
 
     private static async Task IndexAdditionalBusinessesAsync(
@@ -229,45 +228,41 @@ internal static class HoldingSearchIndex
 
     private static async Task IndexAddressAliasesAsync(
         HoldingIndexWriter writer,
-        SourceHoldingRow row,
-        string? line1,
-        string? line2,
+        HoldingIndexItem item,
         SearchableHoldingField enabledFields,
         CancellationToken cancellationToken)
     {
         if (enabledFields.HasFlag(SearchableHoldingField.AddressLine1))
         {
-            await IndexLine1AliasesAsync(writer, row, line1, line2, cancellationToken);
+            await IndexLine1AliasesAsync(writer, item, cancellationToken);
         }
 
-        if (enabledFields.HasFlag(SearchableHoldingField.AddressLine2) && !string.IsNullOrEmpty(line2))
+        if (enabledFields.HasFlag(SearchableHoldingField.AddressLine2) && !string.IsNullOrEmpty(item.Line2))
         {
-            await IndexLine2AliasesAsync(writer, row.Paon, line2, cancellationToken);
+            await IndexLine2AliasesAsync(writer, item.Row.Paon, item.Line2, cancellationToken);
         }
     }
 
     private static async Task IndexLine1AliasesAsync(
         HoldingIndexWriter writer,
-        SourceHoldingRow row,
-        string? line1,
-        string? line2,
+        HoldingIndexItem item,
         CancellationToken cancellationToken)
     {
-        var pairs = string.IsNullOrEmpty(line2)
+        var pairs = string.IsNullOrEmpty(item.Line2)
             ? new[]
             {
-                (row.Saon.StartNumber, row.Saon.StartNumberSuffix),
-                (row.Saon.EndNumber, row.Saon.EndNumberSuffix),
-                (row.Paon.StartNumber, row.Paon.StartNumberSuffix),
-                (row.Paon.EndNumber, row.Paon.EndNumberSuffix)
+                (item.Row.Saon.StartNumber, item.Row.Saon.StartNumberSuffix),
+                (item.Row.Saon.EndNumber, item.Row.Saon.EndNumberSuffix),
+                (item.Row.Paon.StartNumber, item.Row.Paon.StartNumberSuffix),
+                (item.Row.Paon.EndNumber, item.Row.Paon.EndNumberSuffix)
             }
             : new[]
             {
-                (row.Saon.StartNumber, row.Saon.StartNumberSuffix),
-                (row.Saon.EndNumber, row.Saon.EndNumberSuffix)
+                (item.Row.Saon.StartNumber, item.Row.Saon.StartNumberSuffix),
+                (item.Row.Saon.EndNumber, item.Row.Saon.EndNumberSuffix)
             };
 
-        var aliases = ExtractDistinctAliases(line1, pairs);
+        var aliases = ExtractDistinctAliases(item.Line1, pairs);
         foreach (var alias in aliases)
         {
             writer.ClearParameters();
@@ -344,6 +339,13 @@ internal static class HoldingSearchIndex
 
         return formatter is not null ? formatter(list[0]) : list[0];
     }
+
+    private readonly record struct HoldingIndexItem(
+        SourceHoldingRow Row,
+        string? Line1,
+        string? Line2,
+        string[] BusinessList,
+        string[] HerdList);
 
     private readonly record struct SourceHoldingRow(
         string Id,
@@ -422,24 +424,20 @@ internal static class HoldingSearchIndex
             insertCmd.ExecuteNonQueryAsync(cancellationToken);
 
         public async Task WritePrimaryRecordAsync(
-            SourceHoldingRow row,
-            string? line1,
-            string? line2,
-            string[] businessList,
-            string[] herdList,
+            HoldingIndexItem item,
             SearchableHoldingField enabledFields,
             CancellationToken cancellationToken)
         {
-            _pId.Value = row.Id;
-            _pCph.Value = ResolveField(enabledFields, SearchableHoldingField.Cph, row.Cph, FormatCphTokens);
-            _pName.Value = ResolveField(enabledFields, SearchableHoldingField.HoldingName, row.FeatureName);
-            _pBusiness.Value = ResolveFirstListField(enabledFields, SearchableHoldingField.BusinessName, businessList);
-            _pLine1.Value = ResolveField(enabledFields, SearchableHoldingField.AddressLine1, line1);
-            _pLine2.Value = ResolveField(enabledFields, SearchableHoldingField.AddressLine2, line2);
-            _pTown.Value = ResolveField(enabledFields, SearchableHoldingField.Town, row.Town);
-            _pLocality.Value = ResolveField(enabledFields, SearchableHoldingField.Locality, row.Locality);
-            _pPostcode.Value = ResolveField(enabledFields, SearchableHoldingField.Postcode, row.Postcode, FormatPostcodeTokens);
-            _pHerdmark.Value = ResolveFirstListField(enabledFields, SearchableHoldingField.Herdmark, herdList, FormatHerdmarkToken);
+            _pId.Value = item.Row.Id;
+            _pCph.Value = ResolveField(enabledFields, SearchableHoldingField.Cph, item.Row.Cph, FormatCphTokens);
+            _pName.Value = ResolveField(enabledFields, SearchableHoldingField.HoldingName, item.Row.FeatureName);
+            _pBusiness.Value = ResolveFirstListField(enabledFields, SearchableHoldingField.BusinessName, item.BusinessList);
+            _pLine1.Value = ResolveField(enabledFields, SearchableHoldingField.AddressLine1, item.Line1);
+            _pLine2.Value = ResolveField(enabledFields, SearchableHoldingField.AddressLine2, item.Line2);
+            _pTown.Value = ResolveField(enabledFields, SearchableHoldingField.Town, item.Row.Town);
+            _pLocality.Value = ResolveField(enabledFields, SearchableHoldingField.Locality, item.Row.Locality);
+            _pPostcode.Value = ResolveField(enabledFields, SearchableHoldingField.Postcode, item.Row.Postcode, FormatPostcodeTokens);
+            _pHerdmark.Value = ResolveFirstListField(enabledFields, SearchableHoldingField.Herdmark, item.HerdList, FormatHerdmarkToken);
 
             await insertCmd.ExecuteNonQueryAsync(cancellationToken);
         }
