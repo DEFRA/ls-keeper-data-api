@@ -87,7 +87,7 @@ public class FakeSqliteArtifactSourceTests : IDisposable
         await using var countCmd = connection.CreateCommand();
         countCmd.CommandText = "SELECT COUNT(*) FROM cphs;";
         var count = Convert.ToInt64(await countCmd.ExecuteScalarAsync());
-        count.Should().Be(15);
+        count.Should().Be(344);
 
         await using var checkCmd = connection.CreateCommand();
         checkCmd.CommandText = "SELECT COUNT(*) FROM cphs WHERE cph = '13/169/0007';";
@@ -112,14 +112,14 @@ public class FakeSqliteArtifactSourceTests : IDisposable
         await using (var cmd = connection.CreateCommand())
         {
             cmd.CommandText = "SELECT COUNT(*) FROM Holding;";
-            Convert.ToInt64(await cmd.ExecuteScalarAsync()).Should().Be(15);
+            Convert.ToInt64(await cmd.ExecuteScalarAsync()).Should().Be(344);
         }
 
         // 2. Party
         await using (var cmd = connection.CreateCommand())
         {
             cmd.CommandText = "SELECT COUNT(*) FROM Party;";
-            Convert.ToInt64(await cmd.ExecuteScalarAsync()).Should().Be(15);
+            Convert.ToInt64(await cmd.ExecuteScalarAsync()).Should().Be(345);
         }
 
         // 3. Herd
@@ -170,12 +170,12 @@ public class FakeSqliteArtifactSourceTests : IDisposable
 
         // 1. GetPagedHoldingsAsync
         var (items, totalCount, _) = await repo.GetPagedHoldingsAsync(1, 10, "asc", "cph");
-        totalCount.Should().Be(15);
+        totalCount.Should().Be(344);
         items.Should().HaveCount(10);
         items[0].Identifier.Should().Be("10/024/0247");
-        items[1].Identifier.Should().Be("13/169/0007");
-        items[1].Name.Should().Be("Land At Test Farm 06");
-        items[1].Location.Address.PostTown.Should().Be("COLCHESTER");
+        items[2].Identifier.Should().Be("13/169/0007");
+        items[2].Name.Should().Be("Land At Test Farm 06");
+        items[2].Location.Address.PostTown.Should().Be("COLCHESTER");
 
         // 2. GetHoldingDetailByCphAsync for worked example
         var holding = await repo.GetHoldingDetailByCphAsync("13/169/0007");
@@ -199,7 +199,7 @@ public class FakeSqliteArtifactSourceTests : IDisposable
         var dbPath = Path.Combine(_tempDir, artifact!.FileName);
         await _source.DownloadAsync(artifact, dbPath, CancellationToken.None);
         var (indexPath, documentCount) = await KeeperData.Infrastructure.Services.HoldingSearchIndex.BuildAsync(dbPath, CancellationToken.None);
-        documentCount.Should().Be(15);
+        documentCount.Should().Be(344);
 
         var mockCache = new Mock<KeeperData.Core.Services.IReadModelSqliteCacheService>();
         mockCache.Setup(c => c.GetCurrentSnapshot()).Returns(new SqliteSnapshot(dbPath, null, indexPath));
@@ -223,9 +223,9 @@ public class FakeSqliteArtifactSourceTests : IDisposable
         var repo = new KeeperData.Infrastructure.Database.Repositories.CphRepository(mockCache.Object);
 
         var (items, totalCount) = await repo.GetPagedAsync(1, 10, "asc");
-        totalCount.Should().Be(15);
+        totalCount.Should().Be(344);
         items.Should().HaveCount(10);
         items[0].Cph.Should().Be("10/024/0247");
-        items[1].Cph.Should().Be("13/169/0007");
+        items[2].Cph.Should().Be("13/169/0007");
     }
 }

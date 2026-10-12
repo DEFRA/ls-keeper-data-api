@@ -84,7 +84,19 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         FROM Holding AS h
         """;
 
-    private const string SearchJoinClause = " JOIN search_index.HoldingSearch AS s ON s.HoldingId = h.Id WHERE s.SearchText MATCH $match";
+    private const string SearchMatchPredicate = """
+        HoldingSearch MATCH $match AND ($literal IS NULL OR
+            holding_contains_term(Cph, $literal) OR
+            holding_contains_term(HoldingName, $literal) OR
+            holding_contains_term(BusinessName, $literal) OR
+            holding_contains_term(AddressLine1, $literal) OR
+            holding_contains_term(AddressLine2, $literal) OR
+            holding_contains_term(Town, $literal) OR
+            holding_contains_term(Locality, $literal) OR
+            holding_contains_term(Postcode, $literal) OR
+            holding_contains_term(Herdmark, $literal))
+        """;
+    private const string SearchJoinClause = " JOIN (SELECT DISTINCT HoldingId FROM search_index.HoldingSearch WHERE " + SearchMatchPredicate + ") AS s ON s.HoldingId = h.Id";
     private const string BaseHoldingsQuery = SelectHoldingColumns;
     private const string BaseSearchQuery = SelectHoldingColumns + SearchJoinClause;
 
@@ -164,7 +176,7 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         var snapshot = _cacheService.GetCurrentSnapshot()
             ?? throw new InvalidOperationException("The SAM read model is not cached locally, so holding details cannot be resolved.");
 
-        var match = ToFtsQuery(search);
+        var match = ToFtsQuery(search, out var literalSearch);
         if (string.IsNullOrEmpty(match))
         {
             return ([], 0, snapshot.DataTimestamp);
@@ -177,7 +189,7 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
 
         try
         {
-            return await ExecuteSearchHoldingsAsync(snapshot, match, page, pageSize, sort, order, cancellationToken);
+            return await ExecuteSearchHoldingsAsync(snapshot, match, literalSearch, page, pageSize, sort, order, cancellationToken);
         }
         catch (SqliteException ex)
         {
@@ -189,6 +201,7 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
     private async Task<(List<HoldingDetail> Items, int TotalCount, DateTime? DataTimestamp)> ExecuteSearchHoldingsAsync(
         SqliteSnapshot snapshot,
         string match,
+        string? literalSearch,
         int page,
         int pageSize,
         string? sort,
@@ -209,10 +222,12 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         await connection.OpenAsync(cancellationToken);
 
         await AttachSearchIndexAsync(connection, snapshot.SearchIndexPath!, cancellationToken);
+        connection.CreateFunction<string?, string?, bool>("holding_contains_term", ContainsLiteralTerm, isDeterministic: true);
 
         await using var countCommand = connection.CreateCommand();
-        countCommand.CommandText = "SELECT COUNT(*) FROM search_index.HoldingSearch WHERE SearchText MATCH $match;";
+        countCommand.CommandText = "SELECT COUNT(DISTINCT HoldingId) FROM search_index.HoldingSearch WHERE " + SearchMatchPredicate + ";";
         countCommand.Parameters.Add(new SqliteParameter("$match", match));
+        countCommand.Parameters.AddWithValue("$literal", (object?)literalSearch ?? DBNull.Value);
         var totalCount = Convert.ToInt32(await countCommand.ExecuteScalarAsync(cancellationToken));
 
         if (totalCount == 0)
@@ -229,6 +244,7 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         command.Parameters.Add(new SqliteParameter("$pageSize", safePageSize));
         command.Parameters.Add(new SqliteParameter("$offset", offset));
         command.Parameters.Add(new SqliteParameter("$match", match));
+        command.Parameters.AddWithValue("$literal", (object?)literalSearch ?? DBNull.Value);
 
         var holdingRows = await ReadHoldingRowsAsync(command, cancellationToken);
         if (holdingRows.Count == 0)
@@ -350,24 +366,109 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
             _ => SearchByCphDesc
         };
 
-    private static string ToFtsQuery(string search)
+    // FTS finds word-prefix candidates but ignores punctuation. Check the original field
+    // as well so a phrase cannot skip punctuation, while preserving its start boundary.
+    private static bool ContainsLiteralTerm(string? value, string? term)
     {
-        search = search.Trim();
-        if (CphWithSlashesRegex().IsMatch(search))
-            return $"\"{search.Replace("/", "", StringComparison.Ordinal)}\"";
-        if (CphNineDigitsRegex().IsMatch(search))
-            return $"\"{search}\"";
+        if (value is null || string.IsNullOrEmpty(term))
+            return false;
 
-        var terms = SearchTermsRegex().Matches(search)
-            .Select(match => $"\"{match.Value}\"*");
-        return string.Join(" AND ", terms);
+        var offset = 0;
+        while (offset <= value.Length - term.Length)
+        {
+            var index = value.IndexOf(term, offset, StringComparison.OrdinalIgnoreCase);
+            if (index < 0)
+                return false;
+
+            if (index == 0 || !char.IsLetterOrDigit(value, index - 1))
+                return true;
+
+            offset = index + 1;
+        }
+
+        return false;
     }
 
-    [GeneratedRegex(@"^\d{2}/\d{3}/\d{4}$")]
-    private static partial Regex CphWithSlashesRegex();
+    private static string ToFtsQuery(string search, out string? literalSearch)
+    {
+        literalSearch = null;
+        search = search.Trim();
+        if (string.IsNullOrEmpty(search))
+            return "";
 
-    [GeneratedRegex(@"^\d{9}$")]
-    private static partial Regex CphNineDigitsRegex();
+        // 1. Full 9-digit CPH: 47/215/0169, 472150169, 47 215 0169
+        if (FullCphRegex().IsMatch(search))
+        {
+            var digits = string.Concat(search.Where(char.IsDigit));
+            if (digits.Length == 9)
+            {
+                var county = digits[0..2];
+                var parish = digits[2..5];
+                var holding = digits[5..9];
+                return $"(\"{county} {parish} {holding}\"* OR \"{digits}\"* OR Cph : \"{digits}\")";
+            }
+        }
+
+        // 2. Partial CPH with slash or space: 215/0169 or 215 0169
+        var partialCphMatch = PartialCphRegex().Match(search);
+        if (partialCphMatch.Success)
+        {
+            var parish = partialCphMatch.Groups[1].Value;
+            var holding = partialCphMatch.Groups[2].Value;
+            return $"(\"{parish} {holding}\"* OR \"{parish}{holding}\"*)";
+        }
+
+        // 3. Herd mark with UK prefix: UK 123456, UK123456, uk123456
+        var ukHerdMatch = UkHerdRegex().Match(search);
+        if (ukHerdMatch.Success)
+        {
+            var val = ukHerdMatch.Groups[1].Value;
+            var ukTerms = SearchTermsRegex().Matches(search)
+                .Select(match => match.Value)
+                .ToArray();
+            var literalPhrase = ukTerms.Length > 1 ? $"\"{string.Join(" ", ukTerms)}\"*" : $"\"{ukTerms[0]}\"*";
+            return $"({literalPhrase} OR Herdmark : \"UK {val}\"* OR Herdmark : \"UK{val}\"* OR Herdmark : \"{val}\"*)";
+        }
+
+        // 4. Postcode format: CA5 7LD or CA57LD
+        if (UkPostcodeRegex().IsMatch(search))
+        {
+            var unspaced = search.Replace(" ", "").ToUpperInvariant();
+            var spaced = search.ToUpperInvariant();
+            if (!spaced.Contains(' ') && unspaced.Length > 3)
+            {
+                spaced = $"{unspaced[..^3]} {unspaced[^3..]}";
+            }
+            return $"(\"{spaced}\"* OR \"{unspaced}\"*)";
+        }
+
+        // 5. General terms (multi-word phrase or single word prefix)
+        var terms = SearchTermsRegex().Matches(search)
+            .Select(match => match.Value)
+            .ToArray();
+
+        if (terms.Length == 0)
+            return "";
+
+        literalSearch = search;
+        if (terms.Length == 1)
+            return $"\"{terms[0]}\"*";
+
+        // Multi-word phrase: must appear consecutively in the submitted order in the same field
+        return $"\"{string.Join(" ", terms)}\"*";
+    }
+
+    [GeneratedRegex(@"^\d{2}[/\s]*\d{3}[/\s]*\d{4}$")]
+    private static partial Regex FullCphRegex();
+
+    [GeneratedRegex(@"^(\d{3})[/\s]+(\d{4})$")]
+    private static partial Regex PartialCphRegex();
+
+    [GeneratedRegex(@"^(?i)UK\s*([0-9A-Za-z]*[0-9][0-9A-Za-z]*)$")]
+    private static partial Regex UkHerdRegex();
+
+    [GeneratedRegex(@"^[A-Za-z]{1,2}[0-9][A-Za-z0-9]?\s*[0-9][A-Za-z]{2}$")]
+    private static partial Regex UkPostcodeRegex();
 
     [GeneratedRegex(@"[\p{L}\p{N}]+")]
     private static partial Regex SearchTermsRegex();
@@ -801,7 +902,7 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
             StringComparer.OrdinalIgnoreCase);
     }
 
-    private static (string? AddressLine1, string? AddressLine2) AssembleAddressLines(
+    internal static (string? AddressLine1, string? AddressLine2) AssembleAddressLines(
         string? saonDescription,
         string? saonStartNumber,
         string? saonStartNumberSuffix,

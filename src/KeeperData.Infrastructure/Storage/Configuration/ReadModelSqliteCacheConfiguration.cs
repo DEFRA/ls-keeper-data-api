@@ -13,4 +13,9 @@ public record ReadModelSqliteCacheConfiguration : SqliteCacheConfiguration
     public string FilePattern { get; init; } = "krds-db_";
 
     public string LatestArtifactRoute { get; init; } = DataBridgeApiRoutes.GetLatestSqliteReadModel;
+
+    /// <summary>
+    /// Optional list of fields to index for holdings search. If omitted or empty, all AC1 fields are enabled.
+    /// </summary>
+    public IReadOnlyList<string>? SearchableFields { get; init; }
 }

@@ -31,7 +31,7 @@ public class HoldingsController(IRequestExecutor executor, IReadModelSqliteCache
     /// Serves holding details from the locally cached SAM read model.
     /// Returns 503 if the cache has not yet loaded.
     /// </remarks>
-    /// <param name="request">Query parameters for pagination, sorting and optional search. Search matches word prefixes, case-insensitively; all words must occur somewhere in the holding or its associated parties. CPH may be written with slashes or as nine digits.</param>
+    /// <param name="request">Query parameters for pagination, sorting and optional search. Search matches a consecutive phrase within one enabled field, case-insensitively, with a prefix allowed on the final word. Supported punctuation is preserved. CPH accepts slashes, spaces or nine digits.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">OK - Paginated list of holding details.</response>
     /// <response code="400">The request was malformed or could not be processed.</response>
