@@ -33,225 +33,274 @@ internal static class HoldingSearchIndex
         CancellationToken cancellationToken = default)
     {
         var enabledFields = ParseSearchableFields(searchableFields);
-
         var indexPath = Path.Combine(Path.GetDirectoryName(dbPath)!, "holdings-search.sqlite");
-        if (File.Exists(indexPath))
-            File.Delete(indexPath);
 
-        await using var connection = new SqliteConnection($"Data Source={indexPath};Pooling=False");
+        await using var connection = await InitializeIndexConnectionAsync(indexPath, dbPath, cancellationToken);
+        await PopulateIndexAsync(connection, enabledFields, cancellationToken);
+        var documentCount = await OptimizeAndCountDocumentsAsync(connection, cancellationToken);
+
+        await connection.CloseAsync();
+        return (indexPath, documentCount);
+    }
+
+    private static async Task<SqliteConnection> InitializeIndexConnectionAsync(
+        string indexPath,
+        string dbPath,
+        CancellationToken cancellationToken)
+    {
+        if (File.Exists(indexPath))
+        {
+            File.Delete(indexPath);
+        }
+
+        var connection = new SqliteConnection($"Data Source={indexPath};Pooling=False");
         await connection.OpenAsync(cancellationToken);
 
-        await using (var pragma = connection.CreateCommand())
-        {
-            pragma.CommandText = """
-                PRAGMA synchronous = OFF;
-                PRAGMA journal_mode = MEMORY;
-                PRAGMA temp_store = MEMORY;
-                PRAGMA cache_size = -64000;
-                """;
-            await pragma.ExecuteNonQueryAsync(cancellationToken);
-        }
+        await ExecutePragmasAsync(connection, cancellationToken);
+        await AttachSourceDatabaseAsync(connection, dbPath, cancellationToken);
+        await CreateVirtualTableAsync(connection, cancellationToken);
 
-        await using (var attach = connection.CreateCommand())
-        {
-            attach.CommandText = "ATTACH DATABASE $source AS source";
-            attach.Parameters.AddWithValue("$source", dbPath);
-            await attach.ExecuteNonQueryAsync(cancellationToken);
-        }
+        return connection;
+    }
 
-        await using (var create = connection.CreateCommand())
-        {
-            create.CommandText = """
-                CREATE VIRTUAL TABLE HoldingSearch USING fts5(
-                    HoldingId UNINDEXED,
-                    Cph,
-                    HoldingName,
-                    BusinessName,
-                    AddressLine1,
-                    AddressLine2,
-                    Town,
-                    Locality,
-                    Postcode,
-                    Herdmark,
-                    tokenize='unicode61'
-                );
-                """;
-            await create.ExecuteNonQueryAsync(cancellationToken);
-        }
+    private static async Task ExecutePragmasAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    {
+        await using var pragma = connection.CreateCommand();
+        pragma.CommandText = """
+            PRAGMA synchronous = OFF;
+            PRAGMA journal_mode = MEMORY;
+            PRAGMA temp_store = MEMORY;
+            PRAGMA cache_size = -64000;
+            """;
+        await pragma.ExecuteNonQueryAsync(cancellationToken);
+    }
 
+    private static async Task AttachSourceDatabaseAsync(SqliteConnection connection, string dbPath, CancellationToken cancellationToken)
+    {
+        await using var attach = connection.CreateCommand();
+        attach.CommandText = "ATTACH DATABASE $source AS source";
+        attach.Parameters.AddWithValue("$source", dbPath);
+        await attach.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static async Task CreateVirtualTableAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    {
+        await using var create = connection.CreateCommand();
+        create.CommandText = """
+            CREATE VIRTUAL TABLE HoldingSearch USING fts5(
+                HoldingId UNINDEXED,
+                Cph,
+                HoldingName,
+                BusinessName,
+                AddressLine1,
+                AddressLine2,
+                Town,
+                Locality,
+                Postcode,
+                Herdmark,
+                tokenize='unicode61'
+            );
+            """;
+        await create.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static async Task PopulateIndexAsync(
+        SqliteConnection connection,
+        SearchableHoldingField enabledFields,
+        CancellationToken cancellationToken)
+    {
         var availableTables = await GetAvailableSourceTablesAsync(connection, cancellationToken);
         var hasPartyRoles = availableTables.Contains("PartyRole") && availableTables.Contains("Party");
         var hasHerds = availableTables.Contains("Herd");
 
         var selectSql = BuildSourceSelectSql(hasPartyRoles, hasHerds);
 
-        await using (var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken))
+        await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken);
+        await using var insertCmd = CreateInsertCommand(connection, transaction);
+        var writer = new HoldingIndexWriter(insertCmd);
+
+        await using var selectCmd = connection.CreateCommand();
+        selectCmd.Transaction = transaction;
+        selectCmd.CommandText = selectSql;
+        await using var reader = await selectCmd.ExecuteReaderAsync(cancellationToken);
+
+        while (await reader.ReadAsync(cancellationToken))
         {
-            await using var insertCmd = connection.CreateCommand();
-            insertCmd.Transaction = transaction;
-            insertCmd.CommandText = """
-                INSERT INTO HoldingSearch (
-                    HoldingId, Cph, HoldingName, BusinessName, AddressLine1, AddressLine2, Town, Locality, Postcode, Herdmark
-                ) VALUES (
-                    $holdingId, $cph, $name, $business, $line1, $line2, $town, $locality, $postcode, $herdmark
-                );
-                """;
-
-            var pId = insertCmd.Parameters.Add("$holdingId", SqliteType.Text);
-            var pCph = insertCmd.Parameters.Add("$cph", SqliteType.Text);
-            var pName = insertCmd.Parameters.Add("$name", SqliteType.Text);
-            var pBusiness = insertCmd.Parameters.Add("$business", SqliteType.Text);
-            var pLine1 = insertCmd.Parameters.Add("$line1", SqliteType.Text);
-            var pLine2 = insertCmd.Parameters.Add("$line2", SqliteType.Text);
-            var pTown = insertCmd.Parameters.Add("$town", SqliteType.Text);
-            var pLocality = insertCmd.Parameters.Add("$locality", SqliteType.Text);
-            var pPostcode = insertCmd.Parameters.Add("$postcode", SqliteType.Text);
-            var pHerdmark = insertCmd.Parameters.Add("$herdmark", SqliteType.Text);
-
-            await using (var selectCmd = connection.CreateCommand())
-            {
-                selectCmd.Transaction = transaction;
-                selectCmd.CommandText = selectSql;
-                await using var reader = await selectCmd.ExecuteReaderAsync(cancellationToken);
-
-                while (await reader.ReadAsync(cancellationToken))
-                {
-                    var id = reader.GetString(0);
-                    var cph = reader.IsDBNull(1) ? null : reader.GetString(1);
-                    var featureName = reader.IsDBNull(2) ? null : reader.GetString(2);
-
-                    var saonDesc = reader.IsDBNull(3) ? null : reader.GetString(3);
-                    var saonStartNum = reader.IsDBNull(4) ? null : reader.GetString(4);
-                    var saonStartSuffix = reader.IsDBNull(5) ? null : reader.GetString(5);
-                    var saonEndNum = reader.IsDBNull(6) ? null : reader.GetString(6);
-                    var saonEndSuffix = reader.IsDBNull(7) ? null : reader.GetString(7);
-
-                    var paonDesc = reader.IsDBNull(8) ? null : reader.GetString(8);
-                    var paonStartNum = reader.IsDBNull(9) ? null : reader.GetString(9);
-                    var paonStartSuffix = reader.IsDBNull(10) ? null : reader.GetString(10);
-                    var paonEndNum = reader.IsDBNull(11) ? null : reader.GetString(11);
-                    var paonEndSuffix = reader.IsDBNull(12) ? null : reader.GetString(12);
-
-                    var street = reader.IsDBNull(13) ? null : reader.GetString(13);
-                    var town = reader.IsDBNull(14) ? null : reader.GetString(14);
-                    var locality = reader.IsDBNull(15) ? null : reader.GetString(15);
-                    var postcode = reader.IsDBNull(16) ? null : reader.GetString(16);
-                    var businessNames = reader.IsDBNull(17) ? null : reader.GetString(17);
-                    var herdmarks = reader.IsDBNull(18) ? null : reader.GetString(18);
-
-                    var (line1, line2) = HoldingDetailRepository.AssembleAddressLines(
-                        saonDesc, saonStartNum, saonStartSuffix, saonEndNum, saonEndSuffix,
-                        paonDesc, paonStartNum, paonStartSuffix, paonEndNum, paonEndSuffix,
-                        street);
-
-                    var businessList = (businessNames ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                    var herdList = (herdmarks ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-                    pId.Value = id;
-
-                    pCph.Value = (enabledFields.HasFlag(SearchableHoldingField.Cph) && !string.IsNullOrEmpty(cph))
-                        ? FormatCphTokens(cph)
-                        : "";
-
-                    pName.Value = (enabledFields.HasFlag(SearchableHoldingField.HoldingName) && !string.IsNullOrEmpty(featureName))
-                        ? featureName
-                        : "";
-
-                    pBusiness.Value = (enabledFields.HasFlag(SearchableHoldingField.BusinessName) && businessList.Length > 0)
-                        ? businessList[0]
-                        : "";
-
-                    pLine1.Value = (enabledFields.HasFlag(SearchableHoldingField.AddressLine1) && !string.IsNullOrEmpty(line1))
-                        ? line1
-                        : "";
-
-                    pLine2.Value = (enabledFields.HasFlag(SearchableHoldingField.AddressLine2) && !string.IsNullOrEmpty(line2))
-                        ? line2
-                        : "";
-
-                    pTown.Value = (enabledFields.HasFlag(SearchableHoldingField.Town) && !string.IsNullOrEmpty(town))
-                        ? town
-                        : "";
-
-                    pLocality.Value = (enabledFields.HasFlag(SearchableHoldingField.Locality) && !string.IsNullOrEmpty(locality))
-                        ? locality
-                        : "";
-
-                    pPostcode.Value = (enabledFields.HasFlag(SearchableHoldingField.Postcode) && !string.IsNullOrEmpty(postcode))
-                        ? FormatPostcodeTokens(postcode)
-                        : "";
-
-                    pHerdmark.Value = (enabledFields.HasFlag(SearchableHoldingField.Herdmark) && herdList.Length > 0)
-                        ? FormatHerdmarkToken(herdList[0])
-                        : "";
-
-                    await insertCmd.ExecuteNonQueryAsync(cancellationToken);
-
-                    void ClearParameters()
-                    {
-                        pCph.Value = "";
-                        pName.Value = "";
-                        pBusiness.Value = "";
-                        pLine1.Value = "";
-                        pLine2.Value = "";
-                        pTown.Value = "";
-                        pLocality.Value = "";
-                        pPostcode.Value = "";
-                        pHerdmark.Value = "";
-                    }
-
-                    if (enabledFields.HasFlag(SearchableHoldingField.BusinessName) && businessList.Length > 1)
-                    {
-                        for (var i = 1; i < businessList.Length; i++)
-                        {
-                            ClearParameters();
-                            pBusiness.Value = businessList[i];
-                            await insertCmd.ExecuteNonQueryAsync(cancellationToken);
-                        }
-                    }
-
-                    if (enabledFields.HasFlag(SearchableHoldingField.Herdmark) && herdList.Length > 1)
-                    {
-                        for (var i = 1; i < herdList.Length; i++)
-                        {
-                            ClearParameters();
-                            pHerdmark.Value = FormatHerdmarkToken(herdList[i]);
-                            await insertCmd.ExecuteNonQueryAsync(cancellationToken);
-                        }
-                    }
-
-                    var line1AliasPairs = string.IsNullOrEmpty(line2)
-                        ? new[] { (saonStartNum, saonStartSuffix), (saonEndNum, saonEndSuffix), (paonStartNum, paonStartSuffix), (paonEndNum, paonEndSuffix) }
-                        : new[] { (saonStartNum, saonStartSuffix), (saonEndNum, saonEndSuffix) };
-
-                    if (enabledFields.HasFlag(SearchableHoldingField.AddressLine1))
-                    {
-                        var line1Aliases = ExtractDistinctAliases(line1, line1AliasPairs);
-                        foreach (var alias in line1Aliases)
-                        {
-                            ClearParameters();
-                            pLine1.Value = alias;
-                            await insertCmd.ExecuteNonQueryAsync(cancellationToken);
-                        }
-                    }
-
-                    if (enabledFields.HasFlag(SearchableHoldingField.AddressLine2) && !string.IsNullOrEmpty(line2))
-                    {
-                        var line2AliasPairs = new[] { (paonStartNum, paonStartSuffix), (paonEndNum, paonEndSuffix) };
-                        var line2Aliases = ExtractDistinctAliases(line2, line2AliasPairs);
-                        foreach (var alias in line2Aliases)
-                        {
-                            ClearParameters();
-                            pLine2.Value = alias;
-                            await insertCmd.ExecuteNonQueryAsync(cancellationToken);
-                        }
-                    }
-                }
-            }
-
-            await transaction.CommitAsync(cancellationToken);
+            await IndexHoldingRecordAsync(reader, writer, enabledFields, cancellationToken);
         }
 
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    private static SqliteCommand CreateInsertCommand(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        var insertCmd = connection.CreateCommand();
+        insertCmd.Transaction = transaction;
+        insertCmd.CommandText = """
+            INSERT INTO HoldingSearch (
+                HoldingId, Cph, HoldingName, BusinessName, AddressLine1, AddressLine2, Town, Locality, Postcode, Herdmark
+            ) VALUES (
+                $holdingId, $cph, $name, $business, $line1, $line2, $town, $locality, $postcode, $herdmark
+            );
+            """;
+
+        insertCmd.Parameters.Add("$holdingId", SqliteType.Text);
+        insertCmd.Parameters.Add("$cph", SqliteType.Text);
+        insertCmd.Parameters.Add("$name", SqliteType.Text);
+        insertCmd.Parameters.Add("$business", SqliteType.Text);
+        insertCmd.Parameters.Add("$line1", SqliteType.Text);
+        insertCmd.Parameters.Add("$line2", SqliteType.Text);
+        insertCmd.Parameters.Add("$town", SqliteType.Text);
+        insertCmd.Parameters.Add("$locality", SqliteType.Text);
+        insertCmd.Parameters.Add("$postcode", SqliteType.Text);
+        insertCmd.Parameters.Add("$herdmark", SqliteType.Text);
+
+        return insertCmd;
+    }
+
+    private static async Task IndexHoldingRecordAsync(
+        SqliteDataReader reader,
+        HoldingIndexWriter writer,
+        SearchableHoldingField enabledFields,
+        CancellationToken cancellationToken)
+    {
+        var row = ReadSourceHoldingRow(reader);
+        var (line1, line2) = HoldingDetailRepository.AssembleAddressLines(row.Saon, row.Paon, row.Street);
+
+        var businessList = SplitEntries(row.BusinessNames);
+        var herdList = SplitEntries(row.Herdmarks);
+
+        await writer.WritePrimaryRecordAsync(row, line1, line2, businessList, herdList, enabledFields, cancellationToken);
+        await IndexSecondaryEntriesAsync(writer, row, line1, line2, businessList, herdList, enabledFields, cancellationToken);
+    }
+
+    private static async Task IndexSecondaryEntriesAsync(
+        HoldingIndexWriter writer,
+        SourceHoldingRow row,
+        string? line1,
+        string? line2,
+        string[] businessList,
+        string[] herdList,
+        SearchableHoldingField enabledFields,
+        CancellationToken cancellationToken)
+    {
+        await IndexAdditionalBusinessesAsync(writer, businessList, enabledFields, cancellationToken);
+        await IndexAdditionalHerdmarksAsync(writer, herdList, enabledFields, cancellationToken);
+        await IndexAddressAliasesAsync(writer, row, line1, line2, enabledFields, cancellationToken);
+    }
+
+    private static async Task IndexAdditionalBusinessesAsync(
+        HoldingIndexWriter writer,
+        string[] businessList,
+        SearchableHoldingField enabledFields,
+        CancellationToken cancellationToken)
+    {
+        if (!enabledFields.HasFlag(SearchableHoldingField.BusinessName) || businessList.Length <= 1)
+        {
+            return;
+        }
+
+        for (var i = 1; i < businessList.Length; i++)
+        {
+            writer.ClearParameters();
+            writer.SetBusiness(businessList[i]);
+            await writer.ExecuteInsertAsync(cancellationToken);
+        }
+    }
+
+    private static async Task IndexAdditionalHerdmarksAsync(
+        HoldingIndexWriter writer,
+        string[] herdList,
+        SearchableHoldingField enabledFields,
+        CancellationToken cancellationToken)
+    {
+        if (!enabledFields.HasFlag(SearchableHoldingField.Herdmark) || herdList.Length <= 1)
+        {
+            return;
+        }
+
+        for (var i = 1; i < herdList.Length; i++)
+        {
+            writer.ClearParameters();
+            writer.SetHerdmark(FormatHerdmarkToken(herdList[i]));
+            await writer.ExecuteInsertAsync(cancellationToken);
+        }
+    }
+
+    private static async Task IndexAddressAliasesAsync(
+        HoldingIndexWriter writer,
+        SourceHoldingRow row,
+        string? line1,
+        string? line2,
+        SearchableHoldingField enabledFields,
+        CancellationToken cancellationToken)
+    {
+        if (enabledFields.HasFlag(SearchableHoldingField.AddressLine1))
+        {
+            await IndexLine1AliasesAsync(writer, row, line1, line2, cancellationToken);
+        }
+
+        if (enabledFields.HasFlag(SearchableHoldingField.AddressLine2) && !string.IsNullOrEmpty(line2))
+        {
+            await IndexLine2AliasesAsync(writer, row.Paon, line2, cancellationToken);
+        }
+    }
+
+    private static async Task IndexLine1AliasesAsync(
+        HoldingIndexWriter writer,
+        SourceHoldingRow row,
+        string? line1,
+        string? line2,
+        CancellationToken cancellationToken)
+    {
+        var pairs = string.IsNullOrEmpty(line2)
+            ? new[]
+            {
+                (row.Saon.StartNumber, row.Saon.StartNumberSuffix),
+                (row.Saon.EndNumber, row.Saon.EndNumberSuffix),
+                (row.Paon.StartNumber, row.Paon.StartNumberSuffix),
+                (row.Paon.EndNumber, row.Paon.EndNumberSuffix)
+            }
+            : new[]
+            {
+                (row.Saon.StartNumber, row.Saon.StartNumberSuffix),
+                (row.Saon.EndNumber, row.Saon.EndNumberSuffix)
+            };
+
+        var aliases = ExtractDistinctAliases(line1, pairs);
+        foreach (var alias in aliases)
+        {
+            writer.ClearParameters();
+            writer.SetLine1(alias);
+            await writer.ExecuteInsertAsync(cancellationToken);
+        }
+    }
+
+    private static async Task IndexLine2AliasesAsync(
+        HoldingIndexWriter writer,
+        AonComponents paon,
+        string line2,
+        CancellationToken cancellationToken)
+    {
+        var pairs = new[]
+        {
+            (paon.StartNumber, paon.StartNumberSuffix),
+            (paon.EndNumber, paon.EndNumberSuffix)
+        };
+
+        var aliases = ExtractDistinctAliases(line2, pairs);
+        foreach (var alias in aliases)
+        {
+            writer.ClearParameters();
+            writer.SetLine2(alias);
+            await writer.ExecuteInsertAsync(cancellationToken);
+        }
+    }
+
+    private static async Task<long> OptimizeAndCountDocumentsAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
+    {
         await using (var optimize = connection.CreateCommand())
         {
             optimize.CommandText = "INSERT INTO HoldingSearch(HoldingSearch) VALUES('optimize');";
@@ -260,9 +309,140 @@ internal static class HoldingSearchIndex
 
         await using var count = connection.CreateCommand();
         count.CommandText = "SELECT COUNT(DISTINCT HoldingId) FROM HoldingSearch";
-        var documentCount = (long)(await count.ExecuteScalarAsync(cancellationToken))!;
-        await connection.CloseAsync();
-        return (indexPath, documentCount);
+        return (long)(await count.ExecuteScalarAsync(cancellationToken))!;
+    }
+
+    private static string[] SplitEntries(string? raw) =>
+        string.IsNullOrWhiteSpace(raw)
+            ? []
+            : raw.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    private static string ResolveField(
+        SearchableHoldingField enabledFields,
+        SearchableHoldingField field,
+        string? value,
+        Func<string, string>? formatter = null)
+    {
+        if (!enabledFields.HasFlag(field) || string.IsNullOrEmpty(value))
+        {
+            return "";
+        }
+
+        return formatter is not null ? formatter(value) : value;
+    }
+
+    private static string ResolveFirstListField(
+        SearchableHoldingField enabledFields,
+        SearchableHoldingField field,
+        string[] list,
+        Func<string, string>? formatter = null)
+    {
+        if (!enabledFields.HasFlag(field) || list.Length == 0)
+        {
+            return "";
+        }
+
+        return formatter is not null ? formatter(list[0]) : list[0];
+    }
+
+    private readonly record struct SourceHoldingRow(
+        string Id,
+        string? Cph,
+        string? FeatureName,
+        AonComponents Saon,
+        AonComponents Paon,
+        string? Street,
+        string? Town,
+        string? Locality,
+        string? Postcode,
+        string? BusinessNames,
+        string? Herdmarks);
+
+    private static SourceHoldingRow ReadSourceHoldingRow(SqliteDataReader reader)
+    {
+        return new SourceHoldingRow(
+            Id: reader.GetString(0),
+            Cph: GetNullableString(reader, 1),
+            FeatureName: GetNullableString(reader, 2),
+            Saon: new AonComponents(
+                GetNullableString(reader, 3),
+                GetNullableString(reader, 4),
+                GetNullableString(reader, 5),
+                GetNullableString(reader, 6),
+                GetNullableString(reader, 7)),
+            Paon: new AonComponents(
+                GetNullableString(reader, 8),
+                GetNullableString(reader, 9),
+                GetNullableString(reader, 10),
+                GetNullableString(reader, 11),
+                GetNullableString(reader, 12)),
+            Street: GetNullableString(reader, 13),
+            Town: GetNullableString(reader, 14),
+            Locality: GetNullableString(reader, 15),
+            Postcode: GetNullableString(reader, 16),
+            BusinessNames: GetNullableString(reader, 17),
+            Herdmarks: GetNullableString(reader, 18));
+    }
+
+    private static string? GetNullableString(SqliteDataReader reader, int ordinal) =>
+        reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+
+    private sealed class HoldingIndexWriter(SqliteCommand insertCmd)
+    {
+        private readonly SqliteParameter _pId = insertCmd.Parameters["$holdingId"];
+        private readonly SqliteParameter _pCph = insertCmd.Parameters["$cph"];
+        private readonly SqliteParameter _pName = insertCmd.Parameters["$name"];
+        private readonly SqliteParameter _pBusiness = insertCmd.Parameters["$business"];
+        private readonly SqliteParameter _pLine1 = insertCmd.Parameters["$line1"];
+        private readonly SqliteParameter _pLine2 = insertCmd.Parameters["$line2"];
+        private readonly SqliteParameter _pTown = insertCmd.Parameters["$town"];
+        private readonly SqliteParameter _pLocality = insertCmd.Parameters["$locality"];
+        private readonly SqliteParameter _pPostcode = insertCmd.Parameters["$postcode"];
+        private readonly SqliteParameter _pHerdmark = insertCmd.Parameters["$herdmark"];
+
+        public void ClearParameters()
+        {
+            _pCph.Value = "";
+            _pName.Value = "";
+            _pBusiness.Value = "";
+            _pLine1.Value = "";
+            _pLine2.Value = "";
+            _pTown.Value = "";
+            _pLocality.Value = "";
+            _pPostcode.Value = "";
+            _pHerdmark.Value = "";
+        }
+
+        public void SetBusiness(string value) => _pBusiness.Value = value;
+        public void SetHerdmark(string value) => _pHerdmark.Value = value;
+        public void SetLine1(string value) => _pLine1.Value = value;
+        public void SetLine2(string value) => _pLine2.Value = value;
+
+        public Task<int> ExecuteInsertAsync(CancellationToken cancellationToken) =>
+            insertCmd.ExecuteNonQueryAsync(cancellationToken);
+
+        public async Task WritePrimaryRecordAsync(
+            SourceHoldingRow row,
+            string? line1,
+            string? line2,
+            string[] businessList,
+            string[] herdList,
+            SearchableHoldingField enabledFields,
+            CancellationToken cancellationToken)
+        {
+            _pId.Value = row.Id;
+            _pCph.Value = ResolveField(enabledFields, SearchableHoldingField.Cph, row.Cph, FormatCphTokens);
+            _pName.Value = ResolveField(enabledFields, SearchableHoldingField.HoldingName, row.FeatureName);
+            _pBusiness.Value = ResolveFirstListField(enabledFields, SearchableHoldingField.BusinessName, businessList);
+            _pLine1.Value = ResolveField(enabledFields, SearchableHoldingField.AddressLine1, line1);
+            _pLine2.Value = ResolveField(enabledFields, SearchableHoldingField.AddressLine2, line2);
+            _pTown.Value = ResolveField(enabledFields, SearchableHoldingField.Town, row.Town);
+            _pLocality.Value = ResolveField(enabledFields, SearchableHoldingField.Locality, row.Locality);
+            _pPostcode.Value = ResolveField(enabledFields, SearchableHoldingField.Postcode, row.Postcode, FormatPostcodeTokens);
+            _pHerdmark.Value = ResolveFirstListField(enabledFields, SearchableHoldingField.Herdmark, herdList, FormatHerdmarkToken);
+
+            await insertCmd.ExecuteNonQueryAsync(cancellationToken);
+        }
     }
 
     private static async Task<HashSet<string>> GetAvailableSourceTablesAsync(SqliteConnection connection, CancellationToken cancellationToken)

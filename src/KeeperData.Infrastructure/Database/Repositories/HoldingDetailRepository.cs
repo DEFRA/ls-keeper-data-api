@@ -189,7 +189,8 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
 
         try
         {
-            return await ExecuteSearchHoldingsAsync(snapshot, match, literalSearch, page, pageSize, sort, order, cancellationToken);
+            var query = new HoldingSearchQuery(match, literalSearch, page, pageSize, sort, order);
+            return await ExecuteSearchHoldingsAsync(snapshot, query, cancellationToken);
         }
         catch (SqliteException ex)
         {
@@ -198,14 +199,17 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         }
     }
 
+    private readonly record struct HoldingSearchQuery(
+        string Match,
+        string? LiteralSearch,
+        int Page,
+        int PageSize,
+        string? Sort,
+        string? Order);
+
     private async Task<(List<HoldingDetail> Items, int TotalCount, DateTime? DataTimestamp)> ExecuteSearchHoldingsAsync(
         SqliteSnapshot snapshot,
-        string match,
-        string? literalSearch,
-        int page,
-        int pageSize,
-        string? sort,
-        string? order,
+        HoldingSearchQuery query,
         CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
@@ -226,8 +230,8 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
 
         await using var countCommand = connection.CreateCommand();
         countCommand.CommandText = "SELECT COUNT(DISTINCT HoldingId) FROM search_index.HoldingSearch WHERE " + SearchMatchPredicate + ";";
-        countCommand.Parameters.Add(new SqliteParameter("$match", match));
-        countCommand.Parameters.AddWithValue("$literal", (object?)literalSearch ?? DBNull.Value);
+        countCommand.Parameters.Add(new SqliteParameter("$match", query.Match));
+        countCommand.Parameters.AddWithValue("$literal", (object?)query.LiteralSearch ?? DBNull.Value);
         var totalCount = Convert.ToInt32(await countCommand.ExecuteScalarAsync(cancellationToken));
 
         if (totalCount == 0)
@@ -236,15 +240,15 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
             return ([], 0, snapshot.DataTimestamp);
         }
 
-        var (safePageSize, offset) = CalculatePaging(page, pageSize);
-        var descending = string.Equals(sort, "desc", StringComparison.OrdinalIgnoreCase);
+        var (safePageSize, offset) = CalculatePaging(query.Page, query.PageSize);
+        var descending = string.Equals(query.Sort, "desc", StringComparison.OrdinalIgnoreCase);
 
         await using var command = connection.CreateCommand();
-        command.CommandText = ResolveSearchSql(order, descending);
+        command.CommandText = ResolveSearchSql(query.Order, descending);
         command.Parameters.Add(new SqliteParameter("$pageSize", safePageSize));
         command.Parameters.Add(new SqliteParameter("$offset", offset));
-        command.Parameters.Add(new SqliteParameter("$match", match));
-        command.Parameters.AddWithValue("$literal", (object?)literalSearch ?? DBNull.Value);
+        command.Parameters.Add(new SqliteParameter("$match", query.Match));
+        command.Parameters.AddWithValue("$literal", (object?)query.LiteralSearch ?? DBNull.Value);
 
         var holdingRows = await ReadHoldingRowsAsync(command, cancellationToken);
         if (holdingRows.Count == 0)
@@ -541,18 +545,21 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         var northing = row.GetNullableInt32("Northing");
         var osMapReference = row.GetNullableString("OsMapReference");
 
-        var (addressLine1, addressLine2) = AssembleAddressLines(
+        var saon = new AonComponents(
             row.GetNullableString("SaonDescription"),
             row.GetNullableString("SaonStartNumber"),
             row.GetNullableString("SaonStartNumberSuffix"),
             row.GetNullableString("SaonEndNumber"),
-            row.GetNullableString("SaonEndNumberSuffix"),
+            row.GetNullableString("SaonEndNumberSuffix"));
+
+        var paon = new AonComponents(
             row.GetNullableString("PaonDescription"),
             row.GetNullableString("PaonStartNumber"),
             row.GetNullableString("PaonStartNumberSuffix"),
             row.GetNullableString("PaonEndNumber"),
-            row.GetNullableString("PaonEndNumberSuffix"),
-            row.GetNullableString("Street"));
+            row.GetNullableString("PaonEndNumberSuffix"));
+
+        var (addressLine1, addressLine2) = AssembleAddressLines(saon, paon, row.GetNullableString("Street"));
 
         var location = new HoldingLocation(
             OsMapReference: osMapReference,
@@ -903,27 +910,14 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
     }
 
     internal static (string? AddressLine1, string? AddressLine2) AssembleAddressLines(
-        string? saonDescription,
-        string? saonStartNumber,
-        string? saonStartNumberSuffix,
-        string? saonEndNumber,
-        string? saonEndNumberSuffix,
-        string? paonDescription,
-        string? paonStartNumber,
-        string? paonStartNumberSuffix,
-        string? paonEndNumber,
-        string? paonEndNumberSuffix,
+        AonComponents saon,
+        AonComponents paon,
         string? street)
     {
-        var saonLine = FormatAon(
-            saonDescription,
-            saonStartNumber,
-            saonStartNumberSuffix,
-            saonEndNumber,
-            saonEndNumberSuffix);
+        var saonLine = FormatAon(saon);
 
-        var paonNumber = FormatNumberRange(paonStartNumber, paonStartNumberSuffix, paonEndNumber, paonEndNumberSuffix);
-        var paonDescriptionLine = Trimmed(paonDescription);
+        var paonNumber = FormatNumberRange(paon.StartNumber, paon.StartNumberSuffix, paon.EndNumber, paon.EndNumberSuffix);
+        var paonDescriptionLine = Trimmed(paon.Description);
         var streetName = Trimmed(street);
 
         // The PAON number belongs with the thoroughfare; when Street is empty the source carries
@@ -954,15 +948,10 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         };
     }
 
-    private static string? FormatAon(
-        string? description,
-        string? startNumber,
-        string? startNumberSuffix,
-        string? endNumber,
-        string? endNumberSuffix)
+    private static string? FormatAon(AonComponents aon)
     {
-        var number = FormatNumberRange(startNumber, startNumberSuffix, endNumber, endNumberSuffix);
-        return JoinWithSpace(Trimmed(description), number);
+        var number = FormatNumberRange(aon.StartNumber, aon.StartNumberSuffix, aon.EndNumber, aon.EndNumberSuffix);
+        return JoinWithSpace(Trimmed(aon.Description), number);
     }
 
     private static string? FormatNumberRange(
@@ -1183,3 +1172,10 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         }
     }
 }
+
+internal readonly record struct AonComponents(
+    string? Description,
+    string? StartNumber,
+    string? StartNumberSuffix,
+    string? EndNumber,
+    string? EndNumberSuffix);
