@@ -1,5 +1,3 @@
-using KeeperData.Core.ApiClients.DataBridgeApi;
-
 namespace KeeperData.Infrastructure.Storage.Configuration;
 
 /// <summary>
@@ -12,7 +10,7 @@ public record ReadModelSqliteCacheConfiguration : SqliteCacheConfiguration
 
     public string FilePattern { get; init; } = "krds-db_";
 
-    public string LatestArtifactRoute { get; init; } = DataBridgeApiRoutes.GetLatestSqliteReadModel;
+    public string LatestArtifactRoute { get; init; } = "api/etl/staging/sqlite/latest";
 
     /// <summary>
     /// Optional list of fields to index for holdings search. If omitted or empty, all default fields are enabled.
