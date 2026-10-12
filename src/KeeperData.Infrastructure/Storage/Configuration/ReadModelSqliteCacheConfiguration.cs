@@ -15,7 +15,7 @@ public record ReadModelSqliteCacheConfiguration : SqliteCacheConfiguration
     public string LatestArtifactRoute { get; init; } = DataBridgeApiRoutes.GetLatestSqliteReadModel;
 
     /// <summary>
-    /// Optional list of fields to index for holdings search. If omitted or empty, all AC1 fields are enabled.
+    /// Optional list of fields to index for holdings search. If omitted or empty, all default fields are enabled.
     /// </summary>
     public IReadOnlyList<string>? SearchableFields { get; init; }
 }
