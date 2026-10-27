@@ -85,7 +85,7 @@ public class HttpClientRegistrationTests
         client.DefaultRequestHeaders.Authorization.Should().BeNull("ApiKey static header must not be set when UseStsAuthentication is true");
         client.DefaultRequestHeaders.GetValues("x-api-key").Should().ContainSingle("gateway-key");
 
-        var response = await client.GetAsync("/api/etl/sqlite/cphs/latest");
+        var response = await client.GetAsync("/api/etl/staging/sqlite/latest");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         capturedRequest.Should().NotBeNull();

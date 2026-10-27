@@ -58,7 +58,7 @@ public class LegacyEndpointsTests
 
         // The cache-backed v2 controller returns 503 when its SQLite cache has not loaded,
         // which proves the request was routed rather than rejected by the legacy gate.
-        var response = await client.GetAsync("/api/v2/cphs");
+        var response = await client.GetAsync("/api/v2/holdings");
 
         response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
     }

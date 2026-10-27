@@ -32,15 +32,6 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<ISqliteArtifactSource, DataBridgeSqliteArtifactSource>();
         }
 
-        var cphCacheConfig = configuration
-            .GetSection(CphSqliteCacheConfiguration.SectionName)
-            .Get<CphSqliteCacheConfiguration>() ?? new CphSqliteCacheConfiguration();
-        services.AddSingleton(cphCacheConfig);
-
-        services.AddSingleton<CphSqliteCacheService>();
-        services.AddSingleton<ICphSqliteCacheService>(sp => sp.GetRequiredService<CphSqliteCacheService>());
-        services.AddHostedService(sp => sp.GetRequiredService<CphSqliteCacheService>());
-
         var readModelCacheConfig = configuration
             .GetSection(ReadModelSqliteCacheConfiguration.SectionName)
             .Get<ReadModelSqliteCacheConfiguration>() ?? new ReadModelSqliteCacheConfiguration();

@@ -267,7 +267,6 @@ the [.github/example.dependabot.yml](.github/example.dependabot.yml) to `.github
 ### Api Documentation
 
 * healthcheck endpoint: `/health`
-* CPHs endpoint: `/api/v2/cphs`
 * holdings endpoint: `/api/v2/holdings`
 * CPH associations endpoint: `/api/v2/cph-associations`
 * user accounts endpoint: `/api/v2/user-accounts`
