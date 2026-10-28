@@ -71,6 +71,16 @@ public class CursorHelperTests
     }
 
     [Theory]
+    [InlineData("U21pdGh8 MTIz")]   // embedded space, e.g. a '+' lost to missing URL encoding
+    [InlineData(" U21pdGh8MTIz")]   // leading space
+    [InlineData("U21pdGh8MTIz\n")]  // trailing newline
+    public void Decode_WithWhitespaceInCursor_ShouldThrowInvalidCursorException(string cursor)
+    {
+        var act = () => CursorHelper.Decode(cursor);
+        act.Should().Throw<InvalidCursorException>();
+    }
+
+    [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
@@ -78,7 +88,6 @@ public class CursorHelperTests
     {
         CursorHelper.TryDecode(cursor, out _).Should().BeFalse();
         CursorHelper.IsAbsent(cursor).Should().BeTrue();
-        CursorHelper.IsValid(cursor).Should().BeTrue();
     }
 
     [Theory]
@@ -89,7 +98,6 @@ public class CursorHelperTests
     {
         CursorHelper.TryDecode(cursor, out _).Should().BeFalse();
         CursorHelper.IsAbsent(cursor).Should().BeFalse();
-        CursorHelper.IsValid(cursor).Should().BeFalse();
     }
 
     [Theory]
@@ -103,7 +111,6 @@ public class CursorHelperTests
     {
         var cursor = CursorHelper.Encode(sortValue, id);
 
-        CursorHelper.IsValid(cursor).Should().BeTrue();
         var result = CursorHelper.Decode(cursor);
         result.Should().NotBeNull();
         result!.Value.sortValue.Should().Be(sortValue ?? "");

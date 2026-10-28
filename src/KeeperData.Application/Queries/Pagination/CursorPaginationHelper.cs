@@ -72,7 +72,9 @@ public static class CursorPaginationHelper
         {
             var lastItem = items[^1];
             var sortVal = getSortValueFunc(lastItem);
-            return CursorHelper.Encode(sortVal, lastItem.Id ?? string.Empty);
+            // An empty id would produce a cursor that Decode rejects, so fail here rather than issue one.
+            var id = lastItem.Id ?? throw new InvalidOperationException("Cannot build a pagination cursor for a record without an id.");
+            return CursorHelper.Encode(sortVal, id);
         }
         return null;
     }

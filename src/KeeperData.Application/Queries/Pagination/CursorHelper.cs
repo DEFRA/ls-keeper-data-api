@@ -23,11 +23,6 @@ public static class CursorHelper
     public static bool IsAbsent(string? cursor) => string.IsNullOrWhiteSpace(cursor);
 
     /// <summary>
-    /// Returns true when the cursor is absent or can be decoded.
-    /// </summary>
-    public static bool IsValid(string? cursor) => IsAbsent(cursor) || TryDecode(cursor, out _);
-
-    /// <summary>
     /// Attempts to decode a supplied cursor. Returns false for an absent or malformed cursor.
     /// </summary>
     public static bool TryDecode(string? cursor, out (string sortValue, string id) decoded)
@@ -35,10 +30,14 @@ public static class CursorHelper
         decoded = default;
         if (IsAbsent(cursor)) return false;
 
+        // Issued cursors never contain whitespace, but Convert.FromBase64String ignores it. Reject it so a
+        // cursor whose '+' characters were turned into spaces by missing URL encoding cannot decode to the wrong position.
+        if (cursor!.Any(char.IsWhiteSpace)) return false;
+
         string plainText;
         try
         {
-            var base64EncodedBytes = Convert.FromBase64String(cursor!);
+            var base64EncodedBytes = Convert.FromBase64String(cursor);
             plainText = StrictUtf8.GetString(base64EncodedBytes);
         }
         catch (Exception ex) when (ex is FormatException or DecoderFallbackException or ArgumentException)
