@@ -13,46 +13,25 @@ namespace KeeperData.Infrastructure.Storage.Sources;
 [ExcludeFromCodeCoverage]
 public class FakeSqliteArtifactSource : ISqliteArtifactSource
 {
-    private static readonly Action<ILogger, string, Exception?> s_logCphArtifact = LoggerMessage.Define<string>(
-        LogLevel.Information, new EventId(1, nameof(GetLatestAsync)),
-        "FakeSqliteArtifactSource returning fake CPH artifact {FileName}");
     private static readonly Action<ILogger, string, Exception?> s_logReadModelArtifact = LoggerMessage.Define<string>(
         LogLevel.Information, new EventId(2, nameof(GetLatestAsync)),
         "FakeSqliteArtifactSource returning fake ReadModel artifact {FileName}");
-    private static readonly Action<ILogger, string, Exception?> s_logCphSeeded = LoggerMessage.Define<string>(
-        LogLevel.Information, new EventId(3, nameof(DownloadAsync)),
-        "FakeSqliteArtifactSource seeded CPH database to {LocalPath}");
     private static readonly Action<ILogger, string, Exception?> s_logReadModelSeeded = LoggerMessage.Define<string>(
         LogLevel.Information, new EventId(4, nameof(DownloadAsync)),
         "FakeSqliteArtifactSource seeded ReadModel database to {LocalPath}");
 
     private readonly ILogger<FakeSqliteArtifactSource> _logger;
-    private readonly string _cphsFileName;
     private readonly string _readModelFileName;
 
     public FakeSqliteArtifactSource(ILogger<FakeSqliteArtifactSource> logger)
     {
         _logger = logger;
         var now = DateTime.UtcNow;
-        _cphsFileName = $"cphs_{now:yyyyMMdd}T120000Z.sqlite";
         _readModelFileName = $"krds-db_{now:yyyyMMdd}120000.sqlite";
     }
 
     public Task<SqliteArtifact?> GetLatestAsync(string latestArtifactRoute, CancellationToken cancellationToken)
     {
-        if (latestArtifactRoute.Contains("cphs", StringComparison.OrdinalIgnoreCase))
-        {
-            s_logCphArtifact(_logger, _cphsFileName, null);
-            return Task.FromResult<SqliteArtifact?>(new SqliteArtifact
-            {
-                ObjectKey = _cphsFileName,
-                DownloadUrl = $"fake://sqlite/{_cphsFileName}",
-                Size = 4096,
-                LastModified = DateTimeOffset.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(1)
-            });
-        }
-
         if (latestArtifactRoute.Contains("staging", StringComparison.OrdinalIgnoreCase) ||
             latestArtifactRoute.Contains("readmodel", StringComparison.OrdinalIgnoreCase) ||
             latestArtifactRoute.Contains("krds", StringComparison.OrdinalIgnoreCase))
@@ -85,13 +64,6 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
             File.Delete(localPath);
         }
 
-        if (artifact.FileName.StartsWith("cphs_", StringComparison.OrdinalIgnoreCase))
-        {
-            await SeedCphsDatabaseAsync(localPath, cancellationToken);
-            s_logCphSeeded(_logger, localPath, null);
-            return;
-        }
-
         if (artifact.FileName.StartsWith("krds-db_", StringComparison.OrdinalIgnoreCase))
         {
             await SeedReadModelDatabaseAsync(localPath, cancellationToken);
@@ -100,39 +72,6 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
         }
 
         throw new InvalidOperationException($"Unsupported artifact file pattern: {artifact.FileName}");
-    }
-
-    private static async Task SeedCphsDatabaseAsync(string localPath, CancellationToken cancellationToken)
-    {
-        await using var connection = new SqliteConnection($"Data Source={localPath}");
-        await connection.OpenAsync(cancellationToken);
-
-        await using (var command = connection.CreateCommand())
-        {
-            command.CommandText = """
-                CREATE TABLE IF NOT EXISTS cphs (
-                    cph TEXT PRIMARY KEY
-                );
-                """;
-            await command.ExecuteNonQueryAsync(cancellationToken);
-        }
-
-        await using (var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken))
-        {
-            foreach (var cph in SeedHoldings.Select(h => h.Cph))
-            {
-                await using var insertCmd = connection.CreateCommand();
-                insertCmd.Transaction = transaction;
-                insertCmd.CommandText = "INSERT INTO cphs (cph) VALUES ($cph);";
-                insertCmd.Parameters.Add(new SqliteParameter("$cph", cph));
-                await insertCmd.ExecuteNonQueryAsync(cancellationToken);
-            }
-
-            await transaction.CommitAsync(cancellationToken);
-        }
-
-        await connection.CloseAsync();
-        SqliteConnection.ClearPool(connection);
     }
 
     private static async Task SeedReadModelDatabaseAsync(string localPath, CancellationToken cancellationToken)

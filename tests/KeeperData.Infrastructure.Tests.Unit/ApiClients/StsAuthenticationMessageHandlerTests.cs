@@ -32,7 +32,7 @@ public class StsAuthenticationMessageHandlerTests
             BaseAddress = new Uri("https://bridge.example.com")
         };
 
-        var response = await client.GetAsync("/api/etl/sqlite/cphs/latest");
+        var response = await client.GetAsync("/api/etl/staging/sqlite/latest");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         capturedRequest.Should().NotBeNull();

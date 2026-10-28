@@ -40,18 +40,6 @@ public class FakeSqliteArtifactSourceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetLatestAsync_ForCphsRoute_ReturnsValidCphArtifact()
-    {
-        var artifact = await _source.GetLatestAsync("api/etl/sqlite/cphs/latest", CancellationToken.None);
-
-        artifact.Should().NotBeNull();
-        artifact!.FileName.Should().StartWith("cphs_");
-        artifact.FileName.Should().EndWith(".sqlite");
-        artifact.DownloadUrl.Should().StartWith("fake://sqlite/");
-        artifact.Size.Should().BeGreaterThan(0);
-    }
-
-    [Fact]
     public async Task GetLatestAsync_ForStagingRoute_ReturnsValidReadModelArtifact()
     {
         var artifact = await _source.GetLatestAsync("api/etl/staging/sqlite/latest", CancellationToken.None);
@@ -69,30 +57,6 @@ public class FakeSqliteArtifactSourceTests : IDisposable
         var artifact = await _source.GetLatestAsync("api/unknown/route", CancellationToken.None);
 
         artifact.Should().BeNull();
-    }
-
-    [Fact]
-    public async Task DownloadAsync_ForCphsArtifact_SeedsCphsTable()
-    {
-        var artifact = await _source.GetLatestAsync("api/etl/sqlite/cphs/latest", CancellationToken.None);
-        var dbPath = Path.Combine(_tempDir, artifact!.FileName);
-
-        await _source.DownloadAsync(artifact, dbPath, CancellationToken.None);
-
-        File.Exists(dbPath).Should().BeTrue();
-
-        await using var connection = new SqliteConnection($"Data Source={dbPath};Mode=ReadOnly");
-        await connection.OpenAsync();
-
-        await using var countCmd = connection.CreateCommand();
-        countCmd.CommandText = "SELECT COUNT(*) FROM cphs;";
-        var count = Convert.ToInt64(await countCmd.ExecuteScalarAsync());
-        count.Should().Be(344);
-
-        await using var checkCmd = connection.CreateCommand();
-        checkCmd.CommandText = "SELECT COUNT(*) FROM cphs WHERE cph = '13/169/0007';";
-        var found = Convert.ToInt64(await checkCmd.ExecuteScalarAsync());
-        found.Should().Be(1);
     }
 
     [Fact]
@@ -208,24 +172,5 @@ public class FakeSqliteArtifactSourceTests : IDisposable
         var result = await repo.SearchHoldingsAsync(1, 10, "asc", "cph", search);
 
         result.Items.Should().Contain(x => x.Identifier == expectedCph);
-    }
-
-    [Fact]
-    public async Task GivenSeededCphsDatabase_WhenCphRepositoryQueries_ThenReturnsPagedCphs()
-    {
-        var artifact = await _source.GetLatestAsync("api/etl/sqlite/cphs/latest", CancellationToken.None);
-        var dbPath = Path.Combine(_tempDir, artifact!.FileName);
-        await _source.DownloadAsync(artifact, dbPath, CancellationToken.None);
-
-        var mockCache = new Mock<KeeperData.Core.Services.ICphSqliteCacheService>();
-        mockCache.Setup(c => c.GetCurrentDbPath()).Returns(dbPath);
-
-        var repo = new KeeperData.Infrastructure.Database.Repositories.CphRepository(mockCache.Object);
-
-        var (items, totalCount) = await repo.GetPagedAsync(1, 10, "asc");
-        totalCount.Should().Be(344);
-        items.Should().HaveCount(10);
-        items[0].Cph.Should().Be("10/024/0247");
-        items[2].Cph.Should().Be("13/169/0007");
     }
 }

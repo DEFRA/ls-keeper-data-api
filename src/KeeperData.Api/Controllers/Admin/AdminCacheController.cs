@@ -11,7 +11,6 @@ namespace KeeperData.Api.Controllers.Admin;
 [Authorize(Policy = "AdminScopeOrApiKey")]
 [Tags("admin")]
 public sealed class AdminCacheController(
-    ICphSqliteCacheService cphCache,
     IReadModelSqliteCacheService readModelCache,
     IConfiguration configuration) : ControllerBase
 {
@@ -30,17 +29,10 @@ public sealed class AdminCacheController(
         if (!configuration.GetValue<bool>("AdminEndpointsEnabled"))
             return NotFound();
 
-        if (cache is not ("all" or "cph" or "read-model"))
-            return BadRequest(new ProblemDetails { Status = 400, Title = "Invalid cache", Detail = "Use all, cph, or read-model." });
+        if (cache is not ("all" or "read-model"))
+            return BadRequest(new ProblemDetails { Status = 400, Title = "Invalid cache", Detail = "Use all or read-model." });
 
-        CacheRefreshResult[] results = cache switch
-        {
-            "cph" => [await cphCache.ForceRefreshAsync(force, cancellationToken)],
-            "read-model" => [await readModelCache.ForceRefreshAsync(force, cancellationToken)],
-            _ => await Task.WhenAll(
-                cphCache.ForceRefreshAsync(force, cancellationToken),
-                readModelCache.ForceRefreshAsync(force, cancellationToken))
-        };
+        CacheRefreshResult[] results = [await readModelCache.ForceRefreshAsync(force, cancellationToken)];
 
         var failed = results.Where(result => result.Status == "Failed").ToArray();
         if (failed.Length > 0)

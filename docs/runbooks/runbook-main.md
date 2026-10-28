@@ -3,7 +3,7 @@
 ## Service Overview
 
 ### What the API does
-The Keeper Data API is a .NET 10 ASP.NET Core service that manages livestock keeper and site data for DEFRA. It provides REST endpoints for querying holdings, CPHs, CPH associations and user accounts, and maintains reference data for livestock management.
+The Keeper Data API is a .NET 10 ASP.NET Core service that manages livestock keeper and site data for DEFRA. It provides REST endpoints for querying holdings, CPH associations and user accounts, and maintains reference data for livestock management.
 
 Key business functions:
 - **Data Query Services**: Provides paginated REST endpoints to search and retrieve party, site and holding information
@@ -57,7 +57,7 @@ Key business functions:
 
 **Expected Throughput:**
 - API: TBD
-- SQLite cache refresh: configured via `CphSqliteCache`/`ReadModelSqliteCache` `RefreshIntervalHours`
+- SQLite cache refresh: configured via `ReadModelSqliteCache` `RefreshIntervalHours`
 
 **Latency SLOs:**
 - API Queries: TBD
@@ -230,13 +230,6 @@ Rollbacks are handled be redeploying the previous version through the CDP Portal
     "DatabaseUri": "Connection string",
     "DatabaseName": "ls-keeper-data-api"
   },
-  "CphSqliteCache": {
-    "Enabled": true,
-    "CachePath": "data/cache",
-    "FilePattern": "cphs_",
-    "LatestArtifactRoute": "api/etl/sqlite/cphs/latest",
-    "RefreshIntervalHours": 24
-  },
   "ReadModelSqliteCache": {
     "Enabled": true,
     "CachePath": "data/cache",
@@ -292,7 +285,6 @@ Rollbacks are handled be redeploying the previous version through the CDP Portal
 ### API Specifications
 - **OpenAPI/Swagger**: Swagger UI is available at `/swagger`; the generated v2 OpenAPI 3.1 contract is available at `/openapi/v2.json` and as `keeper-data-api-openapi_v2.json` on each GitHub Release from `main`.
 - **Endpoints**:
-  - `GET /api/v2/cphs` - Query CPHs from the SQLite cache
   - `GET /api/v2/cph-associations` - Retrieve CPH associations by email
   - `GET /api/v2/holdings/{county}/{parish}/{holding}` - Retrieve holding details by CPH
   - `POST /api/v2/user-accounts` - Ensure a user account exists
@@ -303,8 +295,8 @@ Rollbacks are handled be redeploying the previous version through the CDP Portal
 ### Known Quirks & Tribal Knowledge
 
 **SQLite caches:**
-- Both cache services are hosted services; on start-up they download the latest artifact from the data bridge and refresh on `RefreshIntervalHours`
-- The `api/v2/cphs` endpoint returns `503` until the cache has loaded
+- The read model cache service is a hosted service; on start-up it downloads the latest artifact from the data bridge and refreshes on `RefreshIntervalHours`
+- The `api/v2/holdings`, `api/v2/cph-associations` and `api/v2/user-accounts` endpoints return `503` until the read model cache has loaded
 - The admin refresh endpoint (`api/admin/sqlite-cache/refresh`) can force a reload and is gated by `AdminEndpointsEnabled`
 
 **MongoDB:**
