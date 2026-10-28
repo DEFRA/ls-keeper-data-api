@@ -1,4 +1,5 @@
 using KeeperData.Core.Exceptions;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace KeeperData.Application.Queries.Pagination;
@@ -20,7 +21,7 @@ public static class CursorHelper
     /// <summary>
     /// Returns true when no cursor has been supplied (null, empty or whitespace-only).
     /// </summary>
-    public static bool IsAbsent(string? cursor) => string.IsNullOrWhiteSpace(cursor);
+    public static bool IsAbsent([NotNullWhen(false)] string? cursor) => string.IsNullOrWhiteSpace(cursor);
 
     /// <summary>
     /// Attempts to decode a supplied cursor. Returns false for an absent or malformed cursor.
@@ -32,7 +33,7 @@ public static class CursorHelper
 
         // Issued cursors never contain whitespace, but Convert.FromBase64String ignores it. Reject it so a
         // cursor whose '+' characters were turned into spaces by missing URL encoding cannot decode to the wrong position.
-        if (cursor!.Any(char.IsWhiteSpace)) return false;
+        if (cursor.Any(char.IsWhiteSpace)) return false;
 
         string plainText;
         try
