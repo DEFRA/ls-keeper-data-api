@@ -121,6 +121,14 @@ public sealed class ExceptionHandlingMiddleware(
             problemDetails.Detail = "One or more validation errors occurred. See the 'errors' field for details.";
         }
 
+        if (exception is InvalidCursorException)
+        {
+            problemDetails.Extensions["errors"] = new Dictionary<string, string[]>
+            {
+                [InvalidCursorException.ParameterName] = [exception.Message]
+            };
+        }
+
         problemDetails.Extensions["traceId"] = correlationId;
         problemDetails.Extensions["correlationId"] = correlationId;
         problemDetails.Extensions["errorId"] = errorId;

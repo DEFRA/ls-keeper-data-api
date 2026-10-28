@@ -29,7 +29,7 @@ namespace KeeperData.Api.Controllers
         /// </remarks>
         /// <param name="request">Query parameters to filter parties.</param>
         /// <response code="200">OK - Successful</response>
-        /// <response code="400">The request was malformed or could not be processed.</response>
+        /// <response code="400">The request was malformed or could not be processed, including a malformed pagination cursor.</response>
         /// <response code="401">Access token is not set or invalid.</response>
         /// <response code="403">The requestor is not authorized to perform this operation on the resource.</response>
         /// <response code="500">The server encountered an unexpected error</response>
