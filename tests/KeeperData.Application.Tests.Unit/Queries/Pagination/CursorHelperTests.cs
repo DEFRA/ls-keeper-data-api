@@ -1,5 +1,6 @@
 using FluentAssertions;
 using KeeperData.Application.Queries.Pagination;
+using KeeperData.Core.Exceptions;
 
 namespace KeeperData.Application.Tests.Unit.Queries.Pagination;
 
@@ -47,17 +48,65 @@ public class CursorHelperTests
         result.Should().BeNull();
     }
 
-    [Fact]
-    public void Decode_WithInvalidBase64_ShouldReturnNull()
+    [Theory]
+    [InlineData("not-base-64!!!")]
+    [InlineData("U21pdGh8MTIz=")]   // wrong padding
+    [InlineData("U21pdGh8MTI")]     // truncated
+    public void Decode_WithInvalidBase64_ShouldThrowInvalidCursorException(string cursor)
     {
-        var result = CursorHelper.Decode("not-base-64!!!");
-        result.Should().BeNull();
+        var act = () => CursorHelper.Decode(cursor);
+        act.Should().Throw<InvalidCursorException>();
     }
 
-    [Fact]
-    public void Decode_WithValidBase64ButNoDelimiter_ShouldReturnNull()
+    [Theory]
+    [InlineData("U21pdGgxMjM=")]    // "Smith123" - no delimiter
+    [InlineData("U21pdGh8")]        // "Smith|" - no record id
+    [InlineData("U21pdGh8ICA=")]    // "Smith|  " - whitespace record id
+    [InlineData("fA==")]            // "|" - delimiter only
+    [InlineData("/w==")]            // 0xFF - not valid UTF-8
+    public void Decode_WithInvalidDecodedStructure_ShouldThrowInvalidCursorException(string cursor)
     {
-        var result = CursorHelper.Decode("U21pdGgxMjM=");
-        result.Should().BeNull();
+        var act = () => CursorHelper.Decode(cursor);
+        act.Should().Throw<InvalidCursorException>();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void TryDecode_WithAbsentCursor_ShouldReturnFalse(string? cursor)
+    {
+        CursorHelper.TryDecode(cursor, out _).Should().BeFalse();
+        CursorHelper.IsAbsent(cursor).Should().BeTrue();
+        CursorHelper.IsValid(cursor).Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("not-base-64!!!")]
+    [InlineData("U21pdGgxMjM=")]
+    [InlineData("U21pdGh8")]
+    public void TryDecode_WithMalformedCursor_ShouldReturnFalse(string cursor)
+    {
+        CursorHelper.TryDecode(cursor, out _).Should().BeFalse();
+        CursorHelper.IsAbsent(cursor).Should().BeFalse();
+        CursorHelper.IsValid(cursor).Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("Smith", "123")]
+    [InlineData("", "123")]
+    [InlineData(null, "123")]
+    [InlineData("Smith|Jones", "123")]
+    [InlineData("|", "123")]
+    [InlineData("Ünïcødé ✓", "ceef6fbc-cc67-4272-9c40-00ae257e62e0")]
+    public void Decode_WithEncodedCursor_ShouldRoundTrip(string? sortValue, string id)
+    {
+        var cursor = CursorHelper.Encode(sortValue, id);
+
+        CursorHelper.IsValid(cursor).Should().BeTrue();
+        var result = CursorHelper.Decode(cursor);
+        result.Should().NotBeNull();
+        result!.Value.sortValue.Should().Be(sortValue ?? "");
+        result.Value.id.Should().Be(id);
     }
 }

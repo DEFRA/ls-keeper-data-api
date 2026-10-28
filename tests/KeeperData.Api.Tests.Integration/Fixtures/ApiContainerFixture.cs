@@ -37,6 +37,7 @@ public class ApiContainerFixture : IAsyncLifetime
           .WithPortBinding(_hostPort, _containerPort)
           .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
           .WithEnvironment("ASPNETCORE_HTTP_PORTS", _containerPort.ToString())
+          .WithEnvironment("AWS_EMF_ENVIRONMENT", "Local")
           .WithEnvironment("Mongo__DatabaseUri", "mongodb://testuser:testpass@mongo:27017/ls-keeper-data-api?authSource=admin")
           .WithEnvironment("ApiClients__DataBridgeApi__BaseUrl", "http://localhost:5560/")
           .WithEnvironment("ApiClients__DataBridgeApi__BridgeApiSubscriptionKey", "")

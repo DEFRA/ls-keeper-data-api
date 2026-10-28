@@ -66,7 +66,8 @@ public class GetSitesRequest
     [FromQuery] public string? Sort { get; set; }
 
     /// <summary>
-    /// The cursor for the next page of results. Leave blank for the first page.
+    /// The cursor for the next page of results, taken from the nextCursor value of a previous response. Leave blank for the first page.
+    /// When supplied, the cursor takes precedence over page. A malformed cursor is rejected with 400 Bad Request.
     /// </summary>
     [FromQuery] public string? Cursor { get; set; }
 }

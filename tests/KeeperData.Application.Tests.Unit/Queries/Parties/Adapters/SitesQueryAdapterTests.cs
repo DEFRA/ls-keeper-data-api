@@ -3,6 +3,7 @@ using KeeperData.Application.Queries.Pagination;
 using KeeperData.Application.Queries.Sites;
 using KeeperData.Application.Queries.Sites.Adapters;
 using KeeperData.Core.Documents;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Repositories;
 using MongoDB.Driver;
 using Moq;
@@ -79,14 +80,31 @@ public class SitesQueryAdapterTests
         _repositoryMock.Verify(x => x.FindAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<SortDefinition<SiteDocument>>(), 0, 10, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Fact]
-    public async Task GetSitesAsync_WithInvalidCursor_ShouldIgnoreCursor()
+    [Theory]
+    [InlineData("invalid-cursor-string")]
+    [InlineData("U21pdGgxMjM=")]
+    [InlineData("U21pdGh8")]
+    public async Task GetSitesAsync_WithMalformedCursor_ShouldThrowWithoutQueryingRepository(string cursor)
     {
-        var query = new GetSitesQuery { Page = 2, PageSize = 10, Cursor = "invalid-cursor-string" };
-        var expectedItems = new List<SiteDocument>();
+        var query = new GetSitesQuery { Page = 2, PageSize = 10, Cursor = cursor };
+
+        var act = () => _adapter.GetSitesAsync(query);
+
+        await act.Should().ThrowAsync<InvalidCursorException>();
+        _repositoryMock.Verify(x => x.CountAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()), Times.Never);
+        _repositoryMock.Verify(x => x.FindAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<SortDefinition<SiteDocument>>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task GetSitesAsync_WithAbsentCursor_ShouldFallbackToPageSkip(string? cursor)
+    {
+        var query = new GetSitesQuery { Page = 2, PageSize = 10, Cursor = cursor };
 
         _repositoryMock.Setup(x => x.FindAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<SortDefinition<SiteDocument>>(), 10, 10, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedItems);
+            .ReturnsAsync([]);
 
         await _adapter.GetSitesAsync(query);
 

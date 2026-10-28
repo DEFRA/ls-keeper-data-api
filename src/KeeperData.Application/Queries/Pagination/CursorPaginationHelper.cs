@@ -20,6 +20,11 @@ public static class CursorPaginationHelper
             ? primarySort.Descending(x => x.Id)
             : primarySort.Ascending(x => x.Id);
     }
+
+    /// <summary>
+    /// Builds the keyset filter for a cursor. Returns null when no cursor was supplied.
+    /// </summary>
+    /// <exception cref="KeeperData.Core.Exceptions.InvalidCursorException">The supplied cursor is malformed.</exception>
     public static FilterDefinition<T>? BuildCursorFilter<T>(string? cursor, string? sortDirection, string sortFieldPath) where T : IEntity
     {
         var decoded = CursorHelper.Decode(cursor);
@@ -52,16 +57,13 @@ public static class CursorPaginationHelper
         string? sortDirection,
         string sortFieldPath) where T : IEntity
     {
-        if (string.IsNullOrWhiteSpace(cursor))
+        // An absent cursor falls back to page-based pagination; a malformed one throws
+        // InvalidCursorException rather than silently restarting from the requested page.
+        var cursorFilter = BuildCursorFilter<T>(cursor, sortDirection, sortFieldPath);
+        if (cursorFilter == null)
             return (currentFilter, false);
 
-        var cursorFilter = BuildCursorFilter<T>(cursor, sortDirection, sortFieldPath);
-        if (cursorFilter != null)
-        {
-            return (Builders<T>.Filter.And(currentFilter, cursorFilter), true);
-        }
-
-        return (currentFilter, false);
+        return (Builders<T>.Filter.And(currentFilter, cursorFilter), true);
     }
 
     public static string? GetNextCursor<T>(List<T>? items, int pageSize, Func<T, string> getSortValueFunc) where T : IEntity
@@ -94,6 +96,7 @@ public static class CursorPaginationHelper
         where T : IEntity
         where TQuery : IPagedQuery<T>
     {
+        // Resolve the cursor before any database call so a malformed cursor is rejected without querying.
         var (pagedFilter, hasValidCursor) = ApplyCursorFilter(
             options.BaseFilter, options.Query.Cursor, options.Query.Sort, options.SortFieldPath);
 
