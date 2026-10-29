@@ -29,7 +29,7 @@ namespace KeeperData.Api.Controllers
         /// </remarks>
         /// <param name="request">Query parameters to filter sites.</param>
         /// <response code="200">OK - Successful operation</response>
-        /// <response code="400">The request was malformed or could not be processed, including a malformed pagination cursor.</response>
+        /// <response code="400">The request was malformed or could not be processed, including a malformed pagination cursor or a siteIds value that is empty or contains an invalid UUID.</response>
         /// <response code="401">Access token is not set or invalid.</response>
         /// <response code="403">The requestor is not authorized to perform this operation on the resource.</response>
         /// <response code="500">The server encountered an unexpected error</response>
@@ -55,13 +55,8 @@ namespace KeeperData.Api.Controllers
                     .ToList()
                 : null;
 
-            var siteIdsList = !string.IsNullOrWhiteSpace(request.SiteIds)
-                ? request.SiteIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(t => t.Trim())
-                    .Where(t => Guid.TryParse(t, out _))
-                    .Select(Guid.Parse)
-                    .ToList()
-                : null;
+            // SiteIds has already been validated by GetSitesRequest, so malformed values never reach here.
+            var siteIdsList = request.ParseSiteIds();
 
             var query = new GetSitesQuery
             {
