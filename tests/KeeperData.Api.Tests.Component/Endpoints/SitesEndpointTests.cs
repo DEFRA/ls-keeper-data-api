@@ -3,9 +3,12 @@ using KeeperData.Application.Queries.Pagination;
 using KeeperData.Core.Documents;
 
 using KeeperData.Core.Extensions;
+using MongoDB.Bson.Serialization;
+using MongoDB.Driver;
 using Moq;
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Web;
 
 namespace KeeperData.Api.Tests.Component.Endpoints;
@@ -118,29 +121,25 @@ public class SitesEndpointTests(AppTestFixture appTestFixture) : IClassFixture<A
     }
 
     [Fact]
-    public async Task GetSites_WithCommaSeparatedSiteIds_ParsesAndReturnsFilteredResult()
+    public async Task GetSites_WithCommaSeparatedSiteIds_AppliesAllIdsAndReturnsFilteredResult()
     {
         // Arrange
         var site1Id = Guid.NewGuid();
         var site2Id = Guid.NewGuid();
-        var site3Id = Guid.NewGuid();
 
         var sites = new List<SiteDocument>
         {
             CreateSite("Site 1", "Type1", "ID1"),
-            CreateSite("Site 2", "Type1", "ID2"),
-            CreateSite("Site 3", "Type1", "ID3")
+            CreateSite("Site 2", "Type1", "ID2")
         };
         sites[0].Id = site1Id.ToString();
         sites[1].Id = site2Id.ToString();
-        sites[2].Id = site3Id.ToString();
 
-        // just return the first 2 sites
-        var expectedMatches = sites.Take(2).ToList();
-        SetupRepository(expectedMatches, totalCount: 2);
+        FilterDefinition<SiteDocument>? capturedFilter = null;
+        SetupRepository(sites, totalCount: 2, onFind: f => capturedFilter = f);
 
-        // test parsing logic coverage
-        var idsParam = $"{site1Id}, , {site2Id}, not-a-guid ";
+        // Surrounding whitespace and empty entries between commas are ignored
+        var idsParam = $" {site1Id} , , {site2Id} ";
         var encodedIds = HttpUtility.UrlEncode(idsParam);
 
         // Act
@@ -148,6 +147,58 @@ public class SitesEndpointTests(AppTestFixture appTestFixture) : IClassFixture<A
 
         // Assert
         await AssertPaginatedResponse(response, expectedCount: 2, expectedNames: ["Site 1", "Site 2"]);
+
+        capturedFilter.Should().NotBeNull();
+        var rendered = capturedFilter!.Render(new RenderArgs<SiteDocument>(
+            BsonSerializer.SerializerRegistry.GetSerializer<SiteDocument>(), BsonSerializer.SerializerRegistry));
+        rendered.ToString().Should().Contain(site1Id.ToString()).And.Contain(site2Id.ToString());
+    }
+
+    [Theory]
+    [InlineData("invalid")]
+    [InlineData("not-a-guid,also-not-a-guid")]
+    [InlineData("{0},invalid")]
+    [InlineData("invalid, {0}")]
+    [InlineData(",")]
+    [InlineData(" , , ")]
+    [InlineData("   ")]
+    [InlineData("")]
+    public async Task GetSites_WithMalformedSiteIds_ReturnsBadRequestWithoutQueryingRepository(string siteIdsTemplate)
+    {
+        // Arrange
+        _appTestFixture.AppWebApplicationFactory.ResetMocks();
+        var siteIds = string.Format(siteIdsTemplate, Guid.NewGuid());
+
+        // Act
+        var response = await _appTestFixture.HttpClient.GetAsync($"/api/sites?siteIds={HttpUtility.UrlEncode(siteIds)}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        body.RootElement.GetProperty("status").GetInt32().Should().Be(400);
+        body.RootElement.GetProperty("errors").TryGetProperty("SiteIds", out _).Should().BeTrue();
+
+        VerifyNoRepositoryQueries();
+    }
+
+    [Fact]
+    public async Task GetSites_WithMoreSiteIdsThanAllowed_ReturnsExistingLimitValidationResponse()
+    {
+        // Arrange
+        _appTestFixture.AppWebApplicationFactory.ResetMocks();
+        var siteIds = string.Join(",", Enumerable.Range(0, 51).Select(_ => Guid.NewGuid()));
+
+        // Act
+        var response = await _appTestFixture.HttpClient.GetAsync($"/api/sites?siteIds={HttpUtility.UrlEncode(siteIds)}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+
+        using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        body.RootElement.GetProperty("errors").TryGetProperty("SiteIds", out _).Should().BeTrue();
+
+        VerifyNoRepositoryQueries();
     }
 
     private static SiteDocument CreateSite(string name, string typeCode, string identifier)
@@ -181,13 +232,15 @@ public class SitesEndpointTests(AppTestFixture appTestFixture) : IClassFixture<A
         return site;
     }
 
-    private void SetupRepository(List<SiteDocument> sites, int totalCount)
+    private void SetupRepository(List<SiteDocument> sites, int totalCount, Action<FilterDefinition<SiteDocument>>? onFind = null)
     {
         _appTestFixture.AppWebApplicationFactory._sitesRepositoryMock
             .Setup(r => r.FindAsync(
                 It.IsAny<MongoDB.Driver.FilterDefinition<SiteDocument>>(),
                 It.IsAny<MongoDB.Driver.SortDefinition<SiteDocument>>(),
                 0, 10, It.IsAny<CancellationToken>()))
+            .Callback<FilterDefinition<SiteDocument>, SortDefinition<SiteDocument>, int, int, CancellationToken>(
+                (filter, _, _, _, _) => onFind?.Invoke(filter))
             .ReturnsAsync(sites);
 
         _appTestFixture.AppWebApplicationFactory._sitesRepositoryMock
@@ -207,5 +260,16 @@ public class SitesEndpointTests(AppTestFixture appTestFixture) : IClassFixture<A
         result.Values.Should().HaveCount(expectedCount);
 
         result.Values.Select(v => v.Name).Should().BeEquivalentTo(expectedNames);
+    }
+
+    private void VerifyNoRepositoryQueries()
+    {
+        var sitesRepositoryMock = _appTestFixture.AppWebApplicationFactory._sitesRepositoryMock;
+
+        sitesRepositoryMock.Verify(r => r.CountAsync(It.IsAny<FilterDefinition<SiteDocument>>(), It.IsAny<CancellationToken>()), Times.Never);
+        sitesRepositoryMock.Verify(r => r.FindAsync(
+            It.IsAny<FilterDefinition<SiteDocument>>(),
+            It.IsAny<SortDefinition<SiteDocument>>(),
+            It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

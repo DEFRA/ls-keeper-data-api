@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace KeeperData.Api.Controllers.RequestDtos.Sites;
 
-public class GetSitesRequest
+public class GetSitesRequest : IValidatableObject
 {
     /// <summary>
     /// Filter by a single site identifier such as CPH Number, FSA No, Port No etc.
@@ -31,9 +32,13 @@ public class GetSitesRequest
     [FromQuery] public Guid? SiteId { get; set; }
 
     /// <summary>
-    /// Filter by multiple site IDs (comma-separated UUIDs). A maximum number of values applies.
+    /// Filter by multiple site IDs (comma-separated UUIDs). Whitespace around each value is ignored. A maximum number of values applies.
+    /// If any value is not a valid UUID, or no values are supplied (for example only commas or whitespace), the request is rejected with 400 Bad Request.
     /// </summary>
-    [FromQuery] public string? SiteIds { get; set; }
+    // Keep blank values so a supplied but empty filter is rejected rather than treated as omitted.
+    [FromQuery]
+    [DisplayFormat(ConvertEmptyStringToNull = false)]
+    public string? SiteIds { get; set; }
 
     /// <summary>
     /// Filter sites by a keeper party ID (UUID).
@@ -70,4 +75,30 @@ public class GetSitesRequest
     /// When supplied, the cursor takes precedence over page. A malformed cursor is rejected with 400 Bad Request.
     /// </summary>
     [FromQuery] public string? Cursor { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (SiteIds is not null)
+        {
+            var values = SplitSiteIds(SiteIds);
+
+            if (values.Count == 0)
+            {
+                yield return new ValidationResult("SiteIds must contain at least one UUID when supplied.", [nameof(SiteIds)]);
+            }
+            else if (values.Any(v => !Guid.TryParse(v, out _)))
+            {
+                yield return new ValidationResult("SiteIds must be a comma-separated list of valid UUIDs.", [nameof(SiteIds)]);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Parses <see cref="SiteIds"/> into GUIDs. Only call after the request has passed validation.
+    /// </summary>
+    public List<Guid>? ParseSiteIds() =>
+        SiteIds is null ? null : SplitSiteIds(SiteIds).Select(Guid.Parse).ToList();
+
+    private static List<string> SplitSiteIds(string siteIds) =>
+        siteIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
 }
