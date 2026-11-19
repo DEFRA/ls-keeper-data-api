@@ -46,7 +46,7 @@ public class GetHoldingsQueryHandlerTests
                 Name: "Farm 1",
                 StartDate: DateTimeOffset.UtcNow,
                 EndDate: null,
-                Location: new HoldingLocation(null, 100, 200, new HoldingAddress(null, "Line 1", null, "Town", "Locality", "AB1 2CD", "England")),
+                Location: new HoldingLocation(null, 100, 200, new HoldingAddress(null, "Line 1", null, "Town", "Locality", "AB1 2CD", "England"), HoldingAddress.Empty),
                 Associations: [],
                 AllowedSpecies: ["CTT"],
                 Marks: []),
@@ -56,7 +56,7 @@ public class GetHoldingsQueryHandlerTests
                 Name: "Farm 2",
                 StartDate: DateTimeOffset.UtcNow,
                 EndDate: null,
-                Location: new HoldingLocation(null, 100, 200, new HoldingAddress(null, "Line 2", null, "Town", "Locality", "AB1 2CE", "England")),
+                Location: new HoldingLocation(null, 100, 200, new HoldingAddress(null, "Line 2", null, "Town", "Locality", "AB1 2CE", "England"), HoldingAddress.Empty),
                 Associations: [],
                 AllowedSpecies: ["SHP"],
                 Marks: [])

@@ -1,4 +1,5 @@
 using FluentAssertions;
+using KeeperData.Core.DTOs;
 using KeeperData.Core.Services;
 using KeeperData.Core.Exceptions;
 using KeeperData.Core.Storage.Sqlite;
@@ -137,6 +138,7 @@ public class HoldingDetailRepositoryTests : IDisposable
         result.Location.Address.Locality.Should().Be("Some Location");
         result.Location.Address.Postcode.Should().Be("TT5 2UU");
         result.Location.Address.Country.Should().Be("England");
+        result.Location.CorrespondenceAddress.Should().Be(new HoldingAddress(null, null, null, null, null, null, null));
 
         result.Associations.Should().HaveCount(1);
         var assoc = result.Associations[0];
@@ -1413,6 +1415,8 @@ public class HoldingDetailRepositoryTests : IDisposable
         holding2.Associations.Should().ContainSingle(a => a.CustomerNumber == "C000002");
         holding2.AllowedSpecies.Should().BeEquivalentTo(["PG", "SHP"]);
         holding2.Marks.Should().ContainSingle(m => m.Mark == "MARK-B");
+
+        result.Items.Should().OnlyContain(h => h.Location.CorrespondenceAddress == new HoldingAddress(null, null, null, null, null, null, null));
     }
 
     [Fact]
