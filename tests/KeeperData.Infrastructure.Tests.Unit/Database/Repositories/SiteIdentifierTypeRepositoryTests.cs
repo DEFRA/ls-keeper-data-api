@@ -13,7 +13,7 @@ public class SiteIdentifierTypeRepositoryTests
     public SiteIdentifierTypeRepositoryTests()
     {
         _fixture = new ReferenceRepositoryTestFixture<SiteIdentifierTypeRepository, SiteIdentifierTypeListDocument, SiteIdentifierTypeDocument>();
-        _sut = _fixture.CreateSut((config, client, unitOfWork) => new SiteIdentifierTypeRepository(config, client, unitOfWork));
+        _sut = _fixture.CreateSut((config, client) => new SiteIdentifierTypeRepository(config, client));
     }
 
     [Fact]

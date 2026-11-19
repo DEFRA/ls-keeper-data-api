@@ -1,6 +1,5 @@
 using KeeperData.Core.Documents.Reference;
 using KeeperData.Core.Repositories;
-using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -20,9 +19,9 @@ public class ReferenceRepositoryTestFixture<TSut, TListDocument, TItem> where TL
         _mockDb.SetupCollection<TListDocument>();
     }
 
-    public TSut CreateSut(Func<IOptions<MongoConfig>, IMongoClient, IUnitOfWork, TSut> sutConstructor)
+    public TSut CreateSut(Func<IOptions<MongoConfig>, IMongoClient, TSut> sutConstructor)
     {
-        var sut = sutConstructor(_mockDb.Config, _mockDb.Client, _mockDb.UnitOfWork);
+        var sut = sutConstructor(_mockDb.Config, _mockDb.Client);
 
         var collectionField = typeof(TSut).BaseType!.BaseType!
             .GetField("_collection", BindingFlags.NonPublic | BindingFlags.Instance);

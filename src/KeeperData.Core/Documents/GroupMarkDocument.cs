@@ -1,4 +1,3 @@
-using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
@@ -49,22 +48,4 @@ public class GroupMarkDocument : INestedEntity
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
-
-    public static GroupMarkDocument FromDomain(GroupMark m) => new()
-    {
-        IdentifierId = m.Id,
-        Mark = m.Mark,
-        StartDate = m.StartDate,
-        EndDate = m.EndDate,
-        Species = m.Species.Select(SpeciesSummaryDocument.FromDomain).ToList(),
-        LastUpdatedDate = m.LastUpdatedDate
-    };
-
-    public GroupMark ToDomain() => new(
-        IdentifierId,
-        LastUpdatedDate,
-        Mark,
-        StartDate,
-        EndDate,
-        Species.Select(s => s.ToDomain()));
 }

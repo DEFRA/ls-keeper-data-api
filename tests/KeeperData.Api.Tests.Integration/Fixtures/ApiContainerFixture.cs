@@ -19,19 +19,13 @@ public class ApiContainerFixture : IAsyncLifetime
     private const string BasicApiKey = "ApiKey";
     private const string BasicSecret = "integration-test-secret";
 
-    private readonly bool _enableAnonymization;
     private readonly int _hostPort;
     private readonly int _containerPort;
 
-    public ApiContainerFixture() : this(enableAnonymization: false)
+    public ApiContainerFixture()
     {
-    }
-
-    protected ApiContainerFixture(bool enableAnonymization)
-    {
-        _enableAnonymization = enableAnonymization;
-        _hostPort = enableAnonymization ? 5556 : 5555;
-        _containerPort = 5555; // Internal container port stays the same
+        _hostPort = 5555;
+        _containerPort = 5555;
     }
 
     public async Task InitializeAsync()
@@ -39,39 +33,23 @@ public class ApiContainerFixture : IAsyncLifetime
         DockerNetworkHelper.EnsureNetworkExists(NetworkName);
 
         var containerBuilder = new ContainerBuilder("keeperdata_api:latest")
-          .WithName(_enableAnonymization ? "keeperdata_api_anon" : "keeperdata_api")
+          .WithName("keeperdata_api")
           .WithPortBinding(_hostPort, _containerPort)
           .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
           .WithEnvironment("ASPNETCORE_HTTP_PORTS", _containerPort.ToString())
-          .WithEnvironment("AWS__ServiceURL", _enableAnonymization ? "http://localstack_anon:4566" : "http://localstack:4566")
-          .WithEnvironment("Mongo__DatabaseUri",
-              $"mongodb://testuser:testpass@{(_enableAnonymization ? "mongo_anon" : "mongo")}:27017/ls-keeper-data-api?authSource=admin")
-          .WithEnvironment("StorageConfiguration__ComparisonReportsStorage__BucketName", "test-comparison-reports-bucket")
-          .WithEnvironment("QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue")
-          .WithEnvironment("QueueConsumerOptions__IntakeEventQueueOptions__DeadLetterQueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue-deadletter")
+          .WithEnvironment("Mongo__DatabaseUri", "mongodb://testuser:testpass@mongo:27017/ls-keeper-data-api?authSource=admin")
           .WithEnvironment("ApiClients__DataBridgeApi__BaseUrl", "http://localhost:5560/")
           .WithEnvironment("ApiClients__DataBridgeApi__BridgeApiSubscriptionKey", "")
           .WithEnvironment("ApiClients__DataBridgeApi__ServiceName", "")
           .WithEnvironment("ApiClients__DataBridgeApi__XApiKey", "")
           .WithEnvironment("ApiClients__DataBridgeApi__UseFakeClient", "true")
-          .WithEnvironment("ServiceBusSenderConfiguration__IntakeEventQueue__QueueUrl", "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ls_keeper_data_intake_queue")
-          .WithEnvironment("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicName", "ls_keeper_data_import_complete")
-          .WithEnvironment("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicArn", "arn:aws:sns:eu-west-2:000000000000:ls_keeper_data_import_complete")
-          .WithEnvironment("DataBridgeScanConfiguration__QueryPageSize", "5")
-          .WithEnvironment("DataBridgeScanConfiguration__DelayBetweenQueriesSeconds", "0")
-          .WithEnvironment("DataBridgeScanConfiguration__LimitScanTotalBatchSize", "10")
-          .WithEnvironment("DataBridgeScanConfiguration__DailyScanIncludeChangesWithinTotalHours", "24")
-          .WithEnvironment("LOCALSTACK_ENDPOINT", _enableAnonymization ? "http://localstack_anon:4566" : "http://localstack:4566")
+          .WithEnvironment("LegacyEndpointsEnabled", "true")
           .WithEnvironment("AWS_REGION", "eu-west-2")
-          .WithEnvironment("AWS_DEFAULT_REGION", "eu-west-2")
-          .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
-          .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test");
-
-        containerBuilder = containerBuilder.WithEnvironment("PiiAnonymization__Enabled", _enableAnonymization ? "true" : "false");
+          .WithEnvironment("AWS_DEFAULT_REGION", "eu-west-2");
 
         ApiContainer = containerBuilder
               .WithNetwork(NetworkName)
-              .WithNetworkAliases(_enableAnonymization ? "keeperdata_api_anon" : "keeperdata_api")
+              .WithNetworkAliases("keeperdata_api")
               .WithWaitStrategy(Wait.ForUnixContainer()
                   .UntilHttpRequestIsSucceeded(req => req.ForPort((ushort)_containerPort).ForPath("/health"), o => o.WithTimeout(TimeSpan.FromSeconds(60))))
               .Build();

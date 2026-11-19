@@ -3,6 +3,7 @@ using KeeperData.Application.Queries.Pagination;
 using KeeperData.Application.Queries.Parties;
 using KeeperData.Application.Queries.Parties.Adapters;
 using KeeperData.Core.Documents;
+using KeeperData.Core.Exceptions;
 using KeeperData.Core.Repositories;
 using MongoDB.Driver;
 using Moq;
@@ -83,18 +84,34 @@ public class PartiesQueryAdapterTests
         _repositoryMock.Verify(x => x.FindAsync(It.IsAny<FilterDefinition<PartyDocument>>(), It.IsAny<SortDefinition<PartyDocument>>(), 0, 10, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Fact]
-    public async Task GetPartiesAsync_WithInvalidCursor_ShouldIgnoreCursor()
+    [Theory]
+    [InlineData("invalid-cursor-string")]
+    [InlineData("U21pdGgxMjM=")]
+    [InlineData("U21pdGh8")]
+    public async Task GetPartiesAsync_WithMalformedCursor_ShouldThrowWithoutQueryingRepository(string cursor)
     {
-        var query = new GetPartiesQuery { Page = 2, PageSize = 10, Cursor = "invalid-cursor-string" };
-        var expectedItems = new List<PartyDocument>();
+        var query = new GetPartiesQuery { Page = 2, PageSize = 10, Cursor = cursor };
+
+        var act = () => _adapter.GetPartiesAsync(query);
+
+        await act.Should().ThrowAsync<InvalidCursorException>();
+        _repositoryMock.Verify(x => x.CountAsync(It.IsAny<FilterDefinition<PartyDocument>>(), It.IsAny<CancellationToken>()), Times.Never);
+        _repositoryMock.Verify(x => x.FindAsync(It.IsAny<FilterDefinition<PartyDocument>>(), It.IsAny<SortDefinition<PartyDocument>>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task GetPartiesAsync_WithAbsentCursor_ShouldFallbackToPageSkip(string? cursor)
+    {
+        var query = new GetPartiesQuery { Page = 2, PageSize = 10, Cursor = cursor };
 
         _repositoryMock.Setup(x => x.FindAsync(It.IsAny<FilterDefinition<PartyDocument>>(), It.IsAny<SortDefinition<PartyDocument>>(), 10, 10, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedItems);
+            .ReturnsAsync([]);
 
         await _adapter.GetPartiesAsync(query);
 
-        // Verifies skip fallback was used because cursor was invalid
         _repositoryMock.Verify(x => x.FindAsync(It.IsAny<FilterDefinition<PartyDocument>>(), It.IsAny<SortDefinition<PartyDocument>>(), 10, 10, It.IsAny<CancellationToken>()), Times.Once);
     }
 

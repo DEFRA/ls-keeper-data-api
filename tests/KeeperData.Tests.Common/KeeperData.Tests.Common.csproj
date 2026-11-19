@@ -9,14 +9,4 @@
     <IsTestProject>false</IsTestProject>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="AutoFixture" Version="4.18.1" />
-    <PackageReference Include="FluentAssertions" Version="7.2.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\KeeperData.Core\KeeperData.Core.csproj" />
-    <ProjectReference Include="..\..\src\KeeperData.Infrastructure\KeeperData.Infrastructure.csproj" />
-  </ItemGroup>
-
 </Project>

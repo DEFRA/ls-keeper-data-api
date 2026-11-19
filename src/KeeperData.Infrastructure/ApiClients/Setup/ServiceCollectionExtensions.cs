@@ -1,8 +1,9 @@
-using KeeperData.Core.ApiClients.DataBridgeApi;
-using KeeperData.Core.ApiClients.DataBridgeApi.Configuration;
+using Amazon.Extensions.NETCore.Setup;
 using KeeperData.Infrastructure.ApiClients.Configuration;
+using KeeperData.Infrastructure.ApiClients.Sts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Polly;
 using Polly.Retry;
@@ -18,23 +19,9 @@ public static class ServiceCollectionExtensions
             .GetSection("ApiClients")
             .Get<Dictionary<string, ApiClientConfiguration>>();
 
-        var dataBridgeScanConfiguration = configuration
-            .GetSection("DataBridgeScanConfiguration")
-            .Get<DataBridgeScanConfiguration>();
-
         if (apiClientConfigurations == null) return;
 
         services.AddSingleton(apiClientConfigurations);
-        services.AddSingleton(dataBridgeScanConfiguration ?? new DataBridgeScanConfiguration());
-
-        if (configuration.GetValue<bool>("ApiClients:DataBridgeApi:UseFakeClient"))
-        {
-            services.AddScoped<IDataBridgeClient, Fakes.FakeDataBridgeClient>();
-        }
-        else
-        {
-            services.AddScoped<IDataBridgeClient, DataBridgeClient>();
-        }
 
         var healthChecksBuilder = services.AddHealthChecks();
 
@@ -72,19 +59,33 @@ public static class ServiceCollectionExtensions
     {
         var config = resolveConfig();
 
-        services.AddHttpClient(clientName, client =>
+        var httpClientBuilder = services.AddHttpClient(clientName, client =>
         {
             client.BaseAddress = new Uri(config.BaseUrl!.TrimEnd('/'));
-            if (config.BridgeApiSubscriptionKey != null)
+            if (!config.UseStsAuthentication && !string.IsNullOrWhiteSpace(config.BridgeApiSubscriptionKey))
             {
                 client.DefaultRequestHeaders.Add("Authorization", $"ApiKey {config.BridgeApiSubscriptionKey}");
             }
-            if (config.XApiKey != null)
+            if (!string.IsNullOrWhiteSpace(config.XApiKey))
             {
                 client.DefaultRequestHeaders.Add("x-api-key", config.XApiKey);
             }
-        })
-            .AddResilienceHandler(clientName, (builder, context) =>
+        });
+
+        if (config.UseStsAuthentication)
+        {
+            services.TryAddSingleton<IStsTokenProvider>(sp =>
+            {
+                var awsOptions = sp.GetService<AWSOptions>();
+                var timeProvider = sp.GetService<TimeProvider>();
+                return new AwsStsTokenProvider(config, awsOptions?.Credentials, timeProvider);
+            });
+
+            httpClientBuilder.AddHttpMessageHandler(sp =>
+                new StsAuthenticationMessageHandler(sp.GetRequiredService<IStsTokenProvider>()));
+        }
+
+        httpClientBuilder.AddResilienceHandler(clientName, (builder, context) =>
             {
                 builder.AddRetry(new RetryStrategyOptions<HttpResponseMessage>
                 {

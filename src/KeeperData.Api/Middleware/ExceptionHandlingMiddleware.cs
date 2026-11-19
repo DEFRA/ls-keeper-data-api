@@ -121,6 +121,14 @@ public sealed class ExceptionHandlingMiddleware(
             problemDetails.Detail = "One or more validation errors occurred. See the 'errors' field for details.";
         }
 
+        if (exception is InvalidCursorException)
+        {
+            problemDetails.Extensions["errors"] = new Dictionary<string, string[]>
+            {
+                [InvalidCursorException.ParameterName] = [exception.Message]
+            };
+        }
+
         problemDetails.Extensions["traceId"] = correlationId;
         problemDetails.Extensions["correlationId"] = correlationId;
         problemDetails.Extensions["errorId"] = errorId;
@@ -129,7 +137,7 @@ public sealed class ExceptionHandlingMiddleware(
         context.Response.ContentType = "application/json";
 
         var json = JsonSerializer.Serialize(problemDetails, JsonDefaults.DefaultOptionsWithIndented);
-        return context.Response.WriteAsync(json);
+        return context.Response.WriteAsync(json, context.RequestAborted);
     }
 
     private void RecordExceptionMetrics(Exception exception, int statusCode, string endpoint, double durationMs, string errorType)

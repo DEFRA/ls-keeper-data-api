@@ -1,4 +1,3 @@
-using KeeperData.Core.ApiClients.DataBridgeApi.Converters;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -26,29 +25,6 @@ public static class JsonDefaults
         WriteIndented = true
     };
 
-    private static JsonSerializerOptions s_defaultOptionsWithSnsPascalSupport = new()
-    {
-        PropertyNamingPolicy = null, // Pascal
-        WriteIndented = false
-    };
-
-    private static JsonSerializerOptions s_defaultOptionsDataBridgeApiSupport = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-        PropertyNameCaseInsensitive = true,
-        Converters =
-        {
-            new SafeNullableIntConverter(),
-            new SafeNullableShortConverter(),
-            new SafeNullableDecimalConverter(),
-            new SafeNullableBoolConverter(),
-            new SafeNullableCharConverter(),
-            new SafeDateTimeConverter(),
-            new SafeNullableDateTimeConverter()
-        }
-    };
-
     public static JsonSerializerOptions DefaultOptions
     {
         get => s_defaultOptions;
@@ -65,17 +41,5 @@ public static class JsonDefaults
     {
         get => s_defaultOptionsWithIndented;
         set => s_defaultOptionsWithIndented = value;
-    }
-
-    public static JsonSerializerOptions DefaultOptionsWithSnsPascalSupport
-    {
-        get => s_defaultOptionsWithSnsPascalSupport;
-        set => s_defaultOptionsWithSnsPascalSupport = value;
-    }
-
-    public static JsonSerializerOptions DefaultOptionsWithDataBridgeApiSupport
-    {
-        get => s_defaultOptionsDataBridgeApiSupport;
-        set => s_defaultOptionsDataBridgeApiSupport = value;
     }
 }

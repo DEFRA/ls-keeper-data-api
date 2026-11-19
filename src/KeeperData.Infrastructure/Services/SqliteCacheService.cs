@@ -46,7 +46,7 @@ public abstract class SqliteCacheService : IHostedService, IDisposable
     /// <summary>The data bridge route serving the latest copy of this database.</summary>
     protected abstract string LatestArtifactRoute { get; }
 
-    /// <summary>The file name prefix identifying the database this cache serves, e.g. "cphs_".</summary>
+    /// <summary>The file name prefix identifying the database this cache serves, e.g. "krds-db_".</summary>
     protected abstract string FilePattern { get; }
 
     /// <summary>The format of the timestamp carried in the file name, e.g. "yyyyMMddHHmmss".</summary>

@@ -1,6 +1,5 @@
 using KeeperData.Core.Documents;
 using KeeperData.Core.Repositories;
-using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -9,12 +8,10 @@ namespace KeeperData.Infrastructure.Database.Repositories;
 
 public class PartiesRepository(
     IOptions<MongoConfig> mongoConfig,
-    IMongoClient client,
-    IUnitOfWork unitOfWork)
+    IMongoClient client)
     : GenericRepository<PartyDocument>(
         mongoConfig,
-        client,
-        unitOfWork), IPartiesRepository
+        client), IPartiesRepository
 {
     public async Task<int> CountAsync(FilterDefinition<PartyDocument> filter, CancellationToken cancellationToken = default)
     {

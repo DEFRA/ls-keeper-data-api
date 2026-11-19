@@ -13,46 +13,25 @@ namespace KeeperData.Infrastructure.Storage.Sources;
 [ExcludeFromCodeCoverage]
 public class FakeSqliteArtifactSource : ISqliteArtifactSource
 {
-    private static readonly Action<ILogger, string, Exception?> s_logCphArtifact = LoggerMessage.Define<string>(
-        LogLevel.Information, new EventId(1, nameof(GetLatestAsync)),
-        "FakeSqliteArtifactSource returning fake CPH artifact {FileName}");
     private static readonly Action<ILogger, string, Exception?> s_logReadModelArtifact = LoggerMessage.Define<string>(
         LogLevel.Information, new EventId(2, nameof(GetLatestAsync)),
         "FakeSqliteArtifactSource returning fake ReadModel artifact {FileName}");
-    private static readonly Action<ILogger, string, Exception?> s_logCphSeeded = LoggerMessage.Define<string>(
-        LogLevel.Information, new EventId(3, nameof(DownloadAsync)),
-        "FakeSqliteArtifactSource seeded CPH database to {LocalPath}");
     private static readonly Action<ILogger, string, Exception?> s_logReadModelSeeded = LoggerMessage.Define<string>(
         LogLevel.Information, new EventId(4, nameof(DownloadAsync)),
         "FakeSqliteArtifactSource seeded ReadModel database to {LocalPath}");
 
     private readonly ILogger<FakeSqliteArtifactSource> _logger;
-    private readonly string _cphsFileName;
     private readonly string _readModelFileName;
 
     public FakeSqliteArtifactSource(ILogger<FakeSqliteArtifactSource> logger)
     {
         _logger = logger;
         var now = DateTime.UtcNow;
-        _cphsFileName = $"cphs_{now:yyyyMMdd}T120000Z.sqlite";
         _readModelFileName = $"krds-db_{now:yyyyMMdd}120000.sqlite";
     }
 
     public Task<SqliteArtifact?> GetLatestAsync(string latestArtifactRoute, CancellationToken cancellationToken)
     {
-        if (latestArtifactRoute.Contains("cphs", StringComparison.OrdinalIgnoreCase))
-        {
-            s_logCphArtifact(_logger, _cphsFileName, null);
-            return Task.FromResult<SqliteArtifact?>(new SqliteArtifact
-            {
-                ObjectKey = _cphsFileName,
-                DownloadUrl = $"fake://sqlite/{_cphsFileName}",
-                Size = 4096,
-                LastModified = DateTimeOffset.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(1)
-            });
-        }
-
         if (latestArtifactRoute.Contains("staging", StringComparison.OrdinalIgnoreCase) ||
             latestArtifactRoute.Contains("readmodel", StringComparison.OrdinalIgnoreCase) ||
             latestArtifactRoute.Contains("krds", StringComparison.OrdinalIgnoreCase))
@@ -85,13 +64,6 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
             File.Delete(localPath);
         }
 
-        if (artifact.FileName.StartsWith("cphs_", StringComparison.OrdinalIgnoreCase))
-        {
-            await SeedCphsDatabaseAsync(localPath, cancellationToken);
-            s_logCphSeeded(_logger, localPath, null);
-            return;
-        }
-
         if (artifact.FileName.StartsWith("krds-db_", StringComparison.OrdinalIgnoreCase))
         {
             await SeedReadModelDatabaseAsync(localPath, cancellationToken);
@@ -100,39 +72,6 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
         }
 
         throw new InvalidOperationException($"Unsupported artifact file pattern: {artifact.FileName}");
-    }
-
-    private static async Task SeedCphsDatabaseAsync(string localPath, CancellationToken cancellationToken)
-    {
-        await using var connection = new SqliteConnection($"Data Source={localPath}");
-        await connection.OpenAsync(cancellationToken);
-
-        await using (var command = connection.CreateCommand())
-        {
-            command.CommandText = """
-                CREATE TABLE IF NOT EXISTS cphs (
-                    cph TEXT PRIMARY KEY
-                );
-                """;
-            await command.ExecuteNonQueryAsync(cancellationToken);
-        }
-
-        await using (var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken))
-        {
-            foreach (var cph in SeedHoldings.Select(h => h.Cph))
-            {
-                await using var insertCmd = connection.CreateCommand();
-                insertCmd.Transaction = transaction;
-                insertCmd.CommandText = "INSERT INTO cphs (cph) VALUES ($cph);";
-                insertCmd.Parameters.Add(new SqliteParameter("$cph", cph));
-                await insertCmd.ExecuteNonQueryAsync(cancellationToken);
-            }
-
-            await transaction.CommitAsync(cancellationToken);
-        }
-
-        await connection.CloseAsync();
-        SqliteConnection.ClearPool(connection);
     }
 
     private static async Task SeedReadModelDatabaseAsync(string localPath, CancellationToken cancellationToken)
@@ -151,6 +90,11 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
                     StartDate INTEGER,
                     EndDate INTEGER,
                     Udprn INTEGER,
+                    SaonDescription TEXT,
+                    SaonStartNumber TEXT,
+                    SaonStartNumberSuffix TEXT,
+                    SaonEndNumber TEXT,
+                    SaonEndNumberSuffix TEXT,
                     PaonDescription TEXT,
                     PaonStartNumber TEXT,
                     PaonStartNumberSuffix TEXT,
@@ -284,6 +228,26 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
                 partyCmd.Parameters.Add(new SqliteParameter("$AddressCountryCode", (object?)p.AddressCountryCode ?? DBNull.Value));
                 await partyCmd.ExecuteNonQueryAsync(cancellationToken);
 
+                // Separate organisations allow local fixtures to exercise cross-party phrase boundaries.
+                for (var i = 0; i < (h.AdditionalBusinessNames?.Count ?? 0); i++)
+                {
+                    var partyId = $"{h.HoldingId}-additional-party-{i}";
+                    await using var additionalPartyCmd = connection.CreateCommand();
+                    additionalPartyCmd.Transaction = transaction;
+                    additionalPartyCmd.CommandText = """
+                        INSERT INTO Party (Id, SourcePartyId, OrganisationName)
+                        VALUES ($Id, $SourcePartyId, $Name);
+                        INSERT INTO PartyRole (Id, PartyId, HoldingId, HerdId, Role)
+                        VALUES ($RoleId, $Id, $HoldingId, NULL, 'holder');
+                        """;
+                    additionalPartyCmd.Parameters.AddWithValue("$Id", partyId);
+                    additionalPartyCmd.Parameters.AddWithValue("$SourcePartyId", partyId);
+                    additionalPartyCmd.Parameters.AddWithValue("$Name", h.AdditionalBusinessNames![i]);
+                    additionalPartyCmd.Parameters.AddWithValue("$RoleId", $"{partyId}-role");
+                    additionalPartyCmd.Parameters.AddWithValue("$HoldingId", h.HoldingId);
+                    await additionalPartyCmd.ExecuteNonQueryAsync(cancellationToken);
+                }
+
                 // 3. Insert Herds
                 foreach (var herd in h.Herds)
                 {
@@ -366,7 +330,8 @@ public class FakeSqliteArtifactSource : ISqliteArtifactSource
         SeedPartyRecord Party,
         IReadOnlyList<SeedHerdRecord> Herds,
         IReadOnlyList<SeedRoleRecord> Roles,
-        IReadOnlyList<string> AllowedSpecies);
+        IReadOnlyList<string> AllowedSpecies,
+        IReadOnlyList<string>? AdditionalBusinessNames = null);
 
     private sealed record SeedPartyRecord(
         string PartyId,

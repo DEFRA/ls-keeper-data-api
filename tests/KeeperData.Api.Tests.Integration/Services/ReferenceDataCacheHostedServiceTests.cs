@@ -4,7 +4,6 @@ using KeeperData.Core.Documents;
 using KeeperData.Core.Documents.Reference;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
-using KeeperData.Core.Transactions;
 using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Infrastructure.Database.Repositories;
 using KeeperData.Infrastructure.Services;
@@ -134,9 +133,6 @@ public class ReferenceDataCacheHostedServiceTests : IClassFixture<MongoDbFixture
                     DatabaseUri = _fixture.ConnectionString!,
                     DatabaseName = MongoDbFixture.KrdsDatabaseName
                 }));
-
-                var unitOfWorkMock = Substitute.For<IUnitOfWork>();
-                services.AddScoped<IUnitOfWork>(_ => unitOfWorkMock);
                 services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
                 services.AddScoped<ICountryRepository, CountryRepository>();
                 services.AddScoped<ISpeciesRepository, SpeciesRepository>();

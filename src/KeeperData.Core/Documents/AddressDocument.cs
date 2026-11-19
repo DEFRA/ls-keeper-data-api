@@ -1,4 +1,3 @@
-using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Serialization;
 using MongoDB.Bson;
@@ -78,28 +77,4 @@ public class AddressDocument : INestedEntity
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
-
-    public static AddressDocument FromDomain(Address address) => new()
-    {
-        IdentifierId = address.Id,
-        Uprn = address.Uprn,
-        AddressLine1 = address.AddressLine1,
-        AddressLine2 = address.AddressLine2,
-        PostTown = address.PostTown,
-        County = address.County,
-        Postcode = address.PostCode,
-        Country = address.Country is not null ? CountrySummaryDocument.FromDomain(address.Country) : null,
-        LastUpdatedDate = address.LastUpdatedDate
-    };
-
-    public Address ToDomain() => new(
-        IdentifierId,
-        Uprn,
-        AddressLine1,
-        AddressLine2,
-        PostTown,
-        County,
-        Postcode,
-        Country?.ToDomain(),
-        LastUpdatedDate);
 }

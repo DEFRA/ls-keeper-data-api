@@ -14,9 +14,9 @@ public class AdminCacheEndpointTests
     private const string Route = "/api/admin/sqlite-cache/refresh";
 
     [Fact]
-    public async Task RefreshAll_ReturnsBothResults()
+    public async Task RefreshAll_ReturnsReadModelResult()
     {
-        using var factory = CreateFactory(true, out var cph, out var readModel);
+        using var factory = CreateFactory(true, out var readModel);
         using var client = factory.CreateClient();
         client.AddBasicApiKey("ApiKey", "integration-test-secret");
 
@@ -24,33 +24,33 @@ public class AdminCacheEndpointTests
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<CacheRefreshResponseForTest>();
-        result!.Results.Select(x => x.Cache).Should().Equal("CPH", "Read model");
-        cph.Verify(x => x.ForceRefreshAsync(true, It.IsAny<CancellationToken>()), Times.Once);
+        result!.Results.Select(x => x.Cache).Should().Equal("Read model");
         readModel.Verify(x => x.ForceRefreshAsync(true, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task RefreshReadModel_OnlyRefreshesReadModel()
+    public async Task RefreshReadModel_RefreshesReadModel()
     {
-        using var factory = CreateFactory(true, out var cph, out var readModel);
+        using var factory = CreateFactory(true, out var readModel);
         using var client = factory.CreateClient();
         client.AddBasicApiKey("ApiKey", "integration-test-secret");
 
         using var response = await client.PostAsync($"{Route}?cache=read-model&force=false", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        cph.Verify(x => x.ForceRefreshAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
         readModel.Verify(x => x.ForceRefreshAsync(false, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Fact]
-    public async Task InvalidCache_ReturnsBadRequest()
+    [Theory]
+    [InlineData("unknown")]
+    [InlineData("cph")]
+    public async Task InvalidCache_ReturnsBadRequest(string cache)
     {
-        using var factory = CreateFactory(true, out _, out _);
+        using var factory = CreateFactory(true, out _);
         using var client = factory.CreateClient();
         client.AddBasicApiKey("ApiKey", "integration-test-secret");
 
-        using var response = await client.PostAsync($"{Route}?cache=unknown", null);
+        using var response = await client.PostAsync($"{Route}?cache={cache}", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -58,7 +58,7 @@ public class AdminCacheEndpointTests
     [Fact]
     public async Task MissingCredentials_ReturnsUnauthorized()
     {
-        using var factory = CreateFactory(true, out _, out _);
+        using var factory = CreateFactory(true, out _);
         using var client = factory.CreateClient();
 
         using var response = await client.PostAsync(Route, null);
@@ -69,7 +69,7 @@ public class AdminCacheEndpointTests
     [Fact]
     public async Task BearerWithoutAdminScope_ReturnsForbidden()
     {
-        using var factory = CreateFactory(true, out _, out _, useFakeAuth: true);
+        using var factory = CreateFactory(true, out _, useFakeAuth: true);
         using var client = factory.CreateClient();
         client.AddJwt();
 
@@ -81,7 +81,7 @@ public class AdminCacheEndpointTests
     [Fact]
     public async Task Disabled_ReturnsNotFoundEvenWithoutCredentials()
     {
-        using var factory = CreateFactory(false, out _, out _);
+        using var factory = CreateFactory(false, out _);
         using var client = factory.CreateClient();
 
         using var response = await client.PostAsync(Route, null);
@@ -99,7 +99,6 @@ public class AdminCacheEndpointTests
             })
             .Build();
         var controller = new AdminCacheController(
-            Mock.Of<ICphSqliteCacheService>(),
             Mock.Of<IReadModelSqliteCacheService>(),
             configuration);
 
@@ -111,13 +110,13 @@ public class AdminCacheEndpointTests
     [Fact]
     public async Task BridgeFailure_ReturnsBadGateway()
     {
-        using var factory = CreateFactory(true, out var cph, out _);
-        cph.Setup(x => x.ForceRefreshAsync(true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CacheRefreshResult("CPH", "Failed", null, null, null, 3, "Bridge unavailable"));
+        using var factory = CreateFactory(true, out var readModel);
+        readModel.Setup(x => x.ForceRefreshAsync(true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CacheRefreshResult("Read model", "Failed", null, null, null, 3, "Bridge unavailable"));
         using var client = factory.CreateClient();
         client.AddBasicApiKey("ApiKey", "integration-test-secret");
 
-        using var response = await client.PostAsync($"{Route}?cache=cph", null);
+        using var response = await client.PostAsync($"{Route}?cache=read-model", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadGateway);
         (await response.Content.ReadAsStringAsync()).Should().Contain("Bridge unavailable");
@@ -126,7 +125,7 @@ public class AdminCacheEndpointTests
     [Fact]
     public async Task InternalSwagger_IncludesRefreshEndpoint()
     {
-        using var factory = CreateFactory(true, out _, out _);
+        using var factory = CreateFactory(true, out _);
         using var client = factory.CreateClient();
 
         var swagger = await client.GetStringAsync("/swagger/internal/swagger.json");
@@ -136,14 +135,10 @@ public class AdminCacheEndpointTests
 
     private static AppWebApplicationFactory CreateFactory(
         bool enabled,
-        out Mock<ICphSqliteCacheService> cph,
         out Mock<IReadModelSqliteCacheService> readModel,
         bool useFakeAuth = false)
     {
-        cph = new Mock<ICphSqliteCacheService>();
         readModel = new Mock<IReadModelSqliteCacheService>();
-        cph.Setup(x => x.ForceRefreshAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CacheRefreshResult("CPH", "Reloaded", "cphs.sqlite", 2, DateTime.UtcNow, 1));
         readModel.Setup(x => x.ForceRefreshAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CacheRefreshResult("Read model", "Reloaded", "krds-db.sqlite", 3, DateTime.UtcNow, 1));
 
@@ -151,7 +146,6 @@ public class AdminCacheEndpointTests
         {
             ["AdminEndpointsEnabled"] = enabled.ToString().ToLowerInvariant()
         }, useFakeAuth);
-        factory.OverrideServiceAsSingleton(cph.Object);
         factory.OverrideServiceAsSingleton(readModel.Object);
         return factory;
     }

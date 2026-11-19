@@ -42,7 +42,7 @@ public class ReadModelSqliteCacheService : SqliteCacheService, IReadModelSqliteC
         var stopwatch = Stopwatch.StartNew();
         try
         {
-            var indexPath = await HoldingSearchIndex.BuildAsync(dbPath, cancellationToken);
+            var indexPath = await HoldingSearchIndex.BuildAsync(dbPath, _config.SearchableFields, cancellationToken);
             if (_logger.IsEnabled(LogLevel.Information))
             {
                 _logger.LogInformation("Holding search index created in {DurationMs}ms with {DocumentCount} documents",

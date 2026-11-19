@@ -63,6 +63,11 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
             h.StartDate,
             h.EndDate,
             h.Udprn,
+            h.SaonDescription,
+            h.SaonStartNumber,
+            h.SaonStartNumberSuffix,
+            h.SaonEndNumber,
+            h.SaonEndNumberSuffix,
             h.PaonDescription,
             h.PaonStartNumber,
             h.PaonStartNumberSuffix,
@@ -79,7 +84,19 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         FROM Holding AS h
         """;
 
-    private const string SearchJoinClause = " JOIN search_index.HoldingSearch AS s ON s.HoldingId = h.Id WHERE s.SearchText MATCH $match";
+    private const string SearchMatchPredicate = """
+        HoldingSearch MATCH $match AND ($literal IS NULL OR
+            holding_contains_term(Cph, $literal) OR
+            holding_contains_term(HoldingName, $literal) OR
+            holding_contains_term(BusinessName, $literal) OR
+            holding_contains_term(AddressLine1, $literal) OR
+            holding_contains_term(AddressLine2, $literal) OR
+            holding_contains_term(Town, $literal) OR
+            holding_contains_term(Locality, $literal) OR
+            holding_contains_term(Postcode, $literal) OR
+            holding_contains_term(Herdmark, $literal))
+        """;
+    private const string SearchJoinClause = " JOIN (SELECT DISTINCT HoldingId FROM search_index.HoldingSearch WHERE " + SearchMatchPredicate + ") AS s ON s.HoldingId = h.Id";
     private const string BaseHoldingsQuery = SelectHoldingColumns;
     private const string BaseSearchQuery = SelectHoldingColumns + SearchJoinClause;
 
@@ -159,7 +176,7 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         var snapshot = _cacheService.GetCurrentSnapshot()
             ?? throw new InvalidOperationException("The SAM read model is not cached locally, so holding details cannot be resolved.");
 
-        var match = ToFtsQuery(search);
+        var match = ToFtsQuery(search, out var literalSearch);
         if (string.IsNullOrEmpty(match))
         {
             return ([], 0, snapshot.DataTimestamp);
@@ -172,7 +189,8 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
 
         try
         {
-            return await ExecuteSearchHoldingsAsync(snapshot, match, page, pageSize, sort, order, cancellationToken);
+            var query = new HoldingSearchQuery(match, literalSearch, page, pageSize, sort, order);
+            return await ExecuteSearchHoldingsAsync(snapshot, query, cancellationToken);
         }
         catch (SqliteException ex)
         {
@@ -181,13 +199,17 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         }
     }
 
+    private readonly record struct HoldingSearchQuery(
+        string Match,
+        string? LiteralSearch,
+        int Page,
+        int PageSize,
+        string? Sort,
+        string? Order);
+
     private async Task<(List<HoldingDetail> Items, int TotalCount, DateTime? DataTimestamp)> ExecuteSearchHoldingsAsync(
         SqliteSnapshot snapshot,
-        string match,
-        int page,
-        int pageSize,
-        string? sort,
-        string? order,
+        HoldingSearchQuery query,
         CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
@@ -204,10 +226,12 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         await connection.OpenAsync(cancellationToken);
 
         await AttachSearchIndexAsync(connection, snapshot.SearchIndexPath!, cancellationToken);
+        connection.CreateFunction<string?, string?, bool>("holding_contains_term", ContainsLiteralTerm, isDeterministic: true);
 
         await using var countCommand = connection.CreateCommand();
-        countCommand.CommandText = "SELECT COUNT(*) FROM search_index.HoldingSearch WHERE SearchText MATCH $match;";
-        countCommand.Parameters.Add(new SqliteParameter("$match", match));
+        countCommand.CommandText = "SELECT COUNT(DISTINCT HoldingId) FROM search_index.HoldingSearch WHERE " + SearchMatchPredicate + ";";
+        countCommand.Parameters.Add(new SqliteParameter("$match", query.Match));
+        countCommand.Parameters.AddWithValue("$literal", (object?)query.LiteralSearch ?? DBNull.Value);
         var totalCount = Convert.ToInt32(await countCommand.ExecuteScalarAsync(cancellationToken));
 
         if (totalCount == 0)
@@ -216,14 +240,15 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
             return ([], 0, snapshot.DataTimestamp);
         }
 
-        var (safePageSize, offset) = CalculatePaging(page, pageSize);
-        var descending = string.Equals(sort, "desc", StringComparison.OrdinalIgnoreCase);
+        var (safePageSize, offset) = CalculatePaging(query.Page, query.PageSize);
+        var descending = string.Equals(query.Sort, "desc", StringComparison.OrdinalIgnoreCase);
 
         await using var command = connection.CreateCommand();
-        command.CommandText = ResolveSearchSql(order, descending);
+        command.CommandText = ResolveSearchSql(query.Order, descending);
         command.Parameters.Add(new SqliteParameter("$pageSize", safePageSize));
         command.Parameters.Add(new SqliteParameter("$offset", offset));
-        command.Parameters.Add(new SqliteParameter("$match", match));
+        command.Parameters.Add(new SqliteParameter("$match", query.Match));
+        command.Parameters.AddWithValue("$literal", (object?)query.LiteralSearch ?? DBNull.Value);
 
         var holdingRows = await ReadHoldingRowsAsync(command, cancellationToken);
         if (holdingRows.Count == 0)
@@ -262,9 +287,10 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
     {
         var holdingRows = new List<HoldingRowData>();
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var row = new RowAccessor(reader);
         while (await reader.ReadAsync(cancellationToken))
         {
-            holdingRows.Add(MapHoldingRow(reader));
+            holdingRows.Add(MapHoldingRow(row));
         }
 
         return holdingRows;
@@ -344,24 +370,109 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
             _ => SearchByCphDesc
         };
 
-    private static string ToFtsQuery(string search)
+    // FTS finds word-prefix candidates but ignores punctuation. Check the original field
+    // as well so a phrase cannot skip punctuation, while preserving its start boundary.
+    private static bool ContainsLiteralTerm(string? value, string? term)
     {
-        search = search.Trim();
-        if (CphWithSlashesRegex().IsMatch(search))
-            return $"\"{search.Replace("/", "", StringComparison.Ordinal)}\"";
-        if (CphNineDigitsRegex().IsMatch(search))
-            return $"\"{search}\"";
+        if (value is null || string.IsNullOrEmpty(term))
+            return false;
 
-        var terms = SearchTermsRegex().Matches(search)
-            .Select(match => $"\"{match.Value}\"*");
-        return string.Join(" AND ", terms);
+        var offset = 0;
+        while (offset <= value.Length - term.Length)
+        {
+            var index = value.IndexOf(term, offset, StringComparison.OrdinalIgnoreCase);
+            if (index < 0)
+                return false;
+
+            if (index == 0 || !char.IsLetterOrDigit(value, index - 1))
+                return true;
+
+            offset = index + 1;
+        }
+
+        return false;
     }
 
-    [GeneratedRegex(@"^\d{2}/\d{3}/\d{4}$")]
-    private static partial Regex CphWithSlashesRegex();
+    private static string ToFtsQuery(string search, out string? literalSearch)
+    {
+        literalSearch = null;
+        search = search.Trim();
+        if (string.IsNullOrEmpty(search))
+            return "";
 
-    [GeneratedRegex(@"^\d{9}$")]
-    private static partial Regex CphNineDigitsRegex();
+        // 1. Full 9-digit CPH: 47/215/0169, 472150169, 47 215 0169
+        if (FullCphRegex().IsMatch(search))
+        {
+            var digits = string.Concat(search.Where(char.IsDigit));
+            if (digits.Length == 9)
+            {
+                var county = digits[0..2];
+                var parish = digits[2..5];
+                var holding = digits[5..9];
+                return $"(\"{county} {parish} {holding}\"* OR \"{digits}\"* OR Cph : \"{digits}\")";
+            }
+        }
+
+        // 2. Partial CPH with slash or space: 215/0169 or 215 0169
+        var partialCphMatch = PartialCphRegex().Match(search);
+        if (partialCphMatch.Success)
+        {
+            var parish = partialCphMatch.Groups[1].Value;
+            var holding = partialCphMatch.Groups[2].Value;
+            return $"(\"{parish} {holding}\"* OR \"{parish}{holding}\"*)";
+        }
+
+        // 3. Herd mark with UK prefix: UK 123456, UK123456, uk123456
+        var ukHerdMatch = UkHerdRegex().Match(search);
+        if (ukHerdMatch.Success)
+        {
+            var val = ukHerdMatch.Groups[1].Value;
+            var ukTerms = SearchTermsRegex().Matches(search)
+                .Select(match => match.Value)
+                .ToArray();
+            var literalPhrase = ukTerms.Length > 1 ? $"\"{string.Join(" ", ukTerms)}\"*" : $"\"{ukTerms[0]}\"*";
+            return $"({literalPhrase} OR Herdmark : \"UK {val}\"* OR Herdmark : \"UK{val}\"* OR Herdmark : \"{val}\"*)";
+        }
+
+        // 4. Postcode format: CA5 7LD or CA57LD
+        if (UkPostcodeRegex().IsMatch(search))
+        {
+            var unspaced = search.Replace(" ", "").ToUpperInvariant();
+            var spaced = search.ToUpperInvariant();
+            if (!spaced.Contains(' ') && unspaced.Length > 3)
+            {
+                spaced = $"{unspaced[..^3]} {unspaced[^3..]}";
+            }
+            return $"(\"{spaced}\"* OR \"{unspaced}\"*)";
+        }
+
+        // 5. General terms (multi-word phrase or single word prefix)
+        var terms = SearchTermsRegex().Matches(search)
+            .Select(match => match.Value)
+            .ToArray();
+
+        if (terms.Length == 0)
+            return "";
+
+        literalSearch = search;
+        if (terms.Length == 1)
+            return $"\"{terms[0]}\"*";
+
+        // Multi-word phrase: must appear consecutively in the submitted order in the same field
+        return $"\"{string.Join(" ", terms)}\"*";
+    }
+
+    [GeneratedRegex(@"^\d{2}[/\s]*\d{3}[/\s]*\d{4}$")]
+    private static partial Regex FullCphRegex();
+
+    [GeneratedRegex(@"^(\d{3})[/\s]+(\d{4})$")]
+    private static partial Regex PartialCphRegex();
+
+    [GeneratedRegex(@"^(?i)UK\s*([0-9A-Za-z]*[0-9][0-9A-Za-z]*)$")]
+    private static partial Regex UkHerdRegex();
+
+    [GeneratedRegex(@"^[A-Za-z]{1,2}[0-9][A-Za-z0-9]?\s*[0-9][A-Za-z]{2}$")]
+    private static partial Regex UkPostcodeRegex();
 
     [GeneratedRegex(@"[\p{L}\p{N}]+")]
     private static partial Regex SearchTermsRegex();
@@ -380,6 +491,11 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
                 h.StartDate,
                 h.EndDate,
                 h.Udprn,
+                h.SaonDescription,
+                h.SaonStartNumber,
+                h.SaonStartNumberSuffix,
+                h.SaonEndNumber,
+                h.SaonEndNumberSuffix,
                 h.PaonDescription,
                 h.PaonStartNumber,
                 h.PaonStartNumberSuffix,
@@ -407,42 +523,43 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
             return null;
         }
 
-        return MapHoldingRow(reader);
+        return MapHoldingRow(new RowAccessor(reader));
     }
 
-    private static HoldingRowData MapHoldingRow(DbDataReader reader)
+    private static HoldingRowData MapHoldingRow(RowAccessor row)
     {
-        var holdingId = reader.GetString(0);
-        var holdingCph = reader.GetString(1);
-        var name = GetNullableString(reader, 2);
-        var cphType = GetNullableString(reader, 3);
-        var startDate = ReadEpoch(reader, 4);
-        var endDate = ReadEpoch(reader, 5);
-        var udprn = GetNullableInt64(reader, 6);
+        var holdingId = row.GetString("Id");
+        var holdingCph = row.GetString("Cph");
+        var name = row.GetNullableString("FeatureName");
+        var cphType = row.GetNullableString("CphType");
+        var startDate = row.GetEpoch("StartDate");
+        var endDate = row.GetEpoch("EndDate");
+        var udprn = row.GetNullableInt64("Udprn");
 
-        var paonDescription = GetNullableString(reader, 7);
-        var paonStartNumber = GetNullableString(reader, 8);
-        var paonStartNumberSuffix = GetNullableString(reader, 9);
-        var paonEndNumber = GetNullableString(reader, 10);
-        var paonEndNumberSuffix = GetNullableString(reader, 11);
-        var street = GetNullableString(reader, 12);
+        var postTown = row.GetNullableString("Town");
+        var locality = row.GetNullableString("Locality");
+        var postcode = row.GetNullableString("Postcode");
+        var country = row.GetNullableString("UkInternalCode");
 
-        var postTown = GetNullableString(reader, 13);
-        var locality = GetNullableString(reader, 14);
-        var postcode = GetNullableString(reader, 15);
-        var country = GetNullableString(reader, 16);
+        var easting = row.GetNullableInt32("Easting");
+        var northing = row.GetNullableInt32("Northing");
+        var osMapReference = row.GetNullableString("OsMapReference");
 
-        var easting = GetNullableInt32(reader, 17);
-        var northing = GetNullableInt32(reader, 18);
-        var osMapReference = GetNullableString(reader, 19);
+        var saon = new AonComponents(
+            row.GetNullableString("SaonDescription"),
+            row.GetNullableString("SaonStartNumber"),
+            row.GetNullableString("SaonStartNumberSuffix"),
+            row.GetNullableString("SaonEndNumber"),
+            row.GetNullableString("SaonEndNumberSuffix"));
 
-        var (addressLine1, addressLine2) = AssembleAddressLines(
-            paonDescription,
-            paonStartNumber,
-            paonStartNumberSuffix,
-            paonEndNumber,
-            paonEndNumberSuffix,
-            street);
+        var paon = new AonComponents(
+            row.GetNullableString("PaonDescription"),
+            row.GetNullableString("PaonStartNumber"),
+            row.GetNullableString("PaonStartNumberSuffix"),
+            row.GetNullableString("PaonEndNumber"),
+            row.GetNullableString("PaonEndNumberSuffix"));
+
+        var (addressLine1, addressLine2) = AssembleAddressLines(saon, paon, row.GetNullableString("Street"));
 
         var location = new HoldingLocation(
             OsMapReference: osMapReference,
@@ -455,7 +572,9 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
                 PostTown: postTown,
                 Locality: locality,
                 Postcode: postcode,
-                Country: country));
+                Country: country),
+            // Correspondence address is not yet sourced; exposed with null values until it is.
+            CorrespondenceAddress: HoldingAddress.Empty);
 
         return new HoldingRowData(holdingId, holdingCph, name, cphType, startDate, endDate, location);
     }
@@ -497,39 +616,39 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         command.Parameters.Add(new SqliteParameter("$holdingId", holdingId));
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var row = new RowAccessor(reader);
         var partyMap = new Dictionary<string, PartyAccumulator>(StringComparer.OrdinalIgnoreCase);
 
         while (await reader.ReadAsync(cancellationToken))
         {
-            ProcessAssociationRow(reader, partyMap);
+            ProcessAssociationRow(row, partyMap);
         }
 
         return partyMap.Values.Select(p => p.ToHoldingAssociation()).ToList();
     }
 
     private static void ProcessAssociationRow(
-        DbDataReader reader,
-        Dictionary<string, PartyAccumulator> partyMap,
-        int offset = 0)
+        RowAccessor row,
+        Dictionary<string, PartyAccumulator> partyMap)
     {
-        var sourcePartyId = reader.GetString(0 + offset);
-        var personTitle = GetNullableString(reader, 1 + offset);
-        var givenName = GetNullableString(reader, 2 + offset);
-        var initials = GetNullableString(reader, 3 + offset);
-        var familyName = GetNullableString(reader, 4 + offset);
-        var organisationName = GetNullableString(reader, 5 + offset);
-        var email = GetNullableString(reader, 6 + offset);
-        var mobile = GetNullableString(reader, 7 + offset);
-        var telephone = GetNullableString(reader, 8 + offset);
-        var addressLine1 = GetNullableString(reader, 9 + offset);
-        var addressLine2 = GetNullableString(reader, 10 + offset);
-        var addressTown = GetNullableString(reader, 11 + offset);
-        var addressLocality = GetNullableString(reader, 12 + offset);
-        var addressNation = GetNullableString(reader, 13 + offset);
-        var addressPostcode = GetNullableString(reader, 14 + offset);
-        var addressCountryCode = GetNullableString(reader, 15 + offset);
-        var roleCode = reader.GetString(16 + offset);
-        var speciesCode = GetNullableString(reader, 17 + offset);
+        var sourcePartyId = row.GetString("SourcePartyId");
+        var personTitle = row.GetNullableString("PersonTitle");
+        var givenName = row.GetNullableString("GivenName");
+        var initials = row.GetNullableString("Initials");
+        var familyName = row.GetNullableString("FamilyName");
+        var organisationName = row.GetNullableString("OrganisationName");
+        var email = row.GetNullableString("Email");
+        var mobile = row.GetNullableString("Mobile");
+        var telephone = row.GetNullableString("Telephone");
+        var addressLine1 = row.GetNullableString("AddressLine1");
+        var addressLine2 = row.GetNullableString("AddressStreet");
+        var addressTown = row.GetNullableString("AddressTown");
+        var addressLocality = row.GetNullableString("AddressLocality");
+        var addressNation = row.GetNullableString("AddressNation");
+        var addressPostcode = row.GetNullableString("AddressPostcode");
+        var addressCountryCode = row.GetNullableString("AddressCountryCode");
+        var roleCode = row.GetString("Role");
+        var speciesCode = row.GetNullableString("AnimalSpeciesCode");
 
         if (!partyMap.TryGetValue(sourcePartyId, out var accumulator))
         {
@@ -579,13 +698,15 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         command.Parameters.Add(new SqliteParameter("$holdingId", holdingId));
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var row = new RowAccessor(reader);
         var speciesList = new List<string>();
 
         while (await reader.ReadAsync(cancellationToken))
         {
-            if (!reader.IsDBNull(0))
+            var species = row.GetNullableString("AnimalSpeciesCode");
+            if (species is not null)
             {
-                speciesList.Add(reader.GetString(0));
+                speciesList.Add(species);
             }
         }
 
@@ -613,30 +734,30 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         command.Parameters.Add(new SqliteParameter("$holdingId", holdingId));
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var row = new RowAccessor(reader);
         var markMap = new Dictionary<string, MarkAccumulator>(StringComparer.OrdinalIgnoreCase);
 
         while (await reader.ReadAsync(cancellationToken))
         {
-            ProcessMarkRow(reader, markMap);
+            ProcessMarkRow(row, markMap);
         }
 
         return markMap.Values.Select(m => m.ToHoldingMark()).ToList();
     }
 
     private static void ProcessMarkRow(
-        DbDataReader reader,
-        Dictionary<string, MarkAccumulator> markMap,
-        int offset = 0)
+        RowAccessor row,
+        Dictionary<string, MarkAccumulator> markMap)
     {
-        if (reader.IsDBNull(0 + offset))
+        var herdmark = row.GetNullableString("Herdmark");
+        if (herdmark is null)
         {
             return;
         }
 
-        var herdmark = reader.GetString(0 + offset);
-        var fromDate = GetNullableInt64(reader, 1 + offset);
-        var toDate = GetNullableInt64(reader, 2 + offset);
-        var species = GetNullableString(reader, 3 + offset);
+        var fromDate = row.GetNullableInt64("AnimalGroupFromDate");
+        var toDate = row.GetNullableInt64("AnimalGroupToDate");
+        var species = row.GetNullableString("AnimalSpeciesCode");
 
         if (!markMap.TryGetValue(herdmark, out var accumulator))
         {
@@ -687,16 +808,17 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         var resultMap = new Dictionary<string, Dictionary<string, PartyAccumulator>>(StringComparer.OrdinalIgnoreCase);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var row = new RowAccessor(reader);
         while (await reader.ReadAsync(cancellationToken))
         {
-            var holdingId = reader.GetString(0);
+            var holdingId = row.GetString("HoldingId");
             if (!resultMap.TryGetValue(holdingId, out var partyMap))
             {
                 partyMap = new Dictionary<string, PartyAccumulator>(StringComparer.OrdinalIgnoreCase);
                 resultMap[holdingId] = partyMap;
             }
 
-            ProcessAssociationRow(reader, partyMap, offset: 1);
+            ProcessAssociationRow(row, partyMap);
         }
 
         return resultMap.ToDictionary(
@@ -724,18 +846,23 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         var resultMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var row = new RowAccessor(reader);
         while (await reader.ReadAsync(cancellationToken))
         {
-            var holdingId = reader.GetString(0);
-            if (!reader.IsDBNull(1))
+            var holdingId = row.GetString("HoldingId");
+            var species = row.GetNullableString("AnimalSpeciesCode");
+            if (species is null)
             {
-                if (!resultMap.TryGetValue(holdingId, out var speciesList))
-                {
-                    speciesList = new List<string>();
-                    resultMap[holdingId] = speciesList;
-                }
-                speciesList.Add(reader.GetString(1));
+                continue;
             }
+
+            if (!resultMap.TryGetValue(holdingId, out var speciesList))
+            {
+                speciesList = new List<string>();
+                resultMap[holdingId] = speciesList;
+            }
+
+            speciesList.Add(species);
         }
 
         return resultMap;
@@ -765,16 +892,17 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         var resultMap = new Dictionary<string, Dictionary<string, MarkAccumulator>>(StringComparer.OrdinalIgnoreCase);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var row = new RowAccessor(reader);
         while (await reader.ReadAsync(cancellationToken))
         {
-            var holdingId = reader.GetString(0);
+            var holdingId = row.GetString("HoldingId");
             if (!resultMap.TryGetValue(holdingId, out var markMap))
             {
                 markMap = new Dictionary<string, MarkAccumulator>(StringComparer.OrdinalIgnoreCase);
                 resultMap[holdingId] = markMap;
             }
 
-            ProcessMarkRow(reader, markMap, offset: 1);
+            ProcessMarkRow(row, markMap);
         }
 
         return resultMap.ToDictionary(
@@ -783,56 +911,82 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
             StringComparer.OrdinalIgnoreCase);
     }
 
-    private static (string? AddressLine1, string? AddressLine2) AssembleAddressLines(
-        string? paonDescription,
-        string? paonStartNumber,
-        string? paonStartNumberSuffix,
-        string? paonEndNumber,
-        string? paonEndNumberSuffix,
+    internal static (string? AddressLine1, string? AddressLine2) AssembleAddressLines(
+        AonComponents saon,
+        AonComponents paon,
         string? street)
     {
-        var number = FormatStreetNumber(paonStartNumber, paonStartNumberSuffix, paonEndNumber, paonEndNumberSuffix);
-        var trimmedStreet = street?.Trim();
-        var streetParts = new List<string>();
-        if (!string.IsNullOrEmpty(number))
+        var saonLine = FormatAon(saon);
+
+        var paonNumber = FormatNumberRange(paon.StartNumber, paon.StartNumberSuffix, paon.EndNumber, paon.EndNumberSuffix);
+        var paonDescriptionLine = Trimmed(paon.Description);
+        var streetName = Trimmed(street);
+
+        // The PAON number belongs with the thoroughfare; when Street is empty the source carries
+        // the thoroughfare in PaonDescription instead, so the number binds to that.
+        string? buildingLine;
+        string? streetLine;
+        if (streetName is not null)
         {
-            streetParts.Add(number);
+            buildingLine = paonDescriptionLine;
+            streetLine = JoinWithSpace(paonNumber, streetName);
         }
-        if (!string.IsNullOrEmpty(trimmedStreet))
+        else
         {
-            streetParts.Add(trimmedStreet);
+            buildingLine = null;
+            streetLine = JoinWithSpace(paonNumber, paonDescriptionLine);
         }
 
-        var streetLine = streetParts.Count > 0 ? string.Join(" ", streetParts).Trim() : null;
-        if (string.IsNullOrWhiteSpace(streetLine))
+        var lines = new[] { saonLine, buildingLine, streetLine }
+            .Where(line => line is not null)
+            .ToArray();
+
+        return lines.Length switch
         {
-            streetLine = null;
-        }
-
-        var paonDesc = string.IsNullOrWhiteSpace(paonDescription) ? null : paonDescription.Trim();
-
-        var addressLine1 = paonDesc ?? streetLine;
-        var addressLine2 = paonDesc is null ? null : streetLine;
-
-        return (addressLine1, addressLine2);
+            0 => (null, null),
+            1 => (lines[0], null),
+            // Fold any overflow into line 1 so the thoroughfare always lands in the last populated line.
+            _ => (string.Join(", ", lines[..^1]), lines[^1])
+        };
     }
 
-    private static string? FormatStreetNumber(
-        string? paonStartNumber,
-        string? paonStartNumberSuffix,
-        string? paonEndNumber,
-        string? paonEndNumberSuffix)
+    private static string? FormatAon(AonComponents aon)
     {
-        var start = Combine(paonStartNumber, paonStartNumberSuffix);
-        var end = Combine(paonEndNumber, paonEndNumberSuffix);
+        var number = FormatNumberRange(aon.StartNumber, aon.StartNumberSuffix, aon.EndNumber, aon.EndNumberSuffix);
+        return JoinWithSpace(Trimmed(aon.Description), number);
+    }
 
-        if (!string.IsNullOrEmpty(start) && !string.IsNullOrEmpty(end))
+    private static string? FormatNumberRange(
+        string? startNumber,
+        string? startNumberSuffix,
+        string? endNumber,
+        string? endNumberSuffix)
+    {
+        var start = Combine(startNumber, startNumberSuffix);
+        var end = Combine(endNumber, endNumberSuffix);
+
+        if (start is null)
         {
-            return $"{start}-{end}";
+            return end;
         }
 
-        return !string.IsNullOrEmpty(start) ? start : end;
+        return end is null || string.Equals(start, end, StringComparison.OrdinalIgnoreCase)
+            ? start
+            : $"{start}-{end}";
     }
+
+    private static string? JoinWithSpace(string? first, string? second)
+    {
+        if (first is null)
+        {
+            return second;
+        }
+
+        return second is null ? first : $"{first} {second}";
+    }
+
+    private static string? Trimmed(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private static string? Combine(string? a, string? b)
     {
@@ -860,19 +1014,59 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         return parts.Length > 0 ? string.Join(" ", parts) : null;
     }
 
-    private static string? GetNullableString(DbDataReader reader, int ordinal) =>
-        reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+    /// <summary>
+    /// Reads columns by name so that changing the column order in a query cannot silently
+    /// misalign the mapping. Ordinals are resolved once per reader, not per row.
+    /// </summary>
+    private sealed class RowAccessor(DbDataReader reader)
+    {
+        private Dictionary<string, int>? _ordinals;
 
-    private static long? GetNullableInt64(DbDataReader reader, int ordinal) =>
-        reader.IsDBNull(ordinal) ? null : reader.GetInt64(ordinal);
+        private int Ordinal(string name)
+        {
+            // Resolved lazily because the column list is only reliably available once a row is read.
+            if (_ordinals is null)
+            {
+                _ordinals = new Dictionary<string, int>(reader.FieldCount, StringComparer.OrdinalIgnoreCase);
+                for (var i = 0; i < reader.FieldCount; i++)
+                {
+                    _ordinals[reader.GetName(i)] = i;
+                }
+            }
 
-    private static int? GetNullableInt32(DbDataReader reader, int ordinal) =>
-        reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
+            return _ordinals.TryGetValue(name, out var ordinal)
+                ? ordinal
+                : throw new InvalidOperationException($"The query result does not contain a column named '{name}'.");
+        }
 
-    private static DateTimeOffset? ReadEpoch(DbDataReader reader, int ordinal) =>
-        reader.IsDBNull(ordinal)
-            ? null
-            : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(ordinal));
+        public string GetString(string name) => reader.GetString(Ordinal(name));
+
+        public string? GetNullableString(string name)
+        {
+            var ordinal = Ordinal(name);
+            return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+        }
+
+        public long? GetNullableInt64(string name)
+        {
+            var ordinal = Ordinal(name);
+            return reader.IsDBNull(ordinal) ? null : reader.GetInt64(ordinal);
+        }
+
+        public int? GetNullableInt32(string name)
+        {
+            var ordinal = Ordinal(name);
+            return reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
+        }
+
+        public DateTimeOffset? GetEpoch(string name)
+        {
+            var ordinal = Ordinal(name);
+            return reader.IsDBNull(ordinal)
+                ? null
+                : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(ordinal));
+        }
+    }
 
     private readonly record struct HoldingRowData(
         string HoldingId,
@@ -980,3 +1174,10 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
         }
     }
 }
+
+internal readonly record struct AonComponents(
+    string? Description,
+    string? StartNumber,
+    string? StartNumberSuffix,
+    string? EndNumber,
+    string? EndNumberSuffix);

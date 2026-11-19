@@ -1,15 +1,9 @@
-using KeeperData.Core.Documents.Silver;
-using KeeperData.Core.Domain.BuildingBlocks.Aggregates;
-using KeeperData.Core.Locking;
-using KeeperData.Core.Repositories;
-using KeeperData.Core.Transactions;
-using KeeperData.Infrastructure.Behaviors;
-using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Infrastructure.Database.Factories;
 using KeeperData.Infrastructure.Database.Factories.Implementations;
+using KeeperData.Core.Repositories;
+using KeeperData.Infrastructure.Behaviors;
+using KeeperData.Infrastructure.Database.Configuration;
 using KeeperData.Infrastructure.Database.Repositories;
-using KeeperData.Infrastructure.Database.Transactions;
-using KeeperData.Infrastructure.Locking;
 using KeeperData.Infrastructure.Services;
 using MediatR;
 using Microsoft.Extensions.Configuration;
@@ -29,7 +23,7 @@ namespace KeeperData.Infrastructure.Database.Setup;
 public static class ServiceCollectionExtensions
 {
     private static bool s_mongoSerializersRegistered;
-    private static readonly object s_mongoSerializersLock = new();
+    private static readonly Lock s_mongoSerializersLock = new();
 
     public static void AddDatabaseDependencies(this IServiceCollection services, IConfiguration configuration)
     {
@@ -39,16 +33,12 @@ public static class ServiceCollectionExtensions
         services.Configure<MongoConfig>(configuration.GetSection("Mongo"));
 
         services.AddSingleton<IMongoDbClientFactory, MongoDbClientFactory>();
-        services.AddScoped<IMongoSessionFactory, MongoSessionFactory>();
-
-        services.AddScoped(sp => sp.GetRequiredService<IMongoSessionFactory>().GetSession());
         services.AddSingleton(sp => sp.GetRequiredService<IMongoDbClientFactory>().CreateClient());
 
         services.AddSingleton<IMongoDbInitialiser, MongoDbInitialiser>();
 
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
-        services.AddScoped<ICphRepository, CphRepository>();
         services.AddScoped<ICphAssociationsRepository, CphAssociationsRepository>();
         services.AddScoped<IHoldingDetailRepository, HoldingDetailRepository>();
         services.AddScoped<ICountryRepository, CountryRepository>();
@@ -63,19 +53,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISitesRepository, SitesRepository>();
         services.AddScoped<IPartiesRepository, PartiesRepository>();
         services.AddScoped<IUserAccountsRepository, UserAccountsRepository>();
-        services.AddScoped<IGoldSitePartyRoleRelationshipRepository, GoldSitePartyRoleRelationshipRepository>();
-        services.AddSingleton<IScanStateRepository, ScanStateRepository>();
-
-        services.AddScoped<IUnitOfWork, MongoUnitOfWork>();
-        services.AddScoped(sp => (ITransactionManager)sp.GetRequiredService<IUnitOfWork>());
-        services.AddScoped<IAggregateTracker, AggregateTracker>();
 
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(UnitOfWorkTransactionBehavior<,>));
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(DomainEventDispatchingBehavior<,>));
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AggregateRootChangedBehavior<,>));
-
-        services.AddSingleton<IDistributedLock, MongoDistributedLock>();
 
         if (mongoConfig.HealthcheckEnabled)
         {

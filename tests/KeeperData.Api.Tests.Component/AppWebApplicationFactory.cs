@@ -1,31 +1,7 @@
-using Amazon.Extensions.NETCore.Setup;
-using Amazon.Runtime;
-using Amazon.S3;
-using Amazon.S3.Model;
-using Amazon.SimpleNotificationService;
-using Amazon.SimpleNotificationService.Model;
-using Amazon.SQS;
-using Amazon.SQS.Model;
 using KeeperData.Api.Tests.Component.Authentication.Fakes;
-using KeeperData.Api.Tests.Component.Consumers.Helpers;
-using KeeperData.Application.Commands.MessageProcessing;
-using KeeperData.Core.ApiClients.DataBridgeApi;
 using KeeperData.Core.Documents;
-using KeeperData.Core.Documents.Silver;
-using KeeperData.Core.Locking;
-using KeeperData.Core.Messaging.Consumers;
-using KeeperData.Core.Messaging.Contracts;
-using KeeperData.Core.Messaging.Observers;
 using KeeperData.Core.Repositories;
 using KeeperData.Core.Services;
-using KeeperData.Infrastructure.ApiClients;
-using KeeperData.Infrastructure.ApiClients.Decorators;
-using KeeperData.Infrastructure.Messaging.Consumers;
-using KeeperData.Infrastructure.Messaging.Services;
-using KeeperData.Infrastructure.Storage.Clients;
-using KeeperData.Infrastructure.Storage.Factories;
-using KeeperData.Infrastructure.Storage.Factories.Implementations;
-using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
@@ -40,82 +16,29 @@ using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Moq;
-using Moq.Protected;
-using System.Net;
 
 namespace KeeperData.Api.Tests.Component;
 
 public class AppWebApplicationFactory(
     IDictionary<string, string?>? configurationOverrides = null,
-    bool useFakeAuth = false, bool useAnon = false) : WebApplicationFactory<Program>
+    bool useFakeAuth = false) : WebApplicationFactory<Program>
 {
-    public Mock<IAmazonS3>? AmazonS3Mock;
-    public Mock<IAmazonSQS>? AmazonSQSMock;
-    public Mock<IAmazonSimpleNotificationService>? AmazonSNSMock;
     public Mock<IMongoClient>? MongoClientMock;
     public readonly Mock<HttpMessageHandler> DataBridgeApiClientHttpMessageHandlerMock = new();
 
-    public readonly Mock<IDistributedLock> DistributedLockMock = new();
-    private readonly HashSet<string> _activeLocks = new();
-    private readonly Dictionary<string, Mock<IDistributedLockHandle>> _lockHandles = new();
-
     public readonly Mock<ISitesRepository> _sitesRepositoryMock = new();
     public readonly Mock<IPartiesRepository> _partiesRepositoryMock = new();
-    public readonly Mock<IGenericRepository<CtsHoldingDocument>> _silverCtsHoldingRepositoryMock = new();
-    public readonly Mock<IGenericRepository<CtsPartyDocument>> _silverCtsPartyRepositoryMock = new();
-    public readonly Mock<IGenericRepository<SamHoldingDocument>> _silverSamHoldingRepositoryMock = new();
-    public readonly Mock<IGenericRepository<SamPartyDocument>> _silverSamPartyRepositoryMock = new();
-    public readonly Mock<IGenericRepository<SamHerdDocument>> _silverSamHerdRepositoryMock = new();
     public readonly Mock<IGenericRepository<SiteDocument>> _goldSiteRepositoryMock = new();
     public readonly Mock<IGenericRepository<PartyDocument>> _goldPartyRepositoryMock = new();
-    public readonly Mock<IGoldSitePartyRoleRelationshipRepository> _goldSitePartyRoleRelationshipRepositoryMock = new();
     public readonly Mock<IRoleRepository> _roleRepositoryMock = new();
     public readonly Mock<ICountryRepository> _countryRepositoryMock = new();
-    public readonly Mock<IScanStateRepository> _scanStateRepositoryMock = new();
     public readonly Mock<IUserAccountsRepository> _userAccountsRepositoryMock = new();
-
-    public readonly Mock<ICountryIdentifierLookupService> _countryIdentifierLookupServiceMock = new();
-    public readonly Mock<ISiteActivityTypeLookupService> _siteActivityTypeLookupServiceMock = new();
-    public readonly Mock<IActivityCodeLookupService> _activityCodeLookupServiceMock = new();
-    public readonly Mock<ISiteTypeLookupService> _siteTypeLookupServiceMock = new();
-    public readonly Mock<IProductionTypeLookupService> _productionTypeLookupServiceMock = new();
-    public readonly Mock<IProductionUsageLookupService> _productionUsageLookupServiceMock = new();
-    public readonly Mock<IRoleTypeLookupService> _roleTypeLookupServiceMock = new();
-    public readonly Mock<ISpeciesTypeLookupService> _speciesTypeLookupServiceMock = new();
-    public readonly Mock<ISiteIdentifierTypeLookupService> _siteIdentifierTypeLookupServiceMock = new();
-
-    public readonly Mock<IRequestHandler<ProcessSamImportHoldingMessageCommand, MessageType>> _samImportHoldingMessageHandlerMock = new();
 
     public readonly Mock<IReferenceDataCache> _referenceDataCacheMock = new();
 
     private readonly List<Action<IServiceCollection>> _overrideServices = [];
     private readonly IDictionary<string, string?> _configurationOverrides = configurationOverrides ?? new Dictionary<string, string?>();
     private readonly bool _useFakeAuth = useFakeAuth;
-
-    private const string ComparisonReportsStorageBucket = "test-comparison-reports-bucket";
-
-    private void ConfigureDistributedLockMock()
-    {
-        DistributedLockMock.Setup(x => x.TryAcquireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-                          .ReturnsAsync((string lockName, TimeSpan duration, CancellationToken ct) =>
-                          {
-                              if (_activeLocks.Contains(lockName))
-                              {
-                                  return null;
-                              }
-
-                              _activeLocks.Add(lockName);
-                              var handleMock = new Mock<IDistributedLockHandle>();
-
-                              // Set up DisposeAsync to release the lock
-                              handleMock.Setup(h => h.DisposeAsync())
-                                       .Callback(() => _activeLocks.Remove(lockName))
-                                       .Returns(ValueTask.CompletedTask);
-
-                              _lockHandles[lockName] = handleMock;
-                              return handleMock.Object;
-                          });
-    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -133,26 +56,12 @@ public class AppWebApplicationFactory(
         {
             RemoveService<IHealthCheckPublisher>(services);
 
-            ConfigureDistributedLockMock();
-
             ConfigureRepositories();
-            ConfigureTransientServices();
-            ConfigureTestMessageHandlers();
-
-            ConfigureAwsOptions(services);
-            ConfigureS3ClientFactory(services);
-            ConfigureSimpleQueueService(services);
-            ConfigureSimpleNotificationService(services);
-            ConfigureDatabase(services);
-
-            ConfigureMessageConsumers(services);
             ConfigureReferenceDataCache(services);
+            ConfigureDatabase(services);
 
             services.AddHttpClient("DataBridgeApi")
                 .ConfigurePrimaryHttpMessageHandler(() => DataBridgeApiClientHttpMessageHandlerMock.Object);
-
-            services.AddScoped<IDataBridgeClient, DataBridgeClient>();
-            if (useAnon) services.Decorate<IDataBridgeClient, DataBridgeClientAnonymizer>();
 
             if (_useFakeAuth)
             {
@@ -227,11 +136,9 @@ public class AppWebApplicationFactory(
 
     public void ResetMocks()
     {
-        ResetInfrastructureMocks();
+        MongoClientMock!.Reset();
+        DataBridgeApiClientHttpMessageHandlerMock.Reset();
         ResetRepositoryMocks();
-        ResetTransientServiceMocks();
-        ResetTestMessageHandlerMocks();
-        ResetDistributedLockMock();
         ResetReferenceDataCache();
     }
 
@@ -240,37 +147,14 @@ public class AppWebApplicationFactory(
         _referenceDataCacheMock.Reset();
     }
 
-    private void ResetDistributedLockMock()
-    {
-        _activeLocks.Clear();
-        _lockHandles.Clear();
-        DistributedLockMock.Reset();
-        ConfigureDistributedLockMock();
-    }
-
     private static void SetTestEnvironmentVariables()
     {
-        Environment.SetEnvironmentVariable("AWS__ServiceURL", "http://localhost:4566");
         Environment.SetEnvironmentVariable("Mongo__DatabaseUri", "mongodb://localhost:27017");
         Environment.SetEnvironmentVariable("Mongo__DatabaseName", "test-keeper-data-api");
-        Environment.SetEnvironmentVariable("StorageConfiguration__ComparisonReportsStorage__BucketName", ComparisonReportsStorageBucket);
-        Environment.SetEnvironmentVariable("QueueConsumerOptions__IntakeEventQueueOptions__QueueUrl", "http://localhost:4566/000000000000/test-queue");
         Environment.SetEnvironmentVariable("ApiClients__DataBridgeApi__HealthcheckEnabled", "true");
         Environment.SetEnvironmentVariable("ApiClients__DataBridgeApi__BaseUrl", TestConstants.DataBridgeApiBaseUrl);
         Environment.SetEnvironmentVariable("ApiClients__DataBridgeApi__BridgeApiSubscriptionKey", "XYZ");
-        Environment.SetEnvironmentVariable("ServiceBusSenderConfiguration__IntakeEventQueue__QueueUrl", "http://localhost:4566/000000000000/test-queue");
-        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__CtsAgentsEnabled", "true");
-        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamHoldingsEnabled", "true");
-        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamHoldersEnabled", "true");
-        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamHerdsEnabled", "true");
-        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamPartiesEnabled", "true");
-        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamPortsEnabled", "true");
-        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamCommonLandsEnabled", "true");
-        Environment.SetEnvironmentVariable("DataBridgeCollectionFlags__SamShowgroundsEnabled", "true");
-        Environment.SetEnvironmentVariable("BulkScanEndpointsEnabled", "false");
-        Environment.SetEnvironmentVariable("DailyScanEndpointsEnabled", "false");
-        Environment.SetEnvironmentVariable("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicName", "ls_keeper_data_import_complete");
-        Environment.SetEnvironmentVariable("BatchCompletionNotificationConfiguration__BatchCompletionEventsTopic__TopicArn", "http://localhost:4566/000000000000/ls_keeper_data_import_complete");
+        Environment.SetEnvironmentVariable("LegacyEndpointsEnabled", "true");
         Environment.SetEnvironmentVariable("AuthenticationConfiguration__EnableApiKey", "true");
         Environment.SetEnvironmentVariable("AuthenticationConfiguration__ApiGatewayExists", "true");
         Environment.SetEnvironmentVariable("AuthenticationConfiguration__Authority", "https://fake-authority/");
@@ -297,20 +181,6 @@ public class AppWebApplicationFactory(
         });
     }
 
-    private static void ConfigureMessageConsumers(IServiceCollection services)
-    {
-        services.RemoveAll<QueueListener>();
-        services.RemoveAll<TestQueuePollerObserver<MessageType>>();
-        services.RemoveAll<IQueueService>();
-        services.RemoveAll<IQueuePoller>();
-
-        services.AddScoped<IQueueService, QueueService>();
-        services.AddScoped<IQueuePoller, QueuePoller>();
-
-        services.AddScoped<TestQueuePollerObserver<MessageType>>();
-        services.AddScoped<IQueuePollerObserver<MessageType>>(sp => sp.GetRequiredService<TestQueuePollerObserver<MessageType>>());
-    }
-
     private void ConfigureReferenceDataCache(IServiceCollection services)
     {
         // Configure Reference Data Cache Mock
@@ -330,21 +200,11 @@ public class AppWebApplicationFactory(
         OverrideServiceAsScoped(_sitesRepositoryMock.Object);
         OverrideServiceAsScoped(_partiesRepositoryMock.Object);
 
-        OverrideServiceAsScoped(_silverCtsHoldingRepositoryMock.Object);
-        OverrideServiceAsScoped(_silverCtsPartyRepositoryMock.Object);
-
-        OverrideServiceAsScoped(_silverSamHoldingRepositoryMock.Object);
-        OverrideServiceAsScoped(_silverSamPartyRepositoryMock.Object);
-        OverrideServiceAsScoped(_silverSamHerdRepositoryMock.Object);
-
         OverrideServiceAsScoped(_goldSiteRepositoryMock.Object);
         OverrideServiceAsScoped(_goldPartyRepositoryMock.Object);
-        OverrideServiceAsScoped(_goldSitePartyRoleRelationshipRepositoryMock.Object);
 
         OverrideServiceAsScoped(_roleRepositoryMock.Object);
         OverrideServiceAsScoped(_countryRepositoryMock.Object);
-
-        OverrideServiceAsSingleton(_scanStateRepositoryMock.Object);
 
         OverrideServiceAsScoped(_userAccountsRepositoryMock.Object);
 
@@ -376,151 +236,13 @@ public class AppWebApplicationFactory(
         _sitesRepositoryMock.Reset();
         _partiesRepositoryMock.Reset();
 
-        _silverCtsHoldingRepositoryMock.Reset();
-        _silverCtsPartyRepositoryMock.Reset();
-
-        _silverSamHoldingRepositoryMock.Reset();
-        _silverSamPartyRepositoryMock.Reset();
-        _silverSamHerdRepositoryMock.Reset();
-
         _goldSiteRepositoryMock.Reset();
         _goldPartyRepositoryMock.Reset();
-        _goldSitePartyRoleRelationshipRepositoryMock.Reset();
 
         _roleRepositoryMock.Reset();
         _countryRepositoryMock.Reset();
 
-        _scanStateRepositoryMock.Reset();
         _userAccountsRepositoryMock.Reset();
-    }
-
-    private void ConfigureTransientServices()
-    {
-        OverrideServiceAsTransient(_countryIdentifierLookupServiceMock.Object);
-        OverrideServiceAsTransient(_siteActivityTypeLookupServiceMock.Object);
-        OverrideServiceAsTransient(_activityCodeLookupServiceMock.Object);
-        OverrideServiceAsTransient(_siteTypeLookupServiceMock.Object);
-        OverrideServiceAsTransient(_productionTypeLookupServiceMock.Object);
-        OverrideServiceAsTransient(_productionUsageLookupServiceMock.Object);
-        OverrideServiceAsTransient(_roleTypeLookupServiceMock.Object);
-        OverrideServiceAsTransient(_speciesTypeLookupServiceMock.Object);
-        OverrideServiceAsTransient(_siteIdentifierTypeLookupServiceMock.Object);
-    }
-
-    private void ResetTransientServiceMocks()
-    {
-        _countryIdentifierLookupServiceMock.Reset();
-        _siteActivityTypeLookupServiceMock.Reset();
-        _siteTypeLookupServiceMock.Reset();
-        _productionTypeLookupServiceMock.Reset();
-        _productionUsageLookupServiceMock.Reset();
-        _roleTypeLookupServiceMock.Reset();
-        _speciesTypeLookupServiceMock.Reset();
-        _siteIdentifierTypeLookupServiceMock.Reset();
-    }
-
-    private void ConfigureTestMessageHandlers()
-    {
-        OverrideServiceAsScoped(_samImportHoldingMessageHandlerMock.Object);
-    }
-
-    private void ResetTestMessageHandlerMocks()
-    {
-        _samImportHoldingMessageHandlerMock.Reset();
-    }
-
-    private static void ConfigureAwsOptions(IServiceCollection services)
-    {
-        var provider = services.BuildServiceProvider();
-        var awsOptions = provider.GetRequiredService<AWSOptions>();
-        awsOptions.Credentials = new BasicAWSCredentials("test", "test");
-        services.Replace(new ServiceDescriptor(typeof(AWSOptions), awsOptions));
-    }
-
-    private void ResetInfrastructureMocks()
-    {
-        AmazonS3Mock!.Reset();
-        AmazonSQSMock!.Reset();
-        AmazonSNSMock!.Reset();
-        MongoClientMock!.Reset();
-        DataBridgeApiClientHttpMessageHandlerMock.Reset();
-
-        DataBridgeApiClientHttpMessageHandlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync((HttpRequestMessage request, CancellationToken cancellationToken) =>
-            {
-                var dataBridgeResponse = new
-                {
-                    collectionName = "test-collection",
-                    count = 0,
-                    totalCount = 0,
-                    skip = 0,
-                    top = 100,
-                    filter = (string?)null,
-                    orderBy = (string?)null,
-                    executedAtUtc = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
-                    data = new object[0]
-                };
-
-                var jsonResponse = System.Text.Json.JsonSerializer.Serialize(dataBridgeResponse);
-                var response = new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new StringContent(jsonResponse, System.Text.Encoding.UTF8, "application/json")
-                };
-                return response;
-            });
-    }
-
-    private void ConfigureS3ClientFactory(IServiceCollection services)
-    {
-        AmazonS3Mock = new Mock<IAmazonS3>();
-
-        AmazonS3Mock
-            .Setup(x => x.GetBucketAclAsync(It.IsAny<GetBucketAclRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GetBucketAclResponse { HttpStatusCode = HttpStatusCode.OK });
-
-        AmazonS3Mock
-            .Setup(x => x.ListObjectsV2Async(It.IsAny<ListObjectsV2Request>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ListObjectsV2Response { HttpStatusCode = HttpStatusCode.OK });
-
-        var provider = services.BuildServiceProvider();
-        var factory = provider.GetRequiredService<IS3ClientFactory>();
-
-        if (factory is S3ClientFactory concreteFactory)
-        {
-            concreteFactory.RegisterMockClient<ComparisonReportsStorageClient>(ComparisonReportsStorageBucket, AmazonS3Mock.Object);
-        }
-    }
-
-    private void ConfigureSimpleQueueService(IServiceCollection services)
-    {
-        services.RemoveAll<IAmazonSQS>();
-
-        AmazonSQSMock = new Mock<IAmazonSQS>();
-
-        AmazonSQSMock
-            .Setup(x => x.GetQueueAttributesAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GetQueueAttributesResponse { HttpStatusCode = HttpStatusCode.OK });
-
-        services.AddSingleton(AmazonSQSMock.Object);
-    }
-
-    private void ConfigureSimpleNotificationService(IServiceCollection services)
-    {
-        services.RemoveAll<IAmazonSimpleNotificationService>();
-
-        AmazonSNSMock = new Mock<IAmazonSimpleNotificationService>();
-
-        AmazonSNSMock
-            .Setup(x => x.GetTopicAttributesAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GetTopicAttributesResponse { HttpStatusCode = HttpStatusCode.OK });
-
-        AmazonSNSMock
-            .Setup(x => x.ListTopicsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ListTopicsResponse() { HttpStatusCode = HttpStatusCode.OK });
-
-        services.AddSingleton(AmazonSNSMock.Object);
     }
 
     private void ConfigureDatabase(IServiceCollection services)
@@ -556,8 +278,6 @@ public class AppWebApplicationFactory(
             .Returns(mongoDatabaseMock.Object);
 
         services.Replace(new ServiceDescriptor(typeof(IMongoClient), MongoClientMock.Object));
-
-        services.Replace(new ServiceDescriptor(typeof(IDistributedLock), DistributedLockMock.Object));
     }
 
     private static IAsyncCursor<BsonDocument> CreateEmptyCursor()

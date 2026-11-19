@@ -1,4 +1,3 @@
-using KeeperData.Core.Domain.Sites;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
@@ -104,37 +103,4 @@ public class SitePartyDocument : INestedEntity
     [BsonElement("partyRoles")]
     [JsonPropertyName("partyRoles")]
     public List<PartyRoleDocument> PartyRoles { get; set; } = [];
-
-    public static SitePartyDocument FromDomain(SiteParty m) => new()
-    {
-        IdentifierId = m.Id,
-        CustomerNumber = m.CustomerNumber,
-        Title = m.Title,
-        FirstName = m.FirstName,
-        LastName = m.LastName,
-        Name = m.Name,
-        PartyType = m.PartyType,
-        Communication = [.. m.Communication.Select(CommunicationDocument.FromDomain)],
-        CorrespondanceAddress = m.CorrespondanceAddress is not null ? AddressDocument.FromDomain(m.CorrespondanceAddress) : null,
-        PartyRoles = [.. m.PartyRoles.Select(PartyRoleDocument.FromDomain)],
-        State = m.State,
-        CreatedDate = m.CreatedDate,
-        LastUpdatedDate = m.LastUpdatedDate
-    };
-
-    public SiteParty ToDomain() => new(
-        IdentifierId,
-        CreatedDate,
-        LastUpdatedDate,
-        CustomerNumber,
-        Title,
-        FirstName,
-        LastName,
-        Name,
-        PartyType,
-        State,
-        CorrespondanceAddress?.ToDomain(),
-        Communication.Select(c => c.ToDomain()),
-        PartyRoles.Select(r => r.ToDomain())
-    );
 }

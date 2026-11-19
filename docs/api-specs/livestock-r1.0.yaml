@@ -1208,7 +1208,7 @@ paths:
             format: uuid
         - name: siteIds
           in:   query
-          description: This parameter accepts an array of strings which represents site id which is a immutable UUID, assigned to a CPH Holding. A maximum of 50 values are allowed at a time.
+          description: This parameter accepts an array of strings which represents site id which is a immutable UUID, assigned to a CPH Holding. A maximum of 50 values are allowed at a time. Surrounding whitespace is ignored. If any value is not a valid UUID, or the parameter is supplied without any values (e.g. only commas or whitespace), the request is rejected with HTTP 400 and the errors field identifies siteIds as invalid; no search is performed.
           required: false
           style: form
           explode: false

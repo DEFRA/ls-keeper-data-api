@@ -206,6 +206,26 @@ public class ExceptionHandlingMiddlewareTests
     }
 
     [Fact]
+    public async Task InvalidCursorException_returns_400_identifying_cursor()
+    {
+        var context = CreateHttpContext();
+        var middleware = CreateMiddleware(_ => throw new InvalidCursorException());
+
+        await middleware.InvokeAsync(context);
+
+        context.Response.StatusCode.Should().Be(400);
+
+        var problem = await GetProblemDetailsFromResponse(context);
+        problem.Status.Should().Be(400);
+        problem.Title.Should().Be("Invalid Cursor");
+        problem.Detail.Should().Be(InvalidCursorException.DefaultMessage);
+
+        var errors = ((JsonElement)problem.Extensions["errors"]!).Deserialize<Dictionary<string, string[]>>();
+        errors.Should().ContainKey("Cursor");
+        errors!["Cursor"].Should().Contain(InvalidCursorException.DefaultMessage);
+    }
+
+    [Fact]
     public async Task ConflictException_returns_409()
     {
         var context = CreateHttpContext();

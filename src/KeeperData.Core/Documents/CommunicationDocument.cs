@@ -1,4 +1,3 @@
-using KeeperData.Core.Domain.Shared;
 using KeeperData.Core.Repositories;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
@@ -52,22 +51,4 @@ public class CommunicationDocument : INestedEntity
     [BsonElement("lastUpdatedDate")]
     [JsonPropertyName("lastUpdatedDate")]
     public DateTime LastUpdatedDate { get; set; }
-
-    public static CommunicationDocument FromDomain(Communication m) => new()
-    {
-        IdentifierId = m.Id,
-        LastUpdatedDate = m.LastUpdatedDate,
-        Email = m.Email,
-        Mobile = m.Mobile,
-        Landline = m.Landline,
-        PrimaryContactFlag = m.PrimaryContactFlag
-    };
-
-    public Communication ToDomain() => new(
-        IdentifierId,
-        LastUpdatedDate,
-        Email,
-        Mobile,
-        Landline,
-        PrimaryContactFlag);
 }

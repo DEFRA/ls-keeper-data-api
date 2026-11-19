@@ -5,7 +5,7 @@ namespace KeeperData.Api.Controllers.RequestDtos.Holdings;
 
 public class GetHoldingsRequest : IValidatableObject
 {
-    /// <summary>Case-insensitive word-prefix search across holding, address and associated party fields, including email and phone numbers. CPH accepts 13/169/0007 or 131690007. Maximum 200 characters.</summary>
+    /// <summary>Case-insensitive search across enabled holding fields: CPH number, holding name, business name, address lines, town/locality, postcode, and herd mark. Maximum 200 characters.</summary>
     [FromQuery(Name = "search")]
     [StringLength(200, ErrorMessage = "Search must be at most 200 characters.")]
     [RegularExpression(@"^[\p{L}\p{N}\s/'@.+(),&-]*$", ErrorMessage = "Search contains an unsupported expression. Use words, spaces, email or phone punctuation, commas, ampersands, apostrophes, hyphens or CPH slashes.")]

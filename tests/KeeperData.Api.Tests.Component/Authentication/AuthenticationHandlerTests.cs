@@ -1,5 +1,4 @@
 using FluentAssertions;
-using KeeperData.Api.Worker.Tasks;
 using KeeperData.Tests.Common.Utilities;
 using Moq;
 using System.Net;
@@ -35,49 +34,5 @@ public class AuthenticationHandlerTests
         var response = await client.GetAsync("/api/parties");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-    }
-
-    [Fact]
-    public async Task WhenApiGatewayExists_ButEndpointIsBasicOnly_JwtSchemeFails()
-    {
-        var configurationOverrides = new Dictionary<string, string?>
-        {
-            ["ScanEndpointsEnabled"] = "true"
-        };
-
-        var ctsScanTaskMock = new Mock<ICtsScanTask>();
-        ctsScanTaskMock.Setup(x => x.StartAsync(It.IsAny<bool>(), It.IsAny<int?>(), It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
-
-        var factory = new AppWebApplicationFactory(configurationOverrides, useFakeAuth: true);
-        factory.OverrideServiceAsSingleton(ctsScanTaskMock.Object);
-
-        var client = factory.CreateClient();
-        client.AddJwt();
-
-        var response = await client.PostAsync("/api/import/startCtsScan", null);
-
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    [Fact]
-    public async Task WhenApiKeyEnabled_AndEndpointIsBasicOnly_BasicSchemeSucceeds()
-    {
-        var configurationOverrides = new Dictionary<string, string?>
-        {
-            ["ScanEndpointsEnabled"] = "true"
-        };
-
-        var ctsScanTaskMock = new Mock<ICtsScanTask>();
-        ctsScanTaskMock.Setup(x => x.StartAsync(It.IsAny<bool>(), It.IsAny<int?>(), It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
-
-        var factory = new AppWebApplicationFactory(configurationOverrides, useFakeAuth: true);
-        factory.OverrideServiceAsSingleton(ctsScanTaskMock.Object);
-
-        var client = factory.CreateClient();
-        client.AddBasicApiKey(BasicApiKey, BasicSecret);
-
-        var response = await client.PostAsync("/api/import/startCtsScan", null);
-
-        response.StatusCode.Should().Be(HttpStatusCode.Accepted);
     }
 }
