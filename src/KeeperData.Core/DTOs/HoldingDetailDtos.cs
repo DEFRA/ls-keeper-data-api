@@ -15,7 +15,8 @@ public sealed record HoldingLocation(
     string? OsMapReference,
     int? Easting,
     int? Northing,
-    HoldingAddress Address);
+    HoldingAddress Address,
+    HoldingAddress CorrespondenceAddress);
 
 public sealed record HoldingAddress(
     long? Udprn,
@@ -24,7 +25,10 @@ public sealed record HoldingAddress(
     string? PostTown,
     string? Locality,
     string? Postcode,
-    string? Country);
+    string? Country)
+{
+    public static HoldingAddress Empty { get; } = new(null, null, null, null, null, null, null);
+}
 
 public sealed record HoldingAssociation(
     string CustomerNumber,

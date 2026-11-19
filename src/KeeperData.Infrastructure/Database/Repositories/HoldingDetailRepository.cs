@@ -572,7 +572,9 @@ public partial class HoldingDetailRepository(IReadModelSqliteCacheService cacheS
                 PostTown: postTown,
                 Locality: locality,
                 Postcode: postcode,
-                Country: country));
+                Country: country),
+            // Correspondence address is not yet sourced; exposed with null values until it is.
+            CorrespondenceAddress: HoldingAddress.Empty);
 
         return new HoldingRowData(holdingId, holdingCph, name, cphType, startDate, endDate, location);
     }

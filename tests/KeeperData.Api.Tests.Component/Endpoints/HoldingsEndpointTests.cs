@@ -120,7 +120,8 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
                     PostTown: "COLCHESTER",
                     Locality: "Great Wigborough",
                     Postcode: "CO5 7RR",
-                    Country: "England")),
+                    Country: "England"),
+                CorrespondenceAddress: HoldingAddress.Empty),
             Associations:
             [
                 new HoldingAssociation(
@@ -173,6 +174,7 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
         result.Name.Should().Be("Land At Test Farm 06");
         result.Location.Address.AddressLine1.Should().Be("Test Farm 06");
         result.Location.Address.AddressLine2.Should().Be("Layer Road");
+        result.Location.CorrespondenceAddress.Should().Be(HoldingAddress.Empty);
         result.Associations.Should().HaveCount(1);
         result.Associations[0].Roles.Should().HaveCount(3);
         result.AllowedSpecies.Should().BeEquivalentTo(["CHK", "CTT", "PG", "SHP"]);
@@ -364,7 +366,7 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
             Name: $"Farm {i}",
             StartDate: DateTimeOffset.Parse("2026-03-09T00:00:00Z"),
             EndDate: null,
-            Location: new HoldingLocation(null, null, null, new HoldingAddress(null, null, null, null, null, null, null)),
+            Location: new HoldingLocation(null, null, null, new HoldingAddress(null, null, null, null, null, null, null), HoldingAddress.Empty),
             Associations: [],
             AllowedSpecies: ["CTT"],
             Marks: []
@@ -462,7 +464,7 @@ public class HoldingsEndpointTests : IClassFixture<AppTestFixture>
             Name: $"Farm {10 - i}",
             StartDate: null,
             EndDate: null,
-            Location: new HoldingLocation(null, null, null, new HoldingAddress(null, null, null, null, null, null, null)),
+            Location: new HoldingLocation(null, null, null, new HoldingAddress(null, null, null, null, null, null, null), HoldingAddress.Empty),
             Associations: [],
             AllowedSpecies: [],
             Marks: []
